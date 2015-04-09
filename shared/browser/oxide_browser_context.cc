@@ -85,7 +85,11 @@ namespace {
 
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
 
+// Cache was used for the default blockfile backend (CACHE_BACKEND_BLOCKFILE),
+// Cache2 is used since the switch to the simple backend (CACHE_BACKEND_SIMPLE).
 const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
+const base::FilePath::CharType kCacheDirname2[] = FILE_PATH_LITERAL("Cache2");
+
 const base::FilePath::CharType kCookiesFilename[] =
     FILE_PATH_LITERAL("cookies.sqlite");
 
@@ -489,13 +493,13 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   // Run-once code that is run when upgrading oxide to
   // a version that uses the simple cache backend.
+  content::BrowserThread::PostTask(
+      content::BrowserThread::FILE,
+      FROM_HERE,
+      base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
   // XXX: is it ok to do file I/O on the cache thread?
   // XXX: are we guaranteed that those tasks will be run
   //  before the new caches get created?
-  content::BrowserThread::PostTask(
-      content::BrowserThread::CACHE,
-      FROM_HERE,
-      base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
   base::FilePath app_cache =
       GetPath().Append(FILE_PATH_LITERAL("Application Cache"));
   content::BrowserThread::PostTask(
@@ -510,7 +514,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     cache_backend = new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
           net::CACHE_BACKEND_SIMPLE,
-          GetCachePath().Append(kCacheDirname),
+          GetCachePath().Append(kCacheDirname2),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
