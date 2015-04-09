@@ -20,35 +20,44 @@
 
 #include <vector>
 
-#include "base/memory/weak_ptr.h"
+#include "base/macros.h"
 #include "content/public/browser/web_contents_observer.h"
-#include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
+
+namespace base {
+template <typename T> class DeleteHelper;
+}
 
 namespace content {
 class RenderViewHost;
+struct FileChooserFileInfo;
+struct FileChooserParams;
 }
 
 namespace oxide {
 
-class FilePicker : public content::WebContentsObserver,
-                   public base::SupportsWeakPtr<FilePicker> {
+class FilePicker : public content::WebContentsObserver {
  public:
-  virtual ~FilePicker();
-
   virtual void Run(const content::FileChooserParams& params) = 0;
+
   void Done(const std::vector<content::FileChooserFileInfo>& files,
             content::FileChooserParams::Mode permissions);
 
  protected:
+  friend class base::DeleteHelper<FilePicker>;
+
   FilePicker(content::RenderViewHost* rvh);
+  virtual ~FilePicker();
 
  private:
-  virtual void OnHide() = 0;
+  virtual void Hide();
 
-  void RenderViewDeleted(content::RenderViewHost* rvh) final;
+  // content::WebContentsObserver implementation
+  void RenderViewDeleted(content::RenderViewHost* rvh) override;
 
   content::RenderViewHost* render_view_host_;
+
+  DISALLOW_COPY_AND_ASSIGN(FilePicker);
 };
 
 } // namespace oxide

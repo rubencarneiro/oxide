@@ -17,31 +17,39 @@
 
 #include "oxide_file_picker.h"
 
+#include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/common/file_chooser_file_info.h"
 
 namespace oxide {
 
-FilePicker::FilePicker(content::RenderViewHost* rvh) :
-    content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
-    render_view_host_(rvh) {}
+FilePicker::FilePicker(content::RenderViewHost* rvh)
+    : content::WebContentsObserver(content::WebContents::FromRenderViewHost(rvh)),
+      render_view_host_(rvh) {}
 
-FilePicker::~FilePicker() {}
+FilePicker::~FilePicker() {
+  DCHECK(!render_view_host_);
+}
 
 void FilePicker::RenderViewDeleted(content::RenderViewHost* rvh) {
   if (rvh != render_view_host_) {
     return;
   }
   render_view_host_ = nullptr;
+  Hide();
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }
 
+void FilePicker::Hide() {}
+
 void FilePicker::Done(const std::vector<content::FileChooserFileInfo>& files,
                       content::FileChooserParams::Mode permissions) {
   render_view_host_->FilesSelectedInChooser(files, permissions);
-  OnHide();
+  render_view_host_ = nullptr;
+  Hide();
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }

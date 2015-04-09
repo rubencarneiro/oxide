@@ -24,6 +24,7 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
 #include "shared/common/oxide_script_message_request.h"
 
 namespace oxide {
@@ -32,27 +33,24 @@ class ScriptMessageRequestImplBrowser;
 
 namespace qt {
 
-class ScriptMessageRequestAdapter;
+class ScriptMessageRequestProxyClient;
 
-class ScriptMessageRequest final {
+class ScriptMessageRequest : public ScriptMessageRequestProxy {
  public:
-  ~ScriptMessageRequest();
+  ScriptMessageRequest(ScriptMessageRequestProxyClient* client);
+  ~ScriptMessageRequest() override;
 
-  static ScriptMessageRequest* FromAdapter(
-      ScriptMessageRequestAdapter* adapter);
+  static ScriptMessageRequest* FromProxyHandle(
+      ScriptMessageRequestProxyHandle* handle);
 
   void SetRequest(scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req);
 
  private:
-  friend class ScriptMessageRequestAdapter;
-
-  ScriptMessageRequest(ScriptMessageRequestAdapter* adapter);
-
   void ReceiveReplyCallback(const std::string& args);
   void ReceiveErrorCallback(oxide::ScriptMessageRequest::Error error,
                             const std::string& msg);
 
-  ScriptMessageRequestAdapter* adapter_;
+  ScriptMessageRequestProxyClient* client_;
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> request_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequest);

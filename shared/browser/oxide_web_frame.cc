@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -84,6 +84,10 @@ void WebFrame::WillDestroy() {
   }
 }
 
+void WebFrame::Delete() {
+  delete this;
+}
+
 void WebFrame::AddChild(WebFrame* child) {
   child_frames_.push_back(child);
   OnChildAdded(child);
@@ -151,7 +155,7 @@ WebFrame* WebFrame::FromRenderFrameHost(
 // static
 void WebFrame::Destroy(WebFrame* frame) {
   frame->WillDestroy();
-  delete frame;
+  frame->Delete();
 }
 
 GURL WebFrame::GetURL() const {
@@ -163,6 +167,15 @@ void WebFrame::InitParent(WebFrame* parent) {
   DCHECK_EQ(parent->view(), view());
   parent_ = parent;
   parent_->AddChild(this);
+}
+
+void WebFrame::SetRenderFrameHost(
+    content::RenderFrameHost* render_frame_host) {
+  DCHECK_EQ(static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+                ->frame_tree_node()->frame_tree_node_id(),
+            static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
+                ->frame_tree_node()->frame_tree_node_id());
+  render_frame_host_ = render_frame_host;
 }
 
 size_t WebFrame::GetChildCount() const {

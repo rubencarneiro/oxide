@@ -17,14 +17,18 @@
 
 #include "oxide_qt_web_frame.h"
 
+#include <QJsonDocument>
 #include <QObject>
+#include <QString>
+#include <QVariant>
 
 #include "base/logging.h"
+#include "url/gurl.h"
 
-#include "qt/core/browser/oxide_qt_script_message_handler.h"
-#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "shared/browser/oxide_script_message_request_impl_browser.h"
 
+#include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_script_message_request.h"
 #include "oxide_qt_web_view.h"
 
@@ -35,21 +39,25 @@ WebFrame::~WebFrame() {}
 
 const oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
-  return ScriptMessageHandler::FromAdapter(
-      adapter_->message_handlers_.at(index))->handler();
+  return ScriptMessageHandler::FromProxyHandle(
+      message_handlers_.at(index))->handler();
 }
 
 size_t WebFrame::GetScriptMessageHandlerCount() const {
-  return adapter_->message_handlers_.size();
+  return message_handlers_.size();
 }
 
 void WebFrame::DidCommitNewURL() {
-  adapter_->URLCommitted();
+  client_->URLCommitted();
+}
+
+void WebFrame::Delete() {
+  client_->DestroyFrame();
+  // |this| has been destroyed
 }
 
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  QObject* child_api = static_cast<WebFrame *>(child)->api_handle();
-  child_api->setParent(api_handle());
+  client_->ChildFramesChanged();
 
   WebView* v = static_cast<WebView*>(view());
   if (v) {
@@ -58,8 +66,7 @@ void WebFrame::OnChildAdded(oxide::WebFrame* child) {
 }
 
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  QObject* child_api = static_cast<WebFrame *>(child)->api_handle();
-  child_api->setParent(nullptr);
+  client_->ChildFramesChanged();
 
   WebView* v = static_cast<WebView*>(view());
   if (v) {
@@ -67,27 +74,78 @@ void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   }
 }
 
-WebFrame::WebFrame(WebFrameAdapter* adapter,
-                   content::RenderFrameHost* render_frame_host,
-                   oxide::WebView* view)
-    : oxide::WebFrame(render_frame_host, view),
-      api_handle_(adapterToQObject(adapter)),
-      adapter_(adapter) {
-  adapter->frame_ = this;
+void WebFrame::setClient(WebFrameProxyClient* client) {
+  DCHECK(!client_ && client);
+  client_ = client;
 }
 
-bool WebFrame::SendMessage(const GURL& context,
-                           const std::string& msg_id,
-                           const std::string& args,
-                           ScriptMessageRequest* req) {
+QUrl WebFrame::url() const {
+  return QUrl(QString::fromStdString(GetURL().spec()));
+}
+
+WebFrameProxyHandle* WebFrame::parent() const {
+  WebFrame* parent = static_cast<WebFrame*>(oxide::WebFrame::parent());
+  if (!parent) {
+    return nullptr;
+  }
+
+  return parent->handle();
+}
+
+int WebFrame::childFrameCount() const {
+  return static_cast<int>(
+      std::min(GetChildCount(),
+               static_cast<size_t>(std::numeric_limits<int>::max())));
+}
+
+WebFrameProxyHandle* WebFrame::childFrameAt(int index) const {
+  DCHECK_GE(index, 0);
+  DCHECK_LT(static_cast<size_t>(index), GetChildCount());
+  return static_cast<WebFrame*>(GetChildAt(index))->handle();
+}
+
+bool WebFrame::sendMessage(const QUrl& context,
+                           const QString& msg_id,
+                           const QVariant& args,
+                           ScriptMessageRequestProxyHandle* req) {
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
-      oxide::WebFrame::SendMessage(context, msg_id, args);
+      SendMessage(GURL(context.toString().toStdString()),
+                  msg_id.toStdString(),
+                  QString(jsondoc.toJson()).toStdString());
   if (!smr) {
     return false;
   }
 
-  req->SetRequest(smr.Pass());
+  ScriptMessageRequest::FromProxyHandle(req)->SetRequest(smr.Pass());
+
   return true;
+}
+
+void WebFrame::sendMessageNoReply(const QUrl& context,
+                                  const QString& msg_id,
+                                  const QVariant& args) {
+  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+
+  SendMessageNoReply(
+      GURL(context.toString().toStdString()),
+      msg_id.toStdString(),
+      QString(jsondoc.toJson()).toStdString());
+}
+
+QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
+  return message_handlers_;
+}
+
+WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
+                   WebView* view)
+    : oxide::WebFrame(render_frame_host, view),
+      client_(nullptr) {}
+
+// static
+WebFrame* WebFrame::FromProxyHandle(WebFrameProxyHandle* handle) {
+  return static_cast<WebFrame*>(handle->proxy_.data());
 }
 
 } // namespace qt

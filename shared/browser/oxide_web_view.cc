@@ -811,7 +811,6 @@ content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
 void WebView::RunFileChooser(content::WebContents* source,
                              const content::FileChooserParams& params) {
   DCHECK_VALID_SOURCE_CONTENTS
-  DCHECK(!active_file_picker_);
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* file_picker = CreateFilePicker(rvh);
@@ -821,8 +820,7 @@ void WebView::RunFileChooser(content::WebContents* source,
     return;
   }
 
-  active_file_picker_ = file_picker->AsWeakPtr();
-  active_file_picker_->Run(params);
+  file_picker->Run(params);
 }
 
 void WebView::EnterFullscreenModeForTab(content::WebContents* source,
@@ -896,7 +894,7 @@ void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
 
   if (frame) {
-    frame->set_render_frame_host(new_host);
+    frame->SetRenderFrameHost(new_host);
     return;
   }
 
@@ -1148,8 +1146,9 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
-  return new WebFrame(rfh, this);
+WebFrame* WebView::CreateWebFrame(
+    content::RenderFrameHost* render_frame_host) {
+  return new WebFrame(render_frame_host, this);
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1890,7 +1889,7 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
                             bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+  DCHECK(!active_popup_menu_);
 
   WebPopupMenu* menu = CreatePopupMenu(render_frame_host);
   if (!menu) {
@@ -1899,15 +1898,17 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  active_popup_menu_ = menu->AsWeakPtr();
+  active_popup_menu_ = menu->GetWeakPtr();
 
   menu->Show(bounds, items, selected_item, allow_multiple_selection);
 }
 
 void WebView::HidePopupMenu() {
-  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
-    active_popup_menu_->Hide();
+  if (!active_popup_menu_) {
+    return;
   }
+
+  active_popup_menu_->Close();
 }
 
 void WebView::RequestGeolocationPermission(
@@ -2090,8 +2091,7 @@ bool WebView::IsInputPanelVisible() const {
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
+    content::JavaScriptMessageType javascript_message_type) {
   return nullptr;
 }
 

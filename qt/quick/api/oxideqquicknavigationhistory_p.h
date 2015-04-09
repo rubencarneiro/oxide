@@ -22,12 +22,6 @@
 #include <QScopedPointer>
 #include <QtQml>
 
-namespace oxide {
-namespace qt {
-class WebViewAdapter;
-}
-}
-
 class OxideQQuickNavigationHistoryPrivate;
 class OxideQQuickWebView;
 

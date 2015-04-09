@@ -17,8 +17,6 @@
 
 #include "oxideqquicklocationbarcontroller_p.h"
 
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
-
 #include "oxideqquickwebview_p.h"
 #include "oxideqquickwebview_p_p.h"
 
@@ -51,7 +49,7 @@ void OxideQQuickLocationBarController::setHeight(qreal height) {
   Q_D(OxideQQuickLocationBarController);
 
   if (height < 0.0f) {
-    qWarning() << "LocationBarController.height cannot be negative";
+    qWarning() << "OxideQQuickLocationBarController: height cannot be negative";
     return;
   }
 

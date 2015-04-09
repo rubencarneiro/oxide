@@ -20,26 +20,21 @@
 #include <QList>
 #include <QRect>
 #include <QString>
+#include <QVector>
 #include <string>
 #include <vector>
 
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
-#include "content/public/browser/browser_thread.h"
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/geometry/rect.h"
 
-#include "qt/core/glue/oxide_qt_web_popup_menu_delegate.h"
+#include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
 
 namespace oxide {
 namespace qt {
 
-WebPopupMenu::WebPopupMenu(WebPopupMenuDelegate* delegate,
-                           content::RenderFrameHost* rfh) :
-    oxide::WebPopupMenu(rfh),
-    delegate_(delegate) {
-  delegate_->menu_ = this;
-}
+WebPopupMenu::~WebPopupMenu() {}
 
 void WebPopupMenu::Show(const gfx::Rect& bounds,
                         const std::vector<content::MenuItem>& items,
@@ -88,14 +83,27 @@ void WebPopupMenu::Show(const gfx::Rect& bounds,
     qitems.append(qitem);
   }
 
-  delegate_->Show(QRect(bounds.x(), bounds.y(), bounds.width(), bounds.height()),
-                  qitems, allow_multiple_selection);
+  proxy_->Show(QRect(bounds.x(), bounds.y(), bounds.width(), bounds.height()),
+               qitems, allow_multiple_selection);
 }
 
-void WebPopupMenu::OnHide() {
-  delegate_->Hide();
-  content::BrowserThread::DeleteSoon(
-      content::BrowserThread::UI, FROM_HERE, this);
+void WebPopupMenu::Hide() {
+  proxy_->Hide();
+}
+
+void WebPopupMenu::selectItems(const QList<int>& selected_indices) {
+  SelectItems(selected_indices.toVector().toStdVector());
+}
+
+void WebPopupMenu::cancel() {
+  Cancel();
+}
+
+WebPopupMenu::WebPopupMenu(content::RenderFrameHost* rfh)
+    : oxide::WebPopupMenu(rfh) {}
+
+void WebPopupMenu::SetProxy(WebPopupMenuProxy* proxy) {
+  proxy_.reset(proxy);
 }
 
 } // namespace qt

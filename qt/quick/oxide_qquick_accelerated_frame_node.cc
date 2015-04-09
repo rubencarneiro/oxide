@@ -23,7 +23,7 @@
 #include <QSize>
 #include <QSGTexture>
 
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {

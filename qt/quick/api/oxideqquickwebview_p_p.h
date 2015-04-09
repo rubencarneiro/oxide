@@ -24,7 +24,8 @@
 #include <QtGlobal>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_web_view_adapter.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
 #include "oxideqquicknavigationhistory_p.h"
 
@@ -43,9 +44,10 @@ class QQuickWindow;
 class QScreen;
 QT_END_NAMESPACE
 
-class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
+class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
+                                  public oxide::qt::WebViewProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
-
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView, oxide::qt::WebViewProxyHandle)
  public:
   ~OxideQQuickWebViewPrivate();
 
@@ -53,79 +55,85 @@ class OxideQQuickWebViewPrivate final : public oxide::qt::WebViewAdapter {
 
   void addAttachedPropertyTo(QObject* object);
 
+  // XXX(chrisccoulson): Add LocationBarControllerProxy and remove these
+  int locationBarHeight();
+  void setLocationBarHeight(int height);
+  oxide::qt::LocationBarMode locationBarMode() const;
+  void setLocationBarMode(oxide::qt::LocationBarMode mode);
+  int locationBarOffsetPix();
+  int locationBarContentOffsetPix();
+
+  // XXX(chrisccoulson): Add NavigationControllerProxy and remove these
+  int getNavigationEntryCount() const;
+  int getNavigationCurrentEntryIndex() const;
+  void setNavigationCurrentEntryIndex(int index);
+  int getNavigationEntryUniqueID(int index) const;
+  QUrl getNavigationEntryUrl(int index) const;
+  QString getNavigationEntryTitle(int index) const;
+  QDateTime getNavigationEntryTimestamp(int index) const;
+
  private:
   friend class UpdatePaintNodeScope;
 
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
-  oxide::qt::WebPopupMenuDelegate* CreateWebPopupMenuDelegate() final;
-  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
-      oxide::qt::JavaScriptDialogDelegate::Type type) final;
-  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() final;
-  oxide::qt::FilePickerDelegate* CreateFilePickerDelegate() final;
-
-  void OnInitialized() final;
-
-  void URLChanged() final;
-  void TitleChanged() final;
-  void IconChanged(QUrl icon) final;
-  void CommandsUpdated() final;
-
-  void LoadingChanged() final;
-  void LoadProgressChanged(double progress) final;
-
-  void LoadEvent(OxideQLoadEvent* event) final;
-  
-  void NavigationEntryCommitted() final;
-  void NavigationListPruned(bool from_front, int count) final;
-  void NavigationEntryChanged(int index) final;
-
-  oxide::qt::WebFrameAdapter* CreateWebFrame() final;
-
-  QScreen* GetScreen() const final;
-  QRect GetViewBoundsPix() const final;
-  bool IsVisible() const final;
-  bool HasFocus() const final;
-
+  // oxide::qt::WebViewProxyClient implementation
+  void Initialized() override;
+  QObject* GetApiHandle() override;
+  oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
+      oxide::qt::WebPopupMenuProxyClient* client) override;
+  oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
+      oxide::qt::JavaScriptDialogProxyClient::Type type,
+      oxide::qt::JavaScriptDialogProxyClient* client) override;
+  oxide::qt::JavaScriptDialogProxy* CreateBeforeUnloadDialog(
+      oxide::qt::JavaScriptDialogProxyClient* client) override;
+  oxide::qt::FilePickerProxy* CreateFilePicker(
+      oxide::qt::FilePickerProxyClient* client) override;
+  void URLChanged() override;
+  void TitleChanged() override;
+  void IconChanged(QUrl icon) override;
+  void CommandsUpdated() override;
+  void LoadingChanged() override;
+  void LoadProgressChanged(double progress) override;
+  void LoadEvent(OxideQLoadEvent* event) override;
+  void NavigationEntryCommitted() override;
+  void NavigationListPruned(bool from_front, int count) override;
+  void NavigationEntryChanged(int index) override;
+  oxide::qt::WebFrameProxyHandle* CreateWebFrame(
+      oxide::qt::WebFrameProxy* proxy) override;
+  QScreen* GetScreen() const override;
+  QRect GetViewBoundsPix() const override;
+  bool IsVisible() const override;
+  bool HasFocus() const override;
   void AddMessageToConsole(int level,
-			   const QString& message,
-			   int line_no,
-			   const QString& source_id) final;
-
-  void ToggleFullscreenMode(bool enter) final;
-
-  void OnWebPreferencesReplaced() final;
-
-  void FrameAdded(oxide::qt::WebFrameAdapter* frame) final;
-  void FrameRemoved(oxide::qt::WebFrameAdapter* frame) final;
-
-  bool CanCreateWindows() const final;
-
-  void UpdateCursor(const QCursor& cursor) final;
-
-  void NavigationRequested(OxideQNavigationRequest* request) final;
-  void NewViewRequested(OxideQNewViewRequest* request) final;
-
+                           const QString& message,
+                           int line_no,
+                           const QString& source_id) override;
+  void ToggleFullscreenMode(bool enter) override;
+  void WebPreferencesReplaced() override;
+  void FrameAdded(oxide::qt::WebFrameProxyHandle* frame) override;
+  void FrameRemoved(oxide::qt::WebFrameProxyHandle* frame) override;
+  bool CanCreateWindows() const override;
+  void UpdateCursor(const QCursor& cursor) override;
+  void NavigationRequested(OxideQNavigationRequest* request) override;
+  void NewViewRequested(OxideQNewViewRequest* request) override;
   void RequestGeolocationPermission(
-      OxideQGeolocationPermissionRequest* request) final;
-
-  void HandleUnhandledKeyboardEvent(QKeyEvent *event) final;
-
+      OxideQGeolocationPermissionRequest* request) override;
+  void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
-      oxide::qt::FrameMetadataChangeFlags flags) final;
+      oxide::qt::FrameMetadataChangeFlags flags) override;
+  void ScheduleUpdate() override;
+  void EvictCurrentFrame() override;
+  void SetInputMethodEnabled(bool enabled) override;
+  void DownloadRequested(OxideQDownloadRequest* download_request) override;
+  void CertificateError(OxideQCertificateError* cert_error) override;
+  void ContentBlocked() override;
+  void PrepareToCloseResponse(bool proceed) override;
+  void CloseRequested() override;
 
-  void OnScheduleUpdate() final;
-  void OnEvictCurrentFrame() final;
-
-  void SetInputMethodEnabled(bool enabled) final;
-
-  void DownloadRequested(OxideQDownloadRequest* downloadRequest) final;
-
-  void CertificateError(OxideQCertificateError* cert_error) final;
-  void ContentBlocked() final;
-
-  void PrepareToCloseResponse(bool proceed) final;
-  void CloseRequested() final;
+  oxide::qt::WebViewProxy* proxy() const {
+    return oxide::qt::WebViewProxyHandle::proxy();
+  }
 
   void completeConstruction();
 
