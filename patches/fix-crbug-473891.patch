@@ -1,0 +1,588 @@
+# HG changeset patch
+# Parent 47e7ce1cd37cc086fc38f174bd82e323aaf00fe4
+# User oxide
+
+diff --git a/gpu/command_buffer/service/async_pixel_transfer_manager_linux.cc b/gpu/command_buffer/service/async_pixel_transfer_manager_linux.cc
+--- a/gpu/command_buffer/service/async_pixel_transfer_manager_linux.cc
++++ b/gpu/command_buffer/service/async_pixel_transfer_manager_linux.cc
+@@ -22,17 +22,16 @@ AsyncPixelTransferManager* AsyncPixelTra
+     DCHECK(context);
+     return static_cast<AsyncPixelTransferManager*> (
+         new AsyncPixelTransferManagerShareGroup(context));
+   }
+ 
+   switch (gfx::GetGLImplementation()) {
+     case gfx::kGLImplementationOSMesaGL:
+     case gfx::kGLImplementationDesktopGL:
+-    case gfx::kGLImplementationDesktopGLCoreProfile:
+     case gfx::kGLImplementationEGLGLES2:
+       return new AsyncPixelTransferManagerIdle(true);
+     case gfx::kGLImplementationMockGL:
+       return new AsyncPixelTransferManagerStub;
+     default:
+       NOTREACHED();
+       return NULL;
+   }
+diff --git a/gpu/command_buffer/service/gles2_cmd_decoder.cc b/gpu/command_buffer/service/gles2_cmd_decoder.cc
+--- a/gpu/command_buffer/service/gles2_cmd_decoder.cc
++++ b/gpu/command_buffer/service/gles2_cmd_decoder.cc
+@@ -1686,20 +1686,16 @@ class GLES2DecoderImpl : public GLES2Dec
+   const FeatureInfo::FeatureFlags& features() const {
+     return feature_info_->feature_flags();
+   }
+ 
+   const FeatureInfo::Workarounds& workarounds() const {
+     return feature_info_->workarounds();
+   }
+ 
+-  const gfx::GLVersionInfo& gl_version() const {
+-    return feature_info_->gl_version_info();
+-  }
+-
+   bool ShouldDeferDraws() {
+     return !offscreen_target_frame_buffer_.get() &&
+            framebuffer_state_.bound_draw_framebuffer.get() == NULL &&
+            surface_->DeferDraws();
+   }
+ 
+   bool ShouldDeferReads() {
+     return !offscreen_target_frame_buffer_.get() &&
+@@ -2739,17 +2735,17 @@ bool GLES2DecoderImpl::Initialize(
+ 
+     if (!surfaceless_) {
+       GLint alpha_bits = 0;
+       GLint depth_bits = 0;
+       GLint stencil_bits = 0;
+ 
+       bool default_fb = (GetBackbufferServiceId() == 0);
+ 
+-      if (gl_version().is_desktop_core_profile) {
++      if (feature_info_->gl_version_info().is_desktop_core_profile) {
+         glGetFramebufferAttachmentParameterivEXT(
+             GL_FRAMEBUFFER,
+             default_fb ? GL_BACK_LEFT : GL_COLOR_ATTACHMENT0,
+             GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE, &alpha_bits);
+         glGetFramebufferAttachmentParameterivEXT(
+             GL_FRAMEBUFFER,
+             default_fb ? GL_DEPTH : GL_DEPTH_ATTACHMENT,
+             GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &depth_bits);
+@@ -2778,17 +2774,17 @@ bool GLES2DecoderImpl::Initialize(
+   }
+ 
+   // OpenGL ES 2.0 implicitly enables the desktop GL capability
+   // VERTEX_PROGRAM_POINT_SIZE and doesn't expose this enum. This fact
+   // isn't well documented; it was discovered in the Khronos OpenGL ES
+   // mailing list archives. It also implicitly enables the desktop GL
+   // capability GL_POINT_SPRITE to provide access to the gl_PointCoord
+   // variable in fragment shaders.
+-  if (!gl_version().BehavesLikeGLES()) {
++  if (!feature_info_->gl_version_info().BehavesLikeGLES()) {
+     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+     glEnable(GL_POINT_SPRITE);
+   }
+ 
+   has_robustness_extension_ =
+       context->HasExtension("GL_ARB_robustness") ||
+       context->HasExtension("GL_KHR_robustness") ||
+       context->HasExtension("GL_EXT_robustness");
+@@ -3016,21 +3012,18 @@ bool GLES2DecoderImpl::InitializeShaderT
+   }
+ 
+   if ((shader_spec == SH_WEBGL_SPEC || shader_spec == SH_WEBGL2_SPEC) &&
+       features().enable_shader_name_hashing)
+     resources.HashFunction = &CityHash64;
+   else
+     resources.HashFunction = NULL;
+   ShaderTranslatorInterface::GlslImplementationType implementation_type =
+-      ShaderTranslatorInterface::kGlsl;
+-  if (gl_version().is_es)
+-    implementation_type = ShaderTranslatorInterface::kGlslES;
+-  else if (gl_version().is_desktop_core_profile)
+-    implementation_type = ShaderTranslatorInterface::kGlslCoreProfile;
++      gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2 ?
++          ShaderTranslatorInterface::kGlslES : ShaderTranslatorInterface::kGlsl;
+   int driver_bug_workarounds = 0;
+   if (workarounds().needs_glsl_built_in_function_emulation)
+     driver_bug_workarounds |= SH_EMULATE_BUILT_IN_FUNCTIONS;
+   if (workarounds().init_gl_position_in_vertex_shader)
+     driver_bug_workarounds |= SH_INIT_GL_POSITION;
+   if (workarounds().unfold_short_circuit_as_ternary_operation)
+     driver_bug_workarounds |= SH_UNFOLD_SHORT_CIRCUIT;
+   if (workarounds().init_varyings_without_static_use)
+@@ -4592,17 +4585,17 @@ void GLES2DecoderImpl::DoDiscardFramebuf
+           NOTREACHED();
+           return;
+       }
+     }
+     translated_attachments[i] = attachment;
+   }
+ 
+   ScopedRenderTo do_render(framebuffer);
+-  if (gl_version().is_es3) {
++  if (feature_info_->gl_version_info().is_es3) {
+     glInvalidateFramebuffer(
+         target, numAttachments, translated_attachments.get());
+   } else {
+     glDiscardFramebufferEXT(
+         target, numAttachments, translated_attachments.get());
+   }
+ }
+ 
+@@ -4774,17 +4767,17 @@ bool GLES2DecoderImpl::GetHelper(
+       if (params) {
+         params[0] = group_->max_draw_buffers();
+       }
+       return true;
+     case GL_ALPHA_BITS:
+       *num_written = 1;
+       if (params) {
+         GLint v = 0;
+-        if (gl_version().is_desktop_core_profile) {
++        if (feature_info_->gl_version_info().is_desktop_core_profile) {
+           Framebuffer* framebuffer =
+               GetFramebufferInfoForTarget(GL_DRAW_FRAMEBUFFER_EXT);
+           if (framebuffer) {
+             glGetFramebufferAttachmentParameterivEXT(
+                 GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                 GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE, &v);
+           } else {
+             v = (back_buffer_color_format_ == GL_RGBA ? 8 : 0);
+@@ -4795,17 +4788,17 @@ bool GLES2DecoderImpl::GetHelper(
+         params[0] =
+             BoundFramebufferHasColorAttachmentWithAlpha(false) ? v : 0;
+       }
+       return true;
+     case GL_DEPTH_BITS:
+       *num_written = 1;
+       if (params) {
+         GLint v = 0;
+-        if (gl_version().is_desktop_core_profile) {
++        if (feature_info_->gl_version_info().is_desktop_core_profile) {
+           Framebuffer* framebuffer =
+               GetFramebufferInfoForTarget(GL_DRAW_FRAMEBUFFER_EXT);
+           if (framebuffer) {
+             glGetFramebufferAttachmentParameterivEXT(
+                 GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                 GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE, &v);
+           } else {
+             v = (back_buffer_has_depth_ ? 24 : 0);
+@@ -4817,17 +4810,17 @@ bool GLES2DecoderImpl::GetHelper(
+       }
+       return true;
+     case GL_RED_BITS:
+     case GL_GREEN_BITS:
+     case GL_BLUE_BITS:
+       *num_written = 1;
+       if (params) {
+         GLint v = 0;
+-        if (gl_version().is_desktop_core_profile) {
++        if (feature_info_->gl_version_info().is_desktop_core_profile) {
+           Framebuffer* framebuffer =
+               GetFramebufferInfoForTarget(GL_DRAW_FRAMEBUFFER_EXT);
+           if (framebuffer) {
+             GLenum framebuffer_enum = 0;
+             switch (pname) {
+               case GL_RED_BITS:
+                 framebuffer_enum = GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE;
+                 break;
+@@ -4848,17 +4841,17 @@ bool GLES2DecoderImpl::GetHelper(
+         }
+         params[0] = v;
+       }
+       return true;
+     case GL_STENCIL_BITS:
+       *num_written = 1;
+       if (params) {
+         GLint v = 0;
+-        if (gl_version().is_desktop_core_profile) {
++        if (feature_info_->gl_version_info().is_desktop_core_profile) {
+           Framebuffer* framebuffer =
+               GetFramebufferInfoForTarget(GL_DRAW_FRAMEBUFFER_EXT);
+           if (framebuffer) {
+             glGetFramebufferAttachmentParameterivEXT(
+                 GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT,
+                 GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &v);
+           } else {
+             v = (back_buffer_has_stencil_ ? 8 : 0);
+@@ -5692,17 +5685,17 @@ void GLES2DecoderImpl::BlitFramebufferHe
+                                              GLint dstX0,
+                                              GLint dstY0,
+                                              GLint dstX1,
+                                              GLint dstY1,
+                                              GLbitfield mask,
+                                              GLenum filter) {
+   // TODO(sievers): This could be resolved at the GL binding level, but the
+   // binding process is currently a bit too 'brute force'.
+-  if (gl_version().is_angle) {
++  if (feature_info_->gl_version_info().is_angle) {
+     glBlitFramebufferANGLE(
+         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+   } else if (feature_info_->feature_flags().use_core_framebuffer_multisample) {
+     glBlitFramebuffer(
+         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+   } else {
+     glBlitFramebufferEXT(
+         srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+@@ -6707,17 +6700,17 @@ bool GLES2DecoderImpl::IsDrawValid(
+                          primcount);
+ }
+ 
+ bool GLES2DecoderImpl::SimulateAttrib0(
+     const char* function_name, GLuint max_vertex_accessed, bool* simulated) {
+   DCHECK(simulated);
+   *simulated = false;
+ 
+-  if (gl_version().BehavesLikeGLES())
++  if (feature_info_->gl_version_info().BehavesLikeGLES())
+     return true;
+ 
+   const VertexAttrib* attrib =
+       state_.vertex_attrib_manager->GetVertexAttrib(0);
+   // If it's enabled or it's not used then we don't need to do anything.
+   bool attrib_0_used =
+       state_.current_program->GetAttribInfoByLocation(0) != NULL;
+   if (attrib->enabled() && attrib_0_used) {
+@@ -8064,17 +8057,17 @@ error::Error GLES2DecoderImpl::HandleRea
+       dst += padded_row_size;
+     }
+   } else {
+     if (async && features().use_async_readpixels) {
+       GLuint buffer = 0;
+       glGenBuffersARB(1, &buffer);
+       glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, buffer);
+       // For ANGLE client version 2, GL_STREAM_READ is not available.
+-      const GLenum usage_hint = gl_version().is_angle ?
++      const GLenum usage_hint = feature_info_->gl_version_info().is_angle ?
+           GL_STATIC_DRAW : GL_STREAM_READ;
+       glBufferData(GL_PIXEL_PACK_BUFFER_ARB, pixels_size, NULL, usage_hint);
+       GLenum error = glGetError();
+       if (error == GL_NO_ERROR) {
+         glReadPixels(x, y, width, height, format, type, 0);
+         pending_readpixel_fences_.push(linked_ptr<FenceCallback>(
+             new FenceCallback()));
+         WaitForReadPixels(base::Bind(
+@@ -10296,17 +10289,17 @@ void GLES2DecoderImpl::DoSwapBuffers() {
+         offscreen_saved_color_texture_.swap(offscreen_target_color_texture_);
+         offscreen_target_frame_buffer_->AttachRenderTexture(
+             offscreen_target_color_texture_.get());
+       }
+ 
+       // Ensure the side effects of the copy are visible to the parent
+       // context. There is no need to do this for ANGLE because it uses a
+       // single D3D device for all contexts.
+-      if (!gl_version().is_angle)
++      if (!feature_info_->gl_version_info().is_angle)
+         glFlush();
+     }
+   } else {
+     if (!surface_->SwapBuffers()) {
+       LOG(ERROR) << "Context lost because SwapBuffers failed.";
+       LoseContext(GL_UNKNOWN_CONTEXT_RESET_ARB);
+     }
+   }
+diff --git a/gpu/command_buffer/service/shader_translator.cc b/gpu/command_buffer/service/shader_translator.cc
+--- a/gpu/command_buffer/service/shader_translator.cc
++++ b/gpu/command_buffer/service/shader_translator.cc
+@@ -112,30 +112,29 @@ bool ShaderTranslator::Init(
+   DCHECK(compiler_ == NULL);
+   DCHECK(shader_type == GL_FRAGMENT_SHADER || shader_type == GL_VERTEX_SHADER);
+   DCHECK(shader_spec == SH_GLES2_SPEC || shader_spec == SH_WEBGL_SPEC ||
+          shader_spec == SH_GLES3_SPEC || shader_spec == SH_WEBGL2_SPEC);
+   DCHECK(resources != NULL);
+ 
+   g_translator_initializer.Get();
+ 
+-  ShShaderOutput shader_output = SH_ESSL_OUTPUT;
+-  switch (glsl_implementation_type) {
+-    case kGlsl:
++  ShShaderOutput shader_output;
++  if (glsl_implementation_type == kGlslES) {
++    shader_output = SH_ESSL_OUTPUT;
++  } else {
++    // TODO(kbr): clean up the tests of shader_spec and
++    // gfx::GetGLImplementation(). crbug.com/471960
++    if (shader_spec == SH_WEBGL2_SPEC ||
++        gfx::GetGLImplementation() ==
++            gfx::kGLImplementationDesktopGLCoreProfile) {
++      shader_output = SH_GLSL_CORE_OUTPUT;
++    } else {
+       shader_output = SH_GLSL_COMPATIBILITY_OUTPUT;
+-      break;
+-    case kGlslCoreProfile:
+-      shader_output = SH_GLSL_CORE_OUTPUT;
+-      break;
+-    case kGlslES:
+-      // Handled in initialization above.
+-      break;
+-    default:
+-      NOTREACHED();
+-      break;
++    }
+   }
+ 
+   {
+     TRACE_EVENT0("gpu", "ShConstructCompiler");
+     compiler_ = ShConstructCompiler(
+         shader_type, shader_spec, shader_output, resources);
+   }
+   implementation_is_glsl_es_ = (glsl_implementation_type == kGlslES);
+diff --git a/gpu/command_buffer/service/shader_translator.h b/gpu/command_buffer/service/shader_translator.h
+--- a/gpu/command_buffer/service/shader_translator.h
++++ b/gpu/command_buffer/service/shader_translator.h
+@@ -28,17 +28,16 @@ typedef base::hash_map<std::string, std:
+ // Translates a GLSL ES 2.0 shader to desktop GLSL shader, or just
+ // validates GLSL ES 2.0 shaders on a true GLSL ES implementation.
+ class ShaderTranslatorInterface
+     : public base::RefCounted<ShaderTranslatorInterface> {
+  public:
+   ShaderTranslatorInterface() {}
+   enum GlslImplementationType {
+     kGlsl,
+-    kGlslCoreProfile,
+     kGlslES
+   };
+ 
+   // Initializes the translator.
+   // Must be called once before using the translator object.
+   virtual bool Init(
+       sh::GLenum shader_type,
+       ShShaderSpec shader_spec,
+diff --git a/gpu/config/gpu_info_collector.cc b/gpu/config/gpu_info_collector.cc
+--- a/gpu/config/gpu_info_collector.cc
++++ b/gpu/config/gpu_info_collector.cc
+@@ -93,17 +93,17 @@ CollectInfoResult CollectGraphicsInfoGL(
+   scoped_refptr<gfx::GLContext> context(InitializeGLContext(surface.get()));
+   if (!context.get()) {
+     LOG(ERROR) << "Could not create context for info collection.";
+     return kCollectInfoFatalFailure;
+   }
+ 
+   gpu_info->gl_renderer = GetGLString(GL_RENDERER);
+   gpu_info->gl_vendor = GetGLString(GL_VENDOR);
+-  gpu_info->gl_extensions = context->GetExtensions();
++  gpu_info->gl_extensions = GetGLString(GL_EXTENSIONS);
+   gpu_info->gl_version = GetGLString(GL_VERSION);
+   std::string glsl_version_string = GetGLString(GL_SHADING_LANGUAGE_VERSION);
+ 
+   gfx::GLWindowSystemBindingInfo window_system_binding_info;
+   if (GetGLWindowSystemBindingInfo(&window_system_binding_info)) {
+     gpu_info->gl_ws_vendor = window_system_binding_info.vendor;
+     gpu_info->gl_ws_version = window_system_binding_info.version;
+     gpu_info->gl_ws_extensions = window_system_binding_info.extensions;
+diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
+--- a/ui/gl/gl_context_glx.cc
++++ b/ui/gl/gl_context_glx.cc
+@@ -34,28 +34,16 @@ bool GLContextGLX::Initialize(
+   display_ = static_cast<XDisplay*>(compatible_surface->GetDisplay());
+ 
+   GLXContext share_handle = static_cast<GLXContext>(
+       share_group() ? share_group()->GetHandle() : NULL);
+ 
+   if (GLSurfaceGLX::IsCreateContextSupported()) {
+     DVLOG(1) << "GLX_ARB_create_context supported.";
+     std::vector<int> attribs;
+-    if (gfx::GetGLImplementation() ==
+-        gfx::kGLImplementationDesktopGLCoreProfile) {
+-      // TODO(kbr): NVIDIA's driver doesn't return a later context
+-      // version if any version later than 3.1 is requested. We
+-      // explicitly want to request a 3.2+ context with no support for
+-      // the compatibility profile. WebGL 2.0 support currently
+-      // requires a 4.2 context. crbug.com/473427
+-      attribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
+-      attribs.push_back(4);
+-      attribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
+-      attribs.push_back(2);
+-    }
+     if (GLSurfaceGLX::IsCreateContextRobustnessSupported() &&
+         (!share_group()->GetContext() ||
+          share_group()->GetContext()->WasAllocatedUsingRobustnessExtension())) {
+       DVLOG(1) << "GLX_ARB_create_context_robustness supported.";
+       was_allocated_using_robustness_extension_ = true;
+       attribs.push_back(GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB);
+       attribs.push_back(GLX_LOSE_CONTEXT_ON_RESET_ARB);
+     }
+diff --git a/ui/gl/gl_context_x11.cc b/ui/gl/gl_context_x11.cc
+--- a/ui/gl/gl_context_x11.cc
++++ b/ui/gl/gl_context_x11.cc
+@@ -30,18 +30,17 @@ scoped_refptr<GLContext> GLContext::Crea
+   switch (GetGLImplementation()) {
+     case kGLImplementationOSMesaGL: {
+       scoped_refptr<GLContext> context(new GLContextOSMesa(share_group));
+       if (!context->Initialize(compatible_surface, gpu_preference))
+         return NULL;
+ 
+       return context;
+     }
+-    case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile: {
++    case kGLImplementationDesktopGL: {
+       scoped_refptr<GLContext> context(new GLContextGLX(share_group));
+       if (!context->Initialize(compatible_surface, gpu_preference))
+         return NULL;
+ 
+       return context;
+     }
+     case kGLImplementationEGLGLES2: {
+       scoped_refptr<GLContext> context(new GLContextEGL(share_group));
+diff --git a/ui/gl/gl_implementation_x11.cc b/ui/gl/gl_implementation_x11.cc
+--- a/ui/gl/gl_implementation_x11.cc
++++ b/ui/gl/gl_implementation_x11.cc
+@@ -38,20 +38,16 @@ const char kGLLibraryName[] = "libGL.so.
+ #endif
+ 
+ const char kGLESv2LibraryName[] = "libGLESv2.so.2";
+ const char kEGLLibraryName[] = "libEGL.so.1";
+ 
+ }  // namespace
+ 
+ void GetAllowedGLImplementations(std::vector<GLImplementation>* impls) {
+-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+-          switches::kEnableUnsafeES3APIs)) {
+-    impls->push_back(kGLImplementationDesktopGLCoreProfile);
+-  }
+   impls->push_back(kGLImplementationDesktopGL);
+   impls->push_back(kGLImplementationEGLGLES2);
+   impls->push_back(kGLImplementationOSMesaGL);
+ }
+ 
+ bool InitializeStaticGLBindings(GLImplementation implementation) {
+   // Prevent reinitialization with a different implementation. Once the gpu
+   // unit tests have initialized with kGLImplementationMock, we don't want to
+@@ -62,18 +58,17 @@ bool InitializeStaticGLBindings(GLImplem
+   // after instituting restrictions on I/O. Going forward they will
+   // likely be used in the browser process on most platforms. The
+   // one-time initialization cost is small, between 2 and 5 ms.
+   base::ThreadRestrictions::ScopedAllowIO allow_io;
+ 
+   switch (implementation) {
+     case kGLImplementationOSMesaGL:
+       return InitializeStaticGLBindingsOSMesaGL();
+-    case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile: {
++    case kGLImplementationDesktopGL: {
+       base::NativeLibrary library = NULL;
+       const base::CommandLine* command_line =
+           base::CommandLine::ForCurrentProcess();
+ 
+       if (command_line->HasSwitch(switches::kTestGLLib))
+         library = LoadLibraryAndPrintError(
+             command_line->GetSwitchValueASCII(switches::kTestGLLib).c_str());
+ 
+@@ -91,17 +86,17 @@ bool InitializeStaticGLBindings(GLImplem
+       if (!get_proc_address) {
+         LOG(ERROR) << "glxGetProcAddress not found.";
+         base::UnloadNativeLibrary(library);
+         return false;
+       }
+ 
+       SetGLGetProcAddressProc(get_proc_address);
+       AddGLNativeLibrary(library);
+-      SetGLImplementation(implementation);
++      SetGLImplementation(kGLImplementationDesktopGL);
+ 
+       InitializeStaticGLBindingsGL();
+       InitializeStaticGLBindingsGLX();
+       break;
+     }
+     case kGLImplementationEGLGLES2: {
+       base::NativeLibrary gles_library =
+           LoadLibraryAndPrintError(kGLESv2LibraryName);
+@@ -151,18 +146,17 @@ bool InitializeStaticGLBindings(GLImplem
+ 
+   return true;
+ }
+ 
+ bool InitializeDynamicGLBindings(GLImplementation implementation,
+     GLContext* context) {
+   switch (implementation) {
+     case kGLImplementationOSMesaGL:
+-    case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile:
++   case kGLImplementationDesktopGL:
+     case kGLImplementationEGLGLES2:
+       InitializeDynamicGLBindingsGL(context);
+       break;
+     case kGLImplementationMockGL:
+       if (!context) {
+         scoped_refptr<GLContextStubWithExtensions> mock_context(
+             new GLContextStubWithExtensions());
+         mock_context->SetGLVersionString("3.0");
+@@ -192,17 +186,16 @@ void ClearGLBindings() {
+   SetGLImplementation(kGLImplementationNone);
+ 
+   UnloadGLNativeLibraries();
+ }
+ 
+ bool GetGLWindowSystemBindingInfo(GLWindowSystemBindingInfo* info) {
+   switch (GetGLImplementation()) {
+     case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile:
+       return GetGLWindowSystemBindingInfoGLX(info);
+     case kGLImplementationEGLGLES2:
+       return GetGLWindowSystemBindingInfoEGL(info);
+     default:
+       return false;
+   }
+   return false;
+ }
+diff --git a/ui/gl/gl_surface_x11.cc b/ui/gl/gl_surface_x11.cc
+--- a/ui/gl/gl_surface_x11.cc
++++ b/ui/gl/gl_surface_x11.cc
+@@ -47,17 +47,16 @@ class NativeViewGLSurfaceOSMesa : public
+   Pixmap pixmap_;
+ 
+   DISALLOW_COPY_AND_ASSIGN(NativeViewGLSurfaceOSMesa);
+ };
+ 
+ bool GLSurface::InitializeOneOffInternal() {
+   switch (GetGLImplementation()) {
+     case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile:
+       if (!GLSurfaceGLX::InitializeOneOff()) {
+         LOG(ERROR) << "GLSurfaceGLX::InitializeOneOff failed.";
+         return false;
+       }
+       break;
+     case kGLImplementationOSMesaGL:
+       if (!NativeViewGLSurfaceOSMesa::InitializeOneOff()) {
+         LOG(ERROR) << "NativeViewGLSurfaceOSMesa::InitializeOneOff failed.";
+@@ -279,18 +278,17 @@ scoped_refptr<GLSurface> GLSurface::Crea
+     case kGLImplementationOSMesaGL: {
+       scoped_refptr<GLSurface> surface(
+           new NativeViewGLSurfaceOSMesa(window));
+       if (!surface->Initialize())
+         return NULL;
+ 
+       return surface;
+     }
+-    case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile: {
++    case kGLImplementationDesktopGL: {
+       scoped_refptr<GLSurface> surface(new NativeViewGLSurfaceGLX(window));
+       if (!surface->Initialize())
+         return NULL;
+ 
+       return surface;
+     }
+     case kGLImplementationEGLGLES2: {
+       DCHECK(window != gfx::kNullAcceleratedWidget);
+@@ -315,18 +313,17 @@ scoped_refptr<GLSurface> GLSurface::Crea
+     case kGLImplementationOSMesaGL: {
+       scoped_refptr<GLSurface> surface(
+           new GLSurfaceOSMesa(OSMesaSurfaceFormatRGBA, size));
+       if (!surface->Initialize())
+         return NULL;
+ 
+       return surface;
+     }
+-    case kGLImplementationDesktopGL:
+-    case kGLImplementationDesktopGLCoreProfile: {
++    case kGLImplementationDesktopGL: {
+       scoped_refptr<GLSurface> surface(new PbufferGLSurfaceGLX(size));
+       if (!surface->Initialize())
+         return NULL;
+ 
+       return surface;
+     }
+     case kGLImplementationEGLGLES2: {
+       scoped_refptr<GLSurface> surface(new PbufferGLSurfaceEGL(size));

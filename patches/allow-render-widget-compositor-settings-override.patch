@@ -42,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }
  
  namespace content {
-@@ -302,13 +306,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -296,13 +300,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual std::string GetUserAgentOverrideForURL(const GURL& url);
  
    // Allow overriding default media player
@@ -81,9 +81,9 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/platform/WebSelectionBound.h"
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
- #include "third_party/WebKit/public/web/WebWidget.h"
-@@ -444,16 +446,18 @@ void RenderWidgetCompositor::Initialize(
-       compositor_deps_->GetGpuMemoryBufferManager();
+ #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
+@@ -457,16 +459,18 @@ void RenderWidgetCompositor::Initialize(
+       compositor_deps_->GetTaskGraphRunner();
  
    scoped_ptr<cc::BeginFrameSource> external_begin_frame_source;
    if (settings.use_external_begin_frame_source) {
@@ -95,9 +95,9 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
 +
    if (compositor_thread_task_runner.get()) {
      layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
-         this, shared_bitmap_manager, gpu_memory_buffer_manager, settings,
-         main_thread_compositor_task_runner, compositor_thread_task_runner,
-         external_begin_frame_source.Pass());
+         this, shared_bitmap_manager, gpu_memory_buffer_manager,
+         task_graph_runner, settings, main_thread_compositor_task_runner,
+         compositor_thread_task_runner, external_begin_frame_source.Pass());
    } else {
      layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(
-         this, this, shared_bitmap_manager, gpu_memory_buffer_manager, settings,
+         this, this, shared_bitmap_manager, gpu_memory_buffer_manager,

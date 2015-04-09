@@ -58,6 +58,7 @@ class BrowserContextObserver;
 class BrowserContextSharedData;
 class BrowserContextSharedIOData;
 class GeolocationPermissionContext;
+class PermissionManager;
 class ResourceContext;
 class SSLHostStateDelegate;
 class URLRequestContext;
@@ -252,6 +253,7 @@ class BrowserContext : public content::BrowserContext,
   storage::SpecialStoragePolicy* GetSpecialStoragePolicy() final;
   content::PushMessagingService* GetPushMessagingService() final;
   content::SSLHostStateDelegate* GetSSLHostStateDelegate() final;
+  content::PermissionManager* GetPermissionManager() final;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
@@ -265,6 +267,7 @@ class BrowserContext : public content::BrowserContext,
   ObserverList<BrowserContextObserver> observers_;
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
+  scoped_ptr<PermissionManager> permission_manager_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
 };

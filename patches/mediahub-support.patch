@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class RenderFrame;
  class RenderView;
-@@ -292,13 +295,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -286,13 +289,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
  
    // Returns true if dev channel APIs are available for plugins.
@@ -83,11 +83,11 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1887,16 +1887,25 @@ blink::WebMediaPlayer* RenderFrameImpl::
-     media_permission_dispatcher_ = new MediaPermissionDispatcher(this);
+@@ -1941,16 +1941,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+     return CreateWebMediaPlayerForMediaStream(url, client);
  
  #if defined(OS_ANDROID)
-   return CreateAndroidWebMediaPlayer(url, client, media_permission_dispatcher_,
+   return CreateAndroidWebMediaPlayer(url, client, GetMediaPermission(),
                                       initial_cdm);
  #else
    scoped_refptr<media::MediaLog> media_log(new RenderMediaLog());
@@ -100,12 +100,13 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 +        media_log.get());
 +
 +  if (media_player)
-+    return media_player; 
- 
++    return media_player;
++
    RenderThreadImpl* render_thread = RenderThreadImpl::current();
    media::WebMediaPlayerParams params(
        base::Bind(&ContentRendererClient::DeferMediaLoad,
                   base::Unretained(GetContentClient()->renderer()),
                   static_cast<RenderFrame*>(this)),
-       render_thread->GetAudioRendererMixerManager()->CreateInput(
-           render_view_->routing_id_, routing_id_),
+       render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_),
+       media_log, render_thread->GetMediaThreadTaskRunner(),
+       render_thread->compositor_message_loop_proxy(),

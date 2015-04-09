@@ -351,7 +351,7 @@ float WebView::GetDeviceScaleFactor() const {
 
 bool WebView::ShouldShowInputPanel() const {
   if (text_input_type_ != ui::TEXT_INPUT_TYPE_NONE &&
-      show_ime_if_needed_) {
+      show_ime_if_needed_ && focused_node_is_editable_) {
     return true;
   }
 
@@ -879,6 +879,8 @@ void WebView::OnFocusedNodeChanged() {
 
   if (ShouldHideInputPanel() && HasFocus()) {
     SetInputPanelVisibility(false);
+  } else if (!has_input_method_state_ && ShouldShowInputPanel()) {
+    SetInputPanelVisibility(true);
   } else if (has_input_method_state_ && focused_node_is_editable_) {
     QGuiApplication::inputMethod()->reset();
   }
