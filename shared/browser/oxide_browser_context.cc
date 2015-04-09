@@ -498,14 +498,14 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       content::BrowserThread::FILE,
       FROM_HERE,
       base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
-  // XXX: is it ok to do file I/O on the cache thread?
-  // XXX: are we guaranteed that those tasks will be run
+  // XXX: are we guaranteed that this task will be run
   //  before the new cache gets created?
   base::FilePath app_cache = GetPath().Append(content::kAppCacheDirname);
   content::BrowserThread::PostTask(
-      content::BrowserThread::CACHE,
+      content::BrowserThread::FILE,
       FROM_HERE,
-      base::Bind(&CleanupOldCacheDir, app_cache.Append(kCacheDirname)));
+      base::Bind(&CleanupOldCacheDir,
+                 app_cache.Append(FILE_PATH_LITERAL("Cache"))));
 
   net::HttpCache::BackendFactory* cache_backend = nullptr;
   if (IsOffTheRecord() || GetCachePath().empty()) {
