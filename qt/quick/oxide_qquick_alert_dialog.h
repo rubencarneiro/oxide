@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG__H_
+#define _OXIDE_QT_QUICK_ALERT_DIALOG__H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_javascript_dialog.h"
 
 namespace oxide {
 namespace qquick {
 
-class ConfirmDialogContext;
-
-class ConfirmDialogDelegate final : public JavaScriptDialogDelegate {
+class AlertDialog : public JavaScriptDialog {
  public:
-  ConfirmDialogDelegate(OxideQQuickWebView* webview);
-
-  bool Show();
+  AlertDialog(OxideQQuickWebView* view,
+              oxide::qt::JavaScriptDialogProxyClient* client);
 
  private:
-  friend class ConfirmDialogContext;
+  // oxide::qt::JavaScriptDialogProxy implementation
+  bool Show();
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_CONFIRM_DIALOG_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_H_

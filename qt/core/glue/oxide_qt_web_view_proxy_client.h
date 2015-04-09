@@ -22,7 +22,7 @@
 #include <QUrl>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 class OxideQCertificateError;
@@ -45,7 +45,7 @@ namespace qt {
 
 class FilePickerProxy;
 class FilePickerProxyClient;
-class JavaScriptDialogDelegate;
+class JavaScriptDialogProxy;
 class WebFrameProxy;
 class WebPopupMenuProxy;
 class WebPopupMenuProxyClient;
@@ -72,9 +72,11 @@ class WebViewProxyClient {
 
   virtual WebPopupMenuProxy* CreateWebPopupMenu(
       WebPopupMenuProxyClient* client) = 0;
-  virtual JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
-      JavaScriptDialogDelegate::Type type) = 0;
-  virtual JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() = 0;
+  virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
+      JavaScriptDialogProxyClient::Type type,
+      JavaScriptDialogProxyClient* client) = 0;
+  virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
+      JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
   virtual void URLChanged() = 0;

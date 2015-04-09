@@ -15,51 +15,64 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_alert_dialog_delegate.h"
+#include "oxide_qquick_confirm_dialog.h"
 
 #include <QObject>
 
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
 namespace qquick {
 
-class AlertDialogContext : public QObject {
+class ConfirmDialogContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString message READ message CONSTANT FINAL)
 
  public:
-  virtual ~AlertDialogContext() {}
-  AlertDialogContext(AlertDialogDelegate* delegate);
+  virtual ~ConfirmDialogContext() {}
+  ConfirmDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
 
   QString message() const;
 
  public Q_SLOTS:
   void accept() const;
+  void reject() const;
 
  private:
-  AlertDialogDelegate* delegate_;
+  oxide::qt::JavaScriptDialogProxyClient* client_;
 };
 
-AlertDialogContext::AlertDialogContext(AlertDialogDelegate* delegate) :
-    delegate_(delegate) {}
+ConfirmDialogContext::ConfirmDialogContext(
+    oxide::qt::JavaScriptDialogProxyClient* client)
+    : client_(client) {}
 
-QString AlertDialogContext::message() const {
-  return delegate_->messageText();
+QString ConfirmDialogContext::message() const {
+  return client_->messageText();
 }
 
-void AlertDialogContext::accept() const {
-  delegate_->Close(true);
+void ConfirmDialogContext::accept() const {
+  client_->close(true);
 }
 
-AlertDialogDelegate::AlertDialogDelegate(OxideQQuickWebView* webview) :
-    JavaScriptDialogDelegate(webview) {}
-
-bool AlertDialogDelegate::Show() {
-  return show(new AlertDialogContext(this), web_view_->alertDialog());
+void ConfirmDialogContext::reject() const {
+  client_->close(false);
 }
+
+bool ConfirmDialog::Show() {
+  if (!view_) {
+    qWarning() << "ConfirmDialog::Show: Can't show after the view has gone";
+    return false;
+  }
+
+  return run(new ConfirmDialogContext(client_), view_->confirmDialog());
+}
+
+ConfirmDialog::ConfirmDialog(OxideQQuickWebView* view,
+                             oxide::qt::JavaScriptDialogProxyClient* client)
+    : JavaScriptDialog(view, client) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_alert_dialog_delegate.moc"
+#include "oxide_qquick_confirm_dialog.moc"

@@ -104,6 +104,10 @@
         'common/oxide_qt_skutils.h',
         'glue/oxide_qt_file_picker_proxy.h',
         'glue/oxide_qt_file_picker_proxy_client.h',
+        'glue/oxide_qt_init.cc',
+        'glue/oxide_qt_init.h',
+        'glue/oxide_qt_javascript_dialog_proxy.h',
+        'glue/oxide_qt_javascript_dialog_proxy_client.h',
         'glue/oxide_qt_proxy_handle.h',
         'glue/oxide_qt_script_message_handler_proxy.cc',
         'glue/oxide_qt_script_message_handler_proxy.h',
@@ -233,10 +237,6 @@
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
-        'glue/oxide_qt_init.cc',
-        'glue/oxide_qt_init.h',
-        'glue/oxide_qt_javascript_dialog_delegate.cc',
-        'glue/oxide_qt_javascript_dialog_delegate.h',
       ],
       'actions': [
         {

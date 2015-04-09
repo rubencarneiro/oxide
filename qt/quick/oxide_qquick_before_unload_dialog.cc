@@ -15,10 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_before_unload_dialog_delegate.h"
+#include "oxide_qquick_before_unload_dialog.h"
 
 #include <QObject>
 
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
@@ -30,7 +31,7 @@ class BeforeUnloadDialogContext : public QObject {
 
  public:
   virtual ~BeforeUnloadDialogContext() {}
-  BeforeUnloadDialogContext(BeforeUnloadDialogDelegate* delegate);
+  BeforeUnloadDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
 
   QString message() const;
 
@@ -39,35 +40,41 @@ class BeforeUnloadDialogContext : public QObject {
   void reject() const;
 
  private:
-  BeforeUnloadDialogDelegate* delegate_;
+  oxide::qt::JavaScriptDialogProxyClient* client_;
 };
 
 BeforeUnloadDialogContext::BeforeUnloadDialogContext(
-    BeforeUnloadDialogDelegate* delegate) :
-    delegate_(delegate) {}
+    oxide::qt::JavaScriptDialogProxyClient* client)
+    : client_(client) {}
 
 QString BeforeUnloadDialogContext::message() const {
-  return delegate_->messageText();
+  return client_->messageText();
 }
 
 void BeforeUnloadDialogContext::accept() const {
-  delegate_->Close(true);
+  client_->close(true);
 }
 
 void BeforeUnloadDialogContext::reject() const {
-  delegate_->Close(false);
+  client_->close(false);
 }
 
-BeforeUnloadDialogDelegate::BeforeUnloadDialogDelegate(
-    OxideQQuickWebView* webview) :
-    JavaScriptDialogDelegate(webview) {}
+bool BeforeUnloadDialog::Show() {
+  if (!view_) {
+    qWarning() << "BeforeUnloadDialog::Show: Can't show after the view has gone";
+    return false;
+  }
 
-bool BeforeUnloadDialogDelegate::Show() {
-  return show(new BeforeUnloadDialogContext(this),
-              web_view_->beforeUnloadDialog());
+  return run(new BeforeUnloadDialogContext(client_),
+             view_->beforeUnloadDialog());
 }
+
+BeforeUnloadDialog::BeforeUnloadDialog(
+    OxideQQuickWebView* view,
+    oxide::qt::JavaScriptDialogProxyClient* client)
+    : JavaScriptDialog(view, client) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_before_unload_dialog_delegate.moc"
+#include "oxide_qquick_before_unload_dialog.moc"

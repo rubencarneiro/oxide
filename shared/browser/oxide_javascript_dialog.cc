@@ -21,24 +21,23 @@
 
 namespace oxide {
 
-JavaScriptDialog::JavaScriptDialog() :
-    is_reload_(false),
-    is_before_unload_dialog_(false) {}
+JavaScriptDialog::JavaScriptDialog()
+    : is_reload_(false),
+      is_before_unload_dialog_(false) {}
+
+void JavaScriptDialog::Hide() {}
 
 JavaScriptDialog::~JavaScriptDialog() {}
 
 void JavaScriptDialog::Close(bool accept, const base::string16& user_input) {
   callback_.Run(accept, user_input);
-  JavaScriptDialogManager::GetInstance()->OnDialogClosed(web_contents_, this);
-}
-
-void JavaScriptDialog::CouldNotShow() {
-  Close(is_before_unload_dialog_);
+  Hide();
+  JavaScriptDialogManager::GetInstance()->DialogClosed(web_contents_, this);
 }
 
 void JavaScriptDialog::Cancel() {
   callback_.Run(false, base::string16());
-  JavaScriptDialogManager::GetInstance()->OnDialogCancelled(web_contents_, this);
+  Hide();
 }
 
 } // namespace oxide

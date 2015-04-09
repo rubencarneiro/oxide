@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -504,30 +504,31 @@ bool WebView::IsInputPanelVisible() const {
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
-  JavaScriptDialogDelegate::Type type;
+    content::JavaScriptMessageType javascript_message_type) {
+  JavaScriptDialogProxyClient::Type type;
   switch (javascript_message_type) {
   case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
-    type = JavaScriptDialogDelegate::TypeAlert;
+    type = JavaScriptDialogProxyClient::TypeAlert;
     break;
   case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
-    type = JavaScriptDialogDelegate::TypeConfirm;
+    type = JavaScriptDialogProxyClient::TypeConfirm;
     break;
   case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
-    type = JavaScriptDialogDelegate::TypePrompt;
+    type = JavaScriptDialogProxyClient::TypePrompt;
     break;
   default:
     Q_UNREACHABLE();
   }
-  JavaScriptDialogDelegate* delegate = client_->CreateJavaScriptDialogDelegate(type);
-  return new JavaScriptDialog(delegate, did_suppress_message);
+
+  JavaScriptDialog* dialog = new JavaScriptDialog();
+  dialog->SetProxy(client_->CreateJavaScriptDialog(type, dialog));
+  return dialog;
 }
 
 oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  JavaScriptDialogDelegate* delegate = client_->CreateBeforeUnloadDialogDelegate();
-  bool did_suppress_message = false;
-  return new JavaScriptDialog(delegate, &did_suppress_message);
+  JavaScriptDialog* dialog = new JavaScriptDialog();
+  dialog->SetProxy(client_->CreateBeforeUnloadDialog(dialog));
+  return dialog;
 }
 
 bool WebView::CanCreateWindows() const {

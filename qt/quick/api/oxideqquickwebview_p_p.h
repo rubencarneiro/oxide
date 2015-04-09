@@ -82,9 +82,11 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QObject* GetApiHandle() override;
   oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
       oxide::qt::WebPopupMenuProxyClient* client) override;
-  oxide::qt::JavaScriptDialogDelegate* CreateJavaScriptDialogDelegate(
-      oxide::qt::JavaScriptDialogDelegate::Type type) override;
-  oxide::qt::JavaScriptDialogDelegate* CreateBeforeUnloadDialogDelegate() override;
+  oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
+      oxide::qt::JavaScriptDialogProxyClient::Type type,
+      oxide::qt::JavaScriptDialogProxyClient* client) override;
+  oxide::qt::JavaScriptDialogProxy* CreateBeforeUnloadDialog(
+      oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
   void URLChanged() override;

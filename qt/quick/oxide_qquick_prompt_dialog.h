@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_
-#define _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_PROMPT_DIALOG_H_
+#define _OXIDE_QT_QUICK_PROMPT_DIALOG_H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog_delegate.h"
+#include "qt/quick/oxide_qquick_javascript_dialog.h"
 
 namespace oxide {
 namespace qquick {
 
-class BeforeUnloadDialogContext;
-
-class BeforeUnloadDialogDelegate final : public JavaScriptDialogDelegate {
+class PromptDialog : public JavaScriptDialog {
  public:
-  BeforeUnloadDialogDelegate(OxideQQuickWebView* webview);
-
-  bool Show();
+  PromptDialog(OxideQQuickWebView* view,
+               oxide::qt::JavaScriptDialogProxyClient* client);
 
  private:
-  friend class BeforeUnloadDialogContext;
+  // oxide::qt::JavaScriptDialogProxy implementation
+  bool Show() override;
+  void Handle(bool accept, const QString& prompt_override) override;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_PROMPT_DIALOG_H_

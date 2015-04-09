@@ -310,8 +310,7 @@ class WebView : public ScriptMessageTarget,
   virtual bool IsInputPanelVisible() const;
 
   virtual JavaScriptDialog* CreateJavaScriptDialog(
-      content::JavaScriptMessageType javascript_message_type,
-      bool* did_suppress_message);
+      content::JavaScriptMessageType javascript_message_type);
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
   virtual bool CanCreateWindows() const;

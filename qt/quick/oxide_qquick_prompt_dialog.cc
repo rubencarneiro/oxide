@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_prompt_dialog_delegate.h"
+#include "oxide_qquick_prompt_dialog.h"
 
 #include <QObject>
 #include <QString>
 
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 namespace oxide {
@@ -33,7 +34,7 @@ class PromptDialogContext : public QObject {
 
  public:
   virtual ~PromptDialogContext() {}
-  PromptDialogContext(PromptDialogDelegate* delegate);
+  PromptDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
 
   QString message() const;
   QString defaultValue() const;
@@ -48,19 +49,20 @@ class PromptDialogContext : public QObject {
   void reject() const;
 
  private:
-  PromptDialogDelegate* delegate_;
+  oxide::qt::JavaScriptDialogProxyClient* client_;
   QString currentValue_;
 };
 
-PromptDialogContext::PromptDialogContext(PromptDialogDelegate* delegate) :
-    delegate_(delegate) {}
+PromptDialogContext::PromptDialogContext(
+    oxide::qt::JavaScriptDialogProxyClient* client)
+    : client_(client) {}
 
 QString PromptDialogContext::message() const {
-  return delegate_->messageText();
+  return client_->messageText();
 }
 
 QString PromptDialogContext::defaultValue() const {
-  return delegate_->defaultPromptText();
+  return client_->defaultPromptText();
 }
 
 const QString& PromptDialogContext::currentValue() const {
@@ -75,21 +77,23 @@ void PromptDialogContext::setCurrentValue(const QString& value) {
 }
 
 void PromptDialogContext::accept(const QString& value) const {
-  delegate_->Close(true, value);
+  client_->close(true, value);
 }
 
 void PromptDialogContext::reject() const {
-  delegate_->Close(false);
+  client_->close(false);
 }
 
-PromptDialogDelegate::PromptDialogDelegate(OxideQQuickWebView* webview) :
-    JavaScriptDialogDelegate(webview) {}
+bool PromptDialog::Show() {
+  if (!view_) {
+    qWarning() << "PromptDialog::Show: Can't show after the view has gone";
+    return false;
+  }
 
-bool PromptDialogDelegate::Show() {
-  return show(new PromptDialogContext(this), web_view_->promptDialog());
+  return run(new PromptDialogContext(client_), view_->promptDialog());
 }
 
-void PromptDialogDelegate::Handle(bool accept, const QString& prompt_override) {
+void PromptDialog::Handle(bool accept, const QString& prompt_override) {
   PromptDialogContext* contextObject =
     qobject_cast<PromptDialogContext*>(context_->contextObject());
   if (accept) {
@@ -103,7 +107,11 @@ void PromptDialogDelegate::Handle(bool accept, const QString& prompt_override) {
   }
 }
 
+PromptDialog::PromptDialog(OxideQQuickWebView* view,
+                           oxide::qt::JavaScriptDialogProxyClient* client)
+    : JavaScriptDialog(view, client) {}
+
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_prompt_dialog_delegate.moc"
+#include "oxide_qquick_prompt_dialog.moc"

@@ -2091,8 +2091,7 @@ bool WebView::IsInputPanelVisible() const {
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
+    content::JavaScriptMessageType javascript_message_type) {
   return nullptr;
 }
 

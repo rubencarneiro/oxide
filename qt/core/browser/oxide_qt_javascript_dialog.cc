@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,19 @@
 
 #include "base/strings/utf_string_conversions.h"
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_delegate.h"
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy.h"
 
 namespace oxide {
 namespace qt {
 
-JavaScriptDialog::JavaScriptDialog(
-    JavaScriptDialogDelegate* delegate,
-    bool* did_suppress_message) :
-    delegate_(delegate) {
-  delegate_->dialog_ = this;
+JavaScriptDialog::~JavaScriptDialog() {}
+
+bool JavaScriptDialog::Run() {
+  return proxy_->Show();
 }
 
-void JavaScriptDialog::Run() {
-  if (!delegate_->Show()) {
-    CouldNotShow();
-  }
+void JavaScriptDialog::Hide() {
+  proxy_->Hide();
 }
 
 void JavaScriptDialog::Handle(bool accept,
@@ -43,7 +40,12 @@ void JavaScriptDialog::Handle(bool accept,
   if (prompt_override) {
     prompt = QString::fromStdString(base::UTF16ToUTF8(*prompt_override));
   }
-  delegate_->Handle(accept, prompt);
+
+  proxy_->Handle(accept, prompt);
+}
+
+void JavaScriptDialog::close(bool accept, const QString& user_input) {
+  Close(accept, base::UTF8ToUTF16(user_input.toStdString()));
 }
 
 QUrl JavaScriptDialog::originUrl() const {
@@ -60,6 +62,12 @@ QString JavaScriptDialog::messageText() const {
 
 QString JavaScriptDialog::defaultPromptText() const {
   return QString::fromStdString(base::UTF16ToUTF8(default_prompt_text_));
+}
+
+JavaScriptDialog::JavaScriptDialog() {}
+
+void JavaScriptDialog::SetProxy(JavaScriptDialogProxy* proxy) {
+  proxy_.reset(proxy);
 }
 
 } // namespace qt
