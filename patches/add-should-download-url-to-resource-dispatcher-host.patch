@@ -22,41 +22,36 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  #include "content/browser/loader/stream_resource_handler.h"
  #include "content/public/browser/content_browser_client.h"
  #include "content/public/browser/download_item.h"
-@@ -339,16 +340,46 @@ bool BufferedResourceHandler::SelectNext
-       *defer = true;
+@@ -392,16 +393,41 @@ bool BufferedResourceHandler::SelectNext
+     bool request_handled = true;
+     bool handled_by_plugin = IsHandledByPlugin(defer, &request_handled);
+     if (!request_handled)
+       return false;
+     if (handled_by_plugin)
        return true;
-     }
-     if (has_plugin)
-       return true;
- #endif
    }
  
 +  if (host_->delegate()) {
 +    std::string disposition;
-+    request()->GetResponseHeaderByName(
-+        "content-disposition", &disposition);
-+    net::HttpContentDisposition
-+        content_disposition(disposition, std::string());
++    request()->GetResponseHeaderByName("content-disposition", &disposition);
++    net::HttpContentDisposition content_disposition(disposition,
++                                                    std::string());
 +    ResourceRequestInfoImpl* info = GetRequestInfo();
 +    if (!host_->delegate()->ShouldDownloadUrl(
 +            request()->url(),
 +            request()->first_party_for_cookies(),
-+	    info->HasUserGesture(),
-+	    !disposition.empty() &&
-+  	      (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME)
-+  	        ? base::UTF8ToUTF16(content_disposition.filename())
-+ 	        : base::string16(),
-+	    false,
-+	    Referrer(GURL(request()->referrer()), info->GetReferrerPolicy()),
-+	    response_->head.mime_type,
-+	    info->GetChildID(),
-+	    info->GetRouteID(),
-+	    info->GetContext())) {
++            info->HasUserGesture(),
++            !disposition.empty() && (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME) ?
++              base::UTF8ToUTF16(content_disposition.filename()) : base::string16(),
++            false,
++            Referrer(GURL(request()->referrer()), info->GetReferrerPolicy()),
++            response_->head.mime_type,
++            info->GetChildID(),
++            info->GetRouteID(),
++            info->GetContext())) {
 +      request()->Cancel();
 +      Cancel();
-+      LOG(INFO) << "Download request for "
-+		<< request()->url().GetContent()
-+		<< " got cancelled by embedder";
++      LOG(INFO) << "Download request for " << request()->url().GetContent() << " got cancelled by embedder";
 +      return false;
 +    }
 +  }
@@ -72,7 +67,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
 diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/browser/loader/resource_dispatcher_host_impl.cc
 --- a/content/browser/loader/resource_dispatcher_host_impl.cc
 +++ b/content/browser/loader/resource_dispatcher_host_impl.cc
-@@ -511,16 +511,33 @@ DownloadInterruptReason ResourceDispatch
+@@ -599,16 +599,33 @@ DownloadInterruptReason ResourceDispatch
      scoped_ptr<DownloadSaveInfo> save_info,
      uint32 download_id,
      const DownloadStartedCallback& started_callback) {
@@ -109,7 +104,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/content/public/browser/resource_dispatcher_host_delegate.cc
 --- a/content/public/browser/resource_dispatcher_host_delegate.cc
 +++ b/content/public/browser/resource_dispatcher_host_delegate.cc
-@@ -80,15 +80,29 @@ void ResourceDispatcherHostDelegate::OnR
+@@ -81,15 +81,29 @@ void ResourceDispatcherHostDelegate::OnR
      ResourceContext* resource_context,
      ResourceResponse* response) {
  }
@@ -142,14 +137,14 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/conte
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/content/public/browser/resource_dispatcher_host_delegate.h
 --- a/content/public/browser/resource_dispatcher_host_delegate.h
 +++ b/content/public/browser/resource_dispatcher_host_delegate.h
-@@ -4,16 +4,17 @@
- 
+@@ -5,16 +5,17 @@
  #ifndef CONTENT_PUBLIC_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
  #define CONTENT_PUBLIC_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
  
  #include <string>
  
  #include "base/basictypes.h"
+ #include "base/files/file_path.h"
  #include "base/memory/scoped_ptr.h"
 +#include "base/strings/string16.h"
  #include "content/common/content_export.h"
@@ -160,7 +155,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
  
  namespace IPC {
  class Sender;
-@@ -112,16 +113,29 @@ class CONTENT_EXPORT ResourceDispatcherH
+@@ -115,16 +116,29 @@ class CONTENT_EXPORT ResourceDispatcherH
    virtual void OnRequestRedirected(const GURL& redirect_url,
                                     net::URLRequest* request,
                                     ResourceContext* resource_context,

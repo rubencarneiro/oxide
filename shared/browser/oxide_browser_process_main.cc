@@ -299,9 +299,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
-  if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
-    command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
-  }
 
   if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);
