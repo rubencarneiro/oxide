@@ -40,6 +40,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
+#include "content/public/common/content_constants.h"
 #include "content/public/common/user_agent.h"
 #include "net/base/host_mapping_rules.h"
 #include "net/base/net_errors.h"
@@ -499,9 +500,8 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
   // XXX: is it ok to do file I/O on the cache thread?
   // XXX: are we guaranteed that those tasks will be run
-  //  before the new caches get created?
-  base::FilePath app_cache =
-      GetPath().Append(FILE_PATH_LITERAL("Application Cache"));
+  //  before the new cache gets created?
+  base::FilePath app_cache = GetPath().Append(content::kAppCacheDirname);
   content::BrowserThread::PostTask(
       content::BrowserThread::CACHE,
       FROM_HERE,
