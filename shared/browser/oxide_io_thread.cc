@@ -31,7 +31,7 @@
 #include "net/http/transport_security_state.h"
 #include "net/log/net_log.h"
 #if defined(USE_NSS)
-#include "net/ocsp/nss_ocsp.h"
+#include "net/cert_net/nss_ocsp.h"
 #endif
 #include "net/proxy/proxy_service.h"
 #include "net/ssl/channel_id_service.h"
