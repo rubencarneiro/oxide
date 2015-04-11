@@ -31,7 +31,12 @@ namespace oxide {
 namespace qt {
 
 WebFrameProxyHandle* ScriptMessage::frame() const {
-  return static_cast<WebFrame*>(impl_->source_frame())->handle();
+  WebFrame* frame = static_cast<WebFrame*>(impl_->source_frame());
+  if (!frame) {
+    return nullptr;
+  }
+
+  return frame->handle();
 }
 
 QString ScriptMessage::msgId() const {
