@@ -179,8 +179,6 @@ int WebContext::BrowserContextDelegate::OnBeforeURLRequest(
     return net::OK;
   }
 
-  bool cancelled = false;
-
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
   if (!info) {
@@ -189,21 +187,19 @@ int WebContext::BrowserContextDelegate::OnBeforeURLRequest(
     return net::OK;
   }
 
-  OxideQBeforeURLRequestEvent* event =
-      new OxideQBeforeURLRequestEvent(
-        QUrl(QString::fromStdString(request->url().spec())),
-        QString::fromStdString(request->method()),
-        QString::fromStdString(request->referrer()),
-        info->IsMainFrame());
+  OxideQBeforeURLRequestEvent event(
+      QUrl(QString::fromStdString(request->url().spec())),
+      QString::fromStdString(request->method()),
+      QString::fromStdString(request->referrer()),
+      info->IsMainFrame());
+
+  io_client->OnBeforeURLRequest(&event);
 
   OxideQBeforeURLRequestEventPrivate* eventp =
-      OxideQBeforeURLRequestEventPrivate::get(event);
-  eventp->request_cancelled = &cancelled;
-  eventp->new_url = new_url;
+      OxideQBeforeURLRequestEventPrivate::get(&event);
+  *new_url = GURL(eventp->new_url.toString().toStdString());
 
-  io_client->OnBeforeURLRequest(event);
-
-  return cancelled ? net::ERR_ABORTED : net::OK;
+  return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
 int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
@@ -215,8 +211,6 @@ int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
     return net::OK;
   }
 
-  bool cancelled = false;
-
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
   if (!info) {
@@ -225,21 +219,19 @@ int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
     return net::OK;
   }
 
-  OxideQBeforeSendHeadersEvent* event =
-      new OxideQBeforeSendHeadersEvent(
-        QUrl(QString::fromStdString(request->url().spec())),
-        QString::fromStdString(request->method()),
-        QString::fromStdString(request->referrer()),
-        info->IsMainFrame());
+  OxideQBeforeSendHeadersEvent event(
+      QUrl(QString::fromStdString(request->url().spec())),
+      QString::fromStdString(request->method()),
+      QString::fromStdString(request->referrer()),
+      info->IsMainFrame());
 
   OxideQBeforeSendHeadersEventPrivate* eventp =
-      OxideQBeforeSendHeadersEventPrivate::get(event);
-  eventp->request_cancelled = &cancelled;
+      OxideQBeforeSendHeadersEventPrivate::get(&event);
   eventp->headers = headers;
 
-  io_client->OnBeforeSendHeaders(event);
+  io_client->OnBeforeSendHeaders(&event);
 
-  return cancelled ? net::ERR_ABORTED : net::OK;
+  return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
 void WebContext::BrowserContextDelegate::OnBeforeRedirect(
@@ -250,8 +242,6 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
     return;
   }
 
-  bool cancelled = false;
-
   const content::ResourceRequestInfo* info =
       content::ResourceRequestInfo::ForRequest(request);
   if (!info) {
@@ -260,21 +250,19 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
     return;
   }
 
-  OxideQBeforeRedirectEvent* event =
-      new OxideQBeforeRedirectEvent(
-        QUrl(QString::fromStdString(new_location.spec())),
-        QString::fromStdString(request->method()),
-        QString::fromStdString(request->referrer()),
-        info->IsMainFrame(),
-        QUrl(QString::fromStdString(request->original_url().spec())));
+  OxideQBeforeRedirectEvent event(
+      QUrl(QString::fromStdString(new_location.spec())),
+      QString::fromStdString(request->method()),
+      QString::fromStdString(request->referrer()),
+      info->IsMainFrame(),
+      QUrl(QString::fromStdString(request->original_url().spec())));
+
+  io_client->OnBeforeRedirect(&event);
 
   OxideQBeforeRedirectEventPrivate* eventp =
-      OxideQBeforeRedirectEventPrivate::get(event);
-  eventp->request_cancelled = &cancelled;
+      OxideQBeforeRedirectEventPrivate::get(&event);
 
-  io_client->OnBeforeRedirect(event);
-
-  if (cancelled) {
+  if (eventp->request_cancelled) {
     request->Cancel();
   }
 }
@@ -284,25 +272,20 @@ oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
     const GURL& first_party_url,
     bool write,
     oxide::StorageType type) {
-  oxide::StoragePermission result = oxide::STORAGE_PERMISSION_UNDEFINED;
-
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
   if (!io_client) {
-    return result;
+    return oxide::STORAGE_PERMISSION_UNDEFINED;
   }
 
-  OxideQStoragePermissionRequest* req =
-      new OxideQStoragePermissionRequest(
-        QUrl(QString::fromStdString(url.spec())),
-        QUrl(QString::fromStdString(first_party_url.spec())),
-        write,
-        static_cast<OxideQStoragePermissionRequest::Type>(type));
+  OxideQStoragePermissionRequest req(
+      QUrl(QString::fromStdString(url.spec())),
+      QUrl(QString::fromStdString(first_party_url.spec())),
+      write,
+      static_cast<OxideQStoragePermissionRequest::Type>(type));
 
-  OxideQStoragePermissionRequestPrivate::get(req)->permission = &result;
+  io_client->HandleStoragePermissionRequest(&req);
 
-  io_client->HandleStoragePermissionRequest(req);
-
-  return result;
+  return OxideQStoragePermissionRequestPrivate::get(&req)->permission;
 }
 
 bool WebContext::BrowserContextDelegate::GetUserAgentOverride(

@@ -101,7 +101,6 @@ void WebContextIODelegate::OnBeforeURLRequest(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -116,7 +115,6 @@ void WebContextIODelegate::OnBeforeSendHeaders(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -131,7 +129,6 @@ void WebContextIODelegate::OnBeforeRedirect(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -146,7 +143,6 @@ void WebContextIODelegate::HandleStoragePermissionRequest(
     delegate = storage_access_permission_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete req;
     return;
   }
 
@@ -166,16 +162,15 @@ bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
 
   bool did_override = false;
 
-  OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
+  OxideQUserAgentOverrideRequest req(url);
+
+  delegate->CallEntryPointInWorker("onGetUserAgentOverride", &req);
 
   OxideQUserAgentOverrideRequestPrivate* p =
-      OxideQUserAgentOverrideRequestPrivate::get(req);
-  p->did_override = &did_override;
-  p->user_agent = user_agent;
+      OxideQUserAgentOverrideRequestPrivate::get(&req);
+  *user_agent = p->user_agent;
 
-  delegate->CallEntryPointInWorker("onGetUserAgentOverride", req);
-
-  return did_override;
+  return p->did_override;
 }
 
 } // namespace qquick

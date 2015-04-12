@@ -25,6 +25,7 @@
 #include <QJSEngine>
 #include <QJSValue>
 #include <QJSValueList>
+#include <QQmlEngine>
 #include <QString>
 #include <QtDebug>
 #include <QThread>
@@ -141,12 +142,12 @@ void IOThreadControllerImpl::CallEntryPointInWorker(
     return;
   }
 
+  QQmlEngine::setObjectOwnership(data, QQmlEngine::CppOwnership);
+
   QJSValueList argv;
   argv.append(engine_->newQObject(data));
 
   func.call(argv);
-
-  delete data;
 }
 
 void IOThreadControllerImpl::runScript(const QUrl& source) {

@@ -20,8 +20,7 @@
 
 OxideQUserAgentOverrideRequestPrivate::OxideQUserAgentOverrideRequestPrivate(
     const QUrl& url) :
-    did_override(nullptr),
-    user_agent(nullptr),
+    did_override(false),
     url_(url) {}
 
 OxideQUserAgentOverrideRequestPrivate::~OxideQUserAgentOverrideRequestPrivate() {}
@@ -47,22 +46,13 @@ QUrl OxideQUserAgentOverrideRequest::url() const {
 QString OxideQUserAgentOverrideRequest::userAgentOverride() const {
   Q_D(const OxideQUserAgentOverrideRequest);
 
-  if (!d->user_agent) {
-    return QString();
-  }
-
-  return *(d->user_agent);
+  return d->user_agent;
 }
 
 void OxideQUserAgentOverrideRequest::setUserAgentOverride(
     const QString& user_agent) {
   Q_D(OxideQUserAgentOverrideRequest);
 
-  if (d->did_override) {
-    *(d->did_override) = true;
-  }
-
-  if (d->user_agent) {
-    *(d->user_agent) = user_agent;
-  }
+  d->did_override = true;
+  d->user_agent = user_agent;
 }
