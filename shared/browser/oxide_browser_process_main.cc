@@ -51,7 +51,7 @@
 #include "crypto/nss_util.h"
 #endif
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
-#include "gin/public/isolate_holder.h"
+#include "gin/v8_initializer.h"
 #endif
 #include "gpu/command_buffer/service/gpu_switches.h"
 #include "ipc/ipc_descriptors.h"
@@ -436,7 +436,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 #if defined(V8_USE_EXTERNAL_STARTUP_DATA)
-  CHECK(gin::IsolateHolder::LoadV8Snapshot());
+  CHECK(gin::V8Initializer::LoadV8Snapshot());
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();

@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }
  
  namespace content {
-@@ -296,13 +300,16 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual std::string GetUserAgentOverrideForURL(const GURL& url);
+@@ -305,13 +309,16 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual void RecordRapporURL(const std::string& metric, const GURL& url) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-@@ -457,16 +459,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -452,16 +454,18 @@ void RenderWidgetCompositor::Initialize(
        compositor_deps_->GetTaskGraphRunner();
  
    scoped_ptr<cc::BeginFrameSource> external_begin_frame_source;
