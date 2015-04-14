@@ -13,7 +13,6 @@ add-oxide-messages.patch
 add-oxide-resources.patch
 gpu-thread-shim.patch
 arm-icu.patch
-arm-neon.patch
 only-use-gl-create-context-robustness-when-possible.patch
 dont-initialize-gl-more-than-once.patch
 expose-extra-properties-for-should-create-webcontents.patch
