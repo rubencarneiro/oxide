@@ -347,6 +347,8 @@
         'browser/oxide_power_save_blocker.h',
         'browser/oxide_quota_permission_context.cc',
         'browser/oxide_quota_permission_context.h',
+        'browser/oxide_redirection_intercept_throttle.cc',
+        'browser/oxide_redirection_intercept_throttle.h',
         'browser/oxide_renderer_frame_evictor.cc',
         'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_widget_host_view.cc',

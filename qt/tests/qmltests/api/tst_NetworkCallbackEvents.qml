@@ -58,7 +58,7 @@ TestWebView {
     function _verify_load_events(data) {
       compare(webView.loadEvents.length, data.length);
       for (var i = 0; i < data.length; ++i) {
-        compare(webView.loadEvents[i].url, data[i].url);
+        compare(webView.loadEvents[i].url, data[i].url, "Unexpected value at index " + i);
         compare(webView.loadEvents[i].type, data[i].type);
         compare(webView.loadEvents[i].originalUrl, data[i].originalUrl);
       }
@@ -178,7 +178,6 @@ TestWebView {
       return [
         { type: "cancelBeforeURLRequest" },
         { type: "cancelBeforeSendHeaders" },
-        //{ type: "cancelBeforeRedirect" }
       ];
     }
 
@@ -254,6 +253,20 @@ TestWebView {
         { referrer: "" },
         { referrer: "" },
         { referrer: "" },
+      ]);
+    }
+
+    function test_NetworkCallbackEvents9_cancelRedirect() {
+      webView.workerTestType = "cancelBeforeRedirect";
+      webView.url = "http://testsuite/tst_NetworkCallbackEvents_redirect.py?http://testsuite/empty.html";
+      verify(webView.waitForLoadStopped());
+
+      _verify_worker_messages([{ requestCancelled: true }]);
+
+      _verify_load_events([
+        { url: "http://testsuite/tst_NetworkCallbackEvents_redirect.py?http://testsuite/empty.html", type: LoadEvent.TypeStarted, originalUrl: "" },
+        { url: "http://testsuite/empty.html", type: LoadEvent.TypeRedirected, originalUrl: "http://testsuite/tst_NetworkCallbackEvents_redirect.py?http://testsuite/empty.html" },
+        { url: "http://testsuite/tst_NetworkCallbackEvents_redirect.py?http://testsuite/empty.html", type: LoadEvent.TypeStopped, originalUrl: "" }
       ]);
     }
   }

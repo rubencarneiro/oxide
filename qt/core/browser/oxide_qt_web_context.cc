@@ -104,8 +104,8 @@ class WebContext::BrowserContextDelegate
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) override;
-  void OnBeforeRedirect(net::URLRequest* request,
-                        const GURL& new_location) override;
+  int OnBeforeRedirect(net::URLRequest* request,
+                       const GURL& new_location) override;
   oxide::StoragePermission CanAccessStorage(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write,
@@ -234,12 +234,12 @@ int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
   return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
-void WebContext::BrowserContextDelegate::OnBeforeRedirect(
+int WebContext::BrowserContextDelegate::OnBeforeRedirect(
     net::URLRequest* request,
     const GURL& new_location) {
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
   if (!io_client) {
-    return;
+    return net::OK;
   }
 
   const content::ResourceRequestInfo* info =
@@ -247,7 +247,7 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
   if (!info) {
     // Requests created outside of the ResourceDispatcher won't have
     // a ResourceRequestInfo
-    return;
+    return net::OK;
   }
 
   OxideQBeforeRedirectEvent event(
@@ -262,9 +262,7 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
   OxideQBeforeRedirectEventPrivate* eventp =
       OxideQBeforeRedirectEventPrivate::get(&event);
 
-  if (eventp->request_cancelled) {
-    request->Cancel();
-  }
+  return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
 oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
