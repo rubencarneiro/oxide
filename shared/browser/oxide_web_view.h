@@ -277,7 +277,7 @@ class WebView : public ScriptMessageTarget,
                              bool strict_enforcement,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
-                             
+
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -496,7 +496,8 @@ class WebView : public ScriptMessageTarget,
   virtual void OnLoadRedirected(const GURL& url,
                                 const GURL& original_url);
   virtual void OnLoadCommitted(const GURL& url,
-                               bool is_error_page);
+                               bool is_error_page,
+                               int http_status_code);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,

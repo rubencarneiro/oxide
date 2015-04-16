@@ -123,6 +123,132 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
   return OxideQLoadEvent::ErrorDomainInternal;
 }
 
+OxideQLoadEvent::HttpStatusCode HttpStatusCodeFromInt(int http_status_code) {
+  switch (http_status_code) {
+    case 100:
+      return OxideQLoadEvent::HttpStatusCodeContinue;
+
+    case 101:
+      return OxideQLoadEvent::HttpStatusCodeSwitchingProtocols;
+
+    case 200:
+      return OxideQLoadEvent::HttpStatusCodeOK;
+
+    case 201:
+      return OxideQLoadEvent::HttpStatusCodeCreated;
+
+    case 202:
+      return OxideQLoadEvent::HttpStatusCodeAccepted;
+
+    case 203:
+      return OxideQLoadEvent::HttpStatusCodeNonAuthoritativeInformation;
+
+    case 204:
+      return OxideQLoadEvent::HttpStatusCodeNoContent;
+
+    case 205:
+      return OxideQLoadEvent::HttpStatusCodeResetContent;
+
+    case 206:
+      return OxideQLoadEvent::HttpStatusCodePartialContent;
+
+    case 300:
+      return OxideQLoadEvent::HttpStatusCodeMultipleChoices;
+
+    case 301:
+      return OxideQLoadEvent::HttpStatusCodeMovedPermanently;
+
+    case 302:
+      return OxideQLoadEvent::HttpStatusCodeFound;
+
+    case 303:
+      return OxideQLoadEvent::HttpStatusCodeSeeOther;
+
+    case 304:
+      return OxideQLoadEvent::HttpStatusCodeNotModified;
+
+    case 305:
+      return OxideQLoadEvent::HttpStatusCodeUseProxy;
+
+    case 307:
+      return OxideQLoadEvent::HttpStatusCodeTemporaryRedirect;
+
+    case 400:
+      return OxideQLoadEvent::HttpStatusCodeBadRequest;
+
+    case 401:
+      return OxideQLoadEvent::HttpStatusCodeUnauthorized;
+
+    case 402:
+      return OxideQLoadEvent::HttpStatusCodePaymentRequired;
+
+    case 403:
+      return OxideQLoadEvent::HttpStatusCodeForbidden;
+
+    case 404:
+      return OxideQLoadEvent::HttpStatusCodeNotFound;
+
+    case 405:
+      return OxideQLoadEvent::HttpStatusCodeMethodNotAllowed;
+
+    case 406:
+      return OxideQLoadEvent::HttpStatusCodeNotAcceptable;
+
+    case 407:
+      return OxideQLoadEvent::HttpStatusCodeProxyAuthenticationRequired;
+
+    case 408:
+      return OxideQLoadEvent::HttpStatusCodeRequestTimeOut;
+
+    case 409:
+      return OxideQLoadEvent::HttpStatusCodeConflict;
+
+    case 410:
+      return OxideQLoadEvent::HttpStatusCodeGone;
+
+    case 411:
+      return OxideQLoadEvent::HttpStatusCodeLengthRequired;
+
+    case 412:
+      return OxideQLoadEvent::HttpStatusCodePreconditionFailed;
+
+    case 413:
+      return OxideQLoadEvent::HttpStatusCodeRequestEntityTooLarge;
+
+    case 414:
+      return OxideQLoadEvent::HttpStatusCodeRequestURITooLarge;
+
+    case 415:
+      return OxideQLoadEvent::HttpStatusCodeUnsupportedMediaType;
+
+    case 416:
+      return OxideQLoadEvent::HttpStatusCodeRequestedRangeNotSatisfiable;
+
+    case 417:
+      return OxideQLoadEvent::HttpStatusCodeExpectationFailed;
+
+    case 500:
+      return OxideQLoadEvent::HttpStatusCodeInternalServerError;
+
+    case 501:
+      return OxideQLoadEvent::HttpStatusCodeNotImplemented;
+
+    case 502:
+      return OxideQLoadEvent::HttpStatusCodeBadGateway;
+
+    case 503:
+      return OxideQLoadEvent::HttpStatusCodeServiceUnavailable;
+
+    case 504:
+      return OxideQLoadEvent::HttpStatusCodeGatewayTimeOut;
+
+    case 505:
+      return OxideQLoadEvent::HttpStatusCodeHTTPVersionNotSupported;
+  }
+
+  return OxideQLoadEvent::HttpStatusCodeUnknown;
+}
+
 inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
   Qt::CursorShape cs = Qt::ArrowCursor;
   switch (type) {
@@ -585,11 +711,13 @@ void WebView::OnLoadRedirected(const GURL& url,
 }
 
 void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page) {
+                              bool is_error_page,
+                              int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(url.spec())),
       OxideQLoadEvent::TypeCommitted,
-      is_error_page);
+      is_error_page,
+      HttpStatusCodeFromInt(http_status_code));
   client_->LoadEvent(&event);
 }
 
@@ -1047,7 +1175,7 @@ bool WebView::canGoForward() const {
 }
 
 bool WebView::incognito() const {
-  return IsIncognito();  
+  return IsIncognito();
 }
 
 bool WebView::loading() const {

@@ -945,7 +945,7 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR, entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -1103,7 +1103,8 @@ void WebView::OnLoadStarted(const GURL& validated_url) {}
 void WebView::OnLoadRedirected(const GURL& url,
                                const GURL& original_url) {}
 void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page) {}
+                              bool is_error_page,
+                              int http_status_code) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
@@ -1448,7 +1449,7 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  
+
   if (web_contents_) {
     web_contents_->GetController().LoadURLWithParams(params);
   } else {
@@ -2037,7 +2038,7 @@ void WebView::ImeCommitText(const base::string16& text,
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeConfirmComposition(text, replacement_range, false);
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
@@ -2051,7 +2052,7 @@ void WebView::ImeSetComposingText(
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeSetComposition(text, underlines,
                           selection_range.start(),
                           selection_range.end());

@@ -113,7 +113,8 @@ class WebView : public QObject,
   void OnLoadRedirected(const GURL& url,
                         const GURL& original_url) override;
   void OnLoadCommitted(const GURL& url,
-                       bool is_error_page) override;
+                       bool is_error_page,
+                       int http_status_code) override;
   void OnLoadStopped(const GURL& validated_url) override;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,

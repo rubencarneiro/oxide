@@ -26,6 +26,7 @@ class OxideQLoadEventPrivate {
       : type(OxideQLoadEvent::TypeStarted),
         error_domain(OxideQLoadEvent::ErrorDomainNone),
         error_code(0),
+        http_status_code(OxideQLoadEvent::HttpStatusCodeOK),
         is_error(false) {}
 
   QUrl url;
@@ -33,13 +34,15 @@ class OxideQLoadEventPrivate {
   OxideQLoadEvent::ErrorDomain error_domain;
   QString error_string;
   int error_code;
+  OxideQLoadEvent::HttpStatusCode http_status_code;
   QUrl original_url;
   bool is_error;
 };
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
-                                 bool is_error)
+                                 bool is_error,
+                                 HttpStatusCode http_status_code)
     : d_ptr(new OxideQLoadEventPrivate()) {
   Q_D(OxideQLoadEvent);
 
@@ -50,6 +53,7 @@ OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
   d->url = url;
   d->type = type;
   d->is_error = is_error;
+  d->http_status_code = http_status_code;
 }
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
@@ -106,6 +110,12 @@ int OxideQLoadEvent::errorCode() const {
   Q_D(const OxideQLoadEvent);
 
   return d->error_code;
+}
+
+OxideQLoadEvent::HttpStatusCode OxideQLoadEvent::httpStatusCode() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->http_status_code;
 }
 
 QUrl OxideQLoadEvent::originalUrl() const {
