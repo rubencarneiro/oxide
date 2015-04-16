@@ -1452,6 +1452,22 @@ void WebView::setLocationBarMode(LocationBarMode mode) {
   SetLocationBarConstraints(LocationBarModeToBlinkTopControlsState(mode));
 }
 
+bool WebView::locationBarAnimated() const {
+  return location_bar_animated();
+}
+
+void WebView::setLocationBarAnimated(bool animated) {
+  set_location_bar_animated(animated);
+}
+
+void WebView::locationBarShow(bool animate) {
+  ShowLocationBar(animate);
+}
+
+void WebView::locationBarHide(bool animate) {
+  HideLocationBar(animate);
+}
+
 WebView::WebView(WebViewProxyClient* client) :
     client_(client),
     has_input_method_state_(false),

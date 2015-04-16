@@ -248,6 +248,14 @@ class WebView : public ScriptMessageTarget,
   }
   void SetLocationBarConstraints(blink::WebTopControlsState constraints);
 
+  bool location_bar_animated() const { return location_bar_animated_; }
+  void set_location_bar_animated(bool animated) {
+    location_bar_animated_ = animated;
+  }
+
+  void ShowLocationBar(bool animate);
+  void HideLocationBar(bool animate);
+
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
@@ -627,6 +635,7 @@ class WebView : public ScriptMessageTarget,
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;
+  bool location_bar_animated_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

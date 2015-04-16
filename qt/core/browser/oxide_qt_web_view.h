@@ -266,6 +266,10 @@ class WebView : public QObject,
   int locationBarContentOffsetPix() override;
   LocationBarMode locationBarMode() const override;
   void setLocationBarMode(LocationBarMode mode) override;
+  bool locationBarAnimated() const override;
+  void setLocationBarAnimated(bool animated) override;
+  void locationBarShow(bool animate) override;
+  void locationBarHide(bool animate) override;
 
   WebViewProxyClient* client_;
 
