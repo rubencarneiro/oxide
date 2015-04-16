@@ -22,13 +22,13 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  #include "content/browser/loader/stream_resource_handler.h"
  #include "content/public/browser/content_browser_client.h"
  #include "content/public/browser/download_item.h"
-@@ -392,16 +393,41 @@ bool BufferedResourceHandler::SelectNext
-     bool request_handled = true;
-     bool handled_by_plugin = IsHandledByPlugin(defer, &request_handled);
-     if (!request_handled)
-       return false;
-     if (handled_by_plugin)
+@@ -349,16 +350,41 @@ bool BufferedResourceHandler::SelectNext
+       *defer = true;
        return true;
+     }
+     if (has_plugin)
+       return true;
+ #endif
    }
  
 +  if (host_->delegate()) {
@@ -104,7 +104,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/content/public/browser/resource_dispatcher_host_delegate.cc
 --- a/content/public/browser/resource_dispatcher_host_delegate.cc
 +++ b/content/public/browser/resource_dispatcher_host_delegate.cc
-@@ -81,15 +81,29 @@ void ResourceDispatcherHostDelegate::OnR
+@@ -80,15 +80,29 @@ void ResourceDispatcherHostDelegate::OnR
      ResourceContext* resource_context,
      ResourceResponse* response) {
  }
@@ -137,14 +137,14 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/conte
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/content/public/browser/resource_dispatcher_host_delegate.h
 --- a/content/public/browser/resource_dispatcher_host_delegate.h
 +++ b/content/public/browser/resource_dispatcher_host_delegate.h
-@@ -5,16 +5,17 @@
+@@ -4,16 +4,17 @@
+ 
  #ifndef CONTENT_PUBLIC_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
  #define CONTENT_PUBLIC_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
  
  #include <string>
  
  #include "base/basictypes.h"
- #include "base/files/file_path.h"
  #include "base/memory/scoped_ptr.h"
 +#include "base/strings/string16.h"
  #include "content/common/content_export.h"
@@ -155,7 +155,7 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
  
  namespace IPC {
  class Sender;
-@@ -115,16 +116,29 @@ class CONTENT_EXPORT ResourceDispatcherH
+@@ -112,16 +113,29 @@ class CONTENT_EXPORT ResourceDispatcherH
    virtual void OnRequestRedirected(const GURL& redirect_url,
                                     net::URLRequest* request,
                                     ResourceContext* resource_context,
