@@ -5,11 +5,11 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -380,20 +380,18 @@ bool RenderFrameHostImpl::OnMessageRecei
-     IPC_MESSAGE_HANDLER(AccessibilityHostMsg_LocationChanges,
-                         OnAccessibilityLocationChanges)
+@@ -383,20 +383,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(AccessibilityHostMsg_FindInPageResult,
                          OnAccessibilityFindInPageResult)
+     IPC_MESSAGE_HANDLER(AccessibilityHostMsg_SnapshotResponse,
+                         OnAccessibilitySnapshotResponse)
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1398,17 +1396,16 @@ void RenderFrameHostImpl::OnToggleFullsc
+@@ -1423,17 +1421,16 @@ void RenderFrameHostImpl::OnToggleFullsc
    else
      delegate_->ExitFullscreenMode();
  
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1421,17 +1418,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1446,17 +1443,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
    mojo::BindToRequest(service, &request);
  }
  #endif
-@@ -1876,29 +1872,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1909,29 +1905,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -116,7 +116,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -398,20 +396,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -405,20 +403,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -138,13 +138,13 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -508,20 +505,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
-       const std::vector<AccessibilityHostMsg_EventParams>& params,
-       int reset_token);
+@@ -517,20 +514,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnAccessibilityLocationChanges(
        const std::vector<AccessibilityHostMsg_LocationChangeParams>& params);
    void OnAccessibilityFindInPageResult(
        const AccessibilityHostMsg_FindInPageResultParams& params);
+   void OnAccessibilitySnapshotResponse(int callback_id,
+                                        const ui::AXTreeUpdate& snapshot);
    void OnToggleFullscreen(bool enter_fullscreen);
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
@@ -198,7 +198,7 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
-@@ -293,17 +293,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
+@@ -325,17 +325,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
  
    // Text shadow (edge style) of the text track text.
    IPC_STRUCT_MEMBER(std::string, text_track_text_shadow)
@@ -216,7 +216,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  
    // The height of each item in the menu.
    IPC_STRUCT_MEMBER(int, item_height)
-@@ -318,17 +317,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
+@@ -350,17 +349,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
    IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
  
    // Whether items should be right-aligned.
@@ -234,14 +234,14 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  // presented. When the frame finishes presenting, a matching
  // FrameHostMsg_CompositorFrameSwappedACK should be sent back to the
  // RenderViewHost that was produced the CompositorFrame.
-@@ -503,24 +501,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_DidUpdateSa
- // changed in another process.
- IPC_MESSAGE_ROUTED1(FrameMsg_DidUpdateName, std::string /* name */)
- 
+@@ -538,24 +536,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_DidUpdateNa
  // Send to the RenderFrame to set text track style settings.
  // Sent for top-level frames.
  IPC_MESSAGE_ROUTED1(FrameMsg_SetTextTrackSettings,
                      FrameMsg_TextTrackSettings_Params /* params */)
+ 
+ // Posts a message from a frame in another process to the current renderer.
+ IPC_MESSAGE_ROUTED1(FrameMsg_PostMessageEvent, FrameMsg_PostMessage_Params)
  
 -#if defined(OS_ANDROID)
 -
@@ -260,14 +260,14 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -848,16 +844,12 @@ IPC_MESSAGE_ROUTED1(FrameHostMsg_VisualS
- // Puts the browser into "tab fullscreen" mode for the sending renderer.
- // See the comment in chrome/browser/ui/browser.h for more details.
- IPC_MESSAGE_ROUTED1(FrameHostMsg_ToggleFullscreen, bool /* enter_fullscreen */)
- 
- // Dispatch a load event for this frame in the iframe element of an
+@@ -888,16 +884,12 @@ IPC_MESSAGE_ROUTED1(FrameHostMsg_ToggleF
  // out-of-process parent frame.
  IPC_MESSAGE_ROUTED0(FrameHostMsg_DispatchLoad)
+ 
+ // Sent to the browser from a frame proxy to post a message to the frame's
+ // active renderer.
+ IPC_MESSAGE_ROUTED1(FrameHostMsg_RouteMessageEvent,
+                     FrameMsg_PostMessage_Params)
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
 -
@@ -280,7 +280,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 diff --git a/content/common/view_messages.h b/content/common/view_messages.h
 --- a/content/common/view_messages.h
 +++ b/content/common/view_messages.h
-@@ -968,18 +968,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
+@@ -947,18 +947,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
  // Sent by the browser when an IME update that requires acknowledgement has been
  // processed on the browser side.
  IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
@@ -375,7 +375,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -958,23 +958,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -963,23 +963,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -399,15 +399,15 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1044,19 +1042,18 @@ bool RenderFrameImpl::OnMessageReceived(
-                         OnAddStyleSheetByURL)
-     IPC_MESSAGE_HANDLER(FrameMsg_SetAccessibilityMode,
-                         OnSetAccessibilityMode)
+@@ -1052,19 +1050,18 @@ bool RenderFrameImpl::OnMessageReceived(
+     IPC_MESSAGE_HANDLER(AccessibilityMsg_SnapshotTree,
+                         OnSnapshotAccessibilityTree)
      IPC_MESSAGE_HANDLER(FrameMsg_DisownOpener, OnDisownOpener)
      IPC_MESSAGE_HANDLER(FrameMsg_CommitNavigation, OnCommitNavigation)
      IPC_MESSAGE_HANDLER(FrameMsg_DidUpdateSandboxFlags, OnDidUpdateSandboxFlags)
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
                          OnTextTrackSettingsChanged)
+     IPC_MESSAGE_HANDLER(FrameMsg_PostMessageEvent, OnPostMessageEvent)
 -#if defined(OS_ANDROID)
      IPC_MESSAGE_HANDLER(FrameMsg_SelectPopupMenuItems, OnSelectPopupMenuItems)
 -#elif defined(OS_MACOSX)
@@ -420,13 +420,13 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1597,31 +1594,29 @@ void RenderFrameImpl::OnTextTrackSetting
-   render_view_->webview()->settings()->setTextTrackTextColor(
-       WebString::fromUTF8(params.text_track_text_color));
-   render_view_->webview()->settings()->setTextTrackTextShadow(
-       WebString::fromUTF8(params.text_track_text_shadow));
-   render_view_->webview()->settings()->setTextTrackTextSize(
-       WebString::fromUTF8(params.text_track_text_size));
+@@ -1689,31 +1686,29 @@ void RenderFrameImpl::OnPostMessageEvent
+   WebSecurityOrigin target_origin;
+   if (!params.target_origin.empty()) {
+     target_origin =
+         WebSecurityOrigin::createFromString(WebString(params.target_origin));
+   }
+   frame_->dispatchMessageEventWithOriginCheck(target_origin, msg_event);
  }
  
 -#if defined(OS_ANDROID)
@@ -452,7 +452,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2003,17 +1998,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2095,17 +2090,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -474,7 +474,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -281,19 +281,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -285,19 +285,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -494,15 +494,15 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -637,20 +635,19 @@ class CONTENT_EXPORT RenderFrameImpl
-   void OnRevertExitTransition();
-   void OnHideTransitionElements(const std::string& css_selector);
+@@ -644,20 +642,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnShowTransitionElements(const std::string& css_selector);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
+   void OnSnapshotAccessibilityTree(int callback_id);
    void OnDisownOpener();
    void OnDidUpdateSandboxFlags(SandboxFlags flags);
    void OnTextTrackSettingsChanged(
        const FrameMsg_TextTrackSettings_Params& params);
+   void OnPostMessageEvent(const FrameMsg_PostMessage_Params& params);
 -#if defined(OS_ANDROID)
    void OnSelectPopupMenuItems(bool canceled,
                                const std::vector<int>& selected_indices);
@@ -516,7 +516,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -910,20 +907,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -917,20 +914,18 @@ class CONTENT_EXPORT RenderFrameImpl
    AccessibilityMode accessibility_mode_;
  
    // Only valid if |accessibility_mode_| is anything other than
@@ -591,9 +591,9 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -390,20 +390,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -391,20 +391,18 @@ class CONTENT_EXPORT RenderWidget
                const gfx::Rect& resizer_rect,
-               bool is_fullscreen,
+               bool is_fullscreen_granted,
                ResizeAck resize_ack);
    // Used to force the size of a window when running layout tests.
    void SetWindowRectSynchronously(const gfx::Rect& new_window_rect);
