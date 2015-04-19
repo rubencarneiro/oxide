@@ -289,8 +289,11 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
   if (error_code == net::ERR_ABORTED) {
     OnLoadStopped(validated_url);
   } else {
+    content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
     OnLoadFailed(validated_url, error_code,
-                 base::UTF16ToUTF8(error_description));
+                 base::UTF16ToUTF8(error_description),
+                 entry->GetHttpStatusCode());
   }
 }
 
@@ -945,7 +948,8 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR, entry->GetHttpStatusCode());
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR,
+    entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -1007,7 +1011,9 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  OnLoadSucceeded(validated_url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  OnLoadSucceeded(validated_url, entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
@@ -1028,7 +1034,8 @@ void WebView::DidGetRedirectForResourceRequest(
     return;
   }
 
-  OnLoadRedirected(details.new_url, details.original_url);
+  OnLoadRedirected(details.new_url, details.original_url,
+    details.http_response_code);
 }
 
 void WebView::NavigationEntryCommitted(
@@ -1101,15 +1108,18 @@ void WebView::OnLoadProgressChanged(double progress) {}
 
 void WebView::OnLoadStarted(const GURL& validated_url) {}
 void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
+                               const GURL& original_url,
+                               int http_status_code) {}
 void WebView::OnLoadCommitted(const GURL& url,
                               bool is_error_page,
                               int http_status_code) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
-                           const std::string& error_description) {}
-void WebView::OnLoadSucceeded(const GURL& validated_url) {}
+                           const std::string& error_description,
+                           int http_status_code) {}
+void WebView::OnLoadSucceeded(const GURL& validated_url,
+                              int http_status_code) {}
 
 void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}

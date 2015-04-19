@@ -494,15 +494,18 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnLoadStarted(const GURL& validated_url);
   virtual void OnLoadRedirected(const GURL& url,
-                                const GURL& original_url);
+                                const GURL& original_url,
+                                int http_status_code);
   virtual void OnLoadCommitted(const GURL& url,
                                bool is_error_page,
                                int http_status_code);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
-                            const std::string& error_description);
-  virtual void OnLoadSucceeded(const GURL& validated_url);
+                            const std::string& error_description,
+                            int http_status_code);
+  virtual void OnLoadSucceeded(const GURL& validated_url,
+                               int http_status_code);
 
   virtual void OnNavigationEntryCommitted();
   virtual void OnNavigationListPruned(bool from_front, int count);

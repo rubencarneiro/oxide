@@ -34,7 +34,16 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_PROPERTY(ErrorDomain errorDomain READ errorDomain CONSTANT)
   Q_PROPERTY(QString errorString READ errorString CONSTANT)
   Q_PROPERTY(int errorCode READ errorCode CONSTANT)
-  Q_PROPERTY(HttpStatusCode httpStatusCode READ httpStatusCode CONSTANT)
+  // The status code of the last known successful navigation.  If
+  // returns 0 that means that either:
+  //
+  //  - this navigation hasn't completed yet;
+  //  - a response wasn't received;
+  //  - or this navigation was restored and for some reason the
+  //    status code wasn't available.
+  //
+  // It returns -1 for an unknown status code
+  Q_PROPERTY(int httpStatusCode READ httpStatusCode CONSTANT REVISION 2)
 
   Q_PROPERTY(QUrl originalUrl READ originalUrl CONSTANT)
 
@@ -42,7 +51,6 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
 
   Q_ENUMS(Type)
   Q_ENUMS(ErrorDomain)
-  Q_ENUMS(HttpStatusCode)
 
   Q_DECLARE_PRIVATE(OxideQLoadEvent)
   Q_DISABLE_COPY(OxideQLoadEvent)
@@ -69,60 +77,18 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     ErrorDomainDNS
   };
 
-  enum HttpStatusCode {
-    HttpStatusCodeContinue,
-    HttpStatusCodeSwitchingProtocols,
-    HttpStatusCodeOK,
-    HttpStatusCodeCreated,
-    HttpStatusCodeAccepted,
-    HttpStatusCodeNonAuthoritativeInformation,
-    HttpStatusCodeNoContent,
-    HttpStatusCodeResetContent,
-    HttpStatusCodePartialContent,
-    HttpStatusCodeMultipleChoices,
-    HttpStatusCodeMovedPermanently,
-    HttpStatusCodeFound,
-    HttpStatusCodeSeeOther,
-    HttpStatusCodeNotModified,
-    HttpStatusCodeUseProxy,
-    HttpStatusCodeTemporaryRedirect,
-    HttpStatusCodeBadRequest,
-    HttpStatusCodeUnauthorized,
-    HttpStatusCodePaymentRequired,
-    HttpStatusCodeForbidden,
-    HttpStatusCodeNotFound,
-    HttpStatusCodeMethodNotAllowed,
-    HttpStatusCodeNotAcceptable,
-    HttpStatusCodeProxyAuthenticationRequired,
-    HttpStatusCodeRequestTimeOut,
-    HttpStatusCodeConflict,
-    HttpStatusCodeGone,
-    HttpStatusCodeLengthRequired,
-    HttpStatusCodePreconditionFailed,
-    HttpStatusCodeRequestEntityTooLarge,
-    HttpStatusCodeRequestURITooLarge,
-    HttpStatusCodeUnsupportedMediaType,
-    HttpStatusCodeRequestedRangeNotSatisfiable,
-    HttpStatusCodeExpectationFailed,
-    HttpStatusCodeInternalServerError,
-    HttpStatusCodeNotImplemented,
-    HttpStatusCodeBadGateway,
-    HttpStatusCodeServiceUnavailable,
-    HttpStatusCodeGatewayTimeOut,
-    HttpStatusCodeHTTPVersionNotSupported,
-    HttpStatusCodeUnknown
-  };
-
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
                                 Type type,
                                 bool is_error = false,
-                                HttpStatusCode http_status_code = HttpStatusCodeOK);
+                                int http_status_code = -1);
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
                                 ErrorDomain error_domain,
                                 const QString& error_string,
-                                int error_code);
+                                int error_code,
+                                int http_status_code);
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                const QUrl& original_url);
+                                const QUrl& original_url,
+                                int http_status_code);
   virtual ~OxideQLoadEvent();
 
   QUrl url() const;
@@ -130,7 +96,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   ErrorDomain errorDomain() const;
   QString errorString() const;
   int errorCode() const;
-  HttpStatusCode httpStatusCode() const;
+  int httpStatusCode() const;
   QUrl originalUrl() const;
   bool isError() const;
 

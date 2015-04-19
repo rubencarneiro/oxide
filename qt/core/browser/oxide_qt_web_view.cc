@@ -123,132 +123,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
   return OxideQLoadEvent::ErrorDomainInternal;
 }
 
-OxideQLoadEvent::HttpStatusCode HttpStatusCodeFromInt(int http_status_code) {
-  switch (http_status_code) {
-    case 100:
-      return OxideQLoadEvent::HttpStatusCodeContinue;
-
-    case 101:
-      return OxideQLoadEvent::HttpStatusCodeSwitchingProtocols;
-
-    case 200:
-      return OxideQLoadEvent::HttpStatusCodeOK;
-
-    case 201:
-      return OxideQLoadEvent::HttpStatusCodeCreated;
-
-    case 202:
-      return OxideQLoadEvent::HttpStatusCodeAccepted;
-
-    case 203:
-      return OxideQLoadEvent::HttpStatusCodeNonAuthoritativeInformation;
-
-    case 204:
-      return OxideQLoadEvent::HttpStatusCodeNoContent;
-
-    case 205:
-      return OxideQLoadEvent::HttpStatusCodeResetContent;
-
-    case 206:
-      return OxideQLoadEvent::HttpStatusCodePartialContent;
-
-    case 300:
-      return OxideQLoadEvent::HttpStatusCodeMultipleChoices;
-
-    case 301:
-      return OxideQLoadEvent::HttpStatusCodeMovedPermanently;
-
-    case 302:
-      return OxideQLoadEvent::HttpStatusCodeFound;
-
-    case 303:
-      return OxideQLoadEvent::HttpStatusCodeSeeOther;
-
-    case 304:
-      return OxideQLoadEvent::HttpStatusCodeNotModified;
-
-    case 305:
-      return OxideQLoadEvent::HttpStatusCodeUseProxy;
-
-    case 307:
-      return OxideQLoadEvent::HttpStatusCodeTemporaryRedirect;
-
-    case 400:
-      return OxideQLoadEvent::HttpStatusCodeBadRequest;
-
-    case 401:
-      return OxideQLoadEvent::HttpStatusCodeUnauthorized;
-
-    case 402:
-      return OxideQLoadEvent::HttpStatusCodePaymentRequired;
-
-    case 403:
-      return OxideQLoadEvent::HttpStatusCodeForbidden;
-
-    case 404:
-      return OxideQLoadEvent::HttpStatusCodeNotFound;
-
-    case 405:
-      return OxideQLoadEvent::HttpStatusCodeMethodNotAllowed;
-
-    case 406:
-      return OxideQLoadEvent::HttpStatusCodeNotAcceptable;
-
-    case 407:
-      return OxideQLoadEvent::HttpStatusCodeProxyAuthenticationRequired;
-
-    case 408:
-      return OxideQLoadEvent::HttpStatusCodeRequestTimeOut;
-
-    case 409:
-      return OxideQLoadEvent::HttpStatusCodeConflict;
-
-    case 410:
-      return OxideQLoadEvent::HttpStatusCodeGone;
-
-    case 411:
-      return OxideQLoadEvent::HttpStatusCodeLengthRequired;
-
-    case 412:
-      return OxideQLoadEvent::HttpStatusCodePreconditionFailed;
-
-    case 413:
-      return OxideQLoadEvent::HttpStatusCodeRequestEntityTooLarge;
-
-    case 414:
-      return OxideQLoadEvent::HttpStatusCodeRequestURITooLarge;
-
-    case 415:
-      return OxideQLoadEvent::HttpStatusCodeUnsupportedMediaType;
-
-    case 416:
-      return OxideQLoadEvent::HttpStatusCodeRequestedRangeNotSatisfiable;
-
-    case 417:
-      return OxideQLoadEvent::HttpStatusCodeExpectationFailed;
-
-    case 500:
-      return OxideQLoadEvent::HttpStatusCodeInternalServerError;
-
-    case 501:
-      return OxideQLoadEvent::HttpStatusCodeNotImplemented;
-
-    case 502:
-      return OxideQLoadEvent::HttpStatusCodeBadGateway;
-
-    case 503:
-      return OxideQLoadEvent::HttpStatusCodeServiceUnavailable;
-
-    case 504:
-      return OxideQLoadEvent::HttpStatusCodeGatewayTimeOut;
-
-    case 505:
-      return OxideQLoadEvent::HttpStatusCodeHTTPVersionNotSupported;
-  }
-
-  return OxideQLoadEvent::HttpStatusCodeUnknown;
-}
-
 inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
   Qt::CursorShape cs = Qt::ArrowCursor;
   switch (type) {
@@ -703,10 +577,12 @@ void WebView::OnLoadStarted(const GURL& validated_url) {
 }
 
 void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {
+                               const GURL& original_url,
+                               int http_status_code) {
   OxideQLoadEvent event(
      QUrl(QString::fromStdString(url.spec())),
-     QUrl(QString::fromStdString(original_url.spec())));
+     QUrl(QString::fromStdString(original_url.spec())),
+     http_status_code);
   client_->LoadEvent(&event);
 }
 
@@ -717,7 +593,7 @@ void WebView::OnLoadCommitted(const GURL& url,
       QUrl(QString::fromStdString(url.spec())),
       OxideQLoadEvent::TypeCommitted,
       is_error_page,
-      HttpStatusCodeFromInt(http_status_code));
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
@@ -730,19 +606,22 @@ void WebView::OnLoadStopped(const GURL& validated_url) {
 
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
-                           const std::string& error_description) {
+                           const std::string& error_description,
+                           int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       ErrorDomainFromErrorCode(error_code),
       QString::fromStdString(error_description),
-      error_code);
+      error_code,
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
-void WebView::OnLoadSucceeded(const GURL& validated_url) {
+void WebView::OnLoadSucceeded(const GURL& validated_url, int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeSucceeded);
+      OxideQLoadEvent::TypeSucceeded,
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
