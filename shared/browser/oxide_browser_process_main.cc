@@ -47,7 +47,7 @@
 #include "content/public/common/main_function_params.h"
 #include "content/renderer/in_process_renderer_thread.h"
 #include "content/utility/in_process_utility_thread.h"
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
 #include "crypto/nss_util.h"
 #endif
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
@@ -98,7 +98,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
              const base::FilePath& nss_db_path,
 #endif
              gfx::GLImplementation gl_impl,
@@ -371,7 +371,7 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
                                    const base::FilePath& nss_db_path,
 #endif
                                    gfx::GLImplementation gl_impl,
@@ -420,7 +420,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   AddFormFactorSpecificCommandLineArguments();
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   if (!nss_db_path.empty()) {
     // Used for testing
     PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,

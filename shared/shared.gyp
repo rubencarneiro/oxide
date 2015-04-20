@@ -475,8 +475,6 @@
           'sources': [
             'browser/oxide_pepper_host_factory_browser.cc',
             'browser/oxide_pepper_host_factory_browser.h',
-            'browser/oxide_pepper_talk_host.cc',
-            'browser/oxide_pepper_talk_host.h',
           ],
           'dependencies': [
             '<(DEPTH)/ppapi/ppapi_internal.gyp:ppapi_host',

@@ -111,7 +111,7 @@ void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
   }
 }
 
-void JavaScriptDialogManager::WebContentsDestroyed(
+void JavaScriptDialogManager::ResetDialogState(
     content::WebContents* web_contents) {
   CancelActiveAndPendingDialogs(web_contents);
 }

@@ -52,7 +52,7 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
 
   void CancelActiveAndPendingDialogs(content::WebContents* web_contents) final;
 
-  void WebContentsDestroyed(content::WebContents* web_contents) final;
+  void ResetDialogState(content::WebContents* web_contents) final;
 
  private:
   friend class JavaScriptDialog;
