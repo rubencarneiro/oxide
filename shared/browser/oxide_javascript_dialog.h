@@ -26,10 +26,10 @@ class JavaScriptDialog {
  public:
   virtual ~JavaScriptDialog();
 
-  virtual void Run() = 0;
-  void Close(bool accept, const base::string16& user_input = base::string16());
-  void CouldNotShow();
+  virtual bool Run() = 0;
   virtual void Handle(bool accept, const base::string16* prompt_override) = 0;
+
+  void Close(bool accept, const base::string16& user_input = base::string16());
   void Cancel();
 
  protected:
@@ -44,7 +44,9 @@ class JavaScriptDialog {
   bool is_reload_;
   bool is_before_unload_dialog_;
 
-private:
+ private:
+  virtual void Hide();
+
   content::WebContents* web_contents_;
   content::JavaScriptDialogManager::DialogClosedCallback callback_;
 };

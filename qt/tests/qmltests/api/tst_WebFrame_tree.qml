@@ -54,8 +54,6 @@ TestWebView {
     function verify_tree() {
       compare(webView.rootFrame.parentFrame, null,
               "Root frame should have no parent");
-      compare(OxideTestingUtils.qObjectParent(webView.rootFrame), webView,
-              "Root frame should be a qobject child of the webview");
 
       var queue = [];
       queue.push(webView.rootFrame);
@@ -65,8 +63,6 @@ TestWebView {
         for (var i = 0; i < frame.childFrames.length; ++i) {
           compare(frame.childFrames[i].parentFrame, frame,
                   "Incorrect parent");
-          compare(OxideTestingUtils.qObjectParent(frame.childFrames[i]), frame,
-                  "Incorrect qobject parent");
           queue.push(frame.childFrames[i]);
         }
       }

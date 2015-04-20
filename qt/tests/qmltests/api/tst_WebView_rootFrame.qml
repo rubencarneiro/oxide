@@ -8,10 +8,21 @@ TestWebView {
   width: 200
   height: 200
 
+  TestWebContext {
+    id: c
+  }
+
+  context: c
+
   SignalSpy {
     id: spy
     target: webView
     signalName: "rootFrameChanged"
+  }
+
+  Component {
+    id: webViewFactory
+    TestWebView { context: c }
   }
 
   TestCase {
@@ -21,8 +32,7 @@ TestWebView {
 
     function test_WebView_rootFrame1_parent() {
       verify(webView.rootFrame, "Should always have a root frame");
-      compare(OxideTestingUtils.qObjectParent(webView.rootFrame), webView,
-              "The root frame should be parented to the webview");
+      verify(!webView.rootFrame.parent, "Root frame should have no parent");
     }
 
     function test_WebView_rootFrame2_undeletable() {
@@ -38,6 +48,30 @@ TestWebView {
 
     function test_WebView_rootFrame3_creation_signal() {
       compare(spy.count, 1, "Should have had 1 signal during construction");
+    }
+
+    // Verify that accessing WebView.rootFrame before a view is unitialized
+    // doesn't crash
+    function test_WebView_rootFrame4_uninitialized() {
+      var done = false;
+      function create_view(request) {
+        var created = webViewFactory.createObject(null, { request: request });
+        verify(!created.rootFrame);
+        created.destroy();
+        done = true;
+      }
+
+      webView.newViewRequested.connect(create_view);
+      webView.context.popupBlockerEnabled = false;
+
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
+      webView.waitFor(function() { return done; });
+
+      webView.context.popupBlockerEnabled = true;
+      webView.newViewRequested.disconnect(create_view);
     }
   }
 }

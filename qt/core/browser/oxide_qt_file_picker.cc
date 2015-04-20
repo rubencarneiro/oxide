@@ -17,39 +17,70 @@
 
 #include "oxide_qt_file_picker.h"
 
+#include <vector>
+
+#include <QDir>
 #include <QFileInfo>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
 
+#include "base/files/file_path.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/public/common/file_chooser_file_info.h"
+#include "content/public/common/file_chooser_params.h"
 
-#include "qt/core/glue/oxide_qt_file_picker_delegate.h"
+#include "qt/core/glue/oxide_qt_file_picker_proxy.h"
 
 namespace oxide {
 namespace qt {
 
-FilePicker::FilePicker(FilePickerDelegate* delegate,
-                       content::RenderViewHost* rvh) :
-    oxide::FilePicker(rvh),
-    delegate_(delegate) {
-  delegate_->file_picker_ = this;
+namespace {
+
+content::FileChooserFileInfo MakeFileInfo(const QFileInfo& fi) {
+  content::FileChooserFileInfo info;
+  info.file_path = base::FilePath(fi.absoluteFilePath().toStdString());
+  return info;
 }
 
+std::vector<content::FileChooserFileInfo> Enumerate(const QDir& dir) {
+  std::vector<content::FileChooserFileInfo> enumerated;
+  QDir::Filters filters =
+      QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot | QDir::Hidden;
+  Q_FOREACH (const QFileInfo& file, dir.entryInfoList(filters)) {
+    if (file.isDir()) {
+      content::FileChooserFileInfo info;
+      QString directoryPath = file.absoluteFilePath() + QStringLiteral("/.");
+      info.file_path = base::FilePath(directoryPath.toStdString());
+      enumerated.push_back(info);
+      std::vector<content::FileChooserFileInfo> contents =
+          Enumerate(file.absoluteFilePath());
+      enumerated.insert(enumerated.end(), contents.begin(), contents.end());
+    } else {
+      enumerated.push_back(MakeFileInfo(file));
+    }
+  }
+  return enumerated;
+}
+
+}
+
+FilePicker::~FilePicker() {}
+
 void FilePicker::Run(const content::FileChooserParams& params) {
-  FilePickerDelegate::Mode mode;
+  FilePickerProxy::Mode mode;
   switch (params.mode) {
     case content::FileChooserParams::Open:
-      mode = FilePickerDelegate::Open;
+      mode = FilePickerProxy::Open;
       break;
     case content::FileChooserParams::OpenMultiple:
-      mode = FilePickerDelegate::OpenMultiple;
+      mode = FilePickerProxy::OpenMultiple;
       break;
     case content::FileChooserParams::UploadFolder:
-      mode = FilePickerDelegate::UploadFolder;
+      mode = FilePickerProxy::UploadFolder;
       break;
     case content::FileChooserParams::Save:
-      mode = FilePickerDelegate::Save;
+      mode = FilePickerProxy::Save;
       break;
     default:
       Q_UNREACHABLE();
@@ -61,11 +92,53 @@ void FilePicker::Run(const content::FileChooserParams& params) {
   for (i = params.accept_types.begin(); i != params.accept_types.end(); ++i) {
     acceptTypes << QString::fromStdString(base::UTF16ToUTF8(*i));
   }
-  delegate_->Show(mode, title, defaultFileName, acceptTypes);
+  proxy_->Show(mode, title, defaultFileName, acceptTypes);
 }
 
-void FilePicker::OnHide() {
-  delegate_->Hide();
+void FilePicker::Hide() {
+  proxy_->Hide();
+}
+
+void FilePicker::done(const QFileInfoList& files,
+                      FilePickerProxy::Mode mode) {
+  std::vector<content::FileChooserFileInfo> selection;
+  if (mode == FilePickerProxy::UploadFolder) {
+    if (!files.isEmpty() && files.first().isDir()) {
+      // XXX: chrome does this asynchronously on a background thread
+      // (see net::DirectoryLister)
+      selection = Enumerate(files.first().absoluteFilePath());
+    }
+  } else {
+    Q_FOREACH (const QFileInfo& file, files) {
+      selection.push_back(MakeFileInfo(file));
+    }
+  }
+  content::FileChooserParams::Mode permissions;
+  switch (mode) {
+    case FilePickerProxy::Open:
+      permissions = content::FileChooserParams::Open;
+      break;
+    case FilePickerProxy::OpenMultiple:
+      permissions = content::FileChooserParams::OpenMultiple;
+      break;
+    case FilePickerProxy::UploadFolder:
+      permissions = content::FileChooserParams::UploadFolder;
+      break;
+    case FilePickerProxy::Save:
+      permissions = content::FileChooserParams::Save;
+      break;
+    default:
+      Q_UNREACHABLE();
+  }
+
+  Done(selection, permissions);
+}
+
+FilePicker::FilePicker(content::RenderViewHost* rvh)
+    : oxide::FilePicker(rvh) {}
+
+void FilePicker::SetProxy(FilePickerProxy* proxy) {
+  proxy_.reset(proxy);
 }
 
 } // namespace qt

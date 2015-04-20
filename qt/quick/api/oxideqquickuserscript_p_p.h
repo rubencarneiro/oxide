@@ -21,15 +21,19 @@
 #include <QObject>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_user_script_adapter.h"
+#include "qt/core/glue/oxide_qt_user_script_proxy.h"
+#include "qt/core/glue/oxide_qt_user_script_proxy_client.h"
 
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 
-class OxideQQuickUserScriptPrivate final
+class OxideQQuickUserScriptPrivate
     : public QObject,
-      public oxide::qt::UserScriptAdapter {
+      public oxide::qt::UserScriptProxyHandle,
+      public oxide::qt::UserScriptProxyClient {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickUserScript)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickUserScript,
+                                      oxide::qt::UserScriptProxyHandle);
 
  public:
   OxideQQuickUserScriptPrivate(OxideQQuickUserScript* q);
@@ -40,8 +44,9 @@ class OxideQQuickUserScriptPrivate final
   void willBeDeleted();
 
  private:
-  void OnScriptLoadFailed() final;
-  void OnScriptLoaded() final;
+  // oxide::qt::UserScriptProxyClient implementation
+  void ScriptLoadFailed() override;
+  void ScriptLoaded() override;
 
   bool constructed_;
 

@@ -74,17 +74,17 @@ namespace qquick {
 
 using namespace webcontextdelegateworker;
 
-class WebContextIODelegate : public oxide::qt::WebContextAdapter::IODelegate {
+class WebContextIODelegate : public oxide::qt::WebContextProxyClient::IOClient {
  public:
   WebContextIODelegate() {}
   virtual ~WebContextIODelegate() {}
 
-  void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) final;
-  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) final;
-  void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) final;
+  void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) override;
+  void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) override;
+  void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) override;
   void HandleStoragePermissionRequest(
-      OxideQStoragePermissionRequest* req) final;
-  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) final;
+      OxideQStoragePermissionRequest* req) override;
+  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) override;
 
   QMutex lock;
 
@@ -101,7 +101,6 @@ void WebContextIODelegate::OnBeforeURLRequest(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -116,7 +115,6 @@ void WebContextIODelegate::OnBeforeSendHeaders(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -131,7 +129,6 @@ void WebContextIODelegate::OnBeforeRedirect(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -146,7 +143,6 @@ void WebContextIODelegate::HandleStoragePermissionRequest(
     delegate = storage_access_permission_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete req;
     return;
   }
 
@@ -166,16 +162,15 @@ bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
 
   bool did_override = false;
 
-  OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
+  OxideQUserAgentOverrideRequest req(url);
+
+  delegate->CallEntryPointInWorker("onGetUserAgentOverride", &req);
 
   OxideQUserAgentOverrideRequestPrivate* p =
-      OxideQUserAgentOverrideRequestPrivate::get(req);
-  p->did_override = &did_override;
-  p->user_agent = user_agent;
+      OxideQUserAgentOverrideRequestPrivate::get(&req);
+  *user_agent = p->user_agent;
 
-  delegate->CallEntryPointInWorker("onGetUserAgentOverride", req);
-
-  return did_override;
+  return p->did_override;
 }
 
 } // namespace qquick
@@ -183,9 +178,12 @@ bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
 
 using namespace oxide::qquick;
 
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebContext,
+                                    oxide::qt::WebContextProxyHandle);
+
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q)
-    : oxide::qt::WebContextAdapter(q),
+    : oxide::qt::WebContextProxyHandle(oxide::qt::WebContextProxy::create(this), q),
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
       network_request_delegate_(nullptr),
@@ -194,7 +192,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
       cookie_manager_(nullptr) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
-  updateUserScripts();
+  proxy()->updateUserScripts();
 }
 
 void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
@@ -203,7 +201,7 @@ void OxideQQuickWebContextPrivate::userScriptWillBeDeleted() {
   OxideQQuickUserScriptPrivate* sender =
       qobject_cast<OxideQQuickUserScriptPrivate *>(q->sender());
   Q_ASSERT(sender);
-  q->removeUserScript(adapterToQObject<OxideQQuickUserScript>(sender));  
+  q->removeUserScript(OxideQQuickUserScriptPrivate::fromProxyHandle(sender));
 }
 
 void OxideQQuickWebContextPrivate::detachUserScriptSignals(
@@ -234,34 +232,38 @@ void OxideQQuickWebContextPrivate::userScript_append(
 
 int OxideQQuickWebContextPrivate::userScript_count(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
-  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
-        static_cast<OxideQQuickWebContext *>(prop->object));
+  oxide::qt::WebContextProxy* p =
+      OxideQQuickWebContextPrivate::get(
+        static_cast<OxideQQuickWebContext*>(prop->object))->proxy();
 
-  return cd->userScripts().size();
+  return p->userScripts().size();
 }
 
 OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
     QQmlListProperty<OxideQQuickUserScript>* prop,
     int index) {
-  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(
-        static_cast<OxideQQuickWebContext *>(prop->object));
+  oxide::qt::WebContextProxy* p =
+      OxideQQuickWebContextPrivate::get(
+        static_cast<OxideQQuickWebContext*>(prop->object))->proxy();
 
-  if (index >= cd->userScripts().size()) {
+  if (index >= p->userScripts().size()) {
     return nullptr;
   }
 
-  return adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(index));
+  return OxideQQuickUserScriptPrivate::fromProxyHandle(
+      p->userScripts().at(index));
 }
 
 void OxideQQuickWebContextPrivate::userScript_clear(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  OxideQQuickWebContextPrivate* cd = OxideQQuickWebContextPrivate::get(context);
+  oxide::qt::WebContextProxy* p =
+      OxideQQuickWebContextPrivate::get(context)->proxy();
 
-  while (cd->userScripts().size() > 0) {
+  while (p->userScripts().size() > 0) {
     context->removeUserScript(
-        adapterToQObject<OxideQQuickUserScript>(cd->userScripts().at(0)));
+        OxideQQuickUserScriptPrivate::fromProxyHandle(p->userScripts().at(0)));
   }
 }
 
@@ -308,18 +310,6 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
   }
 }
 
-QNetworkAccessManager*
-OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
-  Q_Q(OxideQQuickWebContext);
-
-  QQmlEngine* engine = qmlEngine(q);
-  if (!engine) {
-    return nullptr;
-  }
-
-  return engine->networkAccessManager();
-}
-
 void OxideQQuickWebContextPrivate::CookiesSet(
     int request_id,
     const QList<QNetworkCookie>& failed_cookies) {
@@ -339,6 +329,25 @@ void OxideQQuickWebContextPrivate::CookiesRetrieved(
 void OxideQQuickWebContextPrivate::CookiesDeleted(
     int request_id, int num_deleted) {
   emit cookie_manager_->deleteCookiesResponse(request_id, num_deleted);
+}
+
+QNetworkAccessManager*
+OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
+  Q_Q(OxideQQuickWebContext);
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    return nullptr;
+  }
+
+  return engine->networkAccessManager();
+}
+
+void OxideQQuickWebContextPrivate::DestroyDefault() {
+  Q_Q(OxideQQuickWebContext);
+
+  Q_ASSERT(q == OxideQQuickWebContext::defaultContext(false));
+  delete q;
 }
 
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
@@ -363,14 +372,36 @@ OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
   return context->d_func();
 }
 
+bool OxideQQuickWebContextPrivate::isInitialized() const {
+  return proxy()->isInitialized();
+}
+
+int OxideQQuickWebContextPrivate::setCookies(
+    const QUrl& url,
+    const QList<QNetworkCookie>& cookies) {
+  return proxy()->setCookies(url, cookies);
+}
+
+int OxideQQuickWebContextPrivate::getCookies(const QUrl& url) {
+  return proxy()->getCookies(url);
+}
+
+int OxideQQuickWebContextPrivate::getAllCookies() {
+  return proxy()->getAllCookies();
+}
+
+int OxideQQuickWebContextPrivate::deleteAllCookies() {
+  return proxy()->deleteAllCookies();
+}
+
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickWebContextPrivate(this)) {
   Q_D(OxideQQuickWebContext);
 
-  QSharedPointer<oxide::qt::WebContextAdapter::IODelegate> io =
-      qSharedPointerCast<oxide::qt::WebContextAdapter::IODelegate>(d->io_);
-  d->init(io.toWeakRef());
+  QSharedPointer<oxide::qt::WebContextProxyClient::IOClient> io =
+      qSharedPointerCast<oxide::qt::WebContextProxyClient::IOClient>(d->io_);
+  d->proxy()->init(io.toWeakRef());
 
   oxide::qquick::EnsureChromiumStarted();
 }
@@ -378,9 +409,10 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
 
-  for (int i = 0; i < d->userScripts().size(); ++i) {
+  for (int i = 0; i < d->proxy()->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
-        adapterToQObject<OxideQQuickUserScript>(d->userScripts().at(i)));
+        OxideQQuickUserScriptPrivate::fromProxyHandle(
+          d->proxy()->userScripts().at(i)));
   }
 
   // These call back in to us when destroyed, so delete them now in order
@@ -401,11 +433,10 @@ void OxideQQuickWebContext::componentComplete() {
 
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
-  OxideQQuickWebContextPrivate* p =
-      static_cast<OxideQQuickWebContextPrivate*>(
-        oxide::qt::WebContextAdapter::defaultContext());
-  if (p) {
-    return p->q_func();
+  oxide::qt::WebContextProxyHandle* h =
+      oxide::qt::WebContextProxy::defaultContext();
+  if (h) {
+    return OxideQQuickWebContextPrivate::fromProxyHandle(h);
   }
 
   if (!create) {
@@ -416,8 +447,8 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
   c->componentComplete();
   QQmlEngine::setObjectOwnership(c, QQmlEngine::CppOwnership);
 
-  OxideQQuickWebContextPrivate::get(c)->makeDefault();
-  Q_ASSERT(oxide::qt::WebContextAdapter::defaultContext());
+  OxideQQuickWebContextPrivate::get(c)->proxy()->makeDefault();
+  Q_ASSERT(oxide::qt::WebContextProxy::defaultContext());
 
   return c;
 }
@@ -425,19 +456,19 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
 QString OxideQQuickWebContext::product() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->product();
+  return d->proxy()->product();
 }
 
 void OxideQQuickWebContext::setProduct(const QString& product) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->product() == product) {
+  if (d->proxy()->product() == product) {
     return;
   }
 
   QString old_user_agent = userAgent();
 
-  d->setProduct(product);
+  d->proxy()->setProduct(product);
   emit productChanged();
 
   if (userAgent() != old_user_agent) {
@@ -448,78 +479,89 @@ void OxideQQuickWebContext::setProduct(const QString& product) {
 QString OxideQQuickWebContext::userAgent() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->userAgent();
+  return d->proxy()->userAgent();
 }
 
 void OxideQQuickWebContext::setUserAgent(const QString& user_agent) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->userAgent() == user_agent) {
+  if (d->proxy()->userAgent() == user_agent) {
     return;
   }
 
-  d->setUserAgent(user_agent);
+  d->proxy()->setUserAgent(user_agent);
   emit userAgentChanged();
 }
 
 QUrl OxideQQuickWebContext::dataPath() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->dataPath();
+  return d->proxy()->dataPath();
 }
 
 void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.dataPath once the context is in use";
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set dataPath once the context is in use";
     return;
   }
 
-  if (d->dataPath() == data_url) {
+  if (dataPath() == data_url) {
     return;
   }
 
-  d->setDataPath(data_url);
+  if (!data_url.isLocalFile() && !data_url.isEmpty()) {
+    qWarning() << "OxideQQuickWebContext: dataPath only supports local files";
+    return;
+  }
+
+  d->proxy()->setDataPath(data_url);
   emit dataPathChanged();
 }
 
 QUrl OxideQQuickWebContext::cachePath() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->cachePath();
+  return d->proxy()->cachePath();
 }
 
 void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.cachePath once the context is in use";
+  if (d->proxy()->isInitialized()) {
+    qWarning() << "OxideQQuickWebContext:: Cannot set cachePath once the context is in use";
     return;
   }
 
-  if (d->cachePath() == cache_url) {
+  if (cachePath() == cache_url) {
     return;
   }
 
-  d->setCachePath(cache_url);
+  if (!cache_url.isLocalFile() && !cache_url.isEmpty()) {
+    qWarning() << "OxideQQuickWebContext: cachePath only supports local files";
+    return;
+  }
+
+  d->proxy()->setCachePath(cache_url);
   emit cachePathChanged();
 }
 
 QString OxideQQuickWebContext::acceptLangs() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->acceptLangs();
+  return d->proxy()->acceptLangs();
 }
 
 void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->acceptLangs() == accept_langs) {
+  if (acceptLangs() == accept_langs) {
     return;
   }
 
-  d->setAcceptLangs(accept_langs);
+  d->proxy()->setAcceptLangs(accept_langs);
   emit acceptLangsChanged();
 }
 
@@ -544,7 +586,7 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
   OxideQQuickUserScriptPrivate* ud =
       OxideQQuickUserScriptPrivate::get(user_script);
 
-  if (!d->userScripts().contains(ud)) {
+  if (!d->proxy()->userScripts().contains(ud)) {
     connect(user_script, SIGNAL(scriptLoaded()),
             this, SLOT(userScriptUpdated()));
     connect(user_script, SIGNAL(scriptPropertyChanged()),
@@ -552,13 +594,13 @@ void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
     connect(ud, SIGNAL(willBeDeleted()),
             this, SLOT(userScriptWillBeDeleted()));
   } else {
-    d->userScripts().removeOne(ud);
+    d->proxy()->userScripts().removeOne(ud);
   }
 
   if (!user_script->parent()) {
     user_script->setParent(this);
   }
-  d->userScripts().append(ud);
+  d->proxy()->userScripts().append(ud);
 
   emit userScriptsChanged();
 }
@@ -575,7 +617,7 @@ void OxideQQuickWebContext::removeUserScript(
   OxideQQuickUserScriptPrivate* ud =
       OxideQQuickUserScriptPrivate::get(user_script);
 
-  if (!d->userScripts().contains(ud)) {
+  if (!d->proxy()->userScripts().contains(ud)) {
     return;
   }
 
@@ -584,7 +626,7 @@ void OxideQQuickWebContext::removeUserScript(
     user_script->setParent(nullptr);
   }
 
-  d->userScripts().removeOne(ud);
+  d->proxy()->userScripts().removeOne(ud);
 
   emit userScriptsChanged();
 }
@@ -595,30 +637,30 @@ OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const 
   Q_STATIC_ASSERT(
       CookiePolicyAllowAll ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextAdapter::CookiePolicyAllowAll));
+        oxide::qt::WebContextProxy::CookiePolicyAllowAll));
   Q_STATIC_ASSERT(
       CookiePolicyBlockAll ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextAdapter::CookiePolicyBlockAll));
+        oxide::qt::WebContextProxy::CookiePolicyBlockAll));
   Q_STATIC_ASSERT(
       CookiePolicyBlockThirdParty ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextAdapter::CookiePolicyBlockThirdParty));
+        oxide::qt::WebContextProxy::CookiePolicyBlockThirdParty));
 
-  return static_cast<CookiePolicy>(d->cookiePolicy());
+  return static_cast<CookiePolicy>(d->proxy()->cookiePolicy());
 }
 
 void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   Q_D(OxideQQuickWebContext);
 
-  oxide::qt::WebContextAdapter::CookiePolicy p =
-      static_cast<oxide::qt::WebContextAdapter::CookiePolicy>(policy);
+  oxide::qt::WebContextProxy::CookiePolicy p =
+      static_cast<oxide::qt::WebContextProxy::CookiePolicy>(policy);
 
-  if (p == d->cookiePolicy()) {
+  if (policy == cookiePolicy()) {
     return;
   }
 
-  d->setCookiePolicy(p);
+  d->proxy()->setCookiePolicy(p);
 
   emit cookiePolicyChanged();
 }
@@ -630,34 +672,36 @@ OxideQQuickWebContext::sessionCookieMode() const {
   Q_STATIC_ASSERT(
       SessionCookieModeEphemeral ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextAdapter::SessionCookieModeEphemeral));
+        oxide::qt::WebContextProxy::SessionCookieModeEphemeral));
   Q_STATIC_ASSERT(
       SessionCookieModePersistent ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextAdapter::SessionCookieModePersistent));
+        oxide::qt::WebContextProxy::SessionCookieModePersistent));
   Q_STATIC_ASSERT(
       SessionCookieModeRestored ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextAdapter::SessionCookieModeRestored));
-  return static_cast<SessionCookieMode>(d->sessionCookieMode());
+        oxide::qt::WebContextProxy::SessionCookieModeRestored));
+  return static_cast<SessionCookieMode>(d->proxy()->sessionCookieMode());
 }
 
 void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.sessionCookieMode once the context is in use";
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext::Cannot set sessionCookieMode once the context "
+        "is in use";
     return;
   }
 
-  oxide::qt::WebContextAdapter::SessionCookieMode m =
-      static_cast<oxide::qt::WebContextAdapter::SessionCookieMode>(mode);
+  oxide::qt::WebContextProxy::SessionCookieMode m =
+      static_cast<oxide::qt::WebContextProxy::SessionCookieMode>(mode);
 
-  if (m == d->sessionCookieMode()) {
+  if (mode == sessionCookieMode()) {
     return;
   }
 
-  d->setSessionCookieMode(m);
+  d->proxy()->setSessionCookieMode(m);
 
   emit sessionCookieModeChanged();
 }
@@ -665,17 +709,17 @@ void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
 bool OxideQQuickWebContext::popupBlockerEnabled() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->popupBlockerEnabled();
+  return d->proxy()->popupBlockerEnabled();
 }
 
 void OxideQQuickWebContext::setPopupBlockerEnabled(bool enabled) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->popupBlockerEnabled() == enabled) {
+  if (popupBlockerEnabled() == enabled) {
     return;
   }
 
-  d->setPopupBlockerEnabled(enabled);
+  d->proxy()->setPopupBlockerEnabled(enabled);
 
   emit popupBlockerEnabledChanged();
 }
@@ -794,17 +838,24 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
 bool OxideQQuickWebContext::devtoolsEnabled() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->devtoolsEnabled();
+  return d->proxy()->devtoolsEnabled();
 }
 
 void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->devtoolsEnabled() == enabled) {
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set devToolsEnabled once the context "
+        "is in use";
     return;
   }
 
-  d->setDevtoolsEnabled(enabled);
+  if (devtoolsEnabled() == enabled) {
+    return;
+  }
+
+  d->proxy()->setDevtoolsEnabled(enabled);
 
   emit devtoolsEnabledChanged();
 }
@@ -812,17 +863,24 @@ void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
 int OxideQQuickWebContext::devtoolsPort() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->devtoolsPort();
+  return d->proxy()->devtoolsPort();
 }
 
 void OxideQQuickWebContext::setDevtoolsPort(int port) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->devtoolsPort() == port) {
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set devToolsPort once the context is "
+        "in use";
     return;
   }
 
-  d->setDevtoolsPort(port);
+  if (devtoolsPort() == port) {
+    return;
+  }
+
+  d->proxy()->setDevtoolsPort(port);
 
   emit devtoolsPortChanged();
 }
@@ -830,17 +888,24 @@ void OxideQQuickWebContext::setDevtoolsPort(int port) {
 QString OxideQQuickWebContext::devtoolsBindIp() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->devtoolsBindIp();
+  return d->proxy()->devtoolsBindIp();
 }
 
 void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->devtoolsBindIp() == bindIp) {
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set devToolsBindIp once the context is "
+        "in use";
     return;
   }
 
-  d->setDevtoolsBindIp(bindIp);
+  if (devtoolsBindIp() == bindIp) {
+    return;
+  }
+
+  d->proxy()->setDevtoolsBindIp(bindIp);
 
   emit devtoolsBindIpChanged();
 }
@@ -862,22 +927,24 @@ OxideQQuickWebContext::cookieManager() const {
 QStringList OxideQQuickWebContext::hostMappingRules() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->hostMappingRules();
+  return d->proxy()->hostMappingRules();
 }
 
 void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.hostMapRules once the context is in use";
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set hostMappingRules once the context "
+        "is in use";
     return; 
   }
 
-  if (rules == d->hostMappingRules()) {
+  if (rules == hostMappingRules()) {
     return;
   }
 
-  d->setHostMappingRules(rules);
+  d->proxy()->setHostMappingRules(rules);
 
   emit hostMappingRulesChanged();
 }
@@ -893,7 +960,7 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   Q_D(OxideQQuickWebContext);
 
   d->allowed_extra_url_schemes_ = schemes;
-  d->setAllowedExtraUrlSchemes(schemes);
+  d->proxy()->setAllowedExtraUrlSchemes(schemes);
 
   emit allowedExtraUrlSchemesChanged();
 }
@@ -901,35 +968,38 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
 int OxideQQuickWebContext::maxCacheSizeHint() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->maxCacheSizeHint();
+  return d->proxy()->maxCacheSizeHint();
 }
 
 void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
   Q_D(OxideQQuickWebContext);
 
+  if (d->proxy()->isInitialized()) {
+    qWarning() <<
+        "OxideQQuickWebContext: Cannot set maxCacheSizeHint once the context "
+        "is in use";
+    return;
+  }
+
   if (size < 0) {
-    qWarning() << "WebContext.maxCacheSizeHint cannot have a negative value";
+    qWarning() <<
+        "OxideQQuickWebContext: maxCacheSizeHint cannot have a negative value";
     return;
   }
 
   static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
   if (size > upper_limit) {
     // To avoid integer overflow.
-    qWarning() << "WebContext.maxCacheSizeHint cannot exceed"
+    qWarning() << "OxideQQuickWebContext: maxCacheSizeHint cannot exceed "
                << upper_limit << "MB";
     return;
   }
 
-  if (d->isInitialized()) {
-    qWarning() << "Cannot set WebContext.maxCacheSizeHint once the context is in use";
+  if (maxCacheSizeHint() == size) {
     return;
   }
 
-  if (d->maxCacheSizeHint() == size) {
-    return;
-  }
-
-  d->setMaxCacheSizeHint(size);
+  d->proxy()->setMaxCacheSizeHint(size);
   emit maxCacheSizeHintChanged();
 }
 

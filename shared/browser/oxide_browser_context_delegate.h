@@ -86,8 +86,10 @@ class BrowserContextDelegate :
   }
 
   // Called on the IO thread
-  virtual void OnBeforeRedirect(net::URLRequest* request,
-                                const GURL& new_location) {}
+  virtual int OnBeforeRedirect(net::URLRequest* request,
+                               const GURL& new_location) {
+    return net::OK;
+  }
 
   // Called on the IO thread
   virtual StoragePermission CanAccessStorage(const GURL& url,

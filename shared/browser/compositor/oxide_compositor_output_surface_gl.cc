@@ -88,8 +88,8 @@ void CompositorOutputSurfaceGL::DiscardBackbuffer() {
 
   while (!returned_buffers_.empty()) {
     BufferData& buffer = returned_buffers_.front();
-    returned_buffers_.pop();
     DiscardBuffer(&buffer);
+    returned_buffers_.pop();
   }
 
   if (fbo_) {
@@ -205,8 +205,8 @@ CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
   DiscardBackbuffer();
   while (!pending_buffers_.empty()) {
     BufferData& buffer = pending_buffers_.front();
-    pending_buffers_.pop_front();
     DiscardBuffer(&buffer);
+    pending_buffers_.pop_front();
   }
 }
 

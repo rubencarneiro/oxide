@@ -22,22 +22,26 @@
 
 #include "oxideqquickwebcontext_p_p.h"
 
-void OxideQQuickUserScriptPrivate::OnScriptLoadFailed() {
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickUserScript,
+                                    oxide::qt::UserScriptProxyHandle);
+
+void OxideQQuickUserScriptPrivate::ScriptLoadFailed() {
   Q_Q(OxideQQuickUserScript);
 
   emit q->scriptLoadFailed();
 }
 
-void OxideQQuickUserScriptPrivate::OnScriptLoaded() {
+void OxideQQuickUserScriptPrivate::ScriptLoaded() {
   Q_Q(OxideQQuickUserScript);
 
   emit q->scriptLoaded();
 }
 
 OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
-    OxideQQuickUserScript* q) :
-    oxide::qt::UserScriptAdapter(q),
-    constructed_(false) {}
+    OxideQQuickUserScript* q)
+    : oxide::qt::UserScriptProxyHandle(
+        oxide::qt::UserScriptProxy::create(this), q),
+      constructed_(false) {}
 
 // static
 OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
@@ -64,7 +68,24 @@ void OxideQQuickUserScript::componentComplete() {
   Q_D(OxideQQuickUserScript);
 
   d->constructed_ = true;
-  d->init(d->url_);
+
+  if (!d->url_.isValid()) {
+    qWarning() <<
+        "OxideQQuickUserScript::componentComplete: url must be set to a "
+        "valid URL";
+    emit scriptLoadFailed();
+    return;
+  }
+
+  if (!d->url_.isLocalFile()) {
+    qWarning() <<
+        "OxideQQuickUserScript::componentComplete: url must be set to a "
+        "local file";
+    emit scriptLoadFailed();
+    return;
+  }
+
+  d->proxy()->init(d->url_);
 }
 
 QUrl OxideQQuickUserScript::url() const {
@@ -77,7 +98,7 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
 
   if (d->constructed_) {
-    qWarning() << "UserScript url is a construct-only parameter";
+    qWarning() << "OxideQQuickUserScript: url is a construct-only parameter";
     return;
   }
 
@@ -92,7 +113,7 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->emulateGreasemonkey();
+  return d->proxy()->emulateGreasemonkey();
 }
 
 void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
@@ -102,14 +123,14 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
     return;
   }
 
-  d->setEmulateGreasemonkey(emulate_greasemonkey);
+  d->proxy()->setEmulateGreasemonkey(emulate_greasemonkey);
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::matchAllFrames() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->matchAllFrames();
+  return d->proxy()->matchAllFrames();
 }
 
 void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
@@ -119,14 +140,14 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
     return;
   }
 
-  d->setMatchAllFrames(match_all_frames);
+  d->proxy()->setMatchAllFrames(match_all_frames);
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::incognitoEnabled() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->incognitoEnabled();
+  return d->proxy()->incognitoEnabled();
 }
 
 void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
@@ -136,14 +157,14 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
     return;
   }
 
-  d->setIncognitoEnabled(incognito_enabled);
+  d->proxy()->setIncognitoEnabled(incognito_enabled);
   emit scriptPropertyChanged();
 }
 
 QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);
 
-  return d->context();
+  return d->proxy()->context();
 }
 
 void OxideQQuickUserScript::setContext(const QUrl& context) {
@@ -153,6 +174,11 @@ void OxideQQuickUserScript::setContext(const QUrl& context) {
     return;
   }
 
-  d->setContext(context);
+  if (!context.isValid()) {
+    qWarning() << "OxideQQuickUserScript: context must be a valid URL";
+    return;
+  }
+
+  d->proxy()->setContext(context);
   emit scriptPropertyChanged();
 }

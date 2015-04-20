@@ -100,7 +100,7 @@ class URLRequestDelegatedJobProxy
   Q_OBJECT
 
  public:
-  URLRequestDelegatedJobProxy(WebContext* context,
+  URLRequestDelegatedJobProxy(WebContextGetter* context_getter,
                               URLRequestDelegatedJob* job,
                               CrossThreadDataStream* stream);
 
@@ -130,7 +130,7 @@ class URLRequestDelegatedJobProxy
   void DoNotifyDidReceiveResponse(size_t size,
                                   const std::string& mime_type);
 
-  scoped_refptr<WebContext> context_;
+  scoped_refptr<WebContextGetter> context_getter_;
   base::WeakPtr<URLRequestDelegatedJob> job_;
 
   scoped_refptr<CrossThreadDataStream> stream_;
@@ -246,7 +246,14 @@ void URLRequestDelegatedJobProxy::DoStart(const std::string& method,
       base::Bind(&URLRequestDelegatedJobProxy::OnDidRead,
                  base::Unretained(this)));
 
-  QNetworkAccessManager* qnam = context_->GetCustomNetworkAccessManager();
+  WebContext* context = context_getter_->GetContext();
+  if (!context) {
+    NotifyStartError(net::URLRequestStatus(net::URLRequestStatus::FAILED,
+                                           net::ERR_FAILED));
+    return;    
+  }
+
+  QNetworkAccessManager* qnam = context->GetCustomNetworkAccessManager();
   if (!qnam) {
     NotifyStartError(net::URLRequestStatus(net::URLRequestStatus::FAILED,
                                            net::ERR_FAILED));
@@ -305,10 +312,10 @@ void URLRequestDelegatedJobProxy::DoNotifyDidReceiveResponse(
 }
 
 URLRequestDelegatedJobProxy::URLRequestDelegatedJobProxy(
-    WebContext* context,
+    WebContextGetter* context_getter,
     URLRequestDelegatedJob* job,
     CrossThreadDataStream* stream)
-    : context_(context),
+    : context_getter_(context_getter),
       job_(job->AsWeakPtr()),
       stream_(stream),
       did_receive_response_(false) {
@@ -451,12 +458,12 @@ void URLRequestDelegatedJob::OnStart() {
 }
 
 URLRequestDelegatedJob::URLRequestDelegatedJob(
-    WebContext* context,
+    WebContextGetter* context_getter,
     net::URLRequest* request,
     net::NetworkDelegate* network_delegate)
     : oxide::URLRequestDelegatedJob(request, network_delegate),
       stream_(new CrossThreadDataStream()),
-      proxy_(new URLRequestDelegatedJobProxy(context, this, stream_.get())),
+      proxy_(new URLRequestDelegatedJobProxy(context_getter, this, stream_.get())),
       read_buf_size_(0) {
   stream_->SetDataAvailableCallback(
       base::Bind(&URLRequestDelegatedJob::OnDataAvailable,

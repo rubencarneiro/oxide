@@ -27,8 +27,46 @@
 
 namespace oxide {
 
-JavaScriptDialogManager* JavaScriptDialogManager::GetInstance() {
-  return Singleton<JavaScriptDialogManager>::get();
+JavaScriptDialogManager::JavaScriptDialogManager() {}
+
+void JavaScriptDialogManager::DialogClosed(
+    content::WebContents* web_contents,
+    JavaScriptDialog* dialog) {
+  DCHECK(web_contents_data_.find(web_contents) != web_contents_data_.end());
+  DCHECK_EQ(dialog, web_contents_data_[web_contents].active);
+
+  web_contents_data_[web_contents].active = nullptr;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, dialog);
+
+  RunNextDialogForContents(web_contents);
+}
+
+void JavaScriptDialogManager::RunNextDialogForContents(
+    content::WebContents* contents) {
+  DCHECK(web_contents_data_.find(contents) != web_contents_data_.end());
+
+  WebContentsData& data = web_contents_data_[contents];
+
+  if (data.active) {
+    return;
+  }
+
+  while (!data.queue.empty()) {
+    JavaScriptDialog* dialog = data.queue.front();
+    data.queue.pop_front();
+    if (dialog->Run()) {
+      data.active = dialog;
+      break;
+    }
+
+    dialog->callback_.Run(dialog->is_before_unload_dialog_, base::string16());
+    delete dialog;
+  }
+
+  if (!data.active) {
+    web_contents_data_.erase(contents);
+  }
 }
 
 void JavaScriptDialogManager::RunJavaScriptDialog(
@@ -38,28 +76,33 @@ void JavaScriptDialogManager::RunJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
-    const content::JavaScriptDialogManager::DialogClosedCallback& callback,
+    const DialogClosedCallback& callback,
     bool* did_suppress_message) {
+  *did_suppress_message = false;
+
   WebView* webview = WebView::FromWebContents(web_contents);
-  JavaScriptDialog* dialog = webview->CreateJavaScriptDialog(
-      javascript_message_type, did_suppress_message);
-  if (!dialog) {
-    callback.Run(false, base::string16());
+  if (!webview) {
+    *did_suppress_message = true;
     return;
   }
+
+  JavaScriptDialog* dialog =
+      webview->CreateJavaScriptDialog(javascript_message_type);
+  if (!dialog) {
+    *did_suppress_message = true;
+    return;
+  }
+
   dialog->web_contents_ = web_contents;
   dialog->origin_url_ = origin_url;
   dialog->accept_lang_ = accept_lang;
   dialog->message_text_ = message_text;
   dialog->default_prompt_text_ = default_prompt_text;
   dialog->callback_ = callback;
-  if (GetActiveDialog(web_contents)) {
-    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
-    queue.push_back(dialog);
-  } else {
-    active_dialogs_[web_contents] = dialog;
-    dialog->Run();
-  }
+
+  web_contents_data_[web_contents].queue.push_back(dialog);
+
+  RunNextDialogForContents(web_contents);
 }
 
 void JavaScriptDialogManager::RunBeforeUnloadDialog(
@@ -68,47 +111,68 @@ void JavaScriptDialogManager::RunBeforeUnloadDialog(
     bool is_reload,
     const DialogClosedCallback& callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
+  if (!webview) {
+    callback.Run(true, base::string16());
+    return;
+  }
+
   JavaScriptDialog* dialog = webview->CreateBeforeUnloadDialog();
   if (!dialog) {
     callback.Run(true, base::string16());
     return;
   }
+
   dialog->web_contents_ = web_contents;
   dialog->message_text_ = message_text;
   dialog->is_reload_ = is_reload;
   dialog->is_before_unload_dialog_ = true;
   dialog->callback_ = callback;
-  if (GetActiveDialog(web_contents)) {
-    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
-    queue.push_back(dialog);
-  } else {
-    active_dialogs_[web_contents] = dialog;
-    dialog->Run();
-  }
+
+  web_contents_data_[web_contents].queue.push_back(dialog);
+
+  RunNextDialogForContents(web_contents);
 }
 
 bool JavaScriptDialogManager::HandleJavaScriptDialog(
     content::WebContents* web_contents,
     bool accept,
     const base::string16* prompt_override) {
-  JavaScriptDialog* dialog = GetActiveDialog(web_contents);
+  if (web_contents_data_.find(web_contents) == web_contents_data_.end()) {
+    return false;
+  }
+
+  JavaScriptDialog* dialog = web_contents_data_[web_contents].active;
   if (!dialog) {
     return false;
   }
+
   dialog->Handle(accept, prompt_override);
   return true;
 }
 
 void JavaScriptDialogManager::CancelActiveAndPendingDialogs(
     content::WebContents* web_contents) {
-  JavaScriptDialog* dialog = GetActiveDialog(web_contents);
-  if (dialog) {
-    dialog->Cancel();
+  if (web_contents_data_.find(web_contents) == web_contents_data_.end()) {
+    return;
   }
-  std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
-  while (!queue.empty()) {
-    queue.front()->Cancel();
+
+  WebContentsData& data = web_contents_data_[web_contents];
+
+  if (data.active) {
+    data.active->Cancel();
+    content::BrowserThread::DeleteSoon(
+        content::BrowserThread::UI, FROM_HERE, data.active);
+    data.active = nullptr;
   }
+
+  while (!data.queue.empty()) {
+    JavaScriptDialog* dialog = data.queue.front();
+    data.queue.pop_front();
+    dialog->callback_.Run(false, base::string16());
+    delete dialog;
+  }
+
+  web_contents_data_.erase(web_contents);
 }
 
 void JavaScriptDialogManager::ResetDialogState(
@@ -116,46 +180,8 @@ void JavaScriptDialogManager::ResetDialogState(
   CancelActiveAndPendingDialogs(web_contents);
 }
 
-JavaScriptDialog* JavaScriptDialogManager::GetActiveDialog(
-    content::WebContents* web_contents) const {
-  std::map<content::WebContents*, JavaScriptDialog*>::const_iterator it;
-  it = active_dialogs_.find(web_contents);
-  if (it == active_dialogs_.end()) {
-    return nullptr;
-  }
-  return it->second;
-}
-
-void JavaScriptDialogManager::OnDialogClosed(
-    content::WebContents* web_contents,
-    JavaScriptDialog* dialog) {
-  DCHECK_EQ(dialog, GetActiveDialog(web_contents));
-  active_dialogs_[web_contents] = nullptr;
-  content::BrowserThread::DeleteSoon(
-      content::BrowserThread::UI, FROM_HERE, dialog);
-  std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
-  if (!queue.empty()) {
-    JavaScriptDialog* next_dialog = queue.front();
-    queue.pop_front();
-    active_dialogs_[web_contents] = next_dialog;
-    next_dialog->Run();
-  }
-}
-
-void JavaScriptDialogManager::OnDialogCancelled(
-    content::WebContents* web_contents,
-    JavaScriptDialog* dialog) {
-  if (dialog == GetActiveDialog(web_contents)) {
-    active_dialogs_[web_contents] = nullptr;
-  } else {
-    std::deque<JavaScriptDialog*>& queue = queues_[web_contents];
-    std::deque<JavaScriptDialog*>::iterator it =
-        std::find(queue.begin(), queue.end(), dialog);
-    DCHECK(it != queue.end());
-    queue.erase(it);
-  }
-  content::BrowserThread::DeleteSoon(
-      content::BrowserThread::UI, FROM_HERE, dialog);
+JavaScriptDialogManager* JavaScriptDialogManager::GetInstance() {
+  return Singleton<JavaScriptDialogManager>::get();
 }
 
 } // namespace oxide

@@ -24,35 +24,35 @@
 
 #include "base/bind.h"
 
-#include "qt/core/glue/oxide_qt_script_message_request_adapter.h"
+#include "qt/core/glue/oxide_qt_script_message_request_proxy_client.h"
 #include "shared/browser/oxide_script_message_request_impl_browser.h"
 
 namespace oxide {
 namespace qt {
 
-ScriptMessageRequest::ScriptMessageRequest(
-    ScriptMessageRequestAdapter* adapter)
-    : adapter_(adapter) {}
-
 void ScriptMessageRequest::ReceiveReplyCallback(const std::string& args) {
   QJsonDocument jsondoc(QJsonDocument::fromJson(
       QByteArray(args.data(), args.length())));
 
-  adapter_->OnReceiveReply(jsondoc.toVariant());
+  client_->ReceiveReply(jsondoc.toVariant());
 }
 
 void ScriptMessageRequest::ReceiveErrorCallback(
     oxide::ScriptMessageRequest::Error error,
     const std::string& msg) {
-  adapter_->OnReceiveError(error, QString::fromStdString(msg));
+  client_->ReceiveError(error, QString::fromStdString(msg));
 }
+
+ScriptMessageRequest::ScriptMessageRequest(
+    ScriptMessageRequestProxyClient* client)
+    : client_(client) {}
 
 ScriptMessageRequest::~ScriptMessageRequest() {}
 
 // static
-ScriptMessageRequest* ScriptMessageRequest::FromAdapter(
-    ScriptMessageRequestAdapter* adapter) {
-  return adapter->request_.data();
+ScriptMessageRequest* ScriptMessageRequest::FromProxyHandle(
+    ScriptMessageRequestProxyHandle* handle) {
+  return static_cast<ScriptMessageRequest*>(handle->proxy_.data());
 }
 
 void ScriptMessageRequest::SetRequest(

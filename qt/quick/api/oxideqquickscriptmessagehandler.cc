@@ -21,17 +21,18 @@
 #include <QQmlEngine>
 #include <QtDebug>
 
-#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
-
 #include "oxideqquickscriptmessage_p.h"
 #include "oxideqquickscriptmessage_p_p.h"
 
-bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
-    oxide::qt::ScriptMessageAdapter* message,
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageHandler,
+                                    oxide::qt::ScriptMessageHandlerProxyHandle);
+
+bool OxideQQuickScriptMessageHandlerPrivate::ReceiveMessage(
+    oxide::qt::ScriptMessageProxy* message,
     QString& error) {
   QJSValueList args;
   args.append(callback_.engine()->newQObject(
-      adapterToQObject<OxideQQuickScriptMessage>(message)));
+      OxideQQuickScriptMessagePrivate::create(message)));
 
   QJSValue rv = callback_.call(args);
   if (rv.isError()) {
@@ -42,15 +43,10 @@ bool OxideQQuickScriptMessageHandlerPrivate::OnReceiveMessage(
   return true;
 }
 
-oxide::qt::ScriptMessageAdapter*
-OxideQQuickScriptMessageHandlerPrivate::CreateScriptMessage() {
-  OxideQQuickScriptMessage* message = new OxideQQuickScriptMessage();
-  return OxideQQuickScriptMessagePrivate::get(message);
-}
-
 OxideQQuickScriptMessageHandlerPrivate::OxideQQuickScriptMessageHandlerPrivate(
     OxideQQuickScriptMessageHandler* q) :
-    oxide::qt::ScriptMessageHandlerAdapter(q) {}
+    oxide::qt::ScriptMessageHandlerProxyHandle(
+      oxide::qt::ScriptMessageHandlerProxy::create(this), q) {}
 
 bool OxideQQuickScriptMessageHandlerPrivate::isActive() {
   Q_Q(OxideQQuickScriptMessageHandler);
@@ -75,9 +71,9 @@ OxideQQuickScriptMessageHandlerPrivate::get(
 }
 
 OxideQQuickScriptMessageHandler::OxideQQuickScriptMessageHandler(
-    QObject* parent) :
-    QObject(parent),
-    d_ptr(new OxideQQuickScriptMessageHandlerPrivate(this)) {}
+    QObject* parent)
+    : QObject(parent),
+      d_ptr(new OxideQQuickScriptMessageHandlerPrivate(this)) {}
 
 OxideQQuickScriptMessageHandler::~OxideQQuickScriptMessageHandler() {
   Q_D(OxideQQuickScriptMessageHandler);
@@ -94,31 +90,31 @@ OxideQQuickScriptMessageHandler::~OxideQQuickScriptMessageHandler() {
 QString OxideQQuickScriptMessageHandler::msgId() const {
   Q_D(const OxideQQuickScriptMessageHandler);
 
-  return d->msgId();
+  return d->proxy()->msgId();
 }
 
 void OxideQQuickScriptMessageHandler::setMsgId(const QString& id) {
   Q_D(OxideQQuickScriptMessageHandler);
 
-  if (id == d->msgId()) {
+  if (id == msgId()) {
     return;
   }
 
-  d->setMsgId(id);
+  d->proxy()->setMsgId(id);
   emit msgIdChanged();
 }
 
 QList<QUrl> OxideQQuickScriptMessageHandler::contexts() const {
   Q_D(const OxideQQuickScriptMessageHandler);
 
-  return d->contexts();
+  return d->proxy()->contexts();
 }
 
 void OxideQQuickScriptMessageHandler::setContexts(
     const QList<QUrl>& contexts) {
   Q_D(OxideQQuickScriptMessageHandler);
 
-  d->setContexts(contexts);
+  d->proxy()->setContexts(contexts);
   emit contextsChanged();
 }
 
@@ -145,9 +141,9 @@ void OxideQQuickScriptMessageHandler::setCallback(const QJSValue& callback) {
   d->callback_ = callback;
 
   if (is_null) {
-    d->detachHandler();
+    d->proxy()->detachHandler();
   } else {
-    d->attachHandler();
+    d->proxy()->attachHandler();
   }
 
   emit callbackChanged();

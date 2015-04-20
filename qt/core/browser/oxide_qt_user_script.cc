@@ -19,36 +19,18 @@
 
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
+#include "url/gurl.h"
 
-#include "qt/core/glue/oxide_qt_user_script_adapter.h"
+#include "qt/core/glue/oxide_qt_user_script_proxy_client.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
 #include "shared/common/oxide_file_utils.h"
 
 namespace oxide {
 namespace qt {
-
-UserScript::UserScript(UserScriptAdapter* adapter)
-    : adapter_(adapter),
-      state_(Constructing) {}
-
-void UserScript::Init(const base::FilePath& path) {
-  DCHECK_EQ(state_, Constructing);
-
-  state_ = Loading;
-
-  load_job_.reset(oxide::FileUtils::GetFileContents(
-      content::BrowserThread::GetMessageLoopProxyForThread(
-        content::BrowserThread::FILE).get(),
-      path,
-      base::Bind(&UserScript::OnGotFileContents, base::Unretained(this))));
-  if (!load_job_) {
-    state_ = FailedLoad;
-    adapter_->OnScriptLoadFailed();
-  }
-}
 
 void UserScript::OnGotFileContents(base::File::Error error,
                                    const char* data,
@@ -57,7 +39,7 @@ void UserScript::OnGotFileContents(base::File::Error error,
 
   if (error != base::File::FILE_OK) {
     state_ = FailedLoad;
-    adapter_->OnScriptLoadFailed();
+    client_->ScriptLoadFailed();
     return;
   }
 
@@ -66,46 +48,65 @@ void UserScript::OnGotFileContents(base::File::Error error,
   oxide::UserScriptMaster::ParseMetadata(&impl_);
   state_ = Loaded;
 
-  adapter_->OnScriptLoaded();
+  client_->ScriptLoaded();
 }
+
+bool UserScript::emulateGreasemonkey() const {
+  return impl_.emulate_greasemonkey();
+}
+
+void UserScript::setEmulateGreasemonkey(bool emulate) {
+  impl_.set_emulate_greasemonkey(emulate);
+}
+
+bool UserScript::matchAllFrames() const {
+  return impl_.match_all_frames();
+}
+
+void UserScript::setMatchAllFrames(bool match) {
+  impl_.set_match_all_frames(match);
+}
+
+bool UserScript::incognitoEnabled() const {
+  return impl_.incognito_enabled();
+}
+
+void UserScript::setIncognitoEnabled(bool enabled) {
+  impl_.set_incognito_enabled(enabled);
+}
+
+QUrl UserScript::context() const {
+  return QUrl(QString::fromStdString(impl_.context().spec()));
+}
+
+void UserScript::setContext(const QUrl& context) {
+  impl_.set_context(GURL(context.toString().toStdString()));
+}
+
+void UserScript::init(const QUrl& url) {
+  DCHECK_EQ(state_, Constructing);
+  state_ = Loading;
+
+  load_job_.reset(oxide::FileUtils::GetFileContents(
+      content::BrowserThread::GetMessageLoopProxyForThread(
+        content::BrowserThread::FILE).get(),
+      base::FilePath(url.toLocalFile().toStdString()),
+      base::Bind(&UserScript::OnGotFileContents, base::Unretained(this))));
+  if (!load_job_) {
+    state_ = FailedLoad;
+    client_->ScriptLoadFailed();
+  }
+}
+
+UserScript::UserScript(UserScriptProxyClient* client)
+    : client_(client),
+      state_(Constructing) {}
 
 UserScript::~UserScript() {}
 
 // static
-UserScript* UserScript::FromAdapter(UserScriptAdapter* adapter) {
-  return adapter->script_.data();
-}
-
-bool UserScript::GetEmulateGreasemonkey() const {
-  return impl_.emulate_greasemonkey();
-}
-
-void UserScript::SetEmulateGreasemonkey(bool emulate) {
-  impl_.set_emulate_greasemonkey(emulate);
-}
-
-bool UserScript::GetMatchAllFrames() const {
-  return impl_.match_all_frames();
-}
-
-void UserScript::SetMatchAllFrames(bool match) {
-  impl_.set_match_all_frames(match);
-}
-
-bool UserScript::GetIncognitoEnabled() const {
-  return impl_.incognito_enabled();
-}
-
-void UserScript::SetIncognitoEnabled(bool enabled) {
-  impl_.set_incognito_enabled(enabled);
-}
-
-GURL UserScript::GetContext() const {
-  return impl_.context();
-}
-
-void UserScript::SetContext(const GURL& context) {
-  impl_.set_context(context);
+UserScript* UserScript::FromProxyHandle(UserScriptProxyHandle* handle) {
+  return static_cast<UserScript*>(handle->proxy_.data());
 }
 
 } // namespace qt

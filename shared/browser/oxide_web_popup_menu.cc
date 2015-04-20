@@ -19,6 +19,7 @@
 
 #include "base/logging.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
+#include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 
@@ -30,43 +31,37 @@ void WebPopupMenu::RenderFrameDeleted(content::RenderFrameHost* rfh) {
   if (rfh != render_frame_host_) {
     return;
   }
-  render_frame_host_ = nullptr;
-  Hide();
+
+  Close();
 }
 
-WebPopupMenu::WebPopupMenu(content::RenderFrameHost* rfh) :
-    content::WebContentsObserver(content::WebContents::FromRenderFrameHost(rfh)),
-    popup_was_hidden_(false),
-    render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)) {}
+void WebPopupMenu::Hide() {}
+
+WebPopupMenu::WebPopupMenu(content::RenderFrameHost* rfh)
+    : content::WebContentsObserver(content::WebContents::FromRenderFrameHost(rfh)),
+      render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)),
+      weak_ptr_factory_(this) {}
 
 WebPopupMenu::~WebPopupMenu() {
-  if (!popup_was_hidden_) {
-    render_frame_host_->DidCancelPopupMenu();
-  }
+  DCHECK(!render_frame_host_);
 }
 
-void WebPopupMenu::Hide() {
-  if (popup_was_hidden_) {
-    return;
-  }
-  popup_was_hidden_ = true;
-  OnHide();
+void WebPopupMenu::Close() {
+  weak_ptr_factory_.InvalidateWeakPtrs();
+  Hide();
+  render_frame_host_ = nullptr;
+  content::BrowserThread::DeleteSoon(
+      content::BrowserThread::UI, FROM_HERE, this);
 }
 
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
-  DCHECK(!popup_was_hidden_);
   render_frame_host_->DidSelectPopupMenuItems(selected_indices);
-  Hide();
+  Close();
 }
 
 void WebPopupMenu::Cancel() {
-  DCHECK(!popup_was_hidden_);
   render_frame_host_->DidCancelPopupMenu();
-  Hide();
-}
-
-bool WebPopupMenu::WasHidden() const {
-  return popup_was_hidden_;
+  Close();
 }
 
 } // namespace oxide

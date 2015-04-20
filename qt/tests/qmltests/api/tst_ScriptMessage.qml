@@ -10,6 +10,7 @@ TestWebView {
   height: 200
 
   property QtObject lastMessageFrameSource: null
+  property QtObject lastMessage: null
 
   messageHandlers: [
     ScriptMessageHandler {
@@ -34,6 +35,13 @@ TestWebView {
       callback: function(msg) {
         webView.lastMessageFrameSource = msg.frame;
       }
+    },
+    ScriptMessageHandler {
+      msgId: "TEST-ASYNC-REPLY"
+      contexts: [ "oxide://testutils/" ]
+      callback: function(msg) {
+        lastMessage = msg;
+      }
     }
   ]
 
@@ -44,6 +52,7 @@ TestWebView {
 
     function init() {
       webView.lastMessageFrameSource = null;
+      webView.lastMessage = null;
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -85,6 +94,24 @@ TestWebView {
 
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
+    }
+
+    function test_ScriptMessage4_async_response() {
+      var res = null
+      var req = webView.rootFrame.sendMessage("oxide://testutils/",
+                                              "SEND-MESSAGE-TO-SELF", 
+                                              { id: "TEST-ASYNC-REPLY",
+                                                args: { in: 10 }});
+      req.onreply = function(r) {
+        res = r.response;
+      };
+
+      webView.waitFor(function() { return !!webView.lastMessage; });
+      compare(webView.lastMessage.frame, webView.rootFrame);
+
+      webView.lastMessage.reply({ out: 10 });
+      webView.waitFor(function() { return !!res; });
+      compare(res.out, 10);
     }
   }
 }

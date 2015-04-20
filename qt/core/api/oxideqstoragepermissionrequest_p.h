@@ -31,7 +31,7 @@ class OxideQStoragePermissionRequestPrivate final {
   static OxideQStoragePermissionRequestPrivate* get(
       OxideQStoragePermissionRequest* q);
 
-  oxide::StoragePermission* permission;
+  oxide::StoragePermission permission;
  
  private:
   friend class OxideQStoragePermissionRequest;
