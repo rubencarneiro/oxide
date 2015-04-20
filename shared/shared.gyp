@@ -102,6 +102,7 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
             ]
@@ -119,6 +120,7 @@
           'action_name': 'repack_oxide_200_percent',
           'variables': {
             'pak_inputs': [
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_200_percent.pak',
             ]
