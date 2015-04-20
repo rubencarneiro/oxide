@@ -508,6 +508,8 @@
           ],
           'dependencies': [
             'mediahub_lib',
+            '<(DEPTH)/media/media.gyp:media',
+            '<(DEPTH)/media/blink/media_blink.gyp:media_blink',
           ],
         }],
         ['target_arch=="arm"', {
