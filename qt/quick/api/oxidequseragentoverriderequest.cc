@@ -20,7 +20,6 @@
 
 OxideQUserAgentOverrideRequestPrivate::OxideQUserAgentOverrideRequestPrivate(
     const QUrl& url) :
-    did_override(false),
     url_(url) {}
 
 OxideQUserAgentOverrideRequestPrivate::~OxideQUserAgentOverrideRequestPrivate() {}
@@ -53,6 +52,5 @@ void OxideQUserAgentOverrideRequest::setUserAgentOverride(
     const QString& user_agent) {
   Q_D(OxideQUserAgentOverrideRequest);
 
-  d->did_override = true;
   d->user_agent = user_agent;
 }

@@ -100,9 +100,8 @@ class BrowserContextDelegate :
   }
 
   // Called on the IO thread
-  virtual bool GetUserAgentOverride(const GURL& url,
-                                    std::string* user_agent) {
-    return false;
+  virtual std::string GetUserAgentOverride(const GURL& url) {
+    return std::string();
   }
 
   virtual bool IsCustomProtocolHandlerRegistered(

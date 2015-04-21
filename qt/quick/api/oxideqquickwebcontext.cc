@@ -84,7 +84,7 @@ class WebContextIODelegate : public oxide::qt::WebContextProxyClient::IOClient {
   void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) override;
   void HandleStoragePermissionRequest(
       OxideQStoragePermissionRequest* req) override;
-  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) override;
+  QString GetUserAgentOverride(const QUrl& url) override;
 
   QMutex lock;
 
@@ -149,28 +149,23 @@ void WebContextIODelegate::HandleStoragePermissionRequest(
   delegate->CallEntryPointInWorker("onStoragePermissionRequest", req);
 }
 
-bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
-                                                QString* user_agent) {
+QString WebContextIODelegate::GetUserAgentOverride(const QUrl& url) {
   QSharedPointer<IOThreadController> delegate;
   {
     QMutexLocker locker(&lock);
     delegate = user_agent_override_delegate.toStrongRef();
   }
   if (!delegate) {
-    return false;
+    return QString();
   }
 
-  bool did_override = false;
-
   OxideQUserAgentOverrideRequest req(url);
-
   delegate->CallEntryPointInWorker("onGetUserAgentOverride", &req);
 
   OxideQUserAgentOverrideRequestPrivate* p =
       OxideQUserAgentOverrideRequestPrivate::get(&req);
-  *user_agent = p->user_agent;
 
-  return p->did_override;
+  return p->user_agent;
 }
 
 } // namespace qquick

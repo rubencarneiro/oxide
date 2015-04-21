@@ -104,17 +104,15 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
         base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
   }
 
-  GURL u = url;
-
   // Strip username / password / fragment identifier if they exist
-  if (u.has_password() || u.has_username() || u.has_ref()) {
-    GURL::Replacements rep;
-    rep.ClearUsername();
-    rep.ClearPassword();
-    rep.ClearRef();
-    u = u.ReplaceComponents(rep);
-  }
+  GURL::Replacements rep;
+  rep.ClearUsername();
+  rep.ClearPassword();
+  rep.ClearRef();
 
+  GURL u = url.ReplaceComponents(rep);
+
+  // URL's longer than GetMaxURLChars can't be serialized.
   // Strip query if we are above the max number of chars
   if (u.spec().size() > content::GetMaxURLChars() &&
       u.has_query()) {
@@ -128,20 +126,13 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
     u = u.GetOrigin();
   }
 
-  // Not sure we should ever hit this, but in any case - there
-  // isn't much more we can do now
   if (u.spec().size() > content::GetMaxURLChars()) {
     return std::string();
   }
 
-  bool overridden = false;
   std::string user_agent;
-
-  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
-      u, &user_agent, &overridden));
-  if (!overridden) {
-    return std::string();
-  }
+  content::RenderThread::Get()->Send(
+      new OxideHostMsg_GetUserAgentOverride(u, &user_agent));
 
   return user_agent;
 }
