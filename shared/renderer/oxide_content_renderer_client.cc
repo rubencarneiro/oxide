@@ -20,8 +20,11 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "base/strings/stringprintf.h"
 #include "cc/trees/layer_tree_settings.h"
+#include "content/public/common/url_constants.h"
 #include "content/public/common/url_utils.h"
+#include "content/public/common/user_agent.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
@@ -30,6 +33,7 @@
 #include "third_party/WebKit/public/web/WebView.h"
 #include "ui/native_theme/native_theme_switches.h"
 
+#include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 
@@ -95,6 +99,11 @@ void ContentRendererClient::RenderViewCreated(
 
 std::string ContentRendererClient::GetUserAgentOverrideForURL(
     const GURL& url) {
+  if (url.scheme() == content::kChromeUIScheme) {
+    return content::BuildUserAgentFromProduct(
+        base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+  }
+
   GURL u = url;
 
   // Strip username / password / fragment identifier if they exist
