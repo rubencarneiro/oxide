@@ -79,7 +79,12 @@ QVariant OxideQQuickScriptMessage::args() const {
 void OxideQQuickScriptMessage::reply(const QVariant& args) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->proxy()->reply(args);
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->proxy()->reply(aux);
 }
 
 void OxideQQuickScriptMessage::error(const QString& msg) {
