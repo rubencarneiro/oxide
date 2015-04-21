@@ -85,10 +85,10 @@ TestWebView {
               "http://testsuite/empty.html", "Invalid documentURI for child frame");
 
       _verify_worker_messages([
-        { url: "http://testsuite/empty.html", method: "GET", requestCancelled: false, redirectUrl: "", isMainFrame: true },
-        { url: "http://testsuite/tst_NetworkCallbackEvents1.html", method: "GET", requestCancelled: false, redirectUrl: "", isMainFrame: true },
-        { url: "http://testsuite/tst_NetworkCallbackEvents1_foo.html", method: "GET", requestCancelled: false, redirectUrl: "", isMainFrame: false },
-        { url: "http://testsuite/empty.html", method: "GET", requestCancelled: false, redirectUrl: "", isMainFrame: false }
+        { url: "http://testsuite/empty.html", method: "GET", requestCancelled: false, redirectUrl: undefined, isMainFrame: true },
+        { url: "http://testsuite/tst_NetworkCallbackEvents1.html", method: "GET", requestCancelled: false, redirectUrl: undefined, isMainFrame: true },
+        { url: "http://testsuite/tst_NetworkCallbackEvents1_foo.html", method: "GET", requestCancelled: false, redirectUrl: undefined, isMainFrame: false },
+        { url: "http://testsuite/empty.html", method: "GET", requestCancelled: false, redirectUrl: undefined, isMainFrame: false }
       ]);
 
       _verify_load_events([
