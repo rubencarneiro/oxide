@@ -1,3 +1,4 @@
+add-oxide-classes-to-thread-restrictions-friends.patch
 port/native_web_keyboard_event.patch
 port/power_save_blocker.patch
 port/web_contents_view.patch
@@ -12,7 +13,6 @@ add-oxide-messages.patch
 add-oxide-resources.patch
 gpu-thread-shim.patch
 arm-icu.patch
-arm-neon.patch
 only-use-gl-create-context-robustness-when-possible.patch
 dont-initialize-gl-more-than-once.patch
 expose-extra-properties-for-should-create-webcontents.patch
@@ -26,9 +26,7 @@ add-limit-max-decoded-image-bytes-switch.patch
 customize-gesture-fling-curve.patch
 mediahub-support.patch
 allow-os-override-for-gpu-manager.patch
-viewport-min-width.patch
-fix-top-controls-divide-by-zero.patch
 use-android-style-overlay-scrollbars.patch
 allow-render-widget-compositor-settings-override.patch
-enable-accelerated-canvas-on-krillin.patch
 pulse-audio-role.patch
+enable-accelerated-canvas-on-arale.patch

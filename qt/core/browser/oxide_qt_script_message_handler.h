@@ -20,9 +20,9 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/macros.h"
 
+#include "qt/core/glue/oxide_qt_script_message_handler_proxy.h"
 #include "shared/common/oxide_script_message_handler.h"
 
 namespace oxide {
@@ -31,35 +31,31 @@ class ScriptMessage;
 
 namespace qt {
 
-class ScriptMessageHandlerAdapter;
+class ScriptMessageHandlerProxyClient;
 
-class ScriptMessageHandler final {
+class ScriptMessageHandler : public ScriptMessageHandlerProxy {
  public:
-  ~ScriptMessageHandler();
+  ScriptMessageHandler(ScriptMessageHandlerProxyClient* client);
+  ~ScriptMessageHandler() override;
 
-  static ScriptMessageHandler* FromAdapter(
-      ScriptMessageHandlerAdapter* adapter);
+  static ScriptMessageHandler* FromProxyHandle(
+      ScriptMessageHandlerProxyHandle* handle);
 
   const oxide::ScriptMessageHandler* handler() const { return &handler_; }
 
-  void AttachHandler();
-  void DetachHandler();
-
-  std::string GetMsgId() const;
-  void SetMsgId(const std::string& msg_id);
-
-  const std::vector<GURL>& GetContexts() const;
-  void SetContexts(const std::vector<GURL>& contexts);
-
  private:
-  friend class ScriptMessageHandlerAdapter;
-
-  ScriptMessageHandler(ScriptMessageHandlerAdapter* adapter);
-
   bool ReceiveMessageCallback(oxide::ScriptMessage* message,
                               std::string* error_desc);
 
-  ScriptMessageHandlerAdapter* adapter_;
+  // ScriptMessageHandlerProxy implementation
+  QString msgId() const override;
+  void setMsgId(const QString& id) override;
+  QList<QUrl> contexts() const override;
+  void setContexts(const QList<QUrl>& contexts) override;
+  void attachHandler() override;
+  void detachHandler() override;
+
+  ScriptMessageHandlerProxyClient* client_;
   oxide::ScriptMessageHandler handler_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessageHandler);

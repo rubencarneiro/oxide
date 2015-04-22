@@ -36,15 +36,16 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickwebview.cc
     api/oxidequseragentoverriderequest.cc
     oxide_qquick_accelerated_frame_node.cc
-    oxide_qquick_alert_dialog_delegate.cc
-    oxide_qquick_before_unload_dialog_delegate.cc
-    oxide_qquick_confirm_dialog_delegate.cc
-    oxide_qquick_file_picker_delegate.cc
+    oxide_qquick_alert_dialog.cc
+    oxide_qquick_before_unload_dialog.cc
+    oxide_qquick_confirm_dialog.cc
+    oxide_qquick_file_picker.cc
+    oxide_qquick_image_frame_node.cc
     oxide_qquick_init.cc
-    oxide_qquick_javascript_dialog_delegate.cc
-    oxide_qquick_prompt_dialog_delegate.cc
+    oxide_qquick_javascript_dialog.cc
+    oxide_qquick_prompt_dialog.cc
     oxide_qquick_software_frame_node.cc
-    oxide_qquick_web_popup_menu_delegate.cc
+    oxide_qquick_web_popup_menu.cc
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})

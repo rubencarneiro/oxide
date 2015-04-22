@@ -22,7 +22,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  #include "content/browser/loader/stream_resource_handler.h"
  #include "content/public/browser/content_browser_client.h"
  #include "content/public/browser/download_item.h"
-@@ -339,16 +340,46 @@ bool BufferedResourceHandler::SelectNext
+@@ -349,16 +350,41 @@ bool BufferedResourceHandler::SelectNext
        *defer = true;
        return true;
      }
@@ -33,30 +33,25 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
  
 +  if (host_->delegate()) {
 +    std::string disposition;
-+    request()->GetResponseHeaderByName(
-+        "content-disposition", &disposition);
-+    net::HttpContentDisposition
-+        content_disposition(disposition, std::string());
++    request()->GetResponseHeaderByName("content-disposition", &disposition);
++    net::HttpContentDisposition content_disposition(disposition,
++                                                    std::string());
 +    ResourceRequestInfoImpl* info = GetRequestInfo();
 +    if (!host_->delegate()->ShouldDownloadUrl(
 +            request()->url(),
 +            request()->first_party_for_cookies(),
-+	    info->HasUserGesture(),
-+	    !disposition.empty() &&
-+  	      (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME)
-+  	        ? base::UTF8ToUTF16(content_disposition.filename())
-+ 	        : base::string16(),
-+	    false,
-+	    Referrer(GURL(request()->referrer()), info->GetReferrerPolicy()),
-+	    response_->head.mime_type,
-+	    info->GetChildID(),
-+	    info->GetRouteID(),
-+	    info->GetContext())) {
++            info->HasUserGesture(),
++            !disposition.empty() && (content_disposition.parse_result_flags() & net::HttpContentDisposition::HAS_FILENAME) ?
++              base::UTF8ToUTF16(content_disposition.filename()) : base::string16(),
++            false,
++            Referrer(GURL(request()->referrer()), info->GetReferrerPolicy()),
++            response_->head.mime_type,
++            info->GetChildID(),
++            info->GetRouteID(),
++            info->GetContext())) {
 +      request()->Cancel();
 +      Cancel();
-+      LOG(INFO) << "Download request for "
-+		<< request()->url().GetContent()
-+		<< " got cancelled by embedder";
++      LOG(INFO) << "Download request for " << request()->url().GetContent() << " got cancelled by embedder";
 +      return false;
 +    }
 +  }
@@ -72,7 +67,7 @@ diff --git a/content/browser/loader/buffered_resource_handler.cc b/content/brows
 diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/browser/loader/resource_dispatcher_host_impl.cc
 --- a/content/browser/loader/resource_dispatcher_host_impl.cc
 +++ b/content/browser/loader/resource_dispatcher_host_impl.cc
-@@ -511,16 +511,33 @@ DownloadInterruptReason ResourceDispatch
+@@ -599,16 +599,33 @@ DownloadInterruptReason ResourceDispatch
      scoped_ptr<DownloadSaveInfo> save_info,
      uint32 download_id,
      const DownloadStartedCallback& started_callback) {

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -84,9 +84,7 @@ class WebFrame : public ScriptMessageTarget {
   }
 
   // Set the active RenderFrameHost for this WebFrame
-  void set_render_frame_host(content::RenderFrameHost* render_frame_host) {
-    render_frame_host_ = render_frame_host;
-  }
+  void SetRenderFrameHost(content::RenderFrameHost* render_frame_host);
 
   // Return the number of immediate children of this frame
   size_t GetChildCount() const;
@@ -131,6 +129,10 @@ class WebFrame : public ScriptMessageTarget {
   // is called, which will typically then destroy its publicly exposed
   // WebFrame
   void WillDestroy();
+
+  // Delete this WebFrame. Called after WillDestroyFrame and can be overridden
+  // by the implementation
+  virtual void Delete();
 
   // Add |child| to this frame, calling OnChildAdded
   void AddChild(WebFrame* child);

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/memory/ref_counted.h"
-#include "content/public/browser/content_browser_client.h"
+#include "base/macros.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
 
 namespace content {
@@ -36,59 +33,55 @@ class CookieStore;
 
 namespace oxide {
 
-class ResourceDispatcherHostDelegate :
-    public content::ResourceDispatcherHostDelegate {
+class ResourceDispatcherHostDelegate
+    : public content::ResourceDispatcherHostDelegate {
  public:
-   ~ResourceDispatcherHostDelegate() {}
-
-  virtual bool ShouldDownloadUrl(
-      const GURL& url,
-      const GURL& first_party_url,
-      bool is_content_initiated,
-      const base::string16& suggested_name,
-      const bool use_prompt,
-      const content::Referrer& referrer,
-      const std::string& mime_type,
-      int render_process_id,
-      int render_view_id,
-      content::ResourceContext* resource_context) final;
-
-  virtual bool HandleExternalProtocol(
-       const GURL& url,
-       int child_id,
-       int route_id) final;
+  ResourceDispatcherHostDelegate();
+  ~ResourceDispatcherHostDelegate() override;
 
  private:
+  struct DownloadRequestParams;
 
-  struct DownloadRequestParams {
-    GURL url;
-    bool is_content_initiated;
-    base::string16 suggested_name;
-    bool use_prompt;
-    GURL referrer;
-    std::string mime_type;
-    int render_process_id;
-    int render_view_id;
-  };
-
-  void DispatchDownloadRequest(
-      const GURL& url,
-      const GURL& first_party_url,
-      bool is_content_initiated,
-      const base::string16& suggested_name,
-      const bool use_prompt,
-      const content::Referrer& referrer,
-      const std::string& mime_type,
-      int render_process_id,
-      int render_view_id,
-      content::ResourceContext* resource_context);
+  void DispatchDownloadRequest(const GURL& url,
+                               const GURL& first_party_url,
+                               bool is_content_initiated,
+                               const base::string16& suggested_name,
+                               const bool use_prompt,
+                               const content::Referrer& referrer,
+                               const std::string& mime_type,
+                               int render_process_id,
+                               int render_view_id,
+                               content::ResourceContext* resource_context);
 
   static void DispatchDownloadRequestWithCookies(
-      const DownloadRequestParams & params,
+      const DownloadRequestParams& params,
       const std::string& cookies);
 
   net::CookieStore* GetCookieStoreForContext(
       content::ResourceContext* resource_context);
+
+  // content::ResourceDispatcherHostDelegate implementation
+  void RequestBeginning(
+      net::URLRequest* request,
+      content::ResourceContext* resource_context,
+      content::AppCacheService* appcache_service,
+      content::ResourceType resource_type,
+      ScopedVector<content::ResourceThrottle>* throttles) override;
+  bool HandleExternalProtocol(const GURL& url,
+                              int child_id,
+                              int route_id) override;
+  bool ShouldDownloadUrl(const GURL& url,
+                         const GURL& first_party_url,
+                         bool is_content_initiated,
+                         const base::string16& suggested_name,
+                         const bool use_prompt,
+                         const content::Referrer& referrer,
+                         const std::string& mime_type,
+                         int render_process_id,
+                         int render_view_id,
+                         content::ResourceContext* resource_context) override;
+
+  DISALLOW_COPY_AND_ASSIGN(ResourceDispatcherHostDelegate);
 };
 
 } // namespace oxide

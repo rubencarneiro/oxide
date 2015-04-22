@@ -1,0 +1,32 @@
+# Description: Enable GPU raster / accelerated canvas on Arale
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/gpu/config/software_rendering_list_json.cc b/gpu/config/software_rendering_list_json.cc
+--- a/gpu/config/software_rendering_list_json.cc
++++ b/gpu/config/software_rendering_list_json.cc
+@@ -1128,16 +1128,25 @@ LONG_STRING_CONST(
+       "os": {
+         "type": "android",
+         "version": {
+           "op": "<",
+           "value": "5.0"
+         }
+       },
+       "gl_renderer": "PowerVR Rogue.*",
++      "exceptions": [
++        {
++          "driver_version": {
++            "op": ">=",
++            "style": "lexical",
++            "value": "1.3"
++          }
++        }
++      ],
+       "features": [
+         "accelerated_2d_canvas",
+         "gpu_rasterization"
+       ]
+     },
+     {
+       "id": 105,
+       "description": "GPU raster broken on PowerVR SGX even on Lollipop",

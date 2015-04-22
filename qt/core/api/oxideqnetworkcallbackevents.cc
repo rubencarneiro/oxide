@@ -26,7 +26,7 @@ OxideQNetworkCallbackEventPrivate::OxideQNetworkCallbackEventPrivate(
     const QString& method,
     const QString& referrer,
     bool isMainFrame) :
-    request_cancelled(nullptr),
+    request_cancelled(false),
     url_(url),
     method_(method),
     referrer_(referrer),
@@ -39,8 +39,7 @@ OxideQBeforeURLRequestEventPrivate::OxideQBeforeURLRequestEventPrivate(
     const QString& method,
     const QString& referrer,
     bool isMainFrame) :
-    OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame),
-    new_url(nullptr) {}
+    OxideQNetworkCallbackEventPrivate(url, method, referrer, isMainFrame) {}
 
 OxideQBeforeURLRequestEventPrivate::~OxideQBeforeURLRequestEventPrivate() {}
 
@@ -116,21 +115,13 @@ QString OxideQNetworkCallbackEvent::referrer() const {
 bool OxideQNetworkCallbackEvent::requestCancelled() const {
   Q_D(const OxideQNetworkCallbackEvent);
 
-  if (!d->request_cancelled) {
-    return false;
-  }
-
-  return *(d->request_cancelled);
+  return d->request_cancelled;
 }
 
 void OxideQNetworkCallbackEvent::cancelRequest() {
   Q_D(OxideQNetworkCallbackEvent);
 
-  if (!d->request_cancelled) {
-    return;
-  }
-
-  *(d->request_cancelled) = true;
+  d->request_cancelled = true;
 }
 
 OxideQBeforeURLRequestEvent::OxideQBeforeURLRequestEvent(
@@ -147,21 +138,13 @@ OxideQBeforeURLRequestEvent::~OxideQBeforeURLRequestEvent() {}
 QUrl OxideQBeforeURLRequestEvent::redirectUrl() const {
   Q_D(const OxideQBeforeURLRequestEvent);
 
-  if (!d->new_url) {
-    return QUrl();
-  }
-
-  return QUrl(QString::fromStdString(d->new_url->spec()));
+  return d->new_url;
 }
 
 void OxideQBeforeURLRequestEvent::setRedirectUrl(const QUrl& url) {
   Q_D(OxideQBeforeURLRequestEvent);
 
-  if (!d->new_url) {
-    return;
-  }
-
-  *(d->new_url) = GURL(url.toString().toStdString());
+  d->new_url = url;
 }
 
 OxideQBeforeSendHeadersEvent::OxideQBeforeSendHeadersEvent(

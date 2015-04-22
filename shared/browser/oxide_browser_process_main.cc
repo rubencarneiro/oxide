@@ -51,7 +51,7 @@
 #include "crypto/nss_util.h"
 #endif
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
-#include "gin/public/isolate_holder.h"
+#include "gin/v8_initializer.h"
 #endif
 #include "gpu/command_buffer/service/gpu_switches.h"
 #include "ipc/ipc_descriptors.h"
@@ -240,9 +240,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // Remove this when we implement a selection API (see bug #1324292)
   command_line->AppendSwitch(switches::kDisableTouchEditing);
 
-  command_line->AppendSwitch(
-      cc::switches::kEnableTopControlsPositionCalculation);
-
   if (gl_impl == gfx::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
     command_line->AppendSwitch(switches::kDisableGpu);
@@ -302,9 +299,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
-  if (IsEnvironmentOptionEnabled("EXPERIMENTAL_ENABLE_GTALK_PLUGIN")) {
-    command_line->AppendSwitch(switches::kEnableGoogleTalkPlugin);
-  }
 
   if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);
@@ -325,11 +319,7 @@ void AddFormFactorSpecificCommandLineArguments() {
 
   FormFactor form_factor = GetFormFactorHint();
 
-  if (form_factor == FORM_FACTOR_DESKTOP) {
-    // Pinch-viewport is not supported on desktop yet
-    // see https://launchpad.net/bugs/1426567 and https://launchpad.net/bugs/1408686
-    command_line->AppendSwitch(cc::switches::kDisablePinchVirtualViewport);
-  } else {
+  if (form_factor != FORM_FACTOR_DESKTOP) {
     command_line->AppendSwitch(switches::kEnableViewport);
     command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
@@ -446,7 +436,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 #if defined(V8_USE_EXTERNAL_STARTUP_DATA)
-  CHECK(gin::IsolateHolder::LoadV8Snapshot());
+  CHECK(gin::V8Initializer::LoadV8Snapshot());
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();

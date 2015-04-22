@@ -36,7 +36,8 @@ const int32* SurfaceFactoryOzoneOxide::GetEGLSurfaceProperties(
   // This detection is a bit of a hack. Not sure if there's a better way
   // to do this?
   char* egl_platform = getenv("EGL_PLATFORM");
-  if (!egl_platform || strcmp(egl_platform, "mir") != 0) {
+  if (!egl_platform || 
+        ((strcmp(egl_platform, "mir") != 0) && (strcmp(egl_platform, "drm") != 0))) {
     return desired_list;
   }
  

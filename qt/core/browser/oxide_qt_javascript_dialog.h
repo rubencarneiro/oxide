@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,30 +25,39 @@
 #include <QString>
 #include <QUrl>
 
+#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "shared/browser/oxide_javascript_dialog.h"
 
 namespace oxide {
 namespace qt {
 
-class JavaScriptDialogDelegate;
+class JavaScriptDialogProxy;
 
-class JavaScriptDialog final : public oxide::JavaScriptDialog {
+class JavaScriptDialog : public oxide::JavaScriptDialog,
+                         public JavaScriptDialogProxyClient {
  public:
-  JavaScriptDialog(JavaScriptDialogDelegate* delegate,
-                   bool* did_suppress_message);
+  JavaScriptDialog();
 
-  void Run() final;
-  void Handle(bool accept, const base::string16* prompt_override) final;
-
-  QUrl originUrl() const;
-  QString acceptLang() const;
-  QString messageText() const;
-  QString defaultPromptText() const;
+  void SetProxy(JavaScriptDialogProxy* proxy);
 
  private:
-  scoped_ptr<JavaScriptDialogDelegate> delegate_;
+  ~JavaScriptDialog() override;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(JavaScriptDialog);
+  // oxide::JavaScriptDialog implementation
+  bool Run() override;
+  void Hide() override;
+  void Handle(bool accept, const base::string16* prompt_override) override;
+
+  // JavaScriptDialogProxyClient implementation
+  void close(bool accept, const QString& user_input = QString()) override;
+  QUrl originUrl() const override;
+  QString acceptLang() const override;
+  QString messageText() const override;
+  QString defaultPromptText() const override;
+
+  scoped_ptr<JavaScriptDialogProxy> proxy_;
+
+  DISALLOW_COPY_AND_ASSIGN(JavaScriptDialog);
 };
 
 } // namespace qt

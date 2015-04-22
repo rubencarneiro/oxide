@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 
-#include <QList>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_web_frame_adapter.h"
+#include "qt/core/glue/oxide_qt_web_frame_proxy.h"
+#include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebFrame;
@@ -30,20 +30,23 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameAdapter {
+class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
+                                   public oxide::qt::WebFrameProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
+                                      oxide::qt::WebFrameProxyHandle)
 
  public:
+  static OxideQQuickWebFrame* create(oxide::qt::WebFrameProxy* proxy);
+
   static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
 
  private:
-  OxideQQuickWebFramePrivate(OxideQQuickWebFrame* q);
+  OxideQQuickWebFramePrivate(oxide::qt::WebFrameProxy* proxy,
+                             OxideQQuickWebFrame* q);
 
-  // WebFrameAdapter implementation
-  void URLCommitted() override;
-
-  QList<OxideQQuickWebFrame *>& children() {
-    return children_;
+  oxide::qt::WebFrameProxy* proxy() const {
+    return oxide::qt::WebFrameProxyHandle::proxy();
   }
 
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
@@ -56,8 +59,10 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameAdapter {
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
       int index);
 
-  // We keep this separate to QObject becase we want a way to track child frames quickly
-  QList<OxideQQuickWebFrame *> children_;
+  // oxide::qt::WebFrameProxyClient implementation
+  void URLCommitted() override;
+  void ChildFramesChanged() override;
+  void DestroyFrame() override;
 
   Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };
