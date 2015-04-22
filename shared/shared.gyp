@@ -220,6 +220,7 @@
         '<(DEPTH)/build/linux/system.gyp:xext',
         '<(DEPTH)/build/linux/system.gyp:x11',
         '<(DEPTH)/cc/cc.gyp:cc',
+        '<(DEPTH)/components/components.gyp:devtools_http_handler',
         '<(DEPTH)/components/components.gyp:sessions_content',
         '<(DEPTH)/content/content.gyp:content_app_both',
         '<(DEPTH)/content/content.gyp:content_browser',

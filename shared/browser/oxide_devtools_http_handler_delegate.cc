@@ -17,6 +17,7 @@
 
 #include "oxide_devtools_http_handler_delegate.h"
 
+#include "content/public/browser/devtools_frontend_host.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #include "grit/oxide_resources.h"
@@ -32,14 +33,9 @@ std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
     IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
 }
 
-bool DevtoolsHttpHandlerDelegate::BundlesFrontendResources() {
-  // We reuse the default chrome builtin webui from devtools_resources.pak
-  return true;
-}
-
-base::FilePath DevtoolsHttpHandlerDelegate::GetDebugFrontendDir() {
-  // We dont host the devtools resources & ui (see above).
-  return base::FilePath();
+std::string DevtoolsHttpHandlerDelegate::GetFrontendResource(
+    const std::string& path) {
+  return content::DevToolsFrontendHost::GetFrontendResource(path).as_string();
 }
 
 }
