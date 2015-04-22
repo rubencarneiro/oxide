@@ -1961,7 +1961,7 @@ void WebView::RequestGeolocationPermission(
       new SimplePermissionRequest(
         &permission_request_manager_,
         request_id,
-        requesting_frame.GetOrigin(),
+        requesting_frame,
         web_contents_->GetLastCommittedURL().GetOrigin(),
         callback));
 

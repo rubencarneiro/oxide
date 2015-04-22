@@ -30,9 +30,12 @@ class OxideQSimplePermissionRequestPrivate;
 class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(QUrl url READ url CONSTANT)
+  Q_PROPERTY(QUrl origin READ origin CONSTANT)
   Q_PROPERTY(QUrl embedder READ embedder CONSTANT)
   Q_PROPERTY(bool isCancelled READ isCancelled NOTIFY cancelled)
+
+  // Same as origin - here for legacy purposes
+  Q_PROPERTY(QUrl url READ url CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQPermissionRequest)
   Q_DISABLE_COPY(OxideQPermissionRequest)
@@ -40,8 +43,10 @@ class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
  public:
   virtual ~OxideQPermissionRequest();
 
-  QUrl url() const;
+  QUrl origin() const;
   QUrl embedder() const;
+
+  QUrl url() const;
 
   bool isCancelled() const;
 
