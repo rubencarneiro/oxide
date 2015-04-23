@@ -141,6 +141,24 @@ class OxideTestingUtils : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
   }
+
+  Q_INVOKABLE void copyToClipboard(const QString& mimeType, const QString& data) {
+    QMimeData * data = new QMimeData();
+    data->setData(mimeType, data.toUtf8());
+    QGuiApplication::clipboard()->setMimeData(data);
+  }
+
+  Q_INVOKABLE QString copyFromClipboard(const QString& mimeType, const QString& data) {
+    QMimeData * data = QGuiApplication::clipboard()->mimeData();
+    if (data->hasFormat(mimeType)) {
+      return QString(data->data());
+    }
+    return QString();
+  }
+
+  Q_INVOKABLE void clearClipboard(const QString& data) {
+    QGuiApplication::clipboard()->clear();
+  }
 };
 
 QObject* UtilsFactory(QQmlEngine* engine, QJSEngine* script_engine) {

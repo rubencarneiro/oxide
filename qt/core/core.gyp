@@ -56,6 +56,7 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_clipboard.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_main.cc',
@@ -68,6 +69,8 @@
         'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
+        'browser/oxide_qt_clipboard.cc',
+        'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',
@@ -151,6 +154,11 @@
         {
           'action_name': 'moc_oxide_qt_web_view.cc',
           'moc_input': 'browser/oxide_qt_web_view.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_clipboard.moc',
+          'moc_input': 'browser/oxide_qt_clipboard.cc',
           'includes': [ 'moc.gypi' ]
         },
       ],

@@ -39,6 +39,7 @@
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
+#include "oxide_qt_clipboard.h"
 
 namespace oxide {
 namespace qt {
@@ -55,6 +56,9 @@ void LaunchURLExternallyOnUIThread(const GURL& url) {
 BrowserPlatformIntegration::BrowserPlatformIntegration() {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
                    this, SLOT(OnApplicationStateChanged()));
+
+  // might not be the best location
+  ui::Clipboard::OverrideDefaultClipboardCreate(ClipboardQt::DoCreate);
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
