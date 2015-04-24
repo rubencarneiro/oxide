@@ -133,7 +133,7 @@ class OxideTestingUtils : public QObject {
   }
 
   Q_INVOKABLE QVariant getAppProperty(const QString& property) {
-    QCoreApplication::instance()->property(property.toStdString().c_str());
+    return QCoreApplication::instance()->property(property.toStdString().c_str());
   }
 
   Q_INVOKABLE void setAppProperty(const QString& property, const QVariant& value) {
@@ -150,7 +150,7 @@ class OxideTestingUtils : public QObject {
     QGuiApplication::clipboard()->setMimeData(mime_data);
   }
 
-  Q_INVOKABLE QString copyFromClipboard(const QString& mimeType, const QString& data) {
+  Q_INVOKABLE QString copyFromClipboard(const QString& mimeType) {
     const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
     if (mime_data->hasFormat(mimeType)) {
       return QString(mime_data->data(mimeType));

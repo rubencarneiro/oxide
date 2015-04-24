@@ -13,13 +13,18 @@ TestWebView {
 
   function expect_content(expected) {
     var result = webView.getTestApi().evaluateCode(
-        "document.querySelector('#content').value");
+        "return document.querySelector('#content').value", true);
     return (result === expected);
+  }
+
+  function select_textarea_content() {
+    webView.getTestApi().evaluateCode(
+        "document.querySelector('#content').select()", true);
   }
 
   function set_content(content) {
     webView.getTestApi().evaluateCode(
-        "document.querySelector('#content').value = " + content);
+        "document.querySelector('#content').value = '" + content + "'", true);
   }
 
   TestCase {
@@ -35,7 +40,6 @@ TestWebView {
     function test_paste_data() {
       return [
         { content: "content", mimeType: "text/plain" },
-        { content: "<html><head></head><body></body></html>", mimeType: "text/html" },
       ];
     }
 
@@ -46,6 +50,7 @@ TestWebView {
 
       verify(webView.waitForLoadSucceeded(), "Timed out waiting for successful load");
 
+      select_textarea_content();
       keyPress("v", Qt.ControlModifier)
 
       verify(webView.waitFor(function() { return expect_content(data.content); }));
@@ -54,7 +59,6 @@ TestWebView {
     function test_copy_data() {
       return [
         { content: "content", mimeType: "text/plain" },
-        { content: "<html><head></head><body></body></html>", mimeType: "text/html" },
       ];
     }
 
@@ -67,12 +71,15 @@ TestWebView {
 
       webView.waitFor(function() { return expect_content(data.content); });
 
+      select_textarea_content();
+
       keyPress("c", Qt.ControlModifier)
 
-      var current_content = OxideTestingUtils.copyFromClipboard(
-          data.mimeType, data.content);
-
-      verify(current_content === data.content)
+      verify(webView.waitFor(function() {
+        var current_content = OxideTestingUtils.copyFromClipboard(
+          data.mimeType);
+        return current_content === data.content
+      }));
     }
   }
 }

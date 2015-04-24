@@ -397,7 +397,6 @@ void ClipboardQt::WriteObjects(ui::ClipboardType type,
   EnsureAccumulatorMimeDataExists();
 
   // dispatch all objects and gather the resulting mime data
-
   for (ObjectMap::const_iterator iter = objects.begin();
        iter != objects.end();
        ++iter) {
@@ -426,8 +425,7 @@ void ClipboardQt::WriteHTML(const char* markup_data,
                                  size_t markup_len,
                                  const char* url_data,
                                  size_t url_len) {
-  // TODO : Expand relative links with |url_data|.
-
+  // TODO : Expand relative links with |url_data|
   write_mime_data_acc_->setHtml(
       QString::fromUtf8(markup_data, markup_len));
 }
@@ -450,6 +448,7 @@ void ClipboardQt::WriteWebSmartPaste() {
 }
 
 void ClipboardQt::WriteBitmap(const SkBitmap& bitmap) {
+  // TODO validate image format
   QImage image(reinterpret_cast<const uchar *>(bitmap.getPixels()),
       bitmap.width(),
       bitmap.height(),
