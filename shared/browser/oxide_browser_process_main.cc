@@ -65,6 +65,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
@@ -250,6 +251,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 
   if (IsEnvironmentOptionEnabled("DISABLE_GPU_COMPOSITING")) {
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
+  }
+
+  if (AndroidProperties::GetInstance()->Available()) {
+    command_line->AppendSwitch(switches::kDisableOneCopy);
   }
 
   base::StringPiece renderer_cmd_prefix =
