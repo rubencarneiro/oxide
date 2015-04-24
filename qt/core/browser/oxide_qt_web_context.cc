@@ -110,8 +110,7 @@ class WebContext::BrowserContextDelegate
                                             const GURL& first_party_url,
                                             bool write,
                                             oxide::StorageType type) override;
-  bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) override;
+  std::string GetUserAgentOverride(const GURL& url) override;
   bool IsCustomProtocolHandlerRegistered(
       const std::string& scheme) const override;
   oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
@@ -286,20 +285,17 @@ oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
   return OxideQStoragePermissionRequestPrivate::get(&req)->permission;
 }
 
-bool WebContext::BrowserContextDelegate::GetUserAgentOverride(
-    const GURL& url,
-    std::string* user_agent) {
+std::string WebContext::BrowserContextDelegate::GetUserAgentOverride(
+    const GURL& url) {
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
   if (!io_client) {
-    return false;
+    return std::string();
   }
 
-  QString new_user_agent;
-  bool overridden = io_client->GetUserAgentOverride(
-      QUrl(QString::fromStdString(url.spec())), &new_user_agent);
+  QString user_agent = io_client->GetUserAgentOverride(
+      QUrl(QString::fromStdString(url.spec())));
 
-  *user_agent = new_user_agent.toStdString();
-  return overridden;
+  return user_agent.toStdString();
 }
 
 bool WebContext::BrowserContextDelegate::IsCustomProtocolHandlerRegistered(

@@ -68,6 +68,7 @@
         'oxide_extra_resources',
         '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
         '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
+        '<(DEPTH)/content/browser/tracing/tracing_resources.gyp:tracing_resources',
         '<(DEPTH)/content/content.gyp:content_resources',
         '<(DEPTH)/content/browser/devtools/devtools_resources.gyp:devtools_resources',
         '<(DEPTH)/net/net.gyp:net_resources',
@@ -83,10 +84,11 @@
             'pak_inputs': [
               '<(SHARED_INTERMEDIATE_DIR)/blink/devtools_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources.pak',
-              '<(SHARED_INTERMEDIATE_DIR)/ui/resources/webui_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/content/browser/tracing/tracing_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/content_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/net/net_resources.pak',
               '<(SHARED_INTERMEDIATE_DIR)/oxide/oxide_resources.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/ui/resources/webui_resources.pak',
             ]
           },
           'inputs': [
@@ -102,7 +104,7 @@
           'action_name': 'repack_oxide_100_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources_100_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_100_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_100_percent.pak',
             ]
@@ -120,7 +122,7 @@
           'action_name': 'repack_oxide_200_percent',
           'variables': {
             'pak_inputs': [
-              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_resources_200_percent.pak',
+              '<(SHARED_INTERMEDIATE_DIR)/blink/public/resources/blink_image_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/content/app/resources/content_resources_200_percent.pak',
               '<(SHARED_INTERMEDIATE_DIR)/ui/resources/ui_resources_200_percent.pak',
             ]
@@ -507,6 +509,8 @@
           ],
           'dependencies': [
             'mediahub_lib',
+            '<(DEPTH)/media/media.gyp:media',
+            '<(DEPTH)/media/blink/media_blink.gyp:media_blink',
           ],
         }],
         ['target_arch=="arm"', {

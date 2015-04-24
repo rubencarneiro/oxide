@@ -31,7 +31,6 @@ class OxideQUserAgentOverrideRequestPrivate final {
   static OxideQUserAgentOverrideRequestPrivate* get(
       OxideQUserAgentOverrideRequest* q);
 
-  bool did_override;
   QString user_agent;
 
  private:

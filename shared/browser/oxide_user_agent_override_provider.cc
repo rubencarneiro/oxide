@@ -37,17 +37,16 @@ bool UserAgentOverrideProvider::OnMessageReceived(
   return handled;
 }
 
-void UserAgentOverrideProvider::OnGetUserAgentOverride(const GURL& url,
-                                                       std::string* user_agent,
-                                                       bool* overridden) {
+void UserAgentOverrideProvider::OnGetUserAgentOverride(
+    const GURL& url,
+    std::string* user_agent) {
   scoped_refptr<BrowserContextDelegate> delegate(
       BrowserContextIOData::FromResourceContext(context_)->GetDelegate());
   if (!delegate.get()) {
-    *overridden = false;
     return;
   }
 
-  *overridden = delegate->GetUserAgentOverride(url, user_agent);
+  *user_agent = delegate->GetUserAgentOverride(url);
 }
 
 UserAgentOverrideProvider::UserAgentOverrideProvider(
