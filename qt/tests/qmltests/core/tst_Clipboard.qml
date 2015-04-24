@@ -39,7 +39,7 @@ TestWebView {
       ];
     }
 
-    function test_paste_get(data) {
+    function test_paste(data) {
       OxideTestingUtils.copyToClipboard(data.mimeType, data.content);
 
       webView.url = "http://testsuite/tst_Clipboard.html";
@@ -58,7 +58,7 @@ TestWebView {
       ];
     }
 
-    function test_copy_get(data) {
+    function test_copy(data) {
       webView.url = "http://testsuite/tst_Clipboard.html";
 
       verify(webView.waitForLoadSucceeded(), "Timed out waiting for successful load");
