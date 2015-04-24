@@ -16,7 +16,9 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <QCoreApplication>
+#include <QClipboard>
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QLatin1String>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
@@ -143,15 +145,15 @@ class OxideTestingUtils : public QObject {
   }
 
   Q_INVOKABLE void copyToClipboard(const QString& mimeType, const QString& data) {
-    QMimeData * data = new QMimeData();
-    data->setData(mimeType, data.toUtf8());
-    QGuiApplication::clipboard()->setMimeData(data);
+    QMimeData * mime_data = new QMimeData();
+    mime_data->setData(mimeType, data.toUtf8());
+    QGuiApplication::clipboard()->setMimeData(mime_data);
   }
 
   Q_INVOKABLE QString copyFromClipboard(const QString& mimeType, const QString& data) {
-    QMimeData * data = QGuiApplication::clipboard()->mimeData();
-    if (data->hasFormat(mimeType)) {
-      return QString(data->data());
+    const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
+    if (mime_data->hasFormat(mimeType)) {
+      return QString(mime_data->data(mimeType));
     }
     return QString();
   }

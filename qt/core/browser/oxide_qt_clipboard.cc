@@ -47,6 +47,8 @@ private Q_SLOTS:
 private:
   uint64 clipboard_sequence_number_;
   uint64 selection_sequence_number_;
+
+  DISALLOW_COPY_AND_ASSIGN(ClipboardChangedListener);
 };
 
 ClipboardChangedListener::ClipboardChangedListener()
@@ -465,5 +467,6 @@ void ClipboardQt::WriteData(const FormatType& format,
 }
 
 } // namespace qt
-
 } // namespace oxide
+
+#include "oxide_qt_clipboard.moc"
