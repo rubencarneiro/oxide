@@ -84,7 +84,7 @@ class WebContextIODelegate : public oxide::qt::WebContextProxyClient::IOClient {
   void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) override;
   void HandleStoragePermissionRequest(
       OxideQStoragePermissionRequest* req) override;
-  bool GetUserAgentOverride(const QUrl& url, QString* user_agent) override;
+  QString GetUserAgentOverride(const QUrl& url) override;
 
   QMutex lock;
 
@@ -101,7 +101,6 @@ void WebContextIODelegate::OnBeforeURLRequest(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -116,7 +115,6 @@ void WebContextIODelegate::OnBeforeSendHeaders(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -131,7 +129,6 @@ void WebContextIODelegate::OnBeforeRedirect(
     delegate = network_request_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete event;
     return;
   }
 
@@ -146,36 +143,29 @@ void WebContextIODelegate::HandleStoragePermissionRequest(
     delegate = storage_access_permission_delegate.toStrongRef();
   }
   if (!delegate) {
-    delete req;
     return;
   }
 
   delegate->CallEntryPointInWorker("onStoragePermissionRequest", req);
 }
 
-bool WebContextIODelegate::GetUserAgentOverride(const QUrl& url,
-                                                QString* user_agent) {
+QString WebContextIODelegate::GetUserAgentOverride(const QUrl& url) {
   QSharedPointer<IOThreadController> delegate;
   {
     QMutexLocker locker(&lock);
     delegate = user_agent_override_delegate.toStrongRef();
   }
   if (!delegate) {
-    return false;
+    return QString();
   }
 
-  bool did_override = false;
-
-  OxideQUserAgentOverrideRequest* req = new OxideQUserAgentOverrideRequest(url);
+  OxideQUserAgentOverrideRequest req(url);
+  delegate->CallEntryPointInWorker("onGetUserAgentOverride", &req);
 
   OxideQUserAgentOverrideRequestPrivate* p =
-      OxideQUserAgentOverrideRequestPrivate::get(req);
-  p->did_override = &did_override;
-  p->user_agent = user_agent;
+      OxideQUserAgentOverrideRequestPrivate::get(&req);
 
-  delegate->CallEntryPointInWorker("onGetUserAgentOverride", req);
-
-  return did_override;
+  return p->user_agent;
 }
 
 } // namespace qquick

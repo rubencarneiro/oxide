@@ -30,8 +30,8 @@
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_state.h"
 #include "net/log/net_log.h"
-#if defined(USE_NSS)
-#include "net/ocsp/nss_ocsp.h"
+#if defined(USE_NSS_CERTS)
+#include "net/cert_net/nss_ocsp.h"
 #endif
 #include "net/proxy/proxy_service.h"
 #include "net/ssl/channel_id_service.h"
@@ -128,7 +128,7 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   URLRequestContext* context = globals()->system_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::SetURLRequestContextForNSSHttpIO(context);
 #endif
 
@@ -173,7 +173,7 @@ void IOThread::Init() {
 void IOThread::InitAsync() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::SetMessageLoopForNSSHttpIO();
 #endif
 
@@ -211,7 +211,7 @@ void IOThread::InitAsync() {
 void IOThread::CleanUp() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::ShutdownNSSHttpIO();
   net::SetURLRequestContextForNSSHttpIO(nullptr);
 #endif

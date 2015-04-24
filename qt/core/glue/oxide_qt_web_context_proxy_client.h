@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_PROXY_CLIENT_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_PROXY_CLIENT_H_
 
+#include <QString>
 #include <QtGlobal>
 
 class OxideQBeforeRedirectEvent;
@@ -29,7 +30,6 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QNetworkAccessManager;
 class QNetworkCookie;
-class QString;
 class QUrl;
 QT_END_NAMESPACE
 
@@ -62,7 +62,7 @@ class WebContextProxyClient {
 
     virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
 
-    virtual bool GetUserAgentOverride(const QUrl& url, QString* user_agent) = 0;
+    virtual QString GetUserAgentOverride(const QUrl& url) = 0;
   };
 };
 

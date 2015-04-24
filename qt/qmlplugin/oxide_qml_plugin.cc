@@ -125,6 +125,10 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterType<OxideQQuickWebContext, 2>(uri, 1, 6, "WebContext");
 
+    qmlRegisterUncreatableType<OxideQQuickLocationBarController, 1>(uri, 1, 7, "LocationBarController",
+        "LocationBarController is accessed via WebView.locationBarController");
+>>>>>>> MERGE-SOURCE
+
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
   }
 };

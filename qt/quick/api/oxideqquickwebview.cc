@@ -868,12 +868,28 @@ void OxideQQuickWebViewPrivate::setLocationBarMode(
   proxy()->setLocationBarMode(mode);
 }
 
+bool OxideQQuickWebViewPrivate::locationBarAnimated() const {
+  return proxy()->locationBarAnimated();
+}
+
+void OxideQQuickWebViewPrivate::setLocationBarAnimated(bool animated) {
+  proxy()->setLocationBarAnimated(animated);
+}
+
 int OxideQQuickWebViewPrivate::locationBarOffsetPix() {
   return proxy()->locationBarOffsetPix();
 }
 
 int OxideQQuickWebViewPrivate::locationBarContentOffsetPix() {
   return proxy()->locationBarContentOffsetPix();
+}
+
+void OxideQQuickWebViewPrivate::locationBarShow(bool animate) {
+  proxy()->locationBarShow(animate);
+}
+
+void OxideQQuickWebViewPrivate::locationBarHide(bool animate) {
+  proxy()->locationBarHide(animate);
 }
 
 int OxideQQuickWebViewPrivate::getNavigationEntryCount() const {

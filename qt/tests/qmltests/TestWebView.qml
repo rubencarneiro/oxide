@@ -100,23 +100,21 @@ WebView {
 
   context: TestWebContext {}
 
-  onLoadEvent: {
-    if (event.type == LoadEvent.TypeStarted) {
-      webView.qtest_loadsStartedCount++;
-    } else if (event.type == LoadEvent.TypeSucceeded) {
-      webView.qtest_loadsSucceededCount++;
-    } else if (event.type == LoadEvent.TypeStopped) {
-      webView.qtest_loadsStoppedCount++;
-    } else if (event.type == LoadEvent.TypeFailed) {
-      webView.qtest_loadsFailedCount++;
-    } else if (event.type == LoadEvent.TypeCommitted) {
-      webView.qtest_loadsCommittedCount++;
+  Connections {
+    onLoadEvent: {
+      if (event.type == LoadEvent.TypeStarted) {
+        webView.qtest_loadsStartedCount++;
+      } else if (event.type == LoadEvent.TypeSucceeded) {
+        webView.qtest_loadsSucceededCount++;
+      } else if (event.type == LoadEvent.TypeStopped) {
+        webView.qtest_loadsStoppedCount++;
+      } else if (event.type == LoadEvent.TypeFailed) {
+        webView.qtest_loadsFailedCount++;
+      } else if (event.type == LoadEvent.TypeCommitted) {
+        webView.qtest_loadsCommittedCount++;
+      }
     }
-
-    on_load_event(event);
   }
-
-  function on_load_event(event) {}
 
   TestResult { id: qtest_testResult }
 }

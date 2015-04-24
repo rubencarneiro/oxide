@@ -52,7 +52,7 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
   ScriptMessageImplRenderer* m =
       static_cast<ScriptMessageImplRenderer *>(message);
 
-  v8::Handle<v8::Value> argv[] = {
+  v8::Local<v8::Value> argv[] = {
     m->GetHandle()
   };
 

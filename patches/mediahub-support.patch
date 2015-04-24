@@ -59,15 +59,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class RenderFrame;
  class RenderView;
-@@ -286,13 +289,20 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual bool IsPluginAllowedToUseCompositorAPI(const GURL& url);
+@@ -295,13 +298,20 @@ class CONTENT_EXPORT ContentRendererClie
+   // Records a sample string to a Rappor privacy-preserving metric.
+   // See: https://www.chromium.org/developers/design-documents/rappor
+   virtual void RecordRappor(const std::string& metric,
+                             const std::string& sample) {}
  
-   // Returns true if dev channel APIs are available for plugins.
-   virtual bool IsPluginAllowedToUseDevChannelAPIs();
- 
-   // Returns a user agent override specific for |url|, or empty string if
-   // default user agent should be used.
-   virtual std::string GetUserAgentOverrideForURL(const GURL& url);
+   // Records a domain and registry of a url to a Rappor privacy-preserving
+   // metric. See: https://www.chromium.org/developers/design-documents/rappor
+   virtual void RecordRapporURL(const std::string& metric, const GURL& url) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1941,16 +1941,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2024,16 +2024,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(url, client);
  
  #if defined(OS_ANDROID)

@@ -50,7 +50,12 @@ OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return OxideQQuickWebFramePrivate::fromProxyHandle(d->proxy()->frame());
+  oxide::qt::WebFrameProxyHandle* f = d->proxy()->frame();
+  if (!f) {
+    return nullptr;
+  }
+
+  return OxideQQuickWebFramePrivate::fromProxyHandle(f);
 }
 
 QUrl OxideQQuickScriptMessage::context() const {
@@ -74,7 +79,12 @@ QVariant OxideQQuickScriptMessage::args() const {
 void OxideQQuickScriptMessage::reply(const QVariant& args) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->proxy()->reply(args);
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->proxy()->reply(aux);
 }
 
 void OxideQQuickScriptMessage::error(const QString& msg) {

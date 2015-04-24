@@ -60,8 +60,12 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void setLocationBarHeight(int height);
   oxide::qt::LocationBarMode locationBarMode() const;
   void setLocationBarMode(oxide::qt::LocationBarMode mode);
+  bool locationBarAnimated() const;
+  void setLocationBarAnimated(bool animated);
   int locationBarOffsetPix();
   int locationBarContentOffsetPix();
+  void locationBarShow(bool animate);
+  void locationBarHide(bool animate);
 
   // XXX(chrisccoulson): Add NavigationControllerProxy and remove these
   int getNavigationEntryCount() const;

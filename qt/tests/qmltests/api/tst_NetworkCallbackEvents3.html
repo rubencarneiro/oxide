@@ -1,0 +1,8 @@
+<html>
+<body>
+  <iframe id="foo"></iframe>
+</body>
+<script>
+document.getElementById("foo").src = document.location.href.replace(/([^\?]+)/, "http://testsuite/get-headers.py");
+</script>
+</html>

@@ -85,7 +85,11 @@ namespace {
 
 base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
 
+// Cache was used for the default blockfile backend (CACHE_BACKEND_BLOCKFILE),
+// Cache2 is used since the switch to the simple backend (CACHE_BACKEND_SIMPLE).
 const base::FilePath::CharType kCacheDirname[] = FILE_PATH_LITERAL("Cache");
+const base::FilePath::CharType kCacheDirname2[] = FILE_PATH_LITERAL("Cache2");
+
 const base::FilePath::CharType kCookiesFilename[] =
     FILE_PATH_LITERAL("cookies.sqlite");
 
@@ -100,22 +104,17 @@ const char kDefaultAcceptLanguage[] = "en-us,en";
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 const int kBackLog = 1;
 
-void CleanupGPUShaderCache(const base::FilePath& path) {
-  base::FilePath cache = path.Append(FILE_PATH_LITERAL("GPUCache"));
-  if (!base::DirectoryExists(cache)) {
+void CleanupOldCacheDir(const base::FilePath& path) {
+  if (!base::DirectoryExists(path)) {
     return;
   }
 
   base::FileEnumerator traversal(
-      cache, false,
+      path, false,
       base::FileEnumerator::FILES | base::FileEnumerator::DIRECTORIES);
   for (base::FilePath current = traversal.Next(); !current.empty();
        current = traversal.Next()) {
     if (traversal.GetInfo().IsDirectory()) {
-      LOG(WARNING)
-          << "Not deleting GPU shader cache directory \"" << cache.value()
-          << "\". Directory contains an unexpected sub-directory \""
-          << traversal.GetInfo().GetName().value() << "\"";
       return;
     }
 
@@ -123,14 +122,11 @@ void CleanupGPUShaderCache(const base::FilePath& path) {
     if (name != FILE_PATH_LITERAL("index") &&
         name.compare(0, 5, FILE_PATH_LITERAL("data_")) != 0 &&
         name.compare(0, 2, FILE_PATH_LITERAL("f_")) != 0) {
-      LOG(WARNING)
-          << "Not deleting GPU shader cache directory \"" << cache.value()
-          << "\". Directory contains an unexpected file \"" << name << "\"";
       return;
     }
   }
 
-  base::DeleteFile(cache, true);
+  base::DeleteFile(path, true);
 }
 
 } // namespace
@@ -495,14 +491,21 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_transport_security_state(transport_security_state_.get());
 
+  // Run-once code that is run when upgrading oxide to
+  // a version that uses the simple cache backend.
+  content::BrowserThread::PostTask(
+      content::BrowserThread::FILE,
+      FROM_HERE,
+      base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
+
   net::HttpCache::BackendFactory* cache_backend = nullptr;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
     cache_backend = new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
-          net::CACHE_BACKEND_DEFAULT,
-          GetCachePath().Append(kCacheDirname),
+          net::CACHE_BACKEND_SIMPLE,
+          GetCachePath().Append(kCacheDirname2),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::CACHE));
@@ -717,10 +720,11 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
   }
 
   if (!GetPath().empty()) {
+    base::FilePath gpu_cache = GetPath().Append(FILE_PATH_LITERAL("GPUCache"));
     content::BrowserThread::PostTask(
         content::BrowserThread::FILE,
         FROM_HERE,
-        base::Bind(&CleanupGPUShaderCache, GetPath()));
+        base::Bind(&CleanupOldCacheDir, gpu_cache));
   }
 }
 

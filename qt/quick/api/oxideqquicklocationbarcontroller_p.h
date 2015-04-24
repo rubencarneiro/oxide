@@ -29,6 +29,7 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
 
   Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
   Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY modeChanged)
+  Q_PROPERTY(bool animated READ animated WRITE setAnimated NOTIFY animatedChanged REVISION 1)
 
   Q_PROPERTY(qreal offset READ offset NOTIFY offsetChanged)
   Q_PROPERTY(qreal contentOffset READ contentOffset NOTIFY contentOffsetChanged)
@@ -55,12 +56,20 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
   Mode mode() const;
   void setMode(Mode mode);
 
+  bool animated() const;
+  void setAnimated(bool animated);
+
   qreal offset() const;
   qreal contentOffset() const;
+
+ public Q_SLOTS:
+  Q_REVISION(1) void show(bool animate);
+  Q_REVISION(1) void hide(bool animate);
 
  Q_SIGNALS:
   void heightChanged();
   void modeChanged();
+  Q_REVISION(1) void animatedChanged();
   void offsetChanged();
   void contentOffsetChanged();
 

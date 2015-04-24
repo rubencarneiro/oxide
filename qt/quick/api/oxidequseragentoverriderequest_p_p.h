@@ -18,12 +18,9 @@
 #ifndef _OXIDE_QT_QUICK_API_USER_AGENT_OVERRIDE_REQUEST_P_P_H_
 #define _OXIDE_QT_QUICK_API_USER_AGENT_OVERRIDE_REQUEST_P_P_H_
 
+#include <QString>
 #include <QtGlobal>
 #include <QUrl>
-
-QT_BEGIN_NAMESPACE
-class QString;
-QT_END_NAMESPACE
 
 class OxideQUserAgentOverrideRequest;
 
@@ -34,8 +31,7 @@ class OxideQUserAgentOverrideRequestPrivate final {
   static OxideQUserAgentOverrideRequestPrivate* get(
       OxideQUserAgentOverrideRequest* q);
 
-  bool* did_override;
-  QString* user_agent;
+  QString user_agent;
 
  private:
   friend class OxideQUserAgentOverrideRequest;

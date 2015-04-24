@@ -41,15 +41,15 @@ OxideQQuickLocationBarController::~OxideQQuickLocationBarController() {}
 qreal OxideQQuickLocationBarController::height() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(d->view);
-  return p->locationBarHeight();
+  return OxideQQuickWebViewPrivate::get(d->view)->locationBarHeight();
 }
 
 void OxideQQuickLocationBarController::setHeight(qreal height) {
   Q_D(OxideQQuickLocationBarController);
 
   if (height < 0.0f) {
-    qWarning() << "OxideQQuickLocationBarController: height cannot be negative";
+    qWarning() <<
+        "OxideQQuickLocationBarController: height cannot be negative";
     return;
   }
 
@@ -86,13 +86,26 @@ void OxideQQuickLocationBarController::setMode(Mode mode) {
     return;
   }
 
-  if (height() == 0) {
-    return;
-  }
-
   OxideQQuickWebViewPrivate::get(d->view)->setLocationBarMode(
       static_cast<oxide::qt::LocationBarMode>(mode));
   Q_EMIT modeChanged();
+}
+
+bool OxideQQuickLocationBarController::animated() const {
+  Q_D(const OxideQQuickLocationBarController);
+
+  return OxideQQuickWebViewPrivate::get(d->view)->locationBarAnimated();
+}
+
+void OxideQQuickLocationBarController::setAnimated(bool animated) {
+  Q_D(OxideQQuickLocationBarController);
+
+  if (animated == this->animated()) {
+    return;
+  }
+
+  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarAnimated(animated);
+  Q_EMIT animatedChanged();
 }
 
 qreal OxideQQuickLocationBarController::offset() const {
@@ -106,4 +119,42 @@ qreal OxideQQuickLocationBarController::contentOffset() const {
 
   return OxideQQuickWebViewPrivate::get(
       d->view)->locationBarContentOffsetPix();
+}
+
+void OxideQQuickLocationBarController::show(bool animate) {
+  Q_D(OxideQQuickLocationBarController);
+
+  if (mode() != ModeAuto) {
+    qWarning() <<
+        "OxideQQuickLocationBarController::show: mode is not ModeAuto";
+    return;
+  }
+
+  if (height() <= 0.f) {
+    qWarning() <<
+        "OxideQQuickLocationBarController::show: height is not greater than "
+        "zero";
+    return;
+  }
+
+  OxideQQuickWebViewPrivate::get(d->view)->locationBarShow(animate);
+}
+
+void OxideQQuickLocationBarController::hide(bool animate) {
+  Q_D(OxideQQuickLocationBarController);
+
+  if (mode() != ModeAuto) {
+    qWarning() <<
+        "OxideQQuickLocationBarController::hide: mode is not ModeAuto";
+    return;
+  }
+
+  if (height() <= 0.f) {
+    qWarning() <<
+        "OxideQQuickLocationBarController::hide: height is not greater than "
+        "zero";
+    return;
+  }
+
+  OxideQQuickWebViewPrivate::get(d->view)->locationBarHide(animate);
 }

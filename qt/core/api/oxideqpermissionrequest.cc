@@ -106,16 +106,28 @@ OxideQPermissionRequest::OxideQPermissionRequest(
 
 OxideQPermissionRequest::~OxideQPermissionRequest() {}
 
-QUrl OxideQPermissionRequest::url() const {
+QUrl OxideQPermissionRequest::origin() const {
   Q_D(const OxideQPermissionRequest);
 
-  return QUrl(QString::fromStdString(d->request_->url().spec()));;
+  return QUrl(QString::fromStdString(d->request_->origin().spec()));;
 }
 
 QUrl OxideQPermissionRequest::embedder() const {
   Q_D(const OxideQPermissionRequest);
 
   return QUrl(QString::fromStdString(d->request_->embedder().spec()));
+}
+
+QUrl OxideQPermissionRequest::url() const {
+  static bool warn_once = false;
+  if (!warn_once) {
+    warn_once = true;
+    qWarning() <<
+        "OxideQPermissionRequest::url is deprecated. Please use "
+        "OxideQPermissionRequest::origin instead";
+  }
+
+  return origin();
 }
 
 bool OxideQPermissionRequest::isCancelled() const {
@@ -159,9 +171,17 @@ OxideQGeolocationPermissionRequest::OxideQGeolocationPermissionRequest(
 OxideQGeolocationPermissionRequest::~OxideQGeolocationPermissionRequest() {}
 
 QUrl OxideQGeolocationPermissionRequest::origin() const {
-  return url();
+  return OxideQPermissionRequest::origin();
 }
 
 void OxideQGeolocationPermissionRequest::accept() {
+  static bool warn_once = false;
+  if (!warn_once) {
+    warn_once = true;
+    qWarning() <<
+        "OxideQGeolocationPermissionRequest::accept is deprecated. Please use "
+        "OxideQPermissionRequest::allow instead";
+  }
+
   allow();
 }

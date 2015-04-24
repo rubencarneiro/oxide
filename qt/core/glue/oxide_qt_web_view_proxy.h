@@ -192,6 +192,10 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual int locationBarContentOffsetPix() = 0;
   virtual LocationBarMode locationBarMode() const = 0;
   virtual void setLocationBarMode(LocationBarMode mode) = 0;
+  virtual bool locationBarAnimated() const = 0;
+  virtual void setLocationBarAnimated(bool animated) = 0;
+  virtual void locationBarShow(bool animate) = 0;
+  virtual void locationBarHide(bool animate) = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);
