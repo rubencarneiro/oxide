@@ -176,5 +176,27 @@ TestWebView {
       compare(model.frameUrl, "http://testsuite/empty.html");
       compare(model.frameCharset.toLowerCase(), "utf-8");
     }
+
+    function test_WebView_contextMenu_imagelink() {
+      invokeContextMenu("imagelink");
+      var model = webView.currentContextMenu.contextModel;
+      verify(!model.isEditable);
+      compare(model.linkUrl, "http://testsuite/empty.html");
+      compare(model.linkText, "");
+      verify(model.hasImageContents);
+      compare(model.srcUrl, "http://testsuite/cof.svg");
+
+      model.saveLink();
+      spy.wait();
+      compare(webView.downloadUrl, "http://testsuite/empty.html");
+      compare(webView.downloadReferrer,
+              "http://testsuite/tst_WebView_contextMenu.html");
+
+      model.saveImage();
+      spy.wait();
+      compare(webView.downloadUrl, "http://testsuite/cof.svg");
+      compare(webView.downloadReferrer,
+              "http://testsuite/tst_WebView_contextMenu.html");
+    }
   }
 }
