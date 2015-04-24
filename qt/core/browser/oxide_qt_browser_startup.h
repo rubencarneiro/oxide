@@ -56,7 +56,7 @@ class BrowserStartup final {
   void EnsureChromiumStarted();
 
  private:
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   base::FilePath nss_db_path_;
 #endif
 

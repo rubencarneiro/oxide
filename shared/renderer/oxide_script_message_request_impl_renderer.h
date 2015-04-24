@@ -64,7 +64,7 @@ class ScriptMessageRequestImplRenderer final :
 
   void DispatchResponse(v8::Handle<v8::Function> function,
                         int argc,
-                        v8::Handle<v8::Value> argv[]);
+                        v8::Local<v8::Value> argv[]);
 
   ScopedPersistent<v8::Function> reply_callback_;
   ScopedPersistent<v8::Function> error_callback_;

@@ -28,7 +28,7 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -306,16 +306,18 @@
+@@ -305,16 +305,18 @@
          'win/dpi.h',
          'win/hwnd_util.cc',
          'win/hwnd_util.h',
@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
          ['OS=="ios"', {
            # Linkable dependents need to set the linker flag '-ObjC' in order to
            # use the categories in this target (e.g. NSString+CrStringDrawing.h).
-@@ -395,17 +397,17 @@
+@@ -390,17 +392,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -215,11 +215,11 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
  #endif
  
  #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
-@@ -51,17 +51,17 @@ std::string DriverEGL::GetPlatformExtens
-   DCHECK(g_driver_egl.fn.eglInitializeFn);
-   g_driver_egl.fn.eglInitializeFn(display, NULL, NULL);
-   DCHECK(g_driver_egl.fn.eglQueryStringFn);
-   const char* str = g_driver_egl.fn.eglQueryStringFn(display, EGL_EXTENSIONS);
+@@ -58,17 +58,17 @@ std::string DriverEGL::GetPlatformExtens
+ // static
+ std::string DriverEGL::GetClientExtensions() {
+   const char* str =
+       g_driver_egl.fn.eglQueryStringFn(EGL_NO_DISPLAY, EGL_EXTENSIONS);
    return str ? std::string(str) : "";
  }
  #endif
@@ -256,7 +256,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -314,16 +314,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -317,16 +317,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -276,12 +276,12 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -383,17 +386,17 @@ struct GL_EXPORT DriverEGL {
-   ProcsEGL debug_fn;
+@@ -387,17 +390,17 @@ struct GL_EXPORT DriverEGL {
    ExtensionsEGL ext;
  
   private:
    static std::string GetPlatformExtensions();
+   static std::string GetClientExtensions();
  };
  #endif
  
@@ -295,7 +295,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
    ProcsGLX fn;
    ProcsGLX debug_fn;
    ExtensionsGLX ext;
-@@ -425,16 +428,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -429,16 +432,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -401,7 +401,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -584,16 +587,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -585,16 +588,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();

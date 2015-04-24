@@ -6,12 +6,12 @@
 diff --git a/crypto/nss_util.cc b/crypto/nss_util.cc
 --- a/crypto/nss_util.cc
 +++ b/crypto/nss_util.cc
-@@ -79,22 +79,20 @@ std::string GetNSSErrorMessage() {
+@@ -78,22 +78,20 @@ std::string GetNSSErrorMessage() {
    }
    return result;
  }
  
- #if defined(USE_NSS)
+ #if defined(USE_NSS_CERTS)
  #if !defined(OS_CHROMEOS)
  base::FilePath GetDefaultConfigDirectory() {
    base::FilePath dir;
@@ -42,7 +42,7 @@ diff --git a/crypto/nss_util.h b/crypto/nss_util.h
  // initialization functions.
  namespace crypto {
  
- #if defined(USE_NSS)
+ #if defined(USE_NSS_CERTS)
 +
 +enum {
 +  PATH_START = 20000,
