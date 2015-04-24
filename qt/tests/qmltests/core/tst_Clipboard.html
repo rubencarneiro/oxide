@@ -5,7 +5,12 @@
   <textarea id="content" autofocus></textarea>
 
   <script>
- 
+
+    window.onload = function() {
+    document.addEventListener('paste', function(e) {
+      document.querySelector('#content').value = btoa(event.clipboardData.getData('image/png'))
+    });
+    }
   </script>
   
 </body>

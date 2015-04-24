@@ -39,12 +39,17 @@ TestWebView {
     
     function test_paste_data() {
       return [
-        { content: "content", mimeType: "text/plain" },
+        { content: "content", mimeType: "text/plain", isimage: false },
+        { content: OxideTestingUtils.getClipboardImageData(), mimeType: "image/png", isimage: true},
       ];
     }
 
     function test_paste(data) {
-      OxideTestingUtils.copyToClipboard(data.mimeType, data.content);
+      if ( ! data.isimage) {
+        OxideTestingUtils.copyToClipboard(data.mimeType, data.content);
+      } else {
+        OxideTestingUtils.copyImageToClipboard()
+      }
 
       webView.url = "http://testsuite/tst_Clipboard.html";
 

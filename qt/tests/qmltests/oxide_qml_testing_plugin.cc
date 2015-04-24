@@ -150,6 +150,17 @@ class OxideTestingUtils : public QObject {
     QGuiApplication::clipboard()->setMimeData(mime_data);
   }
 
+  Q_INVOKABLE QString getClipboardImageData() const {
+    return QString("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9gHHRY6HXzuCtIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAB6ElEQVQ4y33TT2jPcRzH8cfn9/1uMxsbWmsi1jS05cJuyFr7g4t22QgnWg6Sw5aLGwdJymFFTZKk0JTFKIkLByItsvIvSi2HsZ/N2n77OuxbfrF51/vw+fR5vnt/3q/XO/hPjLUKIShHlMwY+3RfCy5hBNvr+RjPB2fbbEUHahHhJjZjaZotuPBPganT1qNq8oEq7MMiCBmhqMytye824SceQfgLLsFdrJge1pz77Bw2YgwVyYyBHx88jorFpcu9TxKDcR5chBPYAnGtXbkvOpIZ2UX3yLapChldZTXOYiHehaAzk9fAmvRf8A0DhY2zMJQO+oqT6MMMqrEjZNu0YGco8bywQZPIfhwv6HZinuGux0Wsw4sYvahJfnqT++JMtEonXv9H3fc4jCWYiDGOBJNiEWIsno/+OKgMe1J5P8c4iMZMueGoSicy2JkaZq7YgL2owO2Qp0IlLucNcneSuFbYM3sYmjVTLa6jDlkc+GOkxIigF80IEhPDPdqHKE190JB2VpcSj/AwzOHEo1j7tlsfrqbywkSI9C9r8nB6TDT6VH99YmSuXTiPIhzC6rz7Zyu7PC2udgy/Kts90T1HgYJu4xgf4hRupFZeECIvi6sdQU36dBtezbuN9eQwnCY5priCVoziDvwGNw6PMb/zL+4AAAAASUVORK5CYII=");
+  }
+
+  Q_INVOKABLE void copyImageToClipboard() {
+    QMimeData * mime_data = new QMimeData();
+    mime_data->setData("image/png"
+        , QByteArray::fromBase64(getClipboardImageData().toUtf8()));
+    QGuiApplication::clipboard()->setMimeData(mime_data);
+  }
+
   Q_INVOKABLE QString copyFromClipboard(const QString& mimeType) {
     const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
     if (mime_data->hasFormat(mimeType)) {
