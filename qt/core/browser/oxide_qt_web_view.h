@@ -154,6 +154,9 @@ class WebView : public QObject,
 
   oxide::WebFrame* CreateWebFrame(
       content::RenderFrameHost* render_frame_host) override;
+  oxide::WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params) override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
 
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -68,6 +68,7 @@ class WebMouseWheelEvent;
 
 namespace content {
 
+struct ContextMenuParams;
 struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
@@ -103,6 +104,7 @@ class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
 class RenderWidgetHostView;
+class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -253,6 +255,8 @@ class WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
+  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                       const content::ContextMenuParams& params);
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int selected_item,
@@ -538,6 +542,9 @@ class WebView : public ScriptMessageTarget,
 
   virtual WebFrame* CreateWebFrame(
       content::RenderFrameHost* render_frame_host);
+  virtual WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params);
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
@@ -597,6 +604,7 @@ class WebView : public ScriptMessageTarget,
   WebFrameScopedPtr root_frame_;
 
   bool is_fullscreen_;
+  base::WeakPtr<WebContextMenu> active_context_menu_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 

@@ -87,6 +87,7 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_context_menu.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
@@ -1151,6 +1152,12 @@ WebFrame* WebView::CreateWebFrame(
   return new WebFrame(render_frame_host, this);
 }
 
+WebContextMenu* WebView::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  return nullptr;
+}
+
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
   return nullptr;
 }
@@ -1882,6 +1889,20 @@ void WebView::PrepareToClose() {
   // This is ok to call multiple times - RFHI tracks whether a response
   // is pending and won't dispatch another event if it is
   web_contents_->DispatchBeforeUnload(false);
+}
+
+void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                              const content::ContextMenuParams& params) {
+  DCHECK(!active_context_menu_);
+
+  WebContextMenu* menu = CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  active_context_menu_ = menu->GetWeakPtr();
+
+  menu->Show();
 }
 
 void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,

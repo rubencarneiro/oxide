@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -89,6 +89,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(qreal contentX READ contentX NOTIFY contentXChanged)
   Q_PROPERTY(qreal contentY READ contentY NOTIFY contentYChanged)
 
+  Q_PROPERTY(QQmlComponent* contextMenu READ contextMenu WRITE setContextMenu NOTIFY contextMenuChanged REVISION 4)
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
   Q_PROPERTY(QQmlComponent* alertDialog READ alertDialog WRITE setAlertDialog NOTIFY alertDialogChanged)
@@ -183,6 +184,9 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   qreal contentX() const;
   qreal contentY() const;
 
+  QQmlComponent* contextMenu() const;
+  void setContextMenu(QQmlComponent* context_menu);
+
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
 
@@ -250,6 +254,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void rootFrameChanged();
   void frameAdded(OxideQQuickWebFrame* frame);
   void frameRemoved(OxideQQuickWebFrame* frame);
+  Q_REVISION(4) void contextMenuChanged();
   void popupMenuChanged();
   void alertDialogChanged();
   void confirmDialogChanged();

@@ -124,6 +124,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 3>(uri, 1, 5, "WebView");
 
     qmlRegisterType<OxideQQuickWebContext, 2>(uri, 1, 6, "WebContext");
+
+    qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
   }
 };
 

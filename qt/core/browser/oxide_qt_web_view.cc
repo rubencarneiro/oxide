@@ -82,6 +82,7 @@
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_web_context.h"
+#include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 #include "oxide_qt_web_preferences.h"
@@ -781,6 +782,14 @@ oxide::WebFrame* WebView::CreateWebFrame(
   WebFrame* frame = new WebFrame(render_frame_host, this);
   WebFrameProxyHandle* handle = client_->CreateWebFrame(frame);
   return WebFrame::FromProxyHandle(handle);
+}
+
+oxide::WebContextMenu* WebView::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  WebContextMenu* menu = new WebContextMenu(rfh, params);
+  menu->SetProxy(client_->CreateWebContextMenu(menu));
+  return menu;
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {

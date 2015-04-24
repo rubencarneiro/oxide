@@ -54,6 +54,7 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -224,6 +225,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
+    context_menu_(nullptr),
     popup_menu_(nullptr),
     alert_dialog_(nullptr),
     confirm_dialog_(nullptr),
@@ -267,6 +269,13 @@ void OxideQQuickWebViewPrivate::Initialized() {
 QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   Q_Q(OxideQQuickWebView);
   return q;
+}
+
+oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    oxide::qt::WebContextMenuProxyClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebContextMenu(q, client);
 }
 
 oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
@@ -1336,6 +1345,23 @@ qreal OxideQQuickWebView::contentY() const {
 
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameScrollOffsetPix().y();
+}
+
+QQmlComponent* OxideQQuickWebView::contextMenu() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->context_menu_;
+}
+
+void OxideQQuickWebView::setContextMenu(QQmlComponent* context_menu) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->context_menu_ == context_menu) {
+    return;
+  }
+
+  d->context_menu_ = context_menu;
+  emit contextMenuChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
