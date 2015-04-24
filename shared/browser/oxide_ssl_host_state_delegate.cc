@@ -50,4 +50,10 @@ bool SSLHostStateDelegate::DidHostRunInsecureContent(const std::string& host,
   return ran_insecure_content_hosts_.count(BrokenHostEntry(host, pid)) != 0;
 }
 
+void SSLHostStateDelegate::RevokeUserAllowExceptions(const std::string& host) {}
+
+bool SSLHostStateDelegate::HasAllowException(const std::string& host) const {
+  return false;
+}
+
 } // namespace oxide
