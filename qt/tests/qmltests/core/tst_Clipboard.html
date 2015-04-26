@@ -2,14 +2,29 @@
 <body>
   <h1>Clipboard</h1>
 
-  <textarea id="content" autofocus></textarea>
+  <textarea id="content"></textarea>
 
+  <span id="mime_type"></span>
+  <span id="has_file"></span>
   <script>
 
     window.onload = function() {
-    document.addEventListener('paste', function(e) {
-      document.querySelector('#content').value = btoa(event.clipboardData.getData('image/png'))
-    });
+
+    document.addEventListener("paste", function(e) {
+      for (var i = 0; i < e.clipboardData.items.length; ++i) {
+        document.getElementById("mime_type").innerHTML = e.clipboardData.items[i].type;
+        var blob = e.clipboardData.items[i].getAsFile();
+        document.getElementById("has_file").innerHTML = (blob != null) ? "true" : "false";
+        if (blob) {
+          var reader = new FileReader();
+          reader.addEventListener("loadend", function() {
+            document.getElementById('content').value = btoa(String.fromCharCode.apply(null, new Uint8Array(reader.result)))
+          });
+          reader.readAsArrayBuffer(blob);
+        }
+      }
+    }, true);
+
     }
   </script>
   
