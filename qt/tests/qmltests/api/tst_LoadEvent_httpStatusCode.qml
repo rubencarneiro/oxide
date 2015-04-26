@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.0
+import com.canonical.Oxide 1.8
 import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
@@ -21,10 +21,6 @@ TestWebView {
                  event.type != LoadEvent.TypeStarted && event.type != LoadEvent.TypeStopped ?
                   expected.httpStatusCode : -1,
                  "Unexpected value of httpStatusCode");
-  }
-
-  context.networkRequestDelegate: WebContextDelegateWorker {
-    source: Qt.resolvedUrl("tst_LoadEvent_httpStatusCode.js")
   }
 
   TestCase {

@@ -3,10 +3,7 @@ from cStringIO import StringIO
 def handler(request):
   html = StringIO()
 
-  if "HttpStatusCode" in request.headers:
-    http_status_code = int(request.headers["HttpStatusCode"])
-  else:
-    http_status_code = -2
+  http_status_code = int(request.path[-3:])
 
   html.write("Request for http status code: " + str(http_status_code))
 
