@@ -77,12 +77,12 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "content/renderer/input/input_handler_manager.h"
  #include "gpu/command_buffer/client/gles2_interface.h"
  #include "third_party/WebKit/public/platform/WebCompositeAndReadbackAsyncCallback.h"
- #include "third_party/WebKit/public/platform/WebSelectionBound.h"
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
+ #include "third_party/WebKit/public/web/WebSelection.h"
  #include "third_party/WebKit/public/web/WebWidget.h"
-@@ -452,16 +454,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -466,16 +468,18 @@ void RenderWidgetCompositor::Initialize(
        compositor_deps_->GetTaskGraphRunner();
  
    scoped_ptr<cc::BeginFrameSource> external_begin_frame_source;
