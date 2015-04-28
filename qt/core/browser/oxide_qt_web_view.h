@@ -101,6 +101,8 @@ class WebView : public QObject,
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
+  void OnRenderProcessGone(base::TerminationStatus status) override;
+
   void OnURLChanged() override;
   void OnTitleChanged() override;
   void OnIconChanged(const GURL& icon) override;

@@ -69,6 +69,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
   Q_ENUMS(RestoreType);
+  Q_ENUMS(TerminationStatus);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -146,6 +147,15 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     RestoreCurrentSession,
     RestoreLastSessionExitedCleanly,
     RestoreLastSessionCrashed
+  };
+
+  // Keep in sync with chromium’s base::TerminationStatus
+  enum TerminationStatus {
+    TerminationNormal,
+    TerminationAbnormal,
+    TerminationKilled,
+    TerminationCrashed,
+    TerminationStillRunning
   };
 
   void componentComplete();
@@ -238,6 +248,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(2) void prepareToClose();
 
  Q_SIGNALS:
+  Q_REVISION(4) void renderProcessGone(TerminationStatus status);
   void urlChanged();
   void titleChanged();
   void iconChanged();

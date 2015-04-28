@@ -309,6 +309,13 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   return new oxide::qquick::FilePicker(q, client);
 }
 
+void OxideQQuickWebViewPrivate::RenderProcessGone(int status) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->renderProcessGone(
+      static_cast<OxideQQuickWebView::TerminationStatus>(status));
+}
+
 void OxideQQuickWebViewPrivate::URLChanged() {
   Q_Q(OxideQQuickWebView);
 

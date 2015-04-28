@@ -492,6 +492,8 @@ class WebView : public ScriptMessageTarget,
                          content::RenderFrameHost* render_frame_host) final;
 
   // Override in sub-classes
+  virtual void OnRenderProcessGone(base::TerminationStatus status);
+
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
