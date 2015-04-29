@@ -546,6 +546,16 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
 }
 
 void WebView::OnRenderProcessGone(base::TerminationStatus status) {
+  COMPILE_ASSERT(base::TERMINATION_STATUS_NORMAL_TERMINATION == 0,
+                 termination_status_enums_normal_doesnt_match);
+  COMPILE_ASSERT(base::TERMINATION_STATUS_ABNORMAL_TERMINATION == 1,
+                 termination_status_enums_abnormal_doesnt_match);
+  COMPILE_ASSERT(base::TERMINATION_STATUS_PROCESS_WAS_KILLED == 2,
+                 termination_status_enums_killed_doesnt_match);
+  COMPILE_ASSERT(base::TERMINATION_STATUS_PROCESS_CRASHED == 3,
+                 termination_status_enums_crashed_doesnt_match);
+  COMPILE_ASSERT(base::TERMINATION_STATUS_STILL_RUNNING == 4,
+                 termination_status_enums_running_doesnt_match);
   client_->RenderProcessGone(status);
 }
 
