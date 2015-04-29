@@ -556,6 +556,8 @@ void WebView::OnRenderProcessGone(base::TerminationStatus status) {
                  termination_status_enums_crashed_doesnt_match);
   COMPILE_ASSERT(base::TERMINATION_STATUS_STILL_RUNNING == 4,
                  termination_status_enums_running_doesnt_match);
+  COMPILE_ASSERT(base::TERMINATION_STATUS_MAX_ENUM == 5,
+                 termination_status_enums_max_doesnt_match);
   client_->RenderProcessGone(status);
 }
 
