@@ -312,6 +312,9 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
 void OxideQQuickWebViewPrivate::RenderProcessGone(int status) {
   Q_Q(OxideQQuickWebView);
 
+  Q_ASSERT(status >= OxideQQuickWebView::TerminationNormal);
+  Q_ASSERT(status <= OxideQQuickWebView::TerminationStillRunning);
+
   emit q->renderProcessGone(
       static_cast<OxideQQuickWebView::TerminationStatus>(status));
 }
