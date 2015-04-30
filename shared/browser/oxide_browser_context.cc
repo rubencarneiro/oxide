@@ -69,7 +69,6 @@
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_http_handler_delegate.h"
-#include "oxide_devtools_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -247,7 +246,6 @@ struct BrowserContextSharedData {
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  scoped_ptr<DevToolsManagerDelegate> devtools_manager_delegate;
   scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
@@ -714,13 +712,11 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
 
     scoped_ptr<TCPServerSocketFactory> factory(
         new TCPServerSocketFactory(ip, data_.devtools_port));
-    data_.devtools_manager_delegate.reset(new DevToolsManagerDelegate());
     data_.devtools_http_handler.reset(
         new devtools_http_handler::DevToolsHttpHandler(
           factory.Pass(),
           std::string(),
           new DevtoolsHttpHandlerDelegate(),
-          data_.devtools_manager_delegate.get(),
           base::FilePath(),
           base::FilePath(),
           GetProduct(),

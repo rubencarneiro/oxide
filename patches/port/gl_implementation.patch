@@ -215,9 +215,9 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
  #endif
  
  #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
-@@ -58,17 +58,17 @@ std::string DriverEGL::GetPlatformExtens
- // static
+@@ -54,17 +54,17 @@ std::string DriverEGL::GetPlatformExtens
  std::string DriverEGL::GetClientExtensions() {
+   DCHECK(g_driver_egl.fn.eglQueryStringFn);
    const char* str =
        g_driver_egl.fn.eglQueryStringFn(EGL_NO_DISPLAY, EGL_EXTENSIONS);
    return str ? std::string(str) : "";

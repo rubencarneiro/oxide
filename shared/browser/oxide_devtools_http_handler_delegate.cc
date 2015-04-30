@@ -24,10 +24,6 @@
 
 namespace oxide {
 
-DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
-
-DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
-
 std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
   return ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
     IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
@@ -37,5 +33,13 @@ std::string DevtoolsHttpHandlerDelegate::GetFrontendResource(
     const std::string& path) {
   return content::DevToolsFrontendHost::GetFrontendResource(path).as_string();
 }
+
+std::string DevtoolsHttpHandlerDelegate::GetPageThumbnailData(const GURL& url) {
+  return std::string();
+}
+
+DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
+
+DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
 
 }

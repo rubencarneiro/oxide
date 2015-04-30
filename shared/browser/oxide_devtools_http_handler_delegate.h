@@ -30,11 +30,12 @@ class DevtoolsHttpHandlerDelegate
   DevtoolsHttpHandlerDelegate();
   ~DevtoolsHttpHandlerDelegate() override;
 
+ private:
   // DevToolsHttpHandlerDelegate overrides.
   std::string GetDiscoveryPageHTML() override;
   std::string GetFrontendResource(const std::string& path) override;
+  std::string GetPageThumbnailData(const GURL& url) override;
 
- private:
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
 };
 
