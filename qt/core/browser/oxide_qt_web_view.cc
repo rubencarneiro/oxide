@@ -48,6 +48,7 @@
 #include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
@@ -1258,6 +1259,67 @@ void WebView::reload() {
   Reload();
 }
 
+void WebView::findInPage(const QString &text) {
+  content::WebContents* contents = GetWebContents();
+  if (contents == nullptr) return;
+
+  contents->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
+
+  if (text.isEmpty()) {
+      OnFindInPageResult(0, 0);
+      return;
+  }
+
+  find_in_page_state_.request_id += 1;
+  find_in_page_state_.text = text;
+  find_in_page_state_.count = 0;
+  find_in_page_state_.current = 0;
+
+  blink::WebFindOptions options;
+  options.forward = true;
+  options.findNext = false;
+
+  contents->Find(find_in_page_state_.request_id, text.utf16(), options);
+}
+
+void WebView::findInPageNext() {
+   content::WebContents* contents = GetWebContents();
+   if (contents == nullptr) return;
+
+   blink::WebFindOptions options;
+   options.forward = true;
+   options.findNext = true;
+
+   contents->Find(find_in_page_state_.request_id, find_in_page_state_.text.utf16(), options);
+}
+
+void WebView::findInPagePrevious() {
+   content::WebContents* contents = GetWebContents();
+   if (contents == nullptr) return;
+
+   blink::WebFindOptions options;
+   options.forward = false;
+   options.findNext = true;
+
+   contents->Find(find_in_page_state_.request_id, find_in_page_state_.text.utf16(), options);
+}
+
+void WebView::OnFindInPageResult(int current, int count) {
+    int old_count = find_in_page_state_.count;
+    int old_current = find_in_page_state_.current;
+
+    if (count != -1) find_in_page_state_.count = count;
+    if (current != -1) find_in_page_state_.current = current;
+
+    if (find_in_page_state_.count != old_count && find_in_page_state_.current != old_current) {
+      client_->FindInPageStateChanged();
+    }
+}
+
+const FindInPageState& WebView::findInPageState() const {
+    return find_in_page_state_;
+}
+
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
   QByteArray encoded_data = html.toUtf8().toPercentEncoding();
   LoadData(std::string(encoded_data.constData(), encoded_data.length()),
@@ -1472,7 +1534,8 @@ WebView::WebView(WebViewProxyClient* client) :
     client_(client),
     has_input_method_state_(false),
     qsecurity_status_(
-        OxideQSecurityStatusPrivate::Create(this)) {
+        OxideQSecurityStatusPrivate::Create(this)),
+    find_in_page_state_({}) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     connect(im, SIGNAL(visibleChanged()),

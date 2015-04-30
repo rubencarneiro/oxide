@@ -148,6 +148,8 @@ class WebView : public QObject,
 			   const std::string& cookies,
 			   const std::string& referrer) override;
 
+  void OnFindInPageResult(int current, int count) override;
+
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
@@ -223,6 +225,11 @@ class WebView : public QObject,
   void stop() override;
   void reload() override;
 
+  void findInPage(const QString &text) override;
+  void findInPageNext() override;
+  void findInPagePrevious() override;
+  const FindInPageState& findInPageState() const override;
+
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
   QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
@@ -269,7 +276,7 @@ class WebView : public QObject,
   bool locationBarAnimated() const override;
   void setLocationBarAnimated(bool animated) override;
   void locationBarShow(bool animate) override;
-  void locationBarHide(bool animate) override;
+  void locationBarHide(bool animate) override; 
 
   WebViewProxyClient* client_;
 
@@ -281,6 +288,7 @@ class WebView : public QObject,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
+  FindInPageState find_in_page_state_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

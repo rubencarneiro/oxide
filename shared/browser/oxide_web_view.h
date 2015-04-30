@@ -443,6 +443,13 @@ class WebView : public ScriptMessageTarget,
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
 
+  void FindReply(content::WebContents* web_contents,
+                 int request_id,
+                 int number_of_matches,
+                 const gfx::Rect& selection_rect,
+                 int active_match_ordinal,
+                 bool final_update) final;
+
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
   void RenderProcessGone(base::TerminationStatus status) final;
@@ -570,6 +577,8 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnPrepareToCloseResponse(bool proceed);
   virtual void OnCloseRequested();
+
+  virtual void OnFindInPageResult(int current, int count);
 
   struct WebContentsDeleter {
     void operator()(content::WebContents* contents);

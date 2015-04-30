@@ -47,6 +47,11 @@ class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
 class OxideQSecurityStatus;
+namespace oxide {
+    namespace qt {
+        class WebViewProxy;
+    }
+}
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -61,6 +66,42 @@ class OxideQQuickWebViewAttached : public QObject {
 
  private:
   OxideQQuickWebView* view_;
+};
+
+class OxideQQuickWebViewFindInPage : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int current READ current NOTIFY currentChanged)
+
+   public:
+    OxideQQuickWebViewFindInPage(oxide::qt::WebViewProxy* proxy);
+    virtual ~OxideQQuickWebViewFindInPage();
+
+    const QString& text() const;
+    void setText(const QString& text);
+    int count() const;
+    int current() const;
+
+    Q_INVOKABLE void next() const;
+    Q_INVOKABLE void previous() const;
+
+   signals:
+    void textChanged() const;
+    void countChanged() const;
+    void currentChanged() const;
+
+   protected:
+    void updateOnStateChanged(int current, int count);
+
+   private:
+    QString text_;
+    int count_;
+    int current_;
+    oxide::qt::WebViewProxy* proxy_;
+
+   friend class OxideQQuickWebView;
+   friend class OxideQQuickWebViewPrivate;
 };
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
@@ -107,6 +148,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
+
+  Q_PROPERTY(OxideQQuickWebViewFindInPage* findInPage READ findInPage REVISION 4)
 
   // Set at construction time only
   Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
@@ -224,6 +267,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQQuickLocationBarController* locationBarController();
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
+
+  OxideQQuickWebViewFindInPage* findInPage() const;
 
  public Q_SLOTS:
   void goBack();

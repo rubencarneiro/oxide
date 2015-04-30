@@ -134,6 +134,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void ContentBlocked() override;
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
+  void FindInPageStateChanged() override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();
@@ -203,6 +204,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QScopedPointer<ConstructProps> construct_props_;
 
   QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
+  QScopedPointer<OxideQQuickWebViewFindInPage> find_in_page_;
+
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

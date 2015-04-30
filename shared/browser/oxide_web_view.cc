@@ -845,6 +845,15 @@ bool WebView::IsFullscreenForTabOrPending(
   return IsFullscreen();
 }
 
+void WebView::FindReply(content::WebContents* web_contents,
+                        int request_id,
+                        int number_of_matches,
+                        const gfx::Rect& selection_rect,
+                        int active_match_ordinal,
+                        bool final_update) {
+  OnFindInPageResult(active_match_ordinal, number_of_matches);
+}
+
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   // We get a RenderFrameHostChanged notification when any FrameTreeNode is
   // added to the FrameTree, which is when we want a notification. However,
@@ -1184,6 +1193,8 @@ void WebView::OnContentBlocked() {}
 
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
 void WebView::OnCloseRequested() {}
+
+void WebView::OnFindInPageResult(int current, int count) {}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
