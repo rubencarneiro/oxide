@@ -199,6 +199,8 @@ Item {
               "Default height should be 0");
       compare(webView.locationBarController.mode, LocationBarController.ModeAuto,
               "Default mode should be auto");
+      compare(webView.locationBarController.animated, true,
+              "Should default to animated");
       compare(webView.locationBarController.offset, 0,
               "Default offset should be 0");
       compare(webView.locationBarController.contentOffset, 0,
@@ -217,21 +219,26 @@ Item {
 
       webView.locationBarController.height = 80;
 
-      compare(webView.locationBarController.height, 80);
-      compare(spy.count, 1);
+      compare(webView.locationBarController.height, 80,
+              "Height should be set correctly");
+      compare(spy.count, 1, "Should have had a signal when setting the height");
 
       webView.locationBarController.height = -80;
 
-      compare(webView.locationBarController.height, 80);
-      compare(spy.count, 1);
+      compare(webView.locationBarController.height, 80,
+              "Setting an invalid height should be ignored");
+      compare(spy.count, 1,
+              "Setting an invalid height should result in no signal");
 
       webView.locationBarController.height = 0;
 
-      compare(webView.locationBarController.height, 0);
-      compare(spy.count, 2);
+      compare(webView.locationBarController.height, 0,
+              "Height should be set correctly");
+      compare(spy.count, 2, "Should have had a signal when setting the height");
     }
 
-    // Ensure that changing the mode has no effect when not in use
+    // Ensure that changing the mode and calling show() / hide() has no effect
+    //  when not in use
     function test_LocationBarController3_mode_off() {
       var webView = webViewFactory.createObject(top, {});
       locationBarSpy.target = webView;
@@ -249,8 +256,47 @@ Item {
       compare(webView.locationBarController.contentOffset, 0);
 
       webView.locationBarController.mode = LocationBarController.ModeShown;
-      compare(spy.count, 0);
+      compare(spy.count, 1);
+      compare(webView.locationBarController.mode, LocationBarController.ModeShown);
+
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(webView.locationBarController.offset, 0);
+      compare(webView.locationBarController.contentOffset, 0);
+
+      webView.locationBarController.mode = LocationBarController.ModeHidden;
+      compare(spy.count, 2);
+      compare(webView.locationBarController.mode, LocationBarController.ModeHidden);
+
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(webView.locationBarController.offset, 0);
+      compare(webView.locationBarController.contentOffset, 0);
+
+      webView.locationBarController.mode = LocationBarController.ModeAuto;
+      compare(spy.count, 3);
       compare(webView.locationBarController.mode, LocationBarController.ModeAuto);
+
+      webView.locationBarController.show(true);
+
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(webView.locationBarController.offset, 0);
+      compare(webView.locationBarController.contentOffset, 0);
+
+      webView.locationBarController.hide(true);
 
       webView.wait(500);
 
@@ -262,9 +308,20 @@ Item {
       compare(webView.locationBarController.contentOffset, 0);
     }
 
+    function test_LocationBarController4_mode_on_data() {
+      return [
+        { animated: true },
+        { animated: false }
+      ];
+    }
+
     // Ensure that changing the mode does have an effect when in use
-    function test_LocationBarController4_mode_on() {
-      var webView = webViewFactory.createObject(top, { "locationBarController.height": 60 });
+    function test_LocationBarController4_mode_on(data) {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": data.animated
+      });
+
       locationBarSpy.target = webView;
       spy.target = webView.locationBarController;
       spy.signalName = "modeChanged";
@@ -292,9 +349,11 @@ Item {
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
-      compare(locationBarSpy.animationCount, 1);
-      verify(locationBarSpy.lastAnimationDuration > 150 &&
-             locationBarSpy.lastAnimationDuration < 250);
+      compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
+      if (data.animated) {
+        verify(locationBarSpy.lastAnimationDuration > 150 &&
+               locationBarSpy.lastAnimationDuration < 250);
+      }
 
       webView.locationBarController.mode = LocationBarController.ModeShown;
       compare(spy.count, 2);
@@ -307,11 +366,137 @@ Item {
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
-      compare(locationBarSpy.animationCount, 2);
-      verify(locationBarSpy.lastAnimationDuration > 150 &&
-             locationBarSpy.lastAnimationDuration < 250);
+      compare(locationBarSpy.animationCount, data.animated ? 2 : 0);
+      if (data.animated) {
+        verify(locationBarSpy.lastAnimationDuration > 150 &&
+               locationBarSpy.lastAnimationDuration < 250);
+      }
 
       deleteWebView(webView);
+    }
+
+    function test_LocationBarController5_on_show_data() {
+      return [
+        { animated: true },
+        { animated: false }
+      ];
+    }
+
+    // Test that show() behaves as expected
+    function test_LocationBarController5_on_show(data) {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": data.animated,
+          "locationBarController.mode": LocationBarController.ModeHidden
+      });
+
+      locationBarSpy.target = webView;
+      spy.target = webView.locationBarController;
+      spy.signalName = "modeChanged";
+
+      webView.url = "http://testsuite/tst_LocationBarController.html";
+      verify(webView.waitForLoadSucceeded());
+
+      verify(locationBarSpy.waitForUpdate());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.show(data.animated);
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.mode = LocationBarController.ModeAuto;
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.show(data.animated);
+      verify(locationBarSpy.waitUntilShown());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
+    }
+
+    function test_LocationBarController6_on_hide_data() {
+      return [
+        { animated: true },
+        { animated: false }
+      ];
+    }
+
+    // Test that show() behaves as expected
+    function test_LocationBarController6_on_hide(data) {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": data.animated,
+          "locationBarController.mode": LocationBarController.ModeShown
+      });
+
+      locationBarSpy.target = webView;
+      spy.target = webView.locationBarController;
+      spy.signalName = "modeChanged";
+
+      webView.url = "http://testsuite/tst_LocationBarController.html";
+      verify(webView.waitForLoadSucceeded());
+
+      verify(locationBarSpy.waitForUpdate());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.hide(data.animated);
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.mode = LocationBarController.ModeAuto;
+      webView.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.locationBarController.hide(data.animated);
+      verify(locationBarSpy.waitUntilHidden());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
     }
   }
 }

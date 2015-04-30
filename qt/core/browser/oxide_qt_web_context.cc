@@ -104,14 +104,13 @@ class WebContext::BrowserContextDelegate
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) override;
-  void OnBeforeRedirect(net::URLRequest* request,
-                        const GURL& new_location) override;
+  int OnBeforeRedirect(net::URLRequest* request,
+                       const GURL& new_location) override;
   oxide::StoragePermission CanAccessStorage(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write,
                                             oxide::StorageType type) override;
-  bool GetUserAgentOverride(const GURL& url,
-                            std::string* user_agent) override;
+  std::string GetUserAgentOverride(const GURL& url) override;
   bool IsCustomProtocolHandlerRegistered(
       const std::string& scheme) const override;
   oxide::URLRequestDelegatedJob* CreateCustomURLRequestJob(
@@ -234,12 +233,12 @@ int WebContext::BrowserContextDelegate::OnBeforeSendHeaders(
   return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
-void WebContext::BrowserContextDelegate::OnBeforeRedirect(
+int WebContext::BrowserContextDelegate::OnBeforeRedirect(
     net::URLRequest* request,
     const GURL& new_location) {
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
   if (!io_client) {
-    return;
+    return net::OK;
   }
 
   const content::ResourceRequestInfo* info =
@@ -247,7 +246,7 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
   if (!info) {
     // Requests created outside of the ResourceDispatcher won't have
     // a ResourceRequestInfo
-    return;
+    return net::OK;
   }
 
   OxideQBeforeRedirectEvent event(
@@ -262,9 +261,7 @@ void WebContext::BrowserContextDelegate::OnBeforeRedirect(
   OxideQBeforeRedirectEventPrivate* eventp =
       OxideQBeforeRedirectEventPrivate::get(&event);
 
-  if (eventp->request_cancelled) {
-    request->Cancel();
-  }
+  return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
 oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
@@ -288,20 +285,17 @@ oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
   return OxideQStoragePermissionRequestPrivate::get(&req)->permission;
 }
 
-bool WebContext::BrowserContextDelegate::GetUserAgentOverride(
-    const GURL& url,
-    std::string* user_agent) {
+std::string WebContext::BrowserContextDelegate::GetUserAgentOverride(
+    const GURL& url) {
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
   if (!io_client) {
-    return false;
+    return std::string();
   }
 
-  QString new_user_agent;
-  bool overridden = io_client->GetUserAgentOverride(
-      QUrl(QString::fromStdString(url.spec())), &new_user_agent);
+  QString user_agent = io_client->GetUserAgentOverride(
+      QUrl(QString::fromStdString(url.spec())));
 
-  *user_agent = new_user_agent.toStdString();
-  return overridden;
+  return user_agent.toStdString();
 }
 
 bool WebContext::BrowserContextDelegate::IsCustomProtocolHandlerRegistered(

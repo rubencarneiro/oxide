@@ -150,7 +150,7 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
     return;
   }
 
-  v8::Handle<v8::Value> argv[] = {
+  v8::Local<v8::Value> argv[] = {
       message_manager->GetOxideApiObject(message_manager->isolate())
   };
 

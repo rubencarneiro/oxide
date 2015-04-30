@@ -68,10 +68,9 @@ IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockRunningInsecureContent)
 
-IPC_SYNC_MESSAGE_CONTROL1_2(OxideHostMsg_GetUserAgentOverride,
+IPC_SYNC_MESSAGE_CONTROL1_1(OxideHostMsg_GetUserAgentOverride,
                             GURL,
-                            std::string,
-                            bool)
+                            std::string)
 
 // Media
 IPC_ENUM_TRAITS(OxideHostMsg_MediaPlayer_Initialize_Type)

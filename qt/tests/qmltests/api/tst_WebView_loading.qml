@@ -18,7 +18,7 @@ TestWebView {
   property var inTest: true
   property var expectedLoadEvents: []
 
-  function on_load_event(event) {
+  onLoadEvent: {
     if (!inTest) {
       return;
     }

@@ -20,8 +20,11 @@
 #include <string>
 
 #include "base/command_line.h"
+#include "base/strings/stringprintf.h"
 #include "cc/trees/layer_tree_settings.h"
+#include "content/public/common/url_constants.h"
 #include "content/public/common/url_utils.h"
+#include "content/public/common/user_agent.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
@@ -30,6 +33,7 @@
 #include "third_party/WebKit/public/web/WebView.h"
 #include "ui/native_theme/native_theme_switches.h"
 
+#include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_messages.h"
 
@@ -95,17 +99,20 @@ void ContentRendererClient::RenderViewCreated(
 
 std::string ContentRendererClient::GetUserAgentOverrideForURL(
     const GURL& url) {
-  GURL u = url;
-
-  // Strip username / password / fragment identifier if they exist
-  if (u.has_password() || u.has_username() || u.has_ref()) {
-    GURL::Replacements rep;
-    rep.ClearUsername();
-    rep.ClearPassword();
-    rep.ClearRef();
-    u = u.ReplaceComponents(rep);
+  if (url.scheme() == content::kChromeUIScheme) {
+    return content::BuildUserAgentFromProduct(
+        base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
   }
 
+  // Strip username / password / fragment identifier if they exist
+  GURL::Replacements rep;
+  rep.ClearUsername();
+  rep.ClearPassword();
+  rep.ClearRef();
+
+  GURL u = url.ReplaceComponents(rep);
+
+  // URL's longer than GetMaxURLChars can't be serialized.
   // Strip query if we are above the max number of chars
   if (u.spec().size() > content::GetMaxURLChars() &&
       u.has_query()) {
@@ -119,20 +126,13 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
     u = u.GetOrigin();
   }
 
-  // Not sure we should ever hit this, but in any case - there
-  // isn't much more we can do now
   if (u.spec().size() > content::GetMaxURLChars()) {
     return std::string();
   }
 
-  bool overridden = false;
   std::string user_agent;
-
-  content::RenderThread::Get()->Send(new OxideHostMsg_GetUserAgentOverride(
-      u, &user_agent, &overridden));
-  if (!overridden) {
-    return std::string();
-  }
+  content::RenderThread::Get()->Send(
+      new OxideHostMsg_GetUserAgentOverride(u, &user_agent));
 
   return user_agent;
 }

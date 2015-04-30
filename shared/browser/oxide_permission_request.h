@@ -106,10 +106,10 @@ class PermissionRequest {
  public:
   virtual ~PermissionRequest();
 
-  // The URL of the frame that generated this request
-  GURL url() const { return url_; }
+  // The origin of the frame that generated this request
+  GURL origin() const { return origin_; }
 
-  // The URL of the top-level document containing the frame that generated
+  // The origin of the top-level document containing the frame that generated
   // this request
   GURL embedder() const { return embedder_; }
 
@@ -125,7 +125,7 @@ class PermissionRequest {
 
   PermissionRequest(PermissionRequestManager* manager,
                     const PermissionRequestID& request_id,
-                    const GURL& url,
+                    const GURL& origin,
                     const GURL& embedder);
 
   // Cancel this request and run the cancel callback. This is only called from
@@ -137,7 +137,7 @@ class PermissionRequest {
  private:
   PermissionRequestID request_id_;
 
-  GURL url_;
+  GURL origin_;
   GURL embedder_;
 
   bool is_cancelled_;
@@ -156,7 +156,7 @@ class SimplePermissionRequest : public PermissionRequest {
   SimplePermissionRequest(
       PermissionRequestManager* manager,
       const PermissionRequestID& request_id,
-      const GURL& url,
+      const GURL& origin,
       const GURL& embedder,
       const base::Callback<void(content::PermissionStatus)>& callback);
   ~SimplePermissionRequest() override;

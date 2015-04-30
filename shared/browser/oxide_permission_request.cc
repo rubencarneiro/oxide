@@ -150,11 +150,11 @@ void PermissionRequestManager::CancelPendingRequestForID(
 
 PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
                                      const PermissionRequestID& request_id,
-                                     const GURL& url,
+                                     const GURL& origin,
                                      const GURL& embedder)
     : manager_(manager),
       request_id_(request_id),
-      url_(url),
+      origin_(origin),
       embedder_(embedder),
       is_cancelled_(false) {
   DCHECK(manager_);
@@ -195,10 +195,10 @@ void SimplePermissionRequest::Cancel() {
 SimplePermissionRequest::SimplePermissionRequest(
     PermissionRequestManager* manager,
     const PermissionRequestID& request_id,
-    const GURL& url,
+    const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(content::PermissionStatus)>& callback)
-    : PermissionRequest(manager, request_id, url, embedder),
+    : PermissionRequest(manager, request_id, origin, embedder),
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
