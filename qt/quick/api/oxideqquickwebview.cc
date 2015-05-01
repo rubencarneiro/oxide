@@ -217,7 +217,10 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
 
 OxideQQuickWebViewFindInPage::OxideQQuickWebViewFindInPage(oxide::qt::WebViewProxy* proxy) :
     QObject(nullptr),
-    proxy_(proxy) {
+    proxy_(proxy),
+    current_(0),
+    count_(0),
+    text_(QString()) {
 }
 
 OxideQQuickWebViewFindInPage::~OxideQQuickWebViewFindInPage() {}

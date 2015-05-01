@@ -202,3 +202,7 @@ list(SORT I18N_SRC_FILES)
 add_subdirectory(po)
 
 add_subdirectory(${OXIDE_BUILD})
+
+# make files compiled by gyp visible in qtcreator
+file(GLOB_RECURSE GYP_FILES shared/*.cc shared/*.h qt/*.cc qt/*.h)
+add_custom_target(NON_COMPILED_TARGET ALL SOURCES ${GYP_FILES})
