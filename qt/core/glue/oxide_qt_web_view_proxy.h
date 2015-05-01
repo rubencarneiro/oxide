@@ -98,6 +98,7 @@ class CompositorFrameHandle {
 struct FindInPageState {
   int request_id;
   QString text;
+  bool case_sensitive;
   int current;
   int count;
 };
@@ -156,7 +157,7 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void stop() = 0;
   virtual void reload() = 0;
 
-  virtual void findInPage(const QString& text) = 0;
+  virtual void findInPage(const QString& text, bool caseSensitive) = 0;
   virtual void findInPageNext() = 0;
   virtual void findInPagePrevious() = 0;
   virtual const FindInPageState& findInPageState() const = 0;

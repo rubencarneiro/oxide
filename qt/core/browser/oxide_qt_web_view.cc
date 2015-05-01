@@ -1259,7 +1259,7 @@ void WebView::reload() {
   Reload();
 }
 
-void WebView::findInPage(const QString &text) {
+void WebView::findInPage(const QString &text, bool caseSensitive) {
   content::WebContents* contents = GetWebContents();
   if (contents == nullptr) return;
 
@@ -1267,6 +1267,7 @@ void WebView::findInPage(const QString &text) {
   OnFindInPageResult(0, 0);
 
   find_in_page_state_.text = text;
+  find_in_page_state_.case_sensitive = caseSensitive;
   find_in_page_state_.count = 0;
   find_in_page_state_.current = 0;
 
@@ -1276,6 +1277,7 @@ void WebView::findInPage(const QString &text) {
       blink::WebFindOptions options;
       options.forward = true;
       options.findNext = false;
+      options.matchCase = caseSensitive;
 
       contents->Find(find_in_page_state_.request_id, text.utf16(), options);
   }

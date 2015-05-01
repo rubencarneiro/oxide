@@ -15,7 +15,10 @@ TestWebView {
 
     function init() {
       webView.findInPage.text = "";
-      webView.url = "http://testsuite/tst_findInPage.html";
+      webView.findInPage.caseSensitive = false;
+
+      // load the page that will be used by most tests
+      webView.url = "http://testsuite/tst_WebView_findInPage.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
     }
@@ -23,11 +26,29 @@ TestWebView {
     function test_case_insensitive() {
       webView.findInPage.text = "suspendisse";
       tryCompare(webView.findInPage, "count", 1);
-      tryCompare(webView.findInPage, "current", 1);
 
       webView.findInPage.text = "suspendiSSe";
       tryCompare(webView.findInPage, "count", 1);
-      tryCompare(webView.findInPage, "current", 1);
+    }
+
+    function test_case_sensitive() {
+      webView.findInPage.caseSensitive = true;
+
+      webView.findInPage.text = "Suspendisse";
+      tryCompare(webView.findInPage, "count", 1);
+
+      webView.findInPage.text = "suspendisse";
+      tryCompare(webView.findInPage, "count", 0);
+    }
+
+    function test_change_case_sensitivity() {
+      webView.findInPage.caseSensitive = true;
+
+      webView.findInPage.text = "Dolor";
+      tryCompare(webView.findInPage, "count", 1);
+
+      webView.findInPage.caseSensitive = false;
+      tryCompare(webView.findInPage, "count", 2);
     }
 
     function test_movement() {
@@ -110,7 +131,7 @@ TestWebView {
 
       // Verify that when navigating to another page the search does not
       // reset, it is the user responsibility to cancel it and restart it
-      webView.url = "http://testsuite/tst_findInPageManyResults.html";
+      webView.url = "http://testsuite/tst_WebView_findInPageManyResults.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       tryCompare(webView.findInPage, "text", "dolor");

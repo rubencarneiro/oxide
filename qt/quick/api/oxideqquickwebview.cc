@@ -220,6 +220,7 @@ OxideQQuickWebViewFindInPage::OxideQQuickWebViewFindInPage(oxide::qt::WebViewPro
     proxy_(proxy),
     current_(0),
     count_(0),
+    case_sensitive_(false),
     text_(QString()) {
 }
 
@@ -234,7 +235,20 @@ void OxideQQuickWebViewFindInPage::setText(const QString& text) {
     text_ = text;
     emit textChanged();
 
-    proxy_->findInPage(text);
+    proxy_->findInPage(text_, case_sensitive_);
+  }
+}
+
+bool OxideQQuickWebViewFindInPage::caseSensitive() const {
+  return case_sensitive_;
+}
+
+void OxideQQuickWebViewFindInPage::setCaseSensitive(bool caseSensitive) {
+  if (case_sensitive_ != caseSensitive) {
+    case_sensitive_ = caseSensitive;
+    emit caseSensitiveChanged();
+
+    proxy_->findInPage(text_, case_sensitive_);
   }
 }
 

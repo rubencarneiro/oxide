@@ -225,7 +225,7 @@ class WebView : public QObject,
   void stop() override;
   void reload() override;
 
-  void findInPage(const QString &text) override;
+  void findInPage(const QString &text, bool caseSensitive) override;
   void findInPageNext() override;
   void findInPagePrevious() override;
   const FindInPageState& findInPageState() const override;

@@ -71,6 +71,7 @@ class OxideQQuickWebViewAttached : public QObject {
 class OxideQQuickWebViewFindInPage : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+    Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int current READ current NOTIFY currentChanged)
 
@@ -80,6 +81,8 @@ class OxideQQuickWebViewFindInPage : public QObject {
 
     const QString& text() const;
     void setText(const QString& text);
+    bool caseSensitive() const;
+    void setCaseSensitive(bool caseSensitive);
     int count() const;
     int current() const;
 
@@ -88,6 +91,7 @@ class OxideQQuickWebViewFindInPage : public QObject {
 
    signals:
     void textChanged() const;
+    void caseSensitiveChanged() const;
     void countChanged() const;
     void currentChanged() const;
 
@@ -96,6 +100,7 @@ class OxideQQuickWebViewFindInPage : public QObject {
 
    private:
     QString text_;
+    bool case_sensitive_;
     int count_;
     int current_;
     oxide::qt::WebViewProxy* proxy_;
