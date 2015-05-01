@@ -29,6 +29,7 @@ class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
+class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
 
@@ -119,6 +120,8 @@ class WebViewProxyClient {
 
   virtual void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) = 0;
+  virtual void RequestMediaAccessPermission(
+      OxideQMediaAccessPermissionRequest* request) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

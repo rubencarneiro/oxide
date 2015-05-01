@@ -20,8 +20,26 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/media_capture_devices.h"
 
 namespace oxide {
+
+namespace {
+
+const content::MediaStreamDevice* FindDeviceWithId(
+    const content::MediaStreamDevices& devices,
+    const std::string& device_id) {
+  for (auto it = devices.begin(); it != devices.end(); ++it) {
+    const content::MediaStreamDevice& device = *it;
+    if (device.id == device_id) {
+      return &device;
+    }
+  }
+
+  return nullptr;
+}
+
+}
 
 PermissionRequestID::PermissionRequestID(int render_process_id,
                                          int render_view_id,
@@ -220,6 +238,103 @@ void SimplePermissionRequest::Deny() {
   DCHECK(!callback_.is_null());
 
   callback_.Run(content::PERMISSION_STATUS_DENIED);
+  callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
+}
+
+void MediaAccessPermissionRequest::Cancel() {
+  DCHECK(!callback_.is_null());
+
+  callback_.Run(content::MediaStreamDevices(),
+                content::MEDIA_DEVICE_PERMISSION_DENIED,
+                nullptr);
+  callback_.Reset();
+
+  PermissionRequest::Cancel();
+}
+
+MediaAccessPermissionRequest::MediaAccessPermissionRequest(
+    PermissionRequestManager* manager,
+    const PermissionRequestID& request_id,
+    const GURL& origin,
+    const GURL& embedder,
+    bool audio_requested,
+    bool video_requested,
+    const content::MediaResponseCallback& callback)
+    : PermissionRequest(manager, request_id, origin, embedder),
+      audio_requested_(audio_requested),
+      video_requested_(video_requested),
+      callback_(callback) {}
+
+MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
+  if (!callback_.is_null()) {
+    Deny();
+  }
+}
+
+void MediaAccessPermissionRequest::Allow() {
+  Allow(std::string(), std::string());
+}
+
+void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
+                                         const std::string& video_device_id) {
+  DCHECK(!callback_.is_null());
+
+  content::MediaStreamDevices devices;
+
+  if (audio_requested_) {
+    const content::MediaStreamDevices& audio_devices =
+        content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices();
+    const content::MediaStreamDevice* device = nullptr;
+    if (!audio_device_id.empty()) {
+      device = FindDeviceWithId(audio_devices, audio_device_id);
+    } else if (audio_devices.size() > 0) {
+      device = &audio_devices[0];
+    }
+    if (device) {
+      devices.push_back(*device);
+    } else {
+      LOG(WARNING)
+          << "No audio capture device found. This might happen if it was "
+          << "recently removed from the system";
+    }
+  }
+
+  if (video_requested_) {
+    const content::MediaStreamDevices& video_devices =
+        content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
+    const content::MediaStreamDevice* device = nullptr;
+    if (!video_device_id.empty()) {
+      device = FindDeviceWithId(video_devices, video_device_id);
+    } else if (video_devices.size() > 0) {
+      device = &video_devices[0];
+    }
+    if (device) {
+      devices.push_back(*device);
+    } else {
+      LOG(WARNING)
+          << "No video capture device found. This might happen if it was "
+          << "recently removed from the system";
+    }
+  }
+
+  callback_.Run(devices,
+                devices.empty() ?
+                    content::MEDIA_DEVICE_NO_HARDWARE :
+                    content::MEDIA_DEVICE_OK,
+                nullptr);
+  callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
+}
+
+void MediaAccessPermissionRequest::Deny() {
+  DCHECK(!callback_.is_null());
+
+  callback_.Run(content::MediaStreamDevices(),
+                content::MEDIA_DEVICE_PERMISSION_DENIED,
+                nullptr);
   callback_.Reset();
 
   manager_->RemovePendingRequest(this);

@@ -18,16 +18,19 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 
+#include <string>
 #include <vector>
 
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
+#include "content/public/common/media_stream_request.h"
 #include "content/public/common/permission_status.mojom.h"
 #include "url/gurl.h"
 
 namespace oxide {
 
+class MediaAccessPermissionRequest;
 class PermissionRequest;
 class SimplePermissionRequest;
 
@@ -73,6 +76,7 @@ class PermissionRequestManager {
   void CancelPendingRequestForID(const PermissionRequestID& request_id);
 
  private:
+  friend class MediaAccessPermissionRequest;
   friend class PermissionRequest;
   friend class SimplePermissionRequest;
   class IteratorGuard;
@@ -175,6 +179,40 @@ class SimplePermissionRequest : public PermissionRequest {
   base::Callback<void(content::PermissionStatus)> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
+};
+
+class MediaAccessPermissionRequest : public PermissionRequest {
+ public:
+  MediaAccessPermissionRequest(
+      PermissionRequestManager* manager,
+      const PermissionRequestID& request_id,
+      const GURL& origin,
+      const GURL& embedder,
+      bool audio_requested,
+      bool video_requested,
+      const content::MediaResponseCallback& callback);
+  ~MediaAccessPermissionRequest() override;
+
+  bool audio_requested() const { return audio_requested_; }
+
+  bool video_requested() const { return video_requested_; }
+
+  void Allow();
+  void Allow(const std::string& audio_device_id,
+             const std::string& video_device_id);
+
+  void Deny();
+
+ private:
+  // PermissionRequest implementation
+  void Cancel() override;
+
+  bool audio_requested_;
+  bool video_requested_;
+
+  content::MediaResponseCallback callback_;
+
+  DISALLOW_COPY_AND_ASSIGN(MediaAccessPermissionRequest);
 };
 
 } // namespace oxide

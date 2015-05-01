@@ -26,6 +26,7 @@
 #include "qt/core/api/oxideqpermissionrequest.h"
 
 namespace oxide {
+class MediaAccessPermissionRequest;
 class PermissionRequest;
 class SimplePermissionRequest;
 }
@@ -51,7 +52,7 @@ class OxideQPermissionRequestPrivate {
 class OxideQSimplePermissionRequestPrivate
     : public OxideQPermissionRequestPrivate {
  public:
-  virtual ~OxideQSimplePermissionRequestPrivate();
+  ~OxideQSimplePermissionRequestPrivate() override;
 
   static OxideQSimplePermissionRequest* Create(
       scoped_ptr<oxide::SimplePermissionRequest> request);
@@ -69,10 +70,10 @@ class OxideQSimplePermissionRequestPrivate
   bool did_respond_;
 };
 
-class OxideQGeolocationPermissionRequestPrivate final
+class OxideQGeolocationPermissionRequestPrivate
     : public OxideQSimplePermissionRequestPrivate {
  public:
-  ~OxideQGeolocationPermissionRequestPrivate();
+  ~OxideQGeolocationPermissionRequestPrivate() override;
 
   static OxideQGeolocationPermissionRequest* Create(
       scoped_ptr<oxide::SimplePermissionRequest> request);
@@ -80,6 +81,26 @@ class OxideQGeolocationPermissionRequestPrivate final
  private:
   OxideQGeolocationPermissionRequestPrivate(
       scoped_ptr<oxide::SimplePermissionRequest> request);
+};
+
+class OxideQMediaAccessPermissionRequestPrivate
+    : public OxideQPermissionRequestPrivate {
+ public:
+  ~OxideQMediaAccessPermissionRequestPrivate() override;
+
+  static OxideQMediaAccessPermissionRequest* Create(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request);
+
+ private:
+  friend class OxideQMediaAccessPermissionRequest;
+
+  OxideQMediaAccessPermissionRequestPrivate(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request);
+
+  bool canRespond() const;
+  oxide::MediaAccessPermissionRequest* request() const;
+
+  bool did_respond_;
 };
 
 #endif // _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_

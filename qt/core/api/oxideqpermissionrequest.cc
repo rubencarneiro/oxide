@@ -49,12 +49,16 @@ OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {
   if (did_respond_) {
-    qWarning() << "Can only respond once to a permission request";
+    qWarning() <<
+        "OxideQSimplePermissionRequest: Can only respond once to a permission "
+        "request";
     return false;
   }
 
   if (request()->is_cancelled()) {
-    qWarning() << "Can't respond to a cancelled permission request";
+    qWarning() <<
+        "OxideQSimplePermissionRequest: Can't respond to a cancelled "
+        "permission request";
     return false;
   }
 
@@ -66,7 +70,8 @@ OxideQSimplePermissionRequestPrivate::request() const {
   return static_cast<oxide::SimplePermissionRequest *>(request_.get());
 }
 
-OxideQSimplePermissionRequestPrivate::~OxideQSimplePermissionRequestPrivate() {}
+OxideQSimplePermissionRequestPrivate::
+    ~OxideQSimplePermissionRequestPrivate() {}
 
 // static
 OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
@@ -77,11 +82,13 @@ OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
       *new OxideQSimplePermissionRequestPrivate(request.Pass()));
 }
 
-OxideQGeolocationPermissionRequestPrivate::OxideQGeolocationPermissionRequestPrivate(
-    scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
+OxideQGeolocationPermissionRequestPrivate::
+    OxideQGeolocationPermissionRequestPrivate(
+      scoped_ptr<oxide::SimplePermissionRequest> request)
+      : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
 
-OxideQGeolocationPermissionRequestPrivate::~OxideQGeolocationPermissionRequestPrivate() {}
+OxideQGeolocationPermissionRequestPrivate::
+    ~OxideQGeolocationPermissionRequestPrivate() {}
 
 // static
 OxideQGeolocationPermissionRequest*
@@ -91,6 +98,48 @@ OxideQGeolocationPermissionRequestPrivate::Create(
 
   return new OxideQGeolocationPermissionRequest(
       *new OxideQGeolocationPermissionRequestPrivate(request.Pass()));
+}
+
+OxideQMediaAccessPermissionRequestPrivate::
+    OxideQMediaAccessPermissionRequestPrivate(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request)
+      : OxideQPermissionRequestPrivate(request.Pass()),
+        did_respond_(false) {}
+
+bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
+  if (did_respond_) {
+    qWarning() <<
+        "OxideQMediaAccessPermissionRequest: Can only respond once to a "
+        "permission request";
+    return false;
+  }
+
+  if (request()->is_cancelled()) {
+    qWarning() <<
+        "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
+        "permission request";
+    return false;
+  }
+
+  return true;
+}
+
+oxide::MediaAccessPermissionRequest*
+OxideQMediaAccessPermissionRequestPrivate::request() const {
+  return static_cast<oxide::MediaAccessPermissionRequest*>(request_.get());
+}
+
+OxideQMediaAccessPermissionRequestPrivate::
+    ~OxideQMediaAccessPermissionRequestPrivate() {}
+
+// static
+OxideQMediaAccessPermissionRequest*
+OxideQMediaAccessPermissionRequestPrivate::Create(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  DCHECK(request);
+
+  return new OxideQMediaAccessPermissionRequest(
+      *new OxideQMediaAccessPermissionRequestPrivate(request.Pass()));
 }
 
 OxideQPermissionRequest::OxideQPermissionRequest(
@@ -184,4 +233,51 @@ void OxideQGeolocationPermissionRequest::accept() {
   }
 
   allow();
+}
+
+OxideQMediaAccessPermissionRequest::OxideQMediaAccessPermissionRequest(
+    OxideQMediaAccessPermissionRequestPrivate& dd)
+    : OxideQPermissionRequest(dd) {}
+
+OxideQMediaAccessPermissionRequest::~OxideQMediaAccessPermissionRequest() {}
+
+bool OxideQMediaAccessPermissionRequest::isForAudio() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return d->request()->audio_requested();
+}
+
+bool OxideQMediaAccessPermissionRequest::isForVideo() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return d->request()->video_requested();
+}
+
+void OxideQMediaAccessPermissionRequest::allow() {
+  Q_D(OxideQMediaAccessPermissionRequest);
+
+  if (!d->canRespond()) {
+    return;
+  }
+
+  d->did_respond_ = true;
+  d->request()->Allow();
+}
+
+void OxideQMediaAccessPermissionRequest::allow(
+    const QString& audio_device_id,
+    const QString& video_device_id) {
+  // XXX: Implement
+  allow();
+}
+
+void OxideQMediaAccessPermissionRequest::deny() {
+  Q_D(OxideQMediaAccessPermissionRequest);
+
+  if (!d->canRespond()) {
+    return;
+  }
+
+  d->did_respond_ = true;
+  d->request()->Deny();
 }

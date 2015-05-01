@@ -135,6 +135,8 @@ class WebView : public QObject,
 
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void OnRequestMediaAccessPermission(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
