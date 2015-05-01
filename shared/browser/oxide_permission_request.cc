@@ -26,17 +26,23 @@ namespace oxide {
 
 namespace {
 
-const content::MediaStreamDevice* FindDeviceWithId(
+const content::MediaStreamDevice* GetRequestedOrDefaultDevice(
     const content::MediaStreamDevices& devices,
     const std::string& device_id) {
-  for (auto it = devices.begin(); it != devices.end(); ++it) {
-    const content::MediaStreamDevice& device = *it;
-    if (device.id == device_id) {
-      return &device;
+  if (devices.size() == 0) {
+    return nullptr;
+  }
+
+  if (!device_id.empty()) {
+    for (auto it = devices.begin(); it != devices.end(); ++it) {
+      const content::MediaStreamDevice& device = *it;
+      if (device.id == device_id) {
+        return &device;
+      }
     }
   }
 
-  return nullptr;
+  return &devices[0];
 }
 
 }
@@ -284,14 +290,10 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
   content::MediaStreamDevices devices;
 
   if (audio_requested_) {
-    const content::MediaStreamDevices& audio_devices =
-        content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices();
-    const content::MediaStreamDevice* device = nullptr;
-    if (!audio_device_id.empty()) {
-      device = FindDeviceWithId(audio_devices, audio_device_id);
-    } else if (audio_devices.size() > 0) {
-      device = &audio_devices[0];
-    }
+    const content::MediaStreamDevice* device =
+        GetRequestedOrDefaultDevice(
+          content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices(),
+          audio_device_id);
     if (device) {
       devices.push_back(*device);
     } else {
@@ -302,14 +304,10 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
   }
 
   if (video_requested_) {
-    const content::MediaStreamDevices& video_devices =
-        content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
-    const content::MediaStreamDevice* device = nullptr;
-    if (!video_device_id.empty()) {
-      device = FindDeviceWithId(video_devices, video_device_id);
-    } else if (video_devices.size() > 0) {
-      device = &video_devices[0];
-    }
+    const content::MediaStreamDevice* device =
+        GetRequestedOrDefaultDevice(
+          content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices(),
+          video_device_id);
     if (device) {
       devices.push_back(*device);
     } else {
