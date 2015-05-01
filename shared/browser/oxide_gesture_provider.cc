@@ -23,6 +23,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/events/base_event_utils.h"
 #include "ui/events/event.h"
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 #include "ui/events/gesture_detection/gesture_provider.h"
@@ -81,9 +82,7 @@ class MotionEvent : public ui::MotionEvent {
   MotionEvent();
   virtual ~MotionEvent();
 
-  bool IsTouchIdActive(int id) const;
-  void OnTouchEvent(const ui::TouchEvent& event);
-  void RemoveInactiveTouchPoints();
+  bool OnTouchEvent(const ui::TouchEvent& event);
 
  private:
   static const size_t kMaxTouchPoints = ui::MotionEvent::MAX_TOUCH_POINT_COUNT;
@@ -109,6 +108,9 @@ class MotionEvent : public ui::MotionEvent {
               int flags,
               const base::TimeTicks& last_event_time);
 
+  bool IsTouchIdActive(int id) const;
+  void RemoveInactiveTouchPoints();
+
   size_t GetIndexFromPlatformId(int id) const;
   bool HasPlatformId(int id) const;
 
@@ -117,7 +119,7 @@ class MotionEvent : public ui::MotionEvent {
   void UpdateAction(const ui::TouchEvent& event);
 
   // ui::MotionEvent implementation
-  int GetId() const final;
+  uint32_t GetUniqueEventId() const final;
   Action GetAction() const final;
   int GetActionIndex() const final;
   size_t GetPointerCount() const final;
@@ -147,6 +149,8 @@ class MotionEvent : public ui::MotionEvent {
 
   static TouchPoint CreateTouchPointFromEvent(const ui::TouchEvent& event);
 
+  uint32_t unique_event_id_;
+
   size_t pointer_count_;
   size_t active_touch_point_count_;
   TouchPoint touch_points_[kMaxTouchPoints];
@@ -173,7 +177,8 @@ MotionEvent::MotionEvent(
     int action_index,
     int flags,
     const base::TimeTicks& last_event_time)
-    : pointer_count_(pointer_count),
+    : unique_event_id_(ui::GetNextTouchEventId()),
+      pointer_count_(pointer_count),
       active_touch_point_count_(active_touch_point_count),
       id_allocator_(kMaxTouchPoints - 1),
       action_(action),
@@ -184,6 +189,37 @@ MotionEvent::MotionEvent(
     touch_points_[i] = touch_points[i];
     id_allocator_.MarkAsUsed(touch_points[i].id);
   }
+}
+
+bool MotionEvent::IsTouchIdActive(int id) const {
+  for (size_t i = 0; i < pointer_count_; ++i) {
+    if (touch_points_[i].platform_id == id) {
+      return touch_points_[i].active;
+    }
+  }
+
+  return false;
+}
+
+void MotionEvent::RemoveInactiveTouchPoints() {
+  if (pointer_count_ == active_touch_point_count_) {
+    return;
+  }
+
+  size_t i = 0;
+  while (i < pointer_count_) {
+    while (!touch_points_[i].active && i < pointer_count_) {
+      id_allocator_.FreeId(touch_points_[i].id);
+      pointer_count_--;
+      if (pointer_count_ > i) {
+        touch_points_[i] = touch_points_[pointer_count_];
+      }
+    }
+
+    i++;
+  }
+
+  DCHECK_EQ(pointer_count_, active_touch_point_count_);
 }
 
 size_t MotionEvent::GetIndexFromPlatformId(int id) const {
@@ -274,8 +310,8 @@ void MotionEvent::UpdateAction(const ui::TouchEvent& event) {
   }
 }
 
-int MotionEvent::GetId() const {
-  return GetPointerId(0);
+uint32_t MotionEvent::GetUniqueEventId() const {
+  return unique_event_id_;
 }
 
 ui::MotionEvent::Action MotionEvent::GetAction() const {
@@ -415,17 +451,26 @@ MotionEvent::MotionEvent()
 
 MotionEvent::~MotionEvent() {}
 
-bool MotionEvent::IsTouchIdActive(int id) const {
-  for (size_t i = 0; i < pointer_count_; ++i) {
-    if (touch_points_[i].platform_id == id) {
-      return touch_points_[i].active;
-    }
+bool MotionEvent::OnTouchEvent(const ui::TouchEvent& event) {
+  switch (event.type()) {
+    case ui::ET_TOUCH_PRESSED:
+      if (IsTouchIdActive(event.touch_id())) {
+        return false;
+      }
+      break;
+    case ui::ET_TOUCH_MOVED:
+    case ui::ET_TOUCH_RELEASED:
+    case ui::ET_TOUCH_CANCELLED:
+      if (!IsTouchIdActive(event.touch_id())) {
+        return false;
+      }
+      break;
+    default:
+      NOTREACHED();
   }
 
-  return false;
-}
+  RemoveInactiveTouchPoints();
 
-void MotionEvent::OnTouchEvent(const ui::TouchEvent& event) {
   switch (event.type()) {
     case ui::ET_TOUCH_PRESSED:
       AddTouchPoint(event);
@@ -440,29 +485,11 @@ void MotionEvent::OnTouchEvent(const ui::TouchEvent& event) {
   }
 
   UpdateAction(event);
+  unique_event_id_ = event.unique_event_id();
   flags_ = event.flags();
   last_event_time_ = event.time_stamp() + base::TimeTicks();
-}
 
-void MotionEvent::RemoveInactiveTouchPoints() {
-  if (pointer_count_ == active_touch_point_count_) {
-    return;
-  }
-
-  size_t i = 0;
-  while (i < pointer_count_) {
-    while (!touch_points_[i].active && i < pointer_count_) {
-      id_allocator_.FreeId(touch_points_[i].id);
-      pointer_count_--;
-      if (pointer_count_ > i) {
-        touch_points_[i] = touch_points_[pointer_count_];
-      }
-    }
-
-    i++;
-  }
-
-  DCHECK_EQ(pointer_count_, active_touch_point_count_);
+  return true;
 }
 
 class GestureProviderImpl : public GestureProvider,
@@ -495,26 +522,9 @@ class GestureProviderImpl : public GestureProvider,
 
 ui::FilteredGestureProvider::TouchHandlingResult
 GestureProviderImpl::OnTouchEvent(const ui::TouchEvent& event) {
-  switch (event.type()) {
-    case ui::ET_TOUCH_PRESSED:
-      if (touch_state_.IsTouchIdActive(event.touch_id())) {
-        return ui::FilteredGestureProvider::TouchHandlingResult();
-      }
-      break;
-    case ui::ET_TOUCH_MOVED:
-    case ui::ET_TOUCH_RELEASED:
-    case ui::ET_TOUCH_CANCELLED:
-      if (!touch_state_.IsTouchIdActive(event.touch_id())) {
-        return ui::FilteredGestureProvider::TouchHandlingResult();
-      }
-      break;
-    default:
-      NOTREACHED();
+  if (!touch_state_.OnTouchEvent(event)) {
+    return ui::FilteredGestureProvider::TouchHandlingResult();
   }
-
-  touch_state_.RemoveInactiveTouchPoints();
-
-  touch_state_.OnTouchEvent(event);
   return filtered_gesture_provider_.OnTouchEvent(touch_state_);
 }
 
