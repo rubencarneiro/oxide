@@ -1264,22 +1264,21 @@ void WebView::findInPage(const QString &text) {
   if (contents == nullptr) return;
 
   contents->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
+  OnFindInPageResult(0, 0);
 
-  if (text.isEmpty()) {
-      OnFindInPageResult(0, 0);
-      return;
-  }
-
-  find_in_page_state_.request_id += 1;
   find_in_page_state_.text = text;
   find_in_page_state_.count = 0;
   find_in_page_state_.current = 0;
 
-  blink::WebFindOptions options;
-  options.forward = true;
-  options.findNext = false;
+  if (!text.isEmpty()) {
+      find_in_page_state_.request_id += 1;
 
-  contents->Find(find_in_page_state_.request_id, text.utf16(), options);
+      blink::WebFindOptions options;
+      options.forward = true;
+      options.findNext = false;
+
+      contents->Find(find_in_page_state_.request_id, text.utf16(), options);
+  }
 }
 
 void WebView::findInPageNext() {
