@@ -235,6 +235,14 @@ void OxideQQuickWebViewFindInPage::setText(const QString& text) {
   }
 }
 
+int OxideQQuickWebViewFindInPage::count() const {
+  return count_;
+}
+
+int OxideQQuickWebViewFindInPage::current() const {
+  return current_;
+}
+
 void OxideQQuickWebViewFindInPage::next() const {
    proxy_->findInPageNext();
 }

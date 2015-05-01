@@ -1311,7 +1311,7 @@ void WebView::OnFindInPageResult(int current, int count) {
     if (count != -1) find_in_page_state_.count = count;
     if (current != -1) find_in_page_state_.current = current;
 
-    if (find_in_page_state_.count != old_count && find_in_page_state_.current != old_current) {
+    if (find_in_page_state_.count != old_count || find_in_page_state_.current != old_current) {
       client_->FindInPageStateChanged();
     }
 }
