@@ -621,6 +621,7 @@ void WebView::OnLoadSucceeded(const GURL& validated_url, int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       OxideQLoadEvent::TypeSucceeded,
+      false,
       http_status_code);
   client_->LoadEvent(&event);
 }
