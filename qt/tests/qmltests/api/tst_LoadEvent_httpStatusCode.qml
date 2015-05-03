@@ -10,7 +10,7 @@ TestWebView {
 
   property var expectedLoadEvents: []
 
-  function on_load_event(event) {
+  onLoadEvent: {
     test.verify(expectedLoadEvents.length > 0);
     var expected = expectedLoadEvents[0];
     expectedLoadEvents.shift();
@@ -62,7 +62,7 @@ TestWebView {
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?206
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 206 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 206 },
       ]
 
       webView.url = "http://testsuite/tst_LoadEvent_httpStatusCode.py?200";
@@ -93,27 +93,27 @@ TestWebView {
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?400
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 400 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 400 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?401
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 401 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 401 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?403
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 403 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 403 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?404
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 404 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 404 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?405
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 405 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 405 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?406
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 406 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 406 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?407
         // XXX: this returns 406
         //{ type: LoadEvent.TypeStarted },
@@ -122,43 +122,43 @@ TestWebView {
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?408
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 408 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 408 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?409
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 409 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 409 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?410
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 410 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 410 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?411
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 411 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 411 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?412
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 412 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 412 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?413
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 413 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 413 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?414
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 414 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 414},
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?415
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 415 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 415 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?416
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 416 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 416 },
         // http://testsuite/tst_LoadEvent_httpStatusCode.py?417
         { type: LoadEvent.TypeStarted },
         { type: LoadEvent.TypeCommitted, httpStatusCode: 417 },
-        { type: LoadEvent.TypeSucceeded, httpStatusCode: -1 },
+        { type: LoadEvent.TypeSucceeded, httpStatusCode: 417},
       ]
 
       webView.url = "http://testsuite/tst_LoadEvent_httpStatusCode.py?400";
