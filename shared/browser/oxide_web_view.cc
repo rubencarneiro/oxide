@@ -1129,9 +1129,27 @@ void WebView::DidStopLoading() {
 
 void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  DCHECK(frame);
+  if (!frame) {
+    // When a frame is detached, we get notified before any of its children
+    // are detached. If we hit this case, it means that this is a child of a
+    // frame that's being detached, and we've already deleted the corresponding
+    // WebFrame
+    return;
+  }
 
-  certificate_error_manager_.FrameDetached(frame);
+  // This is a bit of a hack, but we need to process children now - see the
+  // comment above
+  std::queue<WebFrame*> frames;
+  frames.push(frame);
+  while (!frames.empty()) {
+    WebFrame* f = frames.front();
+    for (size_t i = 0; i < f->GetChildCount(); ++i) {
+      frames.push(f->GetChildAt(i));
+    }
+    certificate_error_manager_.FrameDetached(f);
+    frames.pop();
+  }
+
   WebFrame::Destroy(frame);
 }
 

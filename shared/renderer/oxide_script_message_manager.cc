@@ -135,7 +135,7 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
 
   v8::Local<v8::Object> exports(v8::Object::New(isolate));
 
-  v8::Handle<v8::Value> argv[] = {
+  v8::Local<v8::Value> argv[] = {
     send_message_template->GetFunction(),
     add_message_handler_template->GetFunction(),
     remove_message_handler_template->GetFunction(),

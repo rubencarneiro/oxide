@@ -22,7 +22,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "ui/gl/gl_implementation.h"
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
 namespace base {
 class FilePath;
 }
@@ -58,7 +58,7 @@ class BrowserProcessMain {
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
   virtual void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
                      const base::FilePath& nss_db_path,
 #endif
                      gfx::GLImplementation gl_impl,

@@ -25,8 +25,6 @@
 #include "ppapi/proxy/ppapi_messages.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
-#include "oxide_pepper_talk_host.h"
-
 namespace oxide {
 
 PepperHostFactoryBrowser::PepperHostFactoryBrowser(
@@ -43,7 +41,7 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
   DCHECK(host == host_->GetPpapiHost());
 
   if (!host_->IsValidInstance(instance)) {
-    return scoped_ptr<ppapi::host::ResourceHost>();
+    return nullptr;
   }
 
   // Dev interfaces:
@@ -53,12 +51,6 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
   // Private interfaces:
   // TODO:
   //  PpapiHostMsg_Broker_Create
-  if (host_->GetPpapiHost()->permissions().HasPermission(
-          ppapi::PERMISSION_PRIVATE) &&
-      message.type() == PpapiHostMsg_Talk_Create::ID) {
-    return scoped_ptr<ppapi::host::ResourceHost>(new PepperTalkHost(
-        host_, instance, resource));
-  }
 
   // Flash interfaces:
   // TODO:
@@ -66,7 +58,7 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
   //  PpapiHostMsg_FlashClipboard_Create
   //  PpapiHostMsg_FlashDRM_Create
 
-  return scoped_ptr<ppapi::host::ResourceHost>();
+  return nullptr;
 }
 
 } // namespace oxide

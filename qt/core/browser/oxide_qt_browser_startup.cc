@@ -58,7 +58,7 @@ BrowserStartup* BrowserStartup::GetInstance() {
 BrowserStartup::~BrowserStartup() {}
 
 base::FilePath BrowserStartup::GetNSSDbPath() const {
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   return nss_db_path_;
 #else
   return base::FilePath();
@@ -66,7 +66,7 @@ base::FilePath BrowserStartup::GetNSSDbPath() const {
 }
 
 void BrowserStartup::SetNSSDbPath(const base::FilePath& path) {
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
     qWarning() << "Cannot set the NSS DB directory once Oxide is running";
     return;
@@ -171,7 +171,7 @@ void BrowserStartup::EnsureChromiumStarted() {
 
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.Pass(),
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
       GetNSSDbPath(),
 #endif
       gl_impl,

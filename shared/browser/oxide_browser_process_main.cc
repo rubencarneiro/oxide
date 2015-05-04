@@ -47,7 +47,7 @@
 #include "content/public/common/main_function_params.h"
 #include "content/renderer/in_process_renderer_thread.h"
 #include "content/utility/in_process_utility_thread.h"
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
 #include "crypto/nss_util.h"
 #endif
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
@@ -65,6 +65,7 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 
+#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_form_factor.h"
 #include "oxide_message_pump.h"
@@ -98,7 +99,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   virtual ~BrowserProcessMainImpl();
 
   void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
              const base::FilePath& nss_db_path,
 #endif
              gfx::GLImplementation gl_impl,
@@ -252,6 +253,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 
+  if (AndroidProperties::GetInstance()->Available()) {
+    command_line->AppendSwitch(switches::kDisableOneCopy);
+  }
+
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
   if (!renderer_cmd_prefix.empty()) {
@@ -371,7 +376,7 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
 }
 
 void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
                                    const base::FilePath& nss_db_path,
 #endif
                                    gfx::GLImplementation gl_impl,
@@ -420,7 +425,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   AddFormFactorSpecificCommandLineArguments();
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   if (!nss_db_path.empty()) {
     // Used for testing
     PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,
