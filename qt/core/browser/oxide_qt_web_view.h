@@ -276,7 +276,7 @@ class WebView : public QObject,
   bool locationBarAnimated() const override;
   void setLocationBarAnimated(bool animated) override;
   void locationBarShow(bool animate) override;
-  void locationBarHide(bool animate) override; 
+  void locationBarHide(bool animate) override;
 
   WebViewProxyClient* client_;
 

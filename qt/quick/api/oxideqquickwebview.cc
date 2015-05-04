@@ -300,8 +300,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
     using_old_load_event_signal_(false),
     construct_props_(new ConstructProps()),
-    find_in_page_(new OxideQQuickWebViewFindInPage(proxy())) {
-}
+    find_in_page_(new OxideQQuickWebViewFindInPage(proxy())) {}
 
 void OxideQQuickWebViewPrivate::Initialized() {
   Q_Q(OxideQQuickWebView);
