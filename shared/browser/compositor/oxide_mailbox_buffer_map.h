@@ -112,6 +112,7 @@ class MailboxBufferMap {
     union {
       GLuint texture;
       struct {
+        bool live;
         int ref_count;
         EGLImageKHR egl_image;
       } image;
