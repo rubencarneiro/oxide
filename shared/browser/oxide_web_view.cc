@@ -1058,11 +1058,17 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
 
   // This is a bit of a hack, but we need to process children now - see the
   // comment above
-  for (size_t i = 0; i < frame->GetChildCount(); ++i) {
-    certificate_error_manager_.FrameDetached(frame->GetChildAt(i));
+  std::queue<WebFrame*> frames;
+  frames.push(frame);
+  while (!frames.empty()) {
+    WebFrame* f = frames.front();
+    for (size_t i = 0; i < f->GetChildCount(); ++i) {
+      frames.push(f->GetChildAt(i));
+    }
+    certificate_error_manager_.FrameDetached(f);
+    frames.pop();
   }
 
-  certificate_error_manager_.FrameDetached(frame);
   WebFrame::Destroy(frame);
 }
 

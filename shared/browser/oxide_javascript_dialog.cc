@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,13 +30,23 @@ void JavaScriptDialog::Hide() {}
 JavaScriptDialog::~JavaScriptDialog() {}
 
 void JavaScriptDialog::Close(bool accept, const base::string16& user_input) {
+  if (callback_.is_null()) {
+    return;
+  }
+
   callback_.Run(accept, user_input);
+  callback_.Reset();
   Hide();
   JavaScriptDialogManager::GetInstance()->DialogClosed(web_contents_, this);
 }
 
 void JavaScriptDialog::Cancel() {
+  if (callback_.is_null()) {
+    return;
+  }
+
   callback_.Run(false, base::string16());
+  callback_.Reset();
   Hide();
 }
 
