@@ -182,6 +182,8 @@ void ContentRendererClient::OverrideCompositorSettings(
   } else {
     settings->scrollbar_show_scale_threshold = 1.f;
   }
+
+  settings->use_external_begin_frame_source = false;
 }
 
 } // namespace oxide
