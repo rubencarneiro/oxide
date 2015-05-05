@@ -55,6 +55,13 @@ WebContentsUnloader* WebContentsUnloader::GetInstance() {
 }
 
 void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
+  if (!contents->NeedToFireBeforeUnload()) {
+    // Despite the name, this checks if sudden termination is allowed. If so,
+    // we shouldn't fire the unload handler particularly if this was script
+    // closed, else we'll never get an ACK
+    return;
+  }
+
   content::WebContents* c = contents.get();
 
   // So we can intercept CloseContents

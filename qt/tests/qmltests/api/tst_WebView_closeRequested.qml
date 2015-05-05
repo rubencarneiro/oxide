@@ -40,6 +40,7 @@ Column {
 
     function init() {
       spy.clear();
+      webView.clearLoadEventCounters();
     }
 
     // Verify that window.close() is ignored for non-script-opened windows
@@ -47,15 +48,15 @@ Column {
     function test_WebView_closeRequested1_application_opened_default() {
       verify(!webView.preferences.allowScriptsToCloseWindows);
 
-      webView.url = "http://testsuite/empty.html";
+      webView.url = "http://foo.testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode("window.close();", false);
       compare(spy.count, 1);
 
-      webView.url = "about:blank";
+      webView.url = "http://bar.testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
-      webView.url = "http://testsuite/empty.html";
+      webView.url = "http://foo.testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode("window.close();", false);
@@ -65,10 +66,16 @@ Column {
     // Verify that window.close() works for non-script-opened windows
     // when the pref is configured to allow it
     function test_WebView_closeRequested2_application_opened_allowed() {
-      webView.preferences.allowScriptsToCloseWindows = true;
-
-      webView.url = "http://testsuite/empty.html";
+      webView.url = "http://bar.testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
+
+      webView.url = "http://foo.testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.getTestApi().evaluateCode("window.close();", false);
+      compare(spy.count, 0);
+
+      webView.preferences.allowScriptsToCloseWindows = true;
 
       webView.getTestApi().evaluateCode("window.close();", false);
       compare(spy.count, 1);
@@ -77,11 +84,11 @@ Column {
     }
 
     function test_WebView_closeRequested3_script_opened() {
+      webView.url = "http://bar.testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
       verify(!webView.preferences.allowScriptsToCloseWindows);
       webView.context.popupBlockerEnabled = false;
-
-      webView.url = "http://testsuite/empty.html";
-      verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
       webView.waitFor(function() { return column.created != null; });
@@ -89,8 +96,16 @@ Column {
       var created = column.created;
       spy.target = created;
 
+      verify(!created.preferences.allowScriptsToCloseWindows);
+
+      created.url = "http://testsuite/empty.html";
+      verify(created.waitForLoadSucceeded());
+
       created.getTestApi().evaluateCode("window.close();", false);
       compare(spy.count, 1);
+
+      // Don't navigate |created| after this. We want to leave it in its "closed"
+      // state to make sure the test process shuts down correctly
     }
   }
 }
