@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,8 +33,9 @@
 
 #include "qt/core/common/oxide_qt_screen_utils.h"
 #include "qt/core/glue/oxide_qt_init.h"
-#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
+#include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
@@ -51,16 +52,14 @@ void LaunchURLExternallyOnUIThread(const GURL& url) {
 
 }
 
-BrowserPlatformIntegration::BrowserPlatformIntegration(
-    GLContextAdopted* gl_share_context)
-    : gl_share_context_(gl_share_context) {
+BrowserPlatformIntegration::BrowserPlatformIntegration() {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(onApplicationStateChanged()));
+                   this, SLOT(OnApplicationStateChanged()));
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
-void BrowserPlatformIntegration::onApplicationStateChanged() {
+void BrowserPlatformIntegration::OnApplicationStateChanged() {
   NotifyApplicationStateChanged();
 }
 
@@ -97,8 +96,8 @@ blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
   return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
-oxide::GLContextAdopted* BrowserPlatformIntegration::GetGLShareContext() {
-  return gl_share_context_.get();
+oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
+  return BrowserStartup::GetInstance()->shared_gl_context();
 }
 
 scoped_ptr<oxide::MessagePump>
@@ -138,6 +137,11 @@ BrowserPlatformIntegration::GetApplicationState() {
   } else {
     return APPLICATION_STATE_INACTIVE;
   }
+}
+
+std::string
+BrowserPlatformIntegration::GetApplicationLocale() {
+  return QLocale::system().name().toStdString();
 }
 
 QThread* GetIOQThread() {

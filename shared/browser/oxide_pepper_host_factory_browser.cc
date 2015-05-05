@@ -44,7 +44,7 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
   DCHECK(host == host_->GetPpapiHost());
 
   if (!host_->IsValidInstance(instance)) {
-    return scoped_ptr<ppapi::host::ResourceHost>();
+    return nullptr;
   }
 
   // Dev interfaces:
@@ -54,19 +54,12 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
   // Private interfaces:
   // TODO:
   //  PpapiHostMsg_Broker_Create
-  if (host_->GetPpapiHost()->permissions().HasPermission(
-          ppapi::PERMISSION_PRIVATE) &&
-      message.type() == PpapiHostMsg_Talk_Create::ID) {
-    return scoped_ptr<ppapi::host::ResourceHost>(new PepperTalkHost(
-        host_, instance, resource));
-  }
 
   // Flash interfaces:
   // TODO:
   //  PpapiHostMsg_Flash_Create
   //  PpapiHostMsg_FlashClipboard_Create
   //  PpapiHostMsg_FlashDRM_Create
-
   if (host_->GetPpapiHost()->permissions().HasPermission(
           ppapi::PERMISSION_FLASH)) {
       switch (message.type()) {
@@ -78,7 +71,7 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
       }
   }
 
-  return scoped_ptr<ppapi::host::ResourceHost>();
+  return nullptr;
 }
 
 } // namespace oxide

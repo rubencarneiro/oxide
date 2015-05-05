@@ -18,27 +18,36 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_FILE_PICKER_H_
 #define _OXIDE_QT_CORE_BROWSER_FILE_PICKER_H_
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/glue/oxide_qt_file_picker_proxy_client.h"
 #include "shared/browser/oxide_file_picker.h"
 
 namespace oxide {
 namespace qt {
 
-class FilePickerDelegate;
+class FilePickerProxy;
 
-class FilePicker final : public oxide::FilePicker {
+class FilePicker : public oxide::FilePicker,
+                   public FilePickerProxyClient {
  public:
-  FilePicker(FilePickerDelegate* delegate, content::RenderViewHost* rvh);
+  FilePicker(content::RenderViewHost* rvh);
 
-  void Run(const content::FileChooserParams& params) final;
+  void SetProxy(FilePickerProxy* proxy);
 
  private:
-  void OnHide() final;
+  ~FilePicker() override;
 
-  scoped_ptr<FilePickerDelegate> delegate_;
+  // oxide::FilePicker implementation
+  void Run(const content::FileChooserParams& params) override;
+  void Hide() override;
+
+  // FilePickerProxyClient implementation
+  void done(const QFileInfoList& files,
+            FilePickerProxy::Mode mode) override;
+
+  scoped_ptr<FilePickerProxy> proxy_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(FilePicker);
 };

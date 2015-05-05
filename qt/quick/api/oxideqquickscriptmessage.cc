@@ -21,9 +21,21 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
+OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
+                                    oxide::qt::ScriptMessageProxyHandle);
+
 OxideQQuickScriptMessagePrivate::OxideQQuickScriptMessagePrivate(
-    OxideQQuickScriptMessage* q) :
-    oxide::qt::ScriptMessageAdapter(q) {}
+    oxide::qt::ScriptMessageProxy* proxy,
+    OxideQQuickScriptMessage* q)
+    : oxide::qt::ScriptMessageProxyHandle(proxy, q) {}
+
+// static
+OxideQQuickScriptMessage* OxideQQuickScriptMessagePrivate::create(
+    oxide::qt::ScriptMessageProxy* proxy) {
+  OxideQQuickScriptMessage* message = new OxideQQuickScriptMessage();
+  message->d_ptr.reset(new OxideQQuickScriptMessagePrivate(proxy, message));
+  return message;
+}
 
 // static
 OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
@@ -31,43 +43,52 @@ OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
   return q->d_func();
 }
 
-OxideQQuickScriptMessage::OxideQQuickScriptMessage() :
-    d_ptr(new OxideQQuickScriptMessagePrivate(this)) {}
+OxideQQuickScriptMessage::OxideQQuickScriptMessage() {}
 
 OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return adapterToQObject<OxideQQuickWebFrame>(d->frame());
+  oxide::qt::WebFrameProxyHandle* f = d->proxy()->frame();
+  if (!f) {
+    return nullptr;
+  }
+
+  return OxideQQuickWebFramePrivate::fromProxyHandle(f);
 }
 
 QUrl OxideQQuickScriptMessage::context() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->context();
+  return d->proxy()->context();
 }
 
 QString OxideQQuickScriptMessage::msgId() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->msgId();
+  return d->proxy()->msgId();
 }
 
 QVariant OxideQQuickScriptMessage::args() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->args();
+  return d->proxy()->args();
 }
 
 void OxideQQuickScriptMessage::reply(const QVariant& args) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->reply(args);
+  QVariant aux = args;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->proxy()->reply(aux);
 }
 
 void OxideQQuickScriptMessage::error(const QString& msg) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->error(msg);
+  d->proxy()->error(msg);
 }

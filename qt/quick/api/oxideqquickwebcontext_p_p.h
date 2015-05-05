@@ -23,7 +23,8 @@
 #include <QStringList>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_web_context_adapter.h"
+#include "qt/core/glue/oxide_qt_web_context_proxy.h"
+#include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
 
@@ -44,11 +45,12 @@ class WebContextIODelegate;
 }
 }
 
-class OxideQQuickWebContextPrivate final
-    : public QObject,
-      public oxide::qt::WebContextAdapter {
+class OxideQQuickWebContextPrivate : public QObject,
+                                     public oxide::qt::WebContextProxyHandle,
+                                     public oxide::qt::WebContextProxyClient {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebContext, oxide::qt::WebContextProxyHandle)
 
  public:
   ~OxideQQuickWebContextPrivate();
@@ -59,11 +61,23 @@ class OxideQQuickWebContextPrivate final
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
+  // XXX(chrisccoulson): Add CookieManager proxy and remove these
+  bool isInitialized() const;
+  int setCookies(const QUrl& url,
+                 const QList<QNetworkCookie>& cookies);
+  int getCookies(const QUrl& url);
+  int getAllCookies();
+  int deleteAllCookies();
+
  Q_SIGNALS:
   void constructed();
 
  private:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
+
+  oxide::qt::WebContextProxy* proxy() const {
+    return oxide::qt::WebContextProxyHandle::proxy();
+  }
 
   void userScriptUpdated();
   void userScriptWillBeDeleted();
@@ -81,13 +95,14 @@ class OxideQQuickWebContextPrivate final
   bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
   void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
 
-  QNetworkAccessManager* GetCustomNetworkAccessManager() final;
-
+  // oxide::qt::WebContextProxyClient implementation
   void CookiesSet(int request_id,
-                  const QList<QNetworkCookie>& failed_cookies) final;
+                  const QList<QNetworkCookie>& failed_cookies) override;
   void CookiesRetrieved(int request_id,
-                        const QList<QNetworkCookie>& cookies) final;
-  void CookiesDeleted(int request_id, int num_deleted) final;
+                        const QList<QNetworkCookie>& cookies) override;
+  void CookiesDeleted(int request_id, int num_deleted) override;
+  QNetworkAccessManager* GetCustomNetworkAccessManager() override;
+  void DestroyDefault() override;
 
   bool constructed_;
 

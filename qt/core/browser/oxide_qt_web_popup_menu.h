@@ -18,30 +18,39 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
 #include "shared/browser/oxide_web_popup_menu.h"
 
 namespace oxide {
 namespace qt {
 
-class WebPopupMenuDelegate;
+class WebPopupMenuProxy;
 
-class WebPopupMenu final : public oxide::WebPopupMenu {
+class WebPopupMenu : public oxide::WebPopupMenu,
+                     public WebPopupMenuProxyClient {
  public:
-  WebPopupMenu(WebPopupMenuDelegate* delegate,
-               content::RenderFrameHost* rfh);
+  WebPopupMenu(content::RenderFrameHost* rfh);
+
+  void SetProxy(WebPopupMenuProxy* proxy);
 
  private:
+  ~WebPopupMenu() override;
+
+  // oxide::WebPopupMenu implementation
   void Show(const gfx::Rect& bounds,
             const std::vector<content::MenuItem>& items,
             int selected_item,
-            bool allow_multiple_selection) final;
-  void OnHide() final;
+            bool allow_multiple_selection) override;
+  void Hide() override;
 
-  scoped_ptr<WebPopupMenuDelegate> delegate_;
+  // WebPopupMenuProxyClient implementation
+  void selectItems(const QList<int>& selected_indices) override;
+  void cancel() override;
+
+  scoped_ptr<WebPopupMenuProxy> proxy_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

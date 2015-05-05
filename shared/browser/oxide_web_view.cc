@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 #include "oxide_web_view.h"
 
 #include <queue>
+#include <utility>
 
 #include "base/auto_reset.h"
 #include "base/command_line.h"
@@ -375,10 +376,12 @@ float WebView::GetFrameMetadataScaleToPix() {
 void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                            bool initial_host) {
   // Show the location bar if this is the initial RVH and the constraints
-  // are set to cc::BOTH
-  blink::WebTopControlsState current =
-      (!initial_host || location_bar_constraints_ != blink::WebTopControlsBoth) ?
-        location_bar_constraints_ : blink::WebTopControlsShown;
+  // are set to blink::WebTopControlsBoth
+  blink::WebTopControlsState current = location_bar_constraints_;
+  if (initial_host &&
+      location_bar_constraints_ == blink::WebTopControlsBoth) {
+    current = blink::WebTopControlsShown;
+  }
 
   rvh->Send(
       new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
@@ -810,7 +813,6 @@ content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
 void WebView::RunFileChooser(content::WebContents* source,
                              const content::FileChooserParams& params) {
   DCHECK_VALID_SOURCE_CONTENTS
-  DCHECK(!active_file_picker_);
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   FilePicker* file_picker = CreateFilePicker(rvh);
@@ -820,8 +822,7 @@ void WebView::RunFileChooser(content::WebContents* source,
     return;
   }
 
-  active_file_picker_ = file_picker->AsWeakPtr();
-  active_file_picker_->Run(params);
+  file_picker->Run(params);
 }
 
 void WebView::EnterFullscreenModeForTab(content::WebContents* source,
@@ -895,7 +896,7 @@ void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
   WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
 
   if (frame) {
-    frame->set_render_frame_host(new_host);
+    frame->SetRenderFrameHost(new_host);
     return;
   }
 
@@ -1037,19 +1038,37 @@ void WebView::NavigationEntryCommitted(
   OnNavigationEntryCommitted();
 }
 
-void WebView::DidStartLoading(content::RenderViewHost* render_view_host) {
+void WebView::DidStartLoading() {
   OnLoadingChanged();
 }
 
-void WebView::DidStopLoading(content::RenderViewHost* render_view_host) {
+void WebView::DidStopLoading() {
   OnLoadingChanged();
 }
 
 void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  DCHECK(frame);
+  if (!frame) {
+    // When a frame is detached, we get notified before any of its children
+    // are detached. If we hit this case, it means that this is a child of a
+    // frame that's being detached, and we've already deleted the corresponding
+    // WebFrame
+    return;
+  }
 
-  certificate_error_manager_.FrameDetached(frame);
+  // This is a bit of a hack, but we need to process children now - see the
+  // comment above
+  std::queue<WebFrame*> frames;
+  frames.push(frame);
+  while (!frames.empty()) {
+    WebFrame* f = frames.front();
+    for (size_t i = 0; i < f->GetChildCount(); ++i) {
+      frames.push(f->GetChildAt(i));
+    }
+    certificate_error_manager_.FrameDetached(f);
+    frames.pop();
+  }
+
   WebFrame::Destroy(frame);
 }
 
@@ -1147,8 +1166,9 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebView::CreateWebFrame(content::RenderFrameHost* rfh) {
-  return new WebFrame(rfh, this);
+WebFrame* WebView::CreateWebFrame(
+    content::RenderFrameHost* render_frame_host) {
+  return new WebFrame(render_frame_host, this);
 }
 
 WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1201,6 +1221,7 @@ WebView::WebView()
       auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
+      location_bar_animated_(true),
       weak_factory_(this) {
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
@@ -1780,10 +1801,7 @@ int WebView::GetLocationBarHeightPix() const {
 }
 
 void WebView::SetLocationBarHeightPix(int height) {
-  if (height < 0) {
-    LOG(WARNING) << "Cannot set a location bar height of less than zero";
-    return;
-  }
+  DCHECK_GE(height, 0);
 
   if (height == location_bar_height_pix_) {
     return;
@@ -1816,9 +1834,45 @@ void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) 
   }
 
   rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints,
+                                                location_bar_constraints_,
                                                 blink::WebTopControlsBoth,
-                                                true));
+                                                location_bar_animated_));
+}
+
+void WebView::ShowLocationBar(bool animate) {
+  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
+
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                                location_bar_constraints_,
+                                                blink::WebTopControlsShown,
+                                                animate));
+}
+
+void WebView::HideLocationBar(bool animate) {
+  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
+
+  if (!web_contents_) {
+    return;
+  }
+
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+                                                location_bar_constraints_,
+                                                blink::WebTopControlsHidden,
+                                                animate));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
@@ -1889,7 +1943,7 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             int selected_item,
                             const std::vector<content::MenuItem>& items,
                             bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_ || active_popup_menu_->WasHidden());
+  DCHECK(!active_popup_menu_);
 
   WebPopupMenu* menu = CreatePopupMenu(render_frame_host);
   if (!menu) {
@@ -1898,15 +1952,17 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  active_popup_menu_ = menu->AsWeakPtr();
+  active_popup_menu_ = menu->GetWeakPtr();
 
   menu->Show(bounds, items, selected_item, allow_multiple_selection);
 }
 
 void WebView::HidePopupMenu() {
-  if (active_popup_menu_ && !active_popup_menu_->WasHidden()) {
-    active_popup_menu_->Hide();
+  if (!active_popup_menu_) {
+    return;
   }
+
+  active_popup_menu_->Close();
 }
 
 void WebView::RequestGeolocationPermission(
@@ -1923,7 +1979,7 @@ void WebView::RequestGeolocationPermission(
       new SimplePermissionRequest(
         &permission_request_manager_,
         request_id,
-        requesting_frame.GetOrigin(),
+        requesting_frame,
         web_contents_->GetLastCommittedURL().GetOrigin(),
         callback));
 
@@ -2078,8 +2134,9 @@ void WebView::DidCommitCompositorFrame() {
     uint32 surface_id = received_surface_ids_.front();
     received_surface_ids_.pop();
 
-    compositor_->DidSwapCompositorFrame(surface_id,
-                                        &previous_compositor_frames_);
+    compositor_->DidSwapCompositorFrame(
+        surface_id,
+        std::move(previous_compositor_frames_));
   }
 }
 
@@ -2088,8 +2145,7 @@ bool WebView::IsInputPanelVisible() const {
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type,
-    bool* did_suppress_message) {
+    content::JavaScriptMessageType javascript_message_type) {
   return nullptr;
 }
 

@@ -21,7 +21,10 @@
 #include <deque>
 #include <map>
 
+#include "base/macros.h"
 #include "content/public/browser/javascript_dialog_manager.h"
+
+template <typename T> struct DefaultSingletonTraits;
 
 namespace oxide {
 
@@ -31,6 +34,17 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
  public:
   static JavaScriptDialogManager* GetInstance();
 
+ private:
+  friend struct DefaultSingletonTraits<JavaScriptDialogManager>;
+  friend class JavaScriptDialog;
+
+  JavaScriptDialogManager();
+
+  void DialogClosed(content::WebContents* web_contents,
+                    JavaScriptDialog* dialog);
+  void RunNextDialogForContents(content::WebContents* contents);
+
+  // content::JavaScriptDialogManager implementation
   void RunJavaScriptDialog(
       content::WebContents* web_contents,
       const GURL& origin_url,
@@ -38,37 +52,31 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
       content::JavaScriptMessageType javascript_message_type,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
-      const content::JavaScriptDialogManager::DialogClosedCallback& callback,
-      bool* did_suppress_message) final;
-
+      const DialogClosedCallback& callback,
+      bool* did_suppress_message) override;
   void RunBeforeUnloadDialog(content::WebContents* web_contents,
                              const base::string16& message_text,
                              bool is_reload,
-                             const DialogClosedCallback& callback) final;
-
+                             const DialogClosedCallback& callback) override;
   bool HandleJavaScriptDialog(content::WebContents* web_contents,
                               bool accept,
-                              const base::string16* prompt_override) final;
-
-  void CancelActiveAndPendingDialogs(content::WebContents* web_contents) final;
-
-  void WebContentsDestroyed(content::WebContents* web_contents) final;
-
- private:
-  friend class JavaScriptDialog;
+                              const base::string16* prompt_override) override;
+  void CancelActiveAndPendingDialogs(content::WebContents* web_contents) override;
+  void ResetDialogState(content::WebContents* web_contents) override;
 
   // Note: chrome implements application-modal dialogs (only one dialog active
   // for all windows and tabs at any given time), whereas we do tab-modal
   // dialogs. See https://code.google.com/p/chromium/issues/detail?id=456.
-  std::map<content::WebContents*, JavaScriptDialog*> active_dialogs_;
-  std::map<content::WebContents*, std::deque<JavaScriptDialog*> > queues_;
+  struct WebContentsData {
+    WebContentsData() : active(nullptr) {}
 
-  JavaScriptDialog* GetActiveDialog(content::WebContents* web_contents) const;
+    JavaScriptDialog* active;
+    std::deque<JavaScriptDialog*> queue;
+  };
 
-  void OnDialogClosed(content::WebContents* web_contents,
-                      JavaScriptDialog* dialog);
-  void OnDialogCancelled(content::WebContents* web_contents,
-                         JavaScriptDialog* dialog);
+  std::map<content::WebContents*, WebContentsData> web_contents_data_;
+
+  DISALLOW_COPY_AND_ASSIGN(JavaScriptDialogManager);
 };
 
 } // namespace oxide

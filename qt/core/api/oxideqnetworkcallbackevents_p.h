@@ -22,8 +22,6 @@
 #include <QtGlobal>
 #include <QUrl>
 
-class GURL;
-
 namespace net {
 class HttpRequestHeaders;
 }
@@ -37,7 +35,7 @@ class OxideQNetworkCallbackEventPrivate {
  public:
   virtual ~OxideQNetworkCallbackEventPrivate();
 
-  bool *request_cancelled;
+  bool request_cancelled;
 
  protected:
   OxideQNetworkCallbackEventPrivate(const QUrl& url,
@@ -61,7 +59,7 @@ class OxideQBeforeURLRequestEventPrivate final
 
   static OxideQBeforeURLRequestEventPrivate* get(OxideQBeforeURLRequestEvent* q);
 
-  GURL* new_url;
+  QUrl new_url;
 
  private:
   friend class OxideQBeforeURLRequestEvent;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@
 namespace oxide {
 namespace qt {
 
-class GLContextAdopted;
+class GLContextDependent;
 
 class BrowserStartup final {
  public:
@@ -44,8 +44,11 @@ class BrowserStartup final {
   oxide::ProcessModel GetProcessModel();
   void SetProcessModel(oxide::ProcessModel model);
 
+  GLContextDependent* shared_gl_context() const {
+    return shared_gl_context_.get();
+  }
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-  void SetSharedGLContext(GLContextAdopted* context);
+  void SetSharedGLContext(GLContextDependent* context);
 #endif
 
   bool DidSelectProcessModelFromEnv() const;
@@ -53,14 +56,14 @@ class BrowserStartup final {
   void EnsureChromiumStarted();
 
  private:
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   base::FilePath nss_db_path_;
 #endif
 
   bool process_model_is_from_env_;
   oxide::ProcessModel process_model_;
 
-  scoped_refptr<GLContextAdopted> shared_gl_context_;
+  scoped_refptr<GLContextDependent> shared_gl_context_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserStartup);
 };

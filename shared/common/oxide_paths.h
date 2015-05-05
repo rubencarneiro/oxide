@@ -23,9 +23,6 @@ namespace oxide {
 enum {
   PATH_START = 1000, // Same as Chrome
 
-  DIR_GTALK_PLUGIN,
-  FILE_GTALK_PLUGIN,
-  FILE_O1D_PLUGIN,
   DIR_PEPPER_FLASH_PLUGIN,
   FILE_PEPPER_FLASH_PLUGIN,
 

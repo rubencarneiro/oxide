@@ -25,7 +25,7 @@ OxideQStoragePermissionRequestPrivate::OxideQStoragePermissionRequestPrivate(
     const QUrl& first_party_url,
     bool write,
     OxideQStoragePermissionRequest::Type type) :
-    permission(nullptr),
+    permission(oxide::STORAGE_PERMISSION_UNDEFINED),
     url_(url),
     first_party_url_(first_party_url),
     write_(write),
@@ -96,15 +96,11 @@ OxideQStoragePermissionRequest::type() const {
 void OxideQStoragePermissionRequest::accept() {
   Q_D(OxideQStoragePermissionRequest);
 
-  if (d->permission) {
-    *(d->permission) = oxide::STORAGE_PERMISSION_ALLOW;
-  }
+  d->permission = oxide::STORAGE_PERMISSION_ALLOW;
 }
 
 void OxideQStoragePermissionRequest::deny() {
   Q_D(OxideQStoragePermissionRequest);
 
-  if (d->permission) {
-    *(d->permission) = oxide::STORAGE_PERMISSION_DENY;
-  }
+  d->permission = oxide::STORAGE_PERMISSION_DENY;
 } 

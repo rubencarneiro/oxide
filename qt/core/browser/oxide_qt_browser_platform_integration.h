@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,31 +33,29 @@ QT_END_NAMESPACE;
 namespace oxide {
 namespace qt {
 
-class GLContextAdopted;
-
 class BrowserPlatformIntegration final
-    : public QObject, public oxide::BrowserPlatformIntegration {
+    : public QObject,
+      public oxide::BrowserPlatformIntegration {
   Q_OBJECT
 
  public:
-  BrowserPlatformIntegration(GLContextAdopted* gl_share_context);
+  BrowserPlatformIntegration();
   ~BrowserPlatformIntegration();
 
  private Q_SLOTS:
-  void onApplicationStateChanged();
+  void OnApplicationStateChanged();
 
  private:
   bool LaunchURLExternally(const GURL& url) final;
   bool IsTouchSupported() final;
   intptr_t GetNativeDisplay() final;
   blink::WebScreenInfo GetDefaultScreenInfo() final;
-  oxide::GLContextAdopted* GetGLShareContext() final;
+  oxide::GLContextDependent* GetGLShareContext() final;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
   void BrowserThreadInit(content::BrowserThread::ID id) final;
   content::LocationProvider* CreateLocationProvider() final;
   ApplicationState GetApplicationState() final;
-
-  scoped_refptr<GLContextAdopted> gl_share_context_;
+  std::string GetApplicationLocale() final;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

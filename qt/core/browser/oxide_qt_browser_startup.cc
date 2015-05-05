@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@
 #include "base/logging.h"
 
 #include "qt/core/app/oxide_qt_platform_delegate.h"
-#include "qt/core/gpu/oxide_qt_gl_context_adopted.h"
+#include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
 #include "oxide_qt_web_context.h"
 
@@ -58,7 +58,7 @@ BrowserStartup* BrowserStartup::GetInstance() {
 BrowserStartup::~BrowserStartup() {}
 
 base::FilePath BrowserStartup::GetNSSDbPath() const {
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   return nss_db_path_;
 #else
   return base::FilePath();
@@ -66,7 +66,7 @@ base::FilePath BrowserStartup::GetNSSDbPath() const {
 }
 
 void BrowserStartup::SetNSSDbPath(const base::FilePath& path) {
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
     qWarning() << "Cannot set the NSS DB directory once Oxide is running";
     return;
@@ -116,7 +116,7 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-void BrowserStartup::SetSharedGLContext(GLContextAdopted* context) {
+void BrowserStartup::SetSharedGLContext(GLContextDependent* context) {
   DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;
 }
@@ -136,14 +136,13 @@ void BrowserStartup::EnsureChromiumStarted() {
       "function without one";
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-  shared_gl_context_ = GLContextAdopted::Create(qt_gl_global_share_context());
+  shared_gl_context_ = GLContextDependent::Create(qt_gl_global_share_context());
 #elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-  shared_gl_context_ = GLContextAdopted::Create(
+  shared_gl_context_ = GLContextDependent::Create(
       QOpenGLContextPrivate::globalShareContext());
 #endif
 
-  scoped_ptr<PlatformDelegate> delegate(
-      new PlatformDelegate(shared_gl_context_.get()));
+  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
 
   gfx::GLImplementation gl_impl = gfx::kGLImplementationNone;
 
@@ -154,7 +153,9 @@ void BrowserStartup::EnsureChromiumStarted() {
     if (QGuiApplication::platformNativeInterface()) {
       if (platform == QLatin1String("xcb")) {
         gl_impl = gfx::kGLImplementationDesktopGL;
-      } else if (platform.startsWith("ubuntu")) {
+      } else if (platform.startsWith("ubuntu") ||
+                 platform == QLatin1String("mirserver") ||
+                 platform == QLatin1String("egl")) {
         gl_impl = gfx::kGLImplementationEGLGLES2;
       } else {
         LOG(WARNING)
@@ -170,7 +171,7 @@ void BrowserStartup::EnsureChromiumStarted() {
 
   oxide::BrowserProcessMain::GetInstance()->Start(
       delegate.Pass(),
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
       GetNSSDbPath(),
 #endif
       gl_impl,

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,24 +19,19 @@
 #define _OXIDE_QT_CORE_APP_PLATFORM_DELEGATE_H_
 
 #include "base/macros.h"
-#include "base/memory/ref_counted.h"
 
 #include "shared/app/oxide_platform_delegate.h"
 
 namespace oxide {
 namespace qt {
 
-class GLContextAdopted;
-
 class PlatformDelegate final : public oxide::PlatformDelegate {
  public:
-  PlatformDelegate(GLContextAdopted* shared_gl_context = nullptr);
+  PlatformDelegate();
   ~PlatformDelegate();
 
  private:
   oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
-
-  scoped_refptr<GLContextAdopted> shared_gl_context_;
 
   DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
 };

@@ -43,7 +43,6 @@ class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
   Q_DISABLE_COPY(OxideQQuickScriptMessage)
 
  public:
-  OxideQQuickScriptMessage();
   virtual ~OxideQQuickScriptMessage();
 
   OxideQQuickWebFrame* frame() const;
@@ -55,6 +54,8 @@ class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
   Q_INVOKABLE void error(const QString& msg);
 
  private:
+  OxideQQuickScriptMessage();
+
   QScopedPointer<OxideQQuickScriptMessagePrivate> d_ptr;
 };
 

@@ -17,22 +17,11 @@
 
 #include "oxide_paths.h"
 
-#include "base/files/file_path.h"
-#include "base/files/file_util.h"
 #include "base/path_service.h"
 
 namespace oxide {
 
 namespace {
-
-const base::FilePath::CharType kGoogleTalkPluginDirs[][25] = {
-  FILE_PATH_LITERAL("/opt/google/talkplugin"),
-  FILE_PATH_LITERAL("/opt/google/chrome")
-};
-const base::FilePath::CharType kGoogleTalkPluginFilename[] =
-    FILE_PATH_LITERAL("libppgoogletalk.so");
-const base::FilePath::CharType kO1DPluginFilename[] =
-    FILE_PATH_LITERAL("libppo1d.so");
 
 const base::FilePath::CharType* kPepperFlashPluginDirs[] = {
   FILE_PATH_LITERAL("/usr/lib/pepperflashplugin-nonfree")
@@ -43,36 +32,6 @@ const base::FilePath::CharType kPepperFlashPluginFilename[] =
 
 bool PathProvider(int key, base::FilePath* result) {
   switch (key) {
-    case DIR_GTALK_PLUGIN: {
-      for (size_t i = 0; i < arraysize(kGoogleTalkPluginDirs); ++i) {
-        base::FilePath path(kGoogleTalkPluginDirs[i]);
-        if (base::PathExists(path.Append(kGoogleTalkPluginFilename)) &&
-            base::PathExists(path.Append(kO1DPluginFilename))) {
-          *result = path;
-          return true;
-        }
-      }
-      return false;
-    }
-
-    case FILE_GTALK_PLUGIN: {
-      base::FilePath path;
-      if (!PathService::Get(DIR_GTALK_PLUGIN, &path)) {
-        return false;
-      }
-      *result = path.Append(kGoogleTalkPluginFilename);
-      return true;
-    }
-
-    case FILE_O1D_PLUGIN: {
-      base::FilePath path;
-      if (!PathService::Get(DIR_GTALK_PLUGIN, &path)) {
-        return false;
-      }
-      *result = path.Append(kO1DPluginFilename);
-      return true;
-    }
-
     case DIR_PEPPER_FLASH_PLUGIN: {
       for (size_t i = 0; i < arraysize(kPepperFlashPluginDirs); ++i) {
         base::FilePath path(kPepperFlashPluginDirs[i]);

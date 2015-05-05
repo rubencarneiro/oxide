@@ -20,7 +20,6 @@
 #include "base/logging.h"
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
-#include "net/base/net_log.h"
 #include "net/cert/cert_verifier.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/dns/host_resolver.h"
@@ -30,8 +29,9 @@
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_state.h"
-#if defined(USE_NSS)
-#include "net/ocsp/nss_ocsp.h"
+#include "net/log/net_log.h"
+#if defined(USE_NSS_CERTS)
+#include "net/cert_net/nss_ocsp.h"
 #endif
 #include "net/proxy/proxy_service.h"
 #include "net/ssl/channel_id_service.h"
@@ -128,7 +128,7 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   URLRequestContext* context = globals()->system_request_context_.get();
   net::URLRequestContextStorage* storage = context->storage();
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::SetURLRequestContextForNSSHttpIO(context);
 #endif
 
@@ -173,7 +173,7 @@ void IOThread::Init() {
 void IOThread::InitAsync() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::SetMessageLoopForNSSHttpIO();
 #endif
 
@@ -211,7 +211,7 @@ void IOThread::InitAsync() {
 void IOThread::CleanUp() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-#if defined(USE_NSS)
+#if defined(USE_NSS_CERTS)
   net::ShutdownNSSHttpIO();
   net::SetURLRequestContextForNSSHttpIO(nullptr);
 #endif

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,9 +17,13 @@
 
 #include "oxide_compositor.h"
 
+#include <utility>
+
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
+#include "cc/resources/task_graph_runner.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
@@ -43,6 +47,9 @@
 #include "oxide_compositor_utils.h"
 
 namespace oxide {
+
+base::LazyInstance<cc::TaskGraphRunner> g_task_graph_runner =
+    LAZY_INSTANCE_INITIALIZER;
 
 namespace {
 
@@ -225,17 +232,17 @@ void Compositor::SetVisibility(bool visible) {
     cc::LayerTreeSettings settings;
     settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
-    settings.throttle_frame_production = false;
-    settings.using_synchronous_renderer_compositor = true;
+    settings.throttle_frame_production = true;
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
         this,
         content::HostSharedBitmapManager::current(),
         content::BrowserGpuMemoryBufferManager::current(),
+        g_task_graph_runner.Pointer(),
         settings,
         base::MessageLoopProxy::current(),
         CompositorUtils::GetInstance()->GetTaskRunner(),
-        scoped_ptr<cc::BeginFrameSource>());
+        nullptr);
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);
@@ -282,8 +289,8 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 }
 
 void Compositor::DidSwapCompositorFrame(uint32 surface_id,
-                                        FrameHandleVector* returned_frames) {
-  proxy_->DidSwapCompositorFrame(surface_id, returned_frames);
+                                        FrameHandleVector returned_frames) {
+  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 
 } // namespace oxide

@@ -46,10 +46,6 @@ class ContentRendererClient final : public content::ContentRendererClient {
   void RenderThreadStarted() final;
   void RenderFrameCreated(content::RenderFrame* render_frame) final;
   void RenderViewCreated(content::RenderView* render_view) final;
-  void DidCreateScriptContext(blink::WebFrame* frame,
-                              v8::Handle<v8::Context> context,
-                              int extension_group,
-                              int world_id) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
 #if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(

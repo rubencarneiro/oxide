@@ -51,7 +51,7 @@ void ScriptMessageRequestImplRenderer::OnReply(const std::string& args) {
     return;
   }
 
-  v8::Handle<v8::Value> argv[] = {
+  v8::Local<v8::Value> argv[] = {
     v8::JSON::Parse(v8::String::NewFromUtf8(isolate, args.c_str()))
   };
 
@@ -70,7 +70,7 @@ void ScriptMessageRequestImplRenderer::OnError(
     return;
   }
 
-  v8::Handle<v8::Value> argv[] = {
+  v8::Local<v8::Value> argv[] = {
     v8::Integer::New(isolate, int(error)),
     v8::String::NewFromUtf8(isolate, msg.c_str())
   };
@@ -81,7 +81,7 @@ void ScriptMessageRequestImplRenderer::OnError(
 void ScriptMessageRequestImplRenderer::DispatchResponse(
     v8::Handle<v8::Function> function,
     int argc,
-    v8::Handle<v8::Value> argv[]) {
+    v8::Local<v8::Value> argv[]) {
   v8::TryCatch try_catch;
   {
     blink::WebScopedMicrotaskSuppression mts;
