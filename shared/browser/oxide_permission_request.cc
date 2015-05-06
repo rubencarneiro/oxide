@@ -320,10 +320,6 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
           audio_device_id);
     if (device) {
       devices.push_back(*device);
-    } else {
-      LOG(WARNING)
-          << "No audio capture device found. This might happen if it was "
-          << "recently removed from the system";
     }
   }
 
@@ -334,10 +330,6 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
           video_device_id);
     if (device) {
       devices.push_back(*device);
-    } else {
-      LOG(WARNING)
-          << "No video capture device found. This might happen if it was "
-          << "recently removed from the system";
     }
   }
 
