@@ -29,12 +29,12 @@ class RenderFrame;
 
 namespace oxide {
 
-class PepperRenderFrameObserver FINAL : public content::RenderFrameObserver {
+class PepperRenderFrameObserver final : public content::RenderFrameObserver {
  public:
   explicit PepperRenderFrameObserver(content::RenderFrame* render_frame);
   ~PepperRenderFrameObserver();
 
-  void DidCreatePepperPlugin(content::RendererPpapiHost* host) OVERRIDE;
+  void DidCreatePepperPlugin(content::RendererPpapiHost* host) override;
 
  private:
   DISALLOW_COPY_AND_ASSIGN(PepperRenderFrameObserver);

@@ -41,9 +41,10 @@ PepperRendererHostFactory::~PepperRendererHostFactory()
 
 scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceHost(
     ppapi::host::PpapiHost* host,
-    const ppapi::proxy::ResourceMessageCallParams& params,
+    PP_Resource resource,
     PP_Instance instance,
-    const IPC::Message& message) {
+    const IPC::Message& message
+) {
   DCHECK_EQ(host_->GetPpapiHost(), host);
 
   if (!host_->IsValidInstance(instance)) {
@@ -55,7 +56,7 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
     switch (message.type()) {
       case PpapiHostMsg_Flash_Create::ID: {
         return scoped_ptr<ppapi::host::ResourceHost>(
-            new PepperFlashRendererHost(host_, instance, params.pp_resource()));
+            new PepperFlashRendererHost(host_, instance, resource));
       }
 //      case PpapiHostMsg_FlashFullscreen_Create::ID: {
 //       return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashFullscreenHost(

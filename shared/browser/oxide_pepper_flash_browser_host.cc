@@ -34,7 +34,7 @@
 #include "ppapi/host/ppapi_host.h"
 #include "ppapi/proxy/ppapi_messages.h"
 #include "ppapi/shared_impl/time_conversion.h"
-
+#include "shared/browser/oxide_browser_context_delegate.h"
 
 namespace oxide {
 
@@ -147,11 +147,22 @@ void PepperFlashBrowserHost::GetLocalDataRestrictions(
 
   PP_FlashLSORestrictions restrictions = PP_FLASHLSORESTRICTIONS_NONE;
   if (browser_context_.get() && document_url.is_valid()) {
-    BrowserContextIOData* io_data = browser_context_->io_data();
-    if (io_data->GetSessionCookieMode() == content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES)
+    if (browser_context_->GetSessionCookieMode() == content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES) {
       restrictions = PP_FLASHLSORESTRICTIONS_IN_MEMORY;
-    if (!io_data->CanAccessCookies(document_url, GURL(), false))
-      restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
+    } else {
+      scoped_refptr<BrowserContextDelegate> delegate(browser_context_->GetDelegate());
+      if (delegate.get()) {
+        if (delegate->CanAccessStorage(document_url, document_url, false,
+                                   STORAGE_TYPE_COOKIES) != STORAGE_PERMISSION_ALLOW) {
+            restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
+        }
+      } else {
+        net::StaticCookiePolicy policy(browser_context_->GetCookiePolicy());
+        if (policy.CanGetCookies(document_url, document_url) != net::OK) {
+          restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
+        }
+      }
+    }
   }
 
   SendReply(reply_context,

@@ -32,7 +32,7 @@
 #include "content/public/renderer/renderer_ppapi_host.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/pepper_plugin_instance.h"
-#include "ui/gfx/rect.h"
+#include "ui/gfx/geometry/rect.h"
 
 
 namespace oxide {

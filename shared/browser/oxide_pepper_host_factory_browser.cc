@@ -25,7 +25,6 @@
 #include "ppapi/proxy/ppapi_messages.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
-#include "oxide_pepper_talk_host.h"
 #include "oxide_pepper_flash_browser_host.h"
 
 namespace oxide {
@@ -37,10 +36,12 @@ PepperHostFactoryBrowser::PepperHostFactoryBrowser(
 PepperHostFactoryBrowser::~PepperHostFactoryBrowser() {}
 
 scoped_ptr<ppapi::host::ResourceHost>
-PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
-                                             PP_Resource resource,
-                                             PP_Instance instance,
-                                             const IPC::Message& message) {
+PepperHostFactoryBrowser::CreateResourceHost(
+    ppapi::host::PpapiHost* host,
+    PP_Resource resource,
+    PP_Instance instance,
+    const IPC::Message& message
+) {
   DCHECK(host == host_->GetPpapiHost());
 
   if (!host_->IsValidInstance(instance)) {
@@ -65,7 +66,7 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
       switch (message.type()) {
         case PpapiHostMsg_Flash_Create::ID:
           return scoped_ptr<ppapi::host::ResourceHost>(
-            new PepperFlashBrowserHost(host_, instance, params.pp_resource()));
+            new PepperFlashBrowserHost(host_, instance, resource));
         default:
           ;
       }

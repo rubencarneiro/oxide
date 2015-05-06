@@ -50,7 +50,7 @@ class RendererPpapiHost;
 
 namespace oxide {
 
-class PepperFlashRendererHost FINAL : public ppapi::host::ResourceHost {
+class PepperFlashRendererHost final : public ppapi::host::ResourceHost {
  public:
   PepperFlashRendererHost(content::RendererPpapiHost* host,
                           PP_Instance instance,
@@ -58,7 +58,7 @@ class PepperFlashRendererHost FINAL : public ppapi::host::ResourceHost {
   ~PepperFlashRendererHost();
 
   int32_t OnResourceMessageReceived(const IPC::Message& msg,
-      ppapi::host::HostMessageContext* context) OVERRIDE;
+      ppapi::host::HostMessageContext* context) override;
 
  private:
   int32_t OnGetProxyForURL(ppapi::host::HostMessageContext* host_context,

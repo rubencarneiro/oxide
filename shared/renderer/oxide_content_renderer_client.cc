@@ -44,7 +44,6 @@
 #include "oxide_user_script_slave.h"
 #include "oxide_web_content_settings_client.h"
 #include "oxide_pepper_render_frame_observer.h"
-#include "oxide_web_permission_client.h"
 
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
@@ -71,7 +70,6 @@ void ContentRendererClient::RenderFrameCreated(
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebContentSettingsClient(render_frame);
   new PepperRenderFrameObserver(render_frame);
-  new WebPermissionClient(render_frame);
 #if defined(ENABLE_MEDIAHUB)
   new RendererMediaPlayerManager(render_frame);
 #endif

@@ -43,7 +43,7 @@ namespace oxide {
 class BrowserContext;
 
 
-class PepperFlashBrowserHost FINAL : public ppapi::host::ResourceHost {
+class PepperFlashBrowserHost final : public ppapi::host::ResourceHost {
  public:
   PepperFlashBrowserHost(content::BrowserPpapiHost* host,
                          PP_Instance instance,
@@ -53,7 +53,7 @@ class PepperFlashBrowserHost FINAL : public ppapi::host::ResourceHost {
  private:
   int32_t OnResourceMessageReceived(
       const IPC::Message& msg,
-      ppapi::host::HostMessageContext* context) OVERRIDE;
+      ppapi::host::HostMessageContext* context) override;
 
   int32_t OnUpdateActivity(ppapi::host::HostMessageContext* host_context);
   int32_t OnGetLocalTimeZoneOffset(

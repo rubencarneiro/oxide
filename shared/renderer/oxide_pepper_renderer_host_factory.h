@@ -27,9 +27,11 @@
 #include "ppapi/host/host_factory.h"
 #include "content/public/renderer/render_frame_observer.h"
 
-
-namespace content {
-class RenderFrame;
+namespace ppapi {
+namespace host {
+class PpapiHost;
+class ResourceHost;
+}
 }
 
 namespace oxide {
@@ -42,9 +44,9 @@ class PepperRendererHostFactory : public ppapi::host::HostFactory {
   // HostFactory.
   scoped_ptr<ppapi::host::ResourceHost> CreateResourceHost(
       ppapi::host::PpapiHost* host,
-      const ppapi::proxy::ResourceMessageCallParams& params,
+      PP_Resource resource,
       PP_Instance instance,
-      const IPC::Message& message) OVERRIDE;
+      const IPC::Message& message) override;
 
  private:
   // Not owned by this object.

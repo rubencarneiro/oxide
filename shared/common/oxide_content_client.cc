@@ -51,6 +51,7 @@ ContentClient* g_instance;
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
 #if defined(ENABLE_PLUGINS)
+  base::FilePath path;
   if (PathService::Get(FILE_PEPPER_FLASH_PLUGIN, &path)) {
     content::PepperPluginInfo pf;
 
