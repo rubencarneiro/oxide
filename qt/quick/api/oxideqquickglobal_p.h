@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
+#include <QVariant>
 
 class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
@@ -58,6 +59,9 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   void setMaxRendererProcessCount(int count);
 
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+
+  Q_INVOKABLE QVariant availableAudioCaptureDevices();
+  Q_INVOKABLE QVariant availableVideoCaptureDevices();
 
  Q_SIGNALS:
   void processModelChanged();

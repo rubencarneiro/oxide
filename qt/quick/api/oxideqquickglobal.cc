@@ -17,9 +17,41 @@
 
 #include "oxideqquickglobal_p.h"
 
+#include <QMap>
+#include <QString>
+
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqmediacapturedevice.h"
 
 #include "oxideqquickwebcontext_p.h"
+
+namespace {
+
+QVariant AudioCaptureDeviceToVariant(const OxideQAudioCaptureDevice& device) {
+  QMap<QString, QVariant> rv;
+  rv["id"] = device.id();
+  rv["displayName"] = device.displayName();
+  return rv;
+}
+
+QVariant VideoCaptureDeviceToVariant(const OxideQVideoCaptureDevice& device) {
+  QMap<QString, QVariant> rv;
+  rv["id"] = device.id();
+  rv["displayName"] = device.displayName();
+
+  switch (device.position()) {
+    case OxideQVideoCaptureDevice::PositionFrontFace:
+      rv["position"] = "frontface";
+    case OxideQVideoCaptureDevice::PositionBackFace:
+      rv["position"] = "backface";
+    default:
+      rv["position"] = "unspecified";
+  }
+    
+  return rv;
+}
+
+}
 
 class OxideQQuickGlobalPrivate {
  public:
@@ -90,4 +122,28 @@ void OxideQQuickGlobal::setMaxRendererProcessCount(int count) {
 
 OxideQQuickWebContext* OxideQQuickGlobal::defaultWebContext() {
   return OxideQQuickWebContext::defaultContext(true);
+}
+
+QVariant OxideQQuickGlobal::availableAudioCaptureDevices() {
+  QList<OxideQAudioCaptureDevice> devices =
+      OxideQAudioCaptureDevice::availableDevices();
+
+  QList<QVariant> rv;
+  for (const OxideQAudioCaptureDevice& device : devices) {
+    rv << AudioCaptureDeviceToVariant(device);
+  }
+
+  return rv;
+}
+
+QVariant OxideQQuickGlobal::availableVideoCaptureDevices() {
+  QList<OxideQVideoCaptureDevice> devices =
+      OxideQVideoCaptureDevice::availableDevices();
+
+  QList<QVariant> rv;
+  for (const OxideQVideoCaptureDevice& device : devices) {
+    rv << VideoCaptureDeviceToVariant(device);
+  }
+
+  return rv;
 }
