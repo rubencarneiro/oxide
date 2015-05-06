@@ -42,7 +42,6 @@ public:
   virtual ~WebContentsUnloaderObserver() {}
 
   void RenderProcessGone(base::TerminationStatus status) override {
-    //    DLOG(ERROR) << "renderer process gone: " << status;
     if (status == base::TERMINATION_STATUS_ABNORMAL_TERMINATION
         || status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED
         || status == base::TERMINATION_STATUS_PROCESS_CRASHED) {
@@ -50,9 +49,6 @@ public:
         web_contents()->GetDelegate()->CloseContents(web_contents());
       }
     }
-    //  FILE* f = fopen("./dddd.log", "a+");
-    // fprintf(f, "renderer process gone %d\n", status);
-    // fclose(f);
   }
 };
 
@@ -131,8 +127,6 @@ WebContentsUnloader::~WebContentsUnloader() {
 WebContentsUnloader* WebContentsUnloader::GetInstance() {
   return Singleton<WebContentsUnloader>::get();
 }
-
-#include <stdio.h>
 
 void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
   content::RenderViewHost* rvh = contents->GetRenderViewHost();
