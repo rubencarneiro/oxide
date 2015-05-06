@@ -101,6 +101,7 @@ class WebView : public QObject,
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
+  void OnRenderViewReady() override;
   void OnRenderProcessGone(base::TerminationStatus status) override;
 
   void OnURLChanged() override;
@@ -272,6 +273,8 @@ class WebView : public QObject,
   void setLocationBarAnimated(bool animated) override;
   void locationBarShow(bool animate) override;
   void locationBarHide(bool animate) override;
+
+  WebProcessStatus webProcessStatus() const override;
 
   WebViewProxyClient* client_;
 

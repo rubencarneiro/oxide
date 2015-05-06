@@ -93,7 +93,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
-  void RenderProcessGone(int status) override;
+  void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
   void IconChanged(QUrl icon) override;

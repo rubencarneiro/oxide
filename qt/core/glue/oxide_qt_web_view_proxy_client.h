@@ -79,7 +79,7 @@ class WebViewProxyClient {
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
-  virtual void RenderProcessGone(int status) = 0;
+  virtual void WebProcessStatusChanged() = 0;
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;

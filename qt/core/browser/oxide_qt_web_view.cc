@@ -545,20 +545,13 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
       message_handlers_.at(index))->handler();
 }
 
+void WebView::OnRenderViewReady() {
+  client_->WebProcessStatusChanged();
+}
+
 void WebView::OnRenderProcessGone(base::TerminationStatus status) {
-  COMPILE_ASSERT(base::TERMINATION_STATUS_NORMAL_TERMINATION == 0,
-                 termination_status_enums_normal_doesnt_match);
-  COMPILE_ASSERT(base::TERMINATION_STATUS_ABNORMAL_TERMINATION == 1,
-                 termination_status_enums_abnormal_doesnt_match);
-  COMPILE_ASSERT(base::TERMINATION_STATUS_PROCESS_WAS_KILLED == 2,
-                 termination_status_enums_killed_doesnt_match);
-  COMPILE_ASSERT(base::TERMINATION_STATUS_PROCESS_CRASHED == 3,
-                 termination_status_enums_crashed_doesnt_match);
-  COMPILE_ASSERT(base::TERMINATION_STATUS_STILL_RUNNING == 4,
-                 termination_status_enums_running_doesnt_match);
-  COMPILE_ASSERT(base::TERMINATION_STATUS_MAX_ENUM == 5,
-                 termination_status_enums_max_doesnt_match);
-  client_->RenderProcessGone(status);
+  Q_UNUSED(status);
+  client_->WebProcessStatusChanged();
 }
 
 void WebView::OnURLChanged() {
@@ -1482,6 +1475,23 @@ void WebView::locationBarShow(bool animate) {
 
 void WebView::locationBarHide(bool animate) {
   HideLocationBar(animate);
+}
+
+WebProcessStatus WebView::webProcessStatus() const {
+  if (!GetWebContents()) {
+    return WEB_PROCESS_CRASHED;
+  }
+
+  base::TerminationStatus status = GetWebContents()->GetCrashedStatus();
+  if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
+    return WEB_PROCESS_RUNNING;
+  } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
+    return WEB_PROCESS_KILLED;
+  } else {
+    // Map all other termination statuses to crashed. This is
+    // consistent with how the sad tab helper works in Chrome.
+    return WEB_PROCESS_CRASHED;
+  }
 }
 
 WebView::WebView(WebViewProxyClient* client) :

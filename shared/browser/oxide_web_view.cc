@@ -868,6 +868,10 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   frame->InitParent(parent);
 }
 
+void WebView::RenderViewReady() {
+  OnRenderViewReady();
+}
+
 void WebView::RenderProcessGone(base::TerminationStatus status) {
   OnRenderProcessGone(status);
 }
@@ -1095,6 +1099,7 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
+void WebView::OnRenderViewReady() {}
 void WebView::OnRenderProcessGone(base::TerminationStatus status) {}
 
 void WebView::OnURLChanged() {}
