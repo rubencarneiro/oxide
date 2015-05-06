@@ -45,7 +45,6 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_devtools_manager_delegate.h"
 #include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -272,11 +271,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
   return platform_integration_->CreateLocationProvider();
-}
-
-content::DevToolsManagerDelegate*
-ContentBrowserClient::GetDevToolsManagerDelegate() {
-  return new DevToolsManagerDelegate();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

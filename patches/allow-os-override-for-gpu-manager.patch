@@ -24,7 +24,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #include "gpu/command_buffer/service/gpu_switches.h"
  #include "gpu/config/gpu_control_list_jsons.h"
  #include "gpu/config/gpu_driver_bug_workaround_type.h"
-@@ -547,25 +548,25 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -548,25 +549,25 @@ void GpuDataManagerImplPrivate::Initiali
    }
  }
  
@@ -44,15 +44,15 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
      gpu_driver_bugs_ = gpu_driver_bug_list_->MakeDecision(
 -        gpu::GpuControlList::kOsAny, std::string(), gpu_info_);
 +        os_type_override_, os_version_override_, gpu_info_);
+ 
+     disabled_extensions_ =
+         JoinString(gpu_driver_bug_list_->GetDisabledExtensions(), ' ');
    }
    gpu::GpuDriverBugList::AppendWorkaroundsFromCommandLine(
        &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
  
    // We have to update GpuFeatureType before notify all the observers.
-   NotifyGpuInfoUpdate();
- }
- 
-@@ -917,32 +918,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+@@ -928,32 +929,37 @@ GpuDataManagerImplPrivate::GpuDataManage
        use_warp_(false),
        card_blacklisted_(false),
        update_histograms_(true),
@@ -91,7 +91,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #endif
  }
  
-@@ -954,25 +960,27 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -965,25 +971,27 @@ void GpuDataManagerImplPrivate::Initiali
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kLogGpuControlListDecisions);
  
@@ -142,14 +142,14 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
  
  namespace content {
  
-@@ -265,15 +266,18 @@ class CONTENT_EXPORT GpuDataManagerImplP
- 
-   unsigned int display_count_;
+@@ -269,15 +270,18 @@ class CONTENT_EXPORT GpuDataManagerImplP
  
    bool gpu_process_accessible_;
  
    // True if all future Initialize calls should be ignored.
    bool finalized_;
+ 
+   std::string disabled_extensions_;
  
 +  gpu::GpuControlList::OsType os_type_override_;
 +  std::string os_version_override_;
@@ -164,7 +164,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -338,9 +338,15 @@ const wchar_t* ContentBrowserClient::Get
+@@ -346,9 +346,15 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -201,7 +201,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
-@@ -614,13 +615,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -626,13 +627,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)
@@ -221,7 +221,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
 diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
 --- a/gpu/config/gpu_control_list.cc
 +++ b/gpu/config/gpu_control_list.cc
-@@ -1317,30 +1317,32 @@ GpuControlList::GpuControlList()
+@@ -1331,30 +1331,32 @@ GpuControlList::GpuControlList()
  }
  
  GpuControlList::~GpuControlList() {
@@ -257,7 +257,7 @@ diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
      return false;
  
    const base::ListValue* list = NULL;
-@@ -1358,17 +1360,19 @@ bool GpuControlList::LoadList(const base
+@@ -1372,17 +1374,19 @@ bool GpuControlList::LoadList(const base
      if (entry.get() == NULL)
        return false;
      if (entry->id() > max_entry_id)
@@ -300,7 +300,7 @@ diff --git a/gpu/config/gpu_control_list.h b/gpu/config/gpu_control_list.h
    // current OS version.
    std::set<int> MakeDecision(
        OsType os, std::string os_version, const GPUInfo& gpu_info);
-@@ -451,17 +451,17 @@ class GPU_EXPORT GpuControlList {
+@@ -458,17 +458,17 @@ class GPU_EXPORT GpuControlList {
      scoped_ptr<BoolInfo> direct_rendering_info_;
      std::set<int> features_;
      std::vector<ScopedGpuControlListEntry> exceptions_;

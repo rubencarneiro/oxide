@@ -20,22 +20,22 @@
 
 #include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "content/public/browser/devtools_http_handler_delegate.h"
+#include "components/devtools_http_handler/devtools_http_handler_delegate.h"
 
 namespace oxide {
 
 class DevtoolsHttpHandlerDelegate
-    : public content::DevToolsHttpHandlerDelegate {
+    : public devtools_http_handler::DevToolsHttpHandlerDelegate {
  public:
   DevtoolsHttpHandlerDelegate();
-  virtual ~DevtoolsHttpHandlerDelegate();
-
-  // DevToolsHttpHandlerDelegate overrides.
-  std::string GetDiscoveryPageHTML() final;
-  bool BundlesFrontendResources() final;
-  base::FilePath GetDebugFrontendDir() final;
+  ~DevtoolsHttpHandlerDelegate() override;
 
  private:
+  // DevToolsHttpHandlerDelegate overrides.
+  std::string GetDiscoveryPageHTML() override;
+  std::string GetFrontendResource(const std::string& path) override;
+  std::string GetPageThumbnailData(const GURL& url) override;
+
   DISALLOW_COPY_AND_ASSIGN(DevtoolsHttpHandlerDelegate);
 };
 
