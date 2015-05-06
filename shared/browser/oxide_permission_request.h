@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ namespace oxide {
 class MediaAccessPermissionRequest;
 class PermissionRequest;
 class SimplePermissionRequest;
+class WebFrame;
 
 // Request ID based on PermissionRequestID in Chromium. It is required for
 // requests that want to participate in cancellation. The design is a bit
@@ -74,6 +75,9 @@ class PermissionRequestManager {
 
   // Cancel the pending permission request with the specified |request_id|
   void CancelPendingRequestForID(const PermissionRequestID& request_id);
+
+  // Cancel any pending permission requests for |frame|
+  void CancelPendingRequestsForFrame(WebFrame* frame);
 
  private:
   friend class MediaAccessPermissionRequest;
@@ -129,6 +133,7 @@ class PermissionRequest {
 
   PermissionRequest(PermissionRequestManager* manager,
                     const PermissionRequestID& request_id,
+                    WebFrame* frame,
                     const GURL& origin,
                     const GURL& embedder);
 
@@ -139,7 +144,11 @@ class PermissionRequest {
   PermissionRequestManager* manager_;
 
  private:
+  // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
+
+  // The frame that initiated this request
+  WebFrame* frame_;
 
   GURL origin_;
   GURL embedder_;
@@ -185,7 +194,7 @@ class MediaAccessPermissionRequest : public PermissionRequest {
  public:
   MediaAccessPermissionRequest(
       PermissionRequestManager* manager,
-      const PermissionRequestID& request_id,
+      WebFrame* frame,
       const GURL& origin,
       const GURL& embedder,
       bool audio_requested,

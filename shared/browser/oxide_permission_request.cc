@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -161,6 +161,8 @@ void PermissionRequestManager::CancelPendingRequests() {
 
 void PermissionRequestManager::CancelPendingRequestForID(
     const PermissionRequestID& request_id) {
+  DCHECK(request_id.IsValid());
+
   for (auto it = pending_requests_.begin();
        it != pending_requests_.end(); ++it) {
     PermissionRequest* request = *it;
@@ -172,12 +174,30 @@ void PermissionRequestManager::CancelPendingRequestForID(
   }
 }
 
+void PermissionRequestManager::CancelPendingRequestsForFrame(WebFrame* frame) {
+  DCHECK(frame);
+
+  IteratorGuard guard(this);
+  for (auto it = pending_requests_.begin();
+       it != pending_requests_.end(); ++it) {
+    PermissionRequest* request = *it;
+    if (request->frame_ != frame) {
+      continue;
+    }
+
+    RemovePendingRequest(request);
+    request->Cancel();
+  }
+}
+
 PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
                                      const PermissionRequestID& request_id,
+                                     WebFrame* frame,
                                      const GURL& origin,
                                      const GURL& embedder)
     : manager_(manager),
       request_id_(request_id),
+      frame_(frame),
       origin_(origin),
       embedder_(embedder),
       is_cancelled_(false) {
@@ -222,7 +242,7 @@ SimplePermissionRequest::SimplePermissionRequest(
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(content::PermissionStatus)>& callback)
-    : PermissionRequest(manager, request_id, origin, embedder),
+    : PermissionRequest(manager, request_id, nullptr, origin, embedder),
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
@@ -262,13 +282,17 @@ void MediaAccessPermissionRequest::Cancel() {
 
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     PermissionRequestManager* manager,
-    const PermissionRequestID& request_id,
+    WebFrame* frame,
     const GURL& origin,
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
     const content::MediaResponseCallback& callback)
-    : PermissionRequest(manager, request_id, origin, embedder),
+    : PermissionRequest(manager,
+                        PermissionRequestID(),
+                        frame,
+                        origin,
+                        embedder),
       audio_requested_(audio_requested),
       video_requested_(video_requested),
       callback_(callback) {}

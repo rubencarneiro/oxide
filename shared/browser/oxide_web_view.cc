@@ -908,15 +908,28 @@ void WebView::RequestMediaAccessPermission(
     return;
   }
 
-  PermissionRequestID request_id(request.render_process_id,
-                                 request.render_frame_id,
-                                 request.page_request_id,
-                                 request.security_origin);
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(request.render_process_id,
+                                       request.render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  if (!frame) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
 
   scoped_ptr<MediaAccessPermissionRequest> req(
       new MediaAccessPermissionRequest(
         &permission_request_manager_,
-        request_id,
+        frame,
         request.security_origin,
         web_contents_->GetLastCommittedURL().GetOrigin(),
         request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
@@ -1077,6 +1090,7 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
+  permission_request_manager_.CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1147,6 +1161,7 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
+    permission_request_manager_.CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
