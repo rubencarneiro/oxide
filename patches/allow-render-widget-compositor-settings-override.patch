@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -223,9 +223,12 @@ std::string ContentRendererClient::GetUs
+@@ -229,9 +229,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -21,7 +21,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -49,16 +49,20 @@ class WebSpeechSynthesizer;
+@@ -50,16 +50,20 @@ class WebSpeechSynthesizer;
  class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLRequest;
@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }
  
  namespace content {
-@@ -305,13 +309,16 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual void RecordRapporURL(const std::string& metric, const GURL& url) {}
+@@ -310,13 +314,16 @@ class CONTENT_EXPORT ContentRendererClie
+       RenderFrame* render_frame);
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -77,19 +77,19 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "content/renderer/input/input_handler_manager.h"
  #include "gpu/command_buffer/client/gles2_interface.h"
  #include "third_party/WebKit/public/platform/WebCompositeAndReadbackAsyncCallback.h"
+ #include "third_party/WebKit/public/platform/WebLayoutAndPaintAsyncCallback.h"
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
- #include "third_party/WebKit/public/web/WebWidget.h"
-@@ -453,16 +455,18 @@ void RenderWidgetCompositor::Initialize(
-   settings.scrollbar_show_scale_threshold = 1.05f;
- #endif
+@@ -458,16 +460,18 @@ void RenderWidgetCompositor::Initialize(
+     settings.use_external_begin_frame_source = true;
  
-   if (cmd->HasSwitch(switches::kEnableLowResTiling))
-     settings.create_low_res_tiling = true;
-   if (cmd->HasSwitch(switches::kDisableLowResTiling))
-     settings.create_low_res_tiling = false;
+   if (widget_->for_oopif()) {
+     // TODO(simonhong): Apply BeginFrame scheduling for OOPIF.
+     // See crbug.com/471411.
+     settings.use_external_begin_frame_source = false;
+   }
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +
