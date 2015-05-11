@@ -1479,7 +1479,7 @@ void WebView::locationBarHide(bool animate) {
 
 WebProcessStatus WebView::webProcessStatus() const {
   if (!GetWebContents()) {
-    return WEB_PROCESS_CRASHED;
+    return WEB_PROCESS_RUNNING;
   }
 
   base::TerminationStatus status = GetWebContents()->GetCrashedStatus();
