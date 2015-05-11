@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,16 +15,48 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QLatin1String>
+#include <QList>
 #include <QQmlContext>
 #include <QQmlExtensionPlugin>
 #include <QQmlParserStatus>
+#include <QProcess>
 #include <QString>
 #include <QtGlobal>
 #include <QtQml>
 #include <QVariant>
+
+namespace {
+
+QList<pid_t> getChildProcesses(pid_t pid) {
+  QProcess pgrep;
+  pgrep.start(QString("pgrep --parent %1").arg(pid));
+  pgrep.waitForFinished();
+  QList<QByteArray> output = pgrep.readAllStandardOutput().split('\n');
+  QList<pid_t> children;
+  Q_FOREACH (const QByteArray& child, output) {
+    if (!child.isEmpty()) {
+      children.append(child.toInt());
+    }
+  }
+  return children;
+}
+
+QList<pid_t> getDescendantProcesses(pid_t pid) {
+  QList<pid_t> descendants = getChildProcesses(pid);
+  Q_FOREACH (pid_t descendant, descendants) {
+    descendants << getDescendantProcesses(descendant);
+  }
+  return descendants;
+}
+
+} // namespace
 
 class ExternalProtocolHandler : public QObject,
                                 public QQmlParserStatus {
@@ -140,6 +172,22 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE void removeAppProperty(const QString& property) {
     QCoreApplication::instance()->setProperty(property.toStdString().c_str(), QVariant());
+  }
+
+  Q_INVOKABLE void killWebProcesses(uint signal=SIGKILL) {
+    Q_FOREACH (pid_t descendant, getDescendantProcesses(getpid())) {
+      QProcess ps;
+      ps.start(QString("ps fhp %1").arg(descendant));
+      ps.waitForFinished();
+      QString output = ps.readAllStandardOutput();
+      if (output.contains("oxide-renderer") &&
+          output.contains("--type=renderer")) {
+        QProcess kill;
+        kill.start(QString("kill -%1 %2")
+            .arg(QString::number(signal), QString::number(descendant)));
+        kill.waitForFinished();
+      }
+    }
   }
 };
 
