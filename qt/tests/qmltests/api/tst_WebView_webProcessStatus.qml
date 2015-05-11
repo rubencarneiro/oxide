@@ -21,6 +21,8 @@ TestWebView {
     }
 
     function test_WebView_webProcessStatus(data) {
+      skip("TODO: re-enable once https://launchpad.net/bugs/1452407 is fixed");
+
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
