@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,32 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/media_capture_devices.h"
 
 namespace oxide {
+
+namespace {
+
+const content::MediaStreamDevice* GetRequestedOrDefaultDevice(
+    const content::MediaStreamDevices& devices,
+    const std::string& device_id) {
+  if (devices.size() == 0) {
+    return nullptr;
+  }
+
+  if (!device_id.empty()) {
+    for (auto it = devices.begin(); it != devices.end(); ++it) {
+      const content::MediaStreamDevice& device = *it;
+      if (device.id == device_id) {
+        return &device;
+      }
+    }
+  }
+
+  return &devices[0];
+}
+
+}
 
 PermissionRequestID::PermissionRequestID(int render_process_id,
                                          int render_view_id,
@@ -137,6 +161,8 @@ void PermissionRequestManager::CancelPendingRequests() {
 
 void PermissionRequestManager::CancelPendingRequestForID(
     const PermissionRequestID& request_id) {
+  DCHECK(request_id.IsValid());
+
   for (auto it = pending_requests_.begin();
        it != pending_requests_.end(); ++it) {
     PermissionRequest* request = *it;
@@ -148,12 +174,30 @@ void PermissionRequestManager::CancelPendingRequestForID(
   }
 }
 
+void PermissionRequestManager::CancelPendingRequestsForFrame(WebFrame* frame) {
+  DCHECK(frame);
+
+  IteratorGuard guard(this);
+  for (auto it = pending_requests_.begin();
+       it != pending_requests_.end(); ++it) {
+    PermissionRequest* request = *it;
+    if (request->frame_ != frame) {
+      continue;
+    }
+
+    RemovePendingRequest(request);
+    request->Cancel();
+  }
+}
+
 PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
                                      const PermissionRequestID& request_id,
+                                     WebFrame* frame,
                                      const GURL& origin,
                                      const GURL& embedder)
     : manager_(manager),
       request_id_(request_id),
+      frame_(frame),
       origin_(origin),
       embedder_(embedder),
       is_cancelled_(false) {
@@ -198,7 +242,7 @@ SimplePermissionRequest::SimplePermissionRequest(
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(content::PermissionStatus)>& callback)
-    : PermissionRequest(manager, request_id, origin, embedder),
+    : PermissionRequest(manager, request_id, nullptr, origin, embedder),
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
@@ -220,6 +264,91 @@ void SimplePermissionRequest::Deny() {
   DCHECK(!callback_.is_null());
 
   callback_.Run(content::PERMISSION_STATUS_DENIED);
+  callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
+}
+
+void MediaAccessPermissionRequest::Cancel() {
+  DCHECK(!callback_.is_null());
+
+  callback_.Run(content::MediaStreamDevices(),
+                content::MEDIA_DEVICE_PERMISSION_DENIED,
+                nullptr);
+  callback_.Reset();
+
+  PermissionRequest::Cancel();
+}
+
+MediaAccessPermissionRequest::MediaAccessPermissionRequest(
+    PermissionRequestManager* manager,
+    WebFrame* frame,
+    const GURL& origin,
+    const GURL& embedder,
+    bool audio_requested,
+    bool video_requested,
+    const content::MediaResponseCallback& callback)
+    : PermissionRequest(manager,
+                        PermissionRequestID(),
+                        frame,
+                        origin,
+                        embedder),
+      audio_requested_(audio_requested),
+      video_requested_(video_requested),
+      callback_(callback) {}
+
+MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
+  if (!callback_.is_null()) {
+    Deny();
+  }
+}
+
+void MediaAccessPermissionRequest::Allow() {
+  Allow(std::string(), std::string());
+}
+
+void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
+                                         const std::string& video_device_id) {
+  DCHECK(!callback_.is_null());
+
+  content::MediaStreamDevices devices;
+
+  if (audio_requested_) {
+    const content::MediaStreamDevice* device =
+        GetRequestedOrDefaultDevice(
+          content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices(),
+          audio_device_id);
+    if (device) {
+      devices.push_back(*device);
+    }
+  }
+
+  if (video_requested_) {
+    const content::MediaStreamDevice* device =
+        GetRequestedOrDefaultDevice(
+          content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices(),
+          video_device_id);
+    if (device) {
+      devices.push_back(*device);
+    }
+  }
+
+  callback_.Run(devices,
+                devices.empty() ?
+                    content::MEDIA_DEVICE_NO_HARDWARE :
+                    content::MEDIA_DEVICE_OK,
+                nullptr);
+  callback_.Reset();
+
+  manager_->RemovePendingRequest(this);
+}
+
+void MediaAccessPermissionRequest::Deny() {
+  DCHECK(!callback_.is_null());
+
+  callback_.Run(content::MediaStreamDevices(),
+                content::MEDIA_DEVICE_PERMISSION_DENIED,
+                nullptr);
   callback_.Reset();
 
   manager_->RemovePendingRequest(this);

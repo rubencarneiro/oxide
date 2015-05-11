@@ -238,6 +238,7 @@
         '<(DEPTH)/gin/gin.gyp:gin',
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
         '<(DEPTH)/ipc/ipc.gyp:ipc',
+        '<(DEPTH)/media/media.gyp:media',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/khronos/khronos.gyp:khronos_headers',

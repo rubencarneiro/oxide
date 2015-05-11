@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,18 +18,22 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 
+#include <string>
 #include <vector>
 
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
+#include "content/public/common/media_stream_request.h"
 #include "content/public/common/permission_status.mojom.h"
 #include "url/gurl.h"
 
 namespace oxide {
 
+class MediaAccessPermissionRequest;
 class PermissionRequest;
 class SimplePermissionRequest;
+class WebFrame;
 
 // Request ID based on PermissionRequestID in Chromium. It is required for
 // requests that want to participate in cancellation. The design is a bit
@@ -72,7 +76,11 @@ class PermissionRequestManager {
   // Cancel the pending permission request with the specified |request_id|
   void CancelPendingRequestForID(const PermissionRequestID& request_id);
 
+  // Cancel any pending permission requests for |frame|
+  void CancelPendingRequestsForFrame(WebFrame* frame);
+
  private:
+  friend class MediaAccessPermissionRequest;
   friend class PermissionRequest;
   friend class SimplePermissionRequest;
   class IteratorGuard;
@@ -125,6 +133,7 @@ class PermissionRequest {
 
   PermissionRequest(PermissionRequestManager* manager,
                     const PermissionRequestID& request_id,
+                    WebFrame* frame,
                     const GURL& origin,
                     const GURL& embedder);
 
@@ -135,7 +144,11 @@ class PermissionRequest {
   PermissionRequestManager* manager_;
 
  private:
+  // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
+
+  // The frame that initiated this request
+  WebFrame* frame_;
 
   GURL origin_;
   GURL embedder_;
@@ -175,6 +188,40 @@ class SimplePermissionRequest : public PermissionRequest {
   base::Callback<void(content::PermissionStatus)> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
+};
+
+class MediaAccessPermissionRequest : public PermissionRequest {
+ public:
+  MediaAccessPermissionRequest(
+      PermissionRequestManager* manager,
+      WebFrame* frame,
+      const GURL& origin,
+      const GURL& embedder,
+      bool audio_requested,
+      bool video_requested,
+      const content::MediaResponseCallback& callback);
+  ~MediaAccessPermissionRequest() override;
+
+  bool audio_requested() const { return audio_requested_; }
+
+  bool video_requested() const { return video_requested_; }
+
+  void Allow();
+  void Allow(const std::string& audio_device_id,
+             const std::string& video_device_id);
+
+  void Deny();
+
+ private:
+  // PermissionRequest implementation
+  void Cancel() override;
+
+  bool audio_requested_;
+  bool video_requested_;
+
+  content::MediaResponseCallback callback_;
+
+  DISALLOW_COPY_AND_ASSIGN(MediaAccessPermissionRequest);
 };
 
 } // namespace oxide

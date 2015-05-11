@@ -37,6 +37,7 @@
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
@@ -54,6 +55,7 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
+#include "content/public/common/media_stream_request.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
@@ -845,6 +847,98 @@ bool WebView::IsFullscreenForTabOrPending(
   return IsFullscreen();
 }
 
+void WebView::RequestMediaAccessPermission(
+    content::WebContents* source,
+    const content::MediaStreamRequest& request,
+    const content::MediaResponseCallback& callback) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
+      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_NO_SERVICE &&
+      request.audio_type == content::MEDIA_NO_SERVICE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  // These are only accessible from Chrome extensions
+  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
+      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  // Anything other than MEDIA_GENERATE_STREAM is only accessible from
+  // Chrome extensions
+  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  content::MediaCaptureDevices* devices =
+      content::MediaCaptureDevices::GetInstance();
+
+  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
+      devices->GetAudioCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
+      devices->GetVideoCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(request.render_process_id,
+                                       request.render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  if (!frame) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  scoped_ptr<MediaAccessPermissionRequest> req(
+      new MediaAccessPermissionRequest(
+        &permission_request_manager_,
+        frame,
+        request.security_origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(),
+        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
+        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
+        callback));
+
+  OnRequestMediaAccessPermission(req.Pass());
+}
+
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   // We get a RenderFrameHostChanged notification when any FrameTreeNode is
   // added to the FrameTree, which is when we want a notification. However,
@@ -1002,6 +1096,7 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
+  permission_request_manager_.CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1072,6 +1167,7 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
+    permission_request_manager_.CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
@@ -1155,6 +1251,8 @@ void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
     scoped_ptr<SimplePermissionRequest> request) {}
+void WebView::OnRequestMediaAccessPermission(
+    scoped_ptr<MediaAccessPermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}

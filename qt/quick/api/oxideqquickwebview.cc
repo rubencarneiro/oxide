@@ -541,6 +541,32 @@ void OxideQQuickWebViewPrivate::RequestGeolocationPermission(
   engine->collectGarbage();
 }
 
+void OxideQQuickWebViewPrivate::RequestMediaAccessPermission(
+    OxideQMediaAccessPermissionRequest* request) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(request);
+    if (!val.isQObject()) {
+      delete request;
+      return;
+    }
+
+    emit q->mediaAccessPermissionRequested(val);
+  }
+
+  engine->collectGarbage();
+
+}
+
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
     QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);

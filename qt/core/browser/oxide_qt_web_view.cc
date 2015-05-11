@@ -668,6 +668,16 @@ void WebView::OnRequestGeolocationPermission(
   client_->RequestGeolocationPermission(req.release());
 }
 
+void WebView::OnRequestMediaAccessPermission(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
+      OxideQMediaAccessPermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestMediaAccessPermission(req.release());
+}
+
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   if (event.skip_in_browser) {
