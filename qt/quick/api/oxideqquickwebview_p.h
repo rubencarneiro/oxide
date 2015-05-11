@@ -154,7 +154,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
-  Q_PROPERTY(OxideQQuickWebViewFindInPage* findInPage READ findInPage REVISION 4)
+  Q_PROPERTY(OxideQQuickWebViewFindInPage* findInPage READ findInPage CONSTANT REVISION 4)
 
   // Set at construction time only
   Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
