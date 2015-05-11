@@ -168,7 +168,9 @@ void IOThread::Init() {
 
   BrowserPlatformIntegration::GetInstance()->BrowserThreadInit(
       content::BrowserThread::IO);
+}
 
+void IOThread::InitAsync() {
 #if defined(USE_NSS_CERTS)
   net::SetMessageLoopForNSSHttpIO();
 #endif

@@ -93,6 +93,7 @@ class IOThread final : public content::BrowserThreadDelegate {
 
   // Called on the IO thread
   void Init() final;
+  void InitAsync() final;
   void CleanUp() final;
 
   scoped_ptr<net::NetLog> net_log_;

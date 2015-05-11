@@ -292,7 +292,7 @@ void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Size& dst_size,
     content::ReadbackRequestCallback& callback,
     const SkColorType color_type) {
-  callback.Run(SkBitmap(), content::READBACK_NOT_SUPPORTED);
+  callback.Run(SkBitmap(), content::READBACK_FAILED);
 }
 
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
