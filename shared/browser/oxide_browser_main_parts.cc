@@ -223,7 +223,8 @@ int BrowserMainParts::PreCreateThreads() {
   // twice. Note also that this decision is based on basic graphics info only
   content::GpuDataManagerImpl::GetInstance()->Initialize();
   if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
-          gpu::USE_VIRTUALIZED_GL_CONTEXTS)) {
+          gpu::USE_VIRTUALIZED_GL_CONTEXTS) ||
+      gfx::GetGLImplementation() == gfx::kGLImplementationDesktopGL) {
     // Virtualized contexts generally work around share group bugs. Don't
     // use the application provided share group if virtualized contexts are
     // to be used for this driver

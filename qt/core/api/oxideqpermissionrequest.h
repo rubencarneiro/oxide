@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 #include <QUrl>
 
 class OxideQGeolocationPermissionRequestPrivate;
+class OxideQMediaAccessPermissionRequestPrivate;
 class OxideQPermissionRequestPrivate;
 class OxideQSimplePermissionRequestPrivate;
 
@@ -41,7 +42,7 @@ class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
   Q_DISABLE_COPY(OxideQPermissionRequest)
 
  public:
-  virtual ~OxideQPermissionRequest();
+  ~OxideQPermissionRequest() Q_DECL_OVERRIDE;
 
   QUrl origin() const;
   QUrl embedder() const;
@@ -67,7 +68,7 @@ class Q_DECL_EXPORT OxideQSimplePermissionRequest :
   Q_DISABLE_COPY(OxideQSimplePermissionRequest)
 
  public:
-  virtual ~OxideQSimplePermissionRequest();
+  ~OxideQSimplePermissionRequest() Q_DECL_OVERRIDE;
 
  public Q_SLOTS:
   void allow();
@@ -90,7 +91,7 @@ class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
   Q_DISABLE_COPY(OxideQGeolocationPermissionRequest)
 
  public:
-  ~OxideQGeolocationPermissionRequest();
+  ~OxideQGeolocationPermissionRequest() Q_DECL_FINAL;
 
   QUrl origin() const;
 
@@ -102,6 +103,33 @@ class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
  private:
   OxideQGeolocationPermissionRequest(
       OxideQGeolocationPermissionRequestPrivate& dd);
+};
+
+class Q_DECL_EXPORT OxideQMediaAccessPermissionRequest Q_DECL_FINAL
+    : public OxideQPermissionRequest {
+  Q_OBJECT
+
+  Q_PROPERTY(bool isForAudio READ isForAudio CONSTANT)
+  Q_PROPERTY(bool isForVideo READ isForVideo CONSTANT)
+
+  Q_DECLARE_PRIVATE(OxideQMediaAccessPermissionRequest)
+  Q_DISABLE_COPY(OxideQMediaAccessPermissionRequest)
+
+ public:
+  ~OxideQMediaAccessPermissionRequest() Q_DECL_FINAL;
+
+  bool isForAudio() const;
+  bool isForVideo() const;
+
+ public Q_SLOTS:
+  void allow();
+  void allow(const QString& audio_device_id,
+             const QString& video_device_id);
+  void deny();
+
+ private:
+  OxideQMediaAccessPermissionRequest(
+      OxideQMediaAccessPermissionRequestPrivate& dd);
 };
 
 #endif // OXIDE_Q_PERMISSION_REQUEST

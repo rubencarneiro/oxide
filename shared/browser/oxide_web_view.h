@@ -442,9 +442,14 @@ class WebView : public ScriptMessageTarget,
   void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
+  void RequestMediaAccessPermission(
+      content::WebContents* source,
+      const content::MediaStreamRequest& request,
+      const content::MediaResponseCallback& callback) final;
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
+  void RenderViewReady() final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
@@ -492,6 +497,8 @@ class WebView : public ScriptMessageTarget,
                          content::RenderFrameHost* render_frame_host) final;
 
   // Override in sub-classes
+  virtual void OnCrashedStatusChanged();
+
   virtual void OnURLChanged();
   virtual void OnTitleChanged();
   virtual void OnIconChanged(const GURL& icon);
@@ -530,6 +537,8 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnRequestGeolocationPermission(
       scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnRequestMediaAccessPermission(
+      scoped_ptr<MediaAccessPermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);

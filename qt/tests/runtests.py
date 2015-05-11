@@ -74,6 +74,7 @@ class Runner(object):
   def run(self, options):
     with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
       os.environ["OXIDE_RUNTESTS_TMPDIR"] = tmpdir
+      os.environ["OXIDE_TESTING_MODE"] = "1"
 
       (opts, args) = options.parse_args()
 

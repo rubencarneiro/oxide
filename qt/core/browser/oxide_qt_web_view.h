@@ -101,6 +101,8 @@ class WebView : public QObject,
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
+  void OnCrashedStatusChanged() override;
+
   void OnURLChanged() override;
   void OnTitleChanged() override;
   void OnIconChanged(const GURL& icon) override;
@@ -139,6 +141,8 @@ class WebView : public QObject,
 
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void OnRequestMediaAccessPermission(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
@@ -274,6 +278,8 @@ class WebView : public QObject,
   void setLocationBarAnimated(bool animated) override;
   void locationBarShow(bool animate) override;
   void locationBarHide(bool animate) override;
+
+  WebProcessStatus webProcessStatus() const override;
 
   WebViewProxyClient* client_;
 
