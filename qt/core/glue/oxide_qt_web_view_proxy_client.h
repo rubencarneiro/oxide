@@ -80,6 +80,8 @@ class WebViewProxyClient {
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
+  virtual void WebProcessStatusChanged() = 0;
+
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
   virtual void IconChanged(QUrl icon) = 0; // XXX(chrisccoulson): Move paramter to a member on WebView
