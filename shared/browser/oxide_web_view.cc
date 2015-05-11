@@ -869,7 +869,7 @@ void WebView::RequestMediaAccessPermission(
     return;
   }
 
-  // These are only accessible from Chrome extensions
+  // Desktop / tab capture not supported
   if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
       request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
       request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
@@ -880,8 +880,9 @@ void WebView::RequestMediaAccessPermission(
     return;
   }
 
-  // Anything other than MEDIA_GENERATE_STREAM is only accessible from
-  // Chrome extensions
+  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
+  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
+  // permission request and MEDIA_OPEN_DEVICE is used from pepper
   if (request.request_type != content::MEDIA_GENERATE_STREAM) {
     callback.Run(content::MediaStreamDevices(),
                  content::MEDIA_DEVICE_NOT_SUPPORTED,
