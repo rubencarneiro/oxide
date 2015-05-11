@@ -545,12 +545,7 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
       message_handlers_.at(index))->handler();
 }
 
-void WebView::OnRenderViewReady() {
-  client_->WebProcessStatusChanged();
-}
-
-void WebView::OnRenderProcessGone(base::TerminationStatus status) {
-  Q_UNUSED(status);
+void WebView::OnCrashedStatusChanged() {
   client_->WebProcessStatusChanged();
 }
 
