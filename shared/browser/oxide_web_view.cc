@@ -104,12 +104,6 @@ namespace oxide {
 
 namespace {
 
-// The time between the last resize, focus, view visibility or
-// input panel visibility event before we scroll the currently focused
-// editable node into view. We want to wait until any transitions
-// are finished because we will only do the scroll once
-const int64 kAutoScrollFocusedEditableNodeIntoViewDelayMs = 50;
-
 const float kMobileViewportWidthEpsilon = 0.15f;
 const char kWebViewKey[] = "oxide_web_view_data";
 
@@ -317,10 +311,6 @@ void WebView::OnDidBlockRunningInsecureContent() {
 }
 
 bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
-  if (did_scroll_focused_editable_node_into_view_) {
-    return false;
-  }
-
   if (!HasFocus()) {
     return false;
   }
@@ -340,32 +330,15 @@ bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
   return true;
 }
 
-void WebView::MaybeResetAutoScrollTimer() {
+void WebView::MaybeScrollFocusedEditableNodeIntoView() {
   if (!ShouldScrollFocusedEditableNodeIntoView()) {
-    auto_scroll_timer_.Stop();
     return;
   }
 
-  if (auto_scroll_timer_.IsRunning()) {
-    auto_scroll_timer_.Reset();
-    return;
-  }
-
-  auto_scroll_timer_.Start(
-      FROM_HERE,
-      base::TimeDelta::FromMilliseconds(
-        kAutoScrollFocusedEditableNodeIntoViewDelayMs),
-      base::Bind(&WebView::ScrollFocusedEditableNodeIntoView,
-                 base::Unretained(this)));
-}
-
-void WebView::ScrollFocusedEditableNodeIntoView() {
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
   if (!host) {
     return;
   }
-
-  did_scroll_focused_editable_node_into_view_ = true;
 
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
@@ -517,8 +490,7 @@ void WebView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
   OnFocusedNodeChanged();
 
-  did_scroll_focused_editable_node_into_view_ = false;
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ImeCancelComposition() {
@@ -1324,8 +1296,6 @@ WebView::WebView()
       initial_index_(0),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
-      did_scroll_focused_editable_node_into_view_(false),
-      auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
@@ -1672,7 +1642,7 @@ void WebView::WasResized() {
     rwhv->GetRenderWidgetHost()->WasResized();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ScreenUpdated() {
@@ -1695,7 +1665,7 @@ void WebView::VisibilityChanged() {
     web_contents_->WasHidden();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::FocusChanged() {
@@ -1710,15 +1680,11 @@ void WebView::FocusChanged() {
     rwhv->Blur();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::InputPanelVisibilityChanged() {
-  if (!IsInputPanelVisible()) {
-    did_scroll_focused_editable_node_into_view_ = false;
-  }
-
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::UpdateWebPreferences() {

@@ -28,7 +28,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
-#include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
@@ -350,8 +349,7 @@ class WebView : public ScriptMessageTarget,
   void OnDidBlockRunningInsecureContent();
 
   bool ShouldScrollFocusedEditableNodeIntoView();
-  void MaybeResetAutoScrollTimer();
-  void ScrollFocusedEditableNodeIntoView();
+  void MaybeScrollFocusedEditableNodeIntoView();
 
   float GetFrameMetadataScaleToPix();
 
@@ -626,21 +624,6 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
-
-  // Usually we would scroll the focused editable node in to view after any
-  // resize if the input method is onscreen. However, this interacts badly
-  // with the browser header bar, which resizes the view when its visibility
-  // changes. To work around this, we don't scroll the focused node into
-  // view on a resize if it has already been scrolled once and the input
-  // method hasn't been hidden. This is reset if the input method goes
-  // offscreen or the focused node changes. To do this, we add a delay to
-  // ensure that we only do the scroll once any transitions are finished
-  // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
-  //
-  // We should be able to get rid of this once we have a solution for
-  // https://launchpad.net/bugs/1370366
-  bool did_scroll_focused_editable_node_into_view_;
-  base::Timer auto_scroll_timer_;
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;
