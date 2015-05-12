@@ -39,7 +39,7 @@ namespace oxide {
 
 namespace {
 
-typedef std::map<int64, WebFrame*> FrameMap;
+typedef std::map<int, WebFrame*> FrameMap;
 typedef FrameMap::iterator FrameMapIterator;
 
 base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
@@ -59,7 +59,7 @@ void WebFrame::WillDestroy() {
     parent_->RemoveChild(this);
   }
 
-  int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
+  int id = static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
       ->frame_tree_node()
       ->frame_tree_node_id();
   size_t erased = g_frame_map.Get().erase(id);
@@ -125,7 +125,7 @@ WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
       next_message_serial_(0),
       destroyed_(false),
       weak_factory_(this) {
-  int64 id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
+  int id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
       ->frame_tree_node()
       ->frame_tree_node_id();
   std::pair<FrameMapIterator, bool> rv =
@@ -134,7 +134,7 @@ WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
 }
 
 // static
-WebFrame* WebFrame::FromFrameTreeNodeID(int64 frame_tree_node_id) {
+WebFrame* WebFrame::FromFrameTreeNodeID(int frame_tree_node_id) {
   FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
   return it == g_frame_map.Get().end() ? nullptr : it->second;
 }
