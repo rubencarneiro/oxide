@@ -115,8 +115,10 @@ TestWebView {
 
     function test_find_on_invalid_page() {
       webView.url = "http://testsuite/tst_invalid_page.html";
-     verify(webView.waitForLoadSucceeded(),
-            "Timed out waiting for successful load");
+      // verify successful load because the server returns a 404 page apparently
+      // and that does not count as a failure
+      verify(webView.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
 
       webView.findInPage.text = "hello";
       tryCompare(webView.findInPage, "count", 0);
