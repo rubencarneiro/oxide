@@ -19,11 +19,36 @@
 
 #include <algorithm>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/supports_user_data.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/browser/web_contents_observer.h"
+
+class WebContentsUnloaderObserver : public content::WebContentsObserver,
+                                    public base::SupportsUserData::Data {
+public:
+  explicit WebContentsUnloaderObserver(
+          content::WebContents* contents)
+      : content::WebContentsObserver(contents) {}
+  virtual ~WebContentsUnloaderObserver() {}
+
+  void RenderProcessGone(base::TerminationStatus status) override {
+    web_contents()->GetDelegate()->CloseContents(web_contents());
+  }
+};
+
+namespace {
+
+const char kWebContentsUnloaderObserverKey[] =
+  "oxide_web_contents_unloader_observer_data";
+
+}
+
 
 namespace oxide {
 
@@ -35,6 +60,13 @@ void WebContentsUnloader::CloseContents(content::WebContents* contents) {
                 contents_unloading_.end(),
                 contents);
   DCHECK(it != contents_unloading_.end());
+
+  WebContentsUnloaderObserver* observer =
+    static_cast<WebContentsUnloaderObserver*> (
+      contents->GetUserData(kWebContentsUnloaderObserverKey));
+  if (observer) {
+    delete observer;
+  }
 
   contents_unloading_.erase(it);
 
@@ -62,7 +94,11 @@ void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
     return;
   }
 
+
   content::WebContents* c = contents.get();
+  c->SetUserData(
+      kWebContentsUnloaderObserverKey,
+      new WebContentsUnloaderObserver(c));
 
   // So we can intercept CloseContents
   contents->SetDelegate(this);
