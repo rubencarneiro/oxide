@@ -33,9 +33,9 @@
 #include "base/synchronization/lock.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
+#include "components/devtools_http_handler/devtools_http_handler.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
-#include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
@@ -131,8 +131,8 @@ void CleanupOldCacheDir(const base::FilePath& path) {
 
 } // namespace
 
-class TCPServerSocketFactory :
-    public content::DevToolsHttpHandler::ServerSocketFactory {
+class TCPServerSocketFactory
+    : public devtools_http_handler::DevToolsHttpHandler::ServerSocketFactory {
  public:
   TCPServerSocketFactory(const std::string& address, int port)
       : address_(address),
@@ -246,7 +246,7 @@ struct BrowserContextSharedData {
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  scoped_ptr<content::DevToolsHttpHandler> devtools_http_handler;
+  scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
   std::string devtools_ip;
@@ -710,13 +710,17 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
         net::ParseIPLiteralToNumber(data_.devtools_ip, &unused) ?
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
-    scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
+    scoped_ptr<TCPServerSocketFactory> factory(
         new TCPServerSocketFactory(ip, data_.devtools_port));
     data_.devtools_http_handler.reset(
-        content::DevToolsHttpHandler::Start(factory.Pass(),
-                                            std::string(),
-                                            new DevtoolsHttpHandlerDelegate(),
-                                            base::FilePath()));
+        new devtools_http_handler::DevToolsHttpHandler(
+          factory.Pass(),
+          std::string(),
+          new DevtoolsHttpHandlerDelegate(),
+          base::FilePath(),
+          base::FilePath(),
+          GetProduct(),
+          GetUserAgent()));
   }
 
   if (!GetPath().empty()) {

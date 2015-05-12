@@ -374,6 +374,12 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   return new oxide::qquick::FilePicker(q, client);
 }
 
+void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->webProcessStatusChanged();
+}
+
 void OxideQQuickWebViewPrivate::URLChanged() {
   Q_Q(OxideQQuickWebView);
 
@@ -1710,6 +1716,22 @@ OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
   }
 
   return d->location_bar_controller_.data();
+}
+
+OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() const {
+  Q_D(const OxideQQuickWebView);
+
+  Q_STATIC_ASSERT(
+      WebProcessRunning ==
+        static_cast<WebProcessStatus>(oxide::qt::WEB_PROCESS_RUNNING));
+  Q_STATIC_ASSERT(
+      WebProcessKilled ==
+        static_cast<WebProcessStatus>(oxide::qt::WEB_PROCESS_KILLED));
+  Q_STATIC_ASSERT(
+      WebProcessCrashed ==
+        static_cast<WebProcessStatus>(oxide::qt::WEB_PROCESS_CRASHED));
+
+  return static_cast<WebProcessStatus>(d->proxy()->webProcessStatus());
 }
 
 // static

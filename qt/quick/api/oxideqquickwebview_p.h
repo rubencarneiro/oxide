@@ -115,6 +115,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_FLAGS(ContentType)
   Q_ENUMS(LogMessageSeverityLevel);
   Q_ENUMS(RestoreType);
+  Q_ENUMS(WebProcessStatus);
 
   Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
   Q_PROPERTY(QString title READ title NOTIFY titleChanged)
@@ -166,6 +167,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 3)
 
+  Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -194,6 +197,12 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     RestoreCurrentSession,
     RestoreLastSessionExitedCleanly,
     RestoreLastSessionCrashed
+  };
+
+  enum WebProcessStatus {
+    WebProcessRunning,
+    WebProcessKilled,
+    WebProcessCrashed
   };
 
   void componentComplete();
@@ -271,6 +280,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   OxideQQuickLocationBarController* locationBarController();
 
+  WebProcessStatus webProcessStatus() const;
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
   OxideQQuickWebViewFindInPage* findInPage() const;
@@ -328,6 +339,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void blockedContentChanged();
   Q_REVISION(2) void prepareToCloseResponse(bool proceed);
   Q_REVISION(2) void closeRequested();
+  Q_REVISION(4) void webProcessStatusChanged();
 
   // Deprecated since 1.3
   void loadingChanged(OxideQLoadEvent* loadEvent);

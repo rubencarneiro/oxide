@@ -877,7 +877,13 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   frame->InitParent(parent);
 }
 
-void WebView::RenderProcessGone(base::TerminationStatus status) {}
+void WebView::RenderViewReady() {
+  OnCrashedStatusChanged();
+}
+
+void WebView::RenderProcessGone(base::TerminationStatus status) {
+  OnCrashedStatusChanged();
+}
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
@@ -1119,6 +1125,8 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
 
   return handled;
 }
+
+void WebView::OnCrashedStatusChanged() {}
 
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}

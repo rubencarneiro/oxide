@@ -136,7 +136,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     scoped_refptr<cc::ContextProvider> context_provider =
         content::ContextProviderCommandBuffer::Create(
-          CreateOffscreenContext3D(), "OxideWebViewCompositor");
+          CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
     if (!context_provider.get()) {
       return scoped_ptr<cc::OutputSurface>();
     }

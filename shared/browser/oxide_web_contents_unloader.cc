@@ -23,7 +23,6 @@
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
-#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 
 namespace oxide {
@@ -56,17 +55,21 @@ WebContentsUnloader* WebContentsUnloader::GetInstance() {
 }
 
 void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
-  content::RenderViewHost* rvh = contents->GetRenderViewHost();
-  if (!rvh) {
+  if (!contents->NeedToFireBeforeUnload()) {
+    // Despite the name, this checks if sudden termination is allowed. If so,
+    // we shouldn't fire the unload handler particularly if this was script
+    // closed, else we'll never get an ACK
     return;
   }
+
+  content::WebContents* c = contents.get();
 
   // So we can intercept CloseContents
   contents->SetDelegate(this);
   contents_unloading_.push_back(contents.release());
 
-  rvh->ClosePage();
-  // Note: |rvh| might be deleted at this point
+  c->ClosePage();
+  // Note: |c| might be deleted at this point
 }
 
 void WebContentsUnloader::WaitForPendingUnloadsToFinish() {
