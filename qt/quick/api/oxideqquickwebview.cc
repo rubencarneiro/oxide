@@ -220,8 +220,7 @@ OxideQQuickWebViewFindInPage::OxideQQuickWebViewFindInPage(oxide::qt::WebViewPro
     proxy_(proxy),
     current_(0),
     count_(0),
-    case_sensitive_(false),
-    text_(QString()) {
+    case_sensitive_(false) {
 }
 
 OxideQQuickWebViewFindInPage::~OxideQQuickWebViewFindInPage() {}
