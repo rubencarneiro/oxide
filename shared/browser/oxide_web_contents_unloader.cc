@@ -43,10 +43,7 @@ public:
 };
 
 namespace {
-
-const char kWebContentsUnloaderObserverKey[] =
-  "oxide_web_contents_unloader_observer_data";
-
+const char kWebContentsUnloaderObserverKey[] = "oxide_web_contents_unloader_observer_data";
 }
 
 
