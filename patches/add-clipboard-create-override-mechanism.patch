@@ -1,56 +1,15 @@
-diff --git a/ui/base/clipboard/clipboard.cc b/ui/base/clipboard/clipboard.cc
-index d7b71f8..75ffe30 100644
---- a/ui/base/clipboard/clipboard.cc
-+++ b/ui/base/clipboard/clipboard.cc
-@@ -14,6 +14,8 @@
- 
- namespace ui {
- 
-+Clipboard::CreateFunc create_func_ = nullptr;
-+
- base::LazyInstance<Clipboard::AllowedThreadsVector>
-     Clipboard::allowed_threads_ = LAZY_INSTANCE_INITIALIZER;
- base::LazyInstance<Clipboard::ClipboardMap> Clipboard::clipboard_map_ =
-@@ -56,11 +58,23 @@ Clipboard* Clipboard::GetForCurrentThread() {
-   if (it != clipboard_map->end())
-     return it->second;
- 
--  Clipboard* clipboard = Clipboard::Create();
-+  Clipboard* clipboard =
-+    create_func_ != nullptr ?
-+    create_func_() :
-+    Clipboard::Create();
-+
-   clipboard_map->insert(std::make_pair(id, clipboard));
-   return clipboard;
- }
- 
-+// static
-+void Clipboard::OverrideDefaultClipboardCreate(Clipboard::CreateFunc func)
-+{
-+  if (func) {
-+    create_func_ = func;
-+  }
-+}
-+
- void Clipboard::DestroyClipboardForCurrentThread() {
-   base::AutoLock lock(clipboard_map_lock_.Get());
- 
-diff --git a/ui/base/clipboard/clipboard.h b/ui/base/clipboard/clipboard.h
-index 6c23a6d..7b35727 100644
---- a/ui/base/clipboard/clipboard.h
-+++ b/ui/base/clipboard/clipboard.h
-@@ -133,6 +133,13 @@ class UI_BASE_EXPORT Clipboard : NON_EXPORTED_BASE(public base::ThreadChecker) {
-   static void SetAllowedThreads(
-       const std::vector<base::PlatformThreadId>& allowed_threads);
- 
-+  typedef Clipboard* (*CreateFunc) ();
-+
-+  // Allows one to override the builtin Clipboard::Create function.
-+  // This helps break deps on platform specific code that would
-+  // normally be added here.
-+  static void OverrideDefaultClipboardCreate(CreateFunc);
-+
-   // Returns the clipboard object for the current thread.
-   //
-   // Most implementations will have at most one clipboard which will live on
+diff --git a/ui/base/ui_base.gyp b/ui/base/ui_base.gyp
+index 29fac97..43427a7 100644
+--- a/ui/base/ui_base.gyp
++++ b/ui/base/ui_base.gyp
+@@ -58,8 +58,8 @@
+         'clipboard/clipboard.h',
+         'clipboard/clipboard_android.cc',
+         'clipboard/clipboard_android.h',
+-        'clipboard/clipboard_aura.cc',
+-        'clipboard/clipboard_aura.h',
++        '<(DEPTH)/../../../shared/port/ui_base/clipboard_oxide.cc',
++        '<(DEPTH)/../../../shared/port/ui_base/clipboard_oxide.h',
+         'clipboard/clipboard_aurax11.cc',
+         'clipboard/clipboard_aurax11.h',
+         'clipboard/clipboard_constants.cc',

@@ -24,6 +24,9 @@
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
+#include "shared/port/ui_base/clipboard_oxide.h"
+
+
 class GURL;
 
 namespace content {
@@ -61,6 +64,8 @@ class BrowserPlatformIntegration {
   virtual GLContextDependent* GetGLShareContext();
 
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
+
+  virtual ui::ClipboardOxideFactory GetClipboardOxideFactory();
 
   // Called on the specified browser thread
   virtual void BrowserThreadInit(content::BrowserThread::ID id);

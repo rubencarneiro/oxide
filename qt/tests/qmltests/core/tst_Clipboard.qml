@@ -17,7 +17,19 @@ TestWebView {
     return (result === expected);
   }
 
-  function select_textarea_content() {
+  function expect_has_file(expected) {
+    var result = webView.getTestApi().evaluateCode(
+        "return document.querySelector('#has_file').innerHTML", true);
+    return (result === expected);
+  }
+
+  function expect_mime_type(expected) {
+    var result = webView.getTestApi().evaluateCode(
+        "return document.querySelector('#mime_type').innerHTML", true);
+    return (result === expected);
+  }
+
+function select_textarea_content() {
     webView.getTestApi().evaluateCode(
         "document.querySelector('#content').select()", true);
   }
@@ -40,7 +52,7 @@ TestWebView {
     function test_paste_data() {
       return [
         { content: "content", mimeType: "text/plain", isimage: false },
-        { content: OxideTestingUtils.getClipboardImageData(), mimeType: "image/png", isimage: true},
+        { content: OxideTestingUtils.getClipboardImageData(), mimeType: "application/x-qt-image", isimage: true},
       ];
     }
 
@@ -58,6 +70,8 @@ TestWebView {
       select_textarea_content();
       keyPress("v", Qt.ControlModifier)
 
+      verify(webView.waitFor(function() { return expect_mime_type(data.mimeType); }));
+      verify(webView.waitFor(function() { return expect_has_file(String(data.isimage)); }));
       verify(webView.waitFor(function() { return expect_content(data.content); }));
     }
 

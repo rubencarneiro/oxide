@@ -30,6 +30,7 @@
 #include <QMimeData>
 #include <QString>
 #include <QImage>
+#include <QDebug>
 
 class ClipboardChangedListener : public QObject {
   Q_OBJECT
@@ -298,7 +299,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
     LOG(ERROR) << "Could not access clipboard";
     return SkBitmap();
   }
-
+  
   const QMimeData *data =
     clipboard->mimeData(
        type == ui::CLIPBOARD_TYPE_COPY_PASTE ?
@@ -311,6 +312,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
   QImage image = qvariant_cast<QImage>(data->imageData());
 
   Q_ASSERT(image.format() == QImage::Format_ARGB32);
+
   SkBitmap bitmap;
   bitmap.setInfo(
       SkImageInfo::MakeN32(
@@ -320,6 +322,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
 
   bitmap.setPixels(const_cast<uchar*>(image.constBits()));
 
+  // Force a deep copy of the image data
   SkBitmap copy;
   bitmap.copyTo(&copy, kN32_SkColorType);
   return copy;

@@ -56,9 +56,6 @@ void LaunchURLExternallyOnUIThread(const GURL& url) {
 BrowserPlatformIntegration::BrowserPlatformIntegration() {
   QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
                    this, SLOT(OnApplicationStateChanged()));
-
-  // might not be the best location
-  ui::Clipboard::OverrideDefaultClipboardCreate(ClipboardQt::DoCreate);
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
@@ -147,6 +144,11 @@ std::string
 BrowserPlatformIntegration::GetApplicationLocale() {
   return QLocale::system().name().toStdString();
 }
+
+ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
+  return ClipboardQt::DoCreate;
+}
+
 
 QThread* GetIOQThread() {
   return g_io_thread.Get();
