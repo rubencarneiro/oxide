@@ -19,9 +19,7 @@
 
 #include <algorithm>
 
-#include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
@@ -90,7 +88,6 @@ void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
     // closed, else we'll never get an ACK
     return;
   }
-
 
   content::WebContents* c = contents.get();
   c->SetUserData(
