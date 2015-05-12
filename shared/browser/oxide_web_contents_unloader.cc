@@ -17,89 +17,45 @@
 
 #include "oxide_web_contents_unloader.h"
 
-#include <map>
 #include <algorithm>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/supports_user_data.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 
-class WebContentsUnloaderObserver : public content::WebContentsObserver {
+class WebContentsUnloaderObserver : public content::WebContentsObserver,
+                                    public base::SupportsUserData::Data {
 public:
-  explicit WebContentsUnloaderObserver(
-          WebContentsUnloaderObserver* contents_observer) {
-    content::WebContents* contents = contents_observer->web_contents();
-    contents_observer->Observe(nullptr);
-    Observe(contents);
-  }
   explicit WebContentsUnloaderObserver(
           content::WebContents* contents)
       : content::WebContentsObserver(contents) {}
-  virtual ~WebContentsUnloaderObserver() {}
+  virtual ~WebContentsUnloaderObserver() {
+    DLOG(ERROR) << "********* Deleting";
+  }
 
   void RenderProcessGone(base::TerminationStatus status) override {
-    if (status == base::TERMINATION_STATUS_ABNORMAL_TERMINATION
-        || status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED
-        || status == base::TERMINATION_STATUS_PROCESS_CRASHED) {
-      if (web_contents() && web_contents()->GetDelegate()) {
-        web_contents()->GetDelegate()->CloseContents(web_contents());
-      }
-    }
+    web_contents()->GetDelegate()->CloseContents(web_contents());
   }
 };
 
 namespace {
 
-typedef std::map<
-  content::WebContents*,
-  std::shared_ptr<WebContentsUnloaderObserver> > WebContensObserverMap;
-
-WebContensObserverMap g_webcontents_observer_map;
-
-WebContensObserverMap::iterator findObserverFor(
-      content::WebContents* contents)
-{
-  WebContensObserverMap::iterator it =
-    g_webcontents_observer_map.begin();
-  for (; it != g_webcontents_observer_map.end(); it++) {
-    if (it->first == contents) {
-      break;
-    }
-  }
-  return it;
-}
-
-void addObserverForWebContents(content::WebContents* contents)
-{
-  if (contents == nullptr) {
-    return;
-  }
-  DCHECK(findObserverFor(contents) == g_webcontents_observer_map.end());
-  g_webcontents_observer_map[contents] =
-      std::make_shared<WebContentsUnloaderObserver>(
-          new WebContentsUnloaderObserver(contents));
-}
-  
-void removeObserverFor(content::WebContents* contents)
-{
-  WebContensObserverMap::iterator it =
-    findObserverFor(contents);
-  if (it != g_webcontents_observer_map.end()) {
-    g_webcontents_observer_map.erase(it);
-  }
-}
+const char kWebContentsUnloaderObserverKey[] =
+  "oxide_web_contents_unloader_observer_data";
 
 }
 
 
 namespace oxide {
 
-WebContentsUnloader::WebContentsUnloader()
-{}
+WebContentsUnloader::WebContentsUnloader() {}
 
 void WebContentsUnloader::CloseContents(content::WebContents* contents) {
   ScopedVector<content::WebContents>::iterator it =
@@ -108,9 +64,14 @@ void WebContentsUnloader::CloseContents(content::WebContents* contents) {
                 contents);
   DCHECK(it != contents_unloading_.end());
 
-  contents_unloading_.erase(it);
+  WebContentsUnloaderObserver* observer =
+    static_cast<WebContentsUnloaderObserver*> (
+      contents->GetUserData(kWebContentsUnloaderObserverKey));
+  if (observer) {
+    delete observer;
+  }
 
-  removeObserverFor(contents);
+  contents_unloading_.erase(it);
 
   if (contents_unloading_.size() != 0 || wait_loop_quit_closure_.is_null()) {
     return;
@@ -136,7 +97,9 @@ void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
 
   content::WebContents* web_contents = contents.release();
 
-  addObserverForWebContents(web_contents);
+  web_contents->SetUserData(
+      kWebContentsUnloaderObserverKey,
+      new WebContentsUnloaderObserver(web_contents));
 
   // So we can intercept CloseContents
   contents->SetDelegate(this);
