@@ -36,9 +36,7 @@ public:
   explicit WebContentsUnloaderObserver(
           content::WebContents* contents)
       : content::WebContentsObserver(contents) {}
-  virtual ~WebContentsUnloaderObserver() {
-    DLOG(ERROR) << "********* Deleting";
-  }
+  virtual ~WebContentsUnloaderObserver() {}
 
   void RenderProcessGone(base::TerminationStatus status) override {
     web_contents()->GetDelegate()->CloseContents(web_contents());
