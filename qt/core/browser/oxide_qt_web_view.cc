@@ -1265,7 +1265,9 @@ void WebView::reload() {
 
 void WebView::findInPage(const QString &text, bool caseSensitive) {
   content::WebContents* contents = GetWebContents();
-  if (contents == nullptr) return;
+  if (contents == nullptr) {
+    return;
+  }
 
   contents->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
   OnFindInPageResult(0, 0);
@@ -1276,20 +1278,22 @@ void WebView::findInPage(const QString &text, bool caseSensitive) {
   find_in_page_state_.current = 0;
 
   if (!text.isEmpty()) {
-      find_in_page_state_.request_id += 1;
+    find_in_page_state_.request_id += 1;
 
-      blink::WebFindOptions options;
-      options.forward = true;
-      options.findNext = false;
-      options.matchCase = caseSensitive;
+    blink::WebFindOptions options;
+    options.forward = true;
+    options.findNext = false;
+    options.matchCase = caseSensitive;
 
-      contents->Find(find_in_page_state_.request_id, text.utf16(), options);
+    contents->Find(find_in_page_state_.request_id, text.utf16(), options);
   }
 }
 
 void WebView::findInPageNext() {
    content::WebContents* contents = GetWebContents();
-   if (contents == nullptr) return;
+   if (contents == nullptr) {
+     return;
+   }
 
    blink::WebFindOptions options;
    options.forward = true;
@@ -1300,7 +1304,9 @@ void WebView::findInPageNext() {
 
 void WebView::findInPagePrevious() {
    content::WebContents* contents = GetWebContents();
-   if (contents == nullptr) return;
+   if (contents == nullptr) {
+     return;
+   }
 
    blink::WebFindOptions options;
    options.forward = false;
@@ -1313,8 +1319,13 @@ void WebView::OnFindInPageResult(int current, int count) {
     int old_count = find_in_page_state_.count;
     int old_current = find_in_page_state_.current;
 
-    if (count != -1) find_in_page_state_.count = count;
-    if (current != -1) find_in_page_state_.current = current;
+    if (count != -1) {
+      find_in_page_state_.count = count;
+    }
+
+    if (current != -1) {
+      find_in_page_state_.current = current;
+    }
 
     if (find_in_page_state_.count != old_count || find_in_page_state_.current != old_current) {
       client_->FindInPageStateChanged();
