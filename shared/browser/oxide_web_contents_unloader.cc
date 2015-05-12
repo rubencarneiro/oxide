@@ -56,13 +56,6 @@ void WebContentsUnloader::CloseContents(content::WebContents* contents) {
                 contents);
   DCHECK(it != contents_unloading_.end());
 
-  WebContentsUnloaderObserver* observer =
-    static_cast<WebContentsUnloaderObserver*> (
-      contents->GetUserData(kWebContentsUnloaderObserverKey));
-  if (observer) {
-    delete observer;
-  }
-
   contents_unloading_.erase(it);
 
   if (contents_unloading_.size() != 0 || wait_loop_quit_closure_.is_null()) {
