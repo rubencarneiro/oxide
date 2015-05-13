@@ -8,6 +8,7 @@
   <span id="has_file"></span>
 
   <div id="blabla"></div>
+
   <script>
 
     window.onload = function() {
@@ -20,7 +21,7 @@
         if (blob) {
           var reader = new FileReader();
           reader.addEventListener("loadend", function(e) {
-            document.getElementById('content').value = e.target.result
+              document.getElementById("content").value = reader.result.substr(String("data:image/png;base64,").length)
           });
           reader.readAsDataURL(blob);
         }

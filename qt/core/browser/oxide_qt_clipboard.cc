@@ -299,17 +299,30 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
     LOG(ERROR) << "Could not access clipboard";
     return SkBitmap();
   }
-  
-  const QMimeData *data =
+
+  const QMimeData *md =
     clipboard->mimeData(
        type == ui::CLIPBOARD_TYPE_COPY_PASTE ?
        QClipboard::Clipboard
        : QClipboard::Selection);
-  if ( ! data || ! data->hasImage()) {
+  if ( ! md) {
     return SkBitmap();
   }
 
-  QImage image = qvariant_cast<QImage>(data->imageData());
+  QImage image;
+  if (md->hasImage()) {
+    image = qvariant_cast<QImage>(md->imageData());
+    /**
+     * ReadImage is only called from blink for clipboardData contents
+     * of type image/png as the method getAsFile is called.
+     * third_party/WebKit/Source/core/clipboard/DataObjectItem.cpp
+     * so we handle the special case there.
+     */
+  } else if (md->hasFormat(Clipboard::kMimeTypePNG)) {
+    image.loadFromData(md->data(Clipboard::kMimeTypePNG));
+  } else {
+    return SkBitmap();
+  }
 
   Q_ASSERT(image.format() == QImage::Format_ARGB32);
 
@@ -319,7 +332,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
           image.width(),
           image.height(),
           kOpaque_SkAlphaType));
-
+  
   bitmap.setPixels(const_cast<uchar*>(image.constBits()));
 
   // Force a deep copy of the image data
