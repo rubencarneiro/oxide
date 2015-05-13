@@ -32,7 +32,7 @@ class MediaWebContentsObserver : public content::WebContentsObserver {
       content::RenderFrameHost* render_frame_host);
 
  private:
-  typedef base::ScopedPtrHashMap<uintptr_t, BrowserMediaPlayerManager>
+  typedef base::ScopedPtrHashMap<uintptr_t, scoped_ptr<BrowserMediaPlayerManager>>
       MediaPlayerManagerMap;
   MediaPlayerManagerMap media_player_managers_;
 
