@@ -73,8 +73,7 @@ class RenderWidgetHostView final :
     return compositor_frame_metadata_;
   }
 
-  // content::RenderWidgetHostViewBase implementation
-  void Blur() final;
+  void Blur();
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const final;
