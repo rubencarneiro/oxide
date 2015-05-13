@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
+#include <QVariant>
 
 class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
@@ -58,6 +59,9 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   void setMaxRendererProcessCount(int count);
 
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+
+  Q_INVOKABLE QVariant availableAudioCaptureDevices();
+  Q_INVOKABLE QVariant availableVideoCaptureDevices();
 
  Q_SIGNALS:
   void processModelChanged();

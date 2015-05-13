@@ -545,6 +545,10 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
       message_handlers_.at(index))->handler();
 }
 
+void WebView::OnCrashedStatusChanged() {
+  client_->WebProcessStatusChanged();
+}
+
 void WebView::OnURLChanged() {
   client_->URLChanged();
 }
@@ -662,6 +666,16 @@ void WebView::OnRequestGeolocationPermission(
 
   // The embedder takes ownership of this
   client_->RequestGeolocationPermission(req.release());
+}
+
+void WebView::OnRequestMediaAccessPermission(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
+      OxideQMediaAccessPermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestMediaAccessPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -1466,6 +1480,23 @@ void WebView::locationBarShow(bool animate) {
 
 void WebView::locationBarHide(bool animate) {
   HideLocationBar(animate);
+}
+
+WebProcessStatus WebView::webProcessStatus() const {
+  if (!GetWebContents()) {
+    return WEB_PROCESS_RUNNING;
+  }
+
+  base::TerminationStatus status = GetWebContents()->GetCrashedStatus();
+  if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
+    return WEB_PROCESS_RUNNING;
+  } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
+    return WEB_PROCESS_KILLED;
+  } else {
+    // Map all other termination statuses to crashed. This is
+    // consistent with how the sad tab helper works in Chrome.
+    return WEB_PROCESS_CRASHED;
+  }
 }
 
 WebView::WebView(WebViewProxyClient* client) :

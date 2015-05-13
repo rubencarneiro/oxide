@@ -37,6 +37,7 @@
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
@@ -54,6 +55,7 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
+#include "content/public/common/media_stream_request.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
@@ -101,12 +103,6 @@
 namespace oxide {
 
 namespace {
-
-// The time between the last resize, focus, view visibility or
-// input panel visibility event before we scroll the currently focused
-// editable node into view. We want to wait until any transitions
-// are finished because we will only do the scroll once
-const int64 kAutoScrollFocusedEditableNodeIntoViewDelayMs = 50;
 
 const float kMobileViewportWidthEpsilon = 0.15f;
 const char kWebViewKey[] = "oxide_web_view_data";
@@ -315,10 +311,6 @@ void WebView::OnDidBlockRunningInsecureContent() {
 }
 
 bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
-  if (did_scroll_focused_editable_node_into_view_) {
-    return false;
-  }
-
   if (!HasFocus()) {
     return false;
   }
@@ -338,32 +330,15 @@ bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
   return true;
 }
 
-void WebView::MaybeResetAutoScrollTimer() {
+void WebView::MaybeScrollFocusedEditableNodeIntoView() {
   if (!ShouldScrollFocusedEditableNodeIntoView()) {
-    auto_scroll_timer_.Stop();
     return;
   }
 
-  if (auto_scroll_timer_.IsRunning()) {
-    auto_scroll_timer_.Reset();
-    return;
-  }
-
-  auto_scroll_timer_.Start(
-      FROM_HERE,
-      base::TimeDelta::FromMilliseconds(
-        kAutoScrollFocusedEditableNodeIntoViewDelayMs),
-      base::Bind(&WebView::ScrollFocusedEditableNodeIntoView,
-                 base::Unretained(this)));
-}
-
-void WebView::ScrollFocusedEditableNodeIntoView() {
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
   if (!host) {
     return;
   }
-
-  did_scroll_focused_editable_node_into_view_ = true;
 
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
@@ -515,8 +490,7 @@ void WebView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
   OnFocusedNodeChanged();
 
-  did_scroll_focused_editable_node_into_view_ = false;
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ImeCancelComposition() {
@@ -845,6 +819,99 @@ bool WebView::IsFullscreenForTabOrPending(
   return IsFullscreen();
 }
 
+void WebView::RequestMediaAccessPermission(
+    content::WebContents* source,
+    const content::MediaStreamRequest& request,
+    const content::MediaResponseCallback& callback) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
+      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_NO_SERVICE &&
+      request.audio_type == content::MEDIA_NO_SERVICE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  // Desktop / tab capture not supported
+  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
+      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
+  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
+  // permission request and MEDIA_OPEN_DEVICE is used from pepper
+  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  content::MediaCaptureDevices* devices =
+      content::MediaCaptureDevices::GetInstance();
+
+  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
+      devices->GetAudioCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
+      devices->GetVideoCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(request.render_process_id,
+                                       request.render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  if (!frame) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  scoped_ptr<MediaAccessPermissionRequest> req(
+      new MediaAccessPermissionRequest(
+        &permission_request_manager_,
+        frame,
+        request.security_origin,
+        web_contents_->GetLastCommittedURL().GetOrigin(),
+        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
+        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
+        callback));
+
+  OnRequestMediaAccessPermission(req.Pass());
+}
+
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   // We get a RenderFrameHostChanged notification when any FrameTreeNode is
   // added to the FrameTree, which is when we want a notification. However,
@@ -868,7 +935,13 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   frame->InitParent(parent);
 }
 
-void WebView::RenderProcessGone(base::TerminationStatus status) {}
+void WebView::RenderViewReady() {
+  OnCrashedStatusChanged();
+}
+
+void WebView::RenderProcessGone(base::TerminationStatus status) {
+  OnCrashedStatusChanged();
+}
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
@@ -996,6 +1069,7 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
+  permission_request_manager_.CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1066,6 +1140,7 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
+    permission_request_manager_.CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
@@ -1111,6 +1186,8 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
+void WebView::OnCrashedStatusChanged() {}
+
 void WebView::OnURLChanged() {}
 void WebView::OnTitleChanged() {}
 void WebView::OnIconChanged(const GURL& icon) {}
@@ -1147,6 +1224,8 @@ void WebView::OnWebPreferencesDestroyed() {}
 
 void WebView::OnRequestGeolocationPermission(
     scoped_ptr<SimplePermissionRequest> request) {}
+void WebView::OnRequestMediaAccessPermission(
+    scoped_ptr<MediaAccessPermissionRequest> request) {}
 
 void WebView::OnUnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}
@@ -1217,8 +1296,6 @@ WebView::WebView()
       initial_index_(0),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
-      did_scroll_focused_editable_node_into_view_(false),
-      auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
@@ -1565,7 +1642,7 @@ void WebView::WasResized() {
     rwhv->GetRenderWidgetHost()->WasResized();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ScreenUpdated() {
@@ -1588,7 +1665,7 @@ void WebView::VisibilityChanged() {
     web_contents_->WasHidden();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::FocusChanged() {
@@ -1603,15 +1680,11 @@ void WebView::FocusChanged() {
     rwhv->Blur();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::InputPanelVisibilityChanged() {
-  if (!IsInputPanelVisible()) {
-    did_scroll_focused_editable_node_into_view_ = false;
-  }
-
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::UpdateWebPreferences() {

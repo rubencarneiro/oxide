@@ -76,6 +76,12 @@ enum LocationBarMode {
   LOCATION_BAR_MODE_HIDDEN
 };
 
+enum WebProcessStatus {
+  WEB_PROCESS_RUNNING,
+  WEB_PROCESS_KILLED,
+  WEB_PROCESS_CRASHED
+};
+
 class CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}
@@ -196,6 +202,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void setLocationBarAnimated(bool animated) = 0;
   virtual void locationBarShow(bool animate) = 0;
   virtual void locationBarHide(bool animate) = 0;
+
+  virtual WebProcessStatus webProcessStatus() const = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);
