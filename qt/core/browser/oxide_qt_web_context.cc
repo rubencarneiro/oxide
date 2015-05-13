@@ -33,7 +33,6 @@
 #include "base/logging.h"
 #include "base/strings/string_util.h"
 #include "base/synchronization/lock.h"
-#include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/cookie_store_factory.h"
 #include "content/public/browser/resource_request_info.h"
@@ -468,7 +467,6 @@ WebContext::~WebContext() {
 
   if (context_.get()) {
     context_->SetDelegate(nullptr);
-    content::BrowserContext::NotifyWillBeDestroyed(context_.get());
   }
 }
 
