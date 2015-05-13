@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_ANCHOR_H_
 #define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_ANCHOR_H_
 
+#include <set>
+
 #include "base/macros.h"
 #include "content/public/browser/render_process_host_observer.h"
 
@@ -42,6 +44,8 @@ class BrowserContextAnchor : public content::RenderProcessHostObserver {
 
   // content::RenderProcessHostObserver implementation
   void RenderProcessHostDestroyed(content::RenderProcessHost* host) override;
+
+  std::set<int> tracked_render_process_hosts_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContextAnchor);
 };

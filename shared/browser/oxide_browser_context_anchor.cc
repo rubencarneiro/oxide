@@ -30,6 +30,9 @@ void BrowserContextAnchor::RenderProcessHostDestroyed(
     content::RenderProcessHost* host) {
   host->RemoveObserver(this);
   BrowserContext::FromContent(host->GetBrowserContext())->Release();
+
+  size_t removed = tracked_render_process_hosts_.erase(host->GetID());
+  DCHECK_GT(removed, 0U);
 }
 
 // static
@@ -39,6 +42,14 @@ BrowserContextAnchor* BrowserContextAnchor::GetInstance() {
 
 void BrowserContextAnchor::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
+  int id = host->GetID();
+  if (tracked_render_process_hosts_.find(id) !=
+      tracked_render_process_hosts_.end()) {
+    return;
+  }
+
+  tracked_render_process_hosts_.insert(id);
+
   BrowserContext::FromContent(host->GetBrowserContext())->AddRef();
   host->AddObserver(this);
 }
