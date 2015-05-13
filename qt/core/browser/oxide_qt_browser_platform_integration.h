@@ -56,6 +56,7 @@ class BrowserPlatformIntegration final
   content::LocationProvider* CreateLocationProvider() final;
   ApplicationState GetApplicationState() final;
   std::string GetApplicationLocale() final;
+  ui::ClipboardOxideFactory GetClipboardOxideFactory() final;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

@@ -20,7 +20,9 @@
 #include <unistd.h>
 
 #include <QCoreApplication>
+#include <QClipboard>
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
 #include <QQmlContext>
@@ -163,7 +165,7 @@ class OxideTestingUtils : public QObject {
   }
 
   Q_INVOKABLE QVariant getAppProperty(const QString& property) {
-    QCoreApplication::instance()->property(property.toStdString().c_str());
+    return QCoreApplication::instance()->property(property.toStdString().c_str());
   }
 
   Q_INVOKABLE void setAppProperty(const QString& property, const QVariant& value) {
@@ -188,6 +190,52 @@ class OxideTestingUtils : public QObject {
         kill.waitForFinished();
       }
     }
+  }
+
+  Q_INVOKABLE void copyToClipboard(const QString& mimeType, const QString& data) {
+    QMimeData * mime_data = new QMimeData();
+    mime_data->setData(mimeType, data.toUtf8());
+    QGuiApplication::clipboard()->setMimeData(mime_data);
+  }
+
+  Q_INVOKABLE QString getClipboardImageData() const {
+    return QString("iVBORw0KGgoAAAANSUhEUgAAABAAAA"
+                   "AQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL"
+                   "2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9gHHRY6HX"
+                   "zuCtIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ"
+                   "4XAAAB6ElEQVQ4y33TT2jPcRzH8cfn9/1uMxsbWmsi1jS05cJuyF"
+                   "r7g4t22QgnWg6Sw5aLGwdJymFFTZKk0JTFKIkLByItsvIvSi2HsZ"
+                   "/N2n77OuxbfrF51/vw+fR5vnt/3q/XO/hPjLUKIShHlMwY+3RfCy"
+                   "5hBNvr+RjPB2fbbEUHahHhJjZjaZotuPBPganT1qNq8oEq7MMiCB"
+                   "mhqMytye824SceQfgLLsFdrJge1pz77Bw2YgwVyYyBHx88jorFpc"
+                   "u9TxKDcR5chBPYAnGtXbkvOpIZ2UX3yLapChldZTXOYiHehaAzk9"
+                   "fAmvRf8A0DhY2zMJQO+oqT6MMMqrEjZNu0YGco8bywQZPIfhwv6H"
+                   "ZinuGux0Wsw4sYvahJfnqT++JMtEonXv9H3fc4jCWYiDGOBJNiEW"
+                   "Isno/+OKgMe1J5P8c4iMZMueGoSicy2JkaZq7YgL2owO2Qp0IlLu"
+                   "cNcneSuFbYM3sYmjVTLa6jDlkc+GOkxIigF80IEhPDPdqHKE190J"
+                   "B2VpcSj/AwzOHEo1j7tlsfrqbywkSI9C9r8nB6TDT6VH99YmSuXT"
+                   "iPIhzC6rz7Zyu7PC2udgy/Kts90T1HgYJu4xgf4hRupFZeECIvi6"
+                   "sdQU36dBtezbuN9eQwnCY5priCVoziDvwGNw6PMb/zL+4AAAAASU"
+                   "VORK5CYII=");
+  }
+
+  Q_INVOKABLE void copyImageToClipboard() {
+    QMimeData * mime_data = new QMimeData();
+    mime_data->setData("image/png"
+        , QByteArray::fromBase64(getClipboardImageData().toUtf8()));
+    QGuiApplication::clipboard()->setMimeData(mime_data);
+  }
+
+  Q_INVOKABLE QString copyFromClipboard(const QString& mimeType) {
+    const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
+    if (mime_data->hasFormat(mimeType)) {
+      return QString(mime_data->data(mimeType));
+    }
+    return QString();
+  }
+
+  Q_INVOKABLE void clearClipboard(const QString& data) {
+    QGuiApplication::clipboard()->clear();
   }
 };
 

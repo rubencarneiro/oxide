@@ -39,6 +39,7 @@
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
+#include "oxide_qt_clipboard.h"
 
 namespace oxide {
 namespace qt {
@@ -143,6 +144,11 @@ std::string
 BrowserPlatformIntegration::GetApplicationLocale() {
   return QLocale::system().name().toStdString();
 }
+
+ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
+  return ClipboardQt::DoCreate;
+}
+
 
 QThread* GetIOQThread() {
   return g_io_thread.Get();
