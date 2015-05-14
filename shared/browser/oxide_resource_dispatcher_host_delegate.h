@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
+#include "content/public/browser/resource_dispatcher_host_login_delegate.h"
 
 namespace content {
 class ResourceContext;
@@ -32,6 +33,20 @@ class CookieStore;
 }
 
 namespace oxide {
+
+class LoginPromptDelegate
+    : public content::ResourceDispatcherHostLoginDelegate {
+ public:
+    LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
+                        net::URLRequest* request);
+    ~LoginPromptDelegate() override;
+    void OnRequestCancelled() override;
+
+    void DispatchAuthRequest();
+
+private:
+    net::URLRequest* request_;
+};
 
 class ResourceDispatcherHostDelegate
     : public content::ResourceDispatcherHostDelegate {
@@ -80,6 +95,13 @@ class ResourceDispatcherHostDelegate
                          int render_process_id,
                          int render_view_id,
                          content::ResourceContext* resource_context) override;
+
+  content::ResourceDispatcherHostLoginDelegate* CreateLoginDelegate(
+      net::AuthChallengeInfo* auth_info,
+      net::URLRequest* request) override;
+
+private:
+  scoped_refptr<LoginPromptDelegate> login_prompt_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(ResourceDispatcherHostDelegate);
 };

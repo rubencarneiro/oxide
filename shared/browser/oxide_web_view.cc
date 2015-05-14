@@ -1239,6 +1239,8 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
 
+void WebView::OnBasicAuthenticationRequested() {}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
@@ -2194,6 +2196,10 @@ void WebView::DownloadRequested(
     const std::string& referrer) {
   OnDownloadRequested(url, mimeType, shouldPrompt,
       suggestedFilename, cookies, referrer);
+}
+
+void WebView::BasicAuthenticationRequested() {
+  OnBasicAuthenticationRequested();
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

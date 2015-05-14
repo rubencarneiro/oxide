@@ -642,6 +642,12 @@ void OxideQQuickWebViewPrivate::DownloadRequested(
   emit q->downloadRequested(downloadRequest);
 }
 
+void OxideQQuickWebViewPrivate::BasicAuthenticationRequested() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->basicAuthenticationRequested();
+}
+
 void OxideQQuickWebViewPrivate::CertificateError(
     OxideQCertificateError* cert_error) {
   Q_Q(OxideQQuickWebView);

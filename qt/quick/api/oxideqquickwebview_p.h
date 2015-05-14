@@ -283,12 +283,13 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
-  void downloadRequested(OxideQDownloadRequest* request);
+  void downloadRequested(OxideQDownloadRequest* request);  
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
   Q_REVISION(2) void prepareToCloseResponse(bool proceed);
   Q_REVISION(2) void closeRequested();
-  Q_REVISION(4) void webProcessStatusChanged();
+  Q_REVISION(4) void webProcessStatusChanged(); 
+  Q_REVISION(4) void basicAuthenticationRequested();
 
   // Deprecated since 1.3
   void loadingChanged(OxideQLoadEvent* loadEvent);

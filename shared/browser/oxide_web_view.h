@@ -305,6 +305,8 @@ class WebView : public ScriptMessageTarget,
       const std::string& cookies,
       const std::string& referrer);
 
+  void BasicAuthenticationRequested();
+
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
@@ -546,6 +548,8 @@ class WebView : public ScriptMessageTarget,
       const base::string16& suggestedFilename,
       const std::string& cookies,
       const std::string& referrer);
+
+  virtual void OnBasicAuthenticationRequested();
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,

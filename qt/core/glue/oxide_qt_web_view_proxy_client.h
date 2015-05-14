@@ -135,6 +135,8 @@ class WebViewProxyClient {
 
   virtual void DownloadRequested(OxideQDownloadRequest* download_request) = 0;
 
+  virtual void BasicAuthenticationRequested() = 0;
+
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
 
   virtual void ContentBlocked() = 0; // XXX(chrisccoulson): Rename to BlockedContentChanged throughout Oxide

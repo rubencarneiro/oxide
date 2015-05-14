@@ -20,9 +20,12 @@
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/logging.h"
+#include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/resource_context.h"
+#include "content/public/browser/resource_request_info.h"
 #include "content/public/common/referrer.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/url_request/url_request_context.h"
@@ -32,6 +35,7 @@
 #include "oxide_browser_platform_integration.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_web_view.h"
+#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
@@ -172,8 +176,69 @@ bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,
   return false;
 }
 
+content::ResourceDispatcherHostLoginDelegate* ResourceDispatcherHostDelegate::CreateLoginDelegate(
+    net::AuthChallengeInfo* auth_info,
+    net::URLRequest* request) {
+    LOG(ERROR) << "Intercepted ===================================== ";
+
+    LoginPromptDelegate* delegate = new LoginPromptDelegate(auth_info, request);
+
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&LoginPromptDelegate::DispatchAuthRequest, delegate));
+
+    LOG(ERROR) << "Returning ===================================== ";
+
+    return delegate;
+}
+
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
 
 ResourceDispatcherHostDelegate::~ResourceDispatcherHostDelegate() {}
 
+LoginPromptDelegate::LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
+                                         net::URLRequest* request) :
+                                         request_(request) {
+}
+
+LoginPromptDelegate::~LoginPromptDelegate() {
+    LOG(ERROR) << "Deleted ===================================== ";
+}
+
+void LoginPromptDelegate::OnRequestCancelled()
+{
+    LOG(ERROR) << "Cancelled ===================================== ";
+}
+
+void LoginPromptDelegate::DispatchAuthRequest() {
+    LOG(ERROR) << "Called DoAuth ===================================== " << request_;
+
+    Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+
+    int renderProcessId;
+    int renderFrameId;
+    content::ResourceRequestInfo::GetRenderFrameForRequest(request_, &renderProcessId,  &renderFrameId);
+    content::RenderViewHost* rvh = content::RenderFrameHost::FromID(renderProcessId, renderFrameId)->GetRenderViewHost();
+    if (!rvh) {
+      LOG(ERROR) << "Invalid or non-existent render_process_id & render_frame_id:"
+             << renderProcessId << ", " << renderFrameId
+             << "during basic auth request dispatch";
+      return;
+    }
+
+    WebView* webview = WebView::FromRenderViewHost(rvh);
+    if (!webview) {
+      return;
+    }
+    webview->BasicAuthenticationRequested();
+}
+
+//void LoginPromptDelegate::DoAuth(bool cancel) {
+//    LOG(ERROR) << "Called DoAuth Login ===================================== " << cancel;
+
+//    if (cancel) request_->CancelAuth();
+//    else request_->SetAuth(net::AuthCredentials(base::ASCIIToUTF16("admin"),
+//                                                base::ASCIIToUTF16("dusty")));
+//}
 } // namespace oxide

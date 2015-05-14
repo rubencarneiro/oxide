@@ -757,6 +757,10 @@ void WebView::OnDownloadRequested(const GURL& url,
   client_->DownloadRequested(&downloadRequest);
 }
 
+void WebView::OnBasicAuthenticationRequested() {
+  client_->BasicAuthenticationRequested();
+}
+
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
                                      bool user_gesture) {
