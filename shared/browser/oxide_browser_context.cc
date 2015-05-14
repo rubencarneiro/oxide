@@ -823,7 +823,16 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
 
 // static
 void BrowserContext::Delete(const BrowserContext* context) {
-  delete const_cast<BrowserContext *>(context)->GetOriginalContext();
+  BrowserContext* oc =
+      const_cast<BrowserContext*>(context)->GetOriginalContext();
+
+  content::BrowserContext::NotifyWillBeDestroyed(oc);
+  if (oc->HasOffTheRecordContext()) {
+    content::BrowserContext::NotifyWillBeDestroyed(
+        oc->GetOffTheRecordContext());
+  }
+
+  delete oc;
 }
 
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :

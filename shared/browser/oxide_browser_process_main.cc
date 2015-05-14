@@ -55,6 +55,7 @@
 #endif
 #include "gpu/command_buffer/service/gpu_switches.h"
 #include "ipc/ipc_descriptors.h"
+#include "media/base/media_switches.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
 #include "ui/gl/gl_switches.h"
@@ -316,6 +317,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
       command_line->AppendSwitch(switches::kEnableMediaHubAudio);
     }
+  }
+
+  if (IsEnvironmentOptionEnabled("TESTING_MODE")) {
+    command_line->AppendSwitch(switches::kUseFakeDeviceForMediaStream);
   }
 }
 

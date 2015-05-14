@@ -32,8 +32,6 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
-class OxideQCertificateError;
-class OxideQGeolocationPermissionRequest;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -330,6 +328,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void navigationRequested(OxideQNavigationRequest* request);
   void newViewRequested(OxideQNewViewRequest* request);
   void geolocationPermissionRequested(const QJSValue& request);
+  Q_REVISION(4) void mediaAccessPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,

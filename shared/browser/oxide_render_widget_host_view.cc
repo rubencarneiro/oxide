@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 #include "oxide_render_widget_host_view.h"
 
 #include "base/bind.h"
+#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/delegated_frame_provider.h"
@@ -29,12 +30,17 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
+#include "third_party/WebKit/public/platform/WebGestureDevice.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/common/oxide_event_utils.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -42,6 +48,34 @@
 #include "oxide_render_widget_host_view_delegate.h"
 
 namespace oxide {
+
+namespace {
+
+const float kMobileViewportWidthEpsilon = 0.15f;
+
+bool ShouldSendPinchGesture() {
+  static bool pinch_allowed =
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnableViewport) ||
+      base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnablePinch);
+  return pinch_allowed;
+}
+
+bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
+  return frame_metadata.min_page_scale_factor ==
+         frame_metadata.max_page_scale_factor;
+}
+
+bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
+  float window_width_dip =
+      frame_metadata.page_scale_factor *
+      frame_metadata.scrollable_viewport_size.width();
+  float content_width_css = frame_metadata.root_layer_size.width();
+  return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
+}
+
+}
 
 void RenderWidgetHostView::OnTextInputStateChanged(
     ui::TextInputType type,
@@ -225,6 +259,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     host_->WasResized();
   }
 
+  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
+  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(
+      !has_fixed_page_scale && !has_mobile_viewport);
+
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
@@ -342,11 +381,7 @@ void RenderWidgetHostView::ShowDisambiguationPopup(
 void RenderWidgetHostView::ProcessAckedTouchEvent(
     const content::TouchEventWithLatencyInfo& touch,
     content::InputEventAckState ack_result) {
-  if (!delegate_) {
-    return;
-  }
-
-  delegate_->ProcessAckedTouchEvent(
+  gesture_provider_->OnTouchEventAck(
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
@@ -449,10 +484,33 @@ bool RenderWidgetHostView::LockMouse() {
 
 void RenderWidgetHostView::UnlockMouse() {}
 
-void RenderWidgetHostView::UnusedResourcesAreAvailable() {
-  if (ack_callbacks_.empty()) {
-    SendReturnedDelegatedResources();
+void RenderWidgetHostView::OnGestureEvent(
+    const blink::WebGestureEvent& event) {
+  if (!host_) {
+    return;
   }
+
+  if ((event.type == blink::WebInputEvent::GesturePinchBegin ||
+       event.type == blink::WebInputEvent::GesturePinchUpdate ||
+       event.type == blink::WebInputEvent::GesturePinchEnd) &&
+      !ShouldSendPinchGesture()) {
+    return;
+  }
+
+  if (event.type == blink::WebInputEvent::GestureTapDown) {
+    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
+    // event to stop any in-progress flings.
+    blink::WebGestureEvent fling_cancel = event;
+    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
+    host_->ForwardGestureEvent(fling_cancel);
+  }
+
+  if (event.type == blink::WebInputEvent::Undefined) {
+    return;
+  }
+
+  host_->ForwardGestureEvent(event);
 }
 
 void RenderWidgetHostView::EvictCurrentFrame() {
@@ -461,6 +519,12 @@ void RenderWidgetHostView::EvictCurrentFrame() {
 
   if (delegate_) {
     delegate_->EvictCurrentFrame();
+  }
+}
+
+void RenderWidgetHostView::UnusedResourcesAreAvailable() {
+  if (ack_callbacks_.empty()) {
+    SendReturnedDelegatedResources();
   }
 }
 
@@ -551,11 +615,14 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
     focused_node_is_editable_(false),
     is_loading_(false),
     is_showing_(false),
-    top_controls_shrink_blink_size_(false) {
+    top_controls_shrink_blink_size_(false),
+    gesture_provider_(GestureProvider::Create(this)) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
   host_->SetView(this);
+
+  gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
@@ -600,6 +667,33 @@ void RenderWidgetHostView::SetDelegate(
   } else if (host_) {
     Hide();
   }
+}
+
+void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
+  auto rv = gesture_provider_->OnTouchEvent(event);
+  if (!rv.succeeded) {
+    return;
+  }
+
+  if (!host_) {
+    gesture_provider_->OnTouchEventAck(false);
+    return;
+  }
+
+  host_->ForwardTouchEventWithLatencyInfo(
+      MakeWebTouchEvent(event, rv.did_generate_scroll),
+      ui::LatencyInfo());
+}
+
+void RenderWidgetHostView::ResetGestureDetection() {
+  const ui::MotionEvent* current_down_event =
+      gesture_provider_->GetCurrentDownEvent();
+  if (current_down_event) {
+    scoped_ptr<ui::MotionEvent> cancel_event = current_down_event->Cancel();
+    HandleTouchEvent(*cancel_event);
+  }
+
+  gesture_provider_->ResetDetection();
 }
 
 void RenderWidgetHostView::Blur() {

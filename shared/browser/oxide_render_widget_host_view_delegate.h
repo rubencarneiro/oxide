@@ -42,8 +42,6 @@ class RenderWidgetHostViewDelegate {
 
   virtual void EvictCurrentFrame() = 0;
 
-  virtual void ProcessAckedTouchEvent(bool consumed) = 0;
-
   virtual void UpdateCursor(const content::WebCursor& cursor) = 0;
 
   virtual void TextInputStateChanged(ui::TextInputType type,

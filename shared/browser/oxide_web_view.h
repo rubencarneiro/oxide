@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
-#include "base/timer/timer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
@@ -50,12 +49,12 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
+#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -91,7 +90,6 @@ class SSLInfo;
 }
 
 namespace ui {
-class GestureEvent;
 class TouchEvent;
 }
 
@@ -132,7 +130,6 @@ class WebViewIterator final {
 class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
-                private GestureProviderClient,
                 private content::NotificationObserver,
                 private RenderWidgetHostViewDelegate,
                 private content::WebContentsDelegate,
@@ -350,8 +347,7 @@ class WebView : public ScriptMessageTarget,
   void OnDidBlockRunningInsecureContent();
 
   bool ShouldScrollFocusedEditableNodeIntoView();
-  void MaybeResetAutoScrollTimer();
-  void ScrollFocusedEditableNodeIntoView();
+  void MaybeScrollFocusedEditableNodeIntoView();
 
   float GetFrameMetadataScaleToPix();
 
@@ -371,9 +367,6 @@ class WebView : public ScriptMessageTarget,
   // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() final;
 
-  // GestureProviderClient implementation
-  void OnGestureEvent(const blink::WebGestureEvent& event) final;
-
   // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
@@ -381,7 +374,6 @@ class WebView : public ScriptMessageTarget,
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
-  void ProcessAckedTouchEvent(bool consumed) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
                              bool show_ime_if_needed) final;
@@ -442,6 +434,10 @@ class WebView : public ScriptMessageTarget,
   void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
+  void RequestMediaAccessPermission(
+      content::WebContents* source,
+      const content::MediaStreamRequest& request,
+      const content::MediaResponseCallback& callback) final;
 
   void FindReply(content::WebContents* web_contents,
                  int request_id,
@@ -536,6 +532,8 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnRequestGeolocationPermission(
       scoped_ptr<SimplePermissionRequest> request);
+  virtual void OnRequestMediaAccessPermission(
+      scoped_ptr<MediaAccessPermissionRequest> request);
 
   virtual void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);
@@ -598,8 +596,7 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
-  scoped_ptr<GestureProvider> gesture_provider_;
-  bool in_swap_;
+  TouchEventState touch_state_;
 
   GURL initial_url_;
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
@@ -629,21 +626,6 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
-
-  // Usually we would scroll the focused editable node in to view after any
-  // resize if the input method is onscreen. However, this interacts badly
-  // with the browser header bar, which resizes the view when its visibility
-  // changes. To work around this, we don't scroll the focused node into
-  // view on a resize if it has already been scrolled once and the input
-  // method hasn't been hidden. This is reset if the input method goes
-  // offscreen or the focused node changes. To do this, we add a delay to
-  // ensure that we only do the scroll once any transitions are finished
-  // See https://bugs.launchpad.net/oxide/+bug/1301681/comments/3
-  //
-  // We should be able to get rid of this once we have a solution for
-  // https://launchpad.net/bugs/1370366
-  bool did_scroll_focused_editable_node_into_view_;
-  base::Timer auto_scroll_timer_;
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;
