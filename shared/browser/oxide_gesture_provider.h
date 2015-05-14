@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,6 @@
 #ifndef _OXIDE_SHARED_BROWSER_GESTURE_PROVIDER_H_
 #define _OXIDE_SHARED_BROWSER_GESTURE_PROVIDER_H_
 
-#include "base/memory/scoped_ptr.h"
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 
 namespace blink {
@@ -27,7 +26,6 @@ class WebGestureEvent;
 
 namespace ui {
 class MotionEvent;
-class TouchEvent;
 }
 
 namespace oxide {
@@ -45,12 +43,14 @@ class GestureProvider {
   virtual ~GestureProvider();
 
   virtual ui::FilteredGestureProvider::TouchHandlingResult
-      OnTouchEvent(const ui::TouchEvent& event) = 0;
+      OnTouchEvent(const ui::MotionEvent& event) = 0;
   virtual void OnTouchEventAck(bool consumed) = 0;
 
-  virtual scoped_ptr<ui::MotionEvent> GetTouchState() const = 0;
-
   virtual void SetDoubleTapSupportForPageEnabled(bool enabled) = 0;
+
+  virtual const ui::MotionEvent* GetCurrentDownEvent() const = 0;
+
+  virtual void ResetDetection() = 0;
 };
 
 } // namespace oxide

@@ -369,6 +369,8 @@
         'browser/oxide_ssl_config_service.h',
         'browser/oxide_ssl_host_state_delegate.cc',
         'browser/oxide_ssl_host_state_delegate.h',
+        'browser/oxide_touch_event_state.cc',
+        'browser/oxide_touch_event_state.h',
         'browser/oxide_url_request_context.cc',
         'browser/oxide_url_request_context.h',
         'browser/oxide_url_request_delegated_job.cc',
