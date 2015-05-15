@@ -26,7 +26,7 @@ class OxideQLoadEventPrivate {
       : type(OxideQLoadEvent::TypeStarted),
         error_domain(OxideQLoadEvent::ErrorDomainNone),
         error_code(0),
-        http_status_code(-1),
+        http_status_code(0),
         is_error(false) {}
 
   QUrl url;
