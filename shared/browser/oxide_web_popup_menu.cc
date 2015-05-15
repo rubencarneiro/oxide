@@ -47,19 +47,27 @@ WebPopupMenu::~WebPopupMenu() {
 }
 
 void WebPopupMenu::Close() {
+  render_frame_host_ = nullptr;
   weak_ptr_factory_.InvalidateWeakPtrs();
   Hide();
-  render_frame_host_ = nullptr;
   content::BrowserThread::DeleteSoon(
       content::BrowserThread::UI, FROM_HERE, this);
 }
 
 void WebPopupMenu::SelectItems(const std::vector<int>& selected_indices) {
+  if (!render_frame_host_) {
+    return;
+  }
+
   render_frame_host_->DidSelectPopupMenuItems(selected_indices);
   Close();
 }
 
 void WebPopupMenu::Cancel() {
+  if (!render_frame_host_) {
+    return;
+  }
+
   render_frame_host_->DidCancelPopupMenu();
   Close();
 }

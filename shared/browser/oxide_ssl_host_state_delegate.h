@@ -27,27 +27,28 @@
 
 namespace oxide {
 
-class SSLHostStateDelegate final : public content::SSLHostStateDelegate {
+class SSLHostStateDelegate : public content::SSLHostStateDelegate {
  public:
   SSLHostStateDelegate();
   ~SSLHostStateDelegate();
 
+ private:
+  // content::SSLHostStateDelegate implementation
   void AllowCert(const std::string&,
                  const net::X509Certificate& cert,
-                 net::CertStatus error) final;
-  void Clear() final;
-
+                 net::CertStatus error) override;
+  void Clear() override;
   CertJudgment QueryPolicy(
       const std::string& host,
       const net::X509Certificate& cert,
       net::CertStatus error,
-      bool* expired_previous_decision) final;
-
-  void HostRanInsecureContent(const std::string& host, int pid) final;
+      bool* expired_previous_decision) override;
+  void HostRanInsecureContent(const std::string& host, int pid) override;
   bool DidHostRunInsecureContent(const std::string& host,
-                                 int pid) const final;
+                                 int pid) const override;
+  void RevokeUserAllowExceptions(const std::string& host) override;
+  bool HasAllowException(const std::string& host) const override;
 
- private:
   typedef std::pair<std::string, int> BrokenHostEntry;
   std::set<BrokenHostEntry> ran_insecure_content_hosts_;
 };

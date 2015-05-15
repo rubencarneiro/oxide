@@ -50,7 +50,7 @@ class WebFrame : public ScriptMessageTarget {
 
   // Find the WebFrame for |frame_tree_node_id|. Currently only used in
   // WebView::OpenURLFromTab - please don't add new code which uses this
-  static WebFrame* FromFrameTreeNodeID(int64 frame_tree_node_id);
+  static WebFrame* FromFrameTreeNodeID(int frame_tree_node_id);
 
   // Find the WebFrame for |render_frame_host|
   static WebFrame* FromRenderFrameHost(

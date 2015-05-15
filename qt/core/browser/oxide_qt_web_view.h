@@ -101,6 +101,8 @@ class WebView : public QObject,
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
+  void OnCrashedStatusChanged() override;
+
   void OnURLChanged() override;
   void OnTitleChanged() override;
   void OnIconChanged(const GURL& icon) override;
@@ -111,14 +113,18 @@ class WebView : public QObject,
 
   void OnLoadStarted(const GURL& validated_url) override;
   void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) override;
+                        const GURL& original_url,
+                        int http_status_code) override;
   void OnLoadCommitted(const GURL& url,
-                       bool is_error_page) override;
+                       bool is_error_page,
+                       int http_status_code) override;
   void OnLoadStopped(const GURL& validated_url) override;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
-                    const std::string& error_description) override;
-  void OnLoadSucceeded(const GURL& validated_url) override;
+                    const std::string& error_description,
+                    int http_status_code) override;
+  void OnLoadSucceeded(const GURL& validated_url,
+                       int http_status_code) override;
 
   void OnNavigationEntryCommitted() override;
   void OnNavigationListPruned(bool from_front, int count) override;
@@ -135,6 +141,8 @@ class WebView : public QObject,
 
   void OnRequestGeolocationPermission(
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void OnRequestMediaAccessPermission(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
   void OnUnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
@@ -273,6 +281,8 @@ class WebView : public QObject,
   void setLocationBarAnimated(bool animated) override;
   void locationBarShow(bool animate) override;
   void locationBarHide(bool animate) override;
+
+  WebProcessStatus webProcessStatus() const override;
 
   WebViewProxyClient* client_;
 

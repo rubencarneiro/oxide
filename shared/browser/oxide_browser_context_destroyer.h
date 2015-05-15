@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_ANCHOR_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_ANCHOR_H_
+#ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DESTROYER_H_
+#define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DESTROYER_H_
+
+#include <set>
 
 #include "base/macros.h"
 #include "content/public/browser/render_process_host_observer.h"
-
-template <typename T> struct DefaultSingletonTraits;
 
 namespace content {
 class RenderProcessHost;
@@ -29,23 +29,29 @@ class RenderProcessHost;
 
 namespace oxide {
 
-class BrowserContextAnchor : public content::RenderProcessHostObserver {
- public:
-  static BrowserContextAnchor* GetInstance();
+class BrowserContext;
 
-  void RenderProcessWillLaunch(content::RenderProcessHost* host);
+class BrowserContextDestroyer : public content::RenderProcessHostObserver {
+ public:
+  static void DestroyContext(BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<BrowserContextAnchor>;
+  BrowserContextDestroyer(BrowserContext* context,
+                          const std::set<content::RenderProcessHost*>& hosts);
+  ~BrowserContextDestroyer() override;
 
-  BrowserContextAnchor();
+  void FinishDestroyContext();
 
   // content::RenderProcessHostObserver implementation
   void RenderProcessHostDestroyed(content::RenderProcessHost* host) override;
 
-  DISALLOW_COPY_AND_ASSIGN(BrowserContextAnchor);
+  BrowserContext* context_;
+
+  uint32_t pending_hosts_;
+  
+  DISALLOW_COPY_AND_ASSIGN(BrowserContextDestroyer);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_ANCHOR_H_
+#endif // _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_DESTROYER_H_

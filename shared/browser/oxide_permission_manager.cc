@@ -17,6 +17,7 @@
 
 #include "oxide_permission_manager.h"
 
+#include "base/bind.h"
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"

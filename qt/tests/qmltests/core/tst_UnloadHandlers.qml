@@ -9,11 +9,16 @@ Column {
     localStorageEnabled: true
   }
 
+  TestWebContext {
+    id: c
+  }
+
   TestWebView {
     id: webView1
     width: 200
     height: 200
 
+    context: c
     preferences: p
   }
 
@@ -22,6 +27,7 @@ Column {
     width: 200
     height: 200
 
+    context: c
     preferences: p
   }
 

@@ -4,29 +4,33 @@
 diff --git a/gpu/config/software_rendering_list_json.cc b/gpu/config/software_rendering_list_json.cc
 --- a/gpu/config/software_rendering_list_json.cc
 +++ b/gpu/config/software_rendering_list_json.cc
-@@ -1128,16 +1128,25 @@ LONG_STRING_CONST(
-       "os": {
-         "type": "android",
-         "version": {
-           "op": "<",
-           "value": "5.0"
-         }
+@@ -1096,29 +1096,16 @@ LONG_STRING_CONST(
        },
-       "gl_renderer": "PowerVR Rogue.*",
-+      "exceptions": [
-+        {
-+          "driver_version": {
-+            "op": ">=",
-+            "style": "lexical",
-+            "value": "1.3"
-+          }
-+        }
-+      ],
+       "vendor_id": "0x8086",
+       "device_id": ["0x2a02"],
        "features": [
-         "accelerated_2d_canvas",
-         "gpu_rasterization"
+         "all"
        ]
      },
      {
+-      "id": 104,
+-      "description": "GPU raster broken on PowerVR Rogue",
+-      "cr_bugs": [436331, 483574],
+-      "os": {
+-        "type": "android"
+-      },
+-      "gl_renderer": "PowerVR Rogue.*",
+-      "features": [
+-        "accelerated_2d_canvas",
+-        "gpu_rasterization"
+-      ]
+-    },
+-    {
        "id": 105,
        "description": "GPU raster broken on PowerVR SGX even on Lollipop",
+       "cr_bugs": [461456],
+       "os": {
+         "type": "android"
+       },
+       "gl_renderer": "PowerVR SGX.*",
+       "features": [

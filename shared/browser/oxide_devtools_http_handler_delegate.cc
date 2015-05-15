@@ -17,29 +17,29 @@
 
 #include "oxide_devtools_http_handler_delegate.h"
 
+#include "content/public/browser/devtools_frontend_host.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #include "grit/oxide_resources.h"
 
 namespace oxide {
 
-DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
-
-DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
-
 std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
   return ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
     IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
 }
 
-bool DevtoolsHttpHandlerDelegate::BundlesFrontendResources() {
-  // We reuse the default chrome builtin webui from devtools_resources.pak
-  return true;
+std::string DevtoolsHttpHandlerDelegate::GetFrontendResource(
+    const std::string& path) {
+  return content::DevToolsFrontendHost::GetFrontendResource(path).as_string();
 }
 
-base::FilePath DevtoolsHttpHandlerDelegate::GetDebugFrontendDir() {
-  // We dont host the devtools resources & ui (see above).
-  return base::FilePath();
+std::string DevtoolsHttpHandlerDelegate::GetPageThumbnailData(const GURL& url) {
+  return std::string();
 }
+
+DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
+
+DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
 
 }

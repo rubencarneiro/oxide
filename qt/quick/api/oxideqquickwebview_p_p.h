@@ -95,6 +95,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
+  void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
   void IconChanged(QUrl icon) override;
@@ -125,6 +126,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NewViewRequested(OxideQNewViewRequest* request) override;
   void RequestGeolocationPermission(
       OxideQGeolocationPermissionRequest* request) override;
+  void RequestMediaAccessPermission(
+      OxideQMediaAccessPermissionRequest* request) override;
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;

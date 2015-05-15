@@ -546,6 +546,10 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
       message_handlers_.at(index))->handler();
 }
 
+void WebView::OnCrashedStatusChanged() {
+  client_->WebProcessStatusChanged();
+}
+
 void WebView::OnURLChanged() {
   client_->URLChanged();
 }
@@ -578,19 +582,23 @@ void WebView::OnLoadStarted(const GURL& validated_url) {
 }
 
 void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {
+                               const GURL& original_url,
+                               int http_status_code) {
   OxideQLoadEvent event(
      QUrl(QString::fromStdString(url.spec())),
-     QUrl(QString::fromStdString(original_url.spec())));
+     QUrl(QString::fromStdString(original_url.spec())),
+     http_status_code);
   client_->LoadEvent(&event);
 }
 
 void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page) {
+                              bool is_error_page,
+                              int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(url.spec())),
       OxideQLoadEvent::TypeCommitted,
-      is_error_page);
+      is_error_page,
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
@@ -603,19 +611,23 @@ void WebView::OnLoadStopped(const GURL& validated_url) {
 
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
-                           const std::string& error_description) {
+                           const std::string& error_description,
+                           int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
       ErrorDomainFromErrorCode(error_code),
       QString::fromStdString(error_description),
-      error_code);
+      error_code,
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
-void WebView::OnLoadSucceeded(const GURL& validated_url) {
+void WebView::OnLoadSucceeded(const GURL& validated_url, int http_status_code) {
   OxideQLoadEvent event(
       QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeSucceeded);
+      OxideQLoadEvent::TypeSucceeded,
+      false,
+      http_status_code);
   client_->LoadEvent(&event);
 }
 
@@ -663,6 +675,16 @@ void WebView::OnRequestGeolocationPermission(
 
   // The embedder takes ownership of this
   client_->RequestGeolocationPermission(req.release());
+}
+
+void WebView::OnRequestMediaAccessPermission(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
+      OxideQMediaAccessPermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestMediaAccessPermission(req.release());
 }
 
 void WebView::OnUnhandledKeyboardEvent(
@@ -1056,7 +1078,7 @@ bool WebView::canGoForward() const {
 }
 
 bool WebView::incognito() const {
-  return IsIncognito();  
+  return IsIncognito();
 }
 
 bool WebView::loading() const {
@@ -1475,6 +1497,23 @@ void WebView::locationBarShow(bool animate) {
 
 void WebView::locationBarHide(bool animate) {
   HideLocationBar(animate);
+}
+
+WebProcessStatus WebView::webProcessStatus() const {
+  if (!GetWebContents()) {
+    return WEB_PROCESS_RUNNING;
+  }
+
+  base::TerminationStatus status = GetWebContents()->GetCrashedStatus();
+  if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
+    return WEB_PROCESS_RUNNING;
+  } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
+    return WEB_PROCESS_KILLED;
+  } else {
+    // Map all other termination statuses to crashed. This is
+    // consistent with how the sad tab helper works in Chrome.
+    return WEB_PROCESS_CRASHED;
+  }
 }
 
 WebView::WebView(WebViewProxyClient* client) :

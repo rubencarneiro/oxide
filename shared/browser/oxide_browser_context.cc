@@ -33,9 +33,9 @@
 #include "base/synchronization/lock.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
+#include "components/devtools_http_handler/devtools_http_handler.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
-#include "content/public/browser/devtools_http_handler.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
@@ -66,6 +66,7 @@
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context_delegate.h"
+#include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_http_handler_delegate.h"
@@ -131,8 +132,8 @@ void CleanupOldCacheDir(const base::FilePath& path) {
 
 } // namespace
 
-class TCPServerSocketFactory :
-    public content::DevToolsHttpHandler::ServerSocketFactory {
+class TCPServerSocketFactory
+    : public devtools_http_handler::DevToolsHttpHandler::ServerSocketFactory {
  public:
   TCPServerSocketFactory(const std::string& address, int port)
       : address_(address),
@@ -165,7 +166,7 @@ class ResourceContextData : public base::SupportsUserData::Data {
  public:
   ResourceContextData(BrowserContextIOData* context) :
       context_(context) {}
-  virtual ~ResourceContextData() {}
+  ~ResourceContextData() override {}
 
   BrowserContextIOData* get() const { return context_; }
 
@@ -173,7 +174,7 @@ class ResourceContextData : public base::SupportsUserData::Data {
   BrowserContextIOData* context_;
 };
 
-class MainURLRequestContextGetter final : public URLRequestContextGetter {
+class MainURLRequestContextGetter : public URLRequestContextGetter {
  public:
   MainURLRequestContextGetter(
       BrowserContextIOData* context,
@@ -184,7 +185,9 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
-  net::URLRequestContext* GetURLRequestContext() final {
+ private:
+  // URLRequestContextGetter implementation
+  net::URLRequestContext* GetURLRequestContext() override {
     DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
     if (!url_request_context_) {
@@ -205,22 +208,23 @@ class MainURLRequestContextGetter final : public URLRequestContextGetter {
   base::WeakPtr<URLRequestContext> url_request_context_;
 };
 
-class ResourceContext final : public content::ResourceContext {
+class ResourceContext : public content::ResourceContext {
  public:
   ResourceContext() :
       request_context_(nullptr) {}
 
-  net::HostResolver* GetHostResolver() final {
+ private:
+  friend class BrowserContextIOData; // for setting request_context_;
+
+  // content::ResourceContext implementation
+  net::HostResolver* GetHostResolver() override {
     return IOThread::instance()->globals()->host_resolver();
   }
 
-  net::URLRequestContext* GetRequestContext() final {
+  net::URLRequestContext* GetRequestContext() override {
     CHECK(request_context_);
     return request_context_;
   }
-
- private:
-  friend class BrowserContextIOData;
 
   net::URLRequestContext* request_context_;
 
@@ -230,23 +234,18 @@ class ResourceContext final : public content::ResourceContext {
 struct BrowserContextSharedData {
   BrowserContextSharedData(BrowserContext* context,
                            const BrowserContext::Params& params)
-      : ref_count(0),
-        in_dtor(false),
-        product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
+      : product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
         user_agent_string_is_default(true),
         user_script_master(context),
         devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
 
-  mutable int ref_count;
-  mutable bool in_dtor;
-
   std::string product;
   bool user_agent_string_is_default;
   UserScriptMaster user_script_master;
 
-  scoped_ptr<content::DevToolsHttpHandler> devtools_http_handler;
+  scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
   int devtools_port;
   std::string devtools_ip;
@@ -306,21 +305,22 @@ class BrowserContextIODataImpl : public BrowserContextIOData {
   BrowserContextIODataImpl(const BrowserContext::Params& params)
       : data_(params) {}
 
-  BrowserContextSharedIOData& GetSharedData() final {
+  BrowserContextSharedIOData& GetSharedData() override {
     return data_;
   }
-  const BrowserContextSharedIOData& GetSharedData() const final {
+  const BrowserContextSharedIOData& GetSharedData() const override {
     return data_;
   }
 
  private:
-  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const final {
+  content::CookieStoreConfig::SessionCookieMode
+  GetSessionCookieMode() const override {
     return GetPath().empty() ?
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES :
         data_.session_cookie_mode;
   }
  
-  bool IsOffTheRecord() const final {
+  bool IsOffTheRecord() const override {
     return false;
   }
 
@@ -333,18 +333,19 @@ class OTRBrowserContextIODataImpl : public BrowserContextIOData {
       : original_io_data_(original) {}
 
  private:
-  content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const final {
+  content::CookieStoreConfig::SessionCookieMode
+  GetSessionCookieMode() const override {
     return content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES;
   }
 
-  bool IsOffTheRecord() const final {
+  bool IsOffTheRecord() const override {
     return true;
   }
 
-  BrowserContextSharedIOData& GetSharedData() final {
+  BrowserContextSharedIOData& GetSharedData() override {
     return original_io_data_->GetSharedData();
   }
-  const BrowserContextSharedIOData& GetSharedData() const final {
+  const BrowserContextSharedIOData& GetSharedData() const override {
     return original_io_data_->GetSharedData();
   }
 
@@ -613,51 +614,62 @@ class OTRBrowserContextImpl : public BrowserContext {
   OTRBrowserContextImpl(BrowserContextImpl* original,
                         BrowserContextIODataImpl* original_io_data);
 
- private:
-  friend class BrowserContextImpl; // For the destructor
-
-  virtual ~OTRBrowserContextImpl() {}
-
-  BrowserContext* GetOffTheRecordContext() final {
-    return this;
+  base::WeakPtr<OTRBrowserContextImpl> GetWeakPtr() {
+    return weak_ptr_factory_.GetWeakPtr();
   }
-  BrowserContext* GetOriginalContext() final;
 
-  BrowserContextSharedData& GetSharedData() final;
-  const BrowserContextSharedData& GetSharedData() const final;
+ private:
+  ~OTRBrowserContextImpl() override;
 
-  bool HasOffTheRecordContext() const final { return true; }
+  scoped_refptr<BrowserContext> GetOffTheRecordContext() override {
+    return make_scoped_refptr(this);
+  }
+  BrowserContext* GetOriginalContext() const override;
 
-  BrowserContextImpl* original_context_;
+  BrowserContextSharedData& GetSharedData() override;
+  const BrowserContextSharedData& GetSharedData() const override;
+
+  bool HasOffTheRecordContext() const override { return true; }
+
+  scoped_refptr<BrowserContextImpl> original_context_;
+
+  base::WeakPtrFactory<OTRBrowserContextImpl> weak_ptr_factory_;
 };
 
 class BrowserContextImpl : public BrowserContext {
  public:
   BrowserContextImpl(const BrowserContext::Params& params);
 
-  BrowserContextSharedData& GetSharedData() final {
+  BrowserContextSharedData& GetSharedData() override {
     return data_;
   }
-  const BrowserContextSharedData& GetSharedData() const final {
+  const BrowserContextSharedData& GetSharedData() const override {
     return data_;
   }
 
  private:
-  virtual ~BrowserContextImpl();
+  ~BrowserContextImpl() override;
 
-  BrowserContext* GetOffTheRecordContext() final;
+  scoped_refptr<BrowserContext> GetOffTheRecordContext() override;
 
-  BrowserContext* GetOriginalContext() final {
-    return this;
+  BrowserContext* GetOriginalContext() const override {
+    return const_cast<BrowserContextImpl*>(this);
   }
 
-  bool HasOffTheRecordContext() const final {
+  bool HasOffTheRecordContext() const override {
     return otr_context_ != nullptr;
   }
 
   BrowserContextSharedData data_;
-  OTRBrowserContextImpl* otr_context_;
+
+  base::WeakPtr<OTRBrowserContextImpl> otr_context_;
 };
+
+OTRBrowserContextImpl::~OTRBrowserContextImpl() {}
+
+BrowserContext* OTRBrowserContextImpl::GetOriginalContext() const {
+  return original_context_.get();
+}
 
 BrowserContextSharedData& OTRBrowserContextImpl::GetSharedData() {
   return original_context_->GetSharedData();
@@ -668,37 +680,31 @@ OTRBrowserContextImpl::GetSharedData() const {
   return original_context_->GetSharedData();
 }
 
-BrowserContext* OTRBrowserContextImpl::GetOriginalContext() {
-  return original_context_;
-}
-
 OTRBrowserContextImpl::OTRBrowserContextImpl(
     BrowserContextImpl* original,
     BrowserContextIODataImpl* original_io_data)
     : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
-      original_context_(original) {}
+      original_context_(original),
+      weak_ptr_factory_(this) {}
 
 BrowserContextImpl::~BrowserContextImpl() {
-  if (otr_context_) {
-    delete otr_context_;
-    otr_context_ = nullptr;
-  }
+  CHECK(!otr_context_);
 }
 
-BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
+scoped_refptr<BrowserContext> BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
-    otr_context_ = new OTRBrowserContextImpl(
+    OTRBrowserContextImpl* context = new OTRBrowserContextImpl(
         this,
         static_cast<BrowserContextIODataImpl *>(io_data()));
+    otr_context_ = context->GetWeakPtr();
   }
 
-  return otr_context_;
+  return make_scoped_refptr(otr_context_.get());
 }
 
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),
-      data_(this, params),
-      otr_context_(nullptr) {
+      data_(this, params) {
   io_data()->GetSharedData().user_agent_string =
       content::BuildUserAgentFromProduct(data_.product);
 
@@ -710,13 +716,17 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
         net::ParseIPLiteralToNumber(data_.devtools_ip, &unused) ?
           data_.devtools_ip : kDevtoolsDefaultServerIp;
 
-    scoped_ptr<content::DevToolsHttpHandler::ServerSocketFactory> factory(
+    scoped_ptr<TCPServerSocketFactory> factory(
         new TCPServerSocketFactory(ip, data_.devtools_port));
     data_.devtools_http_handler.reset(
-        content::DevToolsHttpHandler::Start(factory.Pass(),
-                                            std::string(),
-                                            new DevtoolsHttpHandlerDelegate(),
-                                            base::FilePath()));
+        new devtools_http_handler::DevToolsHttpHandler(
+          factory.Pass(),
+          std::string(),
+          new DevtoolsHttpHandlerDelegate(),
+          base::FilePath(),
+          base::FilePath(),
+          GetProduct(),
+          GetUserAgent()));
   }
 
   if (!GetPath().empty()) {
@@ -726,6 +736,10 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
         FROM_HERE,
         base::Bind(&CleanupOldCacheDir, gpu_cache));
   }
+}
+
+void BrowserContextTraits::Destruct(const BrowserContext* x) {
+  BrowserContextDestroyer::DestroyContext(const_cast<BrowserContext*>(x));
 }
 
 scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
@@ -817,11 +831,6 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-// static
-void BrowserContext::Delete(const BrowserContext* context) {
-  delete const_cast<BrowserContext *>(context)->GetOriginalContext();
-}
-
 BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
     io_data_(io_data) {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
@@ -869,26 +878,6 @@ void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
 }
 
-void BrowserContext::AddRef() const {
-  DCHECK(CalledOnValidThread());
-
-  const BrowserContextSharedData& data = GetSharedData();
-  DCHECK(!data.in_dtor);
-  data.ref_count++;
-}
-
-void BrowserContext::Release() const {
-  DCHECK(CalledOnValidThread());
-
-  const BrowserContextSharedData& data = GetSharedData();
-  DCHECK(!data.in_dtor);
-  DCHECK(data.ref_count > 0);
-  if (--data.ref_count == 0) {
-    data.in_dtor = true;
-    Delete(this);
-  }
-}
-
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
@@ -925,7 +914,7 @@ bool BrowserContext::IsSameContext(BrowserContext* other) const {
   DCHECK(CalledOnValidThread());
   return other->GetOriginalContext() == this ||
          (other->HasOffTheRecordContext() &&
-          other->GetOffTheRecordContext() == this);
+          other->GetOffTheRecordContext().get() == this);
 }
 
 base::FilePath BrowserContext::GetPath() const {

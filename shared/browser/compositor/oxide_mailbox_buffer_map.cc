@@ -75,16 +75,19 @@ void MailboxBufferMap::SetOutputSurfaceID(uint32_t surface_id) {
     }
 
     if (mode_ == COMPOSITING_MODE_TEXTURE) {
-      map_.erase(it++);
+      auto e = it++;
+      map_.erase(e);
     } else {
       DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
-      if (--it->second.data.image.ref_count == 0) {
+      it->second.data.image.live = false;
+      if (it->second.data.image.ref_count == 0) {
         GpuUtils::GetTaskRunner()->PostTask(
             FROM_HERE,
             base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
                        GpuUtils::GetHardwareEGLDisplay(),
                        it->second.data.image.egl_image));
-        map_.erase(it++);
+        auto e = it++;
+        map_.erase(e);
       } else {
         ++it;
       }
@@ -140,7 +143,8 @@ bool MailboxBufferMap::AddEGLImageMapping(
 
   MailboxBufferData data;
   data.surface_id = surface_id;
-  data.data.image.ref_count = 1;
+  data.data.image.live = true;
+  data.data.image.ref_count = 0;
   data.data.image.egl_image = egl_image;
 
   AddMapping(mailbox, data, ready_frame_swaps);
@@ -159,7 +163,8 @@ void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
     if (it == map_.end()) {
       return;
     }
-    if (--it->second.data.image.ref_count == 0) {
+    it->second.data.image.live = false;
+    if (it->second.data.image.ref_count == 0) {
       GpuUtils::GetTaskRunner()->PostTask(
           FROM_HERE,
           base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
@@ -189,7 +194,7 @@ EGLImageKHR MailboxBufferMap::ConsumeEGLImageFromMailbox(
 
   base::AutoLock lock(lock_);
   auto it = map_.find(mailbox);
-  if (it == map_.end()) {
+  if (it == map_.end() || !it->second.data.image.live) {
     return EGL_NO_IMAGE_KHR;
   }
 
@@ -211,7 +216,8 @@ void MailboxBufferMap::ReclaimMailboxBufferResources(
   DCHECK(it != map_.end());
   DCHECK_GT(it->second.data.image.ref_count, 0);
 
-  if (--it->second.data.image.ref_count == 0) {
+  if (--it->second.data.image.ref_count == 0 &&
+      !it->second.data.image.live) {
     GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
