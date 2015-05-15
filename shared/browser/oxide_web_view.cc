@@ -1308,11 +1308,11 @@ void WebView::Init(Params* params) {
   } else {
     CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
-    BrowserContext* context = params->incognito ?
+    scoped_refptr<BrowserContext> context = params->incognito ?
         params->context->GetOffTheRecordContext() :
         params->context->GetOriginalContext();
 
-    content::WebContents::CreateParams content_params(context);
+    content::WebContents::CreateParams content_params(context.get());
     content_params.initial_size = GetViewSizeDip();
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
@@ -1322,7 +1322,7 @@ void WebView::Init(Params* params) {
     if (!restore_state_.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              restore_state_, context);
+              restore_state_, context.get());
       web_contents_->GetController().Restore(
           initial_index_,
           content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
