@@ -34,6 +34,15 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_PROPERTY(ErrorDomain errorDomain READ errorDomain CONSTANT)
   Q_PROPERTY(QString errorString READ errorString CONSTANT)
   Q_PROPERTY(int errorCode READ errorCode CONSTANT)
+  // The status code of the last known successful navigation.  If
+  // returns 0 that means that either:
+  //
+  //  - this navigation hasn't completed yet;
+  //  - a response wasn't received;
+  //  - or this navigation was restored and for some reason the
+  //    status code wasn't available.
+  //
+  Q_PROPERTY(int httpStatusCode READ httpStatusCode CONSTANT REVISION 2)
 
   Q_PROPERTY(QUrl originalUrl READ originalUrl CONSTANT)
 
@@ -69,13 +78,16 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
 
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
                                 Type type,
-                                bool is_error = false);
+                                bool is_error = false,
+                                int http_status_code = -1);
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
                                 ErrorDomain error_domain,
                                 const QString& error_string,
-                                int error_code);
+                                int error_code,
+                                int http_status_code);
   Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                const QUrl& original_url);
+                                const QUrl& original_url,
+                                int http_status_code);
   virtual ~OxideQLoadEvent();
 
   QUrl url() const;
@@ -83,6 +95,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   ErrorDomain errorDomain() const;
   QString errorString() const;
   int errorCode() const;
+  int httpStatusCode() const;
   QUrl originalUrl() const;
   bool isError() const;
 
