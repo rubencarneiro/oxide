@@ -344,7 +344,8 @@ class WebView : public ScriptMessageTarget,
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
-                          const base::string16& error_description);
+                          const base::string16& error_description,
+                          bool is_provisional_load = false);
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();

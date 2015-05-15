@@ -42,7 +42,7 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   //  - or this navigation was restored and for some reason the
   //    status code wasn't available.
   //
-  // It returns -1 for an unknown status code
+  // Default: -1
   Q_PROPERTY(int httpStatusCode READ httpStatusCode CONSTANT REVISION 2)
 
   Q_PROPERTY(QUrl originalUrl READ originalUrl CONSTANT)

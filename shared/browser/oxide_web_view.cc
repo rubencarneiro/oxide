@@ -287,7 +287,8 @@ content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
-                                 const base::string16& error_description) {
+                                 const base::string16& error_description,
+                                 bool is_provisional_load) {
   if (error_code == net::ERR_ABORTED) {
     OnLoadStopped(validated_url);
   } else {
@@ -295,7 +296,7 @@ void WebView::DispatchLoadFailed(const GURL& validated_url,
       web_contents_->GetController().GetLastCommittedEntry();
     OnLoadFailed(validated_url, error_code,
                  base::UTF16ToUTF8(error_description),
-                 entry->GetHttpStatusCode());
+                 is_provisional_load ? 0 : entry->GetHttpStatusCode());
   }
 }
 
@@ -1067,7 +1068,7 @@ void WebView::DidFailProvisionalLoad(
 
   if (!frame->parent() &&
       validated_url.spec() != content::kUnreachableWebDataURL) {
-    DispatchLoadFailed(validated_url, error_code, error_description);
+    DispatchLoadFailed(validated_url, error_code, error_description, true);
   }
 
   if (error_code != net::ERR_ABORTED) {
@@ -1139,7 +1140,7 @@ void WebView::DidGetRedirectForResourceRequest(
   }
 
   OnLoadRedirected(details.new_url, details.original_url,
-    details.http_response_code);
+      details.http_response_code);
 }
 
 void WebView::NavigationEntryCommitted(
