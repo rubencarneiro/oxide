@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,12 +49,12 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
+#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -90,7 +90,6 @@ class SSLInfo;
 }
 
 namespace ui {
-class GestureEvent;
 class TouchEvent;
 }
 
@@ -131,7 +130,6 @@ class WebViewIterator final {
 class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
-                private GestureProviderClient,
                 private content::NotificationObserver,
                 private RenderWidgetHostViewDelegate,
                 private content::WebContentsDelegate,
@@ -284,7 +282,7 @@ class WebView : public ScriptMessageTarget,
                              bool strict_enforcement,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
-                             
+
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -343,7 +341,8 @@ class WebView : public ScriptMessageTarget,
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
-                          const base::string16& error_description);
+                          const base::string16& error_description,
+                          bool is_provisional_load = false);
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
@@ -369,9 +368,6 @@ class WebView : public ScriptMessageTarget,
   // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() final;
 
-  // GestureProviderClient implementation
-  void OnGestureEvent(const blink::WebGestureEvent& event) final;
-
   // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
@@ -379,7 +375,6 @@ class WebView : public ScriptMessageTarget,
 
   // RenderWidgetHostViewDelegate implementation
   void EvictCurrentFrame() final;
-  void ProcessAckedTouchEvent(bool consumed) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
                              bool show_ime_if_needed) final;
@@ -507,14 +502,18 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnLoadStarted(const GURL& validated_url);
   virtual void OnLoadRedirected(const GURL& url,
-                                const GURL& original_url);
+                                const GURL& original_url,
+                                int http_status_code);
   virtual void OnLoadCommitted(const GURL& url,
-                               bool is_error_page);
+                               bool is_error_page,
+                               int http_status_code);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
-                            const std::string& error_description);
-  virtual void OnLoadSucceeded(const GURL& validated_url);
+                            const std::string& error_description,
+                            int http_status_code);
+  virtual void OnLoadSucceeded(const GURL& validated_url,
+                               int http_status_code);
 
   virtual void OnNavigationEntryCommitted();
   virtual void OnNavigationListPruned(bool from_front, int count);
@@ -593,8 +592,7 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
-  scoped_ptr<GestureProvider> gesture_provider_;
-  bool in_swap_;
+  TouchEventState touch_state_;
 
   GURL initial_url_;
   scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;

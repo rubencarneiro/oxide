@@ -41,7 +41,6 @@
 #include "oxide_access_token_store.h"
 #include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
-#include "oxide_browser_context_anchor.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -74,8 +73,6 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-  BrowserContextAnchor::GetInstance()->RenderProcessWillLaunch(host);
-
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
   host->AddFilter(new ScriptMessageDispatcherBrowser(host));

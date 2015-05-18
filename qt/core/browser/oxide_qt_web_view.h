@@ -113,14 +113,18 @@ class WebView : public QObject,
 
   void OnLoadStarted(const GURL& validated_url) override;
   void OnLoadRedirected(const GURL& url,
-                        const GURL& original_url) override;
+                        const GURL& original_url,
+                        int http_status_code) override;
   void OnLoadCommitted(const GURL& url,
-                       bool is_error_page) override;
+                       bool is_error_page,
+                       int http_status_code) override;
   void OnLoadStopped(const GURL& validated_url) override;
   void OnLoadFailed(const GURL& validated_url,
                     int error_code,
-                    const std::string& error_description) override;
-  void OnLoadSucceeded(const GURL& validated_url) override;
+                    const std::string& error_description,
+                    int http_status_code) override;
+  void OnLoadSucceeded(const GURL& validated_url,
+                       int http_status_code) override;
 
   void OnNavigationEntryCommitted() override;
   void OnNavigationListPruned(bool from_front, int count) override;

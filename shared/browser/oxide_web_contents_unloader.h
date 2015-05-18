@@ -33,7 +33,8 @@ class WebContents;
 namespace oxide {
 
 // Singleton class that provides a mechanism to correctly unload WebContents,
-// and block shutdown to wait for pending unloads to complete
+// by running the unload handler after its WebView has been destroyed and
+// ensuring that its render process lives until the handler has completed
 class WebContentsUnloader : public content::WebContentsDelegate {
  public:
   ~WebContentsUnloader();
