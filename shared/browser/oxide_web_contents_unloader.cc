@@ -23,29 +23,27 @@
 #include "base/memory/singleton.h"
 #include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
-#include "base/supports_user_data.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 
-class WebContentsUnloaderObserver : public content::WebContentsObserver,
-                                    public base::SupportsUserData::Data {
-public:
-  explicit WebContentsUnloaderObserver(
-          content::WebContents* contents)
-      : content::WebContentsObserver(contents) {}
-  virtual ~WebContentsUnloaderObserver() {}
+namespace oxide {
 
+class WebContentsUnloaderObserver : public content::WebContentsObserver {
+ public:
+  explicit WebContentsUnloaderObserver(content::WebContents* contents)
+      : content::WebContentsObserver(contents) {}
+  ~WebContentsUnloaderObserver() override {}
+
+ private:
+  // content::WebContentsObserver implementation
   void RenderProcessGone(base::TerminationStatus status) override {
     web_contents()->GetDelegate()->CloseContents(web_contents());
   }
+
+  void WebContentsDestroyed() {
+    delete this;
+  }
 };
-
-namespace {
-const char kWebContentsUnloaderObserverKey[] = "oxide_web_contents_unloader_observer_data";
-}
-
-
-namespace oxide {
 
 WebContentsUnloader::WebContentsUnloader() {}
 
@@ -82,13 +80,13 @@ void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
     return;
   }
 
-  content::WebContents* c = contents.get();
-  c->SetUserData(
-      kWebContentsUnloaderObserverKey,
-      new WebContentsUnloaderObserver(c));
+  // To intercept render process crashes
+  new WebContentsUnloaderObserver(contents.get());
 
   // So we can intercept CloseContents
   contents->SetDelegate(this);
+
+  content::WebContents* c = contents.get();
   contents_unloading_.push_back(contents.release());
 
   c->ClosePage();
@@ -102,10 +100,10 @@ void WebContentsUnloader::WaitForPendingUnloadsToFinish() {
     return;
   }
 
-  base::RunLoop run_loop;
-  wait_loop_quit_closure_ = run_loop.QuitClosure();
+  base::RunLoop wait_loop;
+  wait_loop_quit_closure_ = wait_loop.QuitClosure();
 
-  run_loop.Run();
+  wait_loop.Run();
 }
 
 }

@@ -128,6 +128,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQQuickLocationBarController, 1>(uri, 1, 7, "LocationBarController",
         "LocationBarController is accessed via WebView.locationBarController");
 
+    qmlRegisterUncreatableType<OxideQLoadEvent, 2>(uri, 1, 8, "LoadEvent",
+        "LoadEvent is delivered by WebView.loadEvent");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
   }
 };

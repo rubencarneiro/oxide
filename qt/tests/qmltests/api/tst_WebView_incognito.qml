@@ -25,24 +25,14 @@ Column {
     context: context
   }
 
-  TestWebView {
-    id: webView3
-    width: 200
-    height: 200
-    context: context
-  }
-
   TestCase {
     id: test
     name: "WebView_incognito"
     when: windowShown
 
+    // Verify that a cookie set in a normal webview isn't visible in an
+    // incognito webview
     function test_WebView_incognito1() {
-      if (!webView1.context.dataPath) {
-        console.log("Skipping this test because there is no data path");
-        return;
-      }
-
       webView1.url = "http://testsuite/tst_WebView_incognito.py"
       verify(webView1.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -64,16 +54,6 @@ Column {
       var cookies = JSON.parse(webView2.getTestApi().evaluateCode(
           "return document.body.children[0].innerHTML", true));
       verify(!("foo" in cookies), "Cookie should not be sent in incognito mode");
-
-      // Just to be sure, make sure we can access the original cookie from a third
-      // (non-incognito) webview
-      webView3.url = "http://testsuite/get-cookies.py"
-      verify(webView3.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-
-      var cookies = JSON.parse(webView3.getTestApi().evaluateCode(
-          "return document.body.children[0].innerHTML", true));
-      compare(cookies["foo"], "bar", "Cookie was not accessible in another webview");
     }
   }
 }

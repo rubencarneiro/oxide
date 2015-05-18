@@ -149,7 +149,10 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     const GURL& url,
     int child_id,
-    int route_id) {
+    int route_id,
+    bool is_main_frame,
+    ui::PageTransition page_transition,
+    bool has_user_gesture) {
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
 }
 

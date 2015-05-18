@@ -52,7 +52,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
        &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
  
    // We have to update GpuFeatureType before notify all the observers.
-@@ -928,32 +929,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+@@ -947,32 +948,37 @@ GpuDataManagerImplPrivate::GpuDataManage
        use_warp_(false),
        card_blacklisted_(false),
        update_histograms_(true),
@@ -91,7 +91,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #endif
  }
  
-@@ -965,25 +971,27 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -984,25 +990,27 @@ void GpuDataManagerImplPrivate::Initiali
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kLogGpuControlListDecisions);
  
@@ -142,7 +142,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
  
  namespace content {
  
-@@ -269,15 +270,18 @@ class CONTENT_EXPORT GpuDataManagerImplP
+@@ -271,14 +272,17 @@ class CONTENT_EXPORT GpuDataManagerImplP
  
    bool gpu_process_accessible_;
  
@@ -160,7 +160,6 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
  }  // namespace content
  
  #endif  // CONTENT_BROWSER_GPU_GPU_DATA_MANAGER_IMPL_PRIVATE_H_
- 
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
