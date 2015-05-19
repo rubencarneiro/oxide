@@ -58,7 +58,6 @@ void LifecycleObserver::ApplicationStateChanged() {
     return;
   }
 
-  printf("Flushing BrowserContexts\n");
   BrowserContext::ForEach(base::Bind(&FlushBrowserContext));
 }
 
