@@ -40,7 +40,7 @@ TestCase {
     var devices = Oxide.availableVideoCaptureDevices();
     compare(devices.length, 1);
     compare(devices[0].id, "/dev/video0");
-    compare(devices[0].displayName.substr(0, 14), "fake_device_0");
+    compare(devices[0].displayName.substr(0, 13), "fake_device_0");
     compare(devices[0].position, "unspecified");
   }
 }

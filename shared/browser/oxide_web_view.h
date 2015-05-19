@@ -282,7 +282,7 @@ class WebView : public ScriptMessageTarget,
                              bool strict_enforcement,
                              const base::Callback<void(bool)>& callback,
                              content::CertificateRequestResultType* result);
-                             
+
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -341,7 +341,8 @@ class WebView : public ScriptMessageTarget,
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
-                          const base::string16& error_description);
+                          const base::string16& error_description,
+                          bool is_provisional_load = false);
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
@@ -508,14 +509,18 @@ class WebView : public ScriptMessageTarget,
 
   virtual void OnLoadStarted(const GURL& validated_url);
   virtual void OnLoadRedirected(const GURL& url,
-                                const GURL& original_url);
+                                const GURL& original_url,
+                                int http_status_code);
   virtual void OnLoadCommitted(const GURL& url,
-                               bool is_error_page);
+                               bool is_error_page,
+                               int http_status_code);
   virtual void OnLoadStopped(const GURL& validated_url);
   virtual void OnLoadFailed(const GURL& validated_url,
                             int error_code,
-                            const std::string& error_description);
-  virtual void OnLoadSucceeded(const GURL& validated_url);
+                            const std::string& error_description,
+                            int http_status_code);
+  virtual void OnLoadSucceeded(const GURL& validated_url,
+                               int http_status_code);
 
   virtual void OnNavigationEntryCommitted();
   virtual void OnNavigationListPruned(bool from_front, int count);

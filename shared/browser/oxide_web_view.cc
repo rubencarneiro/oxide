@@ -253,12 +253,16 @@ content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
-                                 const base::string16& error_description) {
+                                 const base::string16& error_description,
+                                 bool is_provisional_load) {
   if (error_code == net::ERR_ABORTED) {
     OnLoadStopped(validated_url);
   } else {
+    content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
     OnLoadFailed(validated_url, error_code,
-                 base::UTF16ToUTF8(error_description));
+                 base::UTF16ToUTF8(error_description),
+                 is_provisional_load ? 0 : entry->GetHttpStatusCode());
   }
 }
 
@@ -952,7 +956,8 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
+  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR,
+    entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -967,7 +972,7 @@ void WebView::DidFailProvisionalLoad(
 
   if (!frame->parent() &&
       validated_url.spec() != content::kUnreachableWebDataURL) {
-    DispatchLoadFailed(validated_url, error_code, error_description);
+    DispatchLoadFailed(validated_url, error_code, error_description, true);
   }
 
   if (error_code != net::ERR_ABORTED) {
@@ -1020,7 +1025,9 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  OnLoadSucceeded(validated_url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  OnLoadSucceeded(validated_url, entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
@@ -1041,7 +1048,8 @@ void WebView::DidGetRedirectForResourceRequest(
     return;
   }
 
-  OnLoadRedirected(details.new_url, details.original_url);
+  OnLoadRedirected(details.new_url, details.original_url,
+      details.http_response_code);
 }
 
 void WebView::NavigationEntryCommitted(
@@ -1135,14 +1143,18 @@ void WebView::OnLoadProgressChanged(double progress) {}
 
 void WebView::OnLoadStarted(const GURL& validated_url) {}
 void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
+                               const GURL& original_url,
+                               int http_status_code) {}
 void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page) {}
+                              bool is_error_page,
+                              int http_status_code) {}
 void WebView::OnLoadStopped(const GURL& validated_url) {}
 void WebView::OnLoadFailed(const GURL& validated_url,
                            int error_code,
-                           const std::string& error_description) {}
-void WebView::OnLoadSucceeded(const GURL& validated_url) {}
+                           const std::string& error_description,
+                           int http_status_code) {}
+void WebView::OnLoadSucceeded(const GURL& validated_url,
+                              int http_status_code) {}
 
 void WebView::OnNavigationEntryCommitted() {}
 void WebView::OnNavigationListPruned(bool from_front, int count) {}
@@ -1319,11 +1331,11 @@ void WebView::Init(Params* params) {
   } else {
     CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
-    BrowserContext* context = params->incognito ?
+    scoped_refptr<BrowserContext> context = params->incognito ?
         params->context->GetOffTheRecordContext() :
         params->context->GetOriginalContext();
 
-    content::WebContents::CreateParams content_params(context);
+    content::WebContents::CreateParams content_params(context.get());
     content_params.initial_size = GetViewSizeDip();
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
@@ -1333,7 +1345,7 @@ void WebView::Init(Params* params) {
     if (!restore_state_.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              restore_state_, context);
+              restore_state_, context.get());
       web_contents_->GetController().Restore(
           initial_index_,
           content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
@@ -1481,7 +1493,7 @@ void WebView::LoadData(const std::string& encodedData,
   params.base_url_for_data_url = baseUrl;
   params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
   params.can_load_local_resources = true;
-  
+
   if (web_contents_) {
     web_contents_->GetController().LoadURLWithParams(params);
   } else {
@@ -2093,7 +2105,7 @@ void WebView::ImeCommitText(const base::string16& text,
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeConfirmComposition(text, replacement_range, false);
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
@@ -2107,7 +2119,7 @@ void WebView::ImeSetComposingText(
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeSetComposition(text, underlines,
                           selection_range.start(),
                           selection_range.end());

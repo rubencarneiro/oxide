@@ -104,7 +104,7 @@ diff --git a/content/browser/loader/resource_dispatcher_host_impl.cc b/content/b
 diff --git a/content/public/browser/resource_dispatcher_host_delegate.cc b/content/public/browser/resource_dispatcher_host_delegate.cc
 --- a/content/public/browser/resource_dispatcher_host_delegate.cc
 +++ b/content/public/browser/resource_dispatcher_host_delegate.cc
-@@ -80,15 +80,29 @@ void ResourceDispatcherHostDelegate::OnR
+@@ -84,15 +84,29 @@ void ResourceDispatcherHostDelegate::OnR
      ResourceContext* resource_context,
      ResourceResponse* response) {
  }
@@ -149,13 +149,13 @@ diff --git a/content/public/browser/resource_dispatcher_host_delegate.h b/conten
 +#include "base/strings/string16.h"
  #include "content/common/content_export.h"
  #include "content/public/common/resource_type.h"
+ #include "ui/base/page_transition_types.h"
  
  class GURL;
  template <class T> class ScopedVector;
  
  namespace IPC {
- class Sender;
-@@ -112,16 +113,29 @@ class CONTENT_EXPORT ResourceDispatcherH
+@@ -116,16 +117,29 @@ class CONTENT_EXPORT ResourceDispatcherH
    virtual void OnRequestRedirected(const GURL& redirect_url,
                                     net::URLRequest* request,
                                     ResourceContext* resource_context,
