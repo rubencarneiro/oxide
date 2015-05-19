@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQFindController;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -64,47 +65,6 @@ class OxideQQuickWebViewAttached : public QObject {
 
  private:
   OxideQQuickWebView* view_;
-};
-
-class OxideQQuickWebViewFindInPage : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
-    Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int current READ current NOTIFY currentChanged)
-
-   public:
-    OxideQQuickWebViewFindInPage(oxide::qt::WebViewProxy* proxy);
-    virtual ~OxideQQuickWebViewFindInPage();
-
-    const QString& text() const;
-    void setText(const QString& text);
-    bool caseSensitive() const;
-    void setCaseSensitive(bool caseSensitive);
-    int count() const;
-    int current() const;
-
-    Q_INVOKABLE void next() const;
-    Q_INVOKABLE void previous() const;
-
-   signals:
-    void textChanged() const;
-    void caseSensitiveChanged() const;
-    void countChanged() const;
-    void currentChanged() const;
-
-   protected:
-    void updateOnStateChanged(int current, int count);
-
-   private:
-    QString text_;
-    bool case_sensitive_;
-    int count_;
-    int current_;
-    oxide::qt::WebViewProxy* proxy_;
-
-   friend class OxideQQuickWebView;
-   friend class OxideQQuickWebViewPrivate;
 };
 
 class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
@@ -153,7 +113,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
 
-  Q_PROPERTY(OxideQQuickWebViewFindInPage* findInPage READ findInPage CONSTANT REVISION 4)
+  Q_PROPERTY(OxideQFindController* findController READ findController CONSTANT REVISION 4)
 
   // Set at construction time only
   Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
@@ -282,7 +242,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
-  OxideQQuickWebViewFindInPage* findInPage() const;
+  OxideQFindController* findController() const;
 
  public Q_SLOTS:
   void goBack();

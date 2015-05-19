@@ -24,6 +24,7 @@
 
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
+#include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -128,8 +129,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQQuickLocationBarController, 1>(uri, 1, 7, "LocationBarController",
         "LocationBarController is accessed via WebView.locationBarController");
 
-    qmlRegisterUncreatableType<OxideQQuickWebViewFindInPage>(uri, 1, 8, "FindInPage",
-        "FindInPage is accessed via WebView.findInPage");
+    qmlRegisterUncreatableType<OxideQFindController>(uri, 1, 8, "FindController",
+        "FindInPage is accessed via WebView.findController");
+
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
   }
 };

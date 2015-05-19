@@ -41,6 +41,7 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQFindController;
 class OxideQSecurityStatus;
 
 namespace oxide {
@@ -229,10 +230,7 @@ class WebView : public QObject,
   void stop() override;
   void reload() override;
 
-  void findInPage(const QString &text, bool caseSensitive) override;
-  void findInPageNext() override;
-  void findInPagePrevious() override;
-  const FindInPageState& findInPageState() const override;
+  OxideQFindController* findInPage() override;
 
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
@@ -294,7 +292,7 @@ class WebView : public QObject,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
-  FindInPageState find_in_page_state_;
+  scoped_ptr<OxideQFindController> find_in_page_controller_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

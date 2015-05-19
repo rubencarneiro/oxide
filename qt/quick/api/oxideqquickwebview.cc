@@ -41,6 +41,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -215,69 +216,6 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
-OxideQQuickWebViewFindInPage::OxideQQuickWebViewFindInPage(oxide::qt::WebViewProxy* proxy) :
-    QObject(nullptr),
-    proxy_(proxy),
-    current_(0),
-    count_(0),
-    case_sensitive_(false) {
-}
-
-OxideQQuickWebViewFindInPage::~OxideQQuickWebViewFindInPage() {}
-
-const QString& OxideQQuickWebViewFindInPage::text() const {
-  return text_;
-}
-
-void OxideQQuickWebViewFindInPage::setText(const QString& text) {
-  if (text_ != text) {
-    text_ = text;
-    emit textChanged();
-
-    proxy_->findInPage(text_, case_sensitive_);
-  }
-}
-
-bool OxideQQuickWebViewFindInPage::caseSensitive() const {
-  return case_sensitive_;
-}
-
-void OxideQQuickWebViewFindInPage::setCaseSensitive(bool caseSensitive) {
-  if (case_sensitive_ != caseSensitive) {
-    case_sensitive_ = caseSensitive;
-    emit caseSensitiveChanged();
-
-    proxy_->findInPage(text_, case_sensitive_);
-  }
-}
-
-int OxideQQuickWebViewFindInPage::count() const {
-  return count_;
-}
-
-int OxideQQuickWebViewFindInPage::current() const {
-  return current_;
-}
-
-void OxideQQuickWebViewFindInPage::next() const {
-   proxy_->findInPageNext();
-}
-
-void OxideQQuickWebViewFindInPage::previous() const {
-   proxy_->findInPagePrevious();
-}
-
-void OxideQQuickWebViewFindInPage::updateOnStateChanged(int current, int count) {
-    if (count_ != count) {
-        count_ = count;
-        emit countChanged();
-    }
-    if (current_ != current) {
-        current_ = current;
-        emit currentChanged();
-    }
-}
-
 OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView,
                                     oxide::qt::WebViewProxyHandle);
 
@@ -298,8 +236,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
     using_old_load_event_signal_(false),
-    construct_props_(new ConstructProps()),
-    find_in_page_(new OxideQQuickWebViewFindInPage(proxy())) {}
+    construct_props_(new ConstructProps()) {}
 
 void OxideQQuickWebViewPrivate::Initialized() {
   Q_Q(OxideQQuickWebView);
@@ -1006,11 +943,6 @@ QString OxideQQuickWebViewPrivate::getNavigationEntryTitle(int index) const {
 QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
     int index) const {
   return proxy()->getNavigationEntryTimestamp(index);
-}
-
-void OxideQQuickWebViewPrivate::FindInPageStateChanged() {
-  oxide::qt::FindInPageState state = proxy()->findInPageState();
-  find_in_page_->updateOnStateChanged(state.current, state.count);
 }
 
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
@@ -1813,10 +1745,10 @@ void OxideQQuickWebView::prepareToClose() {
   d->proxy()->prepareToClose();
 }
 
-OxideQQuickWebViewFindInPage* OxideQQuickWebView::findInPage() const {
+OxideQFindController* OxideQQuickWebView::findController() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->find_in_page_.data();
+  return d->proxy()->findInPage();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

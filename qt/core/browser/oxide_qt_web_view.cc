@@ -68,6 +68,8 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/api/oxideqfindcontroller.h"
+#include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/common/oxide_qt_screen_utils.h"
@@ -1273,77 +1275,12 @@ void WebView::reload() {
   Reload();
 }
 
-void WebView::findInPage(const QString &text, bool caseSensitive) {
-  content::WebContents* contents = GetWebContents();
-  if (contents == nullptr) {
-    return;
-  }
-
-  contents->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
-  OnFindInPageResult(0, 0);
-
-  find_in_page_state_.text = text;
-  find_in_page_state_.case_sensitive = caseSensitive;
-  find_in_page_state_.count = 0;
-  find_in_page_state_.current = 0;
-
-  if (!text.isEmpty()) {
-    find_in_page_state_.request_id += 1;
-
-    blink::WebFindOptions options;
-    options.forward = true;
-    options.findNext = false;
-    options.matchCase = caseSensitive;
-
-    contents->Find(find_in_page_state_.request_id, text.utf16(), options);
-  }
-}
-
-void WebView::findInPageNext() {
-   content::WebContents* contents = GetWebContents();
-   if (contents == nullptr) {
-     return;
-   }
-
-   blink::WebFindOptions options;
-   options.forward = true;
-   options.findNext = true;
-
-   contents->Find(find_in_page_state_.request_id, find_in_page_state_.text.utf16(), options);
-}
-
-void WebView::findInPagePrevious() {
-   content::WebContents* contents = GetWebContents();
-   if (contents == nullptr) {
-     return;
-   }
-
-   blink::WebFindOptions options;
-   options.forward = false;
-   options.findNext = true;
-
-   contents->Find(find_in_page_state_.request_id, find_in_page_state_.text.utf16(), options);
+OxideQFindController* WebView::findInPage() {
+  return find_in_page_controller_.get();
 }
 
 void WebView::OnFindInPageResult(int current, int count) {
-    int old_count = find_in_page_state_.count;
-    int old_current = find_in_page_state_.current;
-
-    if (count != -1) {
-      find_in_page_state_.count = count;
-    }
-
-    if (current != -1) {
-      find_in_page_state_.current = current;
-    }
-
-    if (find_in_page_state_.count != old_count || find_in_page_state_.current != old_current) {
-      client_->FindInPageStateChanged();
-    }
-}
-
-const FindInPageState& WebView::findInPageState() const {
-    return find_in_page_state_;
+  find_in_page_controller_->updateOnFindResult(current, count);
 }
 
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
@@ -1578,7 +1515,7 @@ WebView::WebView(WebViewProxyClient* client) :
     has_input_method_state_(false),
     qsecurity_status_(
         OxideQSecurityStatusPrivate::Create(this)),
-    find_in_page_state_({}) {
+    find_in_page_controller_(new OxideQFindController(this)) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     connect(im, SIGNAL(visibleChanged()),

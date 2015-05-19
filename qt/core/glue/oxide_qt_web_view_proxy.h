@@ -45,6 +45,7 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
 class OxideQWebPreferences;
@@ -163,10 +164,7 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void stop() = 0;
   virtual void reload() = 0;
 
-  virtual void findInPage(const QString& text, bool caseSensitive) = 0;
-  virtual void findInPageNext() = 0;
-  virtual void findInPagePrevious() = 0;
-  virtual const FindInPageState& findInPageState() const = 0;
+  virtual OxideQFindController* findInPage() = 0;
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 

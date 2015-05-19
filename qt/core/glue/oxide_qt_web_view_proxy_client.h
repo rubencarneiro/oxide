@@ -141,8 +141,6 @@ class WebViewProxyClient {
 
   virtual void PrepareToCloseResponse(bool proceed) = 0;
   virtual void CloseRequested() = 0;
-
-  virtual void FindInPageStateChanged() = 0;
 };
 
 } // namespace qt
