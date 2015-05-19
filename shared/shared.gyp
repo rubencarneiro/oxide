@@ -335,6 +335,8 @@
         'browser/oxide_javascript_dialog.h',
         'browser/oxide_javascript_dialog_manager.cc',
         'browser/oxide_javascript_dialog_manager.h',
+        'browser/oxide_lifecycle_observer.cc',
+        'browser/oxide_lifecycle_observer.h',
         'browser/oxide_message_pump.cc',
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',

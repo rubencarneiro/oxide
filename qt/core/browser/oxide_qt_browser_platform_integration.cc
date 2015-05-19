@@ -132,10 +132,17 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
-  if (qApp->applicationState() == Qt::ApplicationActive) {
-    return APPLICATION_STATE_ACTIVE;
-  } else {
-    return APPLICATION_STATE_INACTIVE;
+  switch (qApp->applicationState()) {
+    case Qt::ApplicationSuspended:
+      return APPLICATION_STATE_SUSPENDED;
+    case Qt::ApplicationHidden:
+    case Qt::ApplicationInactive:
+      return APPLICATION_STATE_INACTIVE;
+    case Qt::ApplicationActive:
+      return APPLICATION_STATE_ACTIVE;
+    default:
+      NOTREACHED();
+      return APPLICATION_STATE_ACTIVE;
   }
 }
 

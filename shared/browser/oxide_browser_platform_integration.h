@@ -41,6 +41,7 @@ class BrowserPlatformIntegration {
   virtual ~BrowserPlatformIntegration();
 
   enum ApplicationState {
+    APPLICATION_STATE_SUSPENDED,
     APPLICATION_STATE_INACTIVE,
     APPLICATION_STATE_ACTIVE
   };
