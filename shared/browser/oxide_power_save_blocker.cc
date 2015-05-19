@@ -68,8 +68,8 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
 };
 
 void PowerSaveBlocker::Init() {
-  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
-      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() !=
+      BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
     content::BrowserThread::PostTask(
         content::BrowserThread::FILE,
         FROM_HERE,
@@ -152,10 +152,11 @@ void PowerSaveBlocker::RemoveBlock() {
 void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
-  if (state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE &&
+  if (state != BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
       cookie_ == kInvalidCookie) {
     Init();
-  } else if (cookie_ != kInvalidCookie) {
+  } else if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
+             cookie_ != kInvalidCookie) {
     CleanUp();
   }
 }

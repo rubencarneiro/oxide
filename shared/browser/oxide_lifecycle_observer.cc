@@ -53,13 +53,12 @@ void FlushBrowserContext(BrowserContext* context) {
 }
 
 void LifecycleObserver::ApplicationStateChanged() {
-  // Ideally we'd only flush on suspend, but we don't ever get a suspended
-  // state on Ubuntu phone
-  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
-      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() !=
+      BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
     return;
   }
 
+  printf("Flushing BrowserContexts\n");
   BrowserContext::ForEach(base::Bind(&FlushBrowserContext));
 }
 
