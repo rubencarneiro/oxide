@@ -46,7 +46,7 @@ class Q_DECL_EXPORT OxideQFindController : public QObject {
     OxideQFindController(oxide::WebView* webview);
     ~OxideQFindController();
 
-    const QString& text() const;
+    QString text() const;
     void setText(const QString& text);
     bool caseSensitive() const;
     void setCaseSensitive(bool caseSensitive);
@@ -61,10 +61,6 @@ class Q_DECL_EXPORT OxideQFindController : public QObject {
     void caseSensitiveChanged() const;
     void countChanged() const;
     void currentChanged() const;
-
-   protected:
-    void updateOnFindResult(int current, int count);
-    void updateOnParametersChanged();
 
    private:
     QScopedPointer<OxideQFindControllerPrivate> d_ptr;

@@ -76,6 +76,8 @@
 #include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
 
+#include "third_party/WebKit/public/web/WebFindOptions.h"
+
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
@@ -759,7 +761,17 @@ void WebView::FindReply(content::WebContents* web_contents,
                         const gfx::Rect& selection_rect,
                         int active_match_ordinal,
                         bool final_update) {
-  OnFindInPageResult(active_match_ordinal, number_of_matches);
+  if (active_match_ordinal != -1 &&
+      find_in_page_.current != active_match_ordinal)  {
+      find_in_page_.current = active_match_ordinal;
+      OnFindInPageCurrentChanged();
+  }
+
+  if (number_of_matches != -1 &&
+      find_in_page_.count != number_of_matches)  {
+      find_in_page_.count = number_of_matches;
+      OnFindInPageCountChanged();
+  }
 }
 
 void WebView::RequestMediaAccessPermission(
@@ -1231,7 +1243,8 @@ void WebView::OnContentBlocked() {}
 void WebView::OnPrepareToCloseResponse(bool proceed) {}
 void WebView::OnCloseRequested() {}
 
-void WebView::OnFindInPageResult(int current, int count) {}
+void WebView::OnFindInPageCountChanged() {}
+void WebView::OnFindInPageCurrentChanged() {}
 
 WebView::WebView()
     : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
@@ -1645,6 +1658,84 @@ void WebView::UpdateWebPreferences() {
   }
 
   rvh->OnWebkitPreferencesChanged();
+}
+
+int WebView::GetFindInPageCount() const {
+  return find_in_page_.count;
+}
+
+int WebView::GetFindInPageCurrent() const {
+  return find_in_page_.current;
+}
+
+std::string WebView::GetFindInPageText() const {
+  return find_in_page_.text;
+}
+
+bool WebView::GetFindInPageCaseSensitive() const {
+  return find_in_page_.case_sensitive;
+}
+
+void WebView::SetFindInPageText(const std::string& text) {
+  find_in_page_.text = text;
+  RestartFindInPage();
+}
+
+void WebView::SetFindInPageCaseSensitive(bool case_sensitive) {
+  find_in_page_.case_sensitive = case_sensitive;
+  RestartFindInPage();
+}
+
+void WebView::RestartFindInPage() {
+  if (!web_contents_) {
+      return;
+  }
+
+  web_contents_->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
+
+  find_in_page_.current = 0;
+  OnFindInPageCurrentChanged();
+  find_in_page_.count = 0;
+  OnFindInPageCountChanged();
+
+  if (!find_in_page_.text.empty()) {
+    find_in_page_.request_id++;
+
+    blink::WebFindOptions options;
+    options.forward = true;
+    options.findNext = false;
+    options.matchCase = find_in_page_.case_sensitive;
+
+    web_contents_->Find(find_in_page_.request_id,
+                        base::UTF8ToUTF16(find_in_page_.text),
+                        options);
+  }
+}
+
+void WebView::FindInPageNext() {
+  if (!web_contents_) {
+    return;
+  }
+
+  blink::WebFindOptions options;
+  options.forward = true;
+  options.findNext = true;
+
+  web_contents_->Find(find_in_page_.request_id,
+                      base::UTF8ToUTF16(find_in_page_.text), options);
+}
+
+void WebView::FindInPagePrevious() {
+  if (!web_contents_) {
+    return;
+  }
+
+  blink::WebFindOptions options;
+  options.forward = false;
+  options.findNext = true;
+
+  web_contents_->Find(find_in_page_.request_id,
+                      base::UTF8ToUTF16(find_in_page_.text), options);
 }
 
 BrowserContext* WebView::GetBrowserContext() const {

@@ -157,7 +157,8 @@ class WebView : public QObject,
 			   const std::string& cookies,
 			   const std::string& referrer) override;
 
-  void OnFindInPageResult(int current, int count) override;
+  void OnFindInPageCountChanged() override;
+  void OnFindInPageCurrentChanged() override;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,

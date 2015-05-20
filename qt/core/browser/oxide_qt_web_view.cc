@@ -48,7 +48,6 @@
 #include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
-#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
@@ -1287,8 +1286,12 @@ OxideQFindController* WebView::findInPage() {
   return find_in_page_controller_.get();
 }
 
-void WebView::OnFindInPageResult(int current, int count) {
-  find_in_page_controller_->updateOnFindResult(current, count);
+void WebView::OnFindInPageCountChanged() {
+  Q_EMIT find_in_page_controller_->countChanged();
+}
+
+void WebView::OnFindInPageCurrentChanged() {
+  Q_EMIT find_in_page_controller_->currentChanged();
 }
 
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
