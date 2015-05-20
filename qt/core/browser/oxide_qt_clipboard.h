@@ -66,8 +66,6 @@ class ClipboardQt : public ui::Clipboard {
                  const char* data_data,
                  size_t data_len) override;
 
-  void EnsureAccumulatorMimeDataExists();
-
  private:
 
   scoped_ptr<ClipboardChangedListener> clipboard_changed_listener_;

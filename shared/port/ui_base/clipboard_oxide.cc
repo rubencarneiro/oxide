@@ -18,8 +18,6 @@
 #include "clipboard_oxide.h"
 
 #include "base/basictypes.h"
-#include "base/files/file_path.h"
-#include "base/logging.h"
 #include "ui/base/clipboard/custom_data_helper.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 
@@ -46,7 +44,6 @@ Clipboard* Clipboard::Create() {
   if (g_clipboard_factory) {
     return g_clipboard_factory();
   }
-  DLOG(ERROR) << " &&&&&&&&&&&&&&& create ";
   return new ClipboardOxide;
 }
 
