@@ -234,15 +234,18 @@ void Compositor::SetVisibility(bool visible) {
     settings.use_external_begin_frame_source = false;
     settings.throttle_frame_production = true;
 
+    cc::LayerTreeHost::InitParams params;
+    params.client = this;
+    params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
+    params.gpu_memory_buffer_manager =
+        content::BrowserGpuMemoryBufferManager::current();
+    params.task_graph_runner = g_task_graph_runner.Pointer();
+    params.settings = &settings;
+    params.main_task_runner = base::MessageLoopProxy::current();
+
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
-        this,
-        content::HostSharedBitmapManager::current(),
-        content::BrowserGpuMemoryBufferManager::current(),
-        g_task_graph_runner.Pointer(),
-        settings,
-        base::MessageLoopProxy::current(),
         CompositorUtils::GetInstance()->GetTaskRunner(),
-        nullptr);
+        &params);
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);
