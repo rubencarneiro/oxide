@@ -44,25 +44,8 @@ TestWebView {
     }
 
     function get_image_data() {
-        return "iVBORw0KGgoAAAANSUhEUgAAABAAAA\
-AQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL\
-2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9gHHRY6HX\
-zuCtIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ\
-4XAAAB6ElEQVQ4y33TT2jPcRzH8cfn9/1uMxsbWmsi1jS05cJuyF\
-r7g4t22QgnWg6Sw5aLGwdJymFFTZKk0JTFKIkLByItsvIvSi2HsZ\
-/N2n77OuxbfrF51/vw+fR5vnt/3q/XO/hPjLUKIShHlMwY+3RfCy\
-5hBNvr+RjPB2fbbEUHahHhJjZjaZotuPBPganT1qNq8oEq7MMiCB\
-mhqMytye824SceQfgLLsFdrJge1pz77Bw2YgwVyYyBHx88jorFpc\
-u9TxKDcR5chBPYAnGtXbkvOpIZ2UX3yLapChldZTXOYiHehaAzk9\
-fAmvRf8A0DhY2zMJQO+oqT6MMMqrEjZNu0YGco8bywQZPIfhwv6H\
-ZinuGux0Wsw4sYvahJfnqT++JMtEonXv9H3fc4jCWYiDGOBJNiEW\
-Isno/+OKgMe1J5P8c4iMZMueGoSicy2JkaZq7YgL2owO2Qp0IlLu\
-cNcneSuFbYM3sYmjVTLa6jDlkc+GOkxIigF80IEhPDPdqHKE190J\
-B2VpcSj/AwzOHEo1j7tlsfrqbywkSI9C9r8nB6TDT6VH99YmSuXT\
-iPIhzC6rz7Zyu7PC2udgy/Kts90T1HgYJu4xgf4hRupFZeECIvi6\
-sdQU36dBtezbuN9eQwnCY5priCVoziDvwGNw6PMb/zL+4AAAAASU\
-VORK5CYII=";
-        }
+        return "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAGUlEQVQIHQEOAPH/AAAAAAAAAAAAAAAAAAAADgABd6ch7AAAAABJRU5ErkJggg=="
+    }
 
     TestCase {
         id: testcase
@@ -103,7 +86,7 @@ VORK5CYII=";
               but overall is the same image. QImage does some "processing" on the raw image content
               that slightly alters it and make it hard to have an exact match.
              */
-            verify(webView.waitFor(function() { return expect_content(data.content, 41); }));
+            verify(webView.waitFor(function() { return expect_content(data.content, 34); }));
         }
 
         function test_copy(data) {

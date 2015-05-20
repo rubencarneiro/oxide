@@ -289,7 +289,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
      * See third_party/WebKit/Source/core/clipboard/DataObjectItem.cpp
      */
   } else if (md->hasFormat(Clipboard::kMimeTypePNG)) {
-    image.loadFromData(md->data(Clipboard::kMimeTypePNG));
+    image.loadFromData(md->data(Clipboard::kMimeTypePNG), "PNG");
   } else {
     return SkBitmap();
   }
