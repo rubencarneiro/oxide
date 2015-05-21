@@ -58,6 +58,7 @@ class BrowserPlatformIntegration : public QObject,
   content::LocationProvider* CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   std::string GetApplicationLocale() override;
+  ui::ClipboardOxideFactory GetClipboardOxideFactory() final;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;
