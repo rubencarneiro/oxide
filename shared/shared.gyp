@@ -397,6 +397,8 @@
         'browser/oxide_web_preferences_observer.h',
         'browser/oxide_web_view.cc',
         'browser/oxide_web_view.h',
+        'browser/oxide_web_view_client.cc',
+        'browser/oxide_web_view_client.h',
         'browser/oxide_web_view_contents_helper.cc',
         'browser/oxide_web_view_contents_helper.h',
         'common/oxide_constants.cc',

@@ -57,7 +57,7 @@ OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
 void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   Q_Q(OxideQSecurityStatus);
 
-  const oxide::SecurityStatus& status = web_view_->security_status();
+  const oxide::SecurityStatus& status = web_view_->GetSecurityStatus();
 
   if (old.security_level() != status.security_level()) {
     Q_EMIT q->securityLevelChanged();
@@ -166,7 +166,7 @@ OxideQSecurityStatus::securityLevel() const {
   Q_D(const OxideQSecurityStatus);
 
   return static_cast<SecurityLevel>(
-      d->web_view_->security_status().security_level());
+      d->web_view_->GetSecurityStatus().security_level());
 }
 
 OxideQSecurityStatus::ContentStatusFlags
@@ -174,7 +174,7 @@ OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
   return static_cast<ContentStatusFlags>(
-      d->web_view_->security_status().content_status());
+      d->web_view_->GetSecurityStatus().content_status());
 }
 
 OxideQSecurityStatus::CertStatusFlags
@@ -182,7 +182,7 @@ OxideQSecurityStatus::certStatus() const {
   Q_D(const OxideQSecurityStatus);
 
   return static_cast<CertStatusFlags>(
-      d->web_view_->security_status().cert_status());
+      d->web_view_->GetSecurityStatus().cert_status());
 }
 
 OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
@@ -193,7 +193,7 @@ OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
   }
 
   scoped_refptr<net::X509Certificate> cert =
-      d->web_view_->security_status().cert();
+      d->web_view_->GetSecurityStatus().cert();
   if (!cert.get()) {
     return nullptr;
   }
