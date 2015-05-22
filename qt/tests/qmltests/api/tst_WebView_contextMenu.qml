@@ -65,22 +65,38 @@ TestWebView {
       compare(model.pageUrl, "http://testsuite/tst_WebView_contextMenu.html");
     }
 
-    function test_WebView_contextMenu_text() {
-      invokeContextMenu("text");
-      var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeNone);
-      compare(model.linkUrl, "");
-      compare(model.srcUrl, "");
-      verify(!model.isEditable);
+    function test_WebView_contextMenu_properties_data() {
+      return [
+        { id: "text", mediaType: WebView.MediaTypeNone, linkUrl: "", linkText: "", srcUrl: "", frameUrl: "", isEditable: false },
+        { id: "hyperlink", mediaType: WebView.MediaTypeNone, linkUrl: "http://testsuite/empty.html", linkText: "super-link", srcUrl: "", frameUrl: "", isEditable: false },
+        { id: "image", mediaType: WebView.MediaTypeImage, linkUrl: "", linkText: "", srcUrl: "http://testsuite/cof.svg", frameUrl: "", isEditable: false },
+        { id: "canvas", mediaType: WebView.MediaTypeCanvas, linkUrl: "", linkText: "", srcUrl: "", frameUrl: "", isEditable: false },
+        { id: "editable", mediaType: WebView.MediaTypeNone, linkUrl: "", linkText: "", srcUrl: "", frameUrl: "", isEditable: true },
+        { id: "imagelink", mediaType: WebView.MediaTypeImage, linkUrl: "http://testsuite/empty.html", linkText: "", srcUrl: "http://testsuite/cof.svg", frameUrl: "", isEditable: false },
+        { id: "iframe", mediaType: WebView.MediaTypeNone, linkUrl: "", linkText: "", srcUrl: "", frameUrl: "http://testsuite/empty.html", isEditable: false },
+        { id: "video", mediaType: WebView.MediaTypeVideo, linkUrl: "", linkText: "", srcUrl: "http://testsuite/buddha.mp4", frameUrl: "", isEditable: false },
+        { id: "audio", mediaType: WebView.MediaTypeAudio, linkUrl: "", linkText: "", srcUrl: "http://testsuite/fire.oga", frameUrl: "", isEditable: false },
+      ];
     }
 
-    function test_WebView_contextMenu_hyperlink() {
+    function test_WebView_contextMenu_properties(data) {
+      invokeContextMenu(data.id);
+      var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, data.mediaType);
+      compare(model.linkUrl, data.linkUrl);
+      compare(model.linkText, data.linkText);
+      compare(model.srcUrl, data.srcUrl);
+      if ((model.mediaType == WebView.MediaTypeImage) ||
+          (model.mediaType == WebView.MediaTypeCanvas)) {
+        verify(model.hasImageContents);
+      }
+      compare(model.frameUrl, data.frameUrl);
+      compare(model.isEditable, data.isEditable);
+    }
+
+    function test_WebView_contextMenu_saveLink() {
       invokeContextMenu("hyperlink");
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeNone);
-      verify(!model.isEditable);
-      compare(model.linkUrl, "http://testsuite/empty.html");
-      compare(model.linkText, "super-link");
       model.saveLink();
       spy.wait();
       compare(webView.downloadUrl, "http://testsuite/empty.html");
@@ -88,13 +104,9 @@ TestWebView {
               "http://testsuite/tst_WebView_contextMenu.html");
     }
 
-    function test_WebView_contextMenu_image() {
+    function test_WebView_contextMenu_saveImage() {
       invokeContextMenu("image");
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeImage);
-      verify(!model.isEditable);
-      verify(model.hasImageContents);
-      compare(model.srcUrl, "http://testsuite/cof.svg");
       model.saveImage();
       spy.wait();
       compare(webView.downloadUrl, "http://testsuite/cof.svg");
@@ -102,13 +114,9 @@ TestWebView {
               "http://testsuite/tst_WebView_contextMenu.html");
     }
 
-    function test_WebView_contextMenu_canvas() {
+    function test_WebView_contextMenu_saveImage_canvas() {
       invokeContextMenu("canvas");
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeCanvas);
-      verify(!model.isEditable);
-      verify(model.hasImageContents);
-      compare(model.srcUrl, "");
       model.saveImage();
       spy.wait();
       compare(webView.downloadUrl.toString().slice(0, 11), "data:image/");
@@ -118,8 +126,6 @@ TestWebView {
     function test_WebView_contextMenu_editable() {
       invokeContextMenu("editable");
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeNone);
-      verify(model.isEditable);
       compare(model.selectionText, "");
       verify(!(model.editFlags & WebView.CanUndo));
       verify(!(model.editFlags & WebView.CanRedo));
@@ -132,7 +138,6 @@ TestWebView {
 
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
-      verify(model.isEditable);
       compare(model.selectionText, "text area");
       verify(!(model.editFlags & WebView.CanUndo));
       verify(!(model.editFlags & WebView.CanRedo));
@@ -148,7 +153,6 @@ TestWebView {
 
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
-      verify(model.isEditable);
       compare(model.selectionText, "");
       verify(model.editFlags & WebView.CanUndo);
       verify(!(model.editFlags & WebView.CanRedo));
@@ -160,7 +164,6 @@ TestWebView {
 
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
-      verify(model.isEditable);
       compare(model.selectionText, "text area");
       verify(!(model.editFlags & WebView.CanUndo));
       verify(model.editFlags & WebView.CanRedo);
@@ -173,24 +176,9 @@ TestWebView {
       // (https://launchpad.net/bugs/1301419), test cut/copy/paste
     }
 
-    function test_WebView_contextMenu_iframe() {
-      invokeContextMenu("iframe");
-      var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeNone);
-      verify(!model.isEditable);
-      compare(model.srcUrl, "");
-      compare(model.frameUrl, "http://testsuite/empty.html");
-    }
-
-    function test_WebView_contextMenu_imagelink() {
+    function test_WebView_contextMenu_saveLink_saveImage() {
       invokeContextMenu("imagelink");
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeImage);
-      verify(!model.isEditable);
-      compare(model.linkUrl, "http://testsuite/empty.html");
-      compare(model.linkText, "");
-      verify(model.hasImageContents);
-      compare(model.srcUrl, "http://testsuite/cof.svg");
 
       model.saveLink();
       spy.wait();
@@ -203,24 +191,6 @@ TestWebView {
       compare(webView.downloadUrl, "http://testsuite/cof.svg");
       compare(webView.downloadReferrer,
               "http://testsuite/tst_WebView_contextMenu.html");
-    }
-
-    function test_WebView_contextMenu_video() {
-      invokeContextMenu("video");
-      var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeVideo);
-      compare(model.linkUrl, "");
-      compare(model.srcUrl, "http://testsuite/buddha.mp4");
-      verify(!model.isEditable);
-    }
-
-    function test_WebView_contextMenu_audio() {
-      invokeContextMenu("audio");
-      var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaType, WebView.MediaTypeAudio);
-      compare(model.linkUrl, "");
-      compare(model.srcUrl, "http://testsuite/fire.oga");
-      verify(!model.isEditable);
     }
   }
 }
