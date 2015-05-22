@@ -18,6 +18,7 @@
 #include "oxide_qt_browser_platform_integration.h"
 
 #include <QDesktopServices>
+#include <QEvent>
 #include <QGuiApplication>
 #include <QPointer>
 #include <QString>
@@ -50,16 +51,40 @@ void LaunchURLExternallyOnUIThread(const GURL& url) {
   QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));
 }
 
+oxide::BrowserPlatformIntegration::ApplicationState
+CalculateApplicationState(bool suspended) {
+  switch (qApp->applicationState()) {
+    case Qt::ApplicationSuspended:
+      return oxide::BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED;
+    case Qt::ApplicationHidden:
+      return oxide::BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE;
+    case Qt::ApplicationInactive:
+      if (suspended) {
+        return oxide::BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED;
+      }
+      return oxide::BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE;
+    case Qt::ApplicationActive:
+      return oxide::BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE;
+    default:
+      NOTREACHED();
+      return oxide::BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE;
+  }
 }
 
-BrowserPlatformIntegration::BrowserPlatformIntegration() {
-  QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(OnApplicationStateChanged()));
 }
-
-BrowserPlatformIntegration::~BrowserPlatformIntegration() {}
 
 void BrowserPlatformIntegration::OnApplicationStateChanged() {
+  UpdateApplicationState();
+}
+
+void BrowserPlatformIntegration::UpdateApplicationState() {
+  ApplicationState state = CalculateApplicationState(suspended_);
+  if (state == state_) {
+    return;
+  }
+
+  state_ = state;
+
   NotifyApplicationStateChanged();
 }
 
@@ -132,16 +157,36 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
-  if (qApp->applicationState() == Qt::ApplicationActive) {
-    return APPLICATION_STATE_ACTIVE;
-  } else {
-    return APPLICATION_STATE_INACTIVE;
-  }
+  return state_;
 }
 
 std::string
 BrowserPlatformIntegration::GetApplicationLocale() {
   return QLocale::system().name().toStdString();
+}
+
+bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
+  if (event->type() == QEvent::ApplicationActivate ||
+      event->type() == QEvent::ApplicationDeactivate) {
+    suspended_ = event->type() == QEvent::ApplicationDeactivate;
+    UpdateApplicationState();
+  }
+
+  return QObject::eventFilter(watched, event);
+}
+
+BrowserPlatformIntegration::BrowserPlatformIntegration()
+    : suspended_(false),
+      state_(CalculateApplicationState(false)) {
+  QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
+                   this, SLOT(OnApplicationStateChanged()));
+  if (QGuiApplication::platformName().startsWith("ubuntu")) {
+    QGuiApplication::instance()->installEventFilter(this);
+  }
+}
+
+BrowserPlatformIntegration::~BrowserPlatformIntegration() {
+  QGuiApplication::instance()->removeEventFilter(this);
 }
 
 QThread* GetIOQThread() {

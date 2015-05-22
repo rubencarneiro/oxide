@@ -175,6 +175,9 @@ class BrowserContext
 
   static scoped_refptr<BrowserContext> Create(const Params& params);
 
+  typedef base::Callback<void(BrowserContext*)> BrowserContextCallback;
+  static void ForEach(const BrowserContextCallback& callback);
+
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
 

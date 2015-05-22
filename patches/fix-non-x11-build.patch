@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent 5f03e42ff5305851f3b3ba51d6e42520303fa5dd
+# Parent f0608d26b94086b2e1b717373e85276f0fd93dbc
 # User oxide
 
 diff --git a/ui/events/events.gyp b/ui/events/events.gyp
 --- a/ui/events/events.gyp
 +++ b/ui/events/events.gyp
-@@ -85,16 +85,17 @@
+@@ -95,16 +95,17 @@
        'target_name': 'events',
        'type': '<(component)',
        'dependencies': [
@@ -15,7 +15,7 @@ diff --git a/ui/events/events.gyp b/ui/events/events.gyp
          '../gfx/gfx.gyp:gfx',
          '../gfx/gfx.gyp:gfx_geometry',
 +        'devices/events_devices.gyp:events_devices',
-         'dom4_keycode_converter',
+         'dom_keycode_converter',
          'events_base',
          'gesture_detection',
        ],
@@ -26,7 +26,7 @@ diff --git a/ui/events/events.gyp b/ui/events/events.gyp
 diff --git a/ui/ozone/ozone.gyp b/ui/ozone/ozone.gyp
 --- a/ui/ozone/ozone.gyp
 +++ b/ui/ozone/ozone.gyp
-@@ -52,16 +52,17 @@
+@@ -53,16 +53,17 @@
        'target_name': 'ozone',
        'type': '<(component)',
        'dependencies': [

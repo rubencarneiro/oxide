@@ -28,17 +28,19 @@
 #include "shared/browser/oxide_web_frame.h"
 
 namespace oxide {
+
+class WebView;
+
 namespace qt {
 
 class ScriptMessageRequest;
 class WebFrameProxyClient;
-class WebView;
 
 class WebFrame : public oxide::WebFrame,
                  public WebFrameProxy {
  public:
   WebFrame(content::RenderFrameHost* render_frame_host,
-           WebView* view);
+           oxide::WebView* view);
 
   static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
 

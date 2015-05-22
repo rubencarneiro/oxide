@@ -82,8 +82,7 @@ class RenderWidgetHostView final :
   void HandleTouchEvent(const ui::MotionEvent& event);
   void ResetGestureDetection();
 
-  // content::RenderWidgetHostViewBase implementation
-  void Blur() final;
+  void Blur();
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const final;

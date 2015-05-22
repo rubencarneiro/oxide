@@ -59,7 +59,7 @@ void WebFrame::Delete() {
 void WebFrame::OnChildAdded(oxide::WebFrame* child) {
   client_->ChildFramesChanged();
 
-  WebView* v = static_cast<WebView*>(view());
+  WebView* v = WebView::FromView(view());
   if (v) {
     v->FrameAdded(child);
   }
@@ -68,7 +68,12 @@ void WebFrame::OnChildAdded(oxide::WebFrame* child) {
 void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
   client_->ChildFramesChanged();
 
-  WebView* v = static_cast<WebView*>(view());
+  if (!view()) {
+    // Can be null when the view is being deleted
+    return;
+  }
+
+  WebView* v = WebView::FromView(view());
   if (v) {
     v->FrameRemoved(child);
   }
@@ -139,7 +144,7 @@ QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
 }
 
 WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
-                   WebView* view)
+                   oxide::WebView* view)
     : oxide::WebFrame(render_frame_host, view),
       client_(nullptr) {}
 
