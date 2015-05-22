@@ -206,6 +206,15 @@ class WebView : public ScriptMessageTarget,
   void InputPanelVisibilityChanged();
   void UpdateWebPreferences();
 
+  int GetFindInPageCount() const;
+  int GetFindInPageCurrent() const;
+  std::string GetFindInPageText() const;
+  void SetFindInPageText(const std::string& text);
+  bool GetFindInPageCaseSensitive() const;
+  void SetFindInPageCaseSensitive(bool case_sensitive);
+  void FindInPageNext();
+  void FindInPagePrevious();
+
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
 
@@ -361,6 +370,8 @@ class WebView : public ScriptMessageTarget,
 
   void DispatchPrepareToCloseResponse(bool proceed);
 
+  void RestartFindInPage();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -441,6 +452,12 @@ class WebView : public ScriptMessageTarget,
   void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
+  void FindReply(content::WebContents* source,
+                 int request_id,
+                 int number_of_matches,
+                 const gfx::Rect& selection_rect,
+                 int active_match_ordinal,
+                 bool final_update) final;
   void RequestMediaAccessPermission(
       content::WebContents* source,
       const content::MediaStreamRequest& request,
@@ -550,6 +567,17 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
+
+  struct FindInPageState {
+    int request_id;
+    int current;
+    int count;
+    bool case_sensitive;
+    std::string text;
+    FindInPageState() : request_id(0), current(0), count(0),
+                        case_sensitive(false) {}
+  };
+  FindInPageState find_in_page_;
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;

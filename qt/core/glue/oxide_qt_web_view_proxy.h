@@ -45,6 +45,7 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
 class OxideQWebPreferences;
@@ -111,6 +112,14 @@ class CompositorFrameHandle {
   virtual EGLImageKHR GetImageFrame() = 0;
 };
 
+struct FindInPageState {
+  int request_id;
+  QString text;
+  bool case_sensitive;
+  int current;
+  int count;
+};
+
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
@@ -164,6 +173,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void goForward() = 0;
   virtual void stop() = 0;
   virtual void reload() = 0;
+
+  virtual OxideQFindController* findInPage() = 0;
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 

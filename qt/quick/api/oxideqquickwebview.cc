@@ -41,6 +41,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -1797,6 +1798,12 @@ void OxideQQuickWebView::prepareToClose() {
   Q_D(OxideQQuickWebView);
 
   d->proxy()->prepareToClose();
+}
+
+OxideQFindController* OxideQQuickWebView::findController() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->proxy()->findInPage();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

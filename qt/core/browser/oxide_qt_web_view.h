@@ -41,6 +41,7 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQFindController;
 class OxideQSecurityStatus;
 
 namespace oxide {
@@ -167,6 +168,8 @@ class WebView : public QObject,
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
+  void FindInPageCountChanged() override;
+  void FindInPageCurrentChanged() override;
 
   // oxide::ScriptMessageTargetImplementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -216,6 +219,8 @@ class WebView : public QObject,
   void goForward() override;
   void stop() override;
   void reload() override;
+
+  OxideQFindController* findInPage() override;
 
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
@@ -281,6 +286,7 @@ class WebView : public QObject,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
+  scoped_ptr<OxideQFindController> find_in_page_controller_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
 };

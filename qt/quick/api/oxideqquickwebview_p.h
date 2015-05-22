@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQFindController;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -45,6 +46,11 @@ class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
 class OxideQSecurityStatus;
+namespace oxide {
+    namespace qt {
+        class WebViewProxy;
+    }
+}
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -111,6 +117,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
+
+  Q_PROPERTY(OxideQFindController* findController READ findController CONSTANT REVISION 4)
 
   // Set at construction time only
   Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
@@ -287,6 +295,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   WebProcessStatus webProcessStatus() const;
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
+
+  OxideQFindController* findController() const;
 
   Q_REVISION(4) Q_INVOKABLE void executeEditingCommand(EditingCommands command) const;
 
