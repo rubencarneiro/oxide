@@ -79,13 +79,6 @@ class WebContextMenuProxyClient {
   virtual void cancel() = 0;
 
   virtual int editFlags() const = 0;
-  virtual void undo() const = 0;
-  virtual void redo() const = 0;
-  virtual void cut() const = 0;
-  virtual void copy() const = 0;
-  virtual void paste() const = 0;
-  virtual void erase() const = 0;
-  virtual void selectAll() const = 0;
 
   virtual int mediaFlags() const = 0;
 

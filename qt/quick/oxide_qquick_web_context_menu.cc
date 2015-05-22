@@ -68,15 +68,6 @@ class ContextMenuContext : public QObject {
   QString selectionText() const;
   bool isEditable() const;
   OxideQQuickWebView::EditCapabilities editFlags() const;
-
-  Q_INVOKABLE void undo() const;
-  Q_INVOKABLE void redo() const;
-  Q_INVOKABLE void cut() const;
-  Q_INVOKABLE void copy() const;
-  Q_INVOKABLE void paste() const;
-  Q_INVOKABLE void erase() const;
-  Q_INVOKABLE void selectAll() const;
-
   OxideQQuickWebView::MediaStatus mediaFlags() const;
 
   Q_INVOKABLE void saveLink() const;
@@ -182,76 +173,6 @@ OxideQQuickWebView::EditCapabilities ContextMenuContext::editFlags() const {
         static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_SELECT_ALL));
 
   return static_cast<OxideQQuickWebView::EditCapabilities>(client_->editFlags());
-}
-
-void ContextMenuContext::undo() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::undo(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanUndo)) {
-    qWarning() << "ContextMenuContext::undo(): cannot undo";
-  } else {
-    client_->undo();
-  }
-}
-
-void ContextMenuContext::redo() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::redo(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanRedo)) {
-    qWarning() << "ContextMenuContext::redo(): cannot redo";
-  } else {
-    client_->redo();
-  }
-}
-
-void ContextMenuContext::cut() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::cut(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanCut)) {
-    qWarning() << "ContextMenuContext::cut(): cannot cut";
-  } else {
-    client_->cut();
-  }
-}
-
-void ContextMenuContext::copy() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::copy(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanCopy)) {
-    qWarning() << "ContextMenuContext::copy(): cannot copy";
-  } else {
-    client_->copy();
-  }
-}
-
-void ContextMenuContext::paste() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::paste(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanPaste)) {
-    qWarning() << "ContextMenuContext::paste(): cannot paste";
-  } else {
-    client_->paste();
-  }
-}
-
-void ContextMenuContext::erase() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::erase(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanErase)) {
-    qWarning() << "ContextMenuContext::erase(): cannot erase";
-  } else {
-    client_->erase();
-  }
-}
-
-void ContextMenuContext::selectAll() const {
-  if (!isEditable()) {
-    qWarning() << "ContextMenuContext::selectAll(): not editable";
-  } else if (!editFlags().testFlag(OxideQQuickWebView::CanSelectAll)) {
-    qWarning() << "ContextMenuContext::selectAll(): cannot select all";
-  } else {
-    client_->selectAll();
-  }
 }
 
 OxideQQuickWebView::MediaStatus ContextMenuContext::mediaFlags() const {

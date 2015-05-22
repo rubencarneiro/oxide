@@ -1517,6 +1517,32 @@ WebProcessStatus WebView::webProcessStatus() const {
   }
 }
 
+void WebView::executeEditingCommand(EditingCommands command) const {
+  content::WebContents* contents = view_->GetWebContents();
+  if (!contents) {
+    return;
+  }
+
+  switch (command) {
+    case EDITING_COMMAND_UNDO:
+      return contents->Undo();
+    case EDITING_COMMAND_REDO:
+      return contents->Redo();
+    case EDITING_COMMAND_CUT:
+      return contents->Cut();
+    case EDITING_COMMAND_COPY:
+      return contents->Copy();
+    case EDITING_COMMAND_PASTE:
+      return contents->Paste();
+    case EDITING_COMMAND_ERASE:
+      return contents->Delete();
+    case EDITING_COMMAND_SELECT_ALL:
+      return contents->SelectAll();
+    default:
+      NOTREACHED();
+  }
+}
+
 WebView::WebView(WebViewProxyClient* client)
     : view_(new oxide::WebView(this)),
       client_(client),

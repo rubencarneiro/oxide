@@ -59,13 +59,6 @@ class WebContextMenu : public content::WebContentsObserver {
 
   content::ContextMenuParams params_;
 
-  void Undo() const;
-  void Redo() const;
-  void Cut() const;
-  void Copy() const;
-  void Paste() const;
-  void Erase() const;
-  void SelectAll() const;
   void SaveLink() const;
   void SaveImage() const;
 

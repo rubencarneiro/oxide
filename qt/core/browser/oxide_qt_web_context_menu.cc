@@ -128,34 +128,6 @@ int WebContextMenu::editFlags() const {
   return flags;
 }
 
-void WebContextMenu::undo() const {
-  Undo();
-}
-
-void WebContextMenu::redo() const {
-  Redo();
-}
-
-void WebContextMenu::cut() const {
-  Cut();
-}
-
-void WebContextMenu::copy() const {
-  Copy();
-}
-
-void WebContextMenu::paste() const {
-  Paste();
-}
-
-void WebContextMenu::erase() const {
-  Erase();
-}
-
-void WebContextMenu::selectAll() const {
-  SelectAll();
-}
-
 int WebContextMenu::mediaFlags() const {
   int flags = MEDIA_NONE;
   if (params_.media_flags & blink::WebContextMenuData::MediaInError) {

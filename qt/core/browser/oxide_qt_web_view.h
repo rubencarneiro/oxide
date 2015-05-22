@@ -267,6 +267,8 @@ class WebView : public QObject,
 
   WebProcessStatus webProcessStatus() const override;
 
+  void executeEditingCommand(EditingCommands command) const override;
+
   scoped_ptr<oxide::WebView> view_;
 
   WebViewProxyClient* client_;

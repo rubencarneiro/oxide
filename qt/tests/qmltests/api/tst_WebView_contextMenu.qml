@@ -133,7 +133,7 @@ TestWebView {
       verify(!(model.editFlags & WebView.CanCopy));
       verify(!(model.editFlags & WebView.CanErase));
       verify(model.editFlags & WebView.CanSelectAll);
-      model.selectAll();
+      webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       cleanup();
 
       invokeContextMenu("editable");
@@ -145,7 +145,7 @@ TestWebView {
       verify(model.editFlags & WebView.CanCopy);
       verify(model.editFlags & WebView.CanErase);
       verify(model.editFlags & WebView.CanSelectAll);
-      model.erase();
+      webView.executeEditingCommand(WebView.EditingCommandErase);
       cleanup();
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#editable\").value");
@@ -156,7 +156,7 @@ TestWebView {
       compare(model.selectionText, "");
       verify(model.editFlags & WebView.CanUndo);
       verify(!(model.editFlags & WebView.CanRedo));
-      model.undo();
+      webView.executeEditingCommand(WebView.EditingCommandUndo);
       cleanup();
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#editable\").value");
@@ -167,7 +167,7 @@ TestWebView {
       compare(model.selectionText, "text area");
       verify(!(model.editFlags & WebView.CanUndo));
       verify(model.editFlags & WebView.CanRedo);
-      model.redo();
+      webView.executeEditingCommand(WebView.EditingCommandRedo);
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#editable\").value");
       compare(r, "");

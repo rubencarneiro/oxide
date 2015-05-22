@@ -58,13 +58,6 @@ class WebContextMenu : public oxide::WebContextMenu,
   bool isEditable() const override;
   void cancel() override;
   int editFlags() const override;
-  void undo() const override;
-  void redo() const override;
-  void cut() const override;
-  void copy() const override;
-  void paste() const override;
-  void erase() const override;
-  void selectAll() const override;
   int mediaFlags() const override;
   void saveLink() const override;
   void saveImage() const override;

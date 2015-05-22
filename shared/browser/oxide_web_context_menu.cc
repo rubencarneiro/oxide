@@ -76,48 +76,6 @@ void WebContextMenu::Close() {
       content::BrowserThread::UI, FROM_HERE, this);
 }
 
-void WebContextMenu::Undo() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanUndo) {
-    web_contents()->Undo();
-  }
-}
-
-void WebContextMenu::Redo() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanRedo) {
-    web_contents()->Redo();
-  }
-}
-
-void WebContextMenu::Cut() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanCut) {
-    web_contents()->Cut();
-  }
-}
-
-void WebContextMenu::Copy() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanCopy) {
-    web_contents()->Copy();
-  }
-}
-
-void WebContextMenu::Paste() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanPaste) {
-    web_contents()->Paste();
-  }
-}
-
-void WebContextMenu::Erase() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanDelete) {
-    web_contents()->Delete();
-  }
-}
-
-void WebContextMenu::SelectAll() const {
-  if (params_.edit_flags & blink::WebContextMenuData::CanSelectAll) {
-    web_contents()->SelectAll();
-  }
-}
-
 void WebContextMenu::SaveLink() const {
   content::BrowserContext* context = web_contents()->GetBrowserContext();
   content::DownloadManager* dlm =

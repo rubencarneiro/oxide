@@ -67,6 +67,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_FLAGS(ContentType)
   Q_FLAGS(EditCapabilities)
   Q_FLAGS(MediaStatus)
+  Q_ENUMS(EditingCommands);
   Q_ENUMS(LogMessageSeverityLevel);
   Q_ENUMS(MediaType);
   Q_ENUMS(RestoreType);
@@ -195,6 +196,16 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   };
   Q_DECLARE_FLAGS(MediaStatus, MediaFlags)
 
+  enum EditingCommands {
+    EditingCommandUndo,
+    EditingCommandRedo,
+    EditingCommandCut,
+    EditingCommandCopy,
+    EditingCommandPaste,
+    EditingCommandErase,
+    EditingCommandSelectAll
+  };
+
   void componentComplete();
 
   QUrl url() const;
@@ -276,6 +287,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   WebProcessStatus webProcessStatus() const;
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
+
+  Q_REVISION(4) Q_INVOKABLE void executeEditingCommand(EditingCommands command) const;
 
  public Q_SLOTS:
   void goBack();
