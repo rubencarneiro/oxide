@@ -538,7 +538,6 @@ class WebView : public ScriptMessageTarget,
   WebFrameScopedPtr root_frame_;
 
   bool is_fullscreen_;
-  base::WeakPtr<WebContextMenu> active_context_menu_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 

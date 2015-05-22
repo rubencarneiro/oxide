@@ -1862,14 +1862,10 @@ void WebView::PrepareToClose() {
 
 void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
                               const content::ContextMenuParams& params) {
-  DCHECK(!active_context_menu_);
-
   WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
   if (!menu) {
     return;
   }
-
-  active_context_menu_ = menu->GetWeakPtr();
 
   menu->Show();
 }
