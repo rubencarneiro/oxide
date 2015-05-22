@@ -68,6 +68,7 @@ TestWebView {
     function test_WebView_contextMenu_text() {
       invokeContextMenu("text");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeNone);
       compare(model.linkUrl, "");
       compare(model.srcUrl, "");
       verify(!model.isEditable);
@@ -76,6 +77,7 @@ TestWebView {
     function test_WebView_contextMenu_hyperlink() {
       invokeContextMenu("hyperlink");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeNone);
       verify(!model.isEditable);
       compare(model.linkUrl, "http://testsuite/empty.html");
       compare(model.linkText, "super-link");
@@ -89,6 +91,7 @@ TestWebView {
     function test_WebView_contextMenu_image() {
       invokeContextMenu("image");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeImage);
       verify(!model.isEditable);
       verify(model.hasImageContents);
       compare(model.srcUrl, "http://testsuite/cof.svg");
@@ -102,6 +105,7 @@ TestWebView {
     function test_WebView_contextMenu_canvas() {
       invokeContextMenu("canvas");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeCanvas);
       verify(!model.isEditable);
       verify(model.hasImageContents);
       compare(model.srcUrl, "");
@@ -114,6 +118,7 @@ TestWebView {
     function test_WebView_contextMenu_editable() {
       invokeContextMenu("editable");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeNone);
       verify(model.isEditable);
       compare(model.selectionText, "");
       verify(!(model.editFlags & WebView.CanUndo));
@@ -171,6 +176,7 @@ TestWebView {
     function test_WebView_contextMenu_iframe() {
       invokeContextMenu("iframe");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeNone);
       verify(!model.isEditable);
       compare(model.srcUrl, "");
       compare(model.frameUrl, "http://testsuite/empty.html");
@@ -179,6 +185,7 @@ TestWebView {
     function test_WebView_contextMenu_imagelink() {
       invokeContextMenu("imagelink");
       var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeImage);
       verify(!model.isEditable);
       compare(model.linkUrl, "http://testsuite/empty.html");
       compare(model.linkText, "");

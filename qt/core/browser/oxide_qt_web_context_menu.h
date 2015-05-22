@@ -45,6 +45,7 @@ class WebContextMenu : public oxide::WebContextMenu,
   void Hide() override;
 
   // WebContextMenuProxyClient implementation
+  MediaType mediaType() const override;
   QPoint position() const override;
   QUrl linkUrl() const override;
   QString linkText() const override;

@@ -38,6 +38,7 @@ namespace {
 class ContextMenuContext : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(OxideQQuickWebView::MediaType mediaType READ mediaType CONSTANT FINAL)
   Q_PROPERTY(QPointF position READ position CONSTANT FINAL)
   Q_PROPERTY(QUrl linkUrl READ linkUrl CONSTANT FINAL)
   Q_PROPERTY(QString linkText READ linkText CONSTANT FINAL)
@@ -54,6 +55,7 @@ class ContextMenuContext : public QObject {
   virtual ~ContextMenuContext() {}
   ContextMenuContext(oxide::qt::WebContextMenuProxyClient* client);
 
+  OxideQQuickWebView::MediaType mediaType() const;
   QPointF position() const;
   QUrl linkUrl() const;
   QString linkText() const;
@@ -64,7 +66,6 @@ class ContextMenuContext : public QObject {
   QUrl frameUrl() const;
   QString selectionText() const;
   bool isEditable() const;
-
   OxideQQuickWebView::EditCapabilities editFlags() const;
 
   Q_INVOKABLE void undo() const;
@@ -86,6 +87,29 @@ class ContextMenuContext : public QObject {
 ContextMenuContext::ContextMenuContext(
     oxide::qt::WebContextMenuProxyClient* client) :
     client_(client) {}
+
+OxideQQuickWebView::MediaType ContextMenuContext::mediaType() const {
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypeNone ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_NONE));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypeImage ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_IMAGE));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypeVideo ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_VIDEO));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypeAudio ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_AUDIO));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypeCanvas ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_CANVAS));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaTypePlugin ==
+        static_cast<OxideQQuickWebView::MediaType>(oxide::qt::MEDIA_TYPE_PLUGIN));
+
+  return static_cast<OxideQQuickWebView::MediaType>(client_->mediaType());
+}
 
 QPointF ContextMenuContext::position() const {
   return client_->position();

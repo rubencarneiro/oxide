@@ -37,10 +37,20 @@ enum EditFlags {
   EDIT_CAN_SELECT_ALL = 1 << 6
 };
 
+enum MediaType {
+  MEDIA_TYPE_NONE,
+  MEDIA_TYPE_IMAGE,
+  MEDIA_TYPE_VIDEO,
+  MEDIA_TYPE_AUDIO,
+  MEDIA_TYPE_CANVAS,
+  MEDIA_TYPE_PLUGIN
+};
+
 class WebContextMenuProxyClient {
  public:
   virtual ~WebContextMenuProxyClient() {}
 
+  virtual MediaType mediaType() const = 0;
   virtual QPoint position() const = 0;
   virtual QUrl linkUrl() const = 0;
   virtual QString linkText() const = 0;

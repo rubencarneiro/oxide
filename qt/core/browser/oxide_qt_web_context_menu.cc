@@ -38,6 +38,26 @@ void WebContextMenu::Hide() {
   proxy_->Hide();
 }
 
+MediaType WebContextMenu::mediaType() const {
+  switch (params_.media_type) {
+    case blink::WebContextMenuData::MediaTypeNone:
+    case blink::WebContextMenuData::MediaTypeFile:
+      return MEDIA_TYPE_NONE;
+    case blink::WebContextMenuData::MediaTypeImage:
+      return MEDIA_TYPE_IMAGE;
+    case blink::WebContextMenuData::MediaTypeVideo:
+      return MEDIA_TYPE_VIDEO;
+    case blink::WebContextMenuData::MediaTypeAudio:
+      return MEDIA_TYPE_AUDIO;
+    case blink::WebContextMenuData::MediaTypeCanvas:
+      return MEDIA_TYPE_CANVAS;
+    case blink::WebContextMenuData::MediaTypePlugin:
+      return MEDIA_TYPE_PLUGIN;
+    default:
+      Q_UNREACHABLE();
+  }
+}
+
 QPoint WebContextMenu::position() const {
   return QPoint(params_.x, params_.y);
 }
