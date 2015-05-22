@@ -60,7 +60,7 @@ class WebContextMenu : public content::WebContentsObserver {
   content::ContextMenuParams params_;
 
   void SaveLink() const;
-  void SaveImage() const;
+  void SaveMedia() const;
 
  private:
   void RenderFrameDeleted(content::RenderFrameHost* rfh) final;

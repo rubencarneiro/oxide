@@ -83,7 +83,7 @@ class WebContextMenuProxyClient {
   virtual int mediaFlags() const = 0;
 
   virtual void saveLink() const = 0;
-  virtual void saveImage() const = 0;
+  virtual void saveMedia() const = 0;
 };
 
 } // namespace qt

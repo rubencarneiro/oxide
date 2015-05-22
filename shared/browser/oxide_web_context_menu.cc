@@ -90,7 +90,7 @@ void WebContextMenu::SaveLink() const {
   dlm->DownloadUrl(dl_params.Pass());
 }
 
-void WebContextMenu::SaveImage() const {
+void WebContextMenu::SaveMedia() const {
   bool is_large_data_url =
       params_.has_image_contents && params_.src_url.is_empty();
   if ((params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) ||

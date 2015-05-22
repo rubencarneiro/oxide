@@ -60,7 +60,7 @@ class WebContextMenu : public oxide::WebContextMenu,
   int editFlags() const override;
   int mediaFlags() const override;
   void saveLink() const override;
-  void saveImage() const override;
+  void saveMedia() const override;
 
   scoped_ptr<WebContextMenuProxy> proxy_;
 

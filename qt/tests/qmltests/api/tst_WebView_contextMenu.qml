@@ -104,23 +104,22 @@ TestWebView {
               "http://testsuite/tst_WebView_contextMenu.html");
     }
 
-    function test_WebView_contextMenu_saveImage() {
-      invokeContextMenu("image");
-      var model = webView.currentContextMenu.contextModel;
-      model.saveImage();
-      spy.wait();
-      compare(webView.downloadUrl, "http://testsuite/cof.svg");
-      compare(webView.downloadReferrer,
-              "http://testsuite/tst_WebView_contextMenu.html");
+    function test_WebView_contextMenu_saveMedia_data() {
+      return [
+        { id: "image", url: "http://testsuite/cof.svg", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
+        { id: "canvas", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAKElEQVQ4T2NkoDJgpLJ5DKMGUh6io2E4GoZkhMBosiEj0NC0jMAwBABIxgAVO+SUsAAAAABJRU5ErkJggg==", referrer: "" },
+        { id: "video", url: "http://testsuite/buddha.mp4", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
+        { id: "audio", url: "http://testsuite/fire.oga", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
+      ];
     }
 
-    function test_WebView_contextMenu_saveImage_canvas() {
-      invokeContextMenu("canvas");
+    function test_WebView_contextMenu_saveMedia(data) {
+      invokeContextMenu(data.id);
       var model = webView.currentContextMenu.contextModel;
-      model.saveImage();
+      model.saveMedia();
       spy.wait();
-      compare(webView.downloadUrl.toString().slice(0, 11), "data:image/");
-      compare(webView.downloadReferrer, "");
+      compare(webView.downloadUrl, data.url);
+      compare(webView.downloadReferrer, data.referrer);
     }
 
     function test_WebView_contextMenu_editable() {
@@ -176,7 +175,7 @@ TestWebView {
       // (https://launchpad.net/bugs/1301419), test cut/copy/paste
     }
 
-    function test_WebView_contextMenu_saveLink_saveImage() {
+    function test_WebView_contextMenu_saveLink_saveMedia() {
       invokeContextMenu("imagelink");
       var model = webView.currentContextMenu.contextModel;
 
@@ -186,7 +185,7 @@ TestWebView {
       compare(webView.downloadReferrer,
               "http://testsuite/tst_WebView_contextMenu.html");
 
-      model.saveImage();
+      model.saveMedia();
       spy.wait();
       compare(webView.downloadUrl, "http://testsuite/cof.svg");
       compare(webView.downloadReferrer,

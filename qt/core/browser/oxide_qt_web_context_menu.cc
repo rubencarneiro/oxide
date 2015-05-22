@@ -167,8 +167,8 @@ void WebContextMenu::saveLink() const {
   SaveLink();
 }
 
-void WebContextMenu::saveImage() const {
-  SaveImage();
+void WebContextMenu::saveMedia() const {
+  SaveMedia();
 }
 
 WebContextMenu::WebContextMenu(content::RenderFrameHost* rfh,

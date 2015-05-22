@@ -71,7 +71,7 @@ class ContextMenuContext : public QObject {
   OxideQQuickWebView::MediaStatus mediaFlags() const;
 
   Q_INVOKABLE void saveLink() const;
-  Q_INVOKABLE void saveImage() const;
+  Q_INVOKABLE void saveMedia() const;
 
   Q_INVOKABLE void close();
 
@@ -221,12 +221,26 @@ void ContextMenuContext::saveLink() const {
   }
 }
 
-void ContextMenuContext::saveImage() const {
-  if (hasImageContents()) {
-    client_->saveImage();
+void ContextMenuContext::saveMedia() const {
+  OxideQQuickWebView::MediaType media_type = mediaType();
+  if ((media_type == OxideQQuickWebView::MediaTypeImage) ||
+      (media_type == OxideQQuickWebView::MediaTypeCanvas)) {
+    if (!hasImageContents()) {
+      qWarning() << "ContextMenuContext::saveMedia(): image has no contents";
+      return;
+    }
+  } else if ((media_type == OxideQQuickWebView::MediaTypeVideo) ||
+      (media_type == OxideQQuickWebView::MediaTypeAudio)) {
+    if (!mediaFlags().testFlag(OxideQQuickWebView::MediaCanSave)) {
+      qWarning() << "ContextMenuContext::saveMedia(): cannot save media source";
+      return;
+    }
   } else {
-    qWarning() << "ContextMenuContext::saveImage(): not a valid image";
+    qWarning() << "ContextMenuContext::saveMedia(): invalid content";
+    return;
   }
+
+  client_->saveMedia();
 }
 
 void ContextMenuContext::close() {
