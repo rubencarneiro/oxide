@@ -174,7 +174,6 @@ TestWebView {
       verify(!model.isEditable);
       compare(model.srcUrl, "");
       compare(model.frameUrl, "http://testsuite/empty.html");
-      compare(model.frameCharset.toLowerCase(), "utf-8");
     }
 
     function test_WebView_contextMenu_imagelink() {

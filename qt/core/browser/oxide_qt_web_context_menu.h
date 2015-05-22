@@ -53,7 +53,6 @@ class WebContextMenu : public oxide::WebContextMenu,
   bool hasImageContents() const override;
   QUrl pageUrl() const override;
   QUrl frameUrl() const override;
-  QString frameCharset() const override;
   QString selectionText() const override;
   QString suggestedFileName() const override;
   bool isEditable() const override;

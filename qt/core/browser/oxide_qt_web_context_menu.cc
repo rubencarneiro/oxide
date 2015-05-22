@@ -70,10 +70,6 @@ QUrl WebContextMenu::frameUrl() const {
   return QUrl(QString::fromStdString(params_.frame_url.spec()));
 }
 
-QString WebContextMenu::frameCharset() const {
-  return QString::fromStdString(params_.frame_charset);
-}
-
 QString WebContextMenu::selectionText() const {
   return QString::fromStdString(base::UTF16ToUTF8(params_.selection_text));
 }
