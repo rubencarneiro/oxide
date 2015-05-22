@@ -58,8 +58,8 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  #if defined(ENABLE_MEDIA_MOJO_RENDERER)
  static void CreateMediaRendererService(
      mojo::InterfaceRequest<mojo::MediaRenderer> request) {
-   media::MojoRendererService* service = new media::MojoRendererService();
-   mojo::BindToRequest(service, &request);
+   // The created object is owned by the pipe.
+   new media::MojoRendererService(request.Pass());
  }
  #endif
 @@ -1973,30 +1969,28 @@ RenderFrameHostImpl::GetParentNativeView
@@ -453,7 +453,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2051,17 +2046,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2044,17 +2039,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -495,7 +495,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -661,20 +659,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -656,20 +654,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnTextSurroundingSelectionRequest(size_t max_length);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
    void OnSnapshotAccessibilityTree(int callback_id);
@@ -517,7 +517,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -969,20 +966,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -964,20 +961,18 @@ class CONTENT_EXPORT RenderFrameImpl
    // Only valid if |accessibility_mode_| is anything other than
    // AccessibilityModeOff.
    RendererAccessibility* renderer_accessibility_;
@@ -541,7 +541,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -473,20 +473,18 @@ RenderThreadImpl::RenderThreadImpl(
+@@ -475,20 +475,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
