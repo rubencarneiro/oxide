@@ -47,7 +47,6 @@ class ContextMenuContext : public QObject {
   Q_PROPERTY(QUrl pageUrl READ pageUrl CONSTANT FINAL)
   Q_PROPERTY(QUrl frameUrl READ frameUrl CONSTANT FINAL)
   Q_PROPERTY(QString selectionText READ selectionText CONSTANT FINAL)
-  Q_PROPERTY(QString suggestedFileName READ suggestedFileName CONSTANT FINAL)
   Q_PROPERTY(bool isEditable READ isEditable CONSTANT FINAL)
   Q_PROPERTY(bool canUndo READ canUndo CONSTANT FINAL)
   Q_PROPERTY(bool canRedo READ canRedo CONSTANT FINAL)
@@ -70,7 +69,6 @@ class ContextMenuContext : public QObject {
   QUrl pageUrl() const;
   QUrl frameUrl() const;
   QString selectionText() const;
-  QString suggestedFileName() const;
   bool isEditable() const;
 
   bool canUndo() const;
@@ -135,10 +133,6 @@ QUrl ContextMenuContext::frameUrl() const {
 
 QString ContextMenuContext::selectionText() const {
   return client_->selectionText();
-}
-
-QString ContextMenuContext::suggestedFileName() const {
-  return client_->suggestedFileName();
 }
 
 bool ContextMenuContext::isEditable() const {

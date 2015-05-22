@@ -54,7 +54,6 @@ class WebContextMenu : public oxide::WebContextMenu,
   QUrl pageUrl() const override;
   QUrl frameUrl() const override;
   QString selectionText() const override;
-  QString suggestedFileName() const override;
   bool isEditable() const override;
   void cancel() override;
   bool canUndo() const override;

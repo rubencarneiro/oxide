@@ -74,10 +74,6 @@ QString WebContextMenu::selectionText() const {
   return QString::fromStdString(base::UTF16ToUTF8(params_.selection_text));
 }
 
-QString WebContextMenu::suggestedFileName() const {
-  return QString::fromStdString(base::UTF16ToUTF8(params_.suggested_filename));
-}
-
 bool WebContextMenu::isEditable() const {
   return params_.is_editable;
 }

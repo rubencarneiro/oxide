@@ -39,7 +39,6 @@ class WebContextMenuProxyClient {
   virtual QUrl pageUrl() const = 0;
   virtual QUrl frameUrl() const = 0;
   virtual QString selectionText() const = 0;
-  virtual QString suggestedFileName() const = 0;
   virtual bool isEditable() const = 0;
 
   virtual void cancel() = 0;
