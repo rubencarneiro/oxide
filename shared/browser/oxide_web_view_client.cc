@@ -163,4 +163,8 @@ void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}
 
 void WebViewClient::CloseRequested() {}
 
+void WebViewClient::FindInPageCurrentChanged() {}
+
+void WebViewClient::FindInPageCountChanged() {}
+
 } // namespace oxide

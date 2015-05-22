@@ -67,6 +67,8 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/api/oxideqfindcontroller.h"
+#include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/common/oxide_qt_screen_utils.h"
@@ -985,6 +987,14 @@ void WebView::CloseRequested() {
   client_->CloseRequested();
 }
 
+void WebView::FindInPageCountChanged() {
+  Q_EMIT find_in_page_controller_->countChanged();
+}
+
+void WebView::FindInPageCurrentChanged() {
+  Q_EMIT find_in_page_controller_->currentChanged();
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return message_handlers_.size();
 }
@@ -1279,6 +1289,10 @@ void WebView::reload() {
   view_->Reload();
 }
 
+OxideQFindController* WebView::findInPage() {
+  return find_in_page_controller_.get();
+}
+
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
   QByteArray encoded_data = html.toUtf8().toPercentEncoding();
   view_->LoadData(std::string(encoded_data.constData(), encoded_data.length()),
@@ -1513,7 +1527,8 @@ WebView::WebView(WebViewProxyClient* client)
       client_(client),
       has_input_method_state_(false),
       qsecurity_status_(
-          OxideQSecurityStatusPrivate::Create(this)) {
+          OxideQSecurityStatusPrivate::Create(this)),
+      find_in_page_controller_(new OxideQFindController(view_.get())) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     connect(im, SIGNAL(visibleChanged()),

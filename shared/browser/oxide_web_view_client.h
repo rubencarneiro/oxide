@@ -208,6 +208,9 @@ class WebViewClient : public ScriptMessageTarget {
   virtual void PrepareToCloseResponseReceived(bool proceed);
 
   virtual void CloseRequested();
+
+  virtual void FindInPageCurrentChanged();
+  virtual void FindInPageCountChanged();
 };
 
 } // namespace oxide
