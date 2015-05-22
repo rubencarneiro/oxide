@@ -192,5 +192,25 @@ TestWebView {
       compare(webView.downloadReferrer,
               "http://testsuite/tst_WebView_contextMenu.html");
     }
+
+    function test_WebView_contextMenu_mediaFlags_data() {
+      return [
+        { id: "video", loop: true, canSave: true, hasAudio: false, controls: false },
+        { id: "audio", loop: false, canSave: true, hasAudio: true, controls: true },
+      ];
+    }
+
+    function test_WebView_contextMenu_mediaFlags(data) {
+      invokeContextMenu(data.id);
+      var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaFlags & WebView.MediaLoop,
+              data.loop ? WebView.MediaLoop : WebView.MediaNone);
+      compare(model.mediaFlags & WebView.MediaCanSave,
+              data.canSave ? WebView.MediaCanSave : WebView.MediaNone);
+      compare(model.mediaFlags & WebView.MediaHasAudio,
+              data.hasAudio ? WebView.MediaHasAudio : WebView.MediaNone);
+      compare(model.mediaFlags & WebView.MediaControls,
+              data.controls ? WebView.MediaControls : WebView.MediaNone);
+    }
   }
 }

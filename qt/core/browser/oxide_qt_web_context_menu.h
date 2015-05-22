@@ -65,6 +65,7 @@ class WebContextMenu : public oxide::WebContextMenu,
   void paste() const override;
   void erase() const override;
   void selectAll() const override;
+  int mediaFlags() const override;
   void saveLink() const override;
   void saveImage() const override;
 

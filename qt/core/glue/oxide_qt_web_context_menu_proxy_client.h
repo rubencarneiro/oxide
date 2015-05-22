@@ -46,6 +46,20 @@ enum MediaType {
   MEDIA_TYPE_PLUGIN
 };
 
+enum MediaFlags {
+  MEDIA_NONE = 0,
+  MEDIA_IN_ERROR = 1 << 0,
+  MEDIA_PAUSED = 1 << 1,
+  MEDIA_MUTED = 1 << 2,
+  MEDIA_LOOP = 1 << 3,
+  MEDIA_CAN_SAVE = 1 << 4,
+  MEDIA_HAS_AUDIO = 1 << 5,
+  MEDIA_CAN_TOGGLE_CONTROLS = 1 << 6,
+  MEDIA_CONTROLS = 1 << 7,
+  MEDIA_CAN_PRINT = 1 << 8,
+  MEDIA_CAN_ROTATE = 1 << 9
+};
+
 class WebContextMenuProxyClient {
  public:
   virtual ~WebContextMenuProxyClient() {}
@@ -72,6 +86,8 @@ class WebContextMenuProxyClient {
   virtual void paste() const = 0;
   virtual void erase() const = 0;
   virtual void selectAll() const = 0;
+
+  virtual int mediaFlags() const = 0;
 
   virtual void saveLink() const = 0;
   virtual void saveImage() const = 0;

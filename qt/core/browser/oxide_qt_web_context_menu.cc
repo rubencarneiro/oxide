@@ -156,6 +156,41 @@ void WebContextMenu::selectAll() const {
   SelectAll();
 }
 
+int WebContextMenu::mediaFlags() const {
+  int flags = MEDIA_NONE;
+  if (params_.media_flags & blink::WebContextMenuData::MediaInError) {
+    flags |= MEDIA_IN_ERROR;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaPaused) {
+    flags |= MEDIA_PAUSED;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaMuted) {
+    flags |= MEDIA_MUTED;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaLoop) {
+    flags |= MEDIA_LOOP;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaCanSave) {
+    flags |= MEDIA_CAN_SAVE;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaHasAudio) {
+    flags |= MEDIA_HAS_AUDIO;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaCanToggleControls) {
+    flags |= MEDIA_CAN_TOGGLE_CONTROLS;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaControls) {
+    flags |= MEDIA_CONTROLS;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaCanPrint) {
+    flags |= MEDIA_CAN_PRINT;
+  }
+  if (params_.media_flags & blink::WebContextMenuData::MediaCanRotate) {
+    flags |= MEDIA_CAN_ROTATE;
+  }
+  return flags;
+}
+
 void WebContextMenu::saveLink() const {
   SaveLink();
 }

@@ -66,6 +66,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_FLAGS(ContentType)
   Q_FLAGS(EditCapabilities)
+  Q_FLAGS(MediaStatus)
   Q_ENUMS(LogMessageSeverityLevel);
   Q_ENUMS(MediaType);
   Q_ENUMS(RestoreType);
@@ -178,6 +179,21 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     MediaTypeCanvas,
     MediaTypePlugin
   };
+
+  enum MediaFlags {
+    MediaNone = 0,
+    MediaInError = 1 << 0,
+    MediaPaused = 1 << 1,
+    MediaMuted = 1 << 2,
+    MediaLoop = 1 << 3,
+    MediaCanSave = 1 << 4,
+    MediaHasAudio = 1 << 5,
+    MediaCanToggleControls = 1 << 6,
+    MediaControls = 1 << 7,
+    MediaCanPrint = 1 << 8,
+    MediaCanRotate = 1 << 9
+  };
+  Q_DECLARE_FLAGS(MediaStatus, MediaFlags)
 
   void componentComplete();
 

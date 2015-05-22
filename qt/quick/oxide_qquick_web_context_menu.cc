@@ -50,6 +50,7 @@ class ContextMenuContext : public QObject {
   Q_PROPERTY(QString selectionText READ selectionText CONSTANT FINAL)
   Q_PROPERTY(bool isEditable READ isEditable CONSTANT FINAL)
   Q_PROPERTY(OxideQQuickWebView::EditCapabilities editFlags READ editFlags CONSTANT FINAL)
+  Q_PROPERTY(OxideQQuickWebView::MediaStatus mediaFlags READ mediaFlags CONSTANT FINAL)
 
  public:
   virtual ~ContextMenuContext() {}
@@ -75,6 +76,9 @@ class ContextMenuContext : public QObject {
   Q_INVOKABLE void paste() const;
   Q_INVOKABLE void erase() const;
   Q_INVOKABLE void selectAll() const;
+
+  OxideQQuickWebView::MediaStatus mediaFlags() const;
+
   Q_INVOKABLE void saveLink() const;
   Q_INVOKABLE void saveImage() const;
 
@@ -248,6 +252,44 @@ void ContextMenuContext::selectAll() const {
   } else {
     client_->selectAll();
   }
+}
+
+OxideQQuickWebView::MediaStatus ContextMenuContext::mediaFlags() const {
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaNone ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_NONE));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaInError ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_IN_ERROR));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaPaused ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_PAUSED));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaMuted ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_MUTED));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaLoop ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_LOOP));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaCanSave ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_SAVE));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaHasAudio ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_HAS_AUDIO));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaCanToggleControls ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_TOGGLE_CONTROLS));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaControls ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CONTROLS));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaCanPrint ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_PRINT));
+  Q_STATIC_ASSERT(
+      OxideQQuickWebView::MediaCanRotate ==
+        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_ROTATE));
+
+  return static_cast<OxideQQuickWebView::MediaStatus>(client_->mediaFlags());
 }
 
 void ContextMenuContext::saveLink() const {
