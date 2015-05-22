@@ -78,7 +78,7 @@ class WebContextMenu : public content::WebContentsObserver {
 
   base::WeakPtrFactory<WebContextMenu> weak_ptr_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebContextMenu);
+  DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
 };
 
 } // namespace oxide

@@ -77,7 +77,7 @@ class WebContextMenu : public oxide::WebContextMenu,
 
   scoped_ptr<WebContextMenuProxy> proxy_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebContextMenu);
+  DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
 };
 
 } // namespace qt
