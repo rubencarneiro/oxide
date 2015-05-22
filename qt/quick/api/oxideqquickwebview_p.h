@@ -65,6 +65,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
 
   Q_FLAGS(ContentType)
+  Q_FLAGS(EditCapabilities)
   Q_ENUMS(LogMessageSeverityLevel);
   Q_ENUMS(RestoreType);
   Q_ENUMS(WebProcessStatus);
@@ -155,6 +156,18 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     WebProcessKilled,
     WebProcessCrashed
   };
+
+  enum EditFlags {
+    CanDoNone = 0,
+    CanUndo = 1 << 0,
+    CanRedo = 1 << 1,
+    CanCut = 1 << 2,
+    CanCopy = 1 << 3,
+    CanPaste = 1 << 4,
+    CanErase = 1 << 5,
+    CanSelectAll = 1 << 6
+  };
+  Q_DECLARE_FLAGS(EditCapabilities, EditFlags)
 
   void componentComplete();
 

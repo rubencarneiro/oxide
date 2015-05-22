@@ -82,56 +82,54 @@ void WebContextMenu::cancel() {
   Close();
 }
 
-bool WebContextMenu::canUndo() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanUndo);
+int WebContextMenu::editFlags() const {
+  int flags = EDIT_CAN_DO_NONE;
+  if (params_.edit_flags & blink::WebContextMenuData::CanUndo) {
+    flags |= EDIT_CAN_UNDO;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanRedo) {
+    flags |= EDIT_CAN_REDO;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanCut) {
+    flags |= EDIT_CAN_CUT;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanCopy) {
+    flags |= EDIT_CAN_COPY;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanPaste) {
+    flags |= EDIT_CAN_PASTE;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanDelete) {
+    flags |= EDIT_CAN_ERASE;
+  }
+  if (params_.edit_flags & blink::WebContextMenuData::CanSelectAll) {
+    flags |= EDIT_CAN_SELECT_ALL;
+  }
+  return flags;
 }
 
 void WebContextMenu::undo() const {
   Undo();
 }
 
-bool WebContextMenu::canRedo() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanRedo);
-}
-
 void WebContextMenu::redo() const {
   Redo();
-}
-
-bool WebContextMenu::canCut() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanCut);
 }
 
 void WebContextMenu::cut() const {
   Cut();
 }
 
-bool WebContextMenu::canCopy() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanCopy);
-}
-
 void WebContextMenu::copy() const {
   Copy();
-}
-
-bool WebContextMenu::canPaste() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanPaste);
 }
 
 void WebContextMenu::paste() const {
   Paste();
 }
 
-bool WebContextMenu::canErase() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanDelete);
-}
-
 void WebContextMenu::erase() const {
   Erase();
-}
-
-bool WebContextMenu::canSelectAll() const {
-  return (params_.edit_flags & blink::WebContextMenuData::CanSelectAll);
 }
 
 void WebContextMenu::selectAll() const {

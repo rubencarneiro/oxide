@@ -26,6 +26,17 @@
 namespace oxide {
 namespace qt {
 
+enum EditFlags {
+  EDIT_CAN_DO_NONE = 0,
+  EDIT_CAN_UNDO = 1 << 0,
+  EDIT_CAN_REDO = 1 << 1,
+  EDIT_CAN_CUT = 1 << 2,
+  EDIT_CAN_COPY = 1 << 3,
+  EDIT_CAN_PASTE = 1 << 4,
+  EDIT_CAN_ERASE = 1 << 5,
+  EDIT_CAN_SELECT_ALL = 1 << 6
+};
+
 class WebContextMenuProxyClient {
  public:
   virtual ~WebContextMenuProxyClient() {}
@@ -43,19 +54,13 @@ class WebContextMenuProxyClient {
 
   virtual void cancel() = 0;
 
-  virtual bool canUndo() const = 0;
+  virtual int editFlags() const = 0;
   virtual void undo() const = 0;
-  virtual bool canRedo() const = 0;
   virtual void redo() const = 0;
-  virtual bool canCut() const = 0;
   virtual void cut() const = 0;
-  virtual bool canCopy() const = 0;
   virtual void copy() const = 0;
-  virtual bool canPaste() const = 0;
   virtual void paste() const = 0;
-  virtual bool canErase() const = 0;
   virtual void erase() const = 0;
-  virtual bool canSelectAll() const = 0;
   virtual void selectAll() const = 0;
 
   virtual void saveLink() const = 0;

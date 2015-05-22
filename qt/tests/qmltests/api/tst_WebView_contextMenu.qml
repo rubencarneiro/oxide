@@ -116,12 +116,12 @@ TestWebView {
       var model = webView.currentContextMenu.contextModel;
       verify(model.isEditable);
       compare(model.selectionText, "");
-      verify(!model.canUndo);
-      verify(!model.canRedo);
-      verify(!model.canCut);
-      verify(!model.canCopy);
-      verify(!model.canErase);
-      verify(model.canSelectAll);
+      verify(!(model.editFlags & WebView.CanUndo));
+      verify(!(model.editFlags & WebView.CanRedo));
+      verify(!(model.editFlags & WebView.CanCut));
+      verify(!(model.editFlags & WebView.CanCopy));
+      verify(!(model.editFlags & WebView.CanErase));
+      verify(model.editFlags & WebView.CanSelectAll);
       model.selectAll();
       cleanup();
 
@@ -129,12 +129,12 @@ TestWebView {
       model = webView.currentContextMenu.contextModel;
       verify(model.isEditable);
       compare(model.selectionText, "text area");
-      verify(!model.canUndo);
-      verify(!model.canRedo);
-      verify(model.canCut);
-      verify(model.canCopy);
-      verify(model.canErase);
-      verify(model.canSelectAll);
+      verify(!(model.editFlags & WebView.CanUndo));
+      verify(!(model.editFlags & WebView.CanRedo));
+      verify(model.editFlags & WebView.CanCut);
+      verify(model.editFlags & WebView.CanCopy);
+      verify(model.editFlags & WebView.CanErase);
+      verify(model.editFlags & WebView.CanSelectAll);
       model.erase();
       cleanup();
       var r = webView.getTestApi().evaluateCode(
@@ -145,8 +145,8 @@ TestWebView {
       model = webView.currentContextMenu.contextModel;
       verify(model.isEditable);
       compare(model.selectionText, "");
-      verify(model.canUndo);
-      verify(!model.canRedo);
+      verify(model.editFlags & WebView.CanUndo);
+      verify(!(model.editFlags & WebView.CanRedo));
       model.undo();
       cleanup();
       var r = webView.getTestApi().evaluateCode(
@@ -157,8 +157,8 @@ TestWebView {
       model = webView.currentContextMenu.contextModel;
       verify(model.isEditable);
       compare(model.selectionText, "text area");
-      verify(!model.canUndo);
-      verify(model.canRedo);
+      verify(!(model.editFlags & WebView.CanUndo));
+      verify(model.editFlags & WebView.CanRedo);
       model.redo();
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#editable\").value");
