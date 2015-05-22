@@ -17,7 +17,7 @@
 
 #include "oxide_qquick_web_context_menu.h"
 
-#include <QPoint>
+#include <QPointF>
 #include <QObject>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -38,7 +38,7 @@ namespace {
 class ContextMenuContext : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(QPoint position READ position CONSTANT FINAL)
+  Q_PROPERTY(QPointF position READ position CONSTANT FINAL)
   Q_PROPERTY(QUrl linkUrl READ linkUrl CONSTANT FINAL)
   Q_PROPERTY(QString linkText READ linkText CONSTANT FINAL)
   Q_PROPERTY(QUrl unfilteredLinkUrl READ unfilteredLinkUrl CONSTANT FINAL)
@@ -62,7 +62,7 @@ class ContextMenuContext : public QObject {
   virtual ~ContextMenuContext() {}
   ContextMenuContext(oxide::qt::WebContextMenuProxyClient* client);
 
-  QPoint position() const;
+  QPointF position() const;
   QUrl linkUrl() const;
   QString linkText() const;
   QUrl unfilteredLinkUrl() const;
@@ -103,7 +103,7 @@ ContextMenuContext::ContextMenuContext(
     oxide::qt::WebContextMenuProxyClient* client) :
     client_(client) {}
 
-QPoint ContextMenuContext::position() const {
+QPointF ContextMenuContext::position() const {
   return client_->position();
 }
 
