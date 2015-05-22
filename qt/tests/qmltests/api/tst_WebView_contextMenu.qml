@@ -204,5 +204,23 @@ TestWebView {
       compare(webView.downloadReferrer,
               "http://testsuite/tst_WebView_contextMenu.html");
     }
+
+    function test_WebView_contextMenu_video() {
+      invokeContextMenu("video");
+      var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeVideo);
+      compare(model.linkUrl, "");
+      compare(model.srcUrl, "http://testsuite/buddha.mp4");
+      verify(!model.isEditable);
+    }
+
+    function test_WebView_contextMenu_audio() {
+      invokeContextMenu("audio");
+      var model = webView.currentContextMenu.contextModel;
+      compare(model.mediaType, WebView.MediaTypeAudio);
+      compare(model.linkUrl, "");
+      compare(model.srcUrl, "http://testsuite/fire.oga");
+      verify(!model.isEditable);
+    }
   }
 }
