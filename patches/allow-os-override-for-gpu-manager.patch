@@ -24,7 +24,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #include "gpu/command_buffer/service/gpu_switches.h"
  #include "gpu/config/gpu_control_list_jsons.h"
  #include "gpu/config/gpu_driver_bug_workaround_type.h"
-@@ -548,25 +549,25 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -550,25 +551,25 @@ void GpuDataManagerImplPrivate::Initiali
    }
  }
  
@@ -52,7 +52,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
        &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
  
    // We have to update GpuFeatureType before notify all the observers.
-@@ -947,32 +948,37 @@ GpuDataManagerImplPrivate::GpuDataManage
+@@ -956,32 +957,37 @@ GpuDataManagerImplPrivate::GpuDataManage
        use_warp_(false),
        card_blacklisted_(false),
        update_histograms_(true),
@@ -91,7 +91,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
  #endif
  }
  
-@@ -984,25 +990,27 @@ void GpuDataManagerImplPrivate::Initiali
+@@ -993,25 +999,27 @@ void GpuDataManagerImplPrivate::Initiali
        base::CommandLine::ForCurrentProcess()->HasSwitch(
            switches::kLogGpuControlListDecisions);
  
@@ -163,7 +163,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -346,9 +346,15 @@ const wchar_t* ContentBrowserClient::Get
+@@ -339,9 +339,15 @@ const wchar_t* ContentBrowserClient::Get
  #if defined(VIDEO_HOLE)
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
@@ -200,7 +200,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
-@@ -626,13 +627,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -625,13 +626,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)
@@ -220,7 +220,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
 diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
 --- a/gpu/config/gpu_control_list.cc
 +++ b/gpu/config/gpu_control_list.cc
-@@ -1331,30 +1331,32 @@ GpuControlList::GpuControlList()
+@@ -1331,29 +1331,31 @@ GpuControlList::GpuControlList()
  }
  
  GpuControlList::~GpuControlList() {
@@ -232,8 +232,7 @@ diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
 -    GpuControlList::OsFilter os_filter) {
 +    GpuControlList::OsFilter os_filter,
 +    GpuControlList::OsType os_override) {
-   scoped_ptr<base::Value> root;
-   root.reset(base::JSONReader::Read(json_context));
+   scoped_ptr<base::Value> root = base::JSONReader::Read(json_context);
    if (root.get() == NULL || !root->IsType(base::Value::TYPE_DICTIONARY))
      return false;
  
@@ -256,7 +255,7 @@ diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
      return false;
  
    const base::ListValue* list = NULL;
-@@ -1372,17 +1374,19 @@ bool GpuControlList::LoadList(const base
+@@ -1371,17 +1373,19 @@ bool GpuControlList::LoadList(const base
      if (entry.get() == NULL)
        return false;
      if (entry->id() > max_entry_id)

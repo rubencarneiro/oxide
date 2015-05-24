@@ -42,6 +42,10 @@ class OzonePlatformOxide : public OzonePlatform {
     return &surface_factory_;
   }
 
+  OverlayManagerOzone* GetOverlayManager() final {
+    return nullptr;
+  }
+
   CursorFactoryOzone* GetCursorFactoryOzone() final {
     return nullptr;
   }
