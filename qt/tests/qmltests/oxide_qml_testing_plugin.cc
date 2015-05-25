@@ -19,8 +19,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <QCoreApplication>
 #include <QClipboard>
+#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QGuiApplication>
 #include <QLatin1String>
@@ -195,8 +195,7 @@ class OxideTestingUtils : public QObject {
   Q_INVOKABLE void copyToClipboard(const QString& mimeType, const QString& data) {
     QMimeData * mime_data = new QMimeData();
     if (mimeType.startsWith("image/")) {
-      mime_data->setData(mimeType
-          , QByteArray::fromBase64(data.toUtf8()));
+      mime_data->setData(mimeType, QByteArray::fromBase64(data.toUtf8()));
     } else {
       mime_data->setData(mimeType, data.toUtf8());
     }
