@@ -68,6 +68,8 @@
         'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
+        'browser/oxide_qt_clipboard.cc',
+        'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',
@@ -133,6 +135,11 @@
         'gpu/oxide_qt_gl_context_dependent.h',
       ],
       'actions': [
+        {
+          'action_name': 'oxide_qt_clipboard.moc',
+          'moc_input': 'browser/oxide_qt_clipboard.cc',
+          'includes': [ 'moc.gypi' ]
+        },
         {
           'action_name': 'oxide_qt_location_provider.moc',
           'moc_input': 'browser/oxide_qt_location_provider.cc',
