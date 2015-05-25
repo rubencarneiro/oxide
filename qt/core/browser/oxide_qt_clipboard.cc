@@ -136,13 +136,7 @@ bool ClipboardQt::IsFormatAvailable(const FormatType& format,
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return false;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data) {
     return false;
   }
@@ -153,14 +147,7 @@ bool ClipboardQt::IsFormatAvailable(const FormatType& format,
 void ClipboardQt::Clear(ui::ClipboardType type) {
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
-
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  clipboard->clear();
+  QGuiApplication::clipboard()->clear();
 }
 
 void ClipboardQt::ReadAvailableTypes(ui::ClipboardType type,
@@ -171,24 +158,19 @@ void ClipboardQt::ReadAvailableTypes(ui::ClipboardType type,
   DCHECK(types != nullptr);
   DCHECK(contains_filenames != nullptr);
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data) {
     return;
   }
 
-  std::vector<base::string16> out_types;
-  Q_FOREACH (const QString& format, data->formats()) {
-    out_types.push_back(base::UTF8ToUTF16(format.toUtf8().data()));
-  }
-  std::swap(*types, out_types);
-
   *contains_filenames = false;
+  Q_FOREACH (const QString& format, data->formats()) {
+    types->push_back(base::UTF8ToUTF16(format.toUtf8().data()));
+
+    if (format == GetFilenameFormatType().ToString().c_str()) {
+      *contains_filenames = true;
+    }
+  }
 }
 
 void ClipboardQt::ReadText(ui::ClipboardType type,
@@ -196,13 +178,7 @@ void ClipboardQt::ReadText(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data || ! data->hasText()) {
     return;
   }
@@ -215,13 +191,7 @@ void ClipboardQt::ReadAsciiText(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data || ! data->hasText()) {
     return;
   }
@@ -237,13 +207,7 @@ void ClipboardQt::ReadHTML(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data || ! data->hasHtml()) {
     return;
   }
@@ -258,13 +222,7 @@ void ClipboardQt::ReadRTF(ui::ClipboardType type, std::string* result) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! data || ! data->hasFormat(QString::fromLatin1(kMimeTypeRTF))) {
     return;
   }
@@ -276,13 +234,7 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return SkBitmap();
-  }
-
-  const QMimeData *md = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *md = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   if ( ! md) {
     return SkBitmap();
   }
@@ -327,13 +279,7 @@ void ClipboardQt::ReadCustomData(ui::ClipboardType type,
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
   
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = GET_CLIPBOARD_DATA(clipboard);
+  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   QString mime_type = QString::fromStdString(base::UTF16ToUTF8(data_type));
   if ( ! data || ! data->hasFormat(mime_type)) {
     return;
@@ -355,13 +301,7 @@ void ClipboardQt::ReadData(const FormatType& format,
                            std::string* result) const {
   DCHECK(CalledOnValidThread());
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  const QMimeData *data = clipboard->mimeData(QClipboard::Clipboard);
+  const QMimeData *data = QGuiApplication::clipboard()->mimeData(QClipboard::Clipboard);
   if ( ! data) {
     return;
   }
@@ -385,13 +325,7 @@ void ClipboardQt::WriteObjects(ui::ClipboardType type,
     DispatchObject(static_cast<ObjectType>(iter->first), iter->second);
   }
 
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if ( ! clipboard) {
-    qCritical() << "Could not access clipboard";
-    return;
-  }
-
-  clipboard->setMimeData(
+  QGuiApplication::clipboard()->setMimeData(
       write_mime_data_acc_.release(),
       type == ui::CLIPBOARD_TYPE_COPY_PASTE
       ? QClipboard::Clipboard
