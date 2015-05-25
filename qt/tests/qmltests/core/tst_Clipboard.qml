@@ -91,8 +91,13 @@ TestWebView {
       if (isImage) {
         /**
          The image we get from QImage and the one we pasted are slightly different
-         but overall is the same image. QImage does some "processing" on the raw image content
+         but overall is the same image. QImage does ARGB -> RGBA conversion
+         on the raw image content
          that slightly alters it and make it hard to have an exact match.
+         
+         The '34' magic number in this case has been empirically determined as the
+         maximum amount of content that stays the same after the conversion in this
+         context.
          */
         verify(webView.waitFor(function() { return expect_content(data.content, 34); }));
       } else {
