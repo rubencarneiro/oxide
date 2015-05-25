@@ -88,12 +88,16 @@ TestWebView {
       verify(webView.waitFor(function() { return expect_mime_type(data.mimeType); }));
       verify(webView.waitFor(function() { return expect_has_file(isImage); }));
 
-      /**
-       The image we get from QImage and the one we pasted are slightly different
-       but overall is the same image. QImage does some "processing" on the raw image content
-       that slightly alters it and make it hard to have an exact match.
-       */
-      verify(webView.waitFor(function() { return expect_content(data.content, 34); }));
+      if (isImage) {
+        /**
+         The image we get from QImage and the one we pasted are slightly different
+         but overall is the same image. QImage does some "processing" on the raw image content
+         that slightly alters it and make it hard to have an exact match.
+         */
+        verify(webView.waitFor(function() { return expect_content(data.content, 34); }));
+      } else {
+        verify(webView.waitFor(function() { return expect_content(data.content); }));
+      }
     }
 
     function test_copy() {
