@@ -46,10 +46,6 @@ class WebContextMenu : public content::WebContentsObserver {
   virtual void Show() = 0;
   void Close();
 
-  base::WeakPtr<WebContextMenu> GetWeakPtr() {
-    return weak_ptr_factory_.GetWeakPtr();
-  }
-
  protected:
   friend class base::DeleteHelper<WebContextMenu>;
 
@@ -68,8 +64,6 @@ class WebContextMenu : public content::WebContentsObserver {
   virtual void Hide();
 
   content::RenderFrameHostImpl* render_frame_host_;
-
-  base::WeakPtrFactory<WebContextMenu> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
 };

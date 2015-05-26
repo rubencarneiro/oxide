@@ -61,15 +61,13 @@ WebContextMenu::WebContextMenu(content::RenderFrameHost* rfh,
                                const content::ContextMenuParams& params)
     : content::WebContentsObserver(content::WebContents::FromRenderFrameHost(rfh)),
       params_(params),
-      render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)),
-      weak_ptr_factory_(this) {}
+      render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)) {}
 
 WebContextMenu::~WebContextMenu() {
   DCHECK(!render_frame_host_);
 }
 
 void WebContextMenu::Close() {
-  weak_ptr_factory_.InvalidateWeakPtrs();
   Hide();
   render_frame_host_ = nullptr;
   content::BrowserThread::DeleteSoon(
