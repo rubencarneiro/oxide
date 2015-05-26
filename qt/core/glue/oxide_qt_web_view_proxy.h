@@ -83,6 +83,16 @@ enum WebProcessStatus {
   WEB_PROCESS_CRASHED
 };
 
+enum EditingCommands {
+  EDITING_COMMAND_UNDO,
+  EDITING_COMMAND_REDO,
+  EDITING_COMMAND_CUT,
+  EDITING_COMMAND_COPY,
+  EDITING_COMMAND_PASTE,
+  EDITING_COMMAND_ERASE,
+  EDITING_COMMAND_SELECT_ALL
+};
+
 class CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}
@@ -215,6 +225,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void locationBarHide(bool animate) = 0;
 
   virtual WebProcessStatus webProcessStatus() const = 0;
+
+  virtual void executeEditingCommand(EditingCommands command) const = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);

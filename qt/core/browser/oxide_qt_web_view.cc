@@ -85,6 +85,7 @@
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_web_context.h"
+#include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 #include "oxide_qt_web_preferences.h"
@@ -794,6 +795,14 @@ oxide::WebFrame* WebView::CreateWebFrame(
   WebFrame* frame = new WebFrame(render_frame_host, view_.get());
   WebFrameProxyHandle* handle = client_->CreateWebFrame(frame);
   return WebFrame::FromProxyHandle(handle);
+}
+
+oxide::WebContextMenu* WebView::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  WebContextMenu* menu = new WebContextMenu(rfh, params);
+  menu->SetProxy(client_->CreateWebContextMenu(menu));
+  return menu;
 }
 
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
@@ -1519,6 +1528,32 @@ WebProcessStatus WebView::webProcessStatus() const {
     // Map all other termination statuses to crashed. This is
     // consistent with how the sad tab helper works in Chrome.
     return WEB_PROCESS_CRASHED;
+  }
+}
+
+void WebView::executeEditingCommand(EditingCommands command) const {
+  content::WebContents* contents = view_->GetWebContents();
+  if (!contents) {
+    return;
+  }
+
+  switch (command) {
+    case EDITING_COMMAND_UNDO:
+      return contents->Undo();
+    case EDITING_COMMAND_REDO:
+      return contents->Redo();
+    case EDITING_COMMAND_CUT:
+      return contents->Cut();
+    case EDITING_COMMAND_COPY:
+      return contents->Copy();
+    case EDITING_COMMAND_PASTE:
+      return contents->Paste();
+    case EDITING_COMMAND_ERASE:
+      return contents->Delete();
+    case EDITING_COMMAND_SELECT_ALL:
+      return contents->SelectAll();
+    default:
+      NOTREACHED();
   }
 }
 

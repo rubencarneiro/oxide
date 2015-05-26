@@ -148,6 +148,9 @@ class WebView : public QObject,
                               bool user_gesture) override;
   oxide::WebFrame* CreateWebFrame(
       content::RenderFrameHost* render_frame_host) override;
+  oxide::WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params) override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) override;
@@ -268,6 +271,8 @@ class WebView : public QObject,
   void locationBarHide(bool animate) override;
 
   WebProcessStatus webProcessStatus() const override;
+
+  void executeEditingCommand(EditingCommands command) const override;
 
   scoped_ptr<oxide::WebView> view_;
 

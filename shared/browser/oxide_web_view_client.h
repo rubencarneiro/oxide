@@ -36,6 +36,7 @@ class CompositorFrameMetadata;
 }
 
 namespace content {
+struct ContextMenuParams;
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderViewHost;
@@ -50,6 +51,7 @@ class JavaScriptDialog;
 class MediaAccessPermissionRequest;
 class SecurityStatus;
 class SimplePermissionRequest;
+class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
 class WebView;
@@ -165,6 +167,10 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual WebFrame* CreateWebFrame(
       content::RenderFrameHost* render_frame_host);
+
+  virtual WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params);
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 

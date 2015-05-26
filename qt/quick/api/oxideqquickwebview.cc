@@ -55,6 +55,7 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -225,6 +226,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
+    context_menu_(nullptr),
     popup_menu_(nullptr),
     alert_dialog_(nullptr),
     confirm_dialog_(nullptr),
@@ -268,6 +270,13 @@ void OxideQQuickWebViewPrivate::Initialized() {
 QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   Q_Q(OxideQQuickWebView);
   return q;
+}
+
+oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    oxide::qt::WebContextMenuProxyClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebContextMenu(q, client);
 }
 
 oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
@@ -1387,6 +1396,23 @@ qreal OxideQQuickWebView::contentY() const {
       d)->proxy()->compositorFrameScrollOffsetPix().y();
 }
 
+QQmlComponent* OxideQQuickWebView::contextMenu() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->context_menu_;
+}
+
+void OxideQQuickWebView::setContextMenu(QQmlComponent* context_menu) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->context_menu_ == context_menu) {
+    return;
+  }
+
+  d->context_menu_ = context_menu;
+  emit contextMenuChanged();
+}
+
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1695,6 +1721,35 @@ OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() cons
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {
   return new OxideQQuickWebViewAttached(object);
+}
+
+void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
+  Q_D(const OxideQQuickWebView);
+
+  Q_STATIC_ASSERT(
+      EditingCommandUndo ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_UNDO));
+  Q_STATIC_ASSERT(
+      EditingCommandRedo ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_REDO));
+  Q_STATIC_ASSERT(
+      EditingCommandCut ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_CUT));
+  Q_STATIC_ASSERT(
+      EditingCommandCopy ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_COPY));
+  Q_STATIC_ASSERT(
+      EditingCommandPaste ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_PASTE));
+  Q_STATIC_ASSERT(
+      EditingCommandErase ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_ERASE));
+  Q_STATIC_ASSERT(
+      EditingCommandSelectAll ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_SELECT_ALL));
+
+  d->proxy()->executeEditingCommand(
+      static_cast<oxide::qt::EditingCommands>(command));
 }
 
 void OxideQQuickWebView::goBack() {

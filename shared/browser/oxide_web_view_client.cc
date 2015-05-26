@@ -123,6 +123,12 @@ WebFrame* WebViewClient::CreateWebFrame(
   return nullptr;
 }
 
+WebContextMenu* WebViewClient::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  return nullptr;
+}
+
 WebPopupMenu* WebViewClient::CreatePopupMenu(
     content::RenderFrameHost* rfh) {
   return nullptr;
