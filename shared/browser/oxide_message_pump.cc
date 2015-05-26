@@ -44,7 +44,7 @@ void MessagePump::DidProcessTask(const base::PendingTask& pending_task) {
 
 MessagePump::MessagePump() :
     task_depth_(0) {
-  base::MessageLoop::current()->AddTaskObserver(this);
+  //base::MessageLoop::current()->AddTaskObserver(this);
 }
 
 MessagePump::~MessagePump() {}
