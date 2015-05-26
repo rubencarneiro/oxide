@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
 #define _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_loop.h"
 #include "base/message_loop/message_pump.h"
 
 namespace base {
@@ -29,43 +28,22 @@ class RunLoop;
 
 namespace oxide {
 
-class MessagePump : public base::MessagePump,
-                    public base::MessageLoop::TaskObserver {
+class MessagePump : public base::MessagePump {
  public:
+  static MessagePump* Get();
+
   MessagePump();
   virtual ~MessagePump();
 
-  virtual void Start(Delegate* delegate) = 0;
+  void Start();
   void Stop();
 
-  void WillProcessTask(const base::PendingTask& pending_task) final;
-  void DidProcessTask(const base::PendingTask& pending_task) final;
-
- protected:
-  void SetupRunLoop();
-
  private:
+  virtual void OnStart() = 0;
+
   scoped_ptr<base::RunLoop> run_loop_;
-  int task_depth_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
-};
-
-class MessageLoopForUI final : public base::MessageLoop {
- public:
-  static MessageLoopForUI* current() {
-    MessageLoop* loop = base::MessageLoop::current();
-    DCHECK_EQ(loop->type(), base::MessageLoop::TYPE_UI);
-    return static_cast<MessageLoopForUI *>(loop);
-  }
-
-  void Start() {
-    static_cast<MessagePump *>(pump_.get())->Start(this);
-  }
-
-  void Stop() {
-    static_cast<MessagePump *>(pump_.get())->Stop();
-  }
 };
 
 } // namespace oxide

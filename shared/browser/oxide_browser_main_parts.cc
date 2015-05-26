@@ -279,7 +279,7 @@ void BrowserMainParts::PreMainMessageLoopRun() {
 }
 
 bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
-  MessageLoopForUI::current()->Start();
+  MessagePump::Get()->Start();
   return true;
 }
 

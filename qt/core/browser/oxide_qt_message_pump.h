@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -36,22 +36,25 @@ QT_USE_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class MessagePump final : public QObject,
-                          public oxide::MessagePump {
+class MessagePump : public QObject,
+                    public oxide::MessagePump {
  public:
   MessagePump();
-
-  void Run(Delegate* delegate) final;
-
-  void Quit() final;
-
-  void ScheduleWork() final;
-
-  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) final;
-
-  void Start(Delegate* delegate) final;
+  ~MessagePump() override;
 
  private:
+  // base::MessagePump implementation
+  void Run(Delegate* delegate) override;
+  void Quit() override;
+  void ScheduleWork() override;
+  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) override;
+
+  // oxide::MessagePump implementation
+  void OnStart() override;
+
+  void timerEvent(QTimerEvent* event) final;
+  void customEvent(QEvent* event) final;
+
   struct RunState {
     RunState() :
         delegate(nullptr),
@@ -62,9 +65,6 @@ class MessagePump final : public QObject,
     QEventLoop* event_loop;
     bool should_quit;
   };
-
-  void timerEvent(QTimerEvent* event) final;
-  void customEvent(QEvent* event) final;
 
   base::TimeTicks delayed_work_time_;
   int delayed_work_timer_id_;
