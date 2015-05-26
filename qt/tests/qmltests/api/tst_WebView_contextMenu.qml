@@ -126,24 +126,24 @@ TestWebView {
       invokeContextMenu("editable");
       var model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
-      verify(!(model.editFlags & WebView.CanUndo));
-      verify(!(model.editFlags & WebView.CanRedo));
-      verify(!(model.editFlags & WebView.CanCut));
-      verify(!(model.editFlags & WebView.CanCopy));
-      verify(!(model.editFlags & WebView.CanErase));
-      verify(model.editFlags & WebView.CanSelectAll);
+      verify(!(model.editFlags & WebView.UndoCapability));
+      verify(!(model.editFlags & WebView.RedoCapability));
+      verify(!(model.editFlags & WebView.CutCapability));
+      verify(!(model.editFlags & WebView.CopyCapability));
+      verify(!(model.editFlags & WebView.EraseCapability));
+      verify(model.editFlags & WebView.SelectAllCapability);
       webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       cleanup();
 
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
-      verify(!(model.editFlags & WebView.CanUndo));
-      verify(!(model.editFlags & WebView.CanRedo));
-      verify(model.editFlags & WebView.CanCut);
-      verify(model.editFlags & WebView.CanCopy);
-      verify(model.editFlags & WebView.CanErase);
-      verify(model.editFlags & WebView.CanSelectAll);
+      verify(!(model.editFlags & WebView.UndoCapability));
+      verify(!(model.editFlags & WebView.RedoCapability));
+      verify(model.editFlags & WebView.CutCapability);
+      verify(model.editFlags & WebView.CopyCapability);
+      verify(model.editFlags & WebView.EraseCapability);
+      verify(model.editFlags & WebView.SelectAllCapability);
       webView.executeEditingCommand(WebView.EditingCommandErase);
       cleanup();
       var r = webView.getTestApi().evaluateCode(
@@ -153,8 +153,8 @@ TestWebView {
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
-      verify(model.editFlags & WebView.CanUndo);
-      verify(!(model.editFlags & WebView.CanRedo));
+      verify(model.editFlags & WebView.UndoCapability);
+      verify(!(model.editFlags & WebView.RedoCapability));
       webView.executeEditingCommand(WebView.EditingCommandUndo);
       cleanup();
       var r = webView.getTestApi().evaluateCode(
@@ -164,8 +164,8 @@ TestWebView {
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
-      verify(!(model.editFlags & WebView.CanUndo));
-      verify(model.editFlags & WebView.CanRedo);
+      verify(!(model.editFlags & WebView.UndoCapability));
+      verify(model.editFlags & WebView.RedoCapability);
       webView.executeEditingCommand(WebView.EditingCommandRedo);
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#editable\").value");
