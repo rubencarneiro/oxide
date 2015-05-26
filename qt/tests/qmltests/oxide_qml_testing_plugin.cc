@@ -19,8 +19,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <QClipboard>
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
 #include <QQmlContext>
@@ -163,7 +165,7 @@ class OxideTestingUtils : public QObject {
   }
 
   Q_INVOKABLE QVariant getAppProperty(const QString& property) {
-    QCoreApplication::instance()->property(property.toStdString().c_str());
+    return QCoreApplication::instance()->property(property.toStdString().c_str());
   }
 
   Q_INVOKABLE void setAppProperty(const QString& property, const QVariant& value) {
@@ -188,6 +190,28 @@ class OxideTestingUtils : public QObject {
         kill.waitForFinished();
       }
     }
+  }
+
+  Q_INVOKABLE void copyToClipboard(const QString& mimeType, const QString& data) {
+    QMimeData * mime_data = new QMimeData();
+    if (mimeType.startsWith("image/")) {
+      mime_data->setData(mimeType, QByteArray::fromBase64(data.toUtf8()));
+    } else {
+      mime_data->setData(mimeType, data.toUtf8());
+    }
+    QGuiApplication::clipboard()->setMimeData(mime_data);
+  }
+
+  Q_INVOKABLE QString getFromClipboard(const QString& mimeType) {
+    const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
+    if (mime_data->hasFormat(mimeType)) {
+      return QString(mime_data->data(mimeType));
+    }
+    return QString();
+  }
+
+  Q_INVOKABLE void clearClipboard() {
+    QGuiApplication::clipboard()->clear();
   }
 };
 
