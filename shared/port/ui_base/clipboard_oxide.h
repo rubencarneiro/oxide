@@ -18,7 +18,7 @@
 #ifndef OXIDE_SHARED_PORT_UI_CLIPBOARD_OXIDE_H_
 #define OXIDE_SHARED_PORT_UI_CLIPBOARD_OXIDE_H_
 
-#include "content/common/content_export.h"
+#include "ui/base/ui_base_export.h"
 #include "ui/base/clipboard/clipboard.h"
 
 namespace ui {
@@ -72,7 +72,7 @@ class ClipboardOxide : public Clipboard {
 
 typedef Clipboard* (*ClipboardOxideFactory) ();
 
-CONTENT_EXPORT void SetClipboardOxideFactory(
+UI_BASE_EXPORT void SetClipboardOxideFactory(
     ClipboardOxideFactory factory);
 
 }
