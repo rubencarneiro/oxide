@@ -202,14 +202,14 @@ TestWebView {
     function test_WebView_contextMenu_mediaFlags(data) {
       invokeContextMenu(data.id);
       var model = webView.currentContextMenu.contextModel;
-      compare(model.mediaFlags & WebView.MediaLoop,
-              data.loop ? WebView.MediaLoop : WebView.MediaNone);
-      compare(model.mediaFlags & WebView.MediaCanSave,
-              data.canSave ? WebView.MediaCanSave : WebView.MediaNone);
-      compare(model.mediaFlags & WebView.MediaHasAudio,
-              data.hasAudio ? WebView.MediaHasAudio : WebView.MediaNone);
-      compare(model.mediaFlags & WebView.MediaControls,
-              data.controls ? WebView.MediaControls : WebView.MediaNone);
+      compare(model.mediaFlags & WebView.MediaStatusLoop,
+              data.loop ? WebView.MediaStatusLoop : WebView.MediaStatusNone);
+      compare(model.mediaFlags & WebView.MediaStatusCanSave,
+              data.canSave ? WebView.MediaStatusCanSave : WebView.MediaStatusNone);
+      compare(model.mediaFlags & WebView.MediaStatusHasAudio,
+              data.hasAudio ? WebView.MediaStatusHasAudio : WebView.MediaStatusNone);
+      compare(model.mediaFlags & WebView.MediaStatusControls,
+              data.controls ? WebView.MediaStatusControls : WebView.MediaStatusNone);
     }
   }
 }

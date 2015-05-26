@@ -189,20 +189,20 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     MediaTypePlugin
   };
 
-  enum MediaFlags {
-    MediaNone = 0,
-    MediaInError = 1 << 0,
-    MediaPaused = 1 << 1,
-    MediaMuted = 1 << 2,
-    MediaLoop = 1 << 3,
-    MediaCanSave = 1 << 4,
-    MediaHasAudio = 1 << 5,
-    MediaCanToggleControls = 1 << 6,
-    MediaControls = 1 << 7,
-    MediaCanPrint = 1 << 8,
-    MediaCanRotate = 1 << 9
+  enum MediaStatusFlags {
+    MediaStatusNone = 0,
+    MediaStatusInError = 1 << 0,
+    MediaStatusPaused = 1 << 1,
+    MediaStatusMuted = 1 << 2,
+    MediaStatusLoop = 1 << 3,
+    MediaStatusCanSave = 1 << 4,
+    MediaStatusHasAudio = 1 << 5,
+    MediaStatusCanToggleControls = 1 << 6,
+    MediaStatusControls = 1 << 7,
+    MediaStatusCanPrint = 1 << 8,
+    MediaStatusCanRotate = 1 << 9
   };
-  Q_DECLARE_FLAGS(MediaStatus, MediaFlags)
+  Q_DECLARE_FLAGS(MediaStatus, MediaStatusFlags)
 
   enum EditingCommands {
     EditingCommandUndo,

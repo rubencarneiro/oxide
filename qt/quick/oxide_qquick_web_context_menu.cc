@@ -177,38 +177,38 @@ OxideQQuickWebView::EditCapabilities ContextMenuContext::editFlags() const {
 
 OxideQQuickWebView::MediaStatus ContextMenuContext::mediaFlags() const {
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaNone ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_NONE));
+      OxideQQuickWebView::MediaStatusNone ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_NONE));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaInError ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_IN_ERROR));
+      OxideQQuickWebView::MediaStatusInError ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_IN_ERROR));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaPaused ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_PAUSED));
+      OxideQQuickWebView::MediaStatusPaused ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_PAUSED));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaMuted ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_MUTED));
+      OxideQQuickWebView::MediaStatusMuted ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_MUTED));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaLoop ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_LOOP));
+      OxideQQuickWebView::MediaStatusLoop ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_LOOP));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaCanSave ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_SAVE));
+      OxideQQuickWebView::MediaStatusCanSave ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CAN_SAVE));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaHasAudio ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_HAS_AUDIO));
+      OxideQQuickWebView::MediaStatusHasAudio ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_HAS_AUDIO));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaCanToggleControls ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_TOGGLE_CONTROLS));
+      OxideQQuickWebView::MediaStatusCanToggleControls ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CAN_TOGGLE_CONTROLS));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaControls ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CONTROLS));
+      OxideQQuickWebView::MediaStatusControls ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CONTROLS));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaCanPrint ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_PRINT));
+      OxideQQuickWebView::MediaStatusCanPrint ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CAN_PRINT));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::MediaCanRotate ==
-        static_cast<OxideQQuickWebView::MediaFlags>(oxide::qt::MEDIA_CAN_ROTATE));
+      OxideQQuickWebView::MediaStatusCanRotate ==
+        static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CAN_ROTATE));
 
   return static_cast<OxideQQuickWebView::MediaStatus>(client_->mediaFlags());
 }

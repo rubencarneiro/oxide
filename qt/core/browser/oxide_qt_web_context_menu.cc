@@ -129,36 +129,36 @@ int WebContextMenu::editFlags() const {
 }
 
 int WebContextMenu::mediaFlags() const {
-  int flags = MEDIA_NONE;
+  int flags = MEDIA_STATUS_NONE;
   if (params_.media_flags & blink::WebContextMenuData::MediaInError) {
-    flags |= MEDIA_IN_ERROR;
+    flags |= MEDIA_STATUS_IN_ERROR;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaPaused) {
-    flags |= MEDIA_PAUSED;
+    flags |= MEDIA_STATUS_PAUSED;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaMuted) {
-    flags |= MEDIA_MUTED;
+    flags |= MEDIA_STATUS_MUTED;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaLoop) {
-    flags |= MEDIA_LOOP;
+    flags |= MEDIA_STATUS_LOOP;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaCanSave) {
-    flags |= MEDIA_CAN_SAVE;
+    flags |= MEDIA_STATUS_CAN_SAVE;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaHasAudio) {
-    flags |= MEDIA_HAS_AUDIO;
+    flags |= MEDIA_STATUS_HAS_AUDIO;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaCanToggleControls) {
-    flags |= MEDIA_CAN_TOGGLE_CONTROLS;
+    flags |= MEDIA_STATUS_CAN_TOGGLE_CONTROLS;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaControls) {
-    flags |= MEDIA_CONTROLS;
+    flags |= MEDIA_STATUS_CONTROLS;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaCanPrint) {
-    flags |= MEDIA_CAN_PRINT;
+    flags |= MEDIA_STATUS_CAN_PRINT;
   }
   if (params_.media_flags & blink::WebContextMenuData::MediaCanRotate) {
-    flags |= MEDIA_CAN_ROTATE;
+    flags |= MEDIA_STATUS_CAN_ROTATE;
   }
   return flags;
 }
