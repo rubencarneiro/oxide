@@ -103,27 +103,27 @@ void WebContextMenu::cancel() {
 }
 
 int WebContextMenu::editFlags() const {
-  int flags = EDIT_CAN_DO_NONE;
+  int flags = NO_CAPABILITY;
   if (params_.edit_flags & blink::WebContextMenuData::CanUndo) {
-    flags |= EDIT_CAN_UNDO;
+    flags |= UNDO_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanRedo) {
-    flags |= EDIT_CAN_REDO;
+    flags |= REDO_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanCut) {
-    flags |= EDIT_CAN_CUT;
+    flags |= CUT_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanCopy) {
-    flags |= EDIT_CAN_COPY;
+    flags |= COPY_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanPaste) {
-    flags |= EDIT_CAN_PASTE;
+    flags |= PASTE_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanDelete) {
-    flags |= EDIT_CAN_ERASE;
+    flags |= ERASE_CAPABILITY;
   }
   if (params_.edit_flags & blink::WebContextMenuData::CanSelectAll) {
-    flags |= EDIT_CAN_SELECT_ALL;
+    flags |= SELECT_ALL_CAPABILITY;
   }
   return flags;
 }

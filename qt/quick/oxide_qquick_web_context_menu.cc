@@ -148,29 +148,29 @@ bool ContextMenuContext::isEditable() const {
 
 OxideQQuickWebView::EditCapabilities ContextMenuContext::editFlags() const {
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanDoNone ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_DO_NONE));
+      OxideQQuickWebView::NoCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::NO_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanUndo ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_UNDO));
+      OxideQQuickWebView::UndoCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::UNDO_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanRedo ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_REDO));
+      OxideQQuickWebView::RedoCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::REDO_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanCut ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_CUT));
+      OxideQQuickWebView::CutCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::CUT_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanCopy ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_COPY));
+      OxideQQuickWebView::CopyCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::COPY_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanPaste ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_PASTE));
+      OxideQQuickWebView::PasteCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::PASTE_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanErase ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_ERASE));
+      OxideQQuickWebView::EraseCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::ERASE_CAPABILITY));
   Q_STATIC_ASSERT(
-      OxideQQuickWebView::CanSelectAll ==
-        static_cast<OxideQQuickWebView::EditFlags>(oxide::qt::EDIT_CAN_SELECT_ALL));
+      OxideQQuickWebView::SelectAllCapability ==
+        static_cast<OxideQQuickWebView::EditCapabilityFlags>(oxide::qt::SELECT_ALL_CAPABILITY));
 
   return static_cast<OxideQQuickWebView::EditCapabilities>(client_->editFlags());
 }

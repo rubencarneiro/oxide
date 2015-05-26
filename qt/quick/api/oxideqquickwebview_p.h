@@ -168,17 +168,17 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     WebProcessCrashed
   };
 
-  enum EditFlags {
-    CanDoNone = 0,
-    CanUndo = 1 << 0,
-    CanRedo = 1 << 1,
-    CanCut = 1 << 2,
-    CanCopy = 1 << 3,
-    CanPaste = 1 << 4,
-    CanErase = 1 << 5,
-    CanSelectAll = 1 << 6
+  enum EditCapabilityFlags {
+    NoCapability = 0,
+    UndoCapability = 1 << 0,
+    RedoCapability = 1 << 1,
+    CutCapability = 1 << 2,
+    CopyCapability = 1 << 3,
+    PasteCapability = 1 << 4,
+    EraseCapability = 1 << 5,
+    SelectAllCapability = 1 << 6
   };
-  Q_DECLARE_FLAGS(EditCapabilities, EditFlags)
+  Q_DECLARE_FLAGS(EditCapabilities, EditCapabilityFlags)
 
   enum MediaType {
     MediaTypeNone,
