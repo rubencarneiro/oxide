@@ -231,7 +231,7 @@ void ContextMenuContext::saveMedia() const {
     }
   } else if ((media_type == OxideQQuickWebView::MediaTypeVideo) ||
       (media_type == OxideQQuickWebView::MediaTypeAudio)) {
-    if (!mediaFlags().testFlag(OxideQQuickWebView::MediaCanSave)) {
+    if (!mediaFlags().testFlag(OxideQQuickWebView::MediaStatusCanSave)) {
       qWarning() << "ContextMenuContext::saveMedia(): cannot save media source";
       return;
     }
