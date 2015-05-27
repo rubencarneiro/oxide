@@ -319,6 +319,8 @@
         'browser/oxide_content_types.h',
         'browser/oxide_devtools_http_handler_delegate.cc',
         'browser/oxide_devtools_http_handler_delegate.h',
+        'browser/oxide_download_manager_delegate.cc',
+        'browser/oxide_download_manager_delegate.h',
         'browser/oxide_file_picker.cc',
         'browser/oxide_file_picker.h',
         'browser/oxide_form_factor.h',

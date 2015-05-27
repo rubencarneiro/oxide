@@ -31,13 +31,15 @@ OxideQDownloadRequestPrivate::OxideQDownloadRequestPrivate(
     const bool shouldPrompt,
     const QString& suggestedFilename,
     const QStringList& cookies,
-    const QString& referrer)
+    const QString& referrer,
+    const QString& userAgent)
   : url_(url),
     mime_type_(mimeType),
     should_prompt_(shouldPrompt),
     suggested_filename_(suggestedFilename),
     cookies_(cookies),
-    referrer_(referrer) {}
+    referrer_(referrer),
+    user_agent_(userAgent) {}
 
 OxideQDownloadRequestPrivate::~OxideQDownloadRequestPrivate() {}
 
@@ -48,14 +50,16 @@ OxideQDownloadRequest::OxideQDownloadRequest(
     const QString& suggestedFilename,
     const QString& cookies,
     const QString& referrer,
+    const QString& userAgent,
     QObject* parent) :
       QObject(parent),
       d_ptr(new OxideQDownloadRequestPrivate(url,
-					     mimeType,
-					     shouldPrompt,
-					     suggestedFilename,
-					     cookies.split(kCookieListDelimiter, QString::SkipEmptyParts),
-					     referrer)) {
+          mimeType,
+          shouldPrompt,
+          suggestedFilename,
+          cookies.split(kCookieListDelimiter, QString::SkipEmptyParts),
+          referrer,
+          userAgent)) {
 }
 
 OxideQDownloadRequest::~OxideQDownloadRequest() {}
@@ -94,5 +98,11 @@ QString OxideQDownloadRequest::referrer() const {
   Q_D(const OxideQDownloadRequest);
 
   return d->referrer_;
+}
+
+QString OxideQDownloadRequest::userAgent() const {
+  Q_D(const OxideQDownloadRequest);
+
+  return d->user_agent_;
 }
 

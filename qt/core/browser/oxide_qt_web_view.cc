@@ -745,14 +745,16 @@ void WebView::DownloadRequested(const GURL& url,
                                 const bool should_prompt,
                                 const base::string16& suggested_filename,
                                 const std::string& cookies,
-                                const std::string& referrer) {
+                                const std::string& referrer,
+                                const std::string& user_agent) {
   OxideQDownloadRequest download_request(
       QUrl(QString::fromStdString(url.spec())),
       QString::fromStdString(mime_type),
       should_prompt,
       QString::fromStdString(base::UTF16ToUTF8(suggested_filename)),
       QString::fromStdString(cookies),
-      QString::fromStdString(referrer));
+      QString::fromStdString(referrer),
+      QString::fromStdString(user_agent));
 
   client_->DownloadRequested(&download_request);
 }

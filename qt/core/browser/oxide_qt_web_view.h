@@ -142,7 +142,8 @@ class WebView : public QObject,
       const bool should_prompt,
       const base::string16& suggested_filename,
       const std::string& cookies,
-      const std::string& referrer) override;
+      const std::string& referrer,
+      const std::string& user_agent) override;
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
