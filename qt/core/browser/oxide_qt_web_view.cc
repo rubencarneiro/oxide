@@ -1140,6 +1140,17 @@ void WebView::handleFocusEvent(QFocusEvent* event) {
   view_->FocusChanged();
 }
 
+void WebView::handleHoverEvent(QHoverEvent* event,
+                               const QPoint& window_pos,
+                               const QPoint& global_pos) {
+  view_->HandleMouseEvent(
+      MakeWebMouseEvent(event,
+                        window_pos,
+                        global_pos,
+                        GetDeviceScaleFactor(),
+                        view_->GetLocationBarContentOffsetDip()));
+}
+
 void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
   QString commit_string = event->commitString();
 
@@ -1236,9 +1247,11 @@ void WebView::handleTouchEvent(QTouchEvent* event) {
   }
 }
 
-void WebView::handleWheelEvent(QWheelEvent* event) {
+void WebView::handleWheelEvent(QWheelEvent* event,
+                               const QPoint& window_pos) {
   view_->HandleWheelEvent(
       MakeWebMouseWheelEvent(event,
+                             window_pos,
                              GetDeviceScaleFactor(),
                              view_->GetLocationBarContentOffsetDip()));
 }

@@ -38,6 +38,7 @@ typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QHoverEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -161,11 +162,15 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void visibilityChanged() = 0;
 
   virtual void handleFocusEvent(QFocusEvent* event) = 0;
+  virtual void handleHoverEvent(QHoverEvent* event,
+                                const QPoint& window_pos,
+                                const QPoint& global_pos) = 0;
   virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleWheelEvent(QWheelEvent* event) = 0;
+  virtual void handleWheelEvent(QWheelEvent* event,
+                                const QPoint& window_pos) = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 

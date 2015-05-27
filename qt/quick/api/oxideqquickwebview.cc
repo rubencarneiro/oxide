@@ -90,6 +90,8 @@ class WebViewInputArea : public QQuickItem {
   void focusInEvent(QFocusEvent* event) final;
   void focusOutEvent(QFocusEvent* event) final;
 
+  void hoverEnterEvent(QHoverEvent* event) final;
+  void hoverLeaveEvent(QHoverEvent* event) final;
   void hoverMoveEvent(QHoverEvent* event) final;
 
   void inputMethodEvent(QInputMethodEvent* event) final;
@@ -118,23 +120,25 @@ void WebViewInputArea::focusOutEvent(QFocusEvent* event) {
   d_->handleFocusEvent(event);
 }
 
-void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
-  // QtQuick gives us a hover event unless we have a grab (which
-  // happens implicitly on button press). As Chromium doesn't
-  // distinguish between the 2, just give it a mouse event
+void WebViewInputArea::hoverEnterEvent(QHoverEvent* event) {
   QPointF window_pos = mapToScene(event->posF());
-  QMouseEvent me(QEvent::MouseMove,
-                 event->posF(),
-                 window_pos,
-                 window_pos + window()->position(),
-                 Qt::NoButton,
-                 Qt::NoButton,
-                 event->modifiers());
-  me.accept();
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
+}
 
-  d_->handleMouseEvent(&me);
+void WebViewInputArea::hoverLeaveEvent(QHoverEvent* event) {
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
+}
 
-  event->setAccepted(me.isAccepted());
+void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
 }
 
 void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
@@ -184,7 +188,8 @@ void WebViewInputArea::touchEvent(QTouchEvent* event) {
 }
 
 void WebViewInputArea::wheelEvent(QWheelEvent* event) {
-  d_->handleWheelEvent(event);
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleWheelEvent(event, window_pos.toPoint());
 }
 
 } // namespace qquick

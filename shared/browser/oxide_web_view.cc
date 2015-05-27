@@ -2081,12 +2081,25 @@ void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
 }
 
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
+  blink::WebMouseEvent e(event);
+
+  if (e.type == blink::WebInputEvent::MouseEnter ||
+      e.type == blink::WebInputEvent::MouseLeave) {
+    global_mouse_position_.SetPoint(event.globalX, event.globalY);
+    e.type = blink::WebInputEvent::MouseMove;
+  }
+
+  e.movementX = e.globalX - global_mouse_position_.x();
+  e.movementY = e.globalY - global_mouse_position_.y();
+
+  global_mouse_position_.SetPoint(e.globalX, e.globalY);
+
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
     return;
   }
 
-  rvh->ForwardMouseEvent(event);
+  rvh->ForwardMouseEvent(e);
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {

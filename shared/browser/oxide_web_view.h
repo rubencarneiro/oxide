@@ -537,6 +537,7 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
+  gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
 
   GURL initial_url_;

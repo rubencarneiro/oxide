@@ -28,8 +28,10 @@
 #include "ui/events/event.h"
 
 QT_BEGIN_NAMESPACE
+class QHoverEvent;
 class QKeyEvent;
 class QMouseEvent;
+class QPoint;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -62,6 +64,14 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
+    const QPoint& window_pos,
+    float device_scale,
+    float location_bar_content_offset_dip);
+
+blink::WebMouseEvent MakeWebMouseEvent(
+    QHoverEvent* event,
+    const QPoint& window_pos,
+    const QPoint& global_pos,
     float device_scale,
     float location_bar_content_offset_dip);
 

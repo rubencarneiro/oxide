@@ -207,11 +207,15 @@ class WebView : public QObject,
   void visibilityChanged() override;
 
   void handleFocusEvent(QFocusEvent* event) override;
+  void handleHoverEvent(QHoverEvent* event,
+                        const QPoint& window_pos,
+                        const QPoint& global_pos) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchEvent(QTouchEvent* event) override;
-  void handleWheelEvent(QWheelEvent* event) override;
+  void handleWheelEvent(QWheelEvent* event,
+                        const QPoint& window_pos) override;
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 
