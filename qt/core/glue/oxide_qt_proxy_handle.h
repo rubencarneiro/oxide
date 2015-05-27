@@ -66,7 +66,7 @@ _pub* _pub##Private::fromProxyHandle(_proxy* h) { \
 typedef ::oxide::qt::ProxyHandle<_proxy> _proxy##Handle; \
 
 #define OXIDE_Q_DECL_PROXY_FOR(_impl) \
-  ::oxide::qt::ProxyHandle<_impl##Proxy>* handle_; \
+  ::oxide::qt::ProxyHandle<_impl##Proxy>* handle_ = nullptr; \
  public: \
   typedef _impl ImplType; \
   ::oxide::qt::ProxyHandle<_impl##Proxy>* handle() { return handle_; } \

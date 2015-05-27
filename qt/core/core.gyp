@@ -68,6 +68,8 @@
         'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
+        'browser/oxide_qt_clipboard.cc',
+        'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
         'browser/oxide_qt_javascript_dialog.cc',
@@ -88,6 +90,8 @@
         'browser/oxide_qt_user_script.h',
         'browser/oxide_qt_web_context.cc',
         'browser/oxide_qt_web_context.h',
+        'browser/oxide_qt_web_context_menu.cc',
+        'browser/oxide_qt_web_context_menu.h',
         'browser/oxide_qt_web_frame.cc',
         'browser/oxide_qt_web_frame.h',
         'browser/oxide_qt_web_popup_menu.cc',
@@ -119,6 +123,8 @@
         'glue/oxide_qt_user_script_proxy.cc',
         'glue/oxide_qt_user_script_proxy.h',
         'glue/oxide_qt_user_script_proxy_client.h',
+        'glue/oxide_qt_web_context_menu_proxy.h',
+        'glue/oxide_qt_web_context_menu_proxy_client.h',
         'glue/oxide_qt_web_context_proxy.cc',
         'glue/oxide_qt_web_context_proxy.h',
         'glue/oxide_qt_web_context_proxy_client.h',
@@ -133,6 +139,11 @@
         'gpu/oxide_qt_gl_context_dependent.h',
       ],
       'actions': [
+        {
+          'action_name': 'oxide_qt_clipboard.moc',
+          'moc_input': 'browser/oxide_qt_clipboard.cc',
+          'includes': [ 'moc.gypi' ]
+        },
         {
           'action_name': 'oxide_qt_location_provider.moc',
           'moc_input': 'browser/oxide_qt_location_provider.cc',
@@ -201,6 +212,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqfindcontroller.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
@@ -229,6 +241,9 @@
         'api/oxideqpermissionrequest.cc',
         'api/oxideqpermissionrequest.h',
         'api/oxideqpermissionrequest_p.h',
+        'api/oxideqfindcontroller.cc',
+        'api/oxideqfindcontroller.h',
+        'api/oxideqfindcontroller_p.h',
         'api/oxideqsecuritystatus.cc',
         'api/oxideqsecuritystatus.h',
         'api/oxideqsecuritystatus_p.h',
@@ -276,6 +291,11 @@
         {
           'action_name': 'moc_oxideqpermissionrequest.cc',
           'moc_input': 'api/oxideqpermissionrequest.h',
+          'includes': [ 'moc.gypi' ],
+        },
+        {
+          'action_name': 'moc_oxideqfindcontroller.cc',
+          'moc_input': 'api/oxideqfindcontroller.h',
           'includes': [ 'moc.gypi' ],
         },
         {

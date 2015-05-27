@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <libintl.h>
 #include <limits>
+#include <set>
 #include <vector>
 
 #include "base/files/file_enumerator.h"
@@ -84,7 +85,7 @@ namespace oxide {
 
 namespace {
 
-base::LazyInstance<std::vector<BrowserContext *> > g_all_contexts;
+base::LazyInstance<std::set<BrowserContext *> > g_all_contexts;
 
 // Cache was used for the default blockfile backend (CACHE_BACKEND_BLOCKFILE),
 // Cache2 is used since the switch to the simple backend (CACHE_BACKEND_SIMPLE).
@@ -837,7 +838,7 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
       "The main browser process components must be started before " <<
       "creating a context";
 
-  g_all_contexts.Get().push_back(this);
+  g_all_contexts.Get().insert(this);
 
   // Make sure that the cookie store is properly created
   io_data->Init();
@@ -852,14 +853,7 @@ BrowserContext::~BrowserContext() {
                     observers_,
                     OnBrowserContextDestruction());
 
-  std::vector<BrowserContext *>::iterator it;
-  for (std::vector<BrowserContext *>::iterator it = g_all_contexts.Get().begin();
-       it != g_all_contexts.Get().end(); ++it) {
-    if (*it == this) {
-      g_all_contexts.Get().erase(it);
-      break;
-    }
-  }
+  g_all_contexts.Get().erase(this);
 
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
@@ -871,6 +865,13 @@ BrowserContext::~BrowserContext() {
 scoped_refptr<BrowserContext> BrowserContext::Create(const Params& params) {
   scoped_refptr<BrowserContext> context = new BrowserContextImpl(params);
   return context;
+}
+
+// static
+void BrowserContext::ForEach(const BrowserContextCallback& callback) {
+  for (auto context : g_all_contexts.Get()) {
+    callback.Run(context);
+  }
 }
 
 // static

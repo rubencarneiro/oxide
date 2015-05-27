@@ -79,10 +79,10 @@ class RenderWidgetHostView final :
     return compositor_frame_metadata_;
   }
 
-  void Blur();
-
   void HandleTouchEvent(const ui::MotionEvent& event);
   void ResetGestureDetection();
+
+  void Blur();
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const final;

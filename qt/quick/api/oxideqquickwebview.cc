@@ -41,6 +41,7 @@
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -54,6 +55,7 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -88,6 +90,8 @@ class WebViewInputArea : public QQuickItem {
   void focusInEvent(QFocusEvent* event) final;
   void focusOutEvent(QFocusEvent* event) final;
 
+  void hoverEnterEvent(QHoverEvent* event) final;
+  void hoverLeaveEvent(QHoverEvent* event) final;
   void hoverMoveEvent(QHoverEvent* event) final;
 
   void inputMethodEvent(QInputMethodEvent* event) final;
@@ -116,23 +120,25 @@ void WebViewInputArea::focusOutEvent(QFocusEvent* event) {
   d_->handleFocusEvent(event);
 }
 
-void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
-  // QtQuick gives us a hover event unless we have a grab (which
-  // happens implicitly on button press). As Chromium doesn't
-  // distinguish between the 2, just give it a mouse event
+void WebViewInputArea::hoverEnterEvent(QHoverEvent* event) {
   QPointF window_pos = mapToScene(event->posF());
-  QMouseEvent me(QEvent::MouseMove,
-                 event->posF(),
-                 window_pos,
-                 window_pos + window()->position(),
-                 Qt::NoButton,
-                 Qt::NoButton,
-                 event->modifiers());
-  me.accept();
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
+}
 
-  d_->handleMouseEvent(&me);
+void WebViewInputArea::hoverLeaveEvent(QHoverEvent* event) {
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
+}
 
-  event->setAccepted(me.isAccepted());
+void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleHoverEvent(event,
+                       window_pos.toPoint(),
+                       (window_pos + window()->position()).toPoint());
 }
 
 void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
@@ -182,7 +188,8 @@ void WebViewInputArea::touchEvent(QTouchEvent* event) {
 }
 
 void WebViewInputArea::wheelEvent(QWheelEvent* event) {
-  d_->handleWheelEvent(event);
+  QPointF window_pos = mapToScene(event->posF());
+  d_->handleWheelEvent(event, window_pos.toPoint());
 }
 
 } // namespace qquick
@@ -224,6 +231,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
+    context_menu_(nullptr),
     popup_menu_(nullptr),
     alert_dialog_(nullptr),
     confirm_dialog_(nullptr),
@@ -267,6 +275,13 @@ void OxideQQuickWebViewPrivate::Initialized() {
 QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   Q_Q(OxideQQuickWebView);
   return q;
+}
+
+oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    oxide::qt::WebContextMenuProxyClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebContextMenu(q, client);
 }
 
 oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
@@ -1386,6 +1401,23 @@ qreal OxideQQuickWebView::contentY() const {
       d)->proxy()->compositorFrameScrollOffsetPix().y();
 }
 
+QQmlComponent* OxideQQuickWebView::contextMenu() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->context_menu_;
+}
+
+void OxideQQuickWebView::setContextMenu(QQmlComponent* context_menu) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->context_menu_ == context_menu) {
+    return;
+  }
+
+  d->context_menu_ = context_menu;
+  emit contextMenuChanged();
+}
+
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1696,6 +1728,35 @@ OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
   return new OxideQQuickWebViewAttached(object);
 }
 
+void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
+  Q_D(const OxideQQuickWebView);
+
+  Q_STATIC_ASSERT(
+      EditingCommandUndo ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_UNDO));
+  Q_STATIC_ASSERT(
+      EditingCommandRedo ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_REDO));
+  Q_STATIC_ASSERT(
+      EditingCommandCut ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_CUT));
+  Q_STATIC_ASSERT(
+      EditingCommandCopy ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_COPY));
+  Q_STATIC_ASSERT(
+      EditingCommandPaste ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_PASTE));
+  Q_STATIC_ASSERT(
+      EditingCommandErase ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_ERASE));
+  Q_STATIC_ASSERT(
+      EditingCommandSelectAll ==
+        static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_SELECT_ALL));
+
+  d->proxy()->executeEditingCommand(
+      static_cast<oxide::qt::EditingCommands>(command));
+}
+
 void OxideQQuickWebView::goBack() {
   Q_D(OxideQQuickWebView);
 
@@ -1742,6 +1803,12 @@ void OxideQQuickWebView::prepareToClose() {
   Q_D(OxideQQuickWebView);
 
   d->proxy()->prepareToClose();
+}
+
+OxideQFindController* OxideQQuickWebView::findController() const {
+  Q_D(const OxideQQuickWebView);
+
+  return d->proxy()->findInPage();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

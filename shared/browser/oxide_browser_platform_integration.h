@@ -24,6 +24,9 @@
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
+#include "shared/port/ui_base/clipboard_oxide.h"
+
+
 class GURL;
 
 namespace content {
@@ -36,12 +39,22 @@ class BrowserPlatformIntegrationObserver;
 class GLContextDependent;
 class MessagePump;
 
+// An abstract interface allowing toolkit-independent code to integrate with
+// toolkit-specific features
 class BrowserPlatformIntegration {
  public:
   virtual ~BrowserPlatformIntegration();
 
   enum ApplicationState {
+    // The application is about to be suspended
+    APPLICATION_STATE_SUSPENDED,
+
+    // The application is running but has no focused windows.
+    // XXX: It's not clear whether anything really needs to distinguish
+    //      between this and ACTIVE
     APPLICATION_STATE_INACTIVE,
+
+    // The application is running and has a focused window
     APPLICATION_STATE_ACTIVE
   };
 
@@ -49,28 +62,41 @@ class BrowserPlatformIntegration {
   // must only happen once all Chromium threads have been shut down
   static BrowserPlatformIntegration* GetInstance();
 
-  // Called on the IO thread
+  // Launch |url| in an external application. Can be called on any thread
   virtual bool LaunchURLExternally(const GURL& url);
 
+  // Determine if there are any touch devices connected
   virtual bool IsTouchSupported();
 
+  // Return a native display handle that can be used to create GL contexts
   virtual intptr_t GetNativeDisplay() = 0;
 
+  // Return information about the default screen
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
+  // Return the shared GL context provided by the application, if one exists.
+  // This will be used for sharing resources between the webview and UI
+  // compositors
   virtual GLContextDependent* GetGLShareContext();
 
+  // Create a MessagePump that allows Chromium events to be pumped from
+  // the applications UI event loop
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
+
+  virtual ui::ClipboardOxideFactory GetClipboardOxideFactory();
 
   // Called on the specified browser thread
   virtual void BrowserThreadInit(content::BrowserThread::ID id);
   virtual void BrowserThreadCleanUp(content::BrowserThread::ID id);
 
-  // Called on the geolocation thread
+  // Create a LocationProvider for determining location information from
+  // the toolkit. Called on the geolocation thread
   virtual content::LocationProvider* CreateLocationProvider();
 
+  // Get the current application state
   virtual ApplicationState GetApplicationState();
 
+  // Get the application locale
   virtual std::string GetApplicationLocale() = 0;
 
  protected:

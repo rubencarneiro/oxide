@@ -147,6 +147,8 @@ TestWebView {
               webView.preferences.canDisplayInsecureContent);
       compare(created.preferences.localStorageEnabled,
               webView.preferences.localStorageEnabled);
+      compare(OxideTestingUtils.qObjectParent(created.preferences), created,
+              "WebView should own its default preferences");
     }
   }
 }

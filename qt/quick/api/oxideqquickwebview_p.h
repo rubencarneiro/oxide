@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+class OxideQFindController;
 class OxideQLoadEvent;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
@@ -45,6 +46,11 @@ class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
 class OxideQSecurityStatus;
+namespace oxide {
+    namespace qt {
+        class WebViewProxy;
+    }
+}
 
 class OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
@@ -65,7 +71,11 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_OBJECT
 
   Q_FLAGS(ContentType)
+  Q_FLAGS(EditCapabilities)
+  Q_FLAGS(MediaStatus)
+  Q_ENUMS(EditingCommands);
   Q_ENUMS(LogMessageSeverityLevel);
+  Q_ENUMS(MediaType);
   Q_ENUMS(RestoreType);
   Q_ENUMS(WebProcessStatus);
 
@@ -88,6 +98,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(qreal contentX READ contentX NOTIFY contentXChanged)
   Q_PROPERTY(qreal contentY READ contentY NOTIFY contentYChanged)
 
+  Q_PROPERTY(QQmlComponent* contextMenu READ contextMenu WRITE setContextMenu NOTIFY contextMenuChanged REVISION 4)
   Q_PROPERTY(QQmlComponent* popupMenu READ popupMenu WRITE setPopupMenu NOTIFY popupMenuChanged)
 
   Q_PROPERTY(QQmlComponent* alertDialog READ alertDialog WRITE setAlertDialog NOTIFY alertDialogChanged)
@@ -106,6 +117,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(ContentType blockedContent READ blockedContent NOTIFY blockedContentChanged)
 
   Q_PROPERTY(OxideQNewViewRequest* request READ request WRITE setRequest)
+
+  Q_PROPERTY(OxideQFindController* findController READ findController CONSTANT REVISION 4)
 
   // Set at construction time only
   Q_PROPERTY(QString restoreState READ restoreState WRITE setRestoreState REVISION 2)
@@ -155,6 +168,52 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     WebProcessCrashed
   };
 
+  enum EditCapabilityFlags {
+    NoCapability = 0,
+    UndoCapability = 1 << 0,
+    RedoCapability = 1 << 1,
+    CutCapability = 1 << 2,
+    CopyCapability = 1 << 3,
+    PasteCapability = 1 << 4,
+    EraseCapability = 1 << 5,
+    SelectAllCapability = 1 << 6
+  };
+  Q_DECLARE_FLAGS(EditCapabilities, EditCapabilityFlags)
+
+  enum MediaType {
+    MediaTypeNone,
+    MediaTypeImage,
+    MediaTypeVideo,
+    MediaTypeAudio,
+    MediaTypeCanvas,
+    MediaTypePlugin
+  };
+
+  enum MediaStatusFlags {
+    MediaStatusNone = 0,
+    MediaStatusInError = 1 << 0,
+    MediaStatusPaused = 1 << 1,
+    MediaStatusMuted = 1 << 2,
+    MediaStatusLoop = 1 << 3,
+    MediaStatusCanSave = 1 << 4,
+    MediaStatusHasAudio = 1 << 5,
+    MediaStatusCanToggleControls = 1 << 6,
+    MediaStatusControls = 1 << 7,
+    MediaStatusCanPrint = 1 << 8,
+    MediaStatusCanRotate = 1 << 9
+  };
+  Q_DECLARE_FLAGS(MediaStatus, MediaStatusFlags)
+
+  enum EditingCommands {
+    EditingCommandUndo,
+    EditingCommandRedo,
+    EditingCommandCut,
+    EditingCommandCopy,
+    EditingCommandPaste,
+    EditingCommandErase,
+    EditingCommandSelectAll
+  };
+
   void componentComplete();
 
   QUrl url() const;
@@ -189,6 +248,9 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   qreal contentHeight() const;
   qreal contentX() const;
   qreal contentY() const;
+
+  QQmlComponent* contextMenu() const;
+  void setContextMenu(QQmlComponent* context_menu);
 
   QQmlComponent* popupMenu() const;
   void setPopupMenu(QQmlComponent* popup_menu);
@@ -234,6 +296,10 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
+  OxideQFindController* findController() const;
+
+  Q_REVISION(4) Q_INVOKABLE void executeEditingCommand(EditingCommands command) const;
+
  public Q_SLOTS:
   void goBack();
   void goForward();
@@ -259,6 +325,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void rootFrameChanged();
   void frameAdded(OxideQQuickWebFrame* frame);
   void frameRemoved(OxideQQuickWebFrame* frame);
+  Q_REVISION(4) void contextMenuChanged();
   void popupMenuChanged();
   void alertDialogChanged();
   void confirmDialogChanged();

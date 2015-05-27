@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,36 +17,51 @@
 
 #include "oxide_message_pump.h"
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
+#include "base/threading/thread_local.h"
 
 namespace oxide {
 
-void MessagePump::SetupRunLoop() {
+namespace {
+
+base::LazyInstance<base::ThreadLocalPointer<MessagePump>> g_lazy_tls =
+    LAZY_INSTANCE_INITIALIZER;
+
+}
+
+// static
+MessagePump* MessagePump::Get() {
+  return g_lazy_tls.Pointer()->Get();
+}
+
+MessagePump::MessagePump() {
+  CHECK(!Get());
+  g_lazy_tls.Pointer()->Set(this);
+}
+
+MessagePump::~MessagePump() {
+  g_lazy_tls.Pointer()->Set(nullptr);
+}
+
+void MessagePump::Start() {
+  CHECK(!base::MessageLoop::current()->is_running());
+
+  OnStart();
+
   run_loop_.reset(new base::RunLoop());
   run_loop_->BeforeRun();
+
+  // Schedule events that might have already been posted
+  ScheduleWork();
 }
 
 void MessagePump::Stop() {
-  CHECK_EQ(task_depth_, 0) <<
-      "Stopping Oxide whilst dispatching a task from the event queue is bad!";
+  CHECK(base::MessageLoop::current()->is_running());
+
   run_loop_->AfterRun();
 }
-
-void MessagePump::WillProcessTask(const base::PendingTask& pending_task) {
-  ++task_depth_;
-}
-
-void MessagePump::DidProcessTask(const base::PendingTask& pending_task) {
-  --task_depth_;
-  DCHECK(task_depth_ >= 0);
-}
-
-MessagePump::MessagePump() :
-    task_depth_(0) {
-  //base::MessageLoop::current()->AddTaskObserver(this);
-}
-
-MessagePump::~MessagePump() {}
 
 } // namespace oxide

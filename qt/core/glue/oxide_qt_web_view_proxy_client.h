@@ -47,6 +47,8 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
+class WebContextMenuProxy;
+class WebContextMenuProxyClient;
 class WebFrameProxy;
 class WebPopupMenuProxy;
 class WebPopupMenuProxyClient;
@@ -71,6 +73,8 @@ class WebViewProxyClient {
 
   virtual QObject* GetApiHandle() = 0;
 
+  virtual WebContextMenuProxy* CreateWebContextMenu(
+      WebContextMenuProxyClient* client) = 0;
   virtual WebPopupMenuProxy* CreateWebPopupMenu(
       WebPopupMenuProxyClient* client) = 0;
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(

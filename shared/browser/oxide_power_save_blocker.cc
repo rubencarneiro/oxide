@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -68,8 +68,8 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
 };
 
 void PowerSaveBlocker::Init() {
-  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() ==
-      BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) {
+  if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() !=
+      BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
     content::BrowserThread::PostTask(
         content::BrowserThread::FILE,
         FROM_HERE,
@@ -152,12 +152,12 @@ void PowerSaveBlocker::RemoveBlock() {
 void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
-  if ((state == BrowserPlatformIntegration::APPLICATION_STATE_INACTIVE) &&
-      (cookie_ != kInvalidCookie)) {
-    CleanUp();
-  } else if ((state == BrowserPlatformIntegration::APPLICATION_STATE_ACTIVE) &&
-      (cookie_ == kInvalidCookie)) {
+  if (state != BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
+      cookie_ == kInvalidCookie) {
     Init();
+  } else if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
+             cookie_ != kInvalidCookie) {
+    CleanUp();
   }
 }
 

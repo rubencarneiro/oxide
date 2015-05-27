@@ -32,7 +32,6 @@
 #include <QVariant>
 
 #include "qt/core/api/oxideqglobal.h"
-#include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
@@ -122,14 +121,13 @@ void Api::sendMessage(const QVariant& message) {
   if (aux.userType() == qMetaTypeId<QJSValue>()) {
     aux = aux.value<QJSValue>().toVariant();
   }
-
-  QJsonDocument doc = QJsonDocument::fromVariant(aux);
-  if (doc.isNull()) {
-    qWarning() << "Api::sendMessage: Invalid message from worker";
+  if (aux.type() != QVariant::Map &&
+      aux.type() != QVariant::List &&
+      aux.type() != QVariant::StringList) {
     return;
   }
 
-  Q_EMIT controller_->sendMessage(doc.toVariant());
+  Q_EMIT controller_->sendMessage(aux);
 }
 
 void IOThreadControllerImpl::CallEntryPointInWorker(
@@ -239,7 +237,6 @@ OxideQQuickWebContextDelegateWorker::OxideQQuickWebContextDelegateWorker() :
     d_ptr(new OxideQQuickWebContextDelegateWorkerPrivate()) {
   Q_D(OxideQQuickWebContextDelegateWorker);
 
-  oxide::qquick::EnsureChromiumStarted();
   d->io_thread_controller_->moveToThread(oxideGetIOThread());
 
   connect(d->io_thread_controller_.data(), SIGNAL(error(const QString&)),
@@ -313,16 +310,16 @@ void OxideQQuickWebContextDelegateWorker::sendMessage(const QVariant& message) {
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  QJsonDocument doc = QJsonDocument::fromVariant(aux);
-  if (doc.isNull()) {
-    qWarning() <<
-        "OxideQQuickWebContextDelegateWorker::sendMessage: Invalid message";
+  if (aux.type() != QVariant::Map &&
+      aux.type() != QVariant::List &&
+      aux.type() != QVariant::StringList) {
+    qWarning() << "Called WebContextDelegateWorker.sendMessage with an invalid argument" << aux;
     return;
   }
 
   QMetaObject::invokeMethod(d->io_thread_controller_.data(),
                             "receiveMessage",
-                            Q_ARG(QVariant, doc.toVariant()));
+                            Q_ARG(QVariant, aux));
 }
 
 #include "oxideqquickwebcontextdelegateworker.moc"
