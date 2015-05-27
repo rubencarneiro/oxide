@@ -44,7 +44,8 @@ class GestureProvider {
 
   virtual ui::FilteredGestureProvider::TouchHandlingResult
       OnTouchEvent(const ui::MotionEvent& event) = 0;
-  virtual void OnTouchEventAck(bool consumed) = 0;
+  virtual void OnTouchEventAck(uint32_t unique_event_id,
+                               bool consumed) = 0;
 
   virtual void SetDoubleTapSupportForPageEnabled(bool enabled) = 0;
 
