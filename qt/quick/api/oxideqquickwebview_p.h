@@ -370,16 +370,33 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PRIVATE_SLOT(d_func(), void screenGeometryChanged(const QRect&));
   Q_PRIVATE_SLOT(d_func(), void screenOrientationChanged(Qt::ScreenOrientation));
 
-  void connectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
-  void disconnectNotify(const QMetaMethod& signal) Q_DECL_FINAL;
+  // QObject implementation
+  void connectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
+  void disconnectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
 
-  void geometryChanged(const QRectF& newGeometry,
-                       const QRectF& oldGeometry) Q_DECL_FINAL;
+  // QQuickItem implementation
   void itemChange(QQuickItem::ItemChange change,
-                  const QQuickItem::ItemChangeData& value) Q_DECL_FINAL;
+                  const QQuickItem::ItemChangeData& value) Q_DECL_OVERRIDE;
+  void focusInEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
+  void focusOutEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
+  void hoverEnterEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void hoverLeaveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void hoverMoveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_OVERRIDE;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_OVERRIDE;
+  void keyPressEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
+  void keyReleaseEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
+  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void mouseMoveEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
+  void geometryChanged(const QRectF& newGeometry,
+                       const QRectF& oldGeometry) Q_DECL_OVERRIDE;
   QSGNode* updatePaintNode(
       QSGNode* oldNode,
-      UpdatePaintNodeData* updatePaintNodeData) Q_DECL_FINAL;
+      UpdatePaintNodeData* updatePaintNodeData) Q_DECL_OVERRIDE;
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };
