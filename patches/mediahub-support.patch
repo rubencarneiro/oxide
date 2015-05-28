@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2029,16 +2029,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -1989,16 +1989,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(url, client);
  
  #if defined(OS_ANDROID)
@@ -109,4 +109,4 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
                   static_cast<RenderFrame*>(this)),
        render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_),
        media_log, render_thread->GetMediaThreadTaskRunner(),
-       render_thread->compositor_message_loop_proxy(),
+       render_thread->compositor_task_runner(),
