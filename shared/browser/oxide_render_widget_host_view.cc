@@ -40,10 +40,10 @@
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/common/oxide_event_utils.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_event_utils.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_delegate.h"
 

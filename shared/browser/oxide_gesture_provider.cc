@@ -27,7 +27,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/screen.h"
 
-#include "shared/common/oxide_event_utils.h"
+#include "oxide_event_utils.h"
 
 namespace oxide {
 
