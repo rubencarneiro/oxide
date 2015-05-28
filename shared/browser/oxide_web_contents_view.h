@@ -73,6 +73,11 @@ class WebContentsView final : public content::WebContentsViewOxide {
   // content::RenderViewHostDelegateView
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
                        const content::ContextMenuParams& params) final;
+  void StartDragging(const content::DropData& drop_data,
+                     blink::WebDragOperationsMask allowed_ops,
+                     const gfx::ImageSkia& image,
+                     const gfx::Vector2d& image_offset,
+                     const content::DragEventSourceInfo& event_info) final;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,

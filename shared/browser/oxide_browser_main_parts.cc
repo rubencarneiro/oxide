@@ -153,8 +153,11 @@ class Screen : public gfx::Screen {
   }
 
   gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const final {
-    NOTIMPLEMENTED();
-    return gfx::Display();
+    // XXX(chrisccoulson): This gets called when a drag starts. |view|
+    //  is the NativeView for the corresponding RenderWidgetHostView. It would
+    //  be nice to find a way to cleverly map this to the associated RWHV and
+    //  get the correct display
+    return GetPrimaryDisplay();
   }
 
   gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const final {
