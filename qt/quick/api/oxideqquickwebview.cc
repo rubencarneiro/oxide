@@ -72,129 +72,6 @@ using oxide::qquick::AcceleratedFrameNode;
 using oxide::qquick::ImageFrameNode;
 using oxide::qquick::SoftwareFrameNode;
 
-namespace oxide {
-namespace qquick {
-
-class WebViewInputArea : public QQuickItem {
- public:
-  WebViewInputArea(OxideQQuickWebView* webview, oxide::qt::WebViewProxy* d)
-      : QQuickItem(webview),
-        d_(d) {
-    setAcceptedMouseButtons(Qt::AllButtons);
-    setAcceptHoverEvents(true);
-  }
-
-  virtual ~WebViewInputArea() {}
-
- private:
-  void focusInEvent(QFocusEvent* event) final;
-  void focusOutEvent(QFocusEvent* event) final;
-
-  void hoverEnterEvent(QHoverEvent* event) final;
-  void hoverLeaveEvent(QHoverEvent* event) final;
-  void hoverMoveEvent(QHoverEvent* event) final;
-
-  void inputMethodEvent(QInputMethodEvent* event) final;
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const final;
-
-  void keyPressEvent(QKeyEvent* event) final;
-  void keyReleaseEvent(QKeyEvent* event) final;
-
-  void mouseDoubleClickEvent(QMouseEvent* event) final;
-  void mouseMoveEvent(QMouseEvent* event) final;
-  void mousePressEvent(QMouseEvent* event) final;
-  void mouseReleaseEvent(QMouseEvent* event) final;
-
-  void touchEvent(QTouchEvent* event) final;
-
-  void wheelEvent(QWheelEvent* event) final;
-
-  oxide::qt::WebViewProxy* d_;
-};
-
-void WebViewInputArea::focusInEvent(QFocusEvent* event) {
-  d_->handleFocusEvent(event);
-}
-
-void WebViewInputArea::focusOutEvent(QFocusEvent* event) {
-  d_->handleFocusEvent(event);
-}
-
-void WebViewInputArea::hoverEnterEvent(QHoverEvent* event) {
-  QPointF window_pos = mapToScene(event->posF());
-  d_->handleHoverEvent(event,
-                       window_pos.toPoint(),
-                       (window_pos + window()->position()).toPoint());
-}
-
-void WebViewInputArea::hoverLeaveEvent(QHoverEvent* event) {
-  QPointF window_pos = mapToScene(event->posF());
-  d_->handleHoverEvent(event,
-                       window_pos.toPoint(),
-                       (window_pos + window()->position()).toPoint());
-}
-
-void WebViewInputArea::hoverMoveEvent(QHoverEvent* event) {
-  QPointF window_pos = mapToScene(event->posF());
-  d_->handleHoverEvent(event,
-                       window_pos.toPoint(),
-                       (window_pos + window()->position()).toPoint());
-}
-
-void WebViewInputArea::inputMethodEvent(QInputMethodEvent* event) {
-  d_->handleInputMethodEvent(event);
-}
-
-QVariant WebViewInputArea::inputMethodQuery(
-    Qt::InputMethodQuery query) const {
-  switch (query) {
-    case Qt::ImEnabled:
-      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
-    default:
-      return d_->inputMethodQuery(query);
-  }
-}
-
-void WebViewInputArea::keyPressEvent(QKeyEvent* event) {
-  d_->handleKeyEvent(event);
-}
-
-void WebViewInputArea::keyReleaseEvent(QKeyEvent* event) {
-  d_->handleKeyEvent(event);
-}
-
-void WebViewInputArea::mouseDoubleClickEvent(QMouseEvent* event) {
-  d_->handleMouseEvent(event);
-}
-
-void WebViewInputArea::mouseMoveEvent(QMouseEvent* event) {
-  d_->handleMouseEvent(event);
-}
-
-void WebViewInputArea::mousePressEvent(QMouseEvent* event) {
-  forceActiveFocus();
-  d_->handleMouseEvent(event);
-}
-
-void WebViewInputArea::mouseReleaseEvent(QMouseEvent* event) {
-  d_->handleMouseEvent(event);
-}
-
-void WebViewInputArea::touchEvent(QTouchEvent* event) {
-  if (event->type() == QEvent::TouchBegin) {
-    forceActiveFocus();
-  }
-  d_->handleTouchEvent(event);
-}
-
-void WebViewInputArea::wheelEvent(QWheelEvent* event) {
-  QPointF window_pos = mapToScene(event->posF());
-  d_->handleWheelEvent(event, window_pos.toPoint());
-}
-
-} // namespace qquick
-} // namespace oxide
-
 class UpdatePaintNodeScope {
  public:
   UpdatePaintNodeScope(OxideQQuickWebViewPrivate* d)
@@ -238,11 +115,11 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     prompt_dialog_(nullptr),
     before_unload_dialog_(nullptr),
     file_picker_(nullptr),
-    input_area_(nullptr),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
     using_old_load_event_signal_(false),
+    handling_unhandled_key_event_(false),
     construct_props_(new ConstructProps()) {}
 
 void OxideQQuickWebViewPrivate::Initialized() {
@@ -434,7 +311,9 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
 }
 
 bool OxideQQuickWebViewPrivate::HasFocus() const {
-  return input_area_->hasActiveFocus();
+  Q_Q(const OxideQQuickWebView);
+
+  return q->hasActiveFocus();
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
@@ -591,7 +470,11 @@ void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
     return;
   }
 
+  Q_ASSERT(!handling_unhandled_key_event_);
+
+  handling_unhandled_key_event_ = true;
   w->sendEvent(q, event);
+  handling_unhandled_key_event_ = false;
 }
 
 void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
@@ -646,7 +529,7 @@ void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
 void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
   Q_Q(OxideQQuickWebView);
 
-  input_area_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  q->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
@@ -985,20 +868,6 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
   }
 }
 
-void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
-                                         const QRectF& oldGeometry) {
-  Q_D(OxideQQuickWebView);
-
-  QQuickItem::geometryChanged(newGeometry, oldGeometry);
-
-  d->input_area_->setWidth(newGeometry.width());
-  d->input_area_->setHeight(newGeometry.height());
-
-  if (d->proxy()->isInitialized() && window()) {
-    d->proxy()->wasResized();
-  }
-}
-
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
                                     const QQuickItem::ItemChangeData& value) {
   Q_D(OxideQQuickWebView);
@@ -1011,6 +880,137 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
 
   if (change == QQuickItem::ItemVisibleHasChanged) {
     d->proxy()->visibilityChanged();
+  }
+}
+
+void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleFocusEvent(event);
+}
+
+void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleFocusEvent(event);
+}
+
+void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QPointF window_pos = mapToScene(event->posF());
+  d->proxy()->handleHoverEvent(event,
+                               window_pos.toPoint(),
+                               (window_pos + window()->position()).toPoint());
+}
+
+void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QPointF window_pos = mapToScene(event->posF());
+  d->proxy()->handleHoverEvent(event,
+                               window_pos.toPoint(),
+                               (window_pos + window()->position()).toPoint());
+}
+
+void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QPointF window_pos = mapToScene(event->posF());
+  d->proxy()->handleHoverEvent(event,
+                               window_pos.toPoint(),
+                               (window_pos + window()->position()).toPoint());
+}
+
+void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleInputMethodEvent(event);
+}
+
+QVariant OxideQQuickWebView::inputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  Q_D(const OxideQQuickWebView);
+
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return d->proxy()->inputMethodQuery(query);
+  }
+}
+
+void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->handling_unhandled_key_event_) {
+    QQuickItem::keyPressEvent(event);
+    return;
+  }
+
+  d->proxy()->handleKeyEvent(event);
+}
+
+void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  if (d->handling_unhandled_key_event_) {
+    QQuickItem::keyReleaseEvent(event);
+    return;
+  }
+
+  d->proxy()->handleKeyEvent(event);
+}
+
+void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  forceActiveFocus();
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  d->proxy()->handleTouchEvent(event);
+}
+
+void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QPointF window_pos = mapToScene(event->posF());
+  d->proxy()->handleWheelEvent(event, window_pos.toPoint());
+}
+
+void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
+                                         const QRectF& oldGeometry) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::geometryChanged(newGeometry, oldGeometry);
+
+  if (d->proxy()->isInitialized() && window()) {
+    d->proxy()->wasResized();
   }
 }
 
@@ -1116,19 +1116,11 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
   setFlags(QQuickItem::ItemClipsChildrenToShape |
            QQuickItem::ItemHasContents |
            QQuickItem::ItemIsFocusScope);
+  setAcceptedMouseButtons(Qt::AllButtons);
+  setAcceptHoverEvents(true);
 
   connect(this, SIGNAL(windowChanged(QQuickWindow*)),
           this, SLOT(windowChangedHelper(QQuickWindow*)));
-
-  // We have an input area QQuickItem for receiving input events, so
-  // that we have a way of bubbling unhandled key events back to the
-  // WebView
-  d->input_area_ = new oxide::qquick::WebViewInputArea(this, d->proxy());
-  d->input_area_->setX(0.0f);
-  d->input_area_->setY(0.0f);
-  d->input_area_->setWidth(width());
-  d->input_area_->setHeight(height());
-  d->input_area_->setFocus(true);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
@@ -1152,10 +1144,6 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
         d->proxy()->messageHandlers().at(0));
   }
-
-  // Delete this now as it can get a focusOutEvent after our destructor
-  // runs, calling back in to our deleted oxide::WebView
-  delete d->input_area_;
 }
 
 void OxideQQuickWebView::componentComplete() {

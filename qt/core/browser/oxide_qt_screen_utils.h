@@ -15,19 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BASE_SKUTILS_H_
-#define _OXIDE_QT_CORE_BASE_SKUTILS_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCREEN_UTILS_H_
+#define _OXIDE_QT_CORE_BROWSER_SCREEN_UTILS_H_
 
-#include <QImage>
+#include <QtGlobal>
 
-struct SkImageInfo;
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+
+QT_BEGIN_NAMESPACE
+class QScreen;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-QImage::Format QImageFormatFromSkImageInfo(const SkImageInfo& info);
+float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+
+blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen);
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BASE_SKUTILS_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCREEN_UTILS_H_

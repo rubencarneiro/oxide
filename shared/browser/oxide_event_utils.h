@@ -15,25 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
-#define _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
+#define _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
 
-#include <QtGlobal>
+#include "third_party/WebKit/public/web/WebInputEvent.h"
 
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
-
-QT_BEGIN_NAMESPACE
-class QScreen;
-QT_END_NAMESPACE
+namespace ui {
+class GestureEventData;
+class MotionEvent;
+}
 
 namespace oxide {
-namespace qt {
 
-float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
 
-blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen);
+blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
+                                       bool may_cause_scrolling);
 
-} // namespace qt
+int WindowsKeyCodeWithoutLocation(int code);
+int LocationModifiersFromWindowsKeyCode(int code);
+
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_

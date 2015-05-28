@@ -73,7 +73,6 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
 
 #include "third_party/WebKit/public/web/WebFindOptions.h"
@@ -81,6 +80,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_event_utils.h"
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
