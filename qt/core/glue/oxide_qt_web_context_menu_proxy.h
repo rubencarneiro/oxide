@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,37 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
-#define _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
-
-#include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_pump.h"
-
-namespace base {
-class RunLoop;
-}
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_H_
 
 namespace oxide {
+namespace qt {
 
-class MessagePump : public base::MessagePump {
+class WebContextMenuProxy {
  public:
-  static MessagePump* Get();
+  virtual ~WebContextMenuProxy() {}
 
-  MessagePump();
-  virtual ~MessagePump();
-
-  void Start();
-  void Stop();
-
- private:
-  virtual void OnStart() = 0;
-
-  scoped_ptr<base::RunLoop> run_loop_;
-
-  DISALLOW_COPY_AND_ASSIGN(MessagePump);
+  virtual void Show() = 0;
+  virtual void Hide() = 0;
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_H_

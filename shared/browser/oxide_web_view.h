@@ -66,6 +66,7 @@ class WebMouseWheelEvent;
 
 namespace content {
 
+struct ContextMenuParams;
 struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
@@ -100,6 +101,7 @@ class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
 class RenderWidgetHostView;
+class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -270,6 +272,8 @@ class WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
+  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                       const content::ContextMenuParams& params);
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int selected_item,
@@ -533,6 +537,7 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
+  gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
 
   GURL initial_url_;

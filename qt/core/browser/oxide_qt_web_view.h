@@ -148,6 +148,9 @@ class WebView : public QObject,
                               bool user_gesture) override;
   oxide::WebFrame* CreateWebFrame(
       content::RenderFrameHost* render_frame_host) override;
+  oxide::WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params) override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
   oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition) override;
@@ -204,11 +207,15 @@ class WebView : public QObject,
   void visibilityChanged() override;
 
   void handleFocusEvent(QFocusEvent* event) override;
+  void handleHoverEvent(QHoverEvent* event,
+                        const QPoint& window_pos,
+                        const QPoint& global_pos) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchEvent(QTouchEvent* event) override;
-  void handleWheelEvent(QWheelEvent* event) override;
+  void handleWheelEvent(QWheelEvent* event,
+                        const QPoint& window_pos) override;
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 
@@ -268,6 +275,8 @@ class WebView : public QObject,
   void locationBarHide(bool animate) override;
 
   WebProcessStatus webProcessStatus() const override;
+
+  void executeEditingCommand(EditingCommands command) const override;
 
   scoped_ptr<oxide::WebView> view_;
 

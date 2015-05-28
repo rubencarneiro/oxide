@@ -43,6 +43,7 @@
 #include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
+#include "shared/port/ui_base/clipboard_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
@@ -193,6 +194,9 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
 
+  ui::SetClipboardOxideFactory(
+      BrowserPlatformIntegration::GetInstance()->GetClipboardOxideFactory());
+
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
 
@@ -279,7 +283,7 @@ void BrowserMainParts::PreMainMessageLoopRun() {
 }
 
 bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
-  MessageLoopForUI::current()->Start();
+  MessagePump::Get()->Start();
   return true;
 }
 

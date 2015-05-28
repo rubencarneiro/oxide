@@ -86,6 +86,7 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_context_menu.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
@@ -1960,6 +1961,16 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload(false);
 }
 
+void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                              const content::ContextMenuParams& params) {
+  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  menu->Show();
+}
+
 void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             const gfx::Rect& bounds,
                             int selected_item,
@@ -2070,12 +2081,25 @@ void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
 }
 
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
+  blink::WebMouseEvent e(event);
+
+  if (e.type == blink::WebInputEvent::MouseEnter ||
+      e.type == blink::WebInputEvent::MouseLeave) {
+    global_mouse_position_.SetPoint(event.globalX, event.globalY);
+    e.type = blink::WebInputEvent::MouseMove;
+  }
+
+  e.movementX = e.globalX - global_mouse_position_.x();
+  e.movementY = e.globalY - global_mouse_position_.y();
+
+  global_mouse_position_.SetPoint(e.globalX, e.globalY);
+
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
     return;
   }
 
-  rvh->ForwardMouseEvent(event);
+  rvh->ForwardMouseEvent(e);
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {

@@ -18,6 +18,7 @@
 #include "oxide_qt_event_utils.h"
 
 #include <QEvent>
+#include <QHoverEvent>
 #include <QInputEvent>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -411,21 +412,16 @@ int QKeyEventKeyCodeToWebEventKeyCode(QKeyEvent* qevent) {
 
 int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   Qt::MouseButtons buttons = qevent->buttons();
-  bool mouse_down = qevent->type() == QEvent::MouseButtonPress;
-  Qt::MouseButton event_button = qevent->button();
 
   int modifiers = 0;
 
-  if (buttons & Qt::LeftButton &&
-      (!mouse_down || event_button != Qt::LeftButton)) {
+  if (buttons & Qt::LeftButton) {
     modifiers |= blink::WebInputEvent::LeftButtonDown;
   }
-  if (buttons & Qt::MidButton &&
-      (!mouse_down || event_button != Qt::MidButton)) {
+  if (buttons & Qt::MidButton) {
     modifiers |= blink::WebInputEvent::MiddleButtonDown;
   }
-  if (buttons & Qt::RightButton &&
-      (!mouse_down || event_button != Qt::RightButton)) {
+  if (buttons & Qt::RightButton) {
     modifiers |= blink::WebInputEvent::RightButtonDown;
   }
 
@@ -520,16 +516,16 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   }
 
   switch (event->type()) {
-  case QEvent::KeyPress: {
-    result.type = is_char ?
-        blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
-    break;
-  }
-  case QEvent::KeyRelease:
-    result.type = blink::WebInputEvent::KeyUp;
-    break;
-  default:
-    NOTREACHED();
+    case QEvent::KeyPress: {
+      result.type = is_char ?
+          blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
+      break;
+    }
+    case QEvent::KeyRelease:
+      result.type = blink::WebInputEvent::KeyUp;
+      break;
+    default:
+      NOTREACHED();
   }
 
   if (result.modifiers & blink::WebInputEvent::AltKey) {
@@ -560,13 +556,6 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   return result;
 }
 
-void MakeUITouchEvents(QTouchEvent* event,
-                       float device_scale,
-                       int location_bar_content_offset_dip,
-                       ScopedVector<ui::TouchEvent>* results) {
-
-}
-
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
                                        float device_scale,
                                        float location_bar_content_offset_dip) {
@@ -576,10 +565,11 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   result.modifiers = QMouseEventStateToWebEventModifiers(event);
 
   result.x = qRound(event->x() / device_scale);
-  result.y = qRound((event->y() / device_scale) - location_bar_content_offset_dip);
+  result.y = qRound((event->y() / device_scale) -
+                    location_bar_content_offset_dip);
 
-  result.windowX = result.x;
-  result.windowY = result.y;
+  result.windowX = qRound(event->windowPos().x() / device_scale);
+  result.windowY = qRound(event->windowPos().y() / device_scale);
 
   result.globalX = qRound(event->globalX() / device_scale);
   result.globalY = qRound(event->globalY() / device_scale);
@@ -587,43 +577,55 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   result.clickCount = 0;
 
   switch (event->type()) {
-  case QEvent::MouseButtonPress:
-    result.type = blink::WebInputEvent::MouseDown;
-    result.clickCount = 1;
-    break;
-  case QEvent::MouseButtonRelease:
-    result.type = blink::WebInputEvent::MouseUp;
-    break;
-  case QEvent::MouseMove:
-    result.type = blink::WebInputEvent::MouseMove;
-    break;
-  case QEvent::MouseButtonDblClick:
-    result.type = blink::WebInputEvent::MouseDown;
-    result.clickCount = 2;
-    break;
-  default:
-    NOTREACHED();
+    case QEvent::MouseButtonPress:
+      result.type = blink::WebInputEvent::MouseDown;
+      result.clickCount = 1;
+      break;
+    case QEvent::MouseButtonRelease:
+      result.type = blink::WebInputEvent::MouseUp;
+      break;
+    case QEvent::MouseMove:
+      result.type = blink::WebInputEvent::MouseMove;
+      break;
+    case QEvent::MouseButtonDblClick:
+      result.type = blink::WebInputEvent::MouseDown;
+      result.clickCount = 2;
+      break;
+    default:
+      NOTREACHED();
   }
 
-  switch(event->button()) {
-  case Qt::LeftButton:
-    result.button = blink::WebMouseEvent::ButtonLeft;
-    break;
-  case Qt::MidButton:
-    result.button = blink::WebMouseEvent::ButtonMiddle;
-    break;
-  case Qt::RightButton:
-    result.button = blink::WebMouseEvent::ButtonRight;
-    break;
-  default:
-    result.button = blink::WebMouseEvent::ButtonNone;
-    DCHECK_EQ(result.type, blink::WebMouseEvent::MouseMove);
+  if (event->type() != QEvent::MouseMove) {
+    switch(event->button()) {
+      case Qt::LeftButton:
+        result.button = blink::WebMouseEvent::ButtonLeft;
+        break;
+      case Qt::MidButton:
+        result.button = blink::WebMouseEvent::ButtonMiddle;
+        break;
+      case Qt::RightButton:
+        result.button = blink::WebMouseEvent::ButtonRight;
+        break;
+      default:
+        NOTREACHED();
+    }
+  } else {
+    if (event->buttons() & Qt::LeftButton) {
+      result.button = blink::WebMouseEvent::ButtonLeft;
+    }
+    if (event->buttons() & Qt::MidButton) {
+      result.button = blink::WebMouseEvent::ButtonMiddle;
+    }
+    if (event->buttons() & Qt::RightButton) {
+      result.button = blink::WebMouseEvent::ButtonRight;
+    }
   }
 
   return result;
 }
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
+                                                 const QPoint& window_pos,
                                                  float device_scale,
                                                  float location_bar_content_offset_dip) {
   blink::WebMouseWheelEvent result;
@@ -647,8 +649,8 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.x = qRound(event->x() / device_scale);
   result.y = qRound((event->y() / device_scale) - location_bar_content_offset_dip);
 
-  result.windowX = result.x;
-  result.windowY = result.y;
+  result.windowX = qRound(window_pos.x() / device_scale);
+  result.windowY = qRound(window_pos.y() / device_scale);
 
   result.globalX = qRound(event->globalX() / device_scale);
   result.globalY = qRound(event->globalY() / device_scale);
@@ -663,6 +665,48 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.wheelTicksY = delta.y() / 120.0f;
   result.deltaX = result.wheelTicksX * scrollbarPixelsPerTick;
   result.deltaY = result.wheelTicksY * scrollbarPixelsPerTick;
+
+  return result;
+}
+
+blink::WebMouseEvent MakeWebMouseEvent(
+    QHoverEvent* event,
+    const QPoint& window_pos,
+    const QPoint& global_pos,
+    float device_scale,
+    float location_bar_content_offset_dip) {
+  blink::WebMouseEvent result;
+
+  result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
+  result.modifiers = QInputEventStateToWebEventModifiers(event);
+
+  result.x = qRound(event->pos().x() / device_scale);
+  result.y = qRound((event->pos().y() / device_scale) -
+                    location_bar_content_offset_dip);
+
+  result.windowX = qRound(window_pos.x() / device_scale);
+  result.windowY = qRound(window_pos.x() / device_scale);
+
+  result.globalX = qRound(global_pos.x() / device_scale);
+  result.globalY = qRound(global_pos.y() / device_scale);
+
+  result.clickCount = 0;
+
+  switch (event->type()) {
+    case QEvent::HoverEnter:
+      result.type = blink::WebInputEvent::MouseEnter;
+      break;
+    case QEvent::HoverLeave:
+      result.type = blink::WebInputEvent::MouseLeave;
+      break;
+    case QEvent::HoverMove:
+      result.type = blink::WebInputEvent::MouseMove;
+      break;
+    default:
+      NOTREACHED();
+  }
+
+  result.button = blink::WebMouseEvent::ButtonNone;
 
   return result;
 }

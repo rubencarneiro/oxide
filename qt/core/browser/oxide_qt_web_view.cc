@@ -85,6 +85,7 @@
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_web_context.h"
+#include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_popup_menu.h"
 #include "oxide_qt_web_preferences.h"
@@ -796,6 +797,14 @@ oxide::WebFrame* WebView::CreateWebFrame(
   return WebFrame::FromProxyHandle(handle);
 }
 
+oxide::WebContextMenu* WebView::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  WebContextMenu* menu = new WebContextMenu(rfh, params);
+  menu->SetProxy(client_->CreateWebContextMenu(menu));
+  return menu;
+}
+
 oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
   WebPopupMenu* menu = new WebPopupMenu(rfh);
   menu->SetProxy(client_->CreateWebPopupMenu(menu));
@@ -1131,6 +1140,17 @@ void WebView::handleFocusEvent(QFocusEvent* event) {
   view_->FocusChanged();
 }
 
+void WebView::handleHoverEvent(QHoverEvent* event,
+                               const QPoint& window_pos,
+                               const QPoint& global_pos) {
+  view_->HandleMouseEvent(
+      MakeWebMouseEvent(event,
+                        window_pos,
+                        global_pos,
+                        GetDeviceScaleFactor(),
+                        view_->GetLocationBarContentOffsetDip()));
+}
+
 void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
   QString commit_string = event->commitString();
 
@@ -1227,9 +1247,11 @@ void WebView::handleTouchEvent(QTouchEvent* event) {
   }
 }
 
-void WebView::handleWheelEvent(QWheelEvent* event) {
+void WebView::handleWheelEvent(QWheelEvent* event,
+                               const QPoint& window_pos) {
   view_->HandleWheelEvent(
       MakeWebMouseWheelEvent(event,
+                             window_pos,
                              GetDeviceScaleFactor(),
                              view_->GetLocationBarContentOffsetDip()));
 }
@@ -1519,6 +1541,32 @@ WebProcessStatus WebView::webProcessStatus() const {
     // Map all other termination statuses to crashed. This is
     // consistent with how the sad tab helper works in Chrome.
     return WEB_PROCESS_CRASHED;
+  }
+}
+
+void WebView::executeEditingCommand(EditingCommands command) const {
+  content::WebContents* contents = view_->GetWebContents();
+  if (!contents) {
+    return;
+  }
+
+  switch (command) {
+    case EDITING_COMMAND_UNDO:
+      return contents->Undo();
+    case EDITING_COMMAND_REDO:
+      return contents->Redo();
+    case EDITING_COMMAND_CUT:
+      return contents->Cut();
+    case EDITING_COMMAND_COPY:
+      return contents->Copy();
+    case EDITING_COMMAND_PASTE:
+      return contents->Paste();
+    case EDITING_COMMAND_ERASE:
+      return contents->Delete();
+    case EDITING_COMMAND_SELECT_ALL:
+      return contents->SelectAll();
+    default:
+      NOTREACHED();
   }
 }
 
