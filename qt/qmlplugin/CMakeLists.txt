@@ -41,8 +41,8 @@ set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
 if(GENERATE_QMLTYPES)
   execute_process(
       COMMAND  qmlplugindump com.canonical.Oxide ${OXIDE_VERSION_MAJOR}.${OXIDE_VERSION_MINOR} .
-      OUTPUT_FILE ${CMAKE_SOURCE_DIR}/qt/qmlplugin/oxide.qmltypes
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/qt/qmlplugin/)
+      OUTPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/oxide.qmltypes
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/)
 endif()
 
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
