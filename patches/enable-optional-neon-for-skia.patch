@@ -1,0 +1,37 @@
+# Description: Build SkUtilsArm.cpp on all arm builds (not just Android)
+#  as it already contains a non-Android implementation that works fine
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/skia/skia_library.gypi b/skia/skia_library.gypi
+--- a/skia/skia_library.gypi
++++ b/skia/skia_library.gypi
+@@ -200,22 +200,26 @@
+       ],
+     }],
+ 
+     [ 'OS != "mac"', {
+       'sources/': [
+         ['exclude', '/mac/']
+       ],
+     }],
+-    [ 'OS == "android" and target_arch == "arm"', {
++    [ 'target_arch == "arm"', {
+       'sources': [
+         '../third_party/skia/src/core/SkUtilsArm.cpp',
+       ],
+-      'dependencies': [
+-        '../build/android/ndk.gyp:cpu_features',
++      'conditions': [
++        [ 'OS == "android"', {
++          'dependencies': [
++            '../build/android/ndk.gyp:cpu_features',
++          ],
++        }],
+       ],
+     }],
+     [ 'desktop_linux == 1 or chromeos == 1', {
+       'dependencies': [
+         '../build/linux/system.gyp:fontconfig',
+         '../build/linux/system.gyp:freetype2',
+         '../third_party/icu/icu.gyp:icuuc',
+       ],

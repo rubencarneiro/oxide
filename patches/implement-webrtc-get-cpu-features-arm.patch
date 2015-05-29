@@ -1,0 +1,85 @@
+# Description: Implement WebRtc_GetCPUFeaturesARM on non-Android arm,
+#  so that it can be built with arm_neon_optional and NEON run-time
+#  detection works
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/third_party/webrtc/system_wrappers/source/cpu_features.cc b/third_party/webrtc/system_wrappers/source/cpu_features.cc
+--- a/third_party/webrtc/system_wrappers/source/cpu_features.cc
++++ b/third_party/webrtc/system_wrappers/source/cpu_features.cc
+@@ -65,8 +65,76 @@ static int GetCPUInfo(CPUFeature feature
+ static int GetCPUInfo(CPUFeature feature) {
+   (void)feature;
+   return 0;
+ }
+ #endif
+ 
+ WebRtc_CPUInfo WebRtc_GetCPUInfo = GetCPUInfo;
+ WebRtc_CPUInfo WebRtc_GetCPUInfoNoASM = GetCPUInfoNoASM;
++
++#if defined(WEBRTC_ARCH_ARM64)
++
++uint64_t WebRtc_GetCPUFeaturesARM(void) {
++  return kCPUFeatureNEON;
++}
++
++#elif defined(WEBRTC_ARCH_ARM)
++
++#include <asm/hwcap.h>
++#include <sys/auxv.h>
++#include <stdio.h>
++
++#if defined(WEBRTC_ARCH_ARM_V7)
++#define HAVE_ARM_V7 kCPUFeatureARMv7
++#else
++#define HAVE_ARM_V7 0
++#endif
++#if defined(WEBRTC_ARCH_ARM_NEON)
++#define HAVE_ARM_NEON kCPUFeatureNEON
++#else
++#define HAVE_ARM_NEON 0
++#endif
++
++#define CORE_FLAGS (HAVE_ARM_V7 | HAVE_ARM_NEON)
++
++uint64_t WebRtc_GetCPUFeaturesARM(void) {
++  static bool detected = false;
++  static uint64_t flags = CORE_FLAGS;
++
++  if (detected) {
++    return flags;
++  }
++
++  detected = true;
++
++  struct { uint32_t a_type; uint32_t a_val; } auxv;
++  FILE *f = fopen("/proc/self/auxv", "r");
++
++  bool found_hwcap = false;
++  uint32_t hwcap = 0;
++
++  if (f) {
++    while (fread(&auxv, sizeof(auxv), 1, f) > 0) {
++      if (auxv.a_type == AT_HWCAP) {
++        hwcap = auxv.a_val;
++        found_hwcap = true;
++        break;
++      }
++    }
++    fclose(f);
++  }
++
++  if (!found_hwcap) {
++    return flags;
++  }
++
++  if (hwcap & HWCAP_VFPv3) {
++    flags |= kCPUFeatureVFPv3;
++  }
++  if (hwcap & HWCAP_NEON) {
++    flags |= kCPUFeatureNEON;
++  }
++
++  return flags;
++}
++
++#endif
