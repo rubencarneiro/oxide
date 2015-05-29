@@ -2158,13 +2158,15 @@ void WebView::DownloadRequested(
     const bool should_prompt,
     const base::string16& suggested_filename,
     const std::string& cookies,
-    const std::string& referrer) {
+    const std::string& referrer,
+    const std::string& user_agent) {
   client_->DownloadRequested(url,
                              mime_type,
                              should_prompt,
                              suggested_filename,
                              cookies,
-                             referrer);
+                             referrer,
+                             user_agent);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
