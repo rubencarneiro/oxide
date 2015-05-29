@@ -232,7 +232,6 @@ void Compositor::SetVisibility(bool visible) {
     cc::LayerTreeSettings settings;
     settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
-    settings.throttle_frame_production = true;
 
     cc::LayerTreeHost::InitParams params;
     params.client = this;
