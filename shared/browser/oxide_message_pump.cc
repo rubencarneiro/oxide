@@ -37,8 +37,7 @@ MessagePump* MessagePump::Get() {
   return g_lazy_tls.Pointer()->Get();
 }
 
-MessagePump::MessagePump()
-    : run_loop_(new base::RunLoop()) {
+MessagePump::MessagePump() {
   CHECK(!Get());
   g_lazy_tls.Pointer()->Set(this);
 }
@@ -51,6 +50,8 @@ void MessagePump::Start() {
   CHECK(!base::MessageLoop::current()->is_running());
 
   OnStart();
+
+  run_loop_.reset(new base::RunLoop());
   run_loop_->BeforeRun();
 
   // Schedule events that might have already been posted

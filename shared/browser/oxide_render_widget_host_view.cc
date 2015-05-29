@@ -27,6 +27,7 @@
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
+#include "cc/trees/layer_tree_settings.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -228,7 +229,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       DetachLayer();
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
-      layer_ = cc::DelegatedRendererLayer::Create(frame_provider_);
+      layer_ = cc::DelegatedRendererLayer::Create(cc::LayerSettings(),
+                                                  frame_provider_);
       AttachLayer();
     } else {
       frame_provider_->SetFrameData(frame_data.Pass());
@@ -382,6 +384,7 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
     const content::TouchEventWithLatencyInfo& touch,
     content::InputEventAckState ack_result) {
   gesture_provider_->OnTouchEventAck(
+      touch.event.uniqueTouchEventId,
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
@@ -669,6 +672,13 @@ void RenderWidgetHostView::SetDelegate(
   }
 }
 
+void RenderWidgetHostView::Blur() {
+  host_->SetInputMethodActive(false);
+
+  host_->SetActive(false);
+  host_->Blur();
+}
+
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
   auto rv = gesture_provider_->OnTouchEvent(event);
   if (!rv.succeeded) {
@@ -676,7 +686,7 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
   }
 
   if (!host_) {
-    gesture_provider_->OnTouchEventAck(false);
+    gesture_provider_->OnTouchEventAck(event.GetUniqueEventId(), false);
     return;
   }
 
@@ -694,13 +704,6 @@ void RenderWidgetHostView::ResetGestureDetection() {
   }
 
   gesture_provider_->ResetDetection();
-}
-
-void RenderWidgetHostView::Blur() {
-  host_->SetInputMethodActive(false);
-
-  host_->SetActive(false);
-  host_->Blur();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {

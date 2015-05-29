@@ -5,7 +5,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -42,16 +42,17 @@
+@@ -46,16 +46,17 @@
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      # The public render_widget_host.h needs to re-export skia defines.
      '../skia/skia.gyp:skia',
@@ -19,11 +19,11 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
    'variables': {
      'public_browser_sources': [
        'public/browser/access_token_store.h',
-       'public/browser/android/browser_media_player_manager.cc',
-       'public/browser/android/browser_media_player_manager.h',
+       'public/browser/android/browser_media_player_manager_register.cc',
+       'public/browser/android/browser_media_player_manager_register.h',
        'public/browser/android/compositor.h',
        'public/browser/android/compositor_client.h',
-@@ -1028,17 +1029,17 @@
+@@ -1070,17 +1071,17 @@
        'browser/power_profiler/power_profiler_service.cc',
        'browser/power_profiler/power_profiler_service.h',
        'browser/power_save_blocker_android.cc',
@@ -42,7 +42,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/presentation/presentation_service_impl.h',
        'browser/presentation/presentation_type_converters.cc',
        'browser/presentation/presentation_type_converters.h',
-@@ -1484,16 +1485,18 @@
+@@ -1526,16 +1527,18 @@
        'browser/webui/web_ui_impl.cc',
        'browser/webui/web_ui_impl.h',
        'browser/webui/web_ui_message_handler.cc',
