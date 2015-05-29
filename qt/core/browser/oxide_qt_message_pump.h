@@ -23,7 +23,6 @@
 
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
-#include "base/time/time.h"
 
 #include "shared/browser/oxide_message_pump.h"
 
@@ -32,6 +31,10 @@ class QEventLoop;
 QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
+
+namespace base {
+class TimeTicks;
+}
 
 namespace oxide {
 namespace qt {
@@ -43,6 +46,10 @@ class MessagePump : public QObject,
   ~MessagePump() override;
 
  private:
+  void PostWorkEvent();
+  void CancelTimer();
+  void RunOneTask();
+
   // base::MessagePump implementation
   void Run(Delegate* delegate) override;
   void Quit() override;
@@ -52,8 +59,9 @@ class MessagePump : public QObject,
   // oxide::MessagePump implementation
   void OnStart() override;
 
-  void timerEvent(QTimerEvent* event) final;
-  void customEvent(QEvent* event) final;
+  // QObject implementation
+  void timerEvent(QTimerEvent* event) override;
+  void customEvent(QEvent* event) override;
 
   struct RunState {
     RunState() :
@@ -66,7 +74,7 @@ class MessagePump : public QObject,
     bool should_quit;
   };
 
-  base::TimeTicks delayed_work_time_;
+  bool work_scheduled_;
   int delayed_work_timer_id_;
 
   RunState* state_;

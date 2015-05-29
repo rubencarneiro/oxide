@@ -49,13 +49,10 @@ MessagePump::~MessagePump() {
 void MessagePump::Start() {
   CHECK(!base::MessageLoop::current()->is_running());
 
-  OnStart();
-
   run_loop_.reset(new base::RunLoop());
   run_loop_->BeforeRun();
 
-  // Schedule events that might have already been posted
-  ScheduleWork();
+  OnStart();
 }
 
 void MessagePump::Stop() {

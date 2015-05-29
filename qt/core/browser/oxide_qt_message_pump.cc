@@ -25,6 +25,7 @@
 
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "base/time/time.h"
 
 QT_USE_NAMESPACE
 
@@ -33,9 +34,9 @@ namespace qt {
 
 namespace {
 
-int GetChromiumEventType() {
+QEvent::Type GetChromiumEventType() {
   static int g_event_type = QEvent::registerEventType();
-  return g_event_type;
+  return QEvent::Type(g_event_type);
 }
 
 int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
@@ -46,6 +47,47 @@ int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
 }
 
 } // namespace
+
+void MessagePump::PostWorkEvent() {
+  QCoreApplication::postEvent(this, new QEvent(GetChromiumEventType()));
+}
+
+void MessagePump::CancelTimer() {
+  if (delayed_work_timer_id_ == 0) {
+    return;
+  }
+
+  killTimer(delayed_work_timer_id_);
+  delayed_work_timer_id_ = 0;
+}
+
+void MessagePump::RunOneTask() {
+  DCHECK(state_);
+
+  bool did_work = state_->delegate->DoWork();
+  if (state_->should_quit) {
+    return;
+  }
+
+  base::TimeTicks next_delayed_work_time;
+  did_work |= state_->delegate->DoDelayedWork(&next_delayed_work_time);
+  if (state_->should_quit) {
+    return;
+  }
+
+  if (!next_delayed_work_time.is_null()) {
+    ScheduleDelayedWork(next_delayed_work_time);
+  }
+
+  if (did_work) {
+    ScheduleWork();
+    return;
+  }
+
+  if (state_->delegate->DoIdleWork()) {
+    ScheduleWork();
+  }
+}
 
 void MessagePump::Run(base::MessagePump::Delegate* delegate) {
   QEventLoop event_loop;
@@ -72,26 +114,28 @@ void MessagePump::Quit() {
 }
 
 void MessagePump::ScheduleWork() {
+  if (work_scheduled_) {
+    return;
+  }
+
+  work_scheduled_ = true;
+
   if (!state_) {
     // Handle being called before Start()
     return;
   }
 
-  QCoreApplication::postEvent(
-      this, new QEvent(QEvent::Type(GetChromiumEventType())));
+  PostWorkEvent();
 }
 
 void MessagePump::ScheduleDelayedWork(
     const base::TimeTicks& delayed_work_time) {
-  if (delayed_work_time != delayed_work_time_) {
-    delayed_work_time_ = delayed_work_time;
-    killTimer(delayed_work_timer_id_);
-    delayed_work_timer_id_ = 0;
-
-    if (!delayed_work_time_.is_null()) {
-      delayed_work_timer_id_ =
-          startTimer(GetTimeIntervalMilliseconds(delayed_work_time_));
-    }
+  CancelTimer();
+  int interval = GetTimeIntervalMilliseconds(delayed_work_time);
+  if (interval > 0) {
+    delayed_work_timer_id_ = startTimer(interval);
+  } else {
+    ScheduleWork();
   }
 }
 
@@ -101,46 +145,36 @@ void MessagePump::OnStart() {
 
   top_level_state_.delegate = base::MessageLoop::current();
   state_ = &top_level_state_;
+
+  if (work_scheduled_) {
+    // Schedule events that might have already been posted
+    PostWorkEvent();
+  }
 }
 
 void MessagePump::timerEvent(QTimerEvent* event) {
   DCHECK(event->timerId() == delayed_work_timer_id_);
 
-  // Clear the timer
-  ScheduleDelayedWork(base::TimeTicks());
+  CancelTimer();
 
-  base::TimeTicks next_delayed_work_time;
-  state_->delegate->DoDelayedWork(&next_delayed_work_time);
-  ScheduleDelayedWork(next_delayed_work_time);
+  if (!state_) {
+    ScheduleWork();
+    return;
+  }
+
+  RunOneTask();
 }
 
 void MessagePump::customEvent(QEvent* event) {
   DCHECK(event->type() == GetChromiumEventType());
 
-  bool did_work = state_->delegate->DoWork();
-  if (state_->should_quit) {
-    return;
-  }
-
-  base::TimeTicks next_delayed_work_time;
-  did_work |= state_->delegate->DoDelayedWork(&next_delayed_work_time);
-  ScheduleDelayedWork(next_delayed_work_time);
-  if (state_->should_quit) {
-    return;
-  }
-
-  if (did_work) {
-    ScheduleWork();
-    return;
-  }
-
-  if (state_->delegate->DoIdleWork()) {
-    ScheduleWork();
-  }
+  work_scheduled_ = false;
+  RunOneTask();
 }
 
 MessagePump::MessagePump()
-    : delayed_work_timer_id_(0),
+    : work_scheduled_(false),
+      delayed_work_timer_id_(0),
       state_(nullptr) {}
 
 MessagePump::~MessagePump() {}
