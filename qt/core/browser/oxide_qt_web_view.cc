@@ -56,6 +56,8 @@
 #include "ui/gfx/range/range.h"
 #include "url/gurl.h"
 
+#include "qt/core/api/oxideqbasicauthenticationrequest.h"
+#include "qt/core/api/oxideqbasicauthenticationrequest_p.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -765,8 +767,12 @@ void WebView::OnDownloadRequested(const GURL& url,
   client_->DownloadRequested(&downloadRequest);
 }
 
-void WebView::OnBasicAuthenticationRequested() {
-  client_->BasicAuthenticationRequested();
+void WebView::OnBasicAuthenticationRequested(
+        oxide::ResourceDispatcherHostDelegate*
+        resource_dispatcher_host_delegate) {
+  // the embedder takes ownership of the request
+  client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(
+                                            resource_dispatcher_host_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,

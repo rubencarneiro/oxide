@@ -101,6 +101,7 @@ class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
 class RenderWidgetHostView;
+class ResourceDispatcherHostDelegate;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
@@ -303,7 +304,8 @@ class WebView : public ScriptMessageTarget,
       const std::string& cookies,
       const std::string& referrer);
 
-  void BasicAuthenticationRequested();
+  void BasicAuthenticationRequested(
+      ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate);
 
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
@@ -548,7 +550,8 @@ class WebView : public ScriptMessageTarget,
       const std::string& cookies,
       const std::string& referrer);
 
-  virtual void OnBasicAuthenticationRequested();
+  virtual void OnBasicAuthenticationRequested(
+          ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate);
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,

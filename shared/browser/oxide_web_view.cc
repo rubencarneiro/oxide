@@ -1179,7 +1179,8 @@ void WebView::OnDownloadRequested(const GURL& url,
 				  const std::string& cookies,
 				  const std::string& referrer) {}
 
-void WebView::OnBasicAuthenticationRequested() {}
+void WebView::OnBasicAuthenticationRequested(
+        ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate) {}
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
                                      WindowOpenDisposition disposition,
@@ -2128,8 +2129,9 @@ void WebView::DownloadRequested(
       suggestedFilename, cookies, referrer);
 }
 
-void WebView::BasicAuthenticationRequested() {
-  OnBasicAuthenticationRequested();
+void WebView::BasicAuthenticationRequested(ResourceDispatcherHostDelegate*
+                                           resource_dispatcher_host_delegate) {
+  OnBasicAuthenticationRequested(resource_dispatcher_host_delegate);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

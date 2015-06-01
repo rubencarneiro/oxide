@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 
 #include "base/macros.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
 #include "content/public/browser/resource_dispatcher_host_login_delegate.h"
 
@@ -34,18 +35,27 @@ class CookieStore;
 
 namespace oxide {
 
+class ResourceDispatcherHostDelegate;
+
 class LoginPromptDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
  public:
     LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
-                        net::URLRequest* request);
+                        net::URLRequest* request,
+                        ResourceDispatcherHostDelegate* delegate);
     ~LoginPromptDelegate() override;
     void OnRequestCancelled() override;
 
-    void DispatchAuthRequest();
+    void Cancel();
+    void SendCredentials(std::string login, std::string password);
 
 private:
+    friend class ResourceDispatcherHostDelegate;
+    void DispatchAuthRequest();
+
     net::URLRequest* request_;
+    bool cancelled_;
+    ResourceDispatcherHostDelegate* parent_;
 };
 
 class ResourceDispatcherHostDelegate
@@ -53,6 +63,10 @@ class ResourceDispatcherHostDelegate
  public:
   ResourceDispatcherHostDelegate();
   ~ResourceDispatcherHostDelegate() override;
+
+  void CancelAuthentication();
+  void SendAuthenticationCredentials(const std::string& user,
+                                     const std::string& password);
 
  private:
   struct DownloadRequestParams;

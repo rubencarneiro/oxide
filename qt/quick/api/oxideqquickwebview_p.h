@@ -246,6 +246,10 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_REVISION(2) void prepareToClose();
 
+  Q_REVISION(4) void cancelBasicAuthenticationRequest();
+  Q_REVISION(4) void sendBasicAuthenticationCredentials(const QString& user,
+                                                        const QString& password);
+
  Q_SIGNALS:
   void urlChanged();
   void titleChanged();
@@ -289,7 +293,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(2) void prepareToCloseResponse(bool proceed);
   Q_REVISION(2) void closeRequested();
   Q_REVISION(4) void webProcessStatusChanged(); 
-  Q_REVISION(4) void basicAuthenticationRequested();
+  Q_REVISION(4) void basicAuthenticationRequested(const QJSValue& request);
 
   // Deprecated since 1.3
   void loadingChanged(OxideQLoadEvent* loadEvent);

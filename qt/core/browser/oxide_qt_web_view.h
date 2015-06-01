@@ -156,7 +156,9 @@ class WebView : public QObject,
 			   const std::string& cookies,
 			   const std::string& referrer) override;
 
-  void OnBasicAuthenticationRequested() override;
+  void OnBasicAuthenticationRequested(
+          ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate)
+          override;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
