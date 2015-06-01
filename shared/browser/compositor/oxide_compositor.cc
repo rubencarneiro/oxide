@@ -168,9 +168,6 @@ void Compositor::ApplyViewportDeltas(
     const gfx::Vector2dF& elastic_overscroll_delta,
     float page_scale,
     float top_controls_delta) {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
 
 void Compositor::RequestNewOutputSurface() {
   scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
