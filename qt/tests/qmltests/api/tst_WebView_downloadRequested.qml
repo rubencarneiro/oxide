@@ -86,7 +86,8 @@ TestWebView {
       spy.wait();
 
       compare(spy.count, 1)
-      compare(webView.latestSuggestedFilename, "MyDownload")
+      compare(webView.latestSuggestedFilename, "MyDownload.html")
+      compare(webView.latestMimeType, "text/html")
     }
 
     function test_WebView_downloadRequestUnhandledMimeType() {

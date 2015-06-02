@@ -27,6 +27,7 @@
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/resource_request_info.h"
 #include "content/public/common/referrer.h"
+#include "net/base/mime_util.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/http/http_content_disposition.h"
 #include "net/http/http_request_headers.h"
@@ -82,6 +83,12 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
     response_headers->GetMimeType(&mime_type);
   }
   request->Cancel();
+
+  if (!suggested_name.empty() && mime_type.empty()) {
+    net::GetMimeTypeFromExtension(
+        base::FilePath(suggested_name).Extension(),
+        &mime_type);
+  }
 
   // POST request cannot be repeated in general, so prevent client from
   // retrying the same request, even if it is with a GET.
