@@ -12,9 +12,9 @@ diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
  
  GLContextEGL::GLContextEGL(GLShareGroup* share_group)
      : GLContextReal(share_group),
-       context_(NULL),
-       display_(NULL),
-       config_(NULL),
+       context_(nullptr),
+       display_(nullptr),
+       config_(nullptr),
        unbind_fbo_on_makecurrent_(false),
 -      swap_interval_(1) {
 +      swap_interval_(1),
@@ -35,7 +35,7 @@ diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
    display_ = compatible_surface->GetDisplay();
    config_ = compatible_surface->GetConfig();
  
-   const EGLint* context_attributes = NULL;
+   const EGLint* context_attributes = nullptr;
 -  if (GLSurfaceEGL::IsCreateContextRobustnessSupported()) {
 +  if (GLSurfaceEGL::IsCreateContextRobustnessSupported() &&
 +      (!share_group()->GetContext() ||
@@ -100,8 +100,8 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
  
  GLContextGLX::GLContextGLX(GLShareGroup* share_group)
    : GLContextReal(share_group),
-     context_(NULL),
--    display_(NULL) {
+     context_(nullptr),
+-    display_(nullptr) {
 +    display_(NULL),
 +    was_allocated_using_robustness_extension_(false) {
  }
@@ -115,7 +115,7 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
    display_ = static_cast<XDisplay*>(compatible_surface->GetDisplay());
  
    GLXContext share_handle = static_cast<GLXContext>(
-       share_group() ? share_group()->GetHandle() : NULL);
+       share_group() ? share_group()->GetHandle() : nullptr);
  
    if (GLSurfaceGLX::IsCreateContextSupported()) {
      DVLOG(1) << "GLX_ARB_create_context supported.";
@@ -152,6 +152,42 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
  }
  
  }  // namespace gfx
+diff --git a/ui/gl/gl_context_glx.cc.rej b/ui/gl/gl_context_glx.cc.rej
+deleted file mode 100644
+--- a/ui/gl/gl_context_glx.cc.rej
++++ /dev/null
+@@ -1,31 +0,0 @@
+---- gl_context_glx.cc
+-+++ gl_context_glx.cc
+-@@ -34,28 +34,16 @@ bool GLContextGLX::Initialize(
+-   display_ = static_cast<XDisplay*>(compatible_surface->GetDisplay());
+- 
+-   GLXContext share_handle = static_cast<GLXContext>(
+-       share_group() ? share_group()->GetHandle() : NULL);
+- 
+-   if (GLSurfaceGLX::IsCreateContextSupported()) {
+-     DVLOG(1) << "GLX_ARB_create_context supported.";
+-     std::vector<int> attribs;
+--    if (gfx::GetGLImplementation() ==
+--        gfx::kGLImplementationDesktopGLCoreProfile) {
+--      // TODO(kbr): NVIDIA's driver doesn't return a later context
+--      // version if any version later than 3.1 is requested. We
+--      // explicitly want to request a 3.2+ context with no support for
+--      // the compatibility profile. WebGL 2.0 support currently
+--      // requires a 4.2 context. crbug.com/473427
+--      attribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
+--      attribs.push_back(4);
+--      attribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
+--      attribs.push_back(2);
+--    }
+-     if (GLSurfaceGLX::IsCreateContextRobustnessSupported() &&
+-         (!share_group()->GetContext() ||
+-          share_group()->GetContext()->WasAllocatedUsingRobustnessExtension())) {
+-       DVLOG(1) << "GLX_ARB_create_context_robustness supported.";
+-       was_allocated_using_robustness_extension_ = true;
+-       attribs.push_back(GLX_CONTEXT_RESET_NOTIFICATION_STRATEGY_ARB);
+-       attribs.push_back(GLX_LOSE_CONTEXT_ON_RESET_ARB);
+-     }
 diff --git a/ui/gl/gl_context_glx.h b/ui/gl/gl_context_glx.h
 --- a/ui/gl/gl_context_glx.h
 +++ b/ui/gl/gl_context_glx.h
