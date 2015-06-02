@@ -33,7 +33,8 @@ class OxideQDownloadRequestPrivate {
       const bool shouldPrompt,
       const QString& suggestedFilename,
       const QStringList& cookies,
-      const QString& referrer);
+      const QString& referrer,
+      const QString& userAgent);
   virtual ~OxideQDownloadRequestPrivate();
 
  private:
@@ -45,6 +46,7 @@ class OxideQDownloadRequestPrivate {
   QString suggested_filename_;
   QStringList cookies_;
   QString referrer_;
+  QString user_agent_;
 };
 
 #endif // _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
