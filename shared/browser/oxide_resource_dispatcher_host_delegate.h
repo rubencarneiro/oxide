@@ -26,6 +26,7 @@
 
 namespace content {
 class ResourceContext;
+class ResourceThrottle;
 struct Referrer;
 }
 
@@ -67,8 +68,20 @@ private:
 class ResourceDispatcherHostDelegate
     : public content::ResourceDispatcherHostDelegate {
  public:
+
   ResourceDispatcherHostDelegate();
   ~ResourceDispatcherHostDelegate() override;
+
+  void DownloadStarting(
+      net::URLRequest* request,
+      content::ResourceContext* resource_context,
+      int child_id,
+      int route_id,
+      int request_id,
+      bool is_content_initiated,
+      bool must_download,
+      const std::string& suggested_filename,
+      ScopedVector<content::ResourceThrottle>* throttles) override;
 
  private:
   struct DownloadRequestParams;
@@ -82,7 +95,8 @@ class ResourceDispatcherHostDelegate
                                const std::string& mime_type,
                                int render_process_id,
                                int render_view_id,
-                               content::ResourceContext* resource_context);
+                               content::ResourceContext* resource_context,
+                               net::URLRequest* url_request);
 
   static void DispatchDownloadRequestWithCookies(
       const DownloadRequestParams& params,
@@ -104,16 +118,6 @@ class ResourceDispatcherHostDelegate
                               bool is_main_frame,
                               ui::PageTransition page_transition,
                               bool has_user_gesture) override;
-  bool ShouldDownloadUrl(const GURL& url,
-                         const GURL& first_party_url,
-                         bool is_content_initiated,
-                         const base::string16& suggested_name,
-                         const bool use_prompt,
-                         const content::Referrer& referrer,
-                         const std::string& mime_type,
-                         int render_process_id,
-                         int render_view_id,
-                         content::ResourceContext* resource_context) override;
 
   content::ResourceDispatcherHostLoginDelegate* CreateLoginDelegate(
       net::AuthChallengeInfo* auth_info,

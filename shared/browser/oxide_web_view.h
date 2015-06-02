@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
@@ -67,6 +66,7 @@ class WebMouseWheelEvent;
 
 namespace content {
 
+struct ContextMenuParams;
 struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
@@ -101,11 +101,12 @@ class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
 class RenderWidgetHostView;
-class LoginPromptDelegate;
+class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
 class WebPreferences;
 class WebView;
+class WebViewClient;
 class WebViewContentsHelper;
 
 class WebViewIterator final {
@@ -125,9 +126,8 @@ class WebViewIterator final {
   Vector::iterator current_;
 };
 
-// This is the main webview class. Implementations should subclass
-// this. Note that this class will hold the main browser process
-// components alive
+// This is the main webview class. Implementations should customize this by
+// providing an implementation of WebViewClient
 class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
@@ -136,6 +136,7 @@ class WebView : public ScriptMessageTarget,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
+  WebView(WebViewClient* client);
   virtual ~WebView();
 
   // Maps to content::NavigationController::RestoreType
@@ -154,7 +155,10 @@ class WebView : public ScriptMessageTarget,
     bool incognito;
   };
 
-  virtual void Init(Params* params);
+  void Init(Params* params);
+
+  // XXX(chrisccoulson): Remove this
+  WebViewClient* client() const { return client_; }
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
@@ -201,6 +205,15 @@ class WebView : public ScriptMessageTarget,
   void FocusChanged();
   void InputPanelVisibilityChanged();
   void UpdateWebPreferences();
+
+  int GetFindInPageCount() const;
+  int GetFindInPageCurrent() const;
+  std::string GetFindInPageText() const;
+  void SetFindInPageText(const std::string& text);
+  bool GetFindInPageCaseSensitive() const;
+  void SetFindInPageCaseSensitive(bool case_sensitive);
+  void FindInPageNext();
+  void FindInPagePrevious();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -259,6 +272,8 @@ class WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
+  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                       const content::ContextMenuParams& params);
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int selected_item,
@@ -298,44 +313,40 @@ class WebView : public ScriptMessageTarget,
 
   void DownloadRequested(
       const GURL& url,
-      const std::string& mimeType,
-      const bool shouldPrompt,
-      const base::string16& suggestedFilename,
+      const std::string& mime_type,
+      const bool should_prompt,
+      const base::string16& suggested_filename,
       const std::string& cookies,
-      const std::string& referrer);
+      const std::string& referrer,
+      const std::string& user_agent);
 
   void BasicAuthenticationRequested(LoginPromptDelegate* login_delegate);
 
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
-  // ============================
+  blink::WebScreenInfo GetScreenInfo() const;
+  gfx::Rect GetViewBoundsPix() const;
+  bool IsVisible() const;
+  bool HasFocus() const;
+  bool IsInputPanelVisible() const;
 
-  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
-  virtual gfx::Rect GetViewBoundsPix() const = 0;
-  virtual bool IsVisible() const = 0;
-  virtual bool HasFocus() const = 0;
-  virtual bool IsInputPanelVisible() const;
-
-  virtual JavaScriptDialog* CreateJavaScriptDialog(
+  JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type);
-  virtual JavaScriptDialog* CreateBeforeUnloadDialog();
+  JavaScriptDialog* CreateBeforeUnloadDialog();
 
-  virtual bool CanCreateWindows() const;
+  bool CanCreateWindows() const;
 
- protected:
-  WebView();
+  ui::TextInputType text_input_type() const { return text_input_type_; }
+  bool show_ime_if_needed() const { return show_ime_if_needed_; }
+  bool focused_node_is_editable() const { return focused_node_is_editable_; }
+
+  gfx::Rect caret_rect() const { return caret_rect_; }
+  size_t selection_cursor_position() const { return selection_cursor_position_; }
+  size_t selection_anchor_position() const { return selection_anchor_position_; }
 
   base::string16 GetSelectedText() const;
   const base::string16& GetSelectionText() const;
-
-  ui::TextInputType text_input_type_;
-  bool show_ime_if_needed_;
-  bool focused_node_is_editable_;
-
-  gfx::Rect caret_rect_;
-  size_t selection_cursor_position_;
-  size_t selection_anchor_position_;
 
  private:
   RenderWidgetHostView* GetRenderWidgetHostView() const;
@@ -357,6 +368,12 @@ class WebView : public ScriptMessageTarget,
 
   void InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                     bool initial_host);
+
+  WebFrame* CreateWebFrame(content::RenderFrameHost* render_frame_host);
+
+  void DispatchPrepareToCloseResponse(bool proceed);
+
+  void RestartFindInPage();
 
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
@@ -438,6 +455,12 @@ class WebView : public ScriptMessageTarget,
   void ExitFullscreenModeForTab(content::WebContents* source) final;
   bool IsFullscreenForTabOrPending(
       const content::WebContents* source) const final;
+  void FindReply(content::WebContents* source,
+                 int request_id,
+                 int number_of_matches,
+                 const gfx::Rect& selection_rect,
+                 int active_match_ordinal,
+                 bool final_update) final;
   void RequestMediaAccessPermission(
       content::WebContents* source,
       const content::MediaStreamRequest& request,
@@ -492,96 +515,15 @@ class WebView : public ScriptMessageTarget,
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
 
-  // Override in sub-classes
-  virtual void OnCrashedStatusChanged();
+  WebViewClient* client_;
 
-  virtual void OnURLChanged();
-  virtual void OnTitleChanged();
-  virtual void OnIconChanged(const GURL& icon);
-  virtual void OnCommandsUpdated();
+  ui::TextInputType text_input_type_;
+  bool show_ime_if_needed_;
+  bool focused_node_is_editable_;
 
-  virtual void OnLoadingChanged();
-  virtual void OnLoadProgressChanged(double progress);
-
-  virtual void OnLoadStarted(const GURL& validated_url);
-  virtual void OnLoadRedirected(const GURL& url,
-                                const GURL& original_url,
-                                int http_status_code);
-  virtual void OnLoadCommitted(const GURL& url,
-                               bool is_error_page,
-                               int http_status_code);
-  virtual void OnLoadStopped(const GURL& validated_url);
-  virtual void OnLoadFailed(const GURL& validated_url,
-                            int error_code,
-                            const std::string& error_description,
-                            int http_status_code);
-  virtual void OnLoadSucceeded(const GURL& validated_url,
-                               int http_status_code);
-
-  virtual void OnNavigationEntryCommitted();
-  virtual void OnNavigationListPruned(bool from_front, int count);
-  virtual void OnNavigationEntryChanged(int index);
-
-  virtual bool OnAddMessageToConsole(int32 level,
-                                     const base::string16& message,
-                                     int32 line_no,
-                                     const base::string16& source_id);
-
-  virtual void OnToggleFullscreenMode(bool enter);
-
-  virtual void OnWebPreferencesDestroyed();
-
-  virtual void OnRequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request);
-  virtual void OnRequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request);
-
-  virtual void OnUnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event);
-
-  virtual void OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old);
-
-  virtual void OnDownloadRequested(
-      const GURL& url,
-      const std::string& mimeType,
-      const bool shouldPrompt,
-      const base::string16& suggestedFilename,
-      const std::string& cookies,
-      const std::string& referrer);
-
-  virtual void OnBasicAuthenticationRequested(
-      LoginPromptDelegate* login_delegate);
-
-  virtual bool ShouldHandleNavigation(const GURL& url,
-                                      WindowOpenDisposition disposition,
-                                      bool user_gesture);
-
-  virtual WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host);
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
-
-  virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                    WindowOpenDisposition disposition);
-
-  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
-
-  virtual void OnSwapCompositorFrame() = 0;
-  virtual void OnEvictCurrentFrame();
-
-  virtual void OnTextInputStateChanged();
-  virtual void OnFocusedNodeChanged();
-  virtual void OnSelectionBoundsChanged();
-  virtual void OnImeCancelComposition();
-  virtual void OnSelectionChanged();
-
-  virtual void OnUpdateCursor(const content::WebCursor& cursor);
-
-  virtual void OnSecurityStatusChanged(const SecurityStatus& old);
-  virtual void OnCertificateError(scoped_ptr<CertificateError> error);
-  virtual void OnContentBlocked();
-
-  virtual void OnPrepareToCloseResponse(bool proceed);
-  virtual void OnCloseRequested();
+  gfx::Rect caret_rect_;
+  size_t selection_cursor_position_;
+  size_t selection_anchor_position_;
 
   struct WebContentsDeleter {
     void operator()(content::WebContents* contents);
@@ -598,6 +540,7 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32> received_surface_ids_;
 
+  gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
 
   GURL initial_url_;
@@ -628,6 +571,17 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
+
+  struct FindInPageState {
+    int request_id;
+    int current;
+    int count;
+    bool case_sensitive;
+    std::string text;
+    FindInPageState() : request_id(0), current(0), count(0),
+                        case_sensitive(false) {}
+  };
+  FindInPageState find_in_page_;
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;

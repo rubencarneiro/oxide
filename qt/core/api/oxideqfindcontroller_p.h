@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,25 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
-#define _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+#ifndef _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
+#define _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
 
 #include <QtGlobal>
-
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
-
-QT_BEGIN_NAMESPACE
-class QScreen;
-QT_END_NAMESPACE
+#include <QString>
 
 namespace oxide {
-namespace qt {
+  class WebView;
+}
 
-float GetDeviceScaleFactorFromQScreen(QScreen* screen);
+class OxideQFindControllerPrivate {
+ public:
+  virtual ~OxideQFindControllerPrivate();
 
-blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen);
+ private:
+  OxideQFindControllerPrivate(oxide::WebView* webview);
 
-} // namespace qt
-} // namespace oxide
+  QString text_;
+  bool case_sensitive_;
+  int count_;
+  int current_;
+  int request_id_;
+  oxide::WebView* webview_;
 
-#endif // _OXIDE_QT_CORE_BASE_SCREEN_UTILS_H_
+ friend class OxideQFindController;
+};
+
+#endif // _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
+

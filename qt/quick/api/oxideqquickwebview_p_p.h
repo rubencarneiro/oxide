@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -84,6 +84,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   // oxide::qt::WebViewProxyClient implementation
   void Initialized() override;
   QObject* GetApiHandle() override;
+  oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
+      oxide::qt::WebContextMenuProxyClient* client) override;
   oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
       oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
@@ -178,6 +180,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   int load_progress_;
   QUrl icon_;
   OxideQQuickNavigationHistory navigation_history_;
+  QQmlComponent* context_menu_;
   QQmlComponent* popup_menu_;
   QQmlComponent* alert_dialog_;
   QQmlComponent* confirm_dialog_;
@@ -185,13 +188,13 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
 
-  QQuickItem* input_area_;
-
   bool received_new_compositor_frame_;
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
 
   bool using_old_load_event_signal_;
+
+  bool handling_unhandled_key_event_;
 
   struct ConstructProps {
     ConstructProps()

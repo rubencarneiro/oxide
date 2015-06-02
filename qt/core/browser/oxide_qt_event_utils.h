@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BASE_EVENT_UTILS_H_
-#define _OXIDE_QT_CORE_BASE_EVENT_UTILS_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_EVENT_UTILS_H_
+#define _OXIDE_QT_CORE_BROWSER_EVENT_UTILS_H_
 
 #include <map>
 #include <QtGlobal>
@@ -28,8 +28,10 @@
 #include "ui/events/event.h"
 
 QT_BEGIN_NAMESPACE
+class QHoverEvent;
 class QKeyEvent;
 class QMouseEvent;
+class QPoint;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -62,10 +64,18 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
+    const QPoint& window_pos,
+    float device_scale,
+    float location_bar_content_offset_dip);
+
+blink::WebMouseEvent MakeWebMouseEvent(
+    QHoverEvent* event,
+    const QPoint& window_pos,
+    const QPoint& global_pos,
     float device_scale,
     float location_bar_content_offset_dip);
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BASE_EVENT_UTILS_H_
+#endif // _OXIDE_QT_CORE_BROWSER_EVENT_UTILS_H_

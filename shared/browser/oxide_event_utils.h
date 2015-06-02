@@ -15,19 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BASE_SKUTILS_H_
-#define _OXIDE_QT_CORE_BASE_SKUTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
+#define _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
 
-#include <QImage>
+#include "third_party/WebKit/public/web/WebInputEvent.h"
 
-struct SkImageInfo;
+namespace ui {
+class GestureEventData;
+class MotionEvent;
+}
 
 namespace oxide {
-namespace qt {
 
-QImage::Format QImageFormatFromSkImageInfo(const SkImageInfo& info);
+blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
 
-} // namespace qt
+blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
+                                       bool may_cause_scrolling);
+
+int WindowsKeyCodeWithoutLocation(int code);
+int LocationModifiersFromWindowsKeyCode(int code);
+
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BASE_SKUTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_

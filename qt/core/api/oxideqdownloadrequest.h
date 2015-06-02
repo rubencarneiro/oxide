@@ -36,6 +36,7 @@ class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
   Q_PROPERTY(QString suggestedFilename READ suggestedFilename CONSTANT)
   Q_PROPERTY(QStringList cookies READ cookies CONSTANT)
   Q_PROPERTY(QString referrer READ referrer CONSTANT)
+  Q_PROPERTY(QString userAgent READ userAgent CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQDownloadRequest)
   Q_DISABLE_COPY(OxideQDownloadRequest)
@@ -48,6 +49,7 @@ class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
       const QString& suggestedFilename,
       const QString& cookies,
       const QString& referrer,
+      const QString& userAgent,
       QObject* parent = 0);
   virtual ~OxideQDownloadRequest();
 
@@ -57,6 +59,7 @@ class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
   QString suggestedFilename() const;
   QStringList cookies() const;
   QString referrer() const;
+  QString userAgent() const;
 
  private:
 

@@ -40,9 +40,7 @@
       'conditions': [
         ['target_arch=="arm"', {
           'arm_neon': 0,
-          # Only really works correctly on Android, eg WebRtc_GetCPUFeaturesARM
-          # is missing on non-Android Linux
-          'arm_neon_optional': 0,
+          'arm_neon_optional': 1,
         }],
       ],
     },

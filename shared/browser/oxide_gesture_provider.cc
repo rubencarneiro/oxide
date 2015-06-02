@@ -27,7 +27,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/screen.h"
 
-#include "shared/common/oxide_event_utils.h"
+#include "oxide_event_utils.h"
 
 namespace oxide {
 
@@ -83,7 +83,8 @@ class GestureProviderImpl : public GestureProvider,
   // GestureProvider implementation
   ui::FilteredGestureProvider::TouchHandlingResult OnTouchEvent(
       const ui::MotionEvent& event) override;
-  void OnTouchEventAck(bool consumed) override;
+  void OnTouchEventAck(uint32_t unique_event_id,
+                       bool consumed) override;
   void SetDoubleTapSupportForPageEnabled(bool enabled) override;
   const ui::MotionEvent* GetCurrentDownEvent() const override;
   void ResetDetection() override;
@@ -104,8 +105,9 @@ GestureProviderImpl::OnTouchEvent(const ui::MotionEvent& event) {
   return filtered_gesture_provider_.OnTouchEvent(event);
 }
 
-void GestureProviderImpl::OnTouchEventAck(bool consumed) {
-  filtered_gesture_provider_.OnAsyncTouchEventAck(consumed);
+void GestureProviderImpl::OnTouchEventAck(uint32_t unique_event_id,
+                                          bool consumed) {
+  filtered_gesture_provider_.OnTouchEventAck(unique_event_id, consumed);
 }
 
 void GestureProviderImpl::SetDoubleTapSupportForPageEnabled(bool enabled) {
