@@ -222,7 +222,20 @@ WebView* WebViewIterator::GetNext() {
 WebView::Params::Params()
     : context(nullptr),
       incognito(false) {}
+
 WebView::Params::~Params() {}
+
+struct WebView::InitData {
+  InitData()
+      : restore_type(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+        restore_index(0) {}
+
+  scoped_ptr<content::NavigationController::LoadURLParams> load_params;
+
+  content::NavigationController::RestoreType restore_type;
+  std::vector<sessions::SerializedNavigationEntry> restore_state;
+  int restore_index;
+};
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
@@ -1180,8 +1193,7 @@ WebView::WebView(WebViewClient* client)
       selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
-      restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      initial_index_(0),
+      init_data_(new InitData()),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
@@ -1265,15 +1277,14 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    if (!restore_state_.empty()) {
+    if (!init_data_->restore_state.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              restore_state_, context.get());
+              init_data_->restore_state, context.get());
       web_contents_->GetController().Restore(
-          initial_index_,
-          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
+          init_data_->restore_index,
+          init_data_->restore_type,
           &entries.get());
-      restore_state_.clear();
     }
 
     CreateHelpers(web_contents_.get());
@@ -1308,14 +1319,8 @@ void WebView::Init(Params* params) {
   root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
   DCHECK(root_frame_.get());
 
-  if (params->context) {
-    if (!initial_url_.is_empty()) {
-      SetURL(initial_url_);
-      initial_url_ = GURL();
-    } else if (initial_data_) {
-      web_contents_->GetController().LoadURLWithParams(*initial_data_);
-      initial_data_.reset();
-    }
+  if (params->context && init_data_->load_params) {
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
   }
 
   web_contents_->GetController().LoadIfNecessary();
@@ -1327,6 +1332,8 @@ void WebView::Init(Params* params) {
                    this) ==
          g_all_web_views.Get().end());
   g_all_web_views.Get().push_back(this);
+
+  init_data_.reset();
 
   client_->Initialized();
 }
@@ -1353,10 +1360,15 @@ WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
 }
 
 const GURL& WebView::GetURL() const {
-  if (!web_contents_) {
-    return initial_url_;
+  if (web_contents_) {
+    return web_contents_->GetVisibleURL();
   }
-  return web_contents_->GetVisibleURL();
+
+  if (init_data_->load_params) {
+    return init_data_->load_params->url;
+  }
+
+  return GURL::EmptyGURL();
 }
 
 void WebView::SetURL(const GURL& url) {
@@ -1364,14 +1376,15 @@ void WebView::SetURL(const GURL& url) {
     return;
   }
 
+  content::NavigationController::LoadURLParams params(url);
+  params.transition_type = ui::PAGE_TRANSITION_TYPED;
+
   if (!web_contents_) {
-    initial_url_ = url;
-    initial_data_.reset();
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
     return;
   }
 
-  content::NavigationController::LoadURLParams params(url);
-  params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
@@ -1400,31 +1413,33 @@ void WebView::SetState(content::NavigationController::RestoreType type,
                        std::vector<sessions::SerializedNavigationEntry> state,
                        int index) {
   DCHECK(!web_contents_);
-  restore_type_ = type;
-  restore_state_ = state;
-  initial_index_ = index;
+  init_data_->restore_type = type;
+  init_data_->restore_state = state;
+  init_data_->restore_index = index;
 }
 
-void WebView::LoadData(const std::string& encodedData,
-                       const std::string& mimeType,
-                       const GURL& baseUrl) {
+void WebView::LoadData(const std::string& encoded_data,
+                       const std::string& mime_type,
+                       const GURL& base_url) {
   std::string url("data:");
-  url.append(mimeType);
+  url.append(mime_type);
   url.append(",");
-  url.append(encodedData);
+  url.append(encoded_data);
 
   content::NavigationController::LoadURLParams params((GURL(url)));
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
-  params.base_url_for_data_url = baseUrl;
-  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
+  params.base_url_for_data_url = base_url;
+  params.virtual_url_for_data_url =
+      base_url.is_empty() ? GURL(url::kAboutBlankURL) : base_url;
   params.can_load_local_resources = true;
 
-  if (web_contents_) {
-    web_contents_->GetController().LoadURLWithParams(params);
-  } else {
-    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
-    initial_url_ = GURL();
+  if (!web_contents_) {
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
+    return;
   }
+
+  web_contents_->GetController().LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {

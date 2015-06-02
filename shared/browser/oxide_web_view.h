@@ -178,9 +178,9 @@ class WebView : public ScriptMessageTarget,
                 std::vector<sessions::SerializedNavigationEntry> state,
                 int index);
 
-  void LoadData(const std::string& encodedData,
-                const std::string& mimeType,
-                const GURL& baseUrl);
+  void LoadData(const std::string& encoded_data,
+                const std::string& mime_type,
+                const GURL& base_url);
 
   std::string GetTitle() const;
 
@@ -540,11 +540,9 @@ class WebView : public ScriptMessageTarget,
   gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
 
-  GURL initial_url_;
-  scoped_ptr<content::NavigationController::LoadURLParams> initial_data_;
-  content::NavigationController::RestoreType restore_type_;
-  std::vector<sessions::SerializedNavigationEntry> restore_state_;
-  int initial_index_;
+  struct InitData;
+
+  scoped_ptr<InitData> init_data_;
 
   content::NotificationRegistrar registrar_;
 
