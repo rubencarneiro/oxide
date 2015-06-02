@@ -22,21 +22,25 @@
 #include <QString>
 
 namespace oxide {
-  class ResourceDispatcherHostDelegate;
+  class LoginPromptDelegate;
 }
 
+class OxideQBasicAuthenticationRequest;
+
 class OxideQBasicAuthenticationRequestPrivate {
+  Q_DECLARE_PUBLIC(OxideQBasicAuthenticationRequest)
+
  public:
   virtual ~OxideQBasicAuthenticationRequestPrivate();
 
  private:
-  OxideQBasicAuthenticationRequestPrivate(oxide::ResourceDispatcherHostDelegate*
-                                          resource_dispatcher_host_delegate);
+  OxideQBasicAuthenticationRequestPrivate(oxide::LoginPromptDelegate*
+                                          login_delegate);
+  void RequestCancelled();
 
+  OxideQBasicAuthenticationRequest* q_ptr;
   QString realm_;
-  oxide::ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate_;
-
- friend class OxideQBasicAuthenticationRequest;
+  oxide::LoginPromptDelegate* login_delegate_;
 };
 
 #endif // _OXIDE_QT_CORE_API_BASIC_AUTHENTICATION_REQUEST_P_H_

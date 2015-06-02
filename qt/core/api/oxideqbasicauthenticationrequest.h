@@ -26,10 +26,7 @@
 class OxideQBasicAuthenticationRequestPrivate;
 
 namespace oxide {
-  class ResourceDispatcherHostDelegate;
-  namespace qt {
-    class WebView;
-  }
+  class LoginPromptDelegate;
 }
 
 class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
@@ -40,8 +37,7 @@ class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
     Q_DISABLE_COPY(OxideQBasicAuthenticationRequest)
 
    public:
-    OxideQBasicAuthenticationRequest(oxide::ResourceDispatcherHostDelegate*
-                                     resource_dispatcher_host_delegate);
+    OxideQBasicAuthenticationRequest(oxide::LoginPromptDelegate* login_delegate);
     ~OxideQBasicAuthenticationRequest();
 
     QString realm() const;
@@ -51,11 +47,10 @@ class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
 
    Q_SIGNALS:
     void realmChanged() const;
+    void cancelled();
 
    private:
     QScopedPointer<OxideQBasicAuthenticationRequestPrivate> d_ptr;
-
-   friend class oxide::qt::WebView;
 };
 
 #endif // OXIDE_Q_BASIC_AUTHENTICATION_REQUEST

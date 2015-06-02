@@ -15,25 +15,42 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqbasicauthenticationrequest.h"
-#include "oxideqbasicauthenticationrequest_p.h"
+#include "base/bind.h"
+#include "base/callback.h"
 
 #include "shared/browser/oxide_resource_dispatcher_host_delegate.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
-#include "shared/browser/oxide_web_view.h"
+
+#include "oxideqbasicauthenticationrequest.h"
+#include "oxideqbasicauthenticationrequest_p.h"
 
 OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate
-    (oxide::ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate) :
-    resource_dispatcher_host_delegate_(resource_dispatcher_host_delegate) {}
+    (oxide::LoginPromptDelegate* login_delegate) :
+    q_ptr(nullptr),
+    login_delegate_(login_delegate) {
+    if (login_delegate) {
+        login_delegate->SetCancelledCallback(
+            base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
+                       base::Unretained(this)));
+    }
+}
 
 OxideQBasicAuthenticationRequestPrivate::~OxideQBasicAuthenticationRequestPrivate
     () {}
 
+void OxideQBasicAuthenticationRequestPrivate::RequestCancelled() {
+  Q_Q(OxideQBasicAuthenticationRequest);
+
+  q->cancelled();
+}
+
 OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
-    oxide::ResourceDispatcherHostDelegate* resource_dispatcher_host_delegate) :
+    oxide::LoginPromptDelegate* login_delegate) :
     QObject(nullptr),
     d_ptr(new OxideQBasicAuthenticationRequestPrivate(
-              resource_dispatcher_host_delegate)) {
+              login_delegate)) {
+    Q_D(OxideQBasicAuthenticationRequest);
+    d->q_ptr = this;
 }
 
 #include <QDebug>
@@ -50,13 +67,13 @@ QString OxideQBasicAuthenticationRequest::realm() const {
 void OxideQBasicAuthenticationRequest::deny() {
   Q_D(OxideQBasicAuthenticationRequest);
 
-  d->resource_dispatcher_host_delegate_->CancelAuthentication();
+  d->login_delegate_->Cancel();
 }
 
 void OxideQBasicAuthenticationRequest::allow(const QString &username,
                                              const QString &password) {
   Q_D(OxideQBasicAuthenticationRequest);
 
-  d->resource_dispatcher_host_delegate_->SendAuthenticationCredentials(
-              username.toStdString(), password.toStdString());
+  d->login_delegate_->SendCredentials(username.toStdString(),
+                                      password.toStdString());
 }

@@ -18,7 +18,6 @@
 #include "oxide_resource_dispatcher_host_delegate.h"
 
 #include "base/bind.h"
-#include "base/callback.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
@@ -221,28 +220,78 @@ LoginPromptDelegate::~LoginPromptDelegate() {
     LOG(ERROR) << "Deleted ===================================== ";
 }
 
+void LoginPromptDelegate::SetCancelledCallback(
+        const base::Closure& cancelled_callback) {
+    cancelled_callback_ = cancelled_callback;
+}
+
 void LoginPromptDelegate::OnRequestCancelled()
 {
     LOG(ERROR) << "Cancel notification ===================================== ";
     cancelled_ = true;
+
+    if (!cancelled_callback_.is_null()) {
+        content::BrowserThread::PostTask(
+            content::BrowserThread::IO,
+            FROM_HERE,
+            cancelled_callback_);
+    }
 }
 
 void LoginPromptDelegate::Cancel() {
-    Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+    if (cancelled_) {
+        return;
+    }
+
+    if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
+        content::BrowserThread::PostTask(
+            content::BrowserThread::IO,
+            FROM_HERE,
+            base::Bind(&LoginPromptDelegate::Cancel, this));
+        return;
+    }
 
     request_->CancelAuth();
     content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(request_);
-    request_ = 0;
 }
 
-void LoginPromptDelegate::SendCredentials(std::string login,
+void LoginPromptDelegate::SendCredentials(std::string username,
                                           std::string password) {
-    Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
+    if (cancelled_) {
+        return;
+    }
 
-    request_->SetAuth(net::AuthCredentials(base::UTF8ToUTF16(login),
+    if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
+        content::BrowserThread::PostTask(
+            content::BrowserThread::IO,
+            FROM_HERE,
+            base::Bind(&LoginPromptDelegate::SendCredentials, this,
+                       username, password));
+        return;
+    }
+
+    request_->SetAuth(net::AuthCredentials(base::UTF8ToUTF16(username),
                                             base::UTF8ToUTF16(password)));
     content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(request_);
-    request_ = 0;
+}
+
+WebView* LoginPromptDelegate::GetWebView(net::URLRequest* request) {
+    int processId;
+    int frameId;
+    content::ResourceRequestInfo::GetRenderFrameForRequest(request, &processId,
+                                                           &frameId);
+    content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(processId,
+                                                                     frameId);
+    if (!rfh) {
+      return nullptr;
+    }
+
+    content::RenderViewHost* rvh = rfh->GetRenderViewHost();
+    if (!rvh) {
+      return nullptr;
+    }
+
+    return WebView::FromRenderViewHost(rvh);
 }
 
 void LoginPromptDelegate::DispatchAuthRequest() {
@@ -256,46 +305,13 @@ void LoginPromptDelegate::DispatchAuthRequest() {
         return;
     }
 
-    int processId;
-    int frameId;
-    content::ResourceRequestInfo::GetRenderFrameForRequest(request_, &processId,
-                                                           &frameId);
-    content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(processId,
-                                                                     frameId);
-    if (!rfh) {
-      parent_->CancelAuthentication();
-      return;
-    }
-
-    content::RenderViewHost* rvh = rfh->GetRenderViewHost();
-    if (!rvh) {
-      parent_->CancelAuthentication();
-      return;
-    }
-
-    WebView* webview = WebView::FromRenderViewHost(rvh);
+    WebView* webview = GetWebView(request_);
     if (!webview) {
-      parent_->CancelAuthentication();
+      Cancel();
       return;
     }
 
-    webview->BasicAuthenticationRequested(parent_);
-}
-
-void ResourceDispatcherHostDelegate::CancelAuthentication() {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::IO,
-        FROM_HERE,
-        base::Bind(&LoginPromptDelegate::Cancel, login_prompt_delegate_));
-}
-
-void ResourceDispatcherHostDelegate::SendAuthenticationCredentials(
-    const std::string &user, const std::string &password) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::IO,
-        FROM_HERE,
-        base::Bind(&LoginPromptDelegate::SendCredentials, login_prompt_delegate_,
-                   user, password));
+    webview->BasicAuthenticationRequested(this);
 }
 
 } // namespace oxide

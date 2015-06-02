@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 
+#include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
@@ -36,6 +37,7 @@ class CookieStore;
 namespace oxide {
 
 class ResourceDispatcherHostDelegate;
+class WebView;
 
 class LoginPromptDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
@@ -47,15 +49,19 @@ class LoginPromptDelegate
     void OnRequestCancelled() override;
 
     void Cancel();
-    void SendCredentials(std::string login, std::string password);
+    void SendCredentials(std::string username, std::string password);
+
+    void SetCancelledCallback(const base::Closure& cancelled_callback);
 
 private:
     friend class ResourceDispatcherHostDelegate;
     void DispatchAuthRequest();
+    WebView* GetWebView(net::URLRequest* request);
 
     net::URLRequest* request_;
     bool cancelled_;
     ResourceDispatcherHostDelegate* parent_;
+    base::Closure cancelled_callback_;
 };
 
 class ResourceDispatcherHostDelegate
@@ -63,10 +69,6 @@ class ResourceDispatcherHostDelegate
  public:
   ResourceDispatcherHostDelegate();
   ~ResourceDispatcherHostDelegate() override;
-
-  void CancelAuthentication();
-  void SendAuthenticationCredentials(const std::string& user,
-                                     const std::string& password);
 
  private:
   struct DownloadRequestParams;

@@ -768,11 +768,10 @@ void WebView::OnDownloadRequested(const GURL& url,
 }
 
 void WebView::OnBasicAuthenticationRequested(
-        oxide::ResourceDispatcherHostDelegate*
-        resource_dispatcher_host_delegate) {
+        oxide::LoginPromptDelegate* login_delegate) {
   // the embedder takes ownership of the request
   client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(
-                                            resource_dispatcher_host_delegate));
+                                            login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
