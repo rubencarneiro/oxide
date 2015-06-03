@@ -44,8 +44,7 @@ class LoginPromptDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
  public:
     LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
-                        net::URLRequest* request,
-                        ResourceDispatcherHostDelegate* delegate);
+                        net::URLRequest* request);
     ~LoginPromptDelegate() override;
     void OnRequestCancelled() override;
 
@@ -61,7 +60,6 @@ private:
 
     net::URLRequest* request_;
     bool cancelled_;
-    ResourceDispatcherHostDelegate* parent_;
     base::Closure cancelled_callback_;
 };
 
@@ -124,8 +122,6 @@ class ResourceDispatcherHostDelegate
       net::URLRequest* request) override;
 
 private:
-  scoped_refptr<LoginPromptDelegate> login_prompt_delegate_;
-
   DISALLOW_COPY_AND_ASSIGN(ResourceDispatcherHostDelegate);
 };
 

@@ -136,7 +136,6 @@ class WebView : public QObject,
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
-
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
   void DownloadRequested(const GURL& url,
       const std::string& mime_type,

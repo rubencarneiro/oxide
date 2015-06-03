@@ -57,7 +57,6 @@
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqbasicauthenticationrequest.h"
-#include "qt/core/api/oxideqbasicauthenticationrequest_p.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -763,7 +762,7 @@ void WebView::DownloadRequested(const GURL& url,
 
 void WebView::BasicAuthenticationRequested(
         oxide::LoginPromptDelegate* login_delegate) {
-  // the embedder takes ownership of the request
+  // The client takes ownership of the request
   client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(
                                             login_delegate));
 }

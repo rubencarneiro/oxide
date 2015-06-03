@@ -40,7 +40,6 @@
 #include "oxide_browser_platform_integration.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_web_view.h"
-#include "oxide_web_contents_view.h"
 
 namespace oxide {
 
@@ -243,25 +242,20 @@ content::ResourceDispatcherHostLoginDelegate* ResourceDispatcherHostDelegate::Cr
     net::AuthChallengeInfo* auth_info,
     net::URLRequest* request) {
 
-    // This delegate is ref-counted internally by chromium, but we keep another
-    // reference to it to be able to call back into it when the user accepts or
-    // cancels the authentication request from the UI.
-    //
-    // We release our reference in two ways: either when calling
-    // ResourceDispatcherHostDelegate::ClearLoginDelegateForRequest , which will
-    // cause chromium to drop its own references too.
-    //
-    // Or, when the request is cancelled internally by chromium, we will receive
-    // ResourceDispatcherHostLoginDelegate::OnRequestCancelled and we will drop
-    // our reference there.
-    login_prompt_delegate_ = new LoginPromptDelegate(auth_info, request, this);
+    LoginPromptDelegate* delegate = new LoginPromptDelegate(auth_info, request);
 
+    // We need to send the notification that we have been requested
+    // authentication on the UI thread, because that is where QML will handle it
     content::BrowserThread::PostTask(
         content::BrowserThread::UI,
         FROM_HERE,
-        base::Bind(&LoginPromptDelegate::DispatchAuthRequest, login_prompt_delegate_));
+        base::Bind(&LoginPromptDelegate::DispatchAuthRequest, delegate));
 
-    return login_prompt_delegate_.get();
+    // Chromium will take ownership of the delegate. The fact it is an instance
+    // of RefCountedThreadSafe will make sure it stays around long enough for
+    // PostTask to complete even if the authentication request is cancelled
+    // immediately.
+    return delegate;
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
@@ -269,11 +263,9 @@ ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
 ResourceDispatcherHostDelegate::~ResourceDispatcherHostDelegate() {}
 
 LoginPromptDelegate::LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
-                                         net::URLRequest* request,
-                                         ResourceDispatcherHostDelegate* delegate) :
+                                         net::URLRequest* request) :
                                          request_(request),
-                                         cancelled_(false),
-                                         parent_(delegate) {
+                                         cancelled_(false) {
 }
 
 LoginPromptDelegate::~LoginPromptDelegate() {
