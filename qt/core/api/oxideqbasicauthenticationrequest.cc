@@ -53,13 +53,18 @@ OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
     d->q_ptr = this;
 }
 
-#include <QDebug>
 OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {}
+
+QString OxideQBasicAuthenticationRequest::host() const {
+  Q_D(const OxideQBasicAuthenticationRequest);
+
+  return QString::fromStdString(d->login_delegate_->Host());
+}
 
 QString OxideQBasicAuthenticationRequest::realm() const {
   Q_D(const OxideQBasicAuthenticationRequest);
 
-  return d->realm_;
+  return QString::fromStdString(d->login_delegate_->Realm());
 }
 
 void OxideQBasicAuthenticationRequest::deny() {

@@ -242,23 +242,8 @@ content::ResourceDispatcherHostLoginDelegate*
     ResourceDispatcherHostDelegate::CreateLoginDelegate(
     net::AuthChallengeInfo* auth_info,
     net::URLRequest* request) {
-
-    ResourceDispatcherHostLoginDelegate* delegate;
-    delegate = new ResourceDispatcherHostLoginDelegate(auth_info, request);
-
-    // We need to send the notification that we have been requested
-    // authentication on the UI thread, because that is where QML will handle it
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
-                   delegate));
-
-    // Chromium will take ownership of the delegate. The fact it is an instance
-    // of RefCountedThreadSafe will make sure it stays around long enough for
-    // PostTask to complete even if the authentication request is cancelled
-    // immediately.
-    return delegate;
+    // Chromium will own the delegate
+    return new ResourceDispatcherHostLoginDelegate(auth_info, request);
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
@@ -269,6 +254,16 @@ ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
                                          net::AuthChallengeInfo* auth_info,
                                          net::URLRequest* request) :
                                          request_(request) {
+    if (auth_info) {
+        host_ = auth_info->challenger.ToString();
+        realm_ = auth_info->realm;
+    }
+
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
+                   this));
 }
 
 ResourceDispatcherHostLoginDelegate::~ResourceDispatcherHostLoginDelegate() {}
@@ -280,8 +275,6 @@ void ResourceDispatcherHostLoginDelegate::SetCancelledCallback(
 
 void ResourceDispatcherHostLoginDelegate::OnRequestCancelled()
 {
-    // Drop our pointer to the URLRequest as from this point it can be destroyed
-    // at any time and we should not allow calling into it anymore.
     request_ = nullptr;
 
     if (!cancelled_callback_.is_null()) {
@@ -358,10 +351,8 @@ void ResourceDispatcherHostLoginDelegate::DispatchRequest() {
     Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
     if (!request_) {
-        // While we were switching threads the request was cancelled.
-        // No cleanup needed as the we can get here only having previously
-        // received ResourceDispatcherHostLoginDelegate::OnRequestCancelled
-        // which already ensured that cleanup is being taken care of.
+        // While we were switching threads the request was cancelled, so we
+        // don't need to do anything else
         return;
     }
 
@@ -374,6 +365,14 @@ void ResourceDispatcherHostLoginDelegate::DispatchRequest() {
     }
 
     webview->BasicAuthenticationRequested(this);
+}
+
+std::string ResourceDispatcherHostLoginDelegate::Host() const {
+    return host_;
+}
+
+std::string ResourceDispatcherHostLoginDelegate::Realm() const {
+    return realm_;
 }
 
 } // namespace oxide

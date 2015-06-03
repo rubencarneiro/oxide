@@ -53,12 +53,17 @@ class ResourceDispatcherHostLoginDelegate
 
     void SetCancelledCallback(const base::Closure& cancelled_callback);
 
+    std::string Host() const;
+    std::string Realm() const;
+
 private:
     friend class ResourceDispatcherHostDelegate;
     void DispatchRequest();
     WebView* GetWebView(net::URLRequest* request);
 
     net::URLRequest* request_;
+    std::string host_;
+    std::string realm_;
     base::Closure cancelled_callback_;
 };
 
