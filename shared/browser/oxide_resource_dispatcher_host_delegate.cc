@@ -238,18 +238,21 @@ bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
 }
 
-content::ResourceDispatcherHostLoginDelegate* ResourceDispatcherHostDelegate::CreateLoginDelegate(
+content::ResourceDispatcherHostLoginDelegate*
+    ResourceDispatcherHostDelegate::CreateLoginDelegate(
     net::AuthChallengeInfo* auth_info,
     net::URLRequest* request) {
 
-    LoginPromptDelegate* delegate = new LoginPromptDelegate(auth_info, request);
+    ResourceDispatcherHostLoginDelegate* delegate;
+    delegate = new ResourceDispatcherHostLoginDelegate(auth_info, request);
 
     // We need to send the notification that we have been requested
     // authentication on the UI thread, because that is where QML will handle it
     content::BrowserThread::PostTask(
         content::BrowserThread::UI,
         FROM_HERE,
-        base::Bind(&LoginPromptDelegate::DispatchAuthRequest, delegate));
+        base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
+                   delegate));
 
     // Chromium will take ownership of the delegate. The fact it is an instance
     // of RefCountedThreadSafe will make sure it stays around long enough for
@@ -262,25 +265,24 @@ ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
 
 ResourceDispatcherHostDelegate::~ResourceDispatcherHostDelegate() {}
 
-LoginPromptDelegate::LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
+ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
+                                         net::AuthChallengeInfo* auth_info,
                                          net::URLRequest* request) :
-                                         request_(request),
-                                         cancelled_(false) {
+                                         request_(request) {
 }
 
-LoginPromptDelegate::~LoginPromptDelegate() {
-    LOG(ERROR) << "Deleted ===================================== ";
-}
+ResourceDispatcherHostLoginDelegate::~ResourceDispatcherHostLoginDelegate() {}
 
-void LoginPromptDelegate::SetCancelledCallback(
+void ResourceDispatcherHostLoginDelegate::SetCancelledCallback(
         const base::Closure& cancelled_callback) {
     cancelled_callback_ = cancelled_callback;
 }
 
-void LoginPromptDelegate::OnRequestCancelled()
+void ResourceDispatcherHostLoginDelegate::OnRequestCancelled()
 {
-    LOG(ERROR) << "Cancel notification ===================================== ";
-    cancelled_ = true;
+    // Drop our pointer to the URLRequest as from this point it can be destroyed
+    // at any time and we should not allow calling into it anymore.
+    request_ = nullptr;
 
     if (!cancelled_callback_.is_null()) {
         content::BrowserThread::PostTask(
@@ -290,8 +292,8 @@ void LoginPromptDelegate::OnRequestCancelled()
     }
 }
 
-void LoginPromptDelegate::Cancel() {
-    if (cancelled_) {
+void ResourceDispatcherHostLoginDelegate::Deny() {
+    if (!request_) {
         return;
     }
 
@@ -299,17 +301,20 @@ void LoginPromptDelegate::Cancel() {
         content::BrowserThread::PostTask(
             content::BrowserThread::IO,
             FROM_HERE,
-            base::Bind(&LoginPromptDelegate::Cancel, this));
+            base::Bind(&ResourceDispatcherHostLoginDelegate::Deny, this));
         return;
     }
 
     request_->CancelAuth();
-    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(request_);
+    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
+                                                                      request_);
+    request_ = nullptr;
 }
 
-void LoginPromptDelegate::SendCredentials(std::string username,
-                                          std::string password) {
-    if (cancelled_) {
+void ResourceDispatcherHostLoginDelegate::Allow(std::string username,
+                                                std::string password)
+{
+    if (!request_) {
         return;
     }
 
@@ -317,17 +322,20 @@ void LoginPromptDelegate::SendCredentials(std::string username,
         content::BrowserThread::PostTask(
             content::BrowserThread::IO,
             FROM_HERE,
-            base::Bind(&LoginPromptDelegate::SendCredentials, this,
+            base::Bind(&ResourceDispatcherHostLoginDelegate::Allow, this,
                        username, password));
         return;
     }
 
     request_->SetAuth(net::AuthCredentials(base::UTF8ToUTF16(username),
-                                            base::UTF8ToUTF16(password)));
-    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(request_);
+                                           base::UTF8ToUTF16(password)));
+    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
+                                                                      request_);
+    request_ = nullptr;
 }
 
-WebView* LoginPromptDelegate::GetWebView(net::URLRequest* request) {
+WebView* ResourceDispatcherHostLoginDelegate::GetWebView(
+        net::URLRequest* request) {
     int processId;
     int frameId;
     content::ResourceRequestInfo::GetRenderFrameForRequest(request, &processId,
@@ -346,20 +354,22 @@ WebView* LoginPromptDelegate::GetWebView(net::URLRequest* request) {
     return WebView::FromRenderViewHost(rvh);
 }
 
-void LoginPromptDelegate::DispatchAuthRequest() {
+void ResourceDispatcherHostLoginDelegate::DispatchRequest() {
     Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
-    if (cancelled_) {
+    if (!request_) {
         // While we were switching threads the request was cancelled.
-        // No cleanup needed here as the cancellation comes from the
-        // ResourceDispatcherHostDelegate which will take care of cleaning up
-        // the ResourceDispatcherHostLoginDelegate on its own.
+        // No cleanup needed as the we can get here only having previously
+        // received ResourceDispatcherHostLoginDelegate::OnRequestCancelled
+        // which already ensured that cleanup is being taken care of.
         return;
     }
 
     WebView* webview = GetWebView(request_);
     if (!webview) {
-      Cancel();
+      // Deny the request if we can not get access to the webview, as there is
+      // no other sensible thing to do.
+      Deny();
       return;
     }
 

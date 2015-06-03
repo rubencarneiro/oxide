@@ -145,7 +145,7 @@ class WebView : public QObject,
       const std::string& referrer,
       const std::string& user_agent) override;
   void BasicAuthenticationRequested(
-      LoginPromptDelegate* login_delegate) override;
+      ResourceDispatcherHostLoginDelegate* login_delegate) override;
 
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,

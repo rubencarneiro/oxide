@@ -26,7 +26,7 @@
 class OxideQBasicAuthenticationRequestPrivate;
 
 namespace oxide {
-  class LoginPromptDelegate;
+  class ResourceDispatcherHostLoginDelegate;
 }
 
 class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
@@ -37,7 +37,8 @@ class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
     Q_DISABLE_COPY(OxideQBasicAuthenticationRequest)
 
    public:
-    OxideQBasicAuthenticationRequest(oxide::LoginPromptDelegate* login_delegate);
+    OxideQBasicAuthenticationRequest(oxide::ResourceDispatcherHostLoginDelegate*
+                                     login_delegate);
     ~OxideQBasicAuthenticationRequest();
 
     QString realm() const;

@@ -761,7 +761,7 @@ void WebView::DownloadRequested(const GURL& url,
 }
 
 void WebView::BasicAuthenticationRequested(
-        oxide::LoginPromptDelegate* login_delegate) {
+        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
   // The client takes ownership of the request
   client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(
                                             login_delegate));

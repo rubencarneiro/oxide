@@ -25,7 +25,7 @@
 #include "oxideqbasicauthenticationrequest_p.h"
 
 OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate
-    (oxide::LoginPromptDelegate* login_delegate) :
+    (oxide::ResourceDispatcherHostLoginDelegate* login_delegate) :
     q_ptr(nullptr),
     login_delegate_(login_delegate) {
     if (login_delegate) {
@@ -45,7 +45,7 @@ void OxideQBasicAuthenticationRequestPrivate::RequestCancelled() {
 }
 
 OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
-    oxide::LoginPromptDelegate* login_delegate) :
+    oxide::ResourceDispatcherHostLoginDelegate* login_delegate) :
     QObject(nullptr),
     d_ptr(new OxideQBasicAuthenticationRequestPrivate(
               login_delegate)) {
@@ -54,9 +54,7 @@ OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
 }
 
 #include <QDebug>
-OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {
-    qWarning() << "QRequest deleted ++++++++++++++++++++++++++";
-}
+OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {}
 
 QString OxideQBasicAuthenticationRequest::realm() const {
   Q_D(const OxideQBasicAuthenticationRequest);
@@ -67,13 +65,12 @@ QString OxideQBasicAuthenticationRequest::realm() const {
 void OxideQBasicAuthenticationRequest::deny() {
   Q_D(OxideQBasicAuthenticationRequest);
 
-  d->login_delegate_->Cancel();
+  d->login_delegate_->Deny();
 }
 
 void OxideQBasicAuthenticationRequest::allow(const QString &username,
                                              const QString &password) {
   Q_D(OxideQBasicAuthenticationRequest);
 
-  d->login_delegate_->SendCredentials(username.toStdString(),
-                                      password.toStdString());
+  d->login_delegate_->Allow(username.toStdString(), password.toStdString());
 }

@@ -175,6 +175,6 @@ void WebViewClient::FindInPageCurrentChanged() {}
 void WebViewClient::FindInPageCountChanged() {}
 
 void WebViewClient::BasicAuthenticationRequested(
-    LoginPromptDelegate* login_delegate) {}
+    ResourceDispatcherHostLoginDelegate* login_delegate) {}
 
 } // namespace oxide

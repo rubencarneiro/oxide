@@ -40,26 +40,25 @@ namespace oxide {
 class ResourceDispatcherHostDelegate;
 class WebView;
 
-class LoginPromptDelegate
+class ResourceDispatcherHostLoginDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
  public:
-    LoginPromptDelegate(net::AuthChallengeInfo* auth_info,
-                        net::URLRequest* request);
-    ~LoginPromptDelegate() override;
+    ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,
+                                        net::URLRequest* request);
+    ~ResourceDispatcherHostLoginDelegate() override;
     void OnRequestCancelled() override;
 
-    void Cancel();
-    void SendCredentials(std::string username, std::string password);
+    void Deny();
+    void Allow(std::string username, std::string password);
 
     void SetCancelledCallback(const base::Closure& cancelled_callback);
 
 private:
     friend class ResourceDispatcherHostDelegate;
-    void DispatchAuthRequest();
+    void DispatchRequest();
     WebView* GetWebView(net::URLRequest* request);
 
     net::URLRequest* request_;
-    bool cancelled_;
     base::Closure cancelled_callback_;
 };
 

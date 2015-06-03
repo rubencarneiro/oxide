@@ -2169,7 +2169,8 @@ void WebView::DownloadRequested(
                              user_agent);
 }
 
-void WebView::BasicAuthenticationRequested(LoginPromptDelegate* login_delegate) {
+void WebView::BasicAuthenticationRequested(
+    ResourceDispatcherHostLoginDelegate* login_delegate) {
   client_->BasicAuthenticationRequested(login_delegate);
 }
 
