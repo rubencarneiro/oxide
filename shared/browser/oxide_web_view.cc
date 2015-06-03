@@ -73,7 +73,6 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
 
 #include "third_party/WebKit/public/web/WebFindOptions.h"
@@ -81,6 +80,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_event_utils.h"
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
@@ -2158,13 +2158,15 @@ void WebView::DownloadRequested(
     const bool should_prompt,
     const base::string16& suggested_filename,
     const std::string& cookies,
-    const std::string& referrer) {
+    const std::string& referrer,
+    const std::string& user_agent) {
   client_->DownloadRequested(url,
                              mime_type,
                              should_prompt,
                              suggested_filename,
                              cookies,
-                             referrer);
+                             referrer,
+                             user_agent);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

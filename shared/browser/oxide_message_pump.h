@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/message_loop/message_loop.h"
 #include "base/message_loop/message_pump.h"
 
 namespace base {
@@ -28,7 +29,8 @@ class RunLoop;
 
 namespace oxide {
 
-class MessagePump : public base::MessagePump {
+class MessagePump : public base::MessagePump,
+                    public base::MessageLoop::TaskObserver {
  public:
   static MessagePump* Get();
 
@@ -41,7 +43,13 @@ class MessagePump : public base::MessagePump {
  private:
   virtual void OnStart() = 0;
 
+  // base::MessageLoop::TaskObserver implementation
+  void WillProcessTask(const base::PendingTask& pending_task) override;
+  void DidProcessTask(const base::PendingTask& pending_task) override;
+
   scoped_ptr<base::RunLoop> run_loop_;
+
+  int task_depth_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
 };

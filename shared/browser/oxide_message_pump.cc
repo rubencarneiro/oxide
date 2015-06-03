@@ -19,7 +19,6 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop.h"
 #include "base/run_loop.h"
 #include "base/threading/thread_local.h"
 
@@ -32,13 +31,22 @@ base::LazyInstance<base::ThreadLocalPointer<MessagePump>> g_lazy_tls =
 
 }
 
+void MessagePump::WillProcessTask(const base::PendingTask& pending_task) {
+  ++task_depth_;
+}
+
+void MessagePump::DidProcessTask(const base::PendingTask& pending_task) {
+  --task_depth_;
+  DCHECK_GE(task_depth_, 0);
+}
+
 // static
 MessagePump* MessagePump::Get() {
   return g_lazy_tls.Pointer()->Get();
 }
 
 MessagePump::MessagePump()
-    : run_loop_(new base::RunLoop()) {
+    : task_depth_(0) {
   CHECK(!Get());
   g_lazy_tls.Pointer()->Set(this);
 }
@@ -48,19 +56,30 @@ MessagePump::~MessagePump() {
 }
 
 void MessagePump::Start() {
-  CHECK(!base::MessageLoop::current()->is_running());
+  base::MessageLoop* loop = base::MessageLoop::current();
 
-  OnStart();
+  CHECK(!loop->is_running()) <<
+      "Called Start() more than once or whilst inside a RunLoop";
+
+  loop->AddTaskObserver(this);
+
+  run_loop_.reset(new base::RunLoop());
   run_loop_->BeforeRun();
 
-  // Schedule events that might have already been posted
-  ScheduleWork();
+  OnStart();
 }
 
 void MessagePump::Stop() {
-  CHECK(base::MessageLoop::current()->is_running());
+  base::MessageLoop* loop = base::MessageLoop::current();
+
+  CHECK(loop->is_running() && run_loop_) <<
+      "Called Stop() before calling Start()";
+  CHECK_EQ(task_depth_, 0) << "Called Stop() inside a task";
 
   run_loop_->AfterRun();
+  run_loop_.reset();
+
+  loop->RemoveTaskObserver(this);
 }
 
 } // namespace oxide

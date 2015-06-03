@@ -21,9 +21,9 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -50,16 +50,20 @@ class WebSpeechSynthesizer;
- class WebSpeechSynthesizerClient;
+@@ -52,16 +52,20 @@ class WebSpeechSynthesizerClient;
  class WebThemeEngine;
+ class WebURLResponse;
  class WebURLRequest;
  class WebWorkerContentSettingsClientProxy;
  struct WebPluginParams;
@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  }
  
  namespace content {
-@@ -310,13 +314,16 @@ class CONTENT_EXPORT ContentRendererClie
-       RenderFrame* render_frame);
+@@ -318,13 +322,16 @@ class CONTENT_EXPORT ContentRendererClie
+       std::map<std::string, std::string>* properties) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -458,16 +460,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -447,16 +449,18 @@ void RenderWidgetCompositor::Initialize(
      settings.use_external_begin_frame_source = true;
  
    if (widget_->for_oopif()) {

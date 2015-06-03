@@ -28,7 +28,7 @@
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "qt/core/common/oxide_qt_event_utils.h"
+#include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
@@ -142,7 +142,8 @@ class WebView : public QObject,
       const bool should_prompt,
       const base::string16& suggested_filename,
       const std::string& cookies,
-      const std::string& referrer) override;
+      const std::string& referrer,
+      const std::string& user_agent) override;
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;

@@ -71,8 +71,6 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/common/oxide_qt_screen_utils.h"
-#include "qt/core/common/oxide_qt_skutils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
@@ -83,7 +81,9 @@
 
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_javascript_dialog.h"
+#include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
+#include "oxide_qt_skutils.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
@@ -745,14 +745,16 @@ void WebView::DownloadRequested(const GURL& url,
                                 const bool should_prompt,
                                 const base::string16& suggested_filename,
                                 const std::string& cookies,
-                                const std::string& referrer) {
+                                const std::string& referrer,
+                                const std::string& user_agent) {
   OxideQDownloadRequest download_request(
       QUrl(QString::fromStdString(url.spec())),
       QString::fromStdString(mime_type),
       should_prompt,
       QString::fromStdString(base::UTF16ToUTF8(suggested_filename)),
       QString::fromStdString(cookies),
-      QString::fromStdString(referrer));
+      QString::fromStdString(referrer),
+      QString::fromStdString(user_agent));
 
   client_->DownloadRequested(&download_request);
 }

@@ -87,7 +87,7 @@ Compositor::Compositor(CompositorClient* client)
     : client_(client),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
-      root_layer_(cc::Layer::Create()),
+      root_layer_(cc::Layer::Create(cc::LayerSettings())),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
       lock_count_(0),

@@ -143,6 +143,17 @@ void WebContentsView::ShowContextMenu(
   GetWebView()->ShowContextMenu(render_frame_host, params);
 }
 
+void WebContentsView::StartDragging(
+    const content::DropData& drop_data,
+    blink::WebDragOperationsMask allowed_ops,
+    const gfx::ImageSkia& image,
+    const gfx::Vector2d& image_offset,
+    const content::DragEventSourceInfo& event_info) {
+  // TODO: Implement drag and drop support
+  //  see https://launchpad.net/bugs/1459830
+  web_contents_->SystemDragEnded();
+}
+
 void WebContentsView::ShowPopupMenu(
     content::RenderFrameHost* render_frame_host,
     const gfx::Rect& bounds,

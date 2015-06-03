@@ -186,13 +186,13 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
 
-  QQuickItem* input_area_;
-
   bool received_new_compositor_frame_;
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
 
   bool using_old_load_event_signal_;
+
+  bool handling_unhandled_key_event_;
 
   struct ConstructProps {
     ConstructProps()
