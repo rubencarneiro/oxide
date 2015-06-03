@@ -49,10 +49,8 @@ TestWebView {
     }
 
     function cleanup() {
-      if (webView.currentContextMenu) {
-        webView.currentContextMenu.contextModel.close();
-        tryCompare(webView, "currentContextMenu", null);
-      }
+      webView.currentContextMenu.contextModel.close();
+      tryCompare(webView, "currentContextMenu", null);
     }
 
     function invokeContextMenu(id) {
@@ -125,7 +123,6 @@ TestWebView {
     }
 
     function test_WebView_contextMenu_editable() {
-      // test "select all" command
       invokeContextMenu("editable");
       var model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
@@ -133,12 +130,12 @@ TestWebView {
       verify(!(model.editFlags & WebView.RedoCapability));
       verify(!(model.editFlags & WebView.CutCapability));
       verify(!(model.editFlags & WebView.CopyCapability));
+      verify(model.editFlags & WebView.PasteCapability);
       verify(!(model.editFlags & WebView.EraseCapability));
       verify(model.editFlags & WebView.SelectAllCapability);
-      webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       cleanup();
 
-      // test "erase" command
+      webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
@@ -146,79 +143,33 @@ TestWebView {
       verify(!(model.editFlags & WebView.RedoCapability));
       verify(model.editFlags & WebView.CutCapability);
       verify(model.editFlags & WebView.CopyCapability);
+      verify(model.editFlags & WebView.PasteCapability);
       verify(model.editFlags & WebView.EraseCapability);
       verify(model.editFlags & WebView.SelectAllCapability);
-      webView.executeEditingCommand(WebView.EditingCommandErase);
       cleanup();
-      var r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "");
 
-      // test "undo" command
+      webView.executeEditingCommand(WebView.EditingCommandErase);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
       verify(model.editFlags & WebView.UndoCapability);
       verify(!(model.editFlags & WebView.RedoCapability));
-      webView.executeEditingCommand(WebView.EditingCommandUndo);
       cleanup();
-      r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "text area");
 
-      // test "redo" command
+      webView.executeEditingCommand(WebView.EditingCommandUndo);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
       verify(!(model.editFlags & WebView.UndoCapability));
       verify(model.editFlags & WebView.RedoCapability);
-      webView.executeEditingCommand(WebView.EditingCommandRedo);
       cleanup();
-      r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "");
 
-      // test "paste" command
-      OxideTestingUtils.copyToClipboard("text/plain", "foo bar baz");
+      webView.executeEditingCommand(WebView.EditingCommandRedo);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
-      verify(model.editFlags & WebView.PasteCapability);
-      webView.executeEditingCommand(WebView.EditingCommandPaste);
-      cleanup();
-      r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "foo bar baz");
-
-      // test "copy" command
-      OxideTestingUtils.clearClipboard();
-      webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").select()");
-      invokeContextMenu("editable");
-      model = webView.currentContextMenu.contextModel;
-      compare(model.selectionText, "foo bar baz");
-      verify(model.editFlags & WebView.CopyCapability);
-      compare(OxideTestingUtils.getFromClipboard("text/plain"), "");
-      webView.executeEditingCommand(WebView.EditingCommandCopy);
-      cleanup();
-      r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "foo bar baz");
-      compare(OxideTestingUtils.getFromClipboard("text/plain"), "foo bar baz");
-
-      // test "cut" command
-      OxideTestingUtils.clearClipboard();
-      invokeContextMenu("editable");
-      model = webView.currentContextMenu.contextModel;
-      compare(model.selectionText, "foo bar baz");
-      verify(model.editFlags & WebView.CutCapability);
-      compare(OxideTestingUtils.getFromClipboard("text/plain"), "");
-      webView.executeEditingCommand(WebView.EditingCommandCut);
-      cleanup();
-      r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "");
-      compare(OxideTestingUtils.getFromClipboard("text/plain"), "foo bar baz");
+      verify(model.editFlags & WebView.UndoCapability);
+      verify(!(model.editFlags & WebView.RedoCapability));
     }
 
     function test_WebView_contextMenu_saveLink_saveMedia() {
