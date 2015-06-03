@@ -165,14 +165,8 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
 }
 
 void CreateHelpers(content::WebContents* contents,
-                   WebViewContentsHelper* opener = nullptr) {
-  if (!opener) {
-    new WebViewContentsHelper(contents);
-  }
-  else {
-    new WebViewContentsHelper(contents, opener);
-  }
-
+                   content::WebContents* opener = nullptr) {
+  new WebViewContentsHelper(contents, opener);
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
@@ -580,7 +574,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return nullptr;
   }
 
-  CreateHelpers(contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_.get());
 
   WebView* new_view =
       client_->CreateNewWebView(GetViewBoundsPix(), disposition);
@@ -679,7 +673,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_.get());
 }
 
 void WebView::AddNewContents(content::WebContents* source,
