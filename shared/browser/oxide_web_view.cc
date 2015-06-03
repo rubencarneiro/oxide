@@ -1171,117 +1171,9 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
-<<<<<<< TREE
-void WebView::OnCrashedStatusChanged() {}
-
-void WebView::OnURLChanged() {}
-void WebView::OnTitleChanged() {}
-void WebView::OnIconChanged(const GURL& icon) {}
-void WebView::OnCommandsUpdated() {}
-
-void WebView::OnLoadingChanged() {}
-void WebView::OnLoadProgressChanged(double progress) {}
-
-void WebView::OnLoadStarted(const GURL& validated_url) {}
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url,
-                               int http_status_code) {}
-void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page,
-                              int http_status_code) {}
-void WebView::OnLoadStopped(const GURL& validated_url) {}
-void WebView::OnLoadFailed(const GURL& validated_url,
-                           int error_code,
-                           const std::string& error_description,
-                           int http_status_code) {}
-void WebView::OnLoadSucceeded(const GURL& validated_url,
-                              int http_status_code) {}
-
-void WebView::OnNavigationEntryCommitted() {}
-void WebView::OnNavigationListPruned(bool from_front, int count) {}
-void WebView::OnNavigationEntryChanged(int index) {}
-
-bool WebView::OnAddMessageToConsole(int32 level,
-                                    const base::string16& message,
-                                    int32 line_no,
-                                    const base::string16& source_id) {
-  return false;
-}
-
-void WebView::OnToggleFullscreenMode(bool enter) {}
-
-void WebView::OnWebPreferencesDestroyed() {}
-
-void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<SimplePermissionRequest> request) {}
-void WebView::OnRequestMediaAccessPermission(
-    scoped_ptr<MediaAccessPermissionRequest> request) {}
-
-void WebView::OnUnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {}
-
-void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {}
-
-void WebView::OnDownloadRequested(const GURL& url,
-				  const std::string& mimeType,
-				  const bool shouldPrompt,
-				  const base::string16& suggestedFilename,
-				  const std::string& cookies,
-				  const std::string& referrer) {}
-
-void WebView::OnBasicAuthenticationRequested(
-    LoginPromptDelegate* login_delegate) {}
-
-bool WebView::ShouldHandleNavigation(const GURL& url,
-                                     WindowOpenDisposition disposition,
-                                     bool user_gesture) {
-  return true;
-}
-
-WebFrame* WebView::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  return new WebFrame(render_frame_host, this);
-}
-
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  return nullptr;
-}
-
-WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition) {
-  NOTREACHED() <<
-      "Your CanCreateWindows() implementation should be returning false!";
-  return nullptr;
-}
-
-FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return nullptr;
-}
-
-void WebView::OnEvictCurrentFrame() {}
-
-void WebView::OnTextInputStateChanged() {}
-void WebView::OnFocusedNodeChanged() {}
-void WebView::OnSelectionBoundsChanged() {}
-void WebView::OnImeCancelComposition() {}
-void WebView::OnSelectionChanged() {}
-
-void WebView::OnUpdateCursor(const content::WebCursor& cursor) {}
-
-void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
-void WebView::OnCertificateError(scoped_ptr<CertificateError> error) {}
-void WebView::OnContentBlocked() {}
-
-void WebView::OnPrepareToCloseResponse(bool proceed) {}
-void WebView::OnCloseRequested() {}
-
-WebView::WebView()
-    : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-=======
 WebView::WebView(WebViewClient* client)
     : client_(client),
       text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
->>>>>>> MERGE-SOURCE
       show_ime_if_needed_(false),
       focused_node_is_editable_(false),
       selection_cursor_position_(0),
@@ -2278,7 +2170,7 @@ void WebView::DownloadRequested(
 }
 
 void WebView::BasicAuthenticationRequested(LoginPromptDelegate* login_delegate) {
-  OnBasicAuthenticationRequested(login_delegate);
+  client_->BasicAuthenticationRequested(login_delegate);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

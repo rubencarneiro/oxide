@@ -48,6 +48,7 @@ namespace oxide {
 class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
+class LoginPromptDelegate;
 class MediaAccessPermissionRequest;
 class SecurityStatus;
 class SimplePermissionRequest;

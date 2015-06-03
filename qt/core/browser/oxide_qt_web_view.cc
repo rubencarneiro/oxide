@@ -761,7 +761,7 @@ void WebView::DownloadRequested(const GURL& url,
   client_->DownloadRequested(&download_request);
 }
 
-void WebView::OnBasicAuthenticationRequested(
+void WebView::BasicAuthenticationRequested(
         oxide::LoginPromptDelegate* login_delegate) {
   // the embedder takes ownership of the request
   client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(

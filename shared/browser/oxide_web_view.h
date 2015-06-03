@@ -100,6 +100,7 @@ class Compositor;
 class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
+class LoginPromptDelegate;
 class RenderWidgetHostView;
 class WebContextMenu;
 class WebFrame;
