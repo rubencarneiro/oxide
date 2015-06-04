@@ -198,7 +198,7 @@ void ContentBrowserClient::AllowCertificateError(
 }
 
 content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
-  MediaCaptureDevicesDispatcher::GetInstance();
+  return MediaCaptureDevicesDispatcher::GetInstance();
 }
 
 bool ContentBrowserClient::CanCreateWindow(

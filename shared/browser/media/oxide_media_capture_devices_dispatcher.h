@@ -23,7 +23,14 @@
 
 template <typename T> struct DefaultSingletonTraits;
 
+namespace content {
+struct MediaStreamDevice;
+class MediaStreamDevices;
+}
+
 namespace oxide {
+
+class BrowserContext;
 
 // I think the name of this class is a bit odd, but I couldn't think of a
 // better one so I copied the name from Chrome
@@ -32,6 +39,16 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
   static MediaCaptureDevicesDispatcher* GetInstance();
   ~MediaCaptureDevicesDispatcher();
 
+  const content::MediaStreamDevices& GetAudioCaptureDevices();
+  const content::MediaStreamDevices& GetVideoCaptureDevices();
+
+  const content::MediaStreamDevice* GetFirstAudioCaptureDevice();
+  const content::MediaStreamDevice* GetFirstVideoCaptureDevice();
+
+  bool GetDefaultDevicesForContext(BrowserContext* context,
+                                   bool audio, bool video,
+                                   content::MediaStreamDevices* devices);
+                                        
  private:
   friend struct DefaultSingletonTraits<MediaCaptureDevicesDispatcher>;
 

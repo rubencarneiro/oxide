@@ -123,8 +123,6 @@ class Q_DECL_EXPORT OxideQMediaAccessPermissionRequest Q_DECL_FINAL
 
  public Q_SLOTS:
   void allow();
-  void allow(const QString& audio_device_id,
-             const QString& video_device_id);
   void deny();
 
  private:

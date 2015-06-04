@@ -261,30 +261,6 @@ void OxideQMediaAccessPermissionRequest::allow() {
   d->request()->Allow();
 }
 
-void OxideQMediaAccessPermissionRequest::allow(
-    const QString& audio_device_id,
-    const QString& video_device_id) {
-  Q_D(OxideQMediaAccessPermissionRequest);
-
-  if (!d->canRespond()) {
-    return;
-  }
-
-  if (audio_device_id.isEmpty() && isForAudio()) {
-    qWarning() <<
-        "OxideQMediaAccessPermissionRequest::allow: Invalid audio device "
-        "ID - falling back to default";
-  }
-  if (video_device_id.isEmpty() && isForVideo()) {
-    qWarning() <<
-        "OxideQMediaAccessPermissionRequest::allow: Invalid video device "
-        "ID - falling back to default";
-  }
-
-  d->request()->Allow(audio_device_id.toStdString(),
-                      video_device_id.toStdString());
-}
-
 void OxideQMediaAccessPermissionRequest::deny() {
   Q_D(OxideQMediaAccessPermissionRequest);
 
