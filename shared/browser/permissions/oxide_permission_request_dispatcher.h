@@ -31,6 +31,7 @@
 class GURL;
 
 namespace content {
+class RenderFrameHost;
 class WebContents;
 }
 
@@ -56,12 +57,14 @@ class PermissionRequestDispatcher
   // Request permission to use the resource identified by |permission|
   void RequestPermission(
       content::PermissionType permission,
+      content::RenderFrameHost* render_frame_host,
       int request_id,
       const GURL& requesting_origin,
       const base::Callback<void(content::PermissionStatus)>& callback);
 
   // Cancel the pending permission request
   void CancelPermissionRequest(content::PermissionType permission,
+                               content::RenderFrameHost* render_frame_host,
                                int request_id,
                                const GURL& requesting_origin);
 

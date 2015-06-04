@@ -57,11 +57,18 @@ struct PermissionManager::Subscription {
 
 void PermissionManager::RequestPermission(
     content::PermissionType permission,
-    content::WebContents* web_contents,
+    content::RenderFrameHost* render_frame_host,
     int request_id,
     const GURL& requesting_origin,
     bool user_gesture,
     const base::Callback<void(content::PermissionStatus)>& callback) {
+  content::WebContents* web_contents =
+      content::WebContents::FromRenderFrameHost(render_frame_host);
+  if (!web_contents) {
+    callback.Run(content::PERMISSION_STATUS_DENIED);
+    return;
+  }
+
   PermissionRequestDispatcher* dispatcher =
       PermissionRequestDispatcher::FromWebContents(web_contents);
   if (!dispatcher) {
@@ -70,6 +77,7 @@ void PermissionManager::RequestPermission(
   }
 
   dispatcher->RequestPermission(permission,
+                                render_frame_host,
                                 request_id,
                                 requesting_origin,
                                 WrapCallback(callback, permission));
@@ -77,9 +85,15 @@ void PermissionManager::RequestPermission(
 
 void PermissionManager::CancelPermissionRequest(
     content::PermissionType permission,
-    content::WebContents* web_contents,
+    content::RenderFrameHost* render_frame_host,
     int request_id,
     const GURL& requesting_origin) {
+  content::WebContents* web_contents =
+      content::WebContents::FromRenderFrameHost(render_frame_host);
+  if (!web_contents) {
+    return;
+  }
+
   PermissionRequestDispatcher* dispatcher =
       PermissionRequestDispatcher::FromWebContents(web_contents);
   if (!dispatcher) {
@@ -87,6 +101,7 @@ void PermissionManager::CancelPermissionRequest(
   }
 
   dispatcher->CancelPermissionRequest(permission,
+                                      render_frame_host,
                                       request_id,
                                       requesting_origin);
 }

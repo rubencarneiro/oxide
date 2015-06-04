@@ -110,7 +110,7 @@ class BrowserPlatformIntegration {
   void AddObserver(BrowserPlatformIntegrationObserver* observer);
   void RemoveObserver(BrowserPlatformIntegrationObserver* observer);
 
-  ObserverList<BrowserPlatformIntegrationObserver> observers_;
+  base::ObserverList<BrowserPlatformIntegrationObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
