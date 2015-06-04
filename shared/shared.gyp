@@ -293,6 +293,8 @@
         'browser/compositor/oxide_compositor_utils.h',
         'browser/compositor/oxide_mailbox_buffer_map.cc',
         'browser/compositor/oxide_mailbox_buffer_map.h',
+        'browser/media/oxide_media_capture_devices_dispatcher.cc',
+        'browser/media/oxide_media_capture_devices_dispatcher.h',
         'browser/oxide_access_token_store.cc',
         'browser/oxide_access_token_store.h',
         'browser/oxide_android_properties.cc',
