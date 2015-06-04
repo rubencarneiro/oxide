@@ -29,8 +29,6 @@
 
 #include "shared/browser/permissions/oxide_permission_request.h"
 
-#include "oxideqmediacapturedevice.h"
-
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
 
