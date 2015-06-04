@@ -80,15 +80,16 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
 
   scoped_ptr<base::SharedMemory> shmem(new base::SharedMemory(handle, true));
 
-  CHECK(shmem->Map(sizeof(Pickle::Header)));
-  Pickle::Header* header = reinterpret_cast<Pickle::Header *>(shmem->memory());
-  int size = sizeof(Pickle::Header) + header->payload_size;
+  CHECK(shmem->Map(sizeof(base::Pickle::Header)));
+  base::Pickle::Header* header =
+      reinterpret_cast<base::Pickle::Header *>(shmem->memory());
+  int size = sizeof(base::Pickle::Header) + header->payload_size;
   shmem->Unmap();
 
   CHECK(shmem->Map(size));
 
-  Pickle pickle(reinterpret_cast<char *>(shmem->memory()), size);
-  PickleIterator iter(pickle);
+  base::Pickle pickle(reinterpret_cast<char *>(shmem->memory()), size);
+  base::PickleIterator iter(pickle);
 
   uint64 num_scripts = 0;
   CHECK(iter.ReadUInt64(&num_scripts));
