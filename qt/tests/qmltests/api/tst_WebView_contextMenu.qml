@@ -49,7 +49,7 @@ TestWebView {
     }
 
     function cleanup() {
-      webView.currentContextMenu.contextModel.close()
+      webView.currentContextMenu.contextModel.close();
       tryCompare(webView, "currentContextMenu", null);
     }
 
@@ -130,11 +130,12 @@ TestWebView {
       verify(!(model.editFlags & WebView.RedoCapability));
       verify(!(model.editFlags & WebView.CutCapability));
       verify(!(model.editFlags & WebView.CopyCapability));
+      verify(model.editFlags & WebView.PasteCapability);
       verify(!(model.editFlags & WebView.EraseCapability));
       verify(model.editFlags & WebView.SelectAllCapability);
-      webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       cleanup();
 
+      webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
@@ -142,37 +143,33 @@ TestWebView {
       verify(!(model.editFlags & WebView.RedoCapability));
       verify(model.editFlags & WebView.CutCapability);
       verify(model.editFlags & WebView.CopyCapability);
+      verify(model.editFlags & WebView.PasteCapability);
       verify(model.editFlags & WebView.EraseCapability);
       verify(model.editFlags & WebView.SelectAllCapability);
-      webView.executeEditingCommand(WebView.EditingCommandErase);
       cleanup();
-      var r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "");
 
+      webView.executeEditingCommand(WebView.EditingCommandErase);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "");
       verify(model.editFlags & WebView.UndoCapability);
       verify(!(model.editFlags & WebView.RedoCapability));
-      webView.executeEditingCommand(WebView.EditingCommandUndo);
       cleanup();
-      var r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "text area");
 
+      webView.executeEditingCommand(WebView.EditingCommandUndo);
       invokeContextMenu("editable");
       model = webView.currentContextMenu.contextModel;
       compare(model.selectionText, "text area");
       verify(!(model.editFlags & WebView.UndoCapability));
       verify(model.editFlags & WebView.RedoCapability);
-      webView.executeEditingCommand(WebView.EditingCommandRedo);
-      var r = webView.getTestApi().evaluateCode(
-          "document.querySelector(\"#editable\").value");
-      compare(r, "");
+      cleanup();
 
-      // TODO: once clipboard support is implemented
-      // (https://launchpad.net/bugs/1301419), test cut/copy/paste
+      webView.executeEditingCommand(WebView.EditingCommandRedo);
+      invokeContextMenu("editable");
+      model = webView.currentContextMenu.contextModel;
+      compare(model.selectionText, "");
+      verify(model.editFlags & WebView.UndoCapability);
+      verify(!(model.editFlags & WebView.RedoCapability));
     }
 
     function test_WebView_contextMenu_saveLink_saveMedia() {
