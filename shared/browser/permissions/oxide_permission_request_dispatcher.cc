@@ -166,7 +166,6 @@ void PermissionRequestDispatcher::CancelPermissionRequest(
     if (request->request_id_ != id) {
       continue;
     }
-    RemovePendingRequest(request);
     request->Cancel();
   }
 }
@@ -275,8 +274,6 @@ void PermissionRequestDispatcher::CancelPendingRequests() {
     if (!request) {
       continue;
     }
-
-    RemovePendingRequest(request);
     request->Cancel();
   }
 }
@@ -293,7 +290,6 @@ void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
     if (request->frame_ != frame) {
       continue;
     }
-    RemovePendingRequest(request);
     request->Cancel();
   }
 }

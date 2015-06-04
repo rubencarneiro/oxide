@@ -46,6 +46,12 @@ class PermissionRequest {
   // this request
   GURL embedder() const { return embedder_; }
 
+  // Whether this request is still waiting for a response
+  bool IsPending() const;
+
+  // Whether this request has been cancelled
+  bool is_cancelled() const { return is_cancelled_; }
+
   // Set a callback to be invoked when this request is cancelled
   void SetCancelCallback(const base::Closure& cancel_callback);
 
@@ -75,6 +81,7 @@ class PermissionRequest {
   GURL origin_;
   GURL embedder_;
 
+  bool is_cancelled_;
   base::Closure cancel_callback_;
 
   DISALLOW_COPY_AND_ASSIGN(PermissionRequest);

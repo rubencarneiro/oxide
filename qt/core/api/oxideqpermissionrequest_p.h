@@ -45,8 +45,6 @@ class OxideQPermissionRequestPrivate {
   OxideQPermissionRequest* q_ptr;
   scoped_ptr<oxide::PermissionRequest> request_;
 
-  bool is_cancelled_;
-
  private:
   void OnCancelled();
 };
@@ -68,8 +66,6 @@ class OxideQSimplePermissionRequestPrivate
 
   bool canRespond() const;
   oxide::SimplePermissionRequest* request() const;
-
-  bool did_respond_;
 };
 
 class OxideQGeolocationPermissionRequestPrivate
@@ -101,8 +97,6 @@ class OxideQMediaAccessPermissionRequestPrivate
 
   bool canRespond() const;
   oxide::MediaAccessPermissionRequest* request() const;
-
-  bool did_respond_;
 };
 
 #endif // _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_

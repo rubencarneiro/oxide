@@ -34,35 +34,32 @@
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
 
-  is_cancelled_ = true;
   Q_EMIT q->cancelled();
 }
 
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
     scoped_ptr<oxide::PermissionRequest> request)
     : q_ptr(nullptr),
-      request_(request.Pass()),
-      is_cancelled_(false) {}
+      request_(request.Pass()) {}
 
 OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQPermissionRequestPrivate(request.Pass()),
-      did_respond_(false) {}
+    : OxideQPermissionRequestPrivate(request.Pass()) {}
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {
-  if (did_respond_) {
-    qWarning() <<
-        "OxideQSimplePermissionRequest: Can only respond once to a permission "
-        "request";
-    return false;
-  }
-
-  if (is_cancelled_) {
+  if (request_->is_cancelled()) {
     qWarning() <<
         "OxideQSimplePermissionRequest: Can't respond to a cancelled "
         "permission request";
+    return false;
+  }
+
+  if (!request_->IsPending()) {
+    qWarning() <<
+        "OxideQSimplePermissionRequest: Can only respond once to a permission "
+        "request";
     return false;
   }
 
@@ -107,20 +104,19 @@ OxideQGeolocationPermissionRequestPrivate::Create(
 OxideQMediaAccessPermissionRequestPrivate::
     OxideQMediaAccessPermissionRequestPrivate(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request)
-      : OxideQPermissionRequestPrivate(request.Pass()),
-        did_respond_(false) {}
+      : OxideQPermissionRequestPrivate(request.Pass()) {}
 
 bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
-  if (did_respond_) {
+  if (request_->is_cancelled()) {
     qWarning() <<
-        "OxideQMediaAccessPermissionRequest: Can only respond once to a "
+        "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
         "permission request";
     return false;
   }
 
-  if (is_cancelled_) {
+  if (!request_->IsPending()) {
     qWarning() <<
-        "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
+        "OxideQMediaAccessPermissionRequest: Can only respond once to a "
         "permission request";
     return false;
   }
@@ -186,7 +182,7 @@ QUrl OxideQPermissionRequest::url() const {
 bool OxideQPermissionRequest::isCancelled() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->is_cancelled_;
+  return d->request_->is_cancelled();
 }
 
 OxideQSimplePermissionRequest::OxideQSimplePermissionRequest(
@@ -202,7 +198,6 @@ void OxideQSimplePermissionRequest::allow() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Allow();
 }
 
@@ -213,7 +208,6 @@ void OxideQSimplePermissionRequest::deny() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Deny();
 }
 
@@ -264,7 +258,6 @@ void OxideQMediaAccessPermissionRequest::allow() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Allow();
 }
 
@@ -288,7 +281,6 @@ void OxideQMediaAccessPermissionRequest::allow(
         "ID - falling back to default";
   }
 
-  d->did_respond_ = true;
   d->request()->Allow(audio_device_id.toStdString(),
                       video_device_id.toStdString());
 }
@@ -300,6 +292,5 @@ void OxideQMediaAccessPermissionRequest::deny() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Deny();
 }

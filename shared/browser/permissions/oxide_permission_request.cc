@@ -57,9 +57,15 @@ PermissionRequest::PermissionRequest(const PermissionRequestID& request_id,
       request_id_(request_id),
       frame_(frame),
       origin_(origin),
-      embedder_(embedder) {}
+      embedder_(embedder),
+      is_cancelled_(false) {}
 
 void PermissionRequest::Cancel() {
+  DCHECK(!IsPending());
+  DCHECK(!is_cancelled_);
+
+  is_cancelled_ = true;
+
   if (cancel_callback_.is_null()) {
     return;
   }
@@ -69,30 +75,24 @@ void PermissionRequest::Cancel() {
 }
 
 void PermissionRequest::NotifyDone() {
-  if (!dispatcher_) {
-    return;
-  }
-
   dispatcher_->RemovePendingRequest(this);
+  DCHECK(!dispatcher_);
 }
 
 PermissionRequest::~PermissionRequest() {
-  if (dispatcher_) {
-    dispatcher_->RemovePendingRequest(this);
-  }
+  DCHECK(!IsPending());
+}
+
+bool PermissionRequest::IsPending() const {
+  return !!dispatcher_;
 }
 
 void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
-  DCHECK(dispatcher_);
   cancel_callback_ = callback;
 }
 
 void SimplePermissionRequest::Cancel() {
-  DCHECK(!callback_.is_null());
-
-  callback_.Run(content::PERMISSION_STATUS_DENIED);
-  callback_.Reset();
-
+  Deny();
   PermissionRequest::Cancel();
 }
 
@@ -105,13 +105,13 @@ SimplePermissionRequest::SimplePermissionRequest(
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
-  if (!callback_.is_null()) {
+  if (IsPending()) {
     Deny();
   }
 }
 
 void SimplePermissionRequest::Allow() {
-  DCHECK(!callback_.is_null());
+  DCHECK(IsPending());
 
   callback_.Run(content::PERMISSION_STATUS_GRANTED);
   callback_.Reset();
@@ -120,7 +120,7 @@ void SimplePermissionRequest::Allow() {
 }
 
 void SimplePermissionRequest::Deny() {
-  DCHECK(!callback_.is_null());
+  DCHECK(IsPending());
 
   callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
@@ -129,13 +129,7 @@ void SimplePermissionRequest::Deny() {
 }
 
 void MediaAccessPermissionRequest::Cancel() {
-  DCHECK(!callback_.is_null());
-
-  callback_.Run(content::MediaStreamDevices(),
-                content::MEDIA_DEVICE_PERMISSION_DENIED,
-                nullptr);
-  callback_.Reset();
-
+  Deny();
   PermissionRequest::Cancel();
 }
 
@@ -155,7 +149,7 @@ MediaAccessPermissionRequest::MediaAccessPermissionRequest(
       callback_(callback) {}
 
 MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
-  if (!callback_.is_null()) {
+  if (IsPending()) {
     Deny();
   }
 }
@@ -166,7 +160,7 @@ void MediaAccessPermissionRequest::Allow() {
 
 void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
                                          const std::string& video_device_id) {
-  DCHECK(!callback_.is_null());
+  DCHECK(IsPending());
 
   content::MediaStreamDevices devices;
 
@@ -201,7 +195,7 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
 }
 
 void MediaAccessPermissionRequest::Deny() {
-  DCHECK(!callback_.is_null());
+  DCHECK(IsPending());
 
   callback_.Run(content::MediaStreamDevices(),
                 content::MEDIA_DEVICE_PERMISSION_DENIED,
