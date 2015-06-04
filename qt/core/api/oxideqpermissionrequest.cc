@@ -27,20 +27,22 @@
 #include "base/logging.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_permission_request.h"
+#include "shared/browser/permissions/oxide_permission_request.h"
 
 #include "oxideqmediacapturedevice.h"
 
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
 
+  is_cancelled_ = true;
   Q_EMIT q->cancelled();
 }
 
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
     scoped_ptr<oxide::PermissionRequest> request)
     : q_ptr(nullptr),
-      request_(request.Pass()) {}
+      request_(request.Pass()),
+      is_cancelled_(false) {}
 
 OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
@@ -57,7 +59,7 @@ bool OxideQSimplePermissionRequestPrivate::canRespond() const {
     return false;
   }
 
-  if (request()->is_cancelled()) {
+  if (is_cancelled_) {
     qWarning() <<
         "OxideQSimplePermissionRequest: Can't respond to a cancelled "
         "permission request";
@@ -116,7 +118,7 @@ bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
     return false;
   }
 
-  if (request()->is_cancelled()) {
+  if (is_cancelled_) {
     qWarning() <<
         "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
         "permission request";
@@ -184,7 +186,7 @@ QUrl OxideQPermissionRequest::url() const {
 bool OxideQPermissionRequest::isCancelled() const {
   Q_D(const OxideQPermissionRequest);
 
-  return d->request_->is_cancelled();
+  return d->is_cancelled_;
 }
 
 OxideQSimplePermissionRequest::OxideQSimplePermissionRequest(

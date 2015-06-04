@@ -22,6 +22,8 @@
 #include "base/logging.h"
 #include "content/public/browser/media_capture_devices.h"
 
+#include "oxide_permission_request_dispatcher.h"
+
 namespace oxide {
 
 namespace {
@@ -47,183 +49,41 @@ const content::MediaStreamDevice* GetRequestedOrDefaultDevice(
 
 }
 
-PermissionRequestID::PermissionRequestID(int render_process_id,
-                                         int render_view_id,
-                                         int bridge_id,
-                                         const GURL& origin)
-    : render_process_id_(render_process_id),
-      render_view_id_(render_view_id),
-      bridge_id_(bridge_id),
-      origin_(origin) {}
-
-PermissionRequestID::PermissionRequestID()
-    : render_process_id_(-1),
-      render_view_id_(-1),
-      bridge_id_(-1) {}
-
-PermissionRequestID::~PermissionRequestID() {}
-
-bool PermissionRequestID::IsValid() const {
-  return render_process_id_ > -1 && render_view_id_ > -1 && bridge_id_ > -1;
-}
-
-bool PermissionRequestID::operator==(const PermissionRequestID& other) const {
-  return render_process_id_ == other.render_process_id_ &&
-         render_view_id_ == other.render_view_id_ &&
-         bridge_id_ == other.bridge_id_ &&
-         origin_ == other.origin_;
-}
-
-class PermissionRequestManager::IteratorGuard {
- public:
-  IteratorGuard(PermissionRequestManager* manager);
-  ~IteratorGuard();
-
- private:
-  base::WeakPtr<PermissionRequestManager> manager_;
-  bool iterating_original_;
-
-  DISALLOW_COPY_AND_ASSIGN(IteratorGuard);
-};
-
-PermissionRequestManager::IteratorGuard::IteratorGuard(
-    PermissionRequestManager* manager)
-    : manager_(manager->weak_factory_.GetWeakPtr()),
-      iterating_original_(manager->iterating_) {
-  manager->iterating_ = true;
-}
-
-PermissionRequestManager::IteratorGuard::~IteratorGuard() {
-  if (!manager_) {
-    return;
-  }
-
-  manager_->iterating_ = iterating_original_;
-  if (!manager_->iterating_) {
-    manager_->Compact();
-  }
-}
-
-void PermissionRequestManager::AddPendingRequest(PermissionRequest* request) {
-  DCHECK_EQ(request->manager_, this);
-  DCHECK(std::find(
-      pending_requests_.begin(),
-      pending_requests_.end(),
-      request) == pending_requests_.end());
-
-  pending_requests_.push_back(request);
-}
-
-void PermissionRequestManager::RemovePendingRequest(
-    PermissionRequest* request) {
-  DCHECK_EQ(request->manager_, this);
-  auto it =
-      std::find(pending_requests_.begin(), pending_requests_.end(), request);
-  DCHECK(it != pending_requests_.end());
-  if (iterating_) {
-    *it = nullptr;
-  } else {
-    pending_requests_.erase(it);
-  }
-
-  request->manager_ = nullptr;
-}
-
-void PermissionRequestManager::Compact() {
-  DCHECK(!iterating_);
-
-  pending_requests_.erase(
-      std::remove(pending_requests_.begin(), pending_requests_.end(), nullptr),
-      pending_requests_.end());
-}
-
-PermissionRequestManager::PermissionRequestManager()
-    : iterating_(false),
-      weak_factory_(this) {}
-
-PermissionRequestManager::~PermissionRequestManager() {
-  CancelPendingRequests();
-}
-
-void PermissionRequestManager::CancelPendingRequests() {
-  IteratorGuard guard(this);
-  for (auto it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    PermissionRequest* request = *it;
-    if (!request) {
-      continue;
-    }
-
-    RemovePendingRequest(request);
-    request->Cancel();
-  }
-}
-
-void PermissionRequestManager::CancelPendingRequestForID(
-    const PermissionRequestID& request_id) {
-  DCHECK(request_id.IsValid());
-
-  for (auto it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    PermissionRequest* request = *it;
-    if (request->request_id_ == request_id) {
-      RemovePendingRequest(request);
-      request->Cancel();
-      break;
-    }
-  }
-}
-
-void PermissionRequestManager::CancelPendingRequestsForFrame(WebFrame* frame) {
-  DCHECK(frame);
-
-  IteratorGuard guard(this);
-  for (auto it = pending_requests_.begin();
-       it != pending_requests_.end(); ++it) {
-    PermissionRequest* request = *it;
-    if (request->frame_ != frame) {
-      continue;
-    }
-
-    RemovePendingRequest(request);
-    request->Cancel();
-  }
-}
-
-PermissionRequest::PermissionRequest(PermissionRequestManager* manager,
-                                     const PermissionRequestID& request_id,
+PermissionRequest::PermissionRequest(const PermissionRequestID& request_id,
                                      WebFrame* frame,
                                      const GURL& origin,
                                      const GURL& embedder)
-    : manager_(manager),
+    : dispatcher_(nullptr),
       request_id_(request_id),
       frame_(frame),
       origin_(origin),
-      embedder_(embedder),
-      is_cancelled_(false) {
-  DCHECK(manager_);
-  manager_->AddPendingRequest(this);
-}
+      embedder_(embedder) {}
 
 void PermissionRequest::Cancel() {
-  DCHECK(!is_cancelled_);
-
-  is_cancelled_ = true;
-
-  if (!cancel_callback_.is_null()) {
-    cancel_callback_.Run();
-    cancel_callback_.Reset();
+  if (cancel_callback_.is_null()) {
+    return;
   }
+
+  cancel_callback_.Run();
+  cancel_callback_.Reset();
+}
+
+void PermissionRequest::NotifyDone() {
+  if (!dispatcher_) {
+    return;
+  }
+
+  dispatcher_->RemovePendingRequest(this);
 }
 
 PermissionRequest::~PermissionRequest() {
-  if (manager_) {
-    manager_->RemovePendingRequest(this);
+  if (dispatcher_) {
+    dispatcher_->RemovePendingRequest(this);
   }
 }
 
 void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
-  DCHECK(!is_cancelled_);
+  DCHECK(dispatcher_);
   cancel_callback_ = callback;
 }
 
@@ -237,12 +97,11 @@ void SimplePermissionRequest::Cancel() {
 }
 
 SimplePermissionRequest::SimplePermissionRequest(
-    PermissionRequestManager* manager,
     const PermissionRequestID& request_id,
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(content::PermissionStatus)>& callback)
-    : PermissionRequest(manager, request_id, nullptr, origin, embedder),
+    : PermissionRequest(request_id, nullptr, origin, embedder),
       callback_(callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {
@@ -257,7 +116,7 @@ void SimplePermissionRequest::Allow() {
   callback_.Run(content::PERMISSION_STATUS_GRANTED);
   callback_.Reset();
 
-  manager_->RemovePendingRequest(this);
+  NotifyDone();
 }
 
 void SimplePermissionRequest::Deny() {
@@ -266,7 +125,7 @@ void SimplePermissionRequest::Deny() {
   callback_.Run(content::PERMISSION_STATUS_DENIED);
   callback_.Reset();
 
-  manager_->RemovePendingRequest(this);
+  NotifyDone();
 }
 
 void MediaAccessPermissionRequest::Cancel() {
@@ -281,15 +140,13 @@ void MediaAccessPermissionRequest::Cancel() {
 }
 
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
-    PermissionRequestManager* manager,
     WebFrame* frame,
     const GURL& origin,
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
     const content::MediaResponseCallback& callback)
-    : PermissionRequest(manager,
-                        PermissionRequestID(),
+    : PermissionRequest(PermissionRequestID(),
                         frame,
                         origin,
                         embedder),
@@ -340,7 +197,7 @@ void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
                 nullptr);
   callback_.Reset();
 
-  manager_->RemovePendingRequest(this);
+  NotifyDone();
 }
 
 void MediaAccessPermissionRequest::Deny() {
@@ -351,7 +208,7 @@ void MediaAccessPermissionRequest::Deny() {
                 nullptr);
   callback_.Reset();
 
-  manager_->RemovePendingRequest(this);
+  NotifyDone();
 }
 
 } // namespace oxide

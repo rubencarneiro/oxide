@@ -22,7 +22,7 @@
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"
 
-#include "oxide_web_view.h"
+#include "oxide_permission_request_dispatcher.h"
 
 namespace oxide {
 
@@ -38,6 +38,17 @@ void RespondToGeolocationPermissionRequest(
   callback.Run(result);
 }
 
+base::Callback<void(content::PermissionStatus)> WrapCallback(
+    const base::Callback<void(content::PermissionStatus)>& callback,
+    content::PermissionType permission) {
+  switch (permission) {
+    case content::PermissionType::GEOLOCATION:
+      return base::Bind(&RespondToGeolocationPermissionRequest, callback);
+    default:
+      return callback;
+  }
+}
+
 }
 
 struct PermissionManager::Subscription {
@@ -51,24 +62,17 @@ void PermissionManager::RequestPermission(
     const GURL& requesting_origin,
     bool user_gesture,
     const base::Callback<void(content::PermissionStatus)>& callback) {
-  if (permission != content::PermissionType::GEOLOCATION) {
-    // TODO: Other types
+  PermissionRequestDispatcher* dispatcher =
+      PermissionRequestDispatcher::FromWebContents(web_contents);
+  if (!dispatcher) {
     callback.Run(content::PERMISSION_STATUS_DENIED);
     return;
   }
 
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
-  }
-
-  base::Callback<void(content::PermissionStatus)> wrapped_callback =
-      base::Bind(&RespondToGeolocationPermissionRequest,
-                 callback);
-  webview->RequestGeolocationPermission(requesting_origin,
-                                        request_id,
-                                        wrapped_callback);
+  dispatcher->RequestPermission(permission,
+                                request_id,
+                                requesting_origin,
+                                WrapCallback(callback, permission));
 }
 
 void PermissionManager::CancelPermissionRequest(
@@ -76,17 +80,15 @@ void PermissionManager::CancelPermissionRequest(
     content::WebContents* web_contents,
     int request_id,
     const GURL& requesting_origin) {
-  if (permission != content::PermissionType::GEOLOCATION) {
+  PermissionRequestDispatcher* dispatcher =
+      PermissionRequestDispatcher::FromWebContents(web_contents);
+  if (!dispatcher) {
     return;
   }
 
-  WebView* webview = WebView::FromWebContents(web_contents);
-  if (!webview) {
-    return;
-  }
-
-  webview->CancelGeolocationPermissionRequest(requesting_origin,
-                                              request_id);
+  dispatcher->CancelPermissionRequest(permission,
+                                      request_id,
+                                      requesting_origin);
 }
 
 content::PermissionStatus PermissionManager::GetPermissionStatus(

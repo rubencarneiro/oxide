@@ -35,7 +35,6 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
-#include "content/public/common/permission_status.mojom.h"
 #include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
@@ -48,7 +47,6 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_permission_request.h"
 #include "shared/browser/oxide_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
@@ -280,14 +278,6 @@ class WebView : public ScriptMessageTarget,
                      const std::vector<content::MenuItem>& items,
                      bool allow_multiple_selection);
   void HidePopupMenu();
-
-  void RequestGeolocationPermission(
-      const GURL& requesting_frame,
-      int bridge_id,
-      const base::Callback<void(content::PermissionStatus)>& callback);
-  void CancelGeolocationPermissionRequest(
-      const GURL& requesting_frame,
-      int bridge_id);
 
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,
@@ -557,7 +547,6 @@ class WebView : public ScriptMessageTarget,
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
-  PermissionRequestManager permission_request_manager_;
   CertificateErrorManager certificate_error_manager_;
 
   ContentType blocked_content_;

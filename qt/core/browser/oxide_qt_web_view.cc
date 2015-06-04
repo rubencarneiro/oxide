@@ -77,6 +77,8 @@
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
 #include "shared/browser/oxide_web_view.h"
+#include "shared/browser/permissions/oxide_permission_request.h"
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_file_picker.h"
@@ -460,6 +462,9 @@ void WebView::EnsurePreferences() {
 }
 
 void WebView::Initialized() {
+  oxide::PermissionRequestDispatcher::FromWebContents(
+      view_->GetWebContents())->set_client(this);
+
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
   if (!p->parent()) {
@@ -656,26 +661,6 @@ void WebView::WebPreferencesDestroyed() {
   view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
   client_->WebPreferencesReplaced();
-}
-
-void WebView::RequestGeolocationPermission(
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
-  scoped_ptr<OxideQGeolocationPermissionRequest> req(
-      OxideQGeolocationPermissionRequestPrivate::Create(
-        request.Pass()));
-
-  // The embedder takes ownership of this
-  client_->RequestGeolocationPermission(req.release());
-}
-
-void WebView::RequestMediaAccessPermission(
-    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
-  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
-      OxideQMediaAccessPermissionRequestPrivate::Create(
-        request.Pass()));
-
-  // The embedder takes ownership of this
-  client_->RequestMediaAccessPermission(req.release());
 }
 
 void WebView::UnhandledKeyboardEvent(
@@ -1012,6 +997,26 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
   return ScriptMessageHandler::FromProxyHandle(
       message_handlers_.at(index))->handler();
+}
+
+void WebView::RequestGeolocationPermission(
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+      OxideQGeolocationPermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestGeolocationPermission(req.release());
+}
+
+void WebView::RequestMediaAccessPermission(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
+      OxideQMediaAccessPermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestMediaAccessPermission(req.release());
 }
 
 void WebView::init(bool incognito,
@@ -1585,6 +1590,12 @@ WebView::WebView(WebViewProxyClient* client)
 }
 
 WebView::~WebView() {
+  content::WebContents* contents = view_->GetWebContents();
+  if (contents) {
+    oxide::PermissionRequestDispatcher::FromWebContents(
+        contents)->set_client(nullptr);
+  }
+
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     im->disconnect(this);

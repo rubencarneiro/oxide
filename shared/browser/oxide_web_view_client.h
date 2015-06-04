@@ -48,9 +48,7 @@ namespace oxide {
 class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
-class MediaAccessPermissionRequest;
 class SecurityStatus;
-class SimplePermissionRequest;
 class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
@@ -134,16 +132,6 @@ class WebViewClient : public ScriptMessageTarget {
 
   // TODO(chrisccoulson): Make WebPreferences ref-counted and get rid of this
   virtual void WebPreferencesDestroyed();
-
-  // TODO(chrisccoulson): Make a delegate for dispatching permission requests
-  //    and move there
-  virtual void RequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request);
-
-  // TODO(chrisccoulson): Make a delegate for dispatching permission requests
-  //    and move there
-  virtual void RequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request);
 
   virtual void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);

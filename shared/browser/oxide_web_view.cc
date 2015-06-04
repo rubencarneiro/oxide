@@ -35,7 +35,6 @@
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
-#include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
@@ -52,7 +51,6 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
-#include "content/public/common/media_stream_request.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
@@ -60,6 +58,7 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
+#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
@@ -71,11 +70,10 @@
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
-
-#include "third_party/WebKit/public/web/WebFindOptions.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -167,6 +165,7 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
 void CreateHelpers(content::WebContents* contents,
                    content::WebContents* opener = nullptr) {
   new WebViewContentsHelper(contents, opener);
+  PermissionRequestDispatcher::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
@@ -813,91 +812,8 @@ void WebView::RequestMediaAccessPermission(
     const content::MediaResponseCallback& callback) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
-      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
-
-  if (request.video_type == content::MEDIA_NO_SERVICE &&
-      request.audio_type == content::MEDIA_NO_SERVICE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
-
-  // Desktop / tab capture not supported
-  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
-      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
-
-  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
-  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
-  // permission request and MEDIA_OPEN_DEVICE is used from pepper
-  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
-
-  content::MediaCaptureDevices* devices =
-      content::MediaCaptureDevices::GetInstance();
-
-  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
-      devices->GetAudioCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
-  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
-      devices->GetVideoCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
-  content::RenderFrameHost* rfh =
-      content::RenderFrameHost::FromID(request.render_process_id,
-                                       request.render_frame_id);
-  if (!rfh) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
-  if (!frame) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  scoped_ptr<MediaAccessPermissionRequest> req(
-      new MediaAccessPermissionRequest(
-        &permission_request_manager_,
-        frame,
-        request.security_origin,
-        web_contents_->GetLastCommittedURL().GetOrigin(),
-        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
-        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
-        callback));
-
-  client_->RequestMediaAccessPermission(req.Pass());
+  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+      ->RequestMediaAccessPermission(request, callback);
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
@@ -1032,7 +948,10 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelPendingRequests();
+    // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+    //  WebContentsObserver
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequests();
 
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
@@ -1057,7 +976,10 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
-  permission_request_manager_.CancelPendingRequestsForFrame(frame);
+  // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+  //  WebContentsObserver
+  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+      ->CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1132,7 +1054,10 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
-    permission_request_manager_.CancelPendingRequestsForFrame(f);
+    // XXX(chrisccoulson): Move frame tree management in to its own class
+    //  and have PermissionRequestDispatcher be an observer of that
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
@@ -2005,39 +1930,6 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
-}
-
-void WebView::RequestGeolocationPermission(
-    const GURL& requesting_frame,
-    int bridge_id,
-    const base::Callback<void(content::PermissionStatus)>& callback) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  scoped_ptr<SimplePermissionRequest> request(
-      new SimplePermissionRequest(
-        &permission_request_manager_,
-        request_id,
-        requesting_frame,
-        web_contents_->GetLastCommittedURL().GetOrigin(),
-        callback));
-
-  client_->RequestGeolocationPermission(request.Pass());
-}
-
-void WebView::CancelGeolocationPermissionRequest(
-    const GURL& requesting_frame,
-    int bridge_id) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  permission_request_manager_.CancelPendingRequestForID(request_id);
 }
 
 void WebView::AllowCertificateError(

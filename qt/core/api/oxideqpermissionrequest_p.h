@@ -45,6 +45,8 @@ class OxideQPermissionRequestPrivate {
   OxideQPermissionRequest* q_ptr;
   scoped_ptr<oxide::PermissionRequest> request_;
 
+  bool is_cancelled_;
+
  private:
   void OnCancelled();
 };
