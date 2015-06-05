@@ -70,6 +70,7 @@
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
@@ -812,8 +813,9 @@ void WebView::RequestMediaAccessPermission(
     const content::MediaResponseCallback& callback) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-      ->RequestMediaAccessPermission(request, callback);
+  MediaCaptureDevicesDispatcher::GetInstance()->RequestMediaAccessPermission(
+      request,
+      callback);
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {

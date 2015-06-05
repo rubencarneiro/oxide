@@ -171,65 +171,11 @@ void PermissionRequestDispatcher::CancelPermissionRequest(
 }
 
 void PermissionRequestDispatcher::RequestMediaAccessPermission(
-    const content::MediaStreamRequest& request,
+    content::RenderFrameHost* render_frame_host,
+    const GURL& requesting_origin,
+    bool audio,
+    bool video,
     const content::MediaResponseCallback& callback) {
-  // XXX(chrisccoulson): This logic probably doesn't belong here
-  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
-      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
-
-  if (request.video_type == content::MEDIA_NO_SERVICE &&
-      request.audio_type == content::MEDIA_NO_SERVICE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
-
-  // Desktop / tab capture not supported
-  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
-      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
-
-  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
-  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
-  // permission request and MEDIA_OPEN_DEVICE is used from pepper
-  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
-
-  content::MediaCaptureDevices* devices =
-      content::MediaCaptureDevices::GetInstance();
-
-  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
-      devices->GetAudioCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
-  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
-      devices->GetVideoCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
   if (!client_) {
     callback.Run(content::MediaStreamDevices(),
                  content::MEDIA_DEVICE_PERMISSION_DENIED,
@@ -237,17 +183,7 @@ void PermissionRequestDispatcher::RequestMediaAccessPermission(
     return;
   }
 
-  content::RenderFrameHost* rfh =
-      content::RenderFrameHost::FromID(request.render_process_id,
-                                       request.render_frame_id);
-  if (!rfh) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
+  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     callback.Run(content::MediaStreamDevices(),
                  content::MEDIA_DEVICE_PERMISSION_DENIED,
@@ -258,10 +194,9 @@ void PermissionRequestDispatcher::RequestMediaAccessPermission(
   scoped_ptr<MediaAccessPermissionRequest> req(
       new MediaAccessPermissionRequest(
         frame,
-        request.security_origin,
+        requesting_origin,
         contents_->GetLastCommittedURL().GetOrigin(),
-        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
-        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
+        audio, video,
         callback));
   AddPendingRequest(req.get());
 

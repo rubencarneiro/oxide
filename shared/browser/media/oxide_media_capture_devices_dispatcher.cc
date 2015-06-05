@@ -23,7 +23,10 @@
 #include "base/memory/singleton.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/media_capture_devices.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/common/media_stream_request.h"
+
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 
 #include "oxide_media_capture_devices_context.h"
 #include "oxide_media_capture_devices_dispatcher_observer.h"
@@ -177,6 +180,90 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   }
 
   return !(need_audio || need_video);
+}
+
+void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
+    const content::MediaStreamRequest& request,
+    const content::MediaResponseCallback& callback) {
+  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
+      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_NO_SERVICE &&
+      request.audio_type == content::MEDIA_NO_SERVICE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_INVALID_STATE,
+                 nullptr);
+    return;
+  }
+
+  // Desktop / tab capture not supported
+  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
+      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
+      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
+  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
+  // permission request and MEDIA_OPEN_DEVICE is used from pepper
+  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NOT_SUPPORTED,
+                 nullptr);
+    return;
+  }
+
+  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
+      GetAudioCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
+      GetVideoCaptureDevices().empty()) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_NO_HARDWARE,
+                 nullptr);
+    return;
+  }
+
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(request.render_process_id,
+                                       request.render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  content::WebContents* contents =
+      content::WebContents::FromRenderFrameHost(rfh);
+  if (!contents) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  PermissionRequestDispatcher::FromWebContents(contents)
+      ->RequestMediaAccessPermission(
+        rfh,
+        request.security_origin,
+        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
+        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
+        callback);
 }
 
 } // namespace oxide
