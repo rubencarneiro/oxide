@@ -40,17 +40,33 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
  public:
   static MediaCaptureDevicesDispatcher* GetInstance();
 
+  // Return the currently attached audio capture devices
   const content::MediaStreamDevices& GetAudioCaptureDevices();
+
+  // Return the currently attached video capture devices
   const content::MediaStreamDevices& GetVideoCaptureDevices();
 
+  // Returns the first audio capture device. This is used as a fallback
+  // when the embedder doesn't specify a device
   const content::MediaStreamDevice* GetFirstAudioCaptureDevice();
+
+  // Returns the first video capture device. This is used as a fallback
+  // when the embedder doesn't specify a device
   const content::MediaStreamDevice* GetFirstVideoCaptureDevice();
 
+  // Returns the audio capture device corresponding to the specified ID,
+  // or nullptr if no device with that ID exists
   const content::MediaStreamDevice* FindAudioCaptureDeviceById(
       const std::string& id);
+
+  // Returns the video capture device corresponding to the specified ID,
+  // or nullptr if no device with that ID exists
   const content::MediaStreamDevice* FindVideoCaptureDeviceById(
       const std::string& id);
 
+  // Get the default capture devices for the specified BrowserContext.
+  // This delegates to MediaCaptureDevicesContext, and then falls back to
+  // using the first devices
   bool GetDefaultCaptureDevicesForContext(
       content::BrowserContext* context,
       bool audio,

@@ -35,6 +35,8 @@ namespace oxide {
 class MediaCaptureDevicesContextClient;
 class MediaCaptureDevicesContextFactory;
 
+// This class provides per-context default settings for capture devices.
+// It's shared between each pair of BrowserContexts
 class MediaCaptureDevicesContext : public KeyedService,
                                    public MediaCaptureDevicesDispatcherObserver {
  public:
@@ -44,13 +46,38 @@ class MediaCaptureDevicesContext : public KeyedService,
     client_ = client;
   }
 
+  // Return the ID for the default audio capture device. The ID will be
+  // empty if no default is provided
   std::string GetDefaultAudioDeviceId() const;
+
+  // Set the ID for the default audio capture device. If the specified ID
+  // is empty, the first audio device will be used for capture. If it isn't
+  // empty, the ID must correspond to a valid device. Invalid device IDs are
+  // ignored.
+  // If the specified device is removed from the system in the future, the
+  // ID will reset to empty and the client will be notified.
+  // Returns true on success or false if the ID is not a valid device
   bool SetDefaultAudioDeviceId(const std::string& id);
 
+  // Return the ID for the default video capture device. The ID will be
+  // empty if no default is provided
   std::string GetDefaultVideoDeviceId() const;
+
+  // Set the ID for the default video capture device. If the specified ID
+  // is empty, the first video device will be used for capture. If it isn't
+  // empty, the ID must correspond to a valid device. Invalid device IDs are
+  // ignored.
+  // If the specified device is removed from the system in the future, the
+  // ID will reset to empty and the client will be notified.
+  // Returns true on success or false if the ID is not a valid device
   bool SetDefaultVideoDeviceId(const std::string& id);
 
+  // Returns the default audio capture device for this context, or nullptr
+  // if none is selected
   const content::MediaStreamDevice* GetDefaultAudioDevice() const;
+
+  // Returns the default video capture device for this context, or nullptr
+  // if none is selected
   const content::MediaStreamDevice* GetDefaultVideoDevice() const;
 
  private:

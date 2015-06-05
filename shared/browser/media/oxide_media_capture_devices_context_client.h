@@ -20,6 +20,8 @@
 
 namespace oxide {
 
+// Allows a client to receive notifications of changes to
+// MediaCaptureDevicesContext
 class MediaCaptureDevicesContextClient {
  public:
   virtual ~MediaCaptureDevicesContextClient() {}
