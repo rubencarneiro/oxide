@@ -134,6 +134,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQLoadEvent, 2>(uri, 1, 8, "LoadEvent",
         "LoadEvent is delivered by WebView.loadEvent");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
+
+    qmlRegisterType<OxideQQuickWebContext, 3>(uri, 1, 9, "WebContext");
   }
 };
 

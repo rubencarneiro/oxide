@@ -34,6 +34,7 @@
 #include "content/public/common/web_preferences.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
@@ -194,6 +195,10 @@ void ContentBrowserClient::AllowCertificateError(
                                  resource_type, overridable,
                                  strict_enforcement, callback,
                                  result);
+}
+
+content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
+  return MediaCaptureDevicesDispatcher::GetInstance();
 }
 
 bool ContentBrowserClient::CanCreateWindow(

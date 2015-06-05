@@ -345,6 +345,18 @@ void OxideQQuickWebContextPrivate::DestroyDefault() {
   delete q;
 }
 
+void OxideQQuickWebContextPrivate::DefaultAudioCaptureDeviceChanged() {
+  Q_Q(OxideQQuickWebContext);
+
+  emit q->defaultAudioCaptureDeviceIdChanged();
+}
+
+void OxideQQuickWebContextPrivate::DefaultVideoCaptureDeviceChanged() {
+  Q_Q(OxideQQuickWebContext);
+
+  emit q->defaultVideoCaptureDeviceIdChanged();
+}
+
 OxideQQuickWebContextPrivate::~OxideQQuickWebContextPrivate() {}
 
 void OxideQQuickWebContextPrivate::delegateWorkerDestroyed(
@@ -996,6 +1008,52 @@ void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
 
   d->proxy()->setMaxCacheSizeHint(size);
   emit maxCacheSizeHintChanged();
+}
+
+QString OxideQQuickWebContext::defaultAudioCaptureDeviceId() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->proxy()->defaultAudioCaptureDeviceId();
+}
+
+void OxideQQuickWebContext::setDefaultAudioCaptureDeviceId(const QString& id) {
+  Q_D(OxideQQuickWebContext);
+
+  if (defaultAudioCaptureDeviceId() == id) {
+    return;
+  }
+
+  if (!d->proxy()->setDefaultAudioCaptureDeviceId(id)) {
+    qWarning() <<
+        "OxideQQuickWebContext: Invalid defaultAudioCaptureDeviceId \"" <<
+        id << "\"";
+  }
+
+  // Oxide loops back in to us to emit the signal, as the default will clear
+  // if the actual device is removed
+}
+
+QString OxideQQuickWebContext::defaultVideoCaptureDeviceId() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->proxy()->defaultVideoCaptureDeviceId();
+}
+
+void OxideQQuickWebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
+  Q_D(OxideQQuickWebContext);
+
+  if (defaultVideoCaptureDeviceId() == id) {
+    return;
+  }
+
+  if (!d->proxy()->setDefaultVideoCaptureDeviceId(id)) {
+    qWarning() <<
+        "OxideQQuickWebContext: Invalid defaultVideoCaptureDeviceId \"" <<
+        id << "\"";
+  }
+
+  // Oxide loops back in to us to emit the signal, as the default will clear
+  // if the actual device is removed
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"
