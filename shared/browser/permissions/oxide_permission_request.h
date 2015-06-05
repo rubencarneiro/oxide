@@ -18,8 +18,6 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 
-#include <string>
-
 #include "base/callback.h"
 #include "base/macros.h"
 #include "content/public/common/media_stream_request.h"
@@ -69,14 +67,14 @@ class PermissionRequest {
 
   void NotifyDone();
 
- private:
-  PermissionRequestDispatcher* dispatcher_;
-
   // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
 
   // The frame that initiated this request
   WebFrame* frame_;
+
+ private:
+  PermissionRequestDispatcher* dispatcher_;
 
   GURL origin_;
   GURL embedder_;
@@ -132,10 +130,10 @@ class MediaAccessPermissionRequest : public PermissionRequest {
 
   bool video_requested() const { return video_requested_; }
 
+  // Allow the requesting frame access to the specified resources
   void Allow();
-  void Allow(const std::string& audio_device_id,
-             const std::string& video_device_id);
 
+  // Deny the requesting frame access to the specified resources
   void Deny();
 
  private:

@@ -20,42 +20,23 @@
 #include <algorithm>
 
 #include "base/logging.h"
-#include "content/public/browser/media_capture_devices.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_process_host.h"
+
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request_dispatcher.h"
 
 namespace oxide {
 
-namespace {
-
-const content::MediaStreamDevice* GetRequestedOrDefaultDevice(
-    const content::MediaStreamDevices& devices,
-    const std::string& device_id) {
-  if (devices.size() == 0) {
-    return nullptr;
-  }
-
-  if (!device_id.empty()) {
-    for (auto it = devices.begin(); it != devices.end(); ++it) {
-      const content::MediaStreamDevice& device = *it;
-      if (device.id == device_id) {
-        return &device;
-      }
-    }
-  }
-
-  return &devices[0];
-}
-
-}
-
 PermissionRequest::PermissionRequest(const PermissionRequestID& request_id,
                                      WebFrame* frame,
                                      const GURL& origin,
                                      const GURL& embedder)
-    : dispatcher_(nullptr),
-      request_id_(request_id),
+    : request_id_(request_id),
       frame_(frame),
+      dispatcher_(nullptr),
       origin_(origin),
       embedder_(embedder),
       is_cancelled_(false) {}
@@ -155,34 +136,20 @@ MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
 }
 
 void MediaAccessPermissionRequest::Allow() {
-  Allow(std::string(), std::string());
-}
-
-void MediaAccessPermissionRequest::Allow(const std::string& audio_device_id,
-                                         const std::string& video_device_id) {
   DCHECK(IsPending());
 
+  content::RenderFrameHost* rfh = frame_->render_frame_host();
+  DCHECK(rfh);
+
+  content::BrowserContext* context = rfh->GetProcess()->GetBrowserContext();
+  DCHECK(context);
+
   content::MediaStreamDevices devices;
-
-  if (audio_requested_) {
-    const content::MediaStreamDevice* device =
-        GetRequestedOrDefaultDevice(
-          content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices(),
-          audio_device_id);
-    if (device) {
-      devices.push_back(*device);
-    }
-  }
-
-  if (video_requested_) {
-    const content::MediaStreamDevice* device =
-        GetRequestedOrDefaultDevice(
-          content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices(),
-          video_device_id);
-    if (device) {
-      devices.push_back(*device);
-    }
-  }
+  MediaCaptureDevicesDispatcher::GetInstance()
+      ->GetDefaultCaptureDevicesForContext(context,
+                                           audio_requested_,
+                                           video_requested_,
+                                           &devices);
 
   callback_.Run(devices,
                 devices.empty() ?
