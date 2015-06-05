@@ -20,8 +20,11 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_process_host.h"
 
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request_dispatcher.h"
 
@@ -31,9 +34,9 @@ PermissionRequest::PermissionRequest(const PermissionRequestID& request_id,
                                      WebFrame* frame,
                                      const GURL& origin,
                                      const GURL& embedder)
-    : dispatcher_(nullptr),
-      request_id_(request_id),
+    : request_id_(request_id),
       frame_(frame),
+      dispatcher_(nullptr),
       origin_(origin),
       embedder_(embedder),
       is_cancelled_(false) {}
@@ -135,12 +138,18 @@ MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
 void MediaAccessPermissionRequest::Allow() {
   DCHECK(IsPending());
 
+  content::RenderFrameHost* rfh = frame_->render_frame_host();
+  DCHECK(rfh);
+
+  content::BrowserContext* context = rfh->GetProcess()->GetBrowserContext();
+  DCHECK(context);
+
   content::MediaStreamDevices devices;
-  MediaCaptureDevicesDispatcher::GetInstance()->GetDefaultDevicesForContext(
-      nullptr, // XXX(chrisccoulson): Need some way of getting a BrowserContext
-      audio_requested_,
-      video_requested_,
-      &devices);
+  MediaCaptureDevicesDispatcher::GetInstance()
+      ->GetDefaultCaptureDevicesForContext(context,
+                                           audio_requested_,
+                                           video_requested_,
+                                           &devices);
 
   callback_.Run(devices,
                 devices.empty() ?

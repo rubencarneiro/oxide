@@ -19,25 +19,26 @@
 #define _OXIDE_SHARED_BROWSER_MEDIA_MEDIA_CAPTURE_DEVICES_DISPATCHER_H_
 
 #include "base/macros.h"
+#include "base/observer_list.h"
 #include "content/public/browser/media_observer.h"
 
 template <typename T> struct DefaultSingletonTraits;
 
 namespace content {
+class BrowserContext;
 struct MediaStreamDevice;
 class MediaStreamDevices;
 }
 
 namespace oxide {
 
-class BrowserContext;
+class MediaCaptureDevicesDispatcherObserver;
 
 // I think the name of this class is a bit odd, but I couldn't think of a
 // better one so I copied the name from Chrome
 class MediaCaptureDevicesDispatcher : public content::MediaObserver {
  public:
   static MediaCaptureDevicesDispatcher* GetInstance();
-  ~MediaCaptureDevicesDispatcher();
 
   const content::MediaStreamDevices& GetAudioCaptureDevices();
   const content::MediaStreamDevices& GetVideoCaptureDevices();
@@ -45,14 +46,29 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
   const content::MediaStreamDevice* GetFirstAudioCaptureDevice();
   const content::MediaStreamDevice* GetFirstVideoCaptureDevice();
 
-  bool GetDefaultDevicesForContext(BrowserContext* context,
-                                   bool audio, bool video,
-                                   content::MediaStreamDevices* devices);
+  const content::MediaStreamDevice* FindAudioCaptureDeviceById(
+      const std::string& id);
+  const content::MediaStreamDevice* FindVideoCaptureDeviceById(
+      const std::string& id);
+
+  bool GetDefaultCaptureDevicesForContext(
+      content::BrowserContext* context,
+      bool audio,
+      bool video,
+      content::MediaStreamDevices* devices);
                                         
  private:
   friend struct DefaultSingletonTraits<MediaCaptureDevicesDispatcher>;
+  friend class MediaCaptureDevicesDispatcherObserver;
 
   MediaCaptureDevicesDispatcher();
+  ~MediaCaptureDevicesDispatcher() override;
+
+  void AddObserver(MediaCaptureDevicesDispatcherObserver* observer);
+  void RemoveObserver(MediaCaptureDevicesDispatcherObserver* observer);
+
+  void NotifyAudioCaptureDevicesChanged();
+  void NotifyVideoCaptureDevicesChanged();
 
   // content::MediaObserver implementation
   void OnAudioCaptureDevicesChanged() override;
@@ -66,6 +82,8 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
       content::MediaRequestState state) override;
   void OnCreatingAudioStream(int render_process_id,
                              int render_frame_id) override;
+
+  ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
   
   DISALLOW_COPY_AND_ASSIGN(MediaCaptureDevicesDispatcher);
 };

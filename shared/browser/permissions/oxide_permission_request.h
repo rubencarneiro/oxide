@@ -67,14 +67,14 @@ class PermissionRequest {
 
   void NotifyDone();
 
- private:
-  PermissionRequestDispatcher* dispatcher_;
-
   // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
 
   // The frame that initiated this request
   WebFrame* frame_;
+
+ private:
+  PermissionRequestDispatcher* dispatcher_;
 
   GURL origin_;
   GURL embedder_;
