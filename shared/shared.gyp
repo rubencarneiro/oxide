@@ -296,6 +296,7 @@
         'browser/compositor/oxide_mailbox_buffer_map.h',
         'browser/media/oxide_media_capture_devices_context.cc',
         'browser/media/oxide_media_capture_devices_context.h',
+        'browser/media/oxide_media_capture_devices_context_client.h',
         'browser/media/oxide_media_capture_devices_dispatcher.cc',
         'browser/media/oxide_media_capture_devices_dispatcher.h',
         'browser/media/oxide_media_capture_devices_dispatcher_observer.cc',

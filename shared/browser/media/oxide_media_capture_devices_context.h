@@ -32,12 +32,17 @@ class BrowserContext;
 
 namespace oxide {
 
+class MediaCaptureDevicesContextClient;
 class MediaCaptureDevicesContextFactory;
 
 class MediaCaptureDevicesContext : public KeyedService,
                                    public MediaCaptureDevicesDispatcherObserver {
  public:
   static MediaCaptureDevicesContext* Get(content::BrowserContext* context);
+
+  void set_client(MediaCaptureDevicesContextClient* client) {
+    client_ = client;
+  }
 
   std::string GetDefaultAudioDeviceId() const;
   bool SetDefaultAudioDeviceId(const std::string& id);
@@ -57,6 +62,8 @@ class MediaCaptureDevicesContext : public KeyedService,
   // MediaCaptureDevicesDispatcherObserver implementation
   void OnAudioCaptureDevicesChanged() override;
   void OnVideoCaptureDevicesChanged() override;
+
+  MediaCaptureDevicesContextClient* client_;
 
   std::string default_audio_device_id_;
   std::string default_video_device_id_;

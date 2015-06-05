@@ -23,6 +23,7 @@
 
 #include "shared/browser/oxide_browser_context.h"
 
+#include "oxide_media_capture_devices_context_client.h"
 #include "oxide_media_capture_devices_dispatcher.h"
 
 namespace oxide {
@@ -80,7 +81,8 @@ MediaCaptureDevicesContext* MediaCaptureDevicesContextFactory::GetForContext(
       GetInstance()->GetServiceForBrowserContext(context, true));
 }
 
-MediaCaptureDevicesContext::MediaCaptureDevicesContext() {}
+MediaCaptureDevicesContext::MediaCaptureDevicesContext()
+    : client_(nullptr) {}
 
 MediaCaptureDevicesContext::~MediaCaptureDevicesContext() {}
 
@@ -98,6 +100,10 @@ void MediaCaptureDevicesContext::OnAudioCaptureDevicesChanged() {
 
   // The selected device has been removed
   default_audio_device_id_.clear();
+
+  if (client_) {
+    client_->DefaultAudioDeviceChanged();
+  }
 }
 
 void MediaCaptureDevicesContext::OnVideoCaptureDevicesChanged() {
@@ -114,6 +120,10 @@ void MediaCaptureDevicesContext::OnVideoCaptureDevicesChanged() {
 
   // The selected device has been removed
   default_video_device_id_.clear();
+
+  if (client_) {
+    client_->DefaultVideoDeviceChanged();
+  }
 }
 
 // static
@@ -138,6 +148,11 @@ bool MediaCaptureDevicesContext::SetDefaultAudioDeviceId(
   }
 
   default_audio_device_id_ = id;
+
+  if (client_) {
+    client_->DefaultAudioDeviceChanged();
+  }
+
   return true;
 }
 
@@ -157,6 +172,11 @@ bool MediaCaptureDevicesContext::SetDefaultVideoDeviceId(
   }
 
   default_video_device_id_ = id;
+
+  if (client_) {
+    client_->DefaultVideoDeviceChanged();
+  }
+
   return true;
 }
 
