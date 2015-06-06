@@ -90,7 +90,7 @@ UserScriptMaster::~UserScriptMaster() {}
 void UserScriptMaster::SerializeUserScriptsAndSendUpdates(
     std::vector<const UserScript *>& scripts) {
   // XXX: Should probably do this off the UI thread
-  Pickle pickle;
+  base::Pickle pickle;
   pickle.WriteUInt64(scripts.size());
   for (size_t i = 0; i < scripts.size(); ++i) {
     const UserScript* script = scripts[i];
