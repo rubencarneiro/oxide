@@ -21,6 +21,7 @@
 #include "base/macros.h"
 #include "base/observer_list.h"
 #include "content/public/browser/media_observer.h"
+#include "content/public/common/media_stream_request.h"
 
 template <typename T> struct DefaultSingletonTraits;
 
@@ -72,7 +73,12 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
       bool audio,
       bool video,
       content::MediaStreamDevices* devices);
-                                        
+
+  // Request permission to access media devices
+  void RequestMediaAccessPermission(
+      const content::MediaStreamRequest& request,
+      const content::MediaResponseCallback& callback);
+
  private:
   friend struct DefaultSingletonTraits<MediaCaptureDevicesDispatcher>;
   friend class MediaCaptureDevicesDispatcherObserver;
