@@ -15,21 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_MEDIA_CAPTURE_DEVICE
-#define OXIDE_Q_MEDIA_CAPTURE_DEVICE
+#ifndef OXIDE_Q_MEDIA_CAPTURE_DEVICES
+#define OXIDE_Q_MEDIA_CAPTURE_DEVICES
 
 #include <QList>
+#include <QObject>
+#include <QScopedPointer>
 #include <QSharedDataPointer>
 #include <QString>
 #include <QtGlobal>
 
 class OxideQAudioCaptureDeviceData;
+class OxideQMediaCaptureDevices;
+class OxideQMediaCaptureDevicesPrivate;
 class OxideQVideoCaptureDeviceData;
 
 class Q_DECL_EXPORT OxideQAudioCaptureDevice {
  public:
-  static QList<OxideQAudioCaptureDevice> availableDevices();
-
   OxideQAudioCaptureDevice(const OxideQAudioCaptureDevice& other);
   ~OxideQAudioCaptureDevice();
 
@@ -38,6 +40,8 @@ class Q_DECL_EXPORT OxideQAudioCaptureDevice {
   QString displayName() const;
 
  private:
+  friend class OxideQMediaCaptureDevices;
+
   Q_DECL_HIDDEN OxideQAudioCaptureDevice(const QString& id,
                                          const QString& name);
 
@@ -46,8 +50,6 @@ class Q_DECL_EXPORT OxideQAudioCaptureDevice {
 
 class Q_DECL_EXPORT OxideQVideoCaptureDevice {
  public:
-  static QList<OxideQVideoCaptureDevice> availableDevices();
-
   enum Position {
     PositionUnspecified,
     PositionFrontFace,
@@ -64,6 +66,8 @@ class Q_DECL_EXPORT OxideQVideoCaptureDevice {
   Position position() const;
 
  private:
+  friend class OxideQMediaCaptureDevices;
+
   Q_DECL_HIDDEN OxideQVideoCaptureDevice(const QString& id,
                                          const QString& name,
                                          Position position);
@@ -71,4 +75,27 @@ class Q_DECL_EXPORT OxideQVideoCaptureDevice {
   QSharedDataPointer<OxideQVideoCaptureDeviceData> d;
 };
 
-#endif // OXIDE_Q_MEDIA_CAPTURE_DEVICE
+class Q_DECL_EXPORT OxideQMediaCaptureDevices : public QObject {
+  Q_OBJECT
+
+  Q_DISABLE_COPY(OxideQMediaCaptureDevices)
+  Q_DECLARE_PRIVATE(OxideQMediaCaptureDevices)
+
+ public:
+  static OxideQMediaCaptureDevices* instance();
+
+  Q_DECL_HIDDEN OxideQMediaCaptureDevices();
+  ~OxideQMediaCaptureDevices() Q_DECL_OVERRIDE;
+
+  QList<OxideQAudioCaptureDevice> availableAudioDevices();
+  QList<OxideQVideoCaptureDevice> availableVideoDevices();
+
+ Q_SIGNALS:
+  void availableAudioDevicesChanged();
+  void availableVideoDevicesChanged();
+
+ private:
+  QScopedPointer<OxideQMediaCaptureDevicesPrivate> d_ptr;
+};
+
+#endif // OXIDE_Q_MEDIA_CAPTURE_DEVICES

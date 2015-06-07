@@ -26,6 +26,7 @@
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/common/media_stream_request.h"
 
+#include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 
 #include "oxide_media_capture_devices_context.h"
@@ -42,6 +43,11 @@ const content::MediaStreamDevice* GetFirstCaptureDevice(
   }
 
   return &devices[0];
+}
+
+const content::MediaStreamDevices& EmptyDevices() {
+  static const content::MediaStreamDevices g_empty;
+  return g_empty;
 }
 
 }
@@ -104,16 +110,29 @@ void MediaCaptureDevicesDispatcher::OnCreatingAudioStream(
 
 // static
 MediaCaptureDevicesDispatcher* MediaCaptureDevicesDispatcher::GetInstance() {
-  return Singleton<MediaCaptureDevicesDispatcher>::get();
+  // We use LeakySingletonTraits here so that observers can be created
+  // before Oxide has started up
+  return Singleton<MediaCaptureDevicesDispatcher,
+                   LeakySingletonTraits<MediaCaptureDevicesDispatcher>>::get();
 }
 
 const content::MediaStreamDevices&
 MediaCaptureDevicesDispatcher::GetAudioCaptureDevices() {
+  // We might be created before Oxide startup
+  if (!BrowserProcessMain::GetInstance()->IsRunning()) {
+    return EmptyDevices();
+  }
+
   return content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices();
 }
 
 const content::MediaStreamDevices&
 MediaCaptureDevicesDispatcher::GetVideoCaptureDevices() {
+  // We might be created before Oxide startup
+  if (!BrowserProcessMain::GetInstance()->IsRunning()) {
+    return EmptyDevices();
+  }
+
   return content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
 }
 
