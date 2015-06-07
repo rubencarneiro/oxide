@@ -15,12 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqmediacapturedevice.h"
+#include "oxideqmediacapturedevices.h"
+#include "oxideqmediacapturedevices_p.h"
 
-#include "content/public/browser/media_capture_devices.h"
+#include <QGlobalStatic>
+
 #include "content/public/common/media_stream_request.h"
 
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+
 namespace {
+
+Q_GLOBAL_STATIC(OxideQMediaCaptureDevices, g_instance)
 
 OxideQVideoCaptureDevice::Position VideoFacingModeToPosition(
     content::VideoFacingMode mode) {
@@ -35,6 +41,8 @@ OxideQVideoCaptureDevice::Position VideoFacingModeToPosition(
 }
 
 }
+
+using oxide::MediaCaptureDevicesDispatcher;
 
 class OxideQAudioCaptureDeviceData : public QSharedData {
  public:
@@ -62,25 +70,6 @@ OxideQAudioCaptureDevice::OxideQAudioCaptureDevice(const QString& id,
                                                    const QString& name)
     : d(new OxideQAudioCaptureDeviceData(id, name)) {}
 
-// static
-QList<OxideQAudioCaptureDevice> OxideQAudioCaptureDevice::availableDevices() {
-  const content::MediaStreamDevices& devices =
-      content::MediaCaptureDevices::GetInstance()->GetAudioCaptureDevices();
-
-  QList<OxideQAudioCaptureDevice> rv;
-  for (auto it = devices.begin(); it != devices.end(); ++it) {
-    const content::MediaStreamDevice& device = *it;
-    if (device.type != content::MEDIA_DEVICE_AUDIO_CAPTURE) {
-      continue;
-    }
-
-    rv << OxideQAudioCaptureDevice(QString::fromStdString(device.id),
-                                   QString::fromStdString(device.name));
-  }
-
-  return rv;
-}
-
 OxideQAudioCaptureDevice::OxideQAudioCaptureDevice(
     const OxideQAudioCaptureDevice& other)
     : d(other.d) {}
@@ -100,27 +89,6 @@ OxideQVideoCaptureDevice::OxideQVideoCaptureDevice(const QString& id,
                                                    Position position)
     : d(new OxideQVideoCaptureDeviceData(id, name, position)) {}
 
-// static
-QList<OxideQVideoCaptureDevice> OxideQVideoCaptureDevice::availableDevices() {
-  const content::MediaStreamDevices& devices =
-      content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
-
-  QList<OxideQVideoCaptureDevice> rv;
-  for (auto it = devices.begin(); it != devices.end(); ++it) {
-    const content::MediaStreamDevice& device = *it;
-    if (device.type != content::MEDIA_DEVICE_VIDEO_CAPTURE) {
-      continue;
-    }
-
-    rv << OxideQVideoCaptureDevice(
-        QString::fromStdString(device.id),
-        QString::fromStdString(device.name),
-        VideoFacingModeToPosition(device.video_facing));
-  }
-
-  return rv;
-}
-
 OxideQVideoCaptureDevice::OxideQVideoCaptureDevice(
     const OxideQVideoCaptureDevice& other)
     : d(other.d) {}
@@ -137,4 +105,70 @@ QString OxideQVideoCaptureDevice::displayName() const {
 
 OxideQVideoCaptureDevice::Position OxideQVideoCaptureDevice::position() const {
   return d->position;
+}
+
+OxideQMediaCaptureDevices::OxideQMediaCaptureDevices()
+    : d_ptr(new OxideQMediaCaptureDevicesPrivate(this)) {}
+
+OxideQMediaCaptureDevices::~OxideQMediaCaptureDevices() {}
+
+// static
+OxideQMediaCaptureDevices* OxideQMediaCaptureDevices::instance() {
+  return g_instance();
+}
+
+QList<OxideQAudioCaptureDevice>
+OxideQMediaCaptureDevices::availableAudioDevices() {
+  Q_D(OxideQMediaCaptureDevices);
+
+  if (!d->audio_devices_need_update_) {
+    return d->audio_devices_;
+  }
+
+  d->audio_devices_need_update_ = false;
+  d->audio_devices_.clear();
+
+  const content::MediaStreamDevices& devices =
+      MediaCaptureDevicesDispatcher::GetInstance()->GetAudioCaptureDevices();
+
+  for (auto& device : devices) {
+    if (device.type != content::MEDIA_DEVICE_AUDIO_CAPTURE) {
+      continue;
+    }
+
+    d->audio_devices_ <<
+        OxideQAudioCaptureDevice(QString::fromStdString(device.id),
+                                 QString::fromStdString(device.name));
+  }
+
+  return d->audio_devices_;
+}
+
+QList<OxideQVideoCaptureDevice>
+OxideQMediaCaptureDevices::availableVideoDevices() {
+  Q_D(OxideQMediaCaptureDevices);
+
+  if (!d->video_devices_need_update_) {
+    return d->video_devices_;
+  }
+
+  d->video_devices_need_update_ = false;
+  d->video_devices_.clear();
+
+  const content::MediaStreamDevices& devices =
+      MediaCaptureDevicesDispatcher::GetInstance()->GetVideoCaptureDevices();
+
+  for (auto& device : devices) {
+    if (device.type != content::MEDIA_DEVICE_VIDEO_CAPTURE) {
+      continue;
+    }
+
+    d->video_devices_ <<
+        OxideQVideoCaptureDevice(
+          QString::fromStdString(device.id),
+          QString::fromStdString(device.name),
+          VideoFacingModeToPosition(device.video_facing));
+  }
+
+  return d->video_devices_;
 }

@@ -70,7 +70,10 @@ class PermissionRequestDispatcher
 
   // Request permission to access media devices
   void RequestMediaAccessPermission(
-      const content::MediaStreamRequest& request,
+      content::RenderFrameHost* render_frame_host,
+      const GURL& requesting_origin,
+      bool audio,
+      bool video,
       const content::MediaResponseCallback& callback);
 
   // Cancel any pending permission requests
