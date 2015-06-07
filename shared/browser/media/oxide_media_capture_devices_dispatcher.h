@@ -106,7 +106,7 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
                              int render_frame_id) override;
 
   ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
-  
+
   DISALLOW_COPY_AND_ASSIGN(MediaCaptureDevicesDispatcher);
 };
 

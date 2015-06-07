@@ -32,6 +32,9 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   Q_PROPERTY(ProcessModel processModel READ processModel WRITE setProcessModel NOTIFY processModelChanged)
   Q_PROPERTY(int maxRendererProcessCount READ maxRendererProcessCount WRITE setMaxRendererProcessCount NOTIFY maxRendererProcessCountChanged)
 
+  Q_PROPERTY(QVariant availableAudioCaptureDevices READ availableAudioCaptureDevices NOTIFY availableAudioCaptureDevicesChanged)
+  Q_PROPERTY(QVariant availableVideoCaptureDevices READ availableVideoCaptureDevices NOTIFY availableVideoCaptureDevicesChanged)
+
   Q_ENUMS(ProcessModel)
 
   Q_DECLARE_PRIVATE(OxideQQuickGlobal)
@@ -58,16 +61,21 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   int maxRendererProcessCount() const;
   void setMaxRendererProcessCount(int count);
 
-  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
+  QVariant availableAudioCaptureDevices();
+  QVariant availableVideoCaptureDevices();
 
-  Q_INVOKABLE QVariant availableAudioCaptureDevices();
-  Q_INVOKABLE QVariant availableVideoCaptureDevices();
+  Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 
  Q_SIGNALS:
   void processModelChanged();
   void maxRendererProcessCountChanged();
+  void availableAudioCaptureDevicesChanged();
+  void availableVideoCaptureDevicesChanged();
 
  private:
+  Q_PRIVATE_SLOT(d_func(), void availableAudioCaptureDevicesDidChange());
+  Q_PRIVATE_SLOT(d_func(), void availableVideoCaptureDevicesDidChange());
+
   QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 
