@@ -93,12 +93,6 @@ void WebViewClient::ToggleFullscreenMode(bool enter) {}
 
 void WebViewClient::WebPreferencesDestroyed() {}
 
-void WebViewClient::RequestGeolocationPermission(
-    scoped_ptr<SimplePermissionRequest> request) {}
-
-void WebViewClient::RequestMediaAccessPermission(
-    scoped_ptr<MediaAccessPermissionRequest> request) {}
-
 void WebViewClient::UnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {}
 

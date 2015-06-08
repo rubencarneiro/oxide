@@ -84,9 +84,12 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
   request->Cancel();
 
   if (!suggested_name.empty() && mime_type.empty()) {
-    net::GetMimeTypeFromExtension(
-        base::FilePath(suggested_name).Extension(),
-        &mime_type);
+    base::FilePath::StringType ext =
+        base::FilePath(suggested_name).Extension();
+    if (!ext.empty()) {
+      ext.erase(ext.begin());
+    }
+    net::GetMimeTypeFromExtension(ext, &mime_type);
   }
 
   // POST request cannot be repeated in general, so prevent client from

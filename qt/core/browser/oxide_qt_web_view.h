@@ -24,14 +24,14 @@
 #include <QSharedPointer>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
+#include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -56,6 +56,7 @@ class WebViewProxyClient;
 
 class WebView : public QObject,
                 public oxide::WebViewClient,
+                public oxide::PermissionRequestDispatcherClient,
                 public WebViewProxy {
   Q_OBJECT
 
@@ -130,10 +131,6 @@ class WebView : public QObject,
                            const base::string16& source_id) override;
   void ToggleFullscreenMode(bool enter) override;
   void WebPreferencesDestroyed() override;
-  void RequestGeolocationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) override;
-  void RequestMediaAccessPermission(
-      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
@@ -175,10 +172,16 @@ class WebView : public QObject,
   void FindInPageCountChanged() override;
   void FindInPageCurrentChanged() override;
 
-  // oxide::ScriptMessageTargetImplementation
+  // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
+
+  // oxide::PermissionRequestDispatcherClient implementation
+  void RequestGeolocationPermission(
+      scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void RequestMediaAccessPermission(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
   // WebViewProxy implementation
   void init(bool incognito,

@@ -18,95 +18,18 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 
-#include <string>
-#include <vector>
-
 #include "base/callback.h"
 #include "base/macros.h"
-#include "base/memory/weak_ptr.h"
 #include "content/public/common/media_stream_request.h"
 #include "content/public/common/permission_status.mojom.h"
 #include "url/gurl.h"
 
+#include "shared/browser/permissions/oxide_permission_request_id.h"
+
 namespace oxide {
 
-class MediaAccessPermissionRequest;
-class PermissionRequest;
-class SimplePermissionRequest;
+class PermissionRequestDispatcher;
 class WebFrame;
-
-// Request ID based on PermissionRequestID in Chromium. It is required for
-// requests that want to participate in cancellation. The design is a bit
-// weird though, as |bridge_id| appears to be a per-frame ID from Chromium,
-// making it possible for requests from different frames with the same origin
-// to have the same ID
-class PermissionRequestID {
- public:
-  PermissionRequestID(int render_process_id,
-                      int render_view_id,
-                      int bridge_id,
-                      const GURL& origin);
-
-  // Constructs an invalid ID
-  PermissionRequestID();
-
-  ~PermissionRequestID();
-
-  // Whether this is a valid ID
-  bool IsValid() const;
-
-  bool operator==(const PermissionRequestID& other) const;
-
- private:
-  int render_process_id_;
-  int render_view_id_;
-  int bridge_id_;
-  GURL origin_;
-};
-
-// This class tracks PermissionRequests
-class PermissionRequestManager {
- public:
-  PermissionRequestManager();
-  ~PermissionRequestManager();
-
-  // Cancel any pending permission requests
-  void CancelPendingRequests();
-
-  // Cancel the pending permission request with the specified |request_id|
-  void CancelPendingRequestForID(const PermissionRequestID& request_id);
-
-  // Cancel any pending permission requests for |frame|
-  void CancelPendingRequestsForFrame(WebFrame* frame);
-
- private:
-  friend class MediaAccessPermissionRequest;
-  friend class PermissionRequest;
-  friend class SimplePermissionRequest;
-  class IteratorGuard;
-
-  // Add a PermissionRequest to this manager
-  void AddPendingRequest(PermissionRequest* request);
-
-  // Remove |request| from this manager and invalidate its pointer to this
-  void RemovePendingRequest(PermissionRequest* request);
-
-  // Remove empty slots from pending_requests_
-  void Compact();
-
-  // Used to indicate that pending_requests_ is being iterated over, and
-  // will prevent RemovePendingRequest from mutating it
-  bool iterating_;
-
-  typedef std::vector<PermissionRequest*> PermissionRequestVector;
-
-  // This list of PermissionRequests
-  std::vector<PermissionRequest*> pending_requests_;
-
-  base::WeakPtrFactory<PermissionRequestManager> weak_factory_;
-
-  DISALLOW_COPY_AND_ASSIGN(PermissionRequestManager);
-};
 
 // Base class of all PermissionRequests - this shouldn't be used directly.
 // It contains functionality that is common to all requests (url, embedder)
@@ -121,34 +44,37 @@ class PermissionRequest {
   // this request
   GURL embedder() const { return embedder_; }
 
-  // Whether the request has been cancelled by Oxide. A cancelled request can
-  // no longer be responded to
+  // Whether this request is still waiting for a response
+  bool IsPending() const;
+
+  // Whether this request has been cancelled
   bool is_cancelled() const { return is_cancelled_; }
 
   // Set a callback to be invoked when this request is cancelled
   void SetCancelCallback(const base::Closure& cancel_callback);
 
  protected:
-  friend class PermissionRequestManager;
+  friend class PermissionRequestDispatcher;
 
-  PermissionRequest(PermissionRequestManager* manager,
-                    const PermissionRequestID& request_id,
+  PermissionRequest(const PermissionRequestID& request_id,
                     WebFrame* frame,
                     const GURL& origin,
                     const GURL& embedder);
 
   // Cancel this request and run the cancel callback. This is only called from
-  // PermissionRequestManager
+  // PermissionRequestDispatcher
   virtual void Cancel();
 
-  PermissionRequestManager* manager_;
+  void NotifyDone();
 
- private:
   // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
 
   // The frame that initiated this request
   WebFrame* frame_;
+
+ private:
+  PermissionRequestDispatcher* dispatcher_;
 
   GURL origin_;
   GURL embedder_;
@@ -167,7 +93,6 @@ class PermissionRequest {
 class SimplePermissionRequest : public PermissionRequest {
  public:
   SimplePermissionRequest(
-      PermissionRequestManager* manager,
       const PermissionRequestID& request_id,
       const GURL& origin,
       const GURL& embedder,
@@ -193,7 +118,6 @@ class SimplePermissionRequest : public PermissionRequest {
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
   MediaAccessPermissionRequest(
-      PermissionRequestManager* manager,
       WebFrame* frame,
       const GURL& origin,
       const GURL& embedder,
@@ -206,10 +130,10 @@ class MediaAccessPermissionRequest : public PermissionRequest {
 
   bool video_requested() const { return video_requested_; }
 
+  // Allow the requesting frame access to the specified resources
   void Allow();
-  void Allow(const std::string& audio_device_id,
-             const std::string& video_device_id);
 
+  // Deny the requesting frame access to the specified resources
   void Deny();
 
  private:

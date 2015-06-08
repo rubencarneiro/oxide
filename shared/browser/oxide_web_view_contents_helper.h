@@ -41,9 +41,8 @@ class WebViewContentsHelper final : private BrowserContextObserver,
                                     private WebPreferencesObserver,
                                     private base::SupportsUserData::Data {
  public:
-  WebViewContentsHelper(content::WebContents* contents);
   WebViewContentsHelper(content::WebContents* contents,
-                        WebViewContentsHelper* opener);
+                        content::WebContents* opener);
 
   static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
   static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
@@ -58,7 +57,6 @@ class WebViewContentsHelper final : private BrowserContextObserver,
 
  private:
   ~WebViewContentsHelper();
-  void Init();
 
   void UpdateWebPreferences();
 

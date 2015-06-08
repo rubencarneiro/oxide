@@ -67,6 +67,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   // maxCacheSizeHint is a soft limit, expressed in MB
   Q_PROPERTY(int maxCacheSizeHint READ maxCacheSizeHint WRITE setMaxCacheSizeHint NOTIFY maxCacheSizeHintChanged REVISION 2)
 
+  Q_PROPERTY(QString defaultAudioCaptureDeviceId READ defaultAudioCaptureDeviceId WRITE setDefaultAudioCaptureDeviceId NOTIFY defaultAudioCaptureDeviceIdChanged REVISION 3)
+  Q_PROPERTY(QString defaultVideoCaptureDeviceId READ defaultVideoCaptureDeviceId WRITE setDefaultVideoCaptureDeviceId NOTIFY defaultVideoCaptureDeviceIdChanged REVISION 3)
+
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
 
@@ -154,6 +157,12 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   int maxCacheSizeHint() const;
   void setMaxCacheSizeHint(int size);
 
+  QString defaultAudioCaptureDeviceId() const;
+  void setDefaultAudioCaptureDeviceId(const QString& id);
+
+  QString defaultVideoCaptureDeviceId() const;
+  void setDefaultVideoCaptureDeviceId(const QString& id);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -173,6 +182,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_REVISION(1) void hostMappingRulesChanged();
   Q_REVISION(1) void allowedExtraUrlSchemesChanged();
   Q_REVISION(2) void maxCacheSizeHintChanged();
+  Q_REVISION(3) void defaultAudioCaptureDeviceIdChanged();
+  Q_REVISION(3) void defaultVideoCaptureDeviceIdChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

@@ -42,21 +42,6 @@ WebViewContentsHelper::~WebViewContentsHelper() {
   }
 }
 
-void WebViewContentsHelper::Init() {
-  DCHECK(!FromWebContents(web_contents_));
-
-  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
-
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->SyncRendererPrefs();
-  }
-}
-
 void WebViewContentsHelper::UpdateWebPreferences() {
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (!rvh) {
@@ -74,27 +59,33 @@ void WebViewContentsHelper::WebPreferencesValueChanged() {
   UpdateWebPreferences();
 }
 
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents)
-    : BrowserContextObserver(
-          BrowserContext::FromContent(contents->GetBrowserContext())),
-      context_(BrowserContext::FromContent(contents->GetBrowserContext())),
-      web_contents_(contents),
-      owns_web_preferences_(false) {
-  Init();
-}
-
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
-                                             WebViewContentsHelper* opener)
+                                             content::WebContents* opener)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
       context_(BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
       owns_web_preferences_(false) {
-  Init();
+  DCHECK(!FromWebContents(web_contents_));
 
-  WebPreferencesObserver::Observe(opener->GetWebPreferences()->Clone());
-  owns_web_preferences_ = true;
-  UpdateWebPreferences();
+  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
+
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (rvh) {
+    rvh->SyncRendererPrefs();
+  }
+
+  if (opener) {
+    WebPreferencesObserver::Observe(
+        WebViewContentsHelper::FromWebContents(opener)
+          ->GetWebPreferences()->Clone());
+    owns_web_preferences_ = true;
+    UpdateWebPreferences();
+  }
 }
 
 // static

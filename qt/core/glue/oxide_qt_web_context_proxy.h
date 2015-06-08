@@ -119,6 +119,11 @@ class Q_DECL_EXPORT WebContextProxy {
 
   virtual int maxCacheSizeHint() const = 0;
   virtual void setMaxCacheSizeHint(int size) = 0;
+
+  virtual QString defaultAudioCaptureDeviceId() const = 0;
+  virtual bool setDefaultAudioCaptureDeviceId(const QString& id) = 0;
+  virtual QString defaultVideoCaptureDeviceId() const = 0;
+  virtual bool setDefaultVideoCaptureDeviceId(const QString& id) = 0;
 };
 
 } // namespace qt
