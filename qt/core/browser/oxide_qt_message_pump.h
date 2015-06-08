@@ -21,8 +21,7 @@
 #include <QObject>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 
 #include "shared/browser/oxide_message_pump.h"
 
@@ -74,7 +73,8 @@ class MessagePump : public QObject,
     bool should_quit;
   };
 
-  bool work_scheduled_;
+  int32_t work_scheduled_;
+
   int delayed_work_timer_id_;
 
   RunState* state_;

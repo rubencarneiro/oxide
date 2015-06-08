@@ -72,6 +72,7 @@
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_devtools_http_handler_delegate.h"
+#include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
@@ -105,6 +106,9 @@ const char kDefaultAcceptLanguage[] = "en-us,en";
 
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 const int kBackLog = 1;
+
+const char kDownloadManagerDelegateKeyName[] =
+  "OxideDownloadManagerDelegateKeyName";
 
 void CleanupOldCacheDir(const base::FilePath& path) {
   if (!base::DirectoryExists(path)) {
@@ -791,7 +795,13 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
 
 content::DownloadManagerDelegate*
     BrowserContext::GetDownloadManagerDelegate() {
-  return nullptr;
+  // The embedder owns the delegate, dont transfer ownership.
+  if (!GetUserData(kDownloadManagerDelegateKeyName)) {
+    SetUserData(kDownloadManagerDelegateKeyName
+        , new DownloadManagerDelegate());
+  }
+  return static_cast<oxide::DownloadManagerDelegate*>(
+      GetUserData(kDownloadManagerDelegateKeyName));
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {

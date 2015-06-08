@@ -86,9 +86,6 @@ class Compositor final : public cc::LayerTreeHostClient,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) final;
-  void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                           float page_scale,
-                           float top_controls_delta) final;
   void RequestNewOutputSurface() final;
   void DidInitializeOutputSurface() final;
   void DidFailToInitializeOutputSurface() final;

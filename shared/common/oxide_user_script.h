@@ -26,9 +26,12 @@
 #include "extensions/common/url_pattern_set.h"
 #include "url/gurl.h"
 
+class URLPattern;
+
+namespace base {
 class Pickle;
 class PickleIterator;
-class URLPattern;
+}
 
 namespace oxide {
 
@@ -106,8 +109,8 @@ class UserScript final {
     contents_ = content;
   }
 
-  void Pickle(::Pickle* pickle) const;
-  void Unpickle(PickleIterator* iter);
+  void Pickle(base::Pickle* pickle) const;
+  void Unpickle(base::PickleIterator* iter);
 
   bool MatchesURL(const GURL& url) const;
 
@@ -115,13 +118,13 @@ class UserScript final {
   bool URLMatchesGlobs(const std::vector<std::string>& globs,
                        const GURL& url) const;
 
-  static void PickleGlobs(::Pickle* pickle,
+  static void PickleGlobs(base::Pickle* pickle,
                           const std::vector<std::string>& globs);
-  static void UnpickleGlobs(PickleIterator* iter,
+  static void UnpickleGlobs(base::PickleIterator* iter,
                             std::vector<std::string>* globs);
-  static void PickleURLPatternSet(::Pickle* pickle,
+  static void PickleURLPatternSet(base::Pickle* pickle,
                                   const extensions::URLPatternSet& set);
-  static void UnpickleURLPatternSet(PickleIterator* iter,
+  static void UnpickleURLPatternSet(base::PickleIterator* iter,
                                     extensions::URLPatternSet* set);
 
   GURL url_;

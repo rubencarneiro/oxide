@@ -52,11 +52,11 @@ TestCase {
   // Verify that defaultVideoCaptureDeviceId can be set to a valid device
   // and back again
   function test_WebContext_defaultVideoCaptureDevice2() {
-    result.waitFor(function() { return Oxide.availableVideoCaptureDevices().length > 0; });
+    result.waitFor(function() { return Oxide.availableVideoCaptureDevices.length > 0; });
     var context = webContextFactory.createObject(null, {});
     spy.target = context;
 
-    var id = Oxide.availableVideoCaptureDevices()[0].id;
+    var id = Oxide.availableVideoCaptureDevices[0].id;
     context.defaultVideoCaptureDeviceId = id;
 
     compare(spy.count, 1);

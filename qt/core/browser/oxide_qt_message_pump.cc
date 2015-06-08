@@ -23,8 +23,8 @@
 #include <QEvent>
 #include <QEventLoop>
 
+#include "base/atomicops.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop.h"
 #include "base/time/time.h"
 
 QT_USE_NAMESPACE
@@ -106,22 +106,15 @@ void MessagePump::Run(base::MessagePump::Delegate* delegate) {
 }
 
 void MessagePump::Quit() {
-  DCHECK(state_ && state_->event_loop) <<
-      "Called Quit() without calling Run()";
+  CHECK(state_ && state_->event_loop) << "Called Quit() without calling Run()";
 
   state_->should_quit = true;
   state_->event_loop->exit();
 }
 
 void MessagePump::ScheduleWork() {
-  if (work_scheduled_) {
-    return;
-  }
-
-  work_scheduled_ = true;
-
-  if (!state_) {
-    // Handle being called before Start()
+  // ScheduleWork can be called from any thread
+  if (base::subtle::NoBarrier_CompareAndSwap(&work_scheduled_, 0, 1)) {
     return;
   }
 
@@ -140,14 +133,11 @@ void MessagePump::ScheduleDelayedWork(
 }
 
 void MessagePump::OnStart() {
-  DCHECK(!state_) <<
-      "Called Start() more than once, or somebody already called Run()";
-
   top_level_state_.delegate = base::MessageLoop::current();
   state_ = &top_level_state_;
 
-  if (work_scheduled_) {
-    // Schedule events that might have already been posted
+  if (base::subtle::NoBarrier_Load(&work_scheduled_)) {
+    // Post an event for work that's already been scheduled
     PostWorkEvent();
   }
 }
@@ -158,6 +148,7 @@ void MessagePump::timerEvent(QTimerEvent* event) {
   CancelTimer();
 
   if (!state_) {
+    // Start() hasn't been called yet. Post an event to retry
     ScheduleWork();
     return;
   }
@@ -168,12 +159,18 @@ void MessagePump::timerEvent(QTimerEvent* event) {
 void MessagePump::customEvent(QEvent* event) {
   DCHECK(event->type() == GetChromiumEventType());
 
-  work_scheduled_ = false;
+  if (!state_) {
+    // Start() hasn't been called yet. Returning here means that OnStart()
+    // will post an event to run scheduled work
+    return;
+  }
+
+  base::subtle::NoBarrier_Store(&work_scheduled_, 0);
   RunOneTask();
 }
 
 MessagePump::MessagePump()
-    : work_scheduled_(false),
+    : work_scheduled_(0),
       delayed_work_timer_id_(0),
       state_(nullptr) {}
 

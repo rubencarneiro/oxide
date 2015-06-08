@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -221,9 +221,17 @@ std::string ContentRendererClient::GetUs
+@@ -227,9 +227,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -57,9 +57,9 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  namespace content {
  class BrowserPluginDelegate;
  class DocumentState;
+ class MediaStreamRendererFactory;
  class RenderFrame;
- class RenderView;
-@@ -308,13 +311,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -313,13 +316,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
        RenderFrame* render_frame);
  
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1989,16 +1989,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -1938,16 +1938,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(url, client);
  
  #if defined(OS_ANDROID)
