@@ -22,6 +22,7 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "qt/core/api/oxideqbasicauthenticationrequest.h"
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqfindcontroller.h"
@@ -134,6 +135,10 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQLoadEvent, 2>(uri, 1, 8, "LoadEvent",
         "LoadEvent is delivered by WebView.loadEvent");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
+
+    qmlRegisterUncreatableType<OxideQBasicAuthenticationRequest>(uri, 1, 9, "BasicAuthenticationRequest",
+        "BasicAuthenticationRequest is delivered by WebView.basicAuthenticationRequested");
+    qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
   }
 };
 
