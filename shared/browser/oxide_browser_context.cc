@@ -35,6 +35,7 @@
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
 #include "components/devtools_http_handler/devtools_http_handler.h"
+#include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -864,6 +865,9 @@ BrowserContext::~BrowserContext() {
                     OnBrowserContextDestruction());
 
   g_all_contexts.Get().erase(this);
+
+  BrowserContextDependencyManager::GetInstance()
+      ->DestroyBrowserContextServices(this);
 
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
