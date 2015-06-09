@@ -17,7 +17,7 @@ TestWebView {
 
   // Since the browser caches credentials after the first successful
   // authentication, we make sure to use a different username for every test
-  property string baseUrl: "http://testsuite/tst_BasicAuthentication.py"
+  property string baseUrl: "http://testsuite/tst_WebView_basicAuthentication.py"
   property int userNameSuffix: 0
   property string currentUser: "user" + userNameSuffix
   property string credentialsUrl: baseUrl + "?" + currentUser + "_pass"
@@ -61,8 +61,8 @@ TestWebView {
     }
 
     function test_requestMembers() {
-        webView.url = baseUrl
         expectedRequests++
+        webView.url = credentialsUrl
         verify(waitFor(receivedRequest), "No authentication request")
         compare(lastRequest.realm, "Fake Realm")
         compare(lastRequest.host, "testsuite:80")
@@ -97,7 +97,7 @@ TestWebView {
     }
 
     function test_explicit_cancellation() {
-        webView.url = baseUrl
+        webView.url = credentialsUrl
         expectedRequests++
         verify(waitFor(receivedRequest), "No authentication request")
 
@@ -109,7 +109,7 @@ TestWebView {
     }
 
     function test_cancel_by_navigation() {
-        webView.url = baseUrl
+        webView.url = credentialsUrl
         expectedRequests++
         verify(waitFor(receivedRequest), "No authentication request")
 

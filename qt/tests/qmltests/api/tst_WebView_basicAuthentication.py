@@ -4,11 +4,6 @@ import base64
 def handler(request):
   html = StringIO()
 
-  base = len("/tst_BasicAuthentication.py") + 1
-  query = request.path[base:]
-  if "_" in query:
-      user, password = query.split("_")
-
   def send_401():
       request.send_response(401)
       request.send_header("WWW-Authenticate", "Basic realm=\"Fake Realm\"")
@@ -17,6 +12,7 @@ def handler(request):
       request.end_headers()
 
   if "Authorization" in request.headers:
+      user, password = request.path.split("?")[1].split("_")
       header = request.headers["Authorization"]
       credentials = base64.b64decode(header[len("Basic "):]).split(":")
       if credentials[0] == user and credentials[1] == password:
