@@ -402,15 +402,15 @@ int OxideQQuickWebContextPrivate::deleteAllCookies() {
 }
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
-    QObject(parent),
-    d_ptr(new OxideQQuickWebContextPrivate(this)) {
+    QObject(parent) {
+  oxide::qquick::EnsureChromiumStarted();
+  d_ptr.reset(new OxideQQuickWebContextPrivate(this));
+
   Q_D(OxideQQuickWebContext);
 
   QSharedPointer<oxide::qt::WebContextProxyClient::IOClient> io =
       qSharedPointerCast<oxide::qt::WebContextProxyClient::IOClient>(d->io_);
   d->proxy()->init(io.toWeakRef());
-
-  oxide::qquick::EnsureChromiumStarted();
 }
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
