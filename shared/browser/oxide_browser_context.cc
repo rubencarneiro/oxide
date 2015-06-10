@@ -35,6 +35,7 @@
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
 #include "components/devtools_http_handler/devtools_http_handler.h"
+#include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -62,6 +63,7 @@
 #include "net/url_request/url_request_job_factory_impl.h"
 
 #include "shared/browser/permissions/oxide_permission_manager.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
@@ -370,8 +372,10 @@ void BrowserContextIOData::Init() {
                                  nullptr, nullptr));
 }
 
-BrowserContextIOData::BrowserContextIOData() :
-    resource_context_(new ResourceContext()) {
+BrowserContextIOData::BrowserContextIOData()
+    : resource_context_(new ResourceContext()),
+      temporary_saved_permission_context_(
+        new TemporarySavedPermissionContext()) {
   resource_context_->SetUserData(kBrowserContextKey,
                                  new ResourceContextData(this));
 }
@@ -612,6 +616,11 @@ bool BrowserContextIOData::CanAccessCookies(const GURL& url,
   return policy.CanGetCookies(url, first_party_url) == net::OK;
 }
 
+TemporarySavedPermissionContext*
+BrowserContextIOData::GetTemporarySavedPermissionContext() const {
+  return temporary_saved_permission_context_.get();
+}
+
 class BrowserContextImpl;
 
 class OTRBrowserContextImpl : public BrowserContext {
@@ -826,7 +835,7 @@ content::SSLHostStateDelegate* BrowserContext::GetSSLHostStateDelegate() {
 
 content::PermissionManager* BrowserContext::GetPermissionManager() {
   if (!permission_manager_) {
-    permission_manager_.reset(new PermissionManager());
+    permission_manager_.reset(new PermissionManager(this));
   }
 
   return permission_manager_.get();
@@ -864,6 +873,9 @@ BrowserContext::~BrowserContext() {
                     OnBrowserContextDestruction());
 
   g_all_contexts.Get().erase(this);
+
+  BrowserContextDependencyManager::GetInstance()
+      ->DestroyBrowserContextServices(this);
 
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
@@ -1072,6 +1084,12 @@ content::ResourceContext* BrowserContext::GetResourceContext() {
 scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
   DCHECK(CalledOnValidThread());
   return io_data()->cookie_store_;
+}
+
+TemporarySavedPermissionContext*
+BrowserContext::GetTemporarySavedPermissionContext() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetTemporarySavedPermissionContext();
 }
 
 } // namespace oxide

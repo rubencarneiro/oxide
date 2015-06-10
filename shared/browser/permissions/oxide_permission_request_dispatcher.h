@@ -25,8 +25,8 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/web_contents_user_data.h"
-#include "content/public/common/media_stream_request.h"
-#include "content/public/common/permission_status.mojom.h"
+
+#include "shared/browser/permissions/oxide_permission_request_response.h"
 
 class GURL;
 
@@ -35,6 +35,9 @@ class WebContents;
 }
 
 namespace oxide {
+
+typedef base::Callback<void(PermissionRequestResponse)>
+    PermissionRequestCallback;
 
 class PermissionRequest;
 class PermissionRequestDispatcherClient;
@@ -54,11 +57,10 @@ class PermissionRequestDispatcher
   }
 
   // Request permission to use the resource identified by |permission|
-  void RequestPermission(
-      content::PermissionType permission,
-      int request_id,
-      const GURL& requesting_origin,
-      const base::Callback<void(content::PermissionStatus)>& callback);
+  void RequestPermission(content::PermissionType permission,
+                         int request_id,
+                         const GURL& requesting_origin,
+                         const PermissionRequestCallback& callback);
 
   // Cancel the pending permission request
   void CancelPermissionRequest(content::PermissionType permission,
@@ -66,12 +68,11 @@ class PermissionRequestDispatcher
                                const GURL& requesting_origin);
 
   // Request permission to access media devices
-  void RequestMediaAccessPermission(
-      content::RenderFrameHost* render_frame_host,
-      const GURL& requesting_origin,
-      bool audio,
-      bool video,
-      const content::MediaResponseCallback& callback);
+  void RequestMediaAccessPermission(content::RenderFrameHost* render_frame_host,
+                                    const GURL& requesting_origin,
+                                    bool audio,
+                                    bool video,
+                                    const PermissionRequestCallback& callback);
 
   // Cancel any pending permission requests
   void CancelPendingRequests();
@@ -109,6 +110,7 @@ class PermissionRequestDispatcher
   std::vector<PermissionRequest*> pending_requests_;
 
   base::WeakPtrFactory<PermissionRequestDispatcher> weak_factory_;
+
   DISALLOW_COPY_AND_ASSIGN(PermissionRequestDispatcher);
 };
 

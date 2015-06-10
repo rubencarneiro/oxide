@@ -18,23 +18,27 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSION_REQUEST_H_
 
-#include "base/callback.h"
 #include "base/macros.h"
-#include "content/public/common/media_stream_request.h"
-#include "content/public/common/permission_status.mojom.h"
 #include "url/gurl.h"
 
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_id.h"
+#include "shared/browser/permissions/oxide_permission_request_response.h"
 
 namespace oxide {
 
-class PermissionRequestDispatcher;
 class WebFrame;
 
-// Base class of all PermissionRequests - this shouldn't be used directly.
-// It contains functionality that is common to all requests (url, embedder)
+// Base class of all PermissionRequests. It contains functionality that is
+// common to all requests (url, embedder, allow, deny). If your request
+// requires more information to be exposed, feel free to subclass from this 
 class PermissionRequest {
  public:
+  PermissionRequest(const PermissionRequestID& request_id,
+                    WebFrame* frame,
+                    const GURL& origin,
+                    const GURL& embedder,
+                    const PermissionRequestCallback& callback);
   virtual ~PermissionRequest();
 
   // The origin of the frame that generated this request
@@ -53,19 +57,20 @@ class PermissionRequest {
   // Set a callback to be invoked when this request is cancelled
   void SetCancelCallback(const base::Closure& cancel_callback);
 
- protected:
+  // Allow the requesting frame access to the desired resource
+  void Allow();
+
+  // Deny the requesting frame access to the desired resource
+  void Deny();
+
+ private:
   friend class PermissionRequestDispatcher;
 
-  PermissionRequest(const PermissionRequestID& request_id,
-                    WebFrame* frame,
-                    const GURL& origin,
-                    const GURL& embedder);
-
   // Cancel this request and run the cancel callback. This is only called from
-  // PermissionRequestDispatcher
-  virtual void Cancel();
+  // PermissionRequestDispatcher or this classes destructor
+  void Cancel(bool run_callback);
 
-  void NotifyDone();
+  void Respond(PermissionRequestResponse response);
 
   // The unique ID of this request - used for cancellation from Chromium
   PermissionRequestID request_id_;
@@ -73,7 +78,6 @@ class PermissionRequest {
   // The frame that initiated this request
   WebFrame* frame_;
 
- private:
   PermissionRequestDispatcher* dispatcher_;
 
   GURL origin_;
@@ -82,68 +86,41 @@ class PermissionRequest {
   bool is_cancelled_;
   base::Closure cancel_callback_;
 
+  // The callback provided by Chromium, which we use to respond to the request
+  PermissionRequestCallback callback_;
+
   DISALLOW_COPY_AND_ASSIGN(PermissionRequest);
 };
 
-// Implementation of PermissionRequest that allows embedders to respond
-// with no parameters. Most types of request will use this class (the main
-// exception is media device access permissions, which require responses with
-// parameters). If your request requires more information to be exposed, feel
-// free to subclass from this 
+// XXX(chrisccoulson): This class is going to be deleted
 class SimplePermissionRequest : public PermissionRequest {
  public:
-  SimplePermissionRequest(
-      const PermissionRequestID& request_id,
-      const GURL& origin,
-      const GURL& embedder,
-      const base::Callback<void(content::PermissionStatus)>& callback);
+  SimplePermissionRequest(const PermissionRequestID& request_id,
+                          const GURL& origin,
+                          const GURL& embedder,
+                          const PermissionRequestCallback& callback);
   ~SimplePermissionRequest() override;
-
-  // Allow the requesting frame access to the desired resource
-  void Allow();
-
-  // Deny the requesting frame access to the desired resource
-  void Deny();
-
- private:
-  // PermissionRequest implementation
-  void Cancel() override;
-
-  // The callback provided by Chromium, which we use to respond to the request
-  base::Callback<void(content::PermissionStatus)> callback_;
 
   DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
 };
 
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
-  MediaAccessPermissionRequest(
-      WebFrame* frame,
-      const GURL& origin,
-      const GURL& embedder,
-      bool audio_requested,
-      bool video_requested,
-      const content::MediaResponseCallback& callback);
+  MediaAccessPermissionRequest(WebFrame* frame,
+                               const GURL& origin,
+                               const GURL& embedder,
+                               bool audio_requested,
+                               bool video_requested,
+                               const PermissionRequestCallback& callback);
   ~MediaAccessPermissionRequest() override;
 
   bool audio_requested() const { return audio_requested_; }
 
   bool video_requested() const { return video_requested_; }
 
-  // Allow the requesting frame access to the specified resources
-  void Allow();
-
-  // Deny the requesting frame access to the specified resources
-  void Deny();
-
  private:
-  // PermissionRequest implementation
-  void Cancel() override;
-
   bool audio_requested_;
   bool video_requested_;
-
-  content::MediaResponseCallback callback_;
 
   DISALLOW_COPY_AND_ASSIGN(MediaAccessPermissionRequest);
 };
