@@ -425,6 +425,8 @@
         'browser/permissions/oxide_permission_request_dispatcher.h',
         'browser/permissions/oxide_permission_request_dispatcher_client.h',
         'browser/permissions/oxide_permission_request_response.h',
+        'browser/permissions/oxide_temporary_saved_permission_context.cc',
+        'browser/permissions/oxide_temporary_saved_permission_context.h',
         'common/oxide_constants.cc',
         'common/oxide_constants.h',
         'common/oxide_content_client.cc',
