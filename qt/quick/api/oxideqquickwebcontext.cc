@@ -379,6 +379,10 @@ OxideQQuickWebContextPrivate* OxideQQuickWebContextPrivate::get(
   return context->d_func();
 }
 
+void OxideQQuickWebContextPrivate::clearTemporarySavedPermissionStatuses() {
+  proxy()->clearTemporarySavedPermissionStatuses();
+}
+
 bool OxideQQuickWebContextPrivate::isInitialized() const {
   return proxy()->isInitialized();
 }
