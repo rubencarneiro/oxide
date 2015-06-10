@@ -24,10 +24,12 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/public/common/media_stream_request.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
+#include "shared/browser/permissions/oxide_permission_request_response.h"
 
 #include "oxide_media_capture_devices_context.h"
 #include "oxide_media_capture_devices_dispatcher_observer.h"
@@ -48,6 +50,51 @@ const content::MediaStreamDevice* GetFirstCaptureDevice(
 const content::MediaStreamDevices& EmptyDevices() {
   static const content::MediaStreamDevices g_empty;
   return g_empty;
+}
+
+void RespondToMediaAccessPermissionRequest(
+    const content::MediaResponseCallback& callback,
+    const content::MediaStreamRequest& request,
+    PermissionRequestResponse response) {
+  if (response != PERMISSION_REQUEST_RESPONSE_ALLOW) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(request.render_process_id,
+                                       request.render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  content::BrowserContext* context = rfh->GetProcess()->GetBrowserContext();
+
+  content::MediaStreamDevices devices;
+  MediaCaptureDevicesDispatcher::GetInstance()
+      ->GetDefaultCaptureDevicesForContext(
+        context,
+        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
+        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
+        &devices);
+
+  callback.Run(devices,
+               devices.empty() ?
+                   content::MEDIA_DEVICE_NO_HARDWARE :
+                   content::MEDIA_DEVICE_OK,
+               nullptr);
+}
+
+PermissionRequestCallback WrapMediaResponseCallback(
+    const content::MediaResponseCallback& callback,
+    const content::MediaStreamRequest& request) {
+  return base::Bind(&RespondToMediaAccessPermissionRequest,
+                    callback, request);
 }
 
 }
@@ -282,7 +329,7 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
         request.security_origin,
         request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
         request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
-        callback);
+        WrapMediaResponseCallback(callback, request));
 }
 
 } // namespace oxide

@@ -23,29 +23,46 @@
 #include "content/public/common/permission_status.mojom.h"
 
 #include "oxide_permission_request_dispatcher.h"
+#include "oxide_permission_request_response.h"
 
 namespace oxide {
 
 namespace {
 
+content::PermissionStatus ToPermissionStatus(
+    PermissionRequestResponse response) {
+  return response == PERMISSION_REQUEST_RESPONSE_ALLOW ?
+      content::PERMISSION_STATUS_GRANTED :
+      content::PERMISSION_STATUS_DENIED;
+}
+
 void RespondToGeolocationPermissionRequest(
-    const base::Callback<void(content::PermissionStatus)>& callback,
-    content::PermissionStatus result) {
-  if (result == content::PERMISSION_STATUS_GRANTED) {
+    const PermissionRequestCallback& callback,
+    PermissionRequestResponse response) {
+  if (response == PERMISSION_REQUEST_RESPONSE_ALLOW) {
     content::GeolocationProvider::GetInstance()
         ->UserDidOptIntoLocationServices();
   }
-  callback.Run(result);
+  callback.Run(response);
 }
 
-base::Callback<void(content::PermissionStatus)> WrapCallback(
+void RespondToPermissionRequest(
+    const base::Callback<void(content::PermissionStatus)>& callback,
+    PermissionRequestResponse response) {
+  callback.Run(ToPermissionStatus(response));
+}
+
+const PermissionRequestCallback WrapCallback(
     const base::Callback<void(content::PermissionStatus)>& callback,
     content::PermissionType permission) {
+  const PermissionRequestCallback wrapped_callback =
+      base::Bind(&RespondToPermissionRequest, callback);
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
-      return base::Bind(&RespondToGeolocationPermissionRequest, callback);
+      return base::Bind(&RespondToGeolocationPermissionRequest,
+                        wrapped_callback);
     default:
-      return callback;
+      return wrapped_callback;
   }
 }
 

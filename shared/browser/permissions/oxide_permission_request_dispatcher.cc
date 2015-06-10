@@ -20,8 +20,6 @@
 #include <algorithm>
 
 #include "base/logging.h"
-#include "base/memory/weak_ptr.h"
-#include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -118,9 +116,9 @@ void PermissionRequestDispatcher::RequestPermission(
     content::PermissionType permission,
     int request_id,
     const GURL& requesting_origin,
-    const base::Callback<void(content::PermissionStatus)>& callback) {
+    const PermissionRequestCallback& callback) {
   if (!client_) {
-    callback.Run(content::PERMISSION_STATUS_DENIED);
+    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
     return;
   }
 
@@ -166,7 +164,7 @@ void PermissionRequestDispatcher::CancelPermissionRequest(
     if (request->request_id_ != id) {
       continue;
     }
-    request->Cancel();
+    request->Cancel(true);
   }
 }
 
@@ -175,19 +173,15 @@ void PermissionRequestDispatcher::RequestMediaAccessPermission(
     const GURL& requesting_origin,
     bool audio,
     bool video,
-    const content::MediaResponseCallback& callback) {
+    const PermissionRequestCallback& callback) {
   if (!client_) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
+    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
     return;
   }
 
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
+    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
     return;
   }
 
@@ -209,7 +203,7 @@ void PermissionRequestDispatcher::CancelPendingRequests() {
     if (!request) {
       continue;
     }
-    request->Cancel();
+    request->Cancel(true);
   }
 }
 
@@ -225,7 +219,7 @@ void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
     if (request->frame_ != frame) {
       continue;
     }
-    request->Cancel();
+    request->Cancel(true);
   }
 }
 
