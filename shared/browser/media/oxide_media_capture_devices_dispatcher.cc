@@ -27,9 +27,11 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/media_stream_request.h"
 
+#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
 #include "oxide_media_capture_devices_context.h"
 #include "oxide_media_capture_devices_dispatcher_observer.h"
@@ -52,9 +54,26 @@ const content::MediaStreamDevices& EmptyDevices() {
   return g_empty;
 }
 
+PermissionRequestResponse ToPermissionRequestResponse(
+    TemporarySavedPermissionStatus status) {
+  return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED ?
+      PERMISSION_REQUEST_RESPONSE_ALLOW :
+      PERMISSION_REQUEST_RESPONSE_DENY;
+}
+
+TemporarySavedPermissionStatus ToTemporarySavedPermissionStatus(
+    PermissionRequestResponse response) {
+  DCHECK_NE(response, PERMISSION_REQUEST_RESPONSE_CANCEL);
+  return response == PERMISSION_REQUEST_RESPONSE_ALLOW ?
+      TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED :
+      TEMPORARY_SAVED_PERMISSION_STATUS_DENIED;
+}
+
 void RespondToMediaAccessPermissionRequest(
     const content::MediaResponseCallback& callback,
-    const content::MediaStreamRequest& request,
+    content::RenderFrameHost* render_frame_host,
+    bool audio,
+    bool video,
     PermissionRequestResponse response) {
   if (response != PERMISSION_REQUEST_RESPONSE_ALLOW) {
     callback.Run(content::MediaStreamDevices(),
@@ -63,25 +82,15 @@ void RespondToMediaAccessPermissionRequest(
     return;
   }
 
-  content::RenderFrameHost* rfh =
-      content::RenderFrameHost::FromID(request.render_process_id,
-                                       request.render_frame_id);
-  if (!rfh) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  content::BrowserContext* context = rfh->GetProcess()->GetBrowserContext();
+  content::BrowserContext* context =
+      render_frame_host->GetProcess()->GetBrowserContext();
 
   content::MediaStreamDevices devices;
   MediaCaptureDevicesDispatcher::GetInstance()
-      ->GetDefaultCaptureDevicesForContext(
-        context,
-        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
-        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
-        &devices);
+      ->GetDefaultCaptureDevicesForContext(context,
+                                           audio,
+                                           video,
+                                           &devices);
 
   callback.Run(devices,
                devices.empty() ?
@@ -90,11 +99,69 @@ void RespondToMediaAccessPermissionRequest(
                nullptr);
 }
 
+void RespondToMediaAccessPermissionRequestCallback(
+    const content::MediaResponseCallback& callback,
+    int render_process_id,
+    int render_frame_id,
+    bool audio,
+    bool video,
+    const GURL& requesting_origin,
+    const GURL& embedding_origin,
+    PermissionRequestResponse response) {
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(render_process_id, render_frame_id);
+  if (!rfh) {
+    callback.Run(content::MediaStreamDevices(),
+                 content::MEDIA_DEVICE_PERMISSION_DENIED,
+                 nullptr);
+    return;
+  }
+
+  RespondToMediaAccessPermissionRequest(callback,
+                                        rfh,
+                                        audio,
+                                        video,
+                                        response);
+
+  if (response == PERMISSION_REQUEST_RESPONSE_CANCEL) {
+    return;
+  }
+
+  BrowserContext* context =
+      BrowserContext::FromContent(rfh->GetProcess()->GetBrowserContext());
+  TemporarySavedPermissionContext* pc =
+      context->GetTemporarySavedPermissionContext();
+
+  if (audio) {
+    pc->SetPermissionStatus(TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC,
+                            requesting_origin,
+                            embedding_origin,
+                            ToTemporarySavedPermissionStatus(response));
+  }
+  if (video) {
+    pc->SetPermissionStatus(TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA,
+                            requesting_origin,
+                            embedding_origin,
+                            ToTemporarySavedPermissionStatus(response));
+  }
+}
+
 PermissionRequestCallback WrapMediaResponseCallback(
     const content::MediaResponseCallback& callback,
-    const content::MediaStreamRequest& request) {
-  return base::Bind(&RespondToMediaAccessPermissionRequest,
-                    callback, request);
+    int render_process_id,
+    int render_frame_id,
+    bool audio,
+    bool video,
+    const GURL& requesting_origin,
+    const GURL& embedding_origin) {
+  return base::Bind(&RespondToMediaAccessPermissionRequestCallback,
+                    callback,
+                    render_process_id,
+                    render_frame_id,
+                    audio,
+                    video,
+                    requesting_origin,
+                    embedding_origin);
 }
 
 }
@@ -323,13 +390,59 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
     return;
   }
 
+  TemporarySavedPermissionStatus saved_status =
+      TEMPORARY_SAVED_PERMISSION_STATUS_ASK;
+
+  BrowserContext* context =
+      BrowserContext::FromContent(rfh->GetProcess()->GetBrowserContext());
+  TemporarySavedPermissionContext* pc =
+      context->GetTemporarySavedPermissionContext();
+
+  bool audio = request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE;
+  bool video = request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE;
+
+  GURL embedding_origin = contents->GetLastCommittedURL().GetOrigin();
+
+  if (audio) {
+    saved_status = pc->GetPermissionStatus(
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC,
+        request.security_origin,
+        embedding_origin);    
+  }
+  if (video && saved_status != TEMPORARY_SAVED_PERMISSION_STATUS_DENIED) {
+    TemporarySavedPermissionStatus status = pc->GetPermissionStatus(
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA,
+        request.security_origin,
+        embedding_origin);
+    if (status == TEMPORARY_SAVED_PERMISSION_STATUS_DENIED ||
+        saved_status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED) {
+      saved_status = status;
+    }
+  }
+
+  if (saved_status != TEMPORARY_SAVED_PERMISSION_STATUS_ASK) {
+    RespondToMediaAccessPermissionRequest(
+        callback,
+        rfh,
+        audio,
+        video,
+        ToPermissionRequestResponse(saved_status));
+    return;
+  }
+
   PermissionRequestDispatcher::FromWebContents(contents)
       ->RequestMediaAccessPermission(
         rfh,
         request.security_origin,
-        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
-        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
-        WrapMediaResponseCallback(callback, request));
+        audio,
+        video,
+        WrapMediaResponseCallback(callback,
+                                  request.render_process_id,
+                                  request.render_frame_id,
+                                  audio,
+                                  video,
+                                  request.security_origin,
+                                  embedding_origin));
 }
 
 } // namespace oxide
