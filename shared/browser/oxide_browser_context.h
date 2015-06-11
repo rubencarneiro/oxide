@@ -86,6 +86,8 @@ class BrowserContextIOData {
   std::string GetAcceptLangs() const;
   std::string GetUserAgent() const;
 
+  bool GetDoNotTrack() const;
+
   virtual bool IsOffTheRecord() const = 0;
 
   URLRequestContext* CreateMainRequestContext(
@@ -222,6 +224,9 @@ class BrowserContext
   std::string GetDevtoolsBindIp() const;
 
   const std::vector<std::string>& GetHostMappingRules() const;
+
+  bool GetDoNotTrack() const;
+  void SetDoNotTrack(bool tracking);
 
   UserScriptMaster& UserScriptManager();
 

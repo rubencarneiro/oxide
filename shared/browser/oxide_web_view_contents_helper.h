@@ -62,6 +62,7 @@ class WebViewContentsHelper final : private BrowserContextObserver,
 
   // BrowserContextObserver implementation
   void NotifyPopupBlockerEnabledChanged() final;
+  void NotifyDoNotTrackChanged() final;
 
   // WebPreferencesObserver implementation
   void WebPreferencesValueChanged() final;

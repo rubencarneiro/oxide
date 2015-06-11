@@ -70,6 +70,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_PROPERTY(QString defaultAudioCaptureDeviceId READ defaultAudioCaptureDeviceId WRITE setDefaultAudioCaptureDeviceId NOTIFY defaultAudioCaptureDeviceIdChanged REVISION 3)
   Q_PROPERTY(QString defaultVideoCaptureDeviceId READ defaultVideoCaptureDeviceId WRITE setDefaultVideoCaptureDeviceId NOTIFY defaultVideoCaptureDeviceIdChanged REVISION 3)
 
+  Q_PROPERTY(bool doNotTrack READ doNotTrack WRITE setDoNotTrack NOTIFY doNotTrackChanged REVISION 3)
+
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
 
@@ -163,6 +165,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   QString defaultVideoCaptureDeviceId() const;
   void setDefaultVideoCaptureDeviceId(const QString& id);
 
+  bool doNotTrack() const;
+  void setDoNotTrack(bool enabled);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -184,6 +189,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_REVISION(2) void maxCacheSizeHintChanged();
   Q_REVISION(3) void defaultAudioCaptureDeviceIdChanged();
   Q_REVISION(3) void defaultVideoCaptureDeviceIdChanged();
+  Q_REVISION(3) void doNotTrackChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

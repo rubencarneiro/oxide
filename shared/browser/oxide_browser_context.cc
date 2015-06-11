@@ -264,7 +264,8 @@ struct BrowserContextSharedIOData {
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
-        host_mapping_rules(params.host_mapping_rules) {
+        host_mapping_rules(params.host_mapping_rules),
+        do_not_track(false) {
 
    accept_langs = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
    if (accept_langs == "AcceptLanguage") {
@@ -286,6 +287,8 @@ struct BrowserContextSharedIOData {
   bool popup_blocker_enabled;
 
   std::vector<std::string> host_mapping_rules;
+
+  bool do_not_track;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -435,6 +438,12 @@ std::string BrowserContextIOData::GetUserAgent() const {
   const BrowserContextSharedIOData& data = GetSharedData();
   base::AutoLock lock(data.lock);
   return data.user_agent_string;
+}
+
+bool BrowserContextIOData::GetDoNotTrack() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.do_not_track;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -1072,6 +1081,28 @@ content::ResourceContext* BrowserContext::GetResourceContext() {
 scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
   DCHECK(CalledOnValidThread());
   return io_data()->cookie_store_;
+}
+
+bool BrowserContext::GetDoNotTrack() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetSharedData().do_not_track;
+}
+
+void BrowserContext::SetDoNotTrack(bool tracking) {
+  DCHECK(CalledOnValidThread());
+
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.do_not_track = tracking;
+
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyDoNotTrackChanged());
+  if (HasOffTheRecordContext()) {
+    FOR_EACH_OBSERVER(BrowserContextObserver,
+                      GetOffTheRecordContext()->observers_,
+                      NotifyDoNotTrackChanged());
+  }
 }
 
 } // namespace oxide

@@ -143,6 +143,9 @@ class WebContext : public WebContextProxy,
   QString defaultVideoCaptureDeviceId() const override;
   bool setDefaultVideoCaptureDeviceId(const QString& id) override;
 
+  bool doNotTrack() const override;
+  void setDoNotTrack(bool tracking) override;
+
   // oxide::MediaCaptureDevicesContextClient implementation
   void DefaultAudioDeviceChanged() override;
   void DefaultVideoDeviceChanged() override;
