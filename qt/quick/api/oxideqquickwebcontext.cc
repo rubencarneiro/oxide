@@ -1060,4 +1060,22 @@ void OxideQQuickWebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   // if the actual device is removed
 }
 
+bool OxideQQuickWebContext::doNotTrack() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->proxy()->doNotTrack();
+}
+
+void OxideQQuickWebContext::setDoNotTrack(bool tracking) {
+  Q_D(OxideQQuickWebContext);
+
+  if (doNotTrack() == tracking) {
+    return;
+  }
+
+  d->proxy()->setDoNotTrack(tracking);
+
+  emit doNotTrackChanged();
+}
+
 #include "moc_oxideqquickwebcontext_p.cpp"

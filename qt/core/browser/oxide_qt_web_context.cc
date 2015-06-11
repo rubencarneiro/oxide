@@ -139,7 +139,8 @@ struct WebContext::ConstructProperties {
         session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
         popup_blocker_enabled(true),
         devtools_enabled(false),
-        devtools_port(kDefaultDevtoolsPort) {}
+        devtools_port(kDefaultDevtoolsPort),
+        do_not_track(false) {}
 
   std::string product;
   std::string user_agent;
@@ -156,6 +157,7 @@ struct WebContext::ConstructProperties {
   std::vector<std::string> host_mapping_rules;
   std::string default_audio_capture_device_id;
   std::string default_video_capture_device_id;
+  bool do_not_track;
 };
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
@@ -538,6 +540,7 @@ oxide::BrowserContext* WebContext::GetContext() {
   }
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
+  context_->SetDoNotTrack(construct_props_->do_not_track);
 
   MediaCaptureDevicesContext* dc =
       MediaCaptureDevicesContext::Get(context_.get());
@@ -987,6 +990,22 @@ void WebContext::DefaultAudioDeviceChanged() {
 
 void WebContext::DefaultVideoDeviceChanged() {
   client_->DefaultVideoCaptureDeviceChanged();
+}
+
+bool WebContext::doNotTrack() const {
+    if (IsInitialized()) {
+    return context_->GetDoNotTrack();
+  }
+
+  return construct_props_->do_not_track;
+}
+
+void WebContext::setDoNotTrack(bool tracking) {
+  if (IsInitialized()) {
+    context_->SetDoNotTrack(tracking);
+  } else {
+    construct_props_->do_not_track = tracking;
+  }
 }
 
 } // namespace qt

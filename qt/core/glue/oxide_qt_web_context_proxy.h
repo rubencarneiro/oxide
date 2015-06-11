@@ -126,6 +126,9 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual bool setDefaultVideoCaptureDeviceId(const QString& id) = 0;
 
   virtual void clearTemporarySavedPermissionStatuses() = 0;
+
+  virtual bool doNotTrack() const = 0;
+  virtual void setDoNotTrack(bool tracking) = 0;
 };
 
 } // namespace qt
