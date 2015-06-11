@@ -160,6 +160,7 @@ void PermissionManager::RequestPermission(
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   if (!web_contents) {
+    callback.Run(content::PERMISSION_STATUS_DENIED);
     return;
   }
 
