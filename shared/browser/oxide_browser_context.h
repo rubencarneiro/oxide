@@ -61,6 +61,7 @@ class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
 class SSLHostStateDelegate;
+class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
 class UserScriptMaster;
@@ -98,6 +99,10 @@ class BrowserContextIOData {
                         const GURL& first_party_url,
                         bool write);
 
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
 
@@ -125,6 +130,9 @@ class BrowserContextIOData {
   scoped_refptr<net::CookieStore> cookie_store_;
 
   scoped_ptr<net::HostMappingRules> host_mapping_rules_;
+
+  scoped_ptr<TemporarySavedPermissionContext>
+      temporary_saved_permission_context_;
 };
 
 class BrowserContext;
@@ -229,6 +237,10 @@ class BrowserContext
   content::ResourceContext* GetResourceContext() override;
 
   scoped_refptr<net::CookieStore> GetCookieStore();
+
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
 
  protected:
   friend class BrowserContextDestroyer; // for destructor

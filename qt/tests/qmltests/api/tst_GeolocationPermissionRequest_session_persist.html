@@ -1,0 +1,17 @@
+<html>
+<body>
+</body>
+<script>
+var showPosition = function(position) {
+  var e = new CustomEvent("oxidegeolocationresult", { bubbles: true, detail: { status: 0 } });
+  document.documentElement.dispatchEvent(e);
+};
+
+var handleError = function(error) {
+  var e = new CustomEvent("oxidegeolocationresult", { bubbles: true, detail: { status: error.code } });
+  document.documentElement.dispatchEvent(e);
+};
+
+navigator.geolocation.getCurrentPosition(showPosition, handleError);
+</script>
+</html>

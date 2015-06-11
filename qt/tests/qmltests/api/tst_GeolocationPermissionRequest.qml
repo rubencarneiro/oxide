@@ -47,6 +47,7 @@ TestWebView {
       cancelSpy.clear();
       webView.lastGeolocationRequest = null;
       webView.lastGeolocationStatus = -1;
+      webView.context.clearTemporarySavedPermissionStatuses();
     }
 
     function _test_accept() {
