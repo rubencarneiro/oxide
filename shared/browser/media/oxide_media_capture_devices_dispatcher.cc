@@ -139,10 +139,11 @@ void RespondToMediaAccessPermissionRequestCallback(
                             ToTemporarySavedPermissionStatus(response));
   }
   if (video) {
-    pc->SetPermissionStatus(TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA,
-                            requesting_origin,
-                            embedding_origin,
-                            ToTemporarySavedPermissionStatus(response));
+    pc->SetPermissionStatus(
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA,
+        requesting_origin,
+        embedding_origin,
+        ToTemporarySavedPermissionStatus(response));
   }
 }
 
@@ -198,16 +199,18 @@ void MediaCaptureDevicesDispatcher::OnAudioCaptureDevicesChanged() {
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
-      base::Bind(&MediaCaptureDevicesDispatcher::NotifyAudioCaptureDevicesChanged,
-                 base::Unretained(this)));
+      base::Bind(
+        &MediaCaptureDevicesDispatcher::NotifyAudioCaptureDevicesChanged,
+        base::Unretained(this)));
 }
 
 void MediaCaptureDevicesDispatcher::OnVideoCaptureDevicesChanged() {
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
-      base::Bind(&MediaCaptureDevicesDispatcher::NotifyVideoCaptureDevicesChanged,
-                 base::Unretained(this)));
+      base::Bind(
+        &MediaCaptureDevicesDispatcher::NotifyVideoCaptureDevicesChanged,
+        base::Unretained(this)));
 }
 
 void MediaCaptureDevicesDispatcher::OnMediaRequestStateChanged(
@@ -391,7 +394,7 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
   }
 
   TemporarySavedPermissionStatus saved_status =
-      TEMPORARY_SAVED_PERMISSION_STATUS_ASK;
+      TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 
   BrowserContext* context =
       BrowserContext::FromContent(rfh->GetProcess()->GetBrowserContext());
@@ -407,7 +410,7 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
     saved_status = pc->GetPermissionStatus(
         TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC,
         request.security_origin,
-        embedding_origin);    
+        embedding_origin);
   }
   if (video && saved_status != TEMPORARY_SAVED_PERMISSION_STATUS_DENIED) {
     TemporarySavedPermissionStatus status = pc->GetPermissionStatus(
