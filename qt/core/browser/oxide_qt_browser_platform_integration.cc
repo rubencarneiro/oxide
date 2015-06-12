@@ -161,11 +161,6 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
-std::string
-BrowserPlatformIntegration::GetApplicationLocale() {
-  return QLocale::system().name().toStdString();
-}
-
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
   if (event->type() == QEvent::ApplicationActivate ||
       event->type() == QEvent::ApplicationDeactivate) {

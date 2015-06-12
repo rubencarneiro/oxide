@@ -96,9 +96,6 @@ class BrowserPlatformIntegration {
   // Get the current application state
   virtual ApplicationState GetApplicationState();
 
-  // Get the application locale
-  virtual std::string GetApplicationLocale() = 0;
-
  protected:
   BrowserPlatformIntegration();
 

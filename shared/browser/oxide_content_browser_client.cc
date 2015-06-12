@@ -292,12 +292,14 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 
 std::string
 ContentBrowserClient::GetApplicationLocale() {
-  return platform_integration_->GetApplicationLocale();
+  return application_locale_;
 }
 
 ContentBrowserClient::ContentBrowserClient(
+    const std::string& application_locale,
     BrowserPlatformIntegration* integration)
-    : platform_integration_(integration) {}
+    : application_locale_(application_locale),
+      platform_integration_(integration) {}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 

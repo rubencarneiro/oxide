@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
+#include <string>
 #include <vector>
 
 #include "base/macros.h"
@@ -39,7 +40,8 @@ class ResourceDispatcherHostDelegate;
 
 class ContentBrowserClient final : public content::ContentBrowserClient {
  public:
-  ContentBrowserClient(BrowserPlatformIntegration* integration);
+  ContentBrowserClient(const std::string& application_locale,
+                       BrowserPlatformIntegration* integration);
   ~ContentBrowserClient();
 
   // XXX(chrisccoulson): Try not to add anything here
@@ -115,6 +117,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
       std::string* os_version) final;
 
+  std::string application_locale_;
   scoped_ptr<BrowserPlatformIntegration> platform_integration_;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;

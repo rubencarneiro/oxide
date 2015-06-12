@@ -22,6 +22,7 @@
 #include "base/base_paths.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/i18n/rtl.h"
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "content/public/common/content_client.h"
@@ -30,6 +31,7 @@
 #include "content/public/utility/content_utility_client.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/base/ui_base_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_browser_client.h"
@@ -57,8 +59,17 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 }
 
 void ContentMainDelegate::PreSandboxStartup() {
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+
+  std::string app_locale;
+  if (command_line->HasSwitch(switches::kLang)) {
+    app_locale = command_line->GetSwitchValueASCII(switches::kLang);
+  } else {
+    app_locale = delegate_->GetApplicationLocale();
+  }
   ui::ResourceBundle::InitSharedInstanceWithLocale(
-      std::string(), nullptr,
+      base::i18n::GetCanonicalLocale(app_locale),
+      nullptr,
       ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
 
   base::FilePath dir_exe;
@@ -96,7 +107,8 @@ ContentMainDelegate::CreateContentBrowserClient() {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning());
   DCHECK(!content_browser_client_);
   content_browser_client_.reset(
-      new ContentBrowserClient(delegate_->CreateBrowserIntegration()));
+      new ContentBrowserClient(delegate_->GetApplicationLocale(),
+                               delegate_->CreateBrowserIntegration()));
 
   return content_browser_client_.get();
 }
