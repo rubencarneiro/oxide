@@ -25,10 +25,6 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
-}
-
 namespace content {
 class QuotaPermissionContext;
 class RenderViewHost;
@@ -43,17 +39,12 @@ class ResourceDispatcherHostDelegate;
 
 class ContentBrowserClient final : public content::ContentBrowserClient {
  public:
+  ContentBrowserClient(BrowserPlatformIntegration* integration);
+  ~ContentBrowserClient();
+
   // XXX(chrisccoulson): Try not to add anything here
 
  private:
-  friend class ContentMainDelegate; // For SetPlatformIntegration
-  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-
-  ContentBrowserClient();
-  ~ContentBrowserClient();
-
-  void SetPlatformIntegration(BrowserPlatformIntegration* integration);
-
   // content::ContentBrowserClient implementation
   std::string GetApplicationLocale() final;
   content::BrowserMainParts* CreateBrowserMainParts(

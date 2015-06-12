@@ -22,7 +22,6 @@
 #include "base/base_paths.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/path_service.h"
 #include "content/public/common/content_client.h"
@@ -41,15 +40,6 @@
 #include "oxide_platform_delegate.h"
 
 namespace oxide {
-
-namespace {
-base::LazyInstance<ContentBrowserClient> g_content_browser_client =
-    LAZY_INSTANCE_INITIALIZER;
-base::LazyInstance<ContentRendererClient> g_content_renderer_client =
-    LAZY_INSTANCE_INITIALIZER;
-base::LazyInstance<::content::ContentUtilityClient> g_content_utility_client =
-    LAZY_INSTANCE_INITIALIZER;
-}
 
 ContentMainDelegate::ContentMainDelegate(PlatformDelegate* delegate)
     : delegate_(delegate) {
@@ -104,24 +94,27 @@ void ContentMainDelegate::ProcessExiting(const std::string& process_type) {
 content::ContentBrowserClient*
 ContentMainDelegate::CreateContentBrowserClient() {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning());
+  DCHECK(!content_browser_client_);
+  content_browser_client_.reset(
+      new ContentBrowserClient(delegate_->CreateBrowserIntegration()));
 
-  g_content_browser_client.Get().SetPlatformIntegration(
-      delegate_->CreateBrowserIntegration());
-
-  return g_content_browser_client.Pointer();
+  return content_browser_client_.get();
 }
 
 content::ContentRendererClient*
 ContentMainDelegate::CreateContentRendererClient() {
-  //g_content_renderer_client.Get().SetPlatformIntegration(
-  //    delegate_->CreateRendererIntegration());
+  DCHECK(!content_renderer_client_);
+  content_renderer_client_.reset(new ContentRendererClient());
 
-  return g_content_renderer_client.Pointer();
+  return content_renderer_client_.get();
 }
 
 content::ContentUtilityClient*
 ContentMainDelegate::CreateContentUtilityClient() {
-  return g_content_utility_client.Pointer();
+  DCHECK(!content_utility_client_);
+  content_utility_client_.reset(new content::ContentUtilityClient());
+
+  return content_utility_client_.get();
 }
 
 } // namespace oxide
