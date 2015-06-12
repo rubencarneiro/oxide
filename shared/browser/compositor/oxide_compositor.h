@@ -93,6 +93,9 @@ class Compositor final : public cc::LayerTreeHostClient,
   void DidCommit() final;
   void DidCommitAndDrawFrame() final;
   void DidCompleteSwapBuffers() final;
+  void RecordFrameTimingEvents(
+      scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
+      scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) override;
   void DidCompletePageScaleAnimation() final;
 
   CompositorClient* client_;
