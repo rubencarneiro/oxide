@@ -22,7 +22,6 @@
 #include "base/logging.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
-#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
@@ -114,6 +113,7 @@ PermissionRequestDispatcher::~PermissionRequestDispatcher() {
 
 void PermissionRequestDispatcher::RequestPermission(
     content::PermissionType permission,
+    content::RenderFrameHost* render_frame_host,
     int request_id,
     const GURL& requesting_origin,
     const PermissionRequestCallback& callback) {
@@ -123,8 +123,8 @@ void PermissionRequestDispatcher::RequestPermission(
   }
 
   PermissionRequestID id(
-      contents_->GetRenderProcessHost()->GetID(),
-      contents_->GetRenderViewHost()->GetRoutingID(),
+      render_frame_host->GetProcess()->GetID(),
+      render_frame_host->GetRoutingID(),
       request_id,
       requesting_origin);
 
@@ -148,11 +148,12 @@ void PermissionRequestDispatcher::RequestPermission(
 
 void PermissionRequestDispatcher::CancelPermissionRequest(
     content::PermissionType permission,
+    content::RenderFrameHost* render_frame_host,
     int request_id,
     const GURL& requesting_origin) {
   PermissionRequestID id(
-      contents_->GetRenderProcessHost()->GetID(),
-      contents_->GetRenderViewHost()->GetRoutingID(),
+      render_frame_host->GetProcess()->GetID(),
+      render_frame_host->GetRoutingID(),
       request_id,
       requesting_origin);
 

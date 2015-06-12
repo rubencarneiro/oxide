@@ -280,7 +280,7 @@ class BrowserContext
 
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  ObserverList<BrowserContextObserver> observers_;
+  base::ObserverList<BrowserContextObserver> observers_;
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   scoped_ptr<PermissionManager> permission_manager_;

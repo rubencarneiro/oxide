@@ -22,16 +22,11 @@
 
 namespace oxide {
 
-// Request ID based on PermissionRequestID in Chromium. It is required for
-// requests that want to participate in cancellation. The design is a bit
-// weird though, as |bridge_id| appears to be a per-frame ID from Chromium,
-// making it possible for requests from different frames with the same origin
-// to have the same ID
 class PermissionRequestID {
  public:
   PermissionRequestID(int render_process_id,
-                      int render_view_id,
-                      int bridge_id,
+                      int render_frame_id,
+                      int request_id,
                       const GURL& origin);
 
   // Constructs an invalid ID
@@ -49,8 +44,8 @@ class PermissionRequestID {
 
  private:
   int render_process_id_;
-  int render_view_id_;
-  int bridge_id_;
+  int render_frame_id_;
+  int request_id_;
   GURL origin_;
 };
 

@@ -105,7 +105,7 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
   void OnCreatingAudioStream(int render_process_id,
                              int render_frame_id) override;
 
-  ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
+  base::ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(MediaCaptureDevicesDispatcher);
 };
