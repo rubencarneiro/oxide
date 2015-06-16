@@ -11,10 +11,16 @@ TestCase {
 
   property var webView
 
+  TestWebContext {
+    id: c
+  }
+
   Component {
     id: webViewComponent
 
     TestWebView {
+      context: c
+
       focus: true
       anchors.fill: parent
     }

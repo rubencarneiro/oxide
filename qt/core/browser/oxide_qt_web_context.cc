@@ -65,6 +65,7 @@ namespace oxide {
 namespace qt {
 
 using oxide::MediaCaptureDevicesContext;
+using oxide::UserScriptMaster;
 
 namespace {
 
@@ -369,7 +370,8 @@ void WebContext::UpdateUserScripts() {
     }
   }
 
-  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+  UserScriptMaster::Get(context_.get())
+      ->SerializeUserScriptsAndSendUpdates(scripts);
 }
 
 void WebContext::CookieSetCallback(

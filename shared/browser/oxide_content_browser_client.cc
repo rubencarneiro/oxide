@@ -63,10 +63,6 @@
 
 namespace oxide {
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
-
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
@@ -283,12 +279,6 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 #endif
 }
 
-void ContentBrowserClient::SetPlatformIntegration(
-    BrowserPlatformIntegration* integration) {
-  CHECK(integration && !platform_integration_);
-  platform_integration_.reset(integration);
-}
-
 gpu::GpuControlList::OsType
 ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
     std::string* os_version) {
@@ -303,7 +293,15 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 
 std::string
 ContentBrowserClient::GetApplicationLocale() {
-  return platform_integration_->GetApplicationLocale();
+  return application_locale_;
 }
+
+ContentBrowserClient::ContentBrowserClient(
+    const std::string& application_locale,
+    BrowserPlatformIntegration* integration)
+    : application_locale_(application_locale),
+      platform_integration_(integration) {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

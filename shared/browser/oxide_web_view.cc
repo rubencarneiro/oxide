@@ -72,6 +72,7 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -823,6 +824,26 @@ void WebView::RequestMediaAccessPermission(
   MediaCaptureDevicesDispatcher::GetInstance()->RequestMediaAccessPermission(
       request,
       callback);
+}
+
+bool WebView::CheckMediaAccessPermission(content::WebContents* source,
+                                         const GURL& security_origin,
+                                         content::MediaStreamType type) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  DCHECK(type == content::MEDIA_DEVICE_VIDEO_CAPTURE ||
+         type == content::MEDIA_DEVICE_AUDIO_CAPTURE);
+
+  TemporarySavedPermissionType permission =
+      type == content::MEDIA_DEVICE_VIDEO_CAPTURE ?
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA :
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC;
+
+  TemporarySavedPermissionStatus status =
+      GetBrowserContext()->GetTemporarySavedPermissionContext()
+        ->GetPermissionStatus(permission,
+                              security_origin,
+                              web_contents_->GetLastCommittedURL().GetOrigin());
+  return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {

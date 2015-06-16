@@ -82,7 +82,6 @@
 #include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
 #include "oxide_url_request_delegated_job_factory.h"
-#include "oxide_user_script_master.h"
 
 namespace oxide {
 
@@ -243,14 +242,12 @@ struct BrowserContextSharedData {
                            const BrowserContext::Params& params)
       : product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
         user_agent_string_is_default(true),
-        user_script_master(context),
         devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
 
   std::string product;
   bool user_agent_string_is_default;
-  UserScriptMaster user_script_master;
 
   scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
@@ -1069,11 +1066,6 @@ std::string BrowserContext::GetDevtoolsBindIp() const {
 const std::vector<std::string>& BrowserContext::GetHostMappingRules() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetSharedData().host_mapping_rules;
-}
-
-UserScriptMaster& BrowserContext::UserScriptManager() {
-  DCHECK(CalledOnValidThread());
-  return GetSharedData().user_script_master;
 }
 
 content::ResourceContext* BrowserContext::GetResourceContext() {

@@ -1,0 +1,26 @@
+<html>
+<body>
+</body>
+<script>
+
+var successCallback = function(stream) {
+  var e = new CustomEvent("oxidegumresult", { bubbles: true, detail: { error: "OK" } });
+  document.documentElement.dispatchEvent(e);
+};
+
+var errorCallback = function(error) {
+  var e = new CustomEvent("oxidegumresult", { bubbles: true, detail: { error: error.name } });
+  document.documentElement.dispatchEvent(e);
+};
+
+var params = { audio: 0, video: 0 };
+/[^\?]*\?(.*)/.exec(document.location)[1].split("&").forEach(function(i) {
+  params[i.split("=")[0]] = i.split("=")[1];
+});
+
+navigator.webkitGetUserMedia({ audio: Boolean(parseInt(params.audio)),
+                               video: Boolean(parseInt(params.video)) },
+                             successCallback, errorCallback);
+
+</script>
+</html>

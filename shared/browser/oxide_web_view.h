@@ -453,6 +453,9 @@ class WebView : public ScriptMessageTarget,
       content::WebContents* source,
       const content::MediaStreamRequest& request,
       const content::MediaResponseCallback& callback) final;
+  bool CheckMediaAccessPermission(content::WebContents* source,
+                                  const GURL& security_origin,
+                                  content::MediaStreamType type) final;
 
   // content::WebContentsObserver implementation
   void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;

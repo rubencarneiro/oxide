@@ -64,7 +64,6 @@ class SSLHostStateDelegate;
 class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
-class UserScriptMaster;
 
 class BrowserContextIOData {
  public:
@@ -230,8 +229,6 @@ class BrowserContext
   std::string GetDevtoolsBindIp() const;
 
   const std::vector<std::string>& GetHostMappingRules() const;
-
-  UserScriptMaster& UserScriptManager();
 
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
