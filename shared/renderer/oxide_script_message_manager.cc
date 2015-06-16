@@ -360,9 +360,13 @@ ScriptMessageManager::ScriptMessageManager(content::RenderFrame* frame,
 
   if (world_id_ != kMainWorldId) {
     v8::Local<v8::Object> global(context->Global());
-    global->SetAccessor(v8::String::NewFromUtf8(isolate(), "oxide"),
-                        OxideLazyGetter, nullptr,
-                        local_data);
+    global->Set(v8::String::NewFromUtf8(isolate(), "oxide"),
+                GetOxideApiObject(isolate()));
+    // XXX(chrisccoulson): Started failing between Chromium 45.0.2431.0 and
+    //  45.0.2433.0
+    //global->SetAccessor(v8::String::NewFromUtf8(isolate(), "oxide"),
+    //                    OxideLazyGetter, nullptr,
+    //                    local_data);
   }
 }
 
