@@ -148,6 +148,8 @@ OxideQPermissionRequest::OxideQPermissionRequest(
   d->q_ptr = this;
   d->request_->SetCancelCallback(
       base::Bind(&OxideQPermissionRequestPrivate::OnCancelled,
+                 // The callback cannot run after |d| is deleted, as it
+                 // exclusively owns |request_|
                  base::Unretained(d)));
 }
 

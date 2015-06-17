@@ -17,51 +17,56 @@
 
 #include "oxide_permission_request.h"
 
-#include <algorithm>
-
 #include "base/logging.h"
-#include "content/public/browser/render_frame_host.h"
-#include "content/public/browser/render_process_host.h"
-
-#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
-#include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request_dispatcher.h"
 
 namespace oxide {
 
-PermissionRequest::PermissionRequest(const PermissionRequestID& request_id,
-                                     WebFrame* frame,
-                                     const GURL& origin,
-                                     const GURL& embedder)
-    : request_id_(request_id),
-      frame_(frame),
-      dispatcher_(nullptr),
-      origin_(origin),
-      embedder_(embedder),
-      is_cancelled_(false) {}
-
-void PermissionRequest::Cancel() {
-  DCHECK(!IsPending());
+void PermissionRequest::Cancel(bool run_callback) {
   DCHECK(!is_cancelled_);
-
   is_cancelled_ = true;
+
+  Respond(PERMISSION_REQUEST_RESPONSE_CANCEL);
 
   if (cancel_callback_.is_null()) {
     return;
   }
 
-  cancel_callback_.Run();
+  if (run_callback) {
+    cancel_callback_.Run();
+  }  
   cancel_callback_.Reset();
 }
 
-void PermissionRequest::NotifyDone() {
+void PermissionRequest::Respond(PermissionRequestResponse response) {
+  DCHECK(IsPending());
+
+  callback_.Run(response);
+  callback_.Reset();
+
   dispatcher_->RemovePendingRequest(this);
   DCHECK(!dispatcher_);
 }
 
+PermissionRequest::PermissionRequest(
+    const PermissionRequestID& request_id,
+    WebFrame* frame,
+    const GURL& origin,
+    const GURL& embedder,
+    const base::Callback<void(PermissionRequestResponse)>& callback)
+    : request_id_(request_id),
+      frame_(frame),
+      dispatcher_(nullptr),
+      origin_(origin),
+      embedder_(embedder),
+      is_cancelled_(false),
+      callback_(callback) {}
+
 PermissionRequest::~PermissionRequest() {
-  DCHECK(!IsPending());
+  if (IsPending()) {
+    Cancel(false);
+  }
 }
 
 bool PermissionRequest::IsPending() const {
@@ -72,47 +77,22 @@ void PermissionRequest::SetCancelCallback(const base::Closure& callback) {
   cancel_callback_ = callback;
 }
 
-void SimplePermissionRequest::Cancel() {
-  Deny();
-  PermissionRequest::Cancel();
+void PermissionRequest::Allow() {
+  Respond(PERMISSION_REQUEST_RESPONSE_ALLOW);
+}
+
+void PermissionRequest::Deny() {
+  Respond(PERMISSION_REQUEST_RESPONSE_DENY);
 }
 
 SimplePermissionRequest::SimplePermissionRequest(
     const PermissionRequestID& request_id,
     const GURL& origin,
     const GURL& embedder,
-    const base::Callback<void(content::PermissionStatus)>& callback)
-    : PermissionRequest(request_id, nullptr, origin, embedder),
-      callback_(callback) {}
+    const base::Callback<void(PermissionRequestResponse)>& callback)
+    : PermissionRequest(request_id, nullptr, origin, embedder, callback) {}
 
-SimplePermissionRequest::~SimplePermissionRequest() {
-  if (IsPending()) {
-    Deny();
-  }
-}
-
-void SimplePermissionRequest::Allow() {
-  DCHECK(IsPending());
-
-  callback_.Run(content::PERMISSION_STATUS_GRANTED);
-  callback_.Reset();
-
-  NotifyDone();
-}
-
-void SimplePermissionRequest::Deny() {
-  DCHECK(IsPending());
-
-  callback_.Run(content::PERMISSION_STATUS_DENIED);
-  callback_.Reset();
-
-  NotifyDone();
-}
-
-void MediaAccessPermissionRequest::Cancel() {
-  Deny();
-  PermissionRequest::Cancel();
-}
+SimplePermissionRequest::~SimplePermissionRequest() {}
 
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     WebFrame* frame,
@@ -120,56 +100,15 @@ MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
-    const content::MediaResponseCallback& callback)
+    const base::Callback<void(PermissionRequestResponse)>& callback)
     : PermissionRequest(PermissionRequestID(),
                         frame,
                         origin,
-                        embedder),
+                        embedder,
+                        callback),
       audio_requested_(audio_requested),
-      video_requested_(video_requested),
-      callback_(callback) {}
+      video_requested_(video_requested) {}
 
-MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {
-  if (IsPending()) {
-    Deny();
-  }
-}
-
-void MediaAccessPermissionRequest::Allow() {
-  DCHECK(IsPending());
-
-  content::RenderFrameHost* rfh = frame_->render_frame_host();
-  DCHECK(rfh);
-
-  content::BrowserContext* context = rfh->GetProcess()->GetBrowserContext();
-  DCHECK(context);
-
-  content::MediaStreamDevices devices;
-  MediaCaptureDevicesDispatcher::GetInstance()
-      ->GetDefaultCaptureDevicesForContext(context,
-                                           audio_requested_,
-                                           video_requested_,
-                                           &devices);
-
-  callback_.Run(devices,
-                devices.empty() ?
-                    content::MEDIA_DEVICE_NO_HARDWARE :
-                    content::MEDIA_DEVICE_OK,
-                nullptr);
-  callback_.Reset();
-
-  NotifyDone();
-}
-
-void MediaAccessPermissionRequest::Deny() {
-  DCHECK(IsPending());
-
-  callback_.Run(content::MediaStreamDevices(),
-                content::MEDIA_DEVICE_PERMISSION_DENIED,
-                nullptr);
-  callback_.Reset();
-
-  NotifyDone();
-}
+MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {}
 
 } // namespace oxide

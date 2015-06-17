@@ -446,7 +446,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 #if defined(V8_USE_EXTERNAL_STARTUP_DATA)
-  CHECK(gin::V8Initializer::LoadV8Snapshot());
+  gin::V8Initializer::LoadV8Snapshot();
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();

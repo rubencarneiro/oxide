@@ -59,6 +59,7 @@ TestWebView {
       cancelSpy.clear();
       cancelSpy.target = null;
       webView.clearLoadEventCounters();
+      webView.context.clearTemporarySavedPermissionStatuses();
     }
 
     function test_MediaAccessPermissionRequest1_properties_data() {

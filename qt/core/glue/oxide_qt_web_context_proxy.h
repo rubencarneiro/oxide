@@ -124,6 +124,8 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual bool setDefaultAudioCaptureDeviceId(const QString& id) = 0;
   virtual QString defaultVideoCaptureDeviceId() const = 0;
   virtual bool setDefaultVideoCaptureDeviceId(const QString& id) = 0;
+
+  virtual void clearTemporarySavedPermissionStatuses() = 0;
 };
 
 } // namespace qt

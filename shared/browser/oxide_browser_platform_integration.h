@@ -96,9 +96,6 @@ class BrowserPlatformIntegration {
   // Get the current application state
   virtual ApplicationState GetApplicationState();
 
-  // Get the application locale
-  virtual std::string GetApplicationLocale() = 0;
-
  protected:
   BrowserPlatformIntegration();
 
@@ -110,7 +107,7 @@ class BrowserPlatformIntegration {
   void AddObserver(BrowserPlatformIntegrationObserver* observer);
   void RemoveObserver(BrowserPlatformIntegrationObserver* observer);
 
-  ObserverList<BrowserPlatformIntegrationObserver> observers_;
+  base::ObserverList<BrowserPlatformIntegrationObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

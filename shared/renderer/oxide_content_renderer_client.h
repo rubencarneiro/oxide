@@ -21,10 +21,6 @@
 #include "base/macros.h"
 #include "content/public/renderer/content_renderer_client.h"
 
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
-}
-
 namespace oxide {
 
 #if defined(ENABLE_MEDIAHUB)
@@ -34,14 +30,12 @@ class RendererMediaPlayerManager;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
-  // XXX(chrisccoulson): Try not to add anything here
-
- private:
-  friend struct base::DefaultLazyInstanceTraits<ContentRendererClient>;
-
   ContentRendererClient();
   ~ContentRendererClient();
 
+  // XXX(chrisccoulson): Try not to add anything here
+
+ private:
   // content::ContentRendererClient implementation
   void RenderThreadStarted() final;
   void RenderFrameCreated(content::RenderFrame* render_frame) final;

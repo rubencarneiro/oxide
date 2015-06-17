@@ -23,6 +23,7 @@ set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
 qt5_use_modules(${QML_PLUGIN} Core Gui Qml)
+target_link_libraries(${QML_PLUGIN} ${OXIDE_QUICKLIB})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     AUTOMOC TRUE

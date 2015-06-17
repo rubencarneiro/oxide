@@ -25,13 +25,15 @@
 namespace oxide {
 namespace qt {
 
-class PlatformDelegate final : public oxide::PlatformDelegate {
+class PlatformDelegate : public oxide::PlatformDelegate {
  public:
   PlatformDelegate();
   ~PlatformDelegate();
 
  private:
-  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() final;
+  // oxide::PlatformDelegate implementation
+  std::string GetApplicationLocale() override;
+  oxide::BrowserPlatformIntegration* CreateBrowserIntegration() override;
 
   DISALLOW_COPY_AND_ASSIGN(PlatformDelegate);
 };

@@ -408,8 +408,8 @@ void WebView::RestoreState(qt::RestoreType type, const QByteArray& state) {
 #define WARN_INVALID_DATA \
     qWarning() << "Failed to read initial state: invalid data"
   std::vector<sessions::SerializedNavigationEntry> entries;
-  Pickle pickle(state.data(), state.size());
-  PickleIterator i(pickle);
+  base::Pickle pickle(state.data(), state.size());
+  base::PickleIterator i(pickle);
   std::string magic_number;
   if (!i.ReadString(&magic_number)) {
     WARN_INVALID_DATA;
@@ -1381,7 +1381,7 @@ QByteArray WebView::currentState() const {
   if (entries.size() == 0) {
     return QByteArray();
   }
-  Pickle pickle;
+  base::Pickle pickle;
   pickle.WriteString(STATE_SERIALIZER_MAGIC_NUMBER);
   pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
   pickle.WriteInt(entries.size());

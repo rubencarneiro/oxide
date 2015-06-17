@@ -57,6 +57,7 @@
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
 #include "oxide_qt_browser_startup.h"
 
@@ -64,6 +65,7 @@ namespace oxide {
 namespace qt {
 
 using oxide::MediaCaptureDevicesContext;
+using oxide::UserScriptMaster;
 
 namespace {
 
@@ -368,7 +370,8 @@ void WebContext::UpdateUserScripts() {
     }
   }
 
-  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+  UserScriptMaster::Get(context_.get())
+      ->SerializeUserScriptsAndSendUpdates(scripts);
 }
 
 void WebContext::CookieSetCallback(
@@ -964,6 +967,20 @@ bool WebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   construct_props_->default_video_capture_device_id = id.toStdString();
   client_->DefaultVideoCaptureDeviceChanged();
   return true;
+}
+
+void WebContext::clearTemporarySavedPermissionStatuses() {
+  if (!context_.get()) {
+    return;
+  }
+
+  context_->GetTemporarySavedPermissionContext()->Clear();
+  if (!context_->HasOffTheRecordContext()) {
+    return;
+  }
+
+  context_->GetOffTheRecordContext()
+      ->GetTemporarySavedPermissionContext()->Clear();
 }
 
 void WebContext::DefaultAudioDeviceChanged() {

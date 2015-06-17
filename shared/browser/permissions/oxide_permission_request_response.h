@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_APP_PLATFORM_DELEGATE_H_
-#define _OXIDE_SHARED_APP_PLATFORM_DELEGATE_H_
-
-#include <string>
+#ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_RESPONSE_H_
+#define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_RESPONSE_H_
 
 namespace oxide {
 
-class BrowserPlatformIntegration;
-
-class PlatformDelegate {
- public:
-  virtual ~PlatformDelegate() {}
-
-  // Get the application locale
-  virtual std::string GetApplicationLocale() = 0;
-
-  virtual BrowserPlatformIntegration* CreateBrowserIntegration() = 0;
-
-  //virtual RendererPlatformIntegration* CreateRendererIntegration() = 0;
+enum PermissionRequestResponse {
+  PERMISSION_REQUEST_RESPONSE_ALLOW,
+  PERMISSION_REQUEST_RESPONSE_DENY,
+  PERMISSION_REQUEST_RESPONSE_CANCEL
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_APP_PLATFORM_DELEGATE_H_
+#endif // _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_RESPONSE_H_
