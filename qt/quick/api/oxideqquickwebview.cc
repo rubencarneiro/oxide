@@ -40,10 +40,10 @@
 #include <QtQml>
 #include <Qt>
 
-#include "qt/core/api/oxideqbasicauthenticationrequest.h"
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
@@ -462,26 +462,26 @@ void OxideQQuickWebViewPrivate::RequestMediaAccessPermission(
 
 }
 
-void OxideQQuickWebViewPrivate::BasicAuthenticationRequested(
-    OxideQBasicAuthenticationRequest* request) {
+void OxideQQuickWebViewPrivate::HttpAuthenticationRequested(
+    OxideQHttpAuthenticationRequest* authentication_request) {
   Q_Q(OxideQQuickWebView);
 
   // See the comment in RequestGeolocationPermission
 
   QQmlEngine* engine = qmlEngine(q);
   if (!engine) {
-    delete request;
+    delete authentication_request;
     return;
   }
 
   {
-    QJSValue val = engine->newQObject(request);
+    QJSValue val = engine->newQObject(authentication_request);
     if (!val.isQObject()) {
-      delete request;
+      delete authentication_request;
       return;
     }
 
-    emit q->basicAuthenticationRequested(val);
+    emit q->httpAuthenticationRequested(val);
   }
 
   engine->collectGarbage();

@@ -32,7 +32,7 @@ class OxideQLoadEvent;
 class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
-class OxideQBasicAuthenticationRequest;
+class OxideQHttpAuthenticationRequest;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -140,8 +140,8 @@ class WebViewProxyClient {
 
   virtual void DownloadRequested(OxideQDownloadRequest* download_request) = 0;
 
-  virtual void BasicAuthenticationRequested(OxideQBasicAuthenticationRequest*
-                                            basic_authentication_request) = 0;
+  virtual void HttpAuthenticationRequested(OxideQHttpAuthenticationRequest*
+                                           authentication_request) = 0;
 
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
 

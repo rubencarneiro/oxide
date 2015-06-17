@@ -141,7 +141,7 @@ class WebView : public QObject,
       const std::string& cookies,
       const std::string& referrer,
       const std::string& user_agent) override;
-  void BasicAuthenticationRequested(
+  void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
 
   bool ShouldHandleNavigation(const GURL& url,

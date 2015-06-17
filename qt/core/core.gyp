@@ -206,9 +206,9 @@
         '<(DEPTH)'
       ],
       'sources': [
-        '<(INTERMEDIATE_DIR)/moc_oxideqbasicauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
@@ -220,9 +220,6 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
-        'api/oxideqbasicauthenticationrequest.cc',
-        'api/oxideqbasicauthenticationrequest.h',
-        'api/oxideqbasicauthenticationrequest_p.h',
         'api/oxideqcertificateerror.cc',
         'api/oxideqcertificateerror.h',
         'api/oxideqcertificateerror_p.h',
@@ -231,6 +228,9 @@
         'api/oxideqdownloadrequest_p.h',
         'api/oxideqglobal.cc',
         'api/oxideqglobal.h',
+        'api/oxideqhttpauthenticationrequest.cc',
+        'api/oxideqhttpauthenticationrequest.h',
+        'api/oxideqhttpauthenticationrequest_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -266,11 +266,6 @@
       ],
       'actions': [
         {
-          'action_name': 'moc_oxideqbasicauthenticationrequest.cc',
-          'moc_input': 'api/oxideqbasicauthenticationrequest.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
           'action_name': 'moc_oxideqcertificateerror.cc',
           'moc_input': 'api/oxideqcertificateerror.h',
           'includes': [ 'moc.gypi' ],
@@ -278,6 +273,11 @@
         {
           'action_name': 'moc_oxideqdownloadrequest.cc',
           'moc_input': 'api/oxideqdownloadrequest.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqhttpauthenticationrequest.cc',
+          'moc_input': 'api/oxideqhttpauthenticationrequest.h',
           'includes': [ 'moc.gypi' ]
         },
         {

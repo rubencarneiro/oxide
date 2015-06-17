@@ -367,7 +367,7 @@ void ResourceDispatcherHostLoginDelegate::DispatchRequest() {
     return;
   }
 
-  webview->BasicAuthenticationRequested(this);
+  webview->HttpAuthenticationRequested(this);
 }
 
 std::string ResourceDispatcherHostLoginDelegate::Host() const {

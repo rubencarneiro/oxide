@@ -21,63 +21,63 @@
 #include "shared/browser/oxide_resource_dispatcher_host_delegate.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
-#include "oxideqbasicauthenticationrequest.h"
-#include "oxideqbasicauthenticationrequest_p.h"
+#include "oxideqhttpauthenticationrequest.h"
+#include "oxideqhttpauthenticationrequest_p.h"
 
-OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate(
+OxideQHttpAuthenticationRequestPrivate::OxideQHttpAuthenticationRequestPrivate(
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
     : q_ptr(nullptr),
       login_delegate_(login_delegate) {
   // Use of base::Unretained is safe here because we clear the callback in the
   // destructor, so that the login delegate can not call it anymore
   login_delegate->SetCancelledCallback(
-        base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
+        base::Bind(&OxideQHttpAuthenticationRequestPrivate::RequestCancelled,
                    base::Unretained(this)));
 }
 
-OxideQBasicAuthenticationRequestPrivate::~OxideQBasicAuthenticationRequestPrivate() {
+OxideQHttpAuthenticationRequestPrivate::~OxideQHttpAuthenticationRequestPrivate() {
 }
 
-void OxideQBasicAuthenticationRequestPrivate::RequestCancelled() {
-  Q_Q(OxideQBasicAuthenticationRequest);
+void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
+  Q_Q(OxideQHttpAuthenticationRequest);
 
   q->cancelled();
 }
 
-OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
+OxideQHttpAuthenticationRequest::OxideQHttpAuthenticationRequest(
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
-    : d_ptr(new OxideQBasicAuthenticationRequestPrivate(login_delegate)) {
-  Q_D(OxideQBasicAuthenticationRequest);
+    : d_ptr(new OxideQHttpAuthenticationRequestPrivate(login_delegate)) {
+  Q_D(OxideQHttpAuthenticationRequest);
   d->q_ptr = this;
 }
 
-OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {
-  Q_D(OxideQBasicAuthenticationRequest);
+OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {
+  Q_D(OxideQHttpAuthenticationRequest);
 
   d->login_delegate_->SetCancelledCallback(base::Closure());
 }
 
-QString OxideQBasicAuthenticationRequest::host() const {
-  Q_D(const OxideQBasicAuthenticationRequest);
+QString OxideQHttpAuthenticationRequest::host() const {
+  Q_D(const OxideQHttpAuthenticationRequest);
 
   return QString::fromStdString(d->login_delegate_->Host());
 }
 
-QString OxideQBasicAuthenticationRequest::realm() const {
-  Q_D(const OxideQBasicAuthenticationRequest);
+QString OxideQHttpAuthenticationRequest::realm() const {
+  Q_D(const OxideQHttpAuthenticationRequest);
 
   return QString::fromStdString(d->login_delegate_->Realm());
 }
 
-void OxideQBasicAuthenticationRequest::deny() {
-  Q_D(OxideQBasicAuthenticationRequest);
+void OxideQHttpAuthenticationRequest::deny() {
+  Q_D(OxideQHttpAuthenticationRequest);
 
   d->login_delegate_->Deny();
 }
 
-void OxideQBasicAuthenticationRequest::allow(const QString &username,
+void OxideQHttpAuthenticationRequest::allow(const QString &username,
                                              const QString &password) {
-  Q_D(OxideQBasicAuthenticationRequest);
+  Q_D(OxideQHttpAuthenticationRequest);
 
   d->login_delegate_->Allow(username.toStdString(), password.toStdString());
 }

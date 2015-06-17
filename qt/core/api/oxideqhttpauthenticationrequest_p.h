@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_BASIC_AUTHENTICATION_REQUEST_P_H_
-#define _OXIDE_QT_CORE_API_BASIC_AUTHENTICATION_REQUEST_P_H_
+#ifndef _OXIDE_QT_CORE_API_HTTP_AUTHENTICATION_REQUEST_P_H_
+#define _OXIDE_QT_CORE_API_HTTP_AUTHENTICATION_REQUEST_P_H_
 
 #include <QtGlobal>
 #include <QString>
@@ -25,23 +25,23 @@ namespace oxide {
   class ResourceDispatcherHostLoginDelegate;
 }
 
-class OxideQBasicAuthenticationRequest;
+class OxideQHttpAuthenticationRequest;
 
-class OxideQBasicAuthenticationRequestPrivate {
-  Q_DECLARE_PUBLIC(OxideQBasicAuthenticationRequest)
+class OxideQHttpAuthenticationRequestPrivate {
+  Q_DECLARE_PUBLIC(OxideQHttpAuthenticationRequest)
 
  public:
-  virtual ~OxideQBasicAuthenticationRequestPrivate();
+  virtual ~OxideQHttpAuthenticationRequestPrivate();
 
  private:
-  OxideQBasicAuthenticationRequestPrivate(
+  OxideQHttpAuthenticationRequestPrivate(
       oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
   void RequestCancelled();
 
-  OxideQBasicAuthenticationRequest* q_ptr;
+  OxideQHttpAuthenticationRequest* q_ptr;
   QString realm_;
   oxide::ResourceDispatcherHostLoginDelegate* login_delegate_;
 };
 
-#endif // _OXIDE_QT_CORE_API_BASIC_AUTHENTICATION_REQUEST_P_H_
+#endif // _OXIDE_QT_CORE_API_HTTP_AUTHENTICATION_REQUEST_P_H_
 

@@ -135,8 +135,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void EvictCurrentFrame() override;
   void SetInputMethodEnabled(bool enabled) override;
   void DownloadRequested(OxideQDownloadRequest* download_request) override;
-  void BasicAuthenticationRequested(
-      OxideQBasicAuthenticationRequest* basic_authentication_request) override;
+  void HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequest* authentication_request) override;
   void CertificateError(OxideQCertificateError* cert_error) override;
   void ContentBlocked() override;
   void PrepareToCloseResponse(bool proceed) override;

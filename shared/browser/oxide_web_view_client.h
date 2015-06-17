@@ -208,7 +208,7 @@ class WebViewClient : public ScriptMessageTarget {
   virtual void FindInPageCurrentChanged();
   virtual void FindInPageCountChanged();
 
-  virtual void BasicAuthenticationRequested(
+  virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
 };
 

@@ -56,9 +56,9 @@
 #include "ui/gfx/range/range.h"
 #include "url/gurl.h"
 
-#include "qt/core/api/oxideqbasicauthenticationrequest.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -745,11 +745,11 @@ void WebView::DownloadRequested(const GURL& url,
   client_->DownloadRequested(&download_request);
 }
 
-void WebView::BasicAuthenticationRequested(
+void WebView::HttpAuthenticationRequested(
         oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
   // The client takes ownership of the request
-  client_->BasicAuthenticationRequested(new OxideQBasicAuthenticationRequest(
-                                            login_delegate));
+  client_->HttpAuthenticationRequested(new OxideQHttpAuthenticationRequest(
+                                           login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,

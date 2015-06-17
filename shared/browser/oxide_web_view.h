@@ -311,7 +311,7 @@ class WebView : public ScriptMessageTarget,
       const std::string& referrer,
       const std::string& user_agent);
 
-  void BasicAuthenticationRequested(
+  void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
 
   CompositorFrameHandle* GetCompositorFrameHandle() const;
