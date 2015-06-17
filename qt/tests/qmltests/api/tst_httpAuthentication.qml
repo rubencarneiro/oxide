@@ -17,7 +17,7 @@ TestWebView {
 
   // Since the browser caches credentials after the first successful
   // authentication, we make sure to use a different username for every test
-  property string baseUrl: "http://testsuite/tst_WebView_httpAuthentication.py"
+  property string baseUrl: "http://testsuite/tst_httpAuthentication.py"
   property int userNameSuffix: 0
   property string currentUser: "user" + userNameSuffix
   property string credentialsUrl: baseUrl + "?" + currentUser + "_pass"
@@ -34,7 +34,7 @@ TestWebView {
 
   TestCase {
     id: test
-    name: "WebView_httpAuthentication"
+    name: "httpAuthentication"
     when: windowShown
 
     function init() {
