@@ -28,11 +28,9 @@ OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
     : q_ptr(nullptr),
       login_delegate_(login_delegate) {
-  if (login_delegate) {
-    login_delegate->SetCancelledCallback(
-          base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
-                     base::Unretained(this)));
-  }
+  login_delegate->SetCancelledCallback(
+        base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
+                   base::Unretained(this)));
 }
 
 OxideQBasicAuthenticationRequestPrivate::~OxideQBasicAuthenticationRequestPrivate() {
