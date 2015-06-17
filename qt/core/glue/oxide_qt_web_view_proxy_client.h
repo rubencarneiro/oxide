@@ -140,8 +140,8 @@ class WebViewProxyClient {
 
   virtual void DownloadRequested(OxideQDownloadRequest* download_request) = 0;
 
-  virtual void HttpAuthenticationRequested(OxideQHttpAuthenticationRequest*
-                                           authentication_request) = 0;
+  virtual void HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequest* authentication_request) = 0;
 
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
 

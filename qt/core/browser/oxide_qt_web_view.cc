@@ -748,8 +748,8 @@ void WebView::DownloadRequested(const GURL& url,
 void WebView::HttpAuthenticationRequested(
         oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
   // The client takes ownership of the request
-  client_->HttpAuthenticationRequested(new OxideQHttpAuthenticationRequest(
-                                           login_delegate));
+  client_->HttpAuthenticationRequested(
+      new OxideQHttpAuthenticationRequest(login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
