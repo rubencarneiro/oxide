@@ -26,6 +26,9 @@
 class OxideQHttpAuthenticationRequestPrivate;
 
 namespace oxide {
+  namespace qt {
+    class WebView;
+  }
   class ResourceDispatcherHostLoginDelegate;
 }
 
@@ -38,8 +41,6 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   Q_DISABLE_COPY(OxideQHttpAuthenticationRequest)
 
  public:
-  OxideQHttpAuthenticationRequest(oxide::ResourceDispatcherHostLoginDelegate*
-                                   login_delegate);
   ~OxideQHttpAuthenticationRequest();
 
   QString host() const;
@@ -52,7 +53,12 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   void cancelled() const;
 
  private:
+  Q_DECL_HIDDEN OxideQHttpAuthenticationRequest(
+      oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
+
   QScopedPointer<OxideQHttpAuthenticationRequestPrivate> d_ptr;
+
+ friend class oxide::qt::WebView;
 };
 
 #endif // OXIDE_Q_HTTP_AUTHENTICATION_REQUEST
