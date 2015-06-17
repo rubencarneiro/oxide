@@ -41,6 +41,7 @@ OxideQHttpAuthenticationRequestPrivate::~OxideQHttpAuthenticationRequestPrivate(
 void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
   Q_Q(OxideQHttpAuthenticationRequest);
 
+  login_delegate_ = nullptr;
   q->cancelled();
 }
 
@@ -60,24 +61,36 @@ OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {
 QString OxideQHttpAuthenticationRequest::host() const {
   Q_D(const OxideQHttpAuthenticationRequest);
 
-  return QString::fromStdString(d->login_delegate_->Host());
+  if (d->login_delegate_) {
+    return QString::fromStdString(d->login_delegate_->Host());
+  } else {
+    return QString();
+  }
 }
 
 QString OxideQHttpAuthenticationRequest::realm() const {
   Q_D(const OxideQHttpAuthenticationRequest);
 
-  return QString::fromStdString(d->login_delegate_->Realm());
+  if (d->login_delegate_) {
+    return QString::fromStdString(d->login_delegate_->Realm());
+  } else {
+    return QString();
+  }
 }
 
 void OxideQHttpAuthenticationRequest::deny() {
   Q_D(OxideQHttpAuthenticationRequest);
 
-  d->login_delegate_->Deny();
+  if (d->login_delegate_) {
+    d->login_delegate_->Deny();
+  }
 }
 
 void OxideQHttpAuthenticationRequest::allow(const QString &username,
                                              const QString &password) {
   Q_D(OxideQHttpAuthenticationRequest);
 
-  d->login_delegate_->Allow(username.toStdString(), password.toStdString());
+  if (d->login_delegate_) {
+    d->login_delegate_->Allow(username.toStdString(), password.toStdString());
+  }
 }
