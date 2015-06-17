@@ -82,14 +82,14 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -461,16 +463,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -455,16 +457,18 @@ void RenderWidgetCompositor::Initialize(
+     settings.use_external_begin_frame_source = true;
+ 
    if (widget_->for_oopif()) {
      // TODO(simonhong): Apply BeginFrame scheduling for OOPIF.
      // See crbug.com/471411.
      settings.use_external_begin_frame_source = false;
    }
- 
-   settings.max_bytes_per_copy_operation = GetMaxBytesPerCopyOperation();
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +

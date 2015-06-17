@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -194,17 +194,17 @@
+@@ -186,17 +186,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -392,17 +394,17 @@
+@@ -402,17 +404,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -276,10 +276,10 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -387,17 +390,17 @@ struct GL_EXPORT DriverEGL {
+@@ -386,17 +389,17 @@ struct GL_EXPORT DriverEGL {
+   ProcsEGL debug_fn;
    ExtensionsEGL ext;
  
-  private:
    static std::string GetPlatformExtensions();
    static std::string GetClientExtensions();
  };
@@ -295,7 +295,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
    ProcsGLX fn;
    ProcsGLX debug_fn;
    ExtensionsGLX ext;
-@@ -429,16 +432,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -428,16 +431,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -401,7 +401,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
    return window_;
  }
  
-@@ -576,16 +579,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+@@ -578,16 +581,17 @@ gfx::SwapResult NativeViewGLSurfaceGLX::
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();
