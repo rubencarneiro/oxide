@@ -56,6 +56,8 @@ void BrowserContextDestroyer::RenderProcessHostDestroyed(
     base::MessageLoop::current()->PostTask(
         FROM_HERE,
         base::Bind(&BrowserContextDestroyer::FinishDestroyContext,
+                   // We have exclusive ownership of |this| - nobody else can
+                   // reference or delete it
                    base::Unretained(this)));
   }
 }

@@ -118,6 +118,8 @@ void IOThread::InitSystemRequestContext() {
       content::BrowserThread::IO,
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContextOnIOThread,
+                 // |this| is only deleted after the IO thread has stopped
+                 // processing events
                  base::Unretained(this)));
 }
 
@@ -201,6 +203,8 @@ void IOThread::Init() {
       content::BrowserThread::UI,
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContext,
+                 // |this| is only deleted after we've stopped processing
+                 // events on the UI thread
                  base::Unretained(this)));
 }
 
