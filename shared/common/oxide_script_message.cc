@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,61 +19,62 @@
 
 #include "base/logging.h"
 
-#include "oxide_messages.h"
-#include "oxide_script_message.h"
-
 namespace oxide {
 
 // static
 void ScriptMessageTraits::Destruct(const ScriptMessage* x) {
   ScriptMessage* self = const_cast<ScriptMessage *>(x);
   if (!x->has_responded_) {
-    self->Error(ScriptMessageRequest::ERROR_HANDLER_DID_NOT_RESPOND,
-                "The handler failed to send a response");
+    self->Error(ScriptMessageParams::ERROR_HANDLER_DID_NOT_RESPOND);
   }
   delete x;
 }
 
-void ScriptMessage::MakeParams(OxideMsg_SendMessage_Params* params) {
-  params->context = context().spec();
+void ScriptMessage::MakeResponseParams(ScriptMessageParams* params,
+                                       ScriptMessageParams::Error error,
+                                       scoped_ptr<base::Value> payload) {
   params->serial = serial();
-  params->type = OxideMsg_SendMessage_Type::Reply;
+  params->context = context();
+  params->type = ScriptMessageParams::TYPE_REPLY;
+  params->error = error;
   params->msg_id = msg_id();
+  params->wrapped_payload.Set(0, payload.Pass());
 }
 
 ScriptMessage::ScriptMessage(int serial,
                              const GURL& context,
                              bool want_reply,
                              const std::string& msg_id,
-                             const std::string& args) :
-    serial_(serial),
-    context_(context),
-    msg_id_(msg_id),
-    args_(args),
-    has_responded_(!want_reply) {}
+                             base::ListValue* wrapped_payload)
+    : serial_(serial),
+      context_(context),
+      msg_id_(msg_id),
+      has_responded_(!want_reply) {
+  if (!wrapped_payload->Remove(0, &payload_)) {
+    payload_ = base::Value::CreateNullValue();
+  }
+}
 
 ScriptMessage::~ScriptMessage() {
   DCHECK(has_responded_);
 }
 
-void ScriptMessage::Reply(const std::string& args) {
+void ScriptMessage::Reply(scoped_ptr<base::Value> payload) {
   if (has_responded_) {
     return;
   }
 
   has_responded_ = true;
 
-  OxideMsg_SendMessage_Params params;
-  MakeParams(&params);
-  params.error = ScriptMessageRequest::ERROR_OK;
-  params.payload = args;
+  ScriptMessageParams params;
+  MakeResponseParams(&params, ScriptMessageParams::ERROR_OK, payload.Pass());
 
   DoSendResponse(params);
 }
 
-void ScriptMessage::Error(ScriptMessageRequest::Error code,
-                          const std::string& msg) {
-  DCHECK(code != ScriptMessageRequest::ERROR_OK) <<
+void ScriptMessage::Error(ScriptMessageParams::Error code,
+                          scoped_ptr<base::Value> payload) {
+  DCHECK(code != ScriptMessageParams::ERROR_OK) <<
       "Use Reply() for non-error responses";
   if (has_responded_) {
     return;
@@ -81,10 +82,8 @@ void ScriptMessage::Error(ScriptMessageRequest::Error code,
 
   has_responded_ = true;
 
-  OxideMsg_SendMessage_Params params;
-  MakeParams(&params);
-  params.error = code;
-  params.payload = msg;
+  ScriptMessageParams params;
+  MakeResponseParams(&params, code, payload.Pass());
 
   DoSendResponse(params);
 }

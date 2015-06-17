@@ -95,6 +95,8 @@
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
         'browser/oxide_qt_user_script.h',
+        'browser/oxide_qt_variant_value_converter.cc',
+        'browser/oxide_qt_variant_value_converter.h',
         'browser/oxide_qt_web_context.cc',
         'browser/oxide_qt_web_context.h',
         'browser/oxide_qt_web_context_menu.cc',

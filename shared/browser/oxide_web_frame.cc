@@ -32,6 +32,9 @@
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 
+#include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_script_message_params.h"
+
 #include "oxide_script_message_request_impl_browser.h"
 #include "oxide_web_view.h"
 
@@ -78,9 +81,14 @@ void WebFrame::WillDestroy() {
       continue;
     }
 
+    scoped_ptr<base::ListValue> wrapped_payload(new base::ListValue());
+    wrapped_payload->Set(
+        0,
+        make_scoped_ptr(new base::StringValue(
+          "The frame disappeared whilst waiting for a response")));
     request->OnReceiveResponse(
-        "The frame disappeared whilst waiting for a response",
-        ScriptMessageRequest::ERROR_INVALID_DESTINATION);
+        wrapped_payload.get(),
+        ScriptMessageParams::ERROR_INVALID_DESTINATION);
   }
 }
 
@@ -193,18 +201,26 @@ WebFrame* WebFrame::GetChildAt(size_t index) const {
 scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
     const GURL& context,
     const std::string& msg_id,
-    const std::string& args) {
+    scoped_ptr<base::Value> payload) {
   if (destroyed_) {
-    return scoped_ptr<ScriptMessageRequestImplBrowser>();
+    return nullptr;
   }
 
   scoped_ptr<ScriptMessageRequestImplBrowser> request(
       new ScriptMessageRequestImplBrowser(this,
-                                          next_message_serial_++,
-                                          context, true, msg_id, args));
+                                          next_message_serial_++));
 
-  if (!request->SendMessage()) {
-    return scoped_ptr<ScriptMessageRequestImplBrowser>();
+  ScriptMessageParams params;
+  PopulateScriptMessageParams(request->serial(),
+                              true,
+                              context,
+                              msg_id,
+                              payload.Pass(),
+                              &params);
+
+  if (!render_frame_host_->Send(new OxideMsg_SendMessage(
+          render_frame_host_->GetRoutingID(), params))) {
+    return nullptr;
   }
 
   current_script_message_requests_.push_back(request.get());
@@ -214,15 +230,21 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
 
 bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
-                                  const std::string& args) {
+                                  scoped_ptr<base::Value> payload) {
   if (destroyed_) {
     return false;
   }
 
-  scoped_ptr<ScriptMessageRequestImplBrowser> request(
-      new ScriptMessageRequestImplBrowser(this, next_message_serial_++,
-                                          context, false, msg_id, args));
-  return request->SendMessage();
+  ScriptMessageParams params;
+  PopulateScriptMessageParams(next_message_serial_++,
+                              false,
+                              context,
+                              msg_id,
+                              payload.Pass(),
+                              &params);
+
+  return render_frame_host_->Send(
+      new OxideMsg_SendMessage(render_frame_host_->GetRoutingID(), params));
 }
 
 void WebFrame::RemoveScriptMessageRequest(
@@ -231,10 +253,7 @@ void WebFrame::RemoveScriptMessageRequest(
       std::find(current_script_message_requests_.begin(),
                 current_script_message_requests_.end(),
                 req);
-  if (it == current_script_message_requests_.end()) {
-    // can happen for non "persisted" requests e.g. SendMessageNoReply
-    return;
-  }
+  DCHECK(it != current_script_message_requests_.end());
 
   if (!destroyed_) {
     current_script_message_requests_.erase(it);

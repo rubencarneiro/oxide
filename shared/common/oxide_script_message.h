@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,14 +20,17 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/values.h"
 #include "url/gurl.h"
 
-#include "shared/common/oxide_script_message_request.h"
+#include "shared/common/oxide_script_message_params.h"
 
-class OxideMsg_SendMessage_Params;
+namespace base {
+class ListValue;
+class Value;
+}
 
 namespace oxide {
 
@@ -45,14 +48,14 @@ class ScriptMessage :
     public base::RefCountedThreadSafe<ScriptMessage, ScriptMessageTraits> {
  public:
 
-  void Reply(const std::string& args);
-  void Error(ScriptMessageRequest::Error code,
-             const std::string& msg);
+  void Reply(scoped_ptr<base::Value> payload);
+  void Error(ScriptMessageParams::Error code,
+             scoped_ptr<base::Value> payload = base::Value::CreateNullValue());
 
   int serial() const { return serial_; }
   GURL context() const { return context_; }
   std::string msg_id() const { return msg_id_; }
-  std::string args() const { return args_; }
+  base::Value* payload() const { return payload_.get(); }
   bool want_reply() const { return !has_responded_; }
 
  protected:
@@ -61,20 +64,22 @@ class ScriptMessage :
                 const GURL& context,
                 bool want_reply,
                 const std::string& msg_id,
-                const std::string& args);
+                base::ListValue* wrapped_payload);
   virtual ~ScriptMessage();
 
  private:
-  virtual void DoSendResponse(const OxideMsg_SendMessage_Params& params) = 0;
-  void MakeParams(OxideMsg_SendMessage_Params* params);
+  virtual void DoSendResponse(const ScriptMessageParams& params) = 0;
+  void MakeResponseParams(ScriptMessageParams* params,
+                          ScriptMessageParams::Error error,
+                          scoped_ptr<base::Value> payload);
 
   int serial_;
   GURL context_;
   std::string msg_id_;
-  std::string args_;
+  scoped_ptr<base::Value> payload_;
   bool has_responded_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessage);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessage);
 };
 
 } // namespace oxide

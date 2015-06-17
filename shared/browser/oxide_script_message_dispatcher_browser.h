@@ -34,9 +34,11 @@ class ScriptMessageDispatcherBrowser final :
   ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
   ~ScriptMessageDispatcherBrowser();
 
+ private:
+  void OnReceiveScriptMessage(const IPC::Message& message);
+
   bool OnMessageReceived(const IPC::Message& message) final;
 
- private:
   const int render_process_id_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageDispatcherBrowser);

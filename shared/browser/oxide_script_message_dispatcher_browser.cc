@@ -47,56 +47,51 @@ namespace {
 
 class MessageReceiver {
  public:
-  MessageReceiver(int render_process_id, int routing_id) :
-      render_process_id_(render_process_id),
-      routing_id_(routing_id) {}
+  MessageReceiver(int render_process_id, const IPC::Message& message) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&MessageReceiver::ReceiveMessageOnUIThread,
+                   base::Owned(this),
+                   render_process_id,
+                   message));
+  }
 
   ~MessageReceiver() {}
 
-  void OnReceiveMessage(const OxideMsg_SendMessage_Params& params) {
-    params_ = params;
-
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI, FROM_HERE,
-        base::Bind(&MessageReceiver::ReceiveMessageOnUIThread,
-                   base::Owned(this)));
-  }
-
-  void ReceiveMessageOnUIThread() {
-    bool is_reply = params_.type == OxideMsg_SendMessage_Type::Reply;
-
+  void ReceiveMessageOnUIThread(int render_process_id,
+                                const IPC::Message& message) {
     content::RenderFrameHost* rfh =
-        content::RenderFrameHost::FromID(render_process_id_, routing_id_);
+        content::RenderFrameHost::FromID(render_process_id,
+                                         message.routing_id());
     if (!rfh) {
-      if (!is_reply) {
-        ReturnError(nullptr, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
-                    "Could not find a RenderFrameHost corresponding to the "
-                    "specified routing ID");
-      }
       return;
     }
 
-    if (!OxideMsg_SendMessage_Type::is_valid(params_.type)) {
-      LOG(ERROR) << "Renderer sent bad message type";
+    OxideHostMsg_SendMessage::Param p;
+    if (!OxideHostMsg_SendMessage::Read(&message, &p)) {
       rfh->GetProcess()->ShutdownForBadMessage();
       return;
     }
 
+    ScriptMessageParams params(std::move(base::get<0>(p)));
+
+    bool is_reply = params.type == ScriptMessageParams::TYPE_REPLY;
+
     WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
     if (!frame) {
-      if (!is_reply) {
-        ReturnError(rfh, ScriptMessageRequest::ERROR_INVALID_DESTINATION,
-                    "The RenderFrameHost does not have a corresponding WebFrame");
-      }
+      rfh->GetProcess()->ShutdownForBadMessage();
       return;
     }
 
     if (!is_reply) {
       scoped_refptr<ScriptMessageImplBrowser> message(
-          new ScriptMessageImplBrowser(frame, params_.serial,
-                                       GURL(params_.context),
-                                       params_.type == OxideMsg_SendMessage_Type::Message,
-                                       params_.msg_id, params_.payload));
+          new ScriptMessageImplBrowser(frame,
+                                       params.serial,
+                                       params.context,
+                                       params.type == ScriptMessageParams::TYPE_MESSAGE,
+                                       params.msg_id,
+                                       &params.wrapped_payload));
       WebFrame* target = frame;
       WebView* view = frame->view();
 
@@ -110,8 +105,7 @@ class MessageReceiver {
       }
 
       if (!target && !TryDispatchMessageToTarget(view, message.get())) {
-        message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
-                       "Could not find a handler for message");
+        message->Error(ScriptMessageParams::ERROR_NO_HANDLER);
       }
 
       return;
@@ -121,9 +115,9 @@ class MessageReceiver {
           frame->current_script_message_requests().begin();
          it != frame->current_script_message_requests().end(); ++it) {
       ScriptMessageRequestImplBrowser* request = *it;
-      if (request->serial() == params_.serial &&
+      if (request->serial() == params.serial &&
           request->IsWaitingForResponse()) {
-        request->OnReceiveResponse(params_.payload, params_.error);
+        request->OnReceiveResponse(&params.wrapped_payload, params.error);
         return;
       }
     }
@@ -157,40 +151,27 @@ class MessageReceiver {
 
     return false;
   }
-
-  void ReturnError(content::RenderFrameHost* rfh,
-                   ScriptMessageRequest::Error type,
-                   const std::string& msg) {
-    OxideMsg_SendMessage_Params params;
-    params.context = params_.context;
-    params.serial = params_.serial;
-    params.type = OxideMsg_SendMessage_Type::Reply;
-    params.msg_id = params_.msg_id;
-
-    params.error = type;
-    params.payload = msg;
-
-    content::RenderProcessHost* process = nullptr;
-    if (rfh) {
-      process = rfh->GetProcess();
-    }
-    if (!process) {
-      process = content::RenderProcessHost::FromID(render_process_id_);
-    }
-    if (!process) {
-      return;
-    }
-
-    process->Send(new OxideMsg_SendMessage(routing_id_, params));
-  }
-
-  OxideMsg_SendMessage_Params params_;
-
-  const int render_process_id_;
-  const int routing_id_;
 };
 
 } // namespace
+
+void ScriptMessageDispatcherBrowser::OnReceiveScriptMessage(
+    const IPC::Message& message) {
+  new MessageReceiver(render_process_id_, message);
+}
+
+bool ScriptMessageDispatcherBrowser::OnMessageReceived(
+    const IPC::Message& message) {
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherBrowser, message)
+    IPC_MESSAGE_HANDLER_GENERIC(OxideHostMsg_SendMessage,
+                                OnReceiveScriptMessage(message))
+    IPC_MESSAGE_UNHANDLED(handled = false)
+    (void)param__;
+  IPC_END_MESSAGE_MAP()
+
+  return handled;
+}
 
 ScriptMessageDispatcherBrowser::ScriptMessageDispatcherBrowser(
     content::RenderProcessHost* render_process_host) :
@@ -198,19 +179,5 @@ ScriptMessageDispatcherBrowser::ScriptMessageDispatcherBrowser(
     render_process_id_(render_process_host->GetID()) {}
 
 ScriptMessageDispatcherBrowser::~ScriptMessageDispatcherBrowser() {}
-
-bool ScriptMessageDispatcherBrowser::OnMessageReceived(
-    const IPC::Message& message) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherBrowser, message)
-    IPC_MESSAGE_FORWARD(OxideHostMsg_SendMessage,
-                        new MessageReceiver(render_process_id_,
-                                            message.routing_id()),
-                        MessageReceiver::OnReceiveMessage)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-
-  return handled;
-}
 
 } // namespace oxide

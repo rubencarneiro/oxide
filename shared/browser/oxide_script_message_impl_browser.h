@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,36 +20,41 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 
 #include "shared/common/oxide_script_message.h"
 
 class GURL;
 
+namespace base {
+class ListValue;
+}
+
 namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageImplBrowser final : public ScriptMessage {
+class ScriptMessageImplBrowser : public ScriptMessage {
  public:
   ScriptMessageImplBrowser(WebFrame* source_frame,
                            int serial,
                            const GURL& context,
                            bool want_reply,
                            const std::string& msg_is,
-                           const std::string& args);
+                           base::ListValue* wrapped_payload);
 
   WebFrame* source_frame() const { return source_frame_.get(); }  
 
  private:
   ~ScriptMessageImplBrowser();
-  void DoSendResponse(const OxideMsg_SendMessage_Params& params) final;
+
+  // ScriptMessage implementation
+  void DoSendResponse(const ScriptMessageParams& params) override;
 
   base::WeakPtr<WebFrame> source_frame_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageImplBrowser);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageImplBrowser);
 };
 
 } // namespace oxide
