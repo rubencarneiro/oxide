@@ -28,6 +28,8 @@ OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
     : q_ptr(nullptr),
       login_delegate_(login_delegate) {
+  // Use of base::Unretained is safe here because we clear the callback in the
+  // destructor, so that the login delegate can not call it anymore
   login_delegate->SetCancelledCallback(
         base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
                    base::Unretained(this)));
@@ -50,7 +52,11 @@ OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
   d->q_ptr = this;
 }
 
-OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {}
+OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {
+  Q_D(OxideQBasicAuthenticationRequest);
+
+  d->login_delegate_->SetCancelledCallback(base::Closure());
+}
 
 QString OxideQBasicAuthenticationRequest::host() const {
   Q_D(const OxideQBasicAuthenticationRequest);
