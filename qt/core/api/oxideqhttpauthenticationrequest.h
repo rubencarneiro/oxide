@@ -31,8 +31,8 @@ namespace oxide {
 
 class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   Q_OBJECT
-  Q_PROPERTY(QString host READ host NOTIFY hostChanged)
-  Q_PROPERTY(QString realm READ realm NOTIFY realmChanged)
+  Q_PROPERTY(QString host READ host CONSTANT)
+  Q_PROPERTY(QString realm READ realm CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQHttpAuthenticationRequest)
   Q_DISABLE_COPY(OxideQHttpAuthenticationRequest)
@@ -49,8 +49,6 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   Q_INVOKABLE void deny();
 
  Q_SIGNALS:
-  void hostChanged() const;
-  void realmChanged() const;
   void cancelled() const;
 
  private:
