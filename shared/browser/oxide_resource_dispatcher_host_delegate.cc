@@ -257,10 +257,8 @@ ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
     net::AuthChallengeInfo* auth_info,
     net::URLRequest* request)
     : request_(request) {
-  if (auth_info) {
-    host_ = auth_info->challenger.ToString();
-    realm_ = auth_info->realm;
-  }
+  host_ = auth_info->challenger.ToString();
+  realm_ = auth_info->realm;
 
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
