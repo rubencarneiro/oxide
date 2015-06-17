@@ -24,19 +24,19 @@
 #include "oxideqbasicauthenticationrequest.h"
 #include "oxideqbasicauthenticationrequest_p.h"
 
-OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate
-    (oxide::ResourceDispatcherHostLoginDelegate* login_delegate) :
-    q_ptr(nullptr),
-    login_delegate_(login_delegate) {
-    if (login_delegate) {
-        login_delegate->SetCancelledCallback(
-            base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
-                       base::Unretained(this)));
-    }
+OxideQBasicAuthenticationRequestPrivate::OxideQBasicAuthenticationRequestPrivate(
+    oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
+    : q_ptr(nullptr),
+      login_delegate_(login_delegate) {
+  if (login_delegate) {
+    login_delegate->SetCancelledCallback(
+          base::Bind(&OxideQBasicAuthenticationRequestPrivate::RequestCancelled,
+                     base::Unretained(this)));
+  }
 }
 
-OxideQBasicAuthenticationRequestPrivate::~OxideQBasicAuthenticationRequestPrivate
-    () {}
+OxideQBasicAuthenticationRequestPrivate::~OxideQBasicAuthenticationRequestPrivate() {
+}
 
 void OxideQBasicAuthenticationRequestPrivate::RequestCancelled() {
   Q_Q(OxideQBasicAuthenticationRequest);
@@ -45,12 +45,11 @@ void OxideQBasicAuthenticationRequestPrivate::RequestCancelled() {
 }
 
 OxideQBasicAuthenticationRequest::OxideQBasicAuthenticationRequest(
-    oxide::ResourceDispatcherHostLoginDelegate* login_delegate) :
-    QObject(nullptr),
-    d_ptr(new OxideQBasicAuthenticationRequestPrivate(
-              login_delegate)) {
-    Q_D(OxideQBasicAuthenticationRequest);
-    d->q_ptr = this;
+    oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
+    : QObject(nullptr),
+      d_ptr(new OxideQBasicAuthenticationRequestPrivate(login_delegate)) {
+  Q_D(OxideQBasicAuthenticationRequest);
+  d->q_ptr = this;
 }
 
 OxideQBasicAuthenticationRequest::~OxideQBasicAuthenticationRequest() {}

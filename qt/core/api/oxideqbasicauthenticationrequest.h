@@ -30,31 +30,31 @@ namespace oxide {
 }
 
 class Q_DECL_EXPORT OxideQBasicAuthenticationRequest : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QString host READ host NOTIFY hostChanged)
-    Q_PROPERTY(QString realm READ realm NOTIFY realmChanged)
+  Q_OBJECT
+  Q_PROPERTY(QString host READ host NOTIFY hostChanged)
+  Q_PROPERTY(QString realm READ realm NOTIFY realmChanged)
 
-    Q_DECLARE_PRIVATE(OxideQBasicAuthenticationRequest)
-    Q_DISABLE_COPY(OxideQBasicAuthenticationRequest)
+  Q_DECLARE_PRIVATE(OxideQBasicAuthenticationRequest)
+  Q_DISABLE_COPY(OxideQBasicAuthenticationRequest)
 
-   public:
-    OxideQBasicAuthenticationRequest(oxide::ResourceDispatcherHostLoginDelegate*
-                                     login_delegate);
-    ~OxideQBasicAuthenticationRequest();
+ public:
+  OxideQBasicAuthenticationRequest(oxide::ResourceDispatcherHostLoginDelegate*
+                                   login_delegate);
+  ~OxideQBasicAuthenticationRequest();
 
-    QString host() const;
-    QString realm() const;
+  QString host() const;
+  QString realm() const;
 
-    Q_INVOKABLE void allow(const QString& username, const QString& password);
-    Q_INVOKABLE void deny();
+  Q_INVOKABLE void allow(const QString& username, const QString& password);
+  Q_INVOKABLE void deny();
 
-   Q_SIGNALS:
-    void hostChanged() const;
-    void realmChanged() const;
-    void cancelled() const;
+ Q_SIGNALS:
+  void hostChanged() const;
+  void realmChanged() const;
+  void cancelled() const;
 
-   private:
-    QScopedPointer<OxideQBasicAuthenticationRequestPrivate> d_ptr;
+ private:
+  QScopedPointer<OxideQBasicAuthenticationRequestPrivate> d_ptr;
 };
 
 #endif // OXIDE_Q_BASIC_AUTHENTICATION_REQUEST

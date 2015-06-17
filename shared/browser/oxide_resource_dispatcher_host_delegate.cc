@@ -195,8 +195,8 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
           params.render_process_id, params.render_view_id);
   if (!rvh) {
     LOG(ERROR) << "Invalid or non-existent render_process_id & render_view_id:"
-	       << params.render_process_id << ", " << params.render_view_id
-	       << "during download url delegate dispatch";
+               << params.render_process_id << ", " << params.render_view_id
+               << "during download url delegate dispatch";
     return;
   }
 
@@ -245,8 +245,8 @@ content::ResourceDispatcherHostLoginDelegate*
     ResourceDispatcherHostDelegate::CreateLoginDelegate(
     net::AuthChallengeInfo* auth_info,
     net::URLRequest* request) {
-    // Chromium will own the delegate
-    return new ResourceDispatcherHostLoginDelegate(auth_info, request);
+  // Chromium will own the delegate
+  return new ResourceDispatcherHostLoginDelegate(auth_info, request);
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
@@ -254,128 +254,128 @@ ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}
 ResourceDispatcherHostDelegate::~ResourceDispatcherHostDelegate() {}
 
 ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
-                                         net::AuthChallengeInfo* auth_info,
-                                         net::URLRequest* request) :
-                                         request_(request) {
-    if (auth_info) {
-        host_ = auth_info->challenger.ToString();
-        realm_ = auth_info->realm;
-    }
+    net::AuthChallengeInfo* auth_info,
+    net::URLRequest* request)
+    : request_(request) {
+  if (auth_info) {
+    host_ = auth_info->challenger.ToString();
+    realm_ = auth_info->realm;
+  }
 
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
-                   this));
+  content::BrowserThread::PostTask(
+      content::BrowserThread::UI,
+      FROM_HERE,
+      base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
+          this));
 }
 
 ResourceDispatcherHostLoginDelegate::~ResourceDispatcherHostLoginDelegate() {}
 
 void ResourceDispatcherHostLoginDelegate::SetCancelledCallback(
-        const base::Closure& cancelled_callback) {
-    cancelled_callback_ = cancelled_callback;
+    const base::Closure& cancelled_callback) {
+  cancelled_callback_ = cancelled_callback;
 }
 
 void ResourceDispatcherHostLoginDelegate::OnRequestCancelled()
 {
-    request_ = nullptr;
+  request_ = nullptr;
 
-    if (!cancelled_callback_.is_null()) {
-        content::BrowserThread::PostTask(
-            content::BrowserThread::IO,
-            FROM_HERE,
-            cancelled_callback_);
-    }
+  if (!cancelled_callback_.is_null()) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::IO,
+        FROM_HERE,
+        cancelled_callback_);
+  }
 }
 
 void ResourceDispatcherHostLoginDelegate::Deny() {
-    if (!request_) {
-        return;
-    }
+  if (!request_) {
+    return;
+  }
 
-    if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
-        content::BrowserThread::PostTask(
-            content::BrowserThread::IO,
-            FROM_HERE,
-            base::Bind(&ResourceDispatcherHostLoginDelegate::Deny, this));
-        return;
-    }
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::IO,
+        FROM_HERE,
+        base::Bind(&ResourceDispatcherHostLoginDelegate::Deny, this));
+    return;
+  }
 
-    request_->CancelAuth();
-    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
-                                                                      request_);
-    request_ = nullptr;
+  request_->CancelAuth();
+  content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
+      request_);
+  request_ = nullptr;
 }
 
 void ResourceDispatcherHostLoginDelegate::Allow(std::string username,
                                                 std::string password)
 {
-    if (!request_) {
-        return;
-    }
+  if (!request_) {
+    return;
+  }
 
-    if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
-        content::BrowserThread::PostTask(
-            content::BrowserThread::IO,
-            FROM_HERE,
-            base::Bind(&ResourceDispatcherHostLoginDelegate::Allow, this,
-                       username, password));
-        return;
-    }
+  if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::IO,
+        FROM_HERE,
+        base::Bind(&ResourceDispatcherHostLoginDelegate::Allow, this,
+                   username, password));
+    return;
+  }
 
-    request_->SetAuth(net::AuthCredentials(base::UTF8ToUTF16(username),
-                                           base::UTF8ToUTF16(password)));
-    content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
-                                                                      request_);
-    request_ = nullptr;
+  request_->SetAuth(net::AuthCredentials(base::UTF8ToUTF16(username),
+                                         base::UTF8ToUTF16(password)));
+  content::ResourceDispatcherHost::Get()->ClearLoginDelegateForRequest(
+        request_);
+  request_ = nullptr;
 }
 
 WebView* ResourceDispatcherHostLoginDelegate::GetWebView(
-        net::URLRequest* request) {
-    int processId;
-    int frameId;
-    content::ResourceRequestInfo::GetRenderFrameForRequest(request, &processId,
-                                                           &frameId);
-    content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(processId,
-                                                                     frameId);
-    if (!rfh) {
-      return nullptr;
-    }
+    net::URLRequest* request) {
+  int processId;
+  int frameId;
+  content::ResourceRequestInfo::GetRenderFrameForRequest(request, &processId,
+                                                         &frameId);
+  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(processId,
+                                                                   frameId);
+  if (!rfh) {
+    return nullptr;
+  }
 
-    content::RenderViewHost* rvh = rfh->GetRenderViewHost();
-    if (!rvh) {
-      return nullptr;
-    }
+  content::RenderViewHost* rvh = rfh->GetRenderViewHost();
+  if (!rvh) {
+    return nullptr;
+  }
 
-    return WebView::FromRenderViewHost(rvh);
+  return WebView::FromRenderViewHost(rvh);
 }
 
 void ResourceDispatcherHostLoginDelegate::DispatchRequest() {
-    Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
-    if (!request_) {
-        // While we were switching threads the request was cancelled, so we
-        // don't need to do anything else
-        return;
-    }
+  if (!request_) {
+    // While we were switching threads the request was cancelled, so we
+    // don't need to do anything else
+    return;
+  }
 
-    WebView* webview = GetWebView(request_);
-    if (!webview) {
-      // Deny the request if we can not get access to the webview, as there is
-      // no other sensible thing to do.
-      Deny();
-      return;
-    }
+  WebView* webview = GetWebView(request_);
+  if (!webview) {
+    // Deny the request if we can not get access to the webview, as there is
+    // no other sensible thing to do.
+    Deny();
+    return;
+  }
 
-    webview->BasicAuthenticationRequested(this);
+  webview->BasicAuthenticationRequested(this);
 }
 
 std::string ResourceDispatcherHostLoginDelegate::Host() const {
-    return host_;
+  return host_;
 }
 
 std::string ResourceDispatcherHostLoginDelegate::Realm() const {
-    return realm_;
+  return realm_;
 }
 
 } // namespace oxide

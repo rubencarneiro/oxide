@@ -35,7 +35,7 @@ class OxideQBasicAuthenticationRequestPrivate {
 
  private:
   OxideQBasicAuthenticationRequestPrivate(
-          oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
+      oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
   void RequestCancelled();
 
   OxideQBasicAuthenticationRequest* q_ptr;
