@@ -141,6 +141,7 @@ TestWebView {
       webView.url = data.url;
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
+      webView.waitFor(function() { return !webView.loading; });
 
       _verify_worker_messages([
         { url: data.url, method: "GET", requestCancelled: false, isMainFrame: true, hasUA: true, UA: "Oxide Test", hasFoo: false, Foo: "" },
