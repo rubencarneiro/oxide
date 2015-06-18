@@ -82,13 +82,9 @@ void WebFrame::WillDestroy() {
     }
 
     scoped_ptr<base::ListValue> wrapped_payload(new base::ListValue());
-    wrapped_payload->Set(
-        0,
-        make_scoped_ptr(new base::StringValue(
-          "The frame disappeared whilst waiting for a response")));
     request->OnReceiveResponse(
         wrapped_payload.get(),
-        ScriptMessageParams::ERROR_INVALID_DESTINATION);
+        ScriptMessageParams::ERROR_HANDLER_DID_NOT_RESPOND);
   }
 }
 

@@ -75,8 +75,7 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
 
   if (!mm.get()) {
     if (!is_reply) {
-      ReturnError(ScriptMessageParams::ERROR_INVALID_DESTINATION,
-                  "Could not find a script context to deliver the message to",
+      ReturnError(ScriptMessageParams::ERROR_INVALID_CONTEXT,
                   params);
     }
     return;
@@ -122,7 +121,6 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
 
 void ScriptMessageDispatcherRenderer::ReturnError(
     ScriptMessageParams::Error error,
-    const std::string& msg,
     const ScriptMessageParams& orig) {
   ScriptMessageParams params;
   params.context = orig.context;
@@ -130,10 +128,6 @@ void ScriptMessageDispatcherRenderer::ReturnError(
   params.type = ScriptMessageParams::TYPE_REPLY;
   params.error = error;
   params.msg_id = orig.msg_id;
-
-  scoped_ptr<base::Value> msg_value = make_scoped_ptr(
-      new base::StringValue(msg));
-  params.wrapped_payload.Set(0, msg_value.Pass());
 
   Send(new OxideHostMsg_SendMessage(routing_id(), params));
 }

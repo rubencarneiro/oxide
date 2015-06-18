@@ -57,7 +57,6 @@ class ScriptMessageDispatcherRenderer : public content::RenderFrameObserver {
   void OnReceiveMessage(const IPC::Message& message);
 
   void ReturnError(ScriptMessageParams::Error error,
-                   const std::string& msg,
                    const ScriptMessageParams& orig);
 
   // content::RenderFrameObserver implementation

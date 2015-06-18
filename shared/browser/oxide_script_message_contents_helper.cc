@@ -107,7 +107,7 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     ReturnError(render_frame_host,
-                ScriptMessageParams::ERROR_INVALID_DESTINATION,
+                ScriptMessageParams::ERROR_NO_HANDLER,
                 params);
     return;
   }

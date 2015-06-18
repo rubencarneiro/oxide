@@ -50,8 +50,8 @@ struct ScriptMessageParams {
   enum Error {
     ERROR_OK,
 
-    // Destination frame or context not found
-    ERROR_INVALID_DESTINATION,
+    // Destination context not found (only applicable for browser -> content)
+    ERROR_INVALID_CONTEXT,
 
     // The message handler threw an exception
     ERROR_UNCAUGHT_EXCEPTION,
