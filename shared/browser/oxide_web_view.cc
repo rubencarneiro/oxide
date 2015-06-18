@@ -566,7 +566,14 @@ content::WebContents* WebView::OpenURLFromTab(
       opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
-  contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
+  contents_params.opener_render_process_id =
+      web_contents_->GetRenderProcessHost()->GetID();
+  // XXX(chrisccoulson): This is probably wrong, but we're going to revisit
+  //  navigations anyway, and opener_suppressed is currently always true so
+  //  this is ignored
+  contents_params.opener_render_frame_id =
+      web_contents_->GetMainFrame()->GetRoutingID();
+  contents_params.opener_suppressed = opener_suppressed;
 
   scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));

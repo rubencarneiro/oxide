@@ -119,6 +119,8 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
 
   v8::Local<v8::Script> script(v8::Script::Compile(wrapped_src));
 
+  blink::WebScopedMicrotaskSuppression mts;
+
   v8::TryCatch try_catch;
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());
   if (try_catch.HasCaught()) {
@@ -144,14 +146,12 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
     exports
   };
 
-  {
-    blink::WebScopedMicrotaskSuppression mts;
-    frame_->GetWebFrame()->callFunctionEvenIfScriptDisabled(
-        function,
-        GetV8Context()->Global(),
-        arraysize(argv),
-        argv);
-  }
+  frame_->GetWebFrame()->callFunctionEvenIfScriptDisabled(
+      function,
+      GetV8Context()->Global(),
+      arraysize(argv),
+      argv);
+
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when running script function";
     return v8::Handle<v8::Object>();
