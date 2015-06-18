@@ -59,6 +59,7 @@ class ResourceDispatcherHostLoginDelegate
 private:
     friend class ResourceDispatcherHostDelegate;
     void DispatchRequest();
+    void DispatchCancelledCallback();
     WebView* GetWebView(net::URLRequest* request);
 
     net::URLRequest* request_;

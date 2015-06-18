@@ -271,31 +271,44 @@ ResourceDispatcherHostLoginDelegate::~ResourceDispatcherHostLoginDelegate() {}
 
 void ResourceDispatcherHostLoginDelegate::SetCancelledCallback(
     const base::Closure& cancelled_callback) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
   cancelled_callback_ = cancelled_callback;
 }
 
-void ResourceDispatcherHostLoginDelegate::OnRequestCancelled()
-{
+void ResourceDispatcherHostLoginDelegate::OnRequestCancelled() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
   request_ = nullptr;
+
+  content::BrowserThread::PostTask(
+      content::BrowserThread::UI,
+      FROM_HERE,
+      base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchCancelledCallback,
+          this));
+}
+
+void ResourceDispatcherHostLoginDelegate::DispatchCancelledCallback() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   if (!cancelled_callback_.is_null()) {
     content::BrowserThread::PostTask(
-        content::BrowserThread::IO,
+        content::BrowserThread::UI,
         FROM_HERE,
         cancelled_callback_);
   }
 }
 
 void ResourceDispatcherHostLoginDelegate::Deny() {
-  if (!request_) {
-    return;
-  }
-
   if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
     content::BrowserThread::PostTask(
         content::BrowserThread::IO,
         FROM_HERE,
         base::Bind(&ResourceDispatcherHostLoginDelegate::Deny, this));
+    return;
+  }
+
+  if (!request_) {
     return;
   }
 
@@ -308,16 +321,16 @@ void ResourceDispatcherHostLoginDelegate::Deny() {
 void ResourceDispatcherHostLoginDelegate::Allow(std::string username,
                                                 std::string password)
 {
-  if (!request_) {
-    return;
-  }
-
   if (!content::BrowserThread::CurrentlyOn(content::BrowserThread::IO)) {
     content::BrowserThread::PostTask(
         content::BrowserThread::IO,
         FROM_HERE,
         base::Bind(&ResourceDispatcherHostLoginDelegate::Allow, this,
                    username, password));
+    return;
+  }
+
+  if (!request_) {
     return;
   }
 
