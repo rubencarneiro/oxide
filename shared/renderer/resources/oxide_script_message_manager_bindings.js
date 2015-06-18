@@ -16,11 +16,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 exports.sendMessage = function(id, payload) {
-  return sendMessageNative(true, id, payload);
+  return sendMessageNative(true, id, payload === undefined ? null : payload);
 }
 
 exports.sendMessageNoReply = function(id, payload) {
-  sendMessageNative(false, id, payload);
+  sendMessageNative(false, id, payload === undefined ? null : payload);
 }
 
 exports.addMessageHandler = function(id, handler) {

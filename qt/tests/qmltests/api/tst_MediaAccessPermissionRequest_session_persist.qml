@@ -51,7 +51,7 @@ Item {
           msgId: "GUM-RESPONSE"
           contexts: [ "oxide://testutils/" ]
           callback: function(msg) {
-            _internal.lastError = msg.args.error;
+            _internal.lastError = msg.payload;
           }
         }
       ]
