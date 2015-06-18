@@ -152,7 +152,7 @@ WebView* ResourceDispatcherHostLoginDelegate::GetWebView(
 }
 
 void ResourceDispatcherHostLoginDelegate::DispatchRequest(WebView* webview) {
-  Q_ASSERT(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   webview->HttpAuthenticationRequested(this);
 }
