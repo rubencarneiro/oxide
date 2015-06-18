@@ -22,7 +22,6 @@
 #include "base/macros.h"
 #include "base/strings/string16.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
-#include "content/public/browser/resource_dispatcher_host_login_delegate.h"
 
 namespace content {
 class ResourceContext;
@@ -37,36 +36,7 @@ class CookieStore;
 
 namespace oxide {
 
-class ResourceDispatcherHostDelegate;
-class WebView;
-
-class ResourceDispatcherHostLoginDelegate
-    : public content::ResourceDispatcherHostLoginDelegate {
- public:
-    ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,
-                                        net::URLRequest* request);
-    ~ResourceDispatcherHostLoginDelegate() override;
-    void OnRequestCancelled() override;
-
-    void Deny();
-    void Allow(std::string username, std::string password);
-
-    void SetCancelledCallback(const base::Closure& cancelled_callback);
-
-    std::string Host() const;
-    std::string Realm() const;
-
-private:
-    friend class ResourceDispatcherHostDelegate;
-    void DispatchRequest();
-    void DispatchCancelledCallback();
-    WebView* GetWebView(net::URLRequest* request);
-
-    net::URLRequest* request_;
-    std::string host_;
-    std::string realm_;
-    base::Closure cancelled_callback_;
-};
+class ResourceDispatcherHostLoginDelegate;
 
 class ResourceDispatcherHostDelegate
     : public content::ResourceDispatcherHostDelegate {

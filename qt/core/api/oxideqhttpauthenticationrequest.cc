@@ -18,7 +18,7 @@
 #include "base/bind.h"
 #include "base/callback.h"
 
-#include "shared/browser/oxide_resource_dispatcher_host_delegate.h"
+#include "shared/browser/oxide_resource_dispatcher_host_login_delegate.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
 #include "oxideqhttpauthenticationrequest.h"
