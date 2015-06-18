@@ -28,14 +28,17 @@ OxideQHttpAuthenticationRequestPrivate::OxideQHttpAuthenticationRequestPrivate(
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
     : q_ptr(nullptr),
       login_delegate_(login_delegate) {
-  // Use of base::Unretained is safe here because we clear the callback in the
-  // destructor, so that the login delegate can not call it anymore
+  // Use of base::Unretained is safe here because we clear the callback
+  // in the destructor, so that it can not called back on a deleted object
   login_delegate->SetCancelledCallback(
         base::Bind(&OxideQHttpAuthenticationRequestPrivate::RequestCancelled,
                    base::Unretained(this)));
 }
 
 OxideQHttpAuthenticationRequestPrivate::~OxideQHttpAuthenticationRequestPrivate() {
+  if (login_delegate_) {
+    login_delegate_->SetCancelledCallback(base::Closure());
+  }
 }
 
 void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
@@ -52,11 +55,7 @@ OxideQHttpAuthenticationRequest::OxideQHttpAuthenticationRequest(
   d->q_ptr = this;
 }
 
-OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {
-  Q_D(OxideQHttpAuthenticationRequest);
-
-  d->login_delegate_->SetCancelledCallback(base::Closure());
-}
+OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {}
 
 QString OxideQHttpAuthenticationRequest::host() const {
   Q_D(const OxideQHttpAuthenticationRequest);
@@ -83,6 +82,7 @@ void OxideQHttpAuthenticationRequest::deny() {
 
   if (d->login_delegate_) {
     d->login_delegate_->Deny();
+    d->login_delegate_ = nullptr;
   }
 }
 
@@ -92,5 +92,6 @@ void OxideQHttpAuthenticationRequest::allow(const QString &username,
 
   if (d->login_delegate_) {
     d->login_delegate_->Allow(username.toStdString(), password.toStdString());
+    d->login_delegate_ = nullptr;
   }
 }
