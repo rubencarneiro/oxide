@@ -63,10 +63,14 @@ void ScriptMessageRequest::SetRequest(
   request_->SetReplyCallback(
       base::Bind(
         &ScriptMessageRequest::ReceiveReplyCallback,
+        // The callback cannot run after |this| is deleted, as it exclusively
+        // owns |request_|
         base::Unretained(this)));
   request_->SetErrorCallback(
       base::Bind(
         &ScriptMessageRequest::ReceiveErrorCallback,
+        // The callback cannot run after |this| is deleted, as it exclusively
+        // owns |request_|
         base::Unretained(this)));
 }
 

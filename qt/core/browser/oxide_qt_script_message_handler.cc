@@ -80,6 +80,8 @@ void ScriptMessageHandler::setContexts(const QList<QUrl>& contexts) {
 void ScriptMessageHandler::attachHandler() {
   handler_.SetCallback(
       base::Bind(&ScriptMessageHandler::ReceiveMessageCallback,
+                 // The callback cannot run after |this| is deleted, as it
+                 // exclusively owns |handler_|
                  base::Unretained(this)));
 }
 
