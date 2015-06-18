@@ -40,13 +40,11 @@ void ScriptMessageImplRenderer::DoSendResponse(
 ScriptMessageImplRenderer::ScriptMessageImplRenderer(
     ScriptMessageManager* mm,
     int serial,
-    bool want_reply,
     const std::string& msg_id,
     base::ListValue* wrapped_payload,
     const v8::Handle<v8::Object>& handle)
     : ScriptMessage(serial,
                     mm->GetContextURL(),
-                    want_reply,
                     msg_id,
                     wrapped_payload),
     ScriptReferencedObject<ScriptMessageImplRenderer>(mm, handle) {}

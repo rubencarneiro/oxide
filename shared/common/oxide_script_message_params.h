@@ -34,13 +34,14 @@ struct ScriptMessageParams {
   // the message handler or initiating a message lives
   GURL context;
 
+  static const int kInvalidSerial = -1;
+
   // The message serial is used to identify replies and deliver them
   // to the correct request
   int serial;
 
   enum Type {
     TYPE_MESSAGE,
-    TYPE_MESSAGE_NO_REPLY,
     TYPE_REPLY
   };
 
@@ -79,7 +80,6 @@ struct ScriptMessageParams {
 };
 
 void PopulateScriptMessageParams(int serial,
-                                 bool expects_reply,
                                  const GURL& context,
                                  const std::string& msg_id,
                                  scoped_ptr<base::Value> payload,

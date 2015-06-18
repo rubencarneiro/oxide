@@ -62,7 +62,6 @@ class ScriptMessage :
   friend struct ScriptMessageTraits;
   ScriptMessage(int serial,
                 const GURL& context,
-                bool want_reply,
                 const std::string& msg_id,
                 base::ListValue* wrapped_payload);
   virtual ~ScriptMessage();

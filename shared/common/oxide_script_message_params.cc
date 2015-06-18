@@ -22,12 +22,12 @@
 namespace oxide {
 
 ScriptMessageParams::ScriptMessageParams()
-    : serial(-1),
+    : serial(kInvalidSerial),
       type(TYPE_MESSAGE),
       error(ERROR_OK) {}
 
 ScriptMessageParams::ScriptMessageParams(ScriptMessageParams&& other)
-    : serial(-1),
+    : serial(kInvalidSerial),
       type(TYPE_MESSAGE),
       error(ERROR_OK) {
   std::swap(context, other.context);
@@ -40,20 +40,16 @@ ScriptMessageParams::ScriptMessageParams(ScriptMessageParams&& other)
 }
 
 void PopulateScriptMessageParams(int serial,
-                                 bool expects_reply,
                                  const GURL& context,
                                  const std::string& msg_id,
                                  scoped_ptr<base::Value> payload,
                                  ScriptMessageParams* params) {
   DCHECK(params);
-  DCHECK_GE(serial, 0);
   DCHECK(!msg_id.empty());
 
   params->context = context;
   params->serial = serial;
-  params->type = expects_reply ?
-      ScriptMessageParams::TYPE_MESSAGE :
-      ScriptMessageParams::TYPE_MESSAGE_NO_REPLY;
+  params->type = ScriptMessageParams::TYPE_MESSAGE;
   params->error = ScriptMessageParams::ERROR_OK;
   params->msg_id = msg_id;
   params->wrapped_payload.Set(0, payload ?

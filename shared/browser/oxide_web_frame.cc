@@ -208,7 +208,6 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
 
   ScriptMessageParams params;
   PopulateScriptMessageParams(request->serial(),
-                              true,
                               context,
                               msg_id,
                               payload.Pass(),
@@ -232,8 +231,7 @@ bool WebFrame::SendMessageNoReply(const GURL& context,
   }
 
   ScriptMessageParams params;
-  PopulateScriptMessageParams(next_message_serial_++,
-                              false,
+  PopulateScriptMessageParams(ScriptMessageParams::kInvalidSerial,
                               context,
                               msg_id,
                               payload.Pass(),

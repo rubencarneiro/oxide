@@ -117,7 +117,6 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
         new ScriptMessageImplBrowser(frame,
                                      params.serial,
                                      params.context,
-                                     params.type == ScriptMessageParams::TYPE_MESSAGE,
                                      params.msg_id,
                                      &params.wrapped_payload));
     WebFrame* target = frame;

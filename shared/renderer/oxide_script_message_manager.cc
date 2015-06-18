@@ -208,27 +208,34 @@ void ScriptMessageManager::SendMessageInner(
   v8::Local<v8::Boolean> msg_want_reply = msg_want_reply_as_val->ToBoolean();
   v8::Local<v8::String> msg_id = msg_id_as_val.As<v8::String>();
 
-  v8::Handle<v8::Object> handle(
-      script_message_request_object_handler_.NewInstance());
-
-  scoped_refptr<ScriptMessageRequestImplRenderer> req =
-      new ScriptMessageRequestImplRenderer(
-        this, next_message_id_++, handle);
-
   scoped_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
   scoped_ptr<base::Value> payload(
       converter->FromV8Value(msg_payload, isolate->GetCallingContext()));
 
+  v8::Handle<v8::Object> handle;
+  int serial = ScriptMessageParams::kInvalidSerial;
+
+  if (msg_want_reply->Value()) {
+    handle = script_message_request_object_handler_.NewInstance();
+
+    scoped_refptr<ScriptMessageRequestImplRenderer> req =
+        new ScriptMessageRequestImplRenderer(
+          this, next_message_id_++, handle);
+    serial = req->serial();
+  }
+
   ScriptMessageParams params;
-  PopulateScriptMessageParams(req->serial(),
-                              msg_want_reply->Value(),
+  PopulateScriptMessageParams(serial,
                               GetContextURL(),
                               V8StringToStdString(msg_id),
                               payload.Pass(),
                               &params);
 
-  frame()->Send(new OxideHostMsg_SendMessage(frame()->GetRoutingID(), params));
+  if (!frame()->Send(new OxideHostMsg_SendMessage(frame()->GetRoutingID(),
+                                                  params))) {
+    return;
+  }
 
   if (msg_want_reply->Value()) {
     args.GetReturnValue().Set(handle);

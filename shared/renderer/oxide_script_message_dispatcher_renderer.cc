@@ -90,7 +90,6 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
     scoped_refptr<ScriptMessageImplRenderer> message(
         new ScriptMessageImplRenderer(mm.get(),
                                       params.serial,
-                                      params.type == ScriptMessageParams::TYPE_MESSAGE,
                                       params.msg_id,
                                       &params.wrapped_payload,
                                       handle));

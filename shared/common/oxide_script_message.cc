@@ -43,13 +43,12 @@ void ScriptMessage::MakeResponseParams(ScriptMessageParams* params,
 
 ScriptMessage::ScriptMessage(int serial,
                              const GURL& context,
-                             bool want_reply,
                              const std::string& msg_id,
                              base::ListValue* wrapped_payload)
     : serial_(serial),
       context_(context),
       msg_id_(msg_id),
-      has_responded_(!want_reply) {
+      has_responded_(serial == ScriptMessageParams::kInvalidSerial) {
   if (!wrapped_payload->Remove(0, &payload_)) {
     payload_ = base::Value::CreateNullValue();
   }

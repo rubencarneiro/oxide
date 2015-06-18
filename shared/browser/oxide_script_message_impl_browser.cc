@@ -42,10 +42,9 @@ ScriptMessageImplBrowser::ScriptMessageImplBrowser(
     WebFrame* source_frame,
     int serial,
     const GURL& context,
-    bool want_reply,
     const std::string& msg_id,
     base::ListValue* wrapped_payload)
-    : ScriptMessage(serial, context, want_reply, msg_id, wrapped_payload),
+    : ScriptMessage(serial, context, msg_id, wrapped_payload),
       source_frame_(source_frame->GetWeakPtr()) {}
 
 } // namespace oxide
