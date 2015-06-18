@@ -80,7 +80,7 @@ TestApiHost.prototype = {
         this._frame.sendMessage("oxide://testutils/",
                                 "SEND-MESSAGE-TO-SELF",
                                 { id: id,
-                                  payload === undefined ? null : payload } ),
+                                  payload: payload === undefined ? null : payload } ),
         null, gcDuringWait);
     if (r.error > 0) {
       throw new MessageError(r.error, r.response);
