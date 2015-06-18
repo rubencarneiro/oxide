@@ -38,6 +38,12 @@ OxideQHttpAuthenticationRequestPrivate::OxideQHttpAuthenticationRequestPrivate(
 OxideQHttpAuthenticationRequestPrivate::~OxideQHttpAuthenticationRequestPrivate() {
   if (login_delegate_) {
     login_delegate_->SetCancelledCallback(base::Closure());
+
+    // Always deny the request when we are being destroyed, as it should be the
+    // default action in case the client ignores this request and it gets
+    // garbage collected.
+    // In case an action has already been taken, this is a essentially a no-op.
+    login_delegate_->Deny();
   }
 }
 

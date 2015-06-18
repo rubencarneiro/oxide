@@ -14,6 +14,7 @@ TestWebView {
   property int expectedRequests: 0
   property int totalCancellations: 0
   property int expectedCancellations: 0
+  property bool ignoreRequests: false
 
   // Since the browser caches credentials after the first successful
   // authentication, we make sure to use a different username for every test
@@ -23,8 +24,10 @@ TestWebView {
   property string credentialsUrl: baseUrl + "?" + currentUser + "_pass"
 
   onHttpAuthenticationRequested: {
-      lastRequest = request
-      lastRequest.cancelled.connect(updateCancellations)
+      if (!ignoreRequests) {
+          lastRequest = request
+          lastRequest.cancelled.connect(updateCancellations)
+      }
       totalRequests++
   }
 
@@ -38,6 +41,7 @@ TestWebView {
     when: windowShown
 
     function init() {
+        ignoreRequests = false
         if (lastRequest) {
             lastRequest.cancelled.disconnect(updateCancellations)
             lastRequest = null
@@ -119,6 +123,20 @@ TestWebView {
 
         webView.waitForLoadSucceeded()
         compare(expectedRequests, totalRequests)
+    }
+
+    function test_ignored_request_cancelled() {
+        ignoreRequests = true
+        webView.url = credentialsUrl
+        expectedRequests++
+        verify(waitFor(receivedRequest), "No authentication request")
+
+        // force garbage collection so the request object will be destroyed
+        // as we did not keep any reference to it.
+        // the request destructor will call request.deny()
+        gc()
+        webView.waitForLoadSucceeded()
+        compare(lastStatusCode, 401)
     }
   }
 }
