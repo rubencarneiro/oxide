@@ -27,12 +27,28 @@ WebView {
     qtest_expectedLoadsCommittedCount = 0;
   }
 
+  property var qtest_testApiHosts: new Object()
+
+  Connections {
+    onFrameRemoved: {
+      delete webView.qtest_testApiHosts[frame];
+    }
+  }
+
   function getTestApi() {
-    return new TestUtils.TestApiHost(this, rootFrame);
+    if (!(rootFrame in qtest_testApiHosts)) {
+      qtest_testApiHosts[rootFrame] = new TestUtils.TestApiHost(this, rootFrame);
+    }
+
+    return qtest_testApiHosts[rootFrame];
   }
 
   function getTestApiForFrame(frame) {
-    return new TestUtils.TestApiHost(this, frame);
+    if (!(frame in qtest_testApiHosts)) {
+      qtest_testApiHosts[frame] = new TestUtils.TestApiHost(this, frame);
+    }
+
+    return qtest_testApiHosts[frame];
   }
 
   function waitForLoadStarted(timeout) {
