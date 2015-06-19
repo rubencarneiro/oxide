@@ -18,6 +18,7 @@
 #include "oxide_script_message_handler.h"
 
 #include "base/logging.h"
+#include "base/values.h"
 
 #include "oxide_script_message.h"
 #include "oxide_script_message_request.h"
@@ -38,12 +39,12 @@ void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) const {
   DCHECK_EQ(message->msg_id(), msg_id());
   DCHECK(!callback_.is_null());
 
-  std::string error_desc;
-  bool success = callback_.Run(message, &error_desc);
+  scoped_ptr<base::Value> error_payload;
+  bool success = callback_.Run(message, &error_payload);
 
   if (!success) {
-    message->Error(ScriptMessageRequest::ERROR_UNCAUGHT_EXCEPTION,
-                   error_desc);
+    message->Error(ScriptMessageParams::ERROR_UNCAUGHT_EXCEPTION,
+                   error_payload.Pass());
   }
 }
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,69 +20,39 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "url/gurl.h"
+#include "base/macros.h"
 
-class OxideMsg_SendMessage_Params;
+#include "shared/common/oxide_script_message_params.h"
+
+namespace base {
+class ListValue;
+class Value;
+}
 
 namespace oxide {
 
 class ScriptMessageRequest {
  public:
-  enum Error {
-    ERROR_OK,
-
-    // Destination frame or context not found
-    ERROR_INVALID_DESTINATION,
-
-    // The message handler threw an exception
-    ERROR_UNCAUGHT_EXCEPTION,
-
-    // No handler was registered for this message
-    ERROR_NO_HANDLER,
-
-    // The handler reporter an error via the error() function
-    ERROR_HANDLER_REPORTED_ERROR,
-
-    ERROR_HANDLER_DID_NOT_RESPOND
-  };
-
   virtual ~ScriptMessageRequest();
 
   int serial() const { return serial_; }
-  GURL context() const { return context_; }
-  std::string msg_id() const { return msg_id_; }
-  std::string args() const { return args_; }
-
-  bool SendMessage();
 
   bool IsWaitingForResponse() const;
-  void OnReceiveResponse(const std::string& payload,
-                         Error error);
+  void OnReceiveResponse(base::ListValue* wrapped_payload,
+                         ScriptMessageParams::Error error);
 
  protected:
-  ScriptMessageRequest(int serial,
-                       const GURL& context,
-                       bool want_reply,
-                       const std::string& msg_id,
-                       const std::string& args);
+  ScriptMessageRequest(int serial);
 
  private:
-  virtual bool DoSendMessage(const OxideMsg_SendMessage_Params& params) = 0;
-
-  virtual void OnReply(const std::string& args) = 0;
-  virtual void OnError(Error error, const std::string& msg) = 0;
+  virtual void OnReply(const base::Value& payload) = 0;
+  virtual void OnError(ScriptMessageParams::Error error,
+                       const base::Value& payload) = 0;
 
   int serial_;
-  GURL context_;
-  bool want_reply_;
-  std::string msg_id_;
-  std::string args_;
-  bool has_sent_message_;
   bool has_received_response_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequest);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageRequest);
 };
 
 } // namespace oxide

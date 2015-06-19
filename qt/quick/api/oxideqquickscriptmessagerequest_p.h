@@ -39,11 +39,13 @@ class Q_DECL_EXPORT OxideQQuickScriptMessageRequest : public QObject {
 
   enum ErrorCode {
     ErrorNone,
-    ErrorDestinationNotFound,
+    ErrorInvalidContext,
     ErrorUncaughtException,
     ErrorNoHandler,
     ErrorHandlerReportedError,
-    ErrorHandlerDidNotRespond
+    ErrorHandlerDidNotRespond,
+
+    ErrorDestinationNotFound = ErrorInvalidContext
   };
 
   QJSValue replyCallback() const;

@@ -30,7 +30,7 @@ TestWebView {
       msgId: "GUM-RESPONSE"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        webView.lastError = msg.args.error;
+        webView.lastError = msg.payload;
       }
     }
   ]
@@ -99,7 +99,7 @@ TestWebView {
 
       webView.getTestApi().evaluateCode(
 "document.addEventListener(\"oxidegumresult\", function(event) {
-  oxide.sendMessage(\"GUM-RESPONSE\", { error: event.detail.error });
+  oxide.sendMessage(\"GUM-RESPONSE\", event.detail.error);
 });", true);
 
       if (!webView.lastRequest) {
@@ -130,7 +130,7 @@ TestWebView {
 
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
 "document.addEventListener(\"oxidegumresult\", function(event) {
-  oxide.sendMessage(\"GUM-RESPONSE\", { error: event.detail.error });
+  oxide.sendMessage(\"GUM-RESPONSE\", event.detail.error);
 });", true);
 
       if (!webView.lastRequest) {

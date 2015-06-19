@@ -24,8 +24,8 @@ oxide.addMessageHandler("GET-DOCUMENT-URI", function(msg) {
 });
 
 oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
-  var code = msg.args.code;
-  if (msg.args.wrap) {
+  var code = msg.payload.code;
+  if (msg.payload.wrap) {
     code = "(function() {" + code + "})()";
   }
   try {
@@ -36,7 +36,7 @@ oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
 });
 
 oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
-  var e = document.querySelector(msg.args.selector);
+  var e = document.querySelector(msg.payload);
   if (!e) {
     msg.error("No element found");
     return;
@@ -47,7 +47,7 @@ oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
 });
 
 oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
-  var r = oxide.sendMessage(msg.args.id, msg.args.args);
+  var r = oxide.sendMessage(msg.payload.id, msg.payload.payload);
   r.onreply = function(response) {
     msg.reply({error: 0, response: response});
   };
