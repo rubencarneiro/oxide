@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -227,9 +227,17 @@ std::string ContentRendererClient::GetUs
+@@ -222,9 +222,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -313,13 +316,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -309,13 +312,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
        RenderFrame* render_frame);
  
@@ -83,12 +83,12 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1938,16 +1938,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
-     return CreateWebMediaPlayerForMediaStream(url, client);
+@@ -1956,16 +1956,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+   if (!web_stream.isNull())
+     return CreateWebMediaPlayerForMediaStream(client);
  
  #if defined(OS_ANDROID)
-   return CreateAndroidWebMediaPlayer(url, client, GetMediaPermission(),
-                                      initial_cdm);
+   return CreateAndroidWebMediaPlayer(client, GetMediaPermission(), initial_cdm);
  #else
    scoped_refptr<media::MediaLog> media_log(new RenderMediaLog());
  
