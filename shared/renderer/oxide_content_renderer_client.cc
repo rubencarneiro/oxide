@@ -52,10 +52,6 @@
 
 namespace oxide {
 
-ContentRendererClient::ContentRendererClient() {}
-
-ContentRendererClient::~ContentRendererClient() {}
-
 void ContentRendererClient::RenderThreadStarted() {
   new RenderProcessObserver();
   new UserScriptSlave();
@@ -184,6 +180,12 @@ void ContentRendererClient::OverrideCompositorSettings(
   } else {
     settings->scrollbar_show_scale_threshold = 1.f;
   }
+
+  settings->use_external_begin_frame_source = false;
 }
+
+ContentRendererClient::ContentRendererClient() {}
+
+ContentRendererClient::~ContentRendererClient() {}
 
 } // namespace oxide

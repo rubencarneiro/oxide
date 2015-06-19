@@ -118,6 +118,8 @@ void IOThread::InitSystemRequestContext() {
       content::BrowserThread::IO,
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContextOnIOThread,
+                 // |this| is only deleted after the IO thread has stopped
+                 // processing events
                  base::Unretained(this)));
 }
 
@@ -168,10 +170,6 @@ void IOThread::Init() {
 
   BrowserPlatformIntegration::GetInstance()->BrowserThreadInit(
       content::BrowserThread::IO);
-}
-
-void IOThread::InitAsync() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
 #if defined(USE_NSS_CERTS)
   net::SetMessageLoopForNSSHttpIO();
@@ -205,6 +203,8 @@ void IOThread::InitAsync() {
       content::BrowserThread::UI,
       FROM_HERE,
       base::Bind(&IOThread::InitSystemRequestContext,
+                 // |this| is only deleted after we've stopped processing
+                 // events on the UI thread
                  base::Unretained(this)));
 }
 

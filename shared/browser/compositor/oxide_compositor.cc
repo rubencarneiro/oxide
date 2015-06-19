@@ -23,7 +23,7 @@
 #include "base/logging.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
-#include "cc/resources/task_graph_runner.h"
+#include "cc/raster/task_graph_runner.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
@@ -87,7 +87,7 @@ Compositor::Compositor(CompositorClient* client)
     : client_(client),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
-      root_layer_(cc::Layer::Create()),
+      root_layer_(cc::Layer::Create(cc::LayerSettings())),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
       lock_count_(0),
@@ -136,7 +136,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     scoped_refptr<cc::ContextProvider> context_provider =
         content::ContextProviderCommandBuffer::Create(
-          CreateOffscreenContext3D(), "OxideWebViewCompositor");
+          CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
     if (!context_provider.get()) {
       return scoped_ptr<cc::OutputSurface>();
     }
@@ -168,9 +168,6 @@ void Compositor::ApplyViewportDeltas(
     const gfx::Vector2dF& elastic_overscroll_delta,
     float page_scale,
     float top_controls_delta) {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
 
 void Compositor::RequestNewOutputSurface() {
   scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
@@ -204,6 +201,9 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
+void Compositor::RecordFrameTimingEvents(
+    scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
+    scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 // static
@@ -232,17 +232,19 @@ void Compositor::SetVisibility(bool visible) {
     cc::LayerTreeSettings settings;
     settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
-    settings.throttle_frame_production = true;
+
+    cc::LayerTreeHost::InitParams params;
+    params.client = this;
+    params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
+    params.gpu_memory_buffer_manager =
+        content::BrowserGpuMemoryBufferManager::current();
+    params.task_graph_runner = g_task_graph_runner.Pointer();
+    params.settings = &settings;
+    params.main_task_runner = base::MessageLoopProxy::current();
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
-        this,
-        content::HostSharedBitmapManager::current(),
-        content::BrowserGpuMemoryBufferManager::current(),
-        g_task_graph_runner.Pointer(),
-        settings,
-        base::MessageLoopProxy::current(),
         CompositorUtils::GetInstance()->GetTaskRunner(),
-        nullptr);
+        &params);
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);

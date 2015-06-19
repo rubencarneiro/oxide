@@ -20,8 +20,6 @@
 #include <queue>
 #include <utility>
 
-#include "base/auto_reset.h"
-#include "base/command_line.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/strings/string_util.h"
@@ -50,7 +48,6 @@
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
 #include "content/public/browser/web_contents.h"
-#include "content/public/common/content_switches.h"
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
@@ -61,11 +58,10 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
-#include "third_party/WebKit/public/platform/WebGestureDevice.h"
+#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
-#include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/range/range.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
@@ -74,22 +70,27 @@
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/common/oxide_event_utils.h"
 #include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
+#include "oxide_event_utils.h"
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
+#include "oxide_web_context_menu.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
+#include "oxide_web_view_client.h"
 #include "oxide_web_view_contents_helper.h"
 
 #if defined(ENABLE_MEDIAHUB)
@@ -102,13 +103,6 @@ namespace oxide {
 
 namespace {
 
-// The time between the last resize, focus, view visibility or
-// input panel visibility event before we scroll the currently focused
-// editable node into view. We want to wait until any transitions
-// are finished because we will only do the scroll once
-const int64 kAutoScrollFocusedEditableNodeIntoViewDelayMs = 50;
-
-const float kMobileViewportWidthEpsilon = 0.15f;
 const char kWebViewKey[] = "oxide_web_view_data";
 
 // SupportsUserData implementations own their data. This class exists
@@ -154,15 +148,6 @@ void InitCreatedWebView(WebView* view,
   view->Init(&params);
 }
 
-bool ShouldSendPinchGesture() {
-  static bool pinch_allowed =
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnableViewport) ||
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnablePinch);
-  return pinch_allowed;
-}
-
 // Qt input methods don’t generate key events, but a lot of web pages out there
 // rely on keydown and keyup events to e.g. perform search-as-you-type or
 // enable/disable a submit button based on the contents of a text input field,
@@ -179,28 +164,10 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
   host->ForwardKeyboardEvent(fake_event);
 }
 
-bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
-  return frame_metadata.min_page_scale_factor ==
-         frame_metadata.max_page_scale_factor;
-}
-
-bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
-  float window_width_dip =
-      frame_metadata.page_scale_factor *
-      frame_metadata.scrollable_viewport_size.width();
-  float content_width_css = frame_metadata.root_layer_size.width();
-  return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
-}
-
 void CreateHelpers(content::WebContents* contents,
-                   WebViewContentsHelper* opener = nullptr) {
-  if (!opener) {
-    new WebViewContentsHelper(contents);
-  }
-  else {
-    new WebViewContentsHelper(contents, opener);
-  }
-
+                   content::WebContents* opener = nullptr) {
+  new WebViewContentsHelper(contents, opener);
+  PermissionRequestDispatcher::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
@@ -250,7 +217,20 @@ WebView* WebViewIterator::GetNext() {
 WebView::Params::Params()
     : context(nullptr),
       incognito(false) {}
+
 WebView::Params::~Params() {}
+
+struct WebView::InitData {
+  InitData()
+      : restore_type(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+        restore_index(0) {}
+
+  scoped_ptr<content::NavigationController::LoadURLParams> load_params;
+
+  content::NavigationController::RestoreType restore_type;
+  std::vector<sessions::SerializedNavigationEntry> restore_state;
+  int restore_index;
+};
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
@@ -285,12 +265,18 @@ content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
                                  int error_code,
-                                 const base::string16& error_description) {
+                                 const base::string16& error_description,
+                                 bool is_provisional_load) {
   if (error_code == net::ERR_ABORTED) {
-    OnLoadStopped(validated_url);
+    client_->LoadStopped(validated_url);
   } else {
-    OnLoadFailed(validated_url, error_code,
-                 base::UTF16ToUTF8(error_description));
+    content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+    client_->LoadFailed(validated_url,
+                        error_code,
+                        base::UTF16ToUTF8(error_description),
+                        is_provisional_load ?
+                            0 : entry->GetHttpStatusCode());
   }
 }
 
@@ -301,7 +287,7 @@ void WebView::OnDidBlockDisplayingInsecureContent() {
 
   blocked_content_ |= CONTENT_TYPE_MIXED_DISPLAY;
 
-  OnContentBlocked();
+  client_->ContentBlocked();
 }
 
 void WebView::OnDidBlockRunningInsecureContent() {
@@ -311,14 +297,10 @@ void WebView::OnDidBlockRunningInsecureContent() {
 
   blocked_content_ |= CONTENT_TYPE_MIXED_SCRIPT;
 
-  OnContentBlocked();
+  client_->ContentBlocked();
 }
 
 bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
-  if (did_scroll_focused_editable_node_into_view_) {
-    return false;
-  }
-
   if (!HasFocus()) {
     return false;
   }
@@ -338,32 +320,15 @@ bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
   return true;
 }
 
-void WebView::MaybeResetAutoScrollTimer() {
+void WebView::MaybeScrollFocusedEditableNodeIntoView() {
   if (!ShouldScrollFocusedEditableNodeIntoView()) {
-    auto_scroll_timer_.Stop();
     return;
   }
 
-  if (auto_scroll_timer_.IsRunning()) {
-    auto_scroll_timer_.Reset();
-    return;
-  }
-
-  auto_scroll_timer_.Start(
-      FROM_HERE,
-      base::TimeDelta::FromMilliseconds(
-        kAutoScrollFocusedEditableNodeIntoViewDelayMs),
-      base::Bind(&WebView::ScrollFocusedEditableNodeIntoView,
-                 base::Unretained(this)));
-}
-
-void WebView::ScrollFocusedEditableNodeIntoView() {
   content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
   if (!host) {
     return;
   }
-
-  did_scroll_focused_editable_node_into_view_ = true;
 
   host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
@@ -390,13 +355,27 @@ void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                           false));
 }
 
+WebFrame* WebView::CreateWebFrame(
+    content::RenderFrameHost* render_frame_host) {
+  WebFrame* frame = client_->CreateWebFrame(render_frame_host);
+  if (frame) {
+    return frame;
+  }
+
+  return new WebFrame(render_frame_host, this);
+}
+
+void WebView::DispatchPrepareToCloseResponse(bool proceed) {
+  client_->PrepareToCloseResponseReceived(proceed);
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
-  return 0;
+  return client_->GetScriptMessageHandlerCount();
 }
 
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
-  return nullptr;
+  return client_->GetScriptMessageHandlerAt(index);
 }
 
 void WebView::CompositorDidCommit() {
@@ -422,51 +401,13 @@ void WebView::CompositorSwapFrame(uint32 surface_id,
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = pending_compositor_frame_metadata_;
 
-  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
-  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(
-      !has_fixed_page_scale && !has_mobile_viewport);
-
   // TODO(chrisccoulson): Merge these
-  OnFrameMetadataUpdated(old);
-  OnSwapCompositorFrame();
+  client_->FrameMetadataUpdated(old);
+  client_->SwapCompositorFrame();
 }
 
 void WebView::WebPreferencesDestroyed() {
-  OnWebPreferencesDestroyed();
-}
-
-void WebView::OnGestureEvent(const blink::WebGestureEvent& event) {
-  if (in_swap_) {
-    return;
-  }
-
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  if ((event.type == blink::WebInputEvent::GesturePinchBegin ||
-       event.type == blink::WebInputEvent::GesturePinchUpdate ||
-       event.type == blink::WebInputEvent::GesturePinchEnd) &&
-      !ShouldSendPinchGesture()) {
-    return;
-  }
-
-  if (event.type == blink::WebInputEvent::GestureTapDown) {
-    // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
-    // event to stop any in-progress flings.
-    blink::WebGestureEvent fling_cancel = event;
-    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
-    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
-    host->ForwardGestureEvent(fling_cancel);
-  }
-
-  if (event.type == blink::WebInputEvent::Undefined) {
-    return;
-  }
-
-  host->ForwardGestureEvent(event);
+  client_->WebPreferencesDestroyed();
 }
 
 void WebView::Observe(int type,
@@ -477,25 +418,24 @@ void WebView::Observe(int type,
     return;
   }
   if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
-    content::PrunedDetails* pruned_details = content::Details<content::PrunedDetails>(details).ptr();
-    OnNavigationListPruned(pruned_details->from_front, pruned_details->count);
+    content::PrunedDetails* pruned_details =
+        content::Details<content::PrunedDetails>(details).ptr();
+    client_->NavigationListPruned(pruned_details->from_front,
+                                  pruned_details->count);
   } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
-    int index = content::Details<content::EntryChangedDetails>(details).ptr()->index;
-    OnNavigationEntryChanged(index);
+    int index =
+        content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    client_->NavigationEntryChanged(index);
   }
 }
 
 void WebView::EvictCurrentFrame() {
   current_compositor_frame_ = nullptr;
-  OnEvictCurrentFrame();
-}
-
-void WebView::ProcessAckedTouchEvent(bool consumed) {
-  gesture_provider_->OnTouchEventAck(consumed);
+  client_->EvictCurrentFrame();
 }
 
 void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  OnUpdateCursor(cursor);
+  client_->UpdateCursor(cursor);
 }
 
 void WebView::TextInputStateChanged(ui::TextInputType type,
@@ -508,19 +448,18 @@ void WebView::TextInputStateChanged(ui::TextInputType type,
   text_input_type_ = type;
   show_ime_if_needed_ = show_ime_if_needed;
 
-  OnTextInputStateChanged();
+  client_->TextInputStateChanged();
 }
 
 void WebView::FocusedNodeChanged(bool is_editable_node) {
   focused_node_is_editable_ = is_editable_node;
-  OnFocusedNodeChanged();
+  client_->FocusedNodeChanged();
 
-  did_scroll_focused_editable_node_into_view_ = false;
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ImeCancelComposition() {
-  OnImeCancelComposition();
+  client_->ImeCancelComposition();
 }
 
 void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
@@ -536,11 +475,11 @@ void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
   selection_cursor_position_ = selection_cursor_position;
   selection_anchor_position_ = selection_anchor_position;
 
-  OnSelectionBoundsChanged();
+  client_->SelectionBoundsChanged();
 }
 
 void WebView::SelectionChanged() {
-  OnSelectionChanged();
+  client_->SelectionChanged();
 }
 
 Compositor* WebView::GetCompositor() const {
@@ -603,9 +542,9 @@ content::WebContents* WebView::OpenURLFromTab(
   // new webview
   if (local_params.is_renderer_initiated &&
       top_level &&
-      !ShouldHandleNavigation(local_params.url,
-                              disposition,
-                              local_params.user_gesture)) {
+      !client_->ShouldHandleNavigation(local_params.url,
+                                       disposition,
+                                       local_params.user_gesture)) {
     return nullptr;
   }
 
@@ -627,7 +566,14 @@ content::WebContents* WebView::OpenURLFromTab(
       opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
-  contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
+  contents_params.opener_render_process_id =
+      web_contents_->GetRenderProcessHost()->GetID();
+  // XXX(chrisccoulson): This is probably wrong, but we're going to revisit
+  //  navigations anyway, and opener_suppressed is currently always true so
+  //  this is ignored
+  contents_params.opener_render_frame_id =
+      web_contents_->GetMainFrame()->GetRoutingID();
+  contents_params.opener_suppressed = opener_suppressed;
 
   scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
@@ -636,9 +582,10 @@ content::WebContents* WebView::OpenURLFromTab(
     return nullptr;
   }
 
-  CreateHelpers(contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_.get());
 
-  WebView* new_view = CreateNewWebView(GetViewBoundsPix(), disposition);
+  WebView* new_view =
+      client_->CreateNewWebView(GetViewBoundsPix(), disposition);
   if (!new_view) {
     return nullptr;
   }
@@ -658,16 +605,16 @@ void WebView::NavigationStateChanged(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
 
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
-    OnURLChanged();
+    client_->URLChanged();
   }
 
   if (changed_flags & content::INVALIDATE_TYPE_TITLE) {
-    OnTitleChanged();
+    client_->TitleChanged();
   }
 
   if (changed_flags & (content::INVALIDATE_TYPE_URL |
                        content::INVALIDATE_TYPE_LOAD)) {
-    OnCommandsUpdated();
+    client_->CommandsUpdated();
   }
 }
 
@@ -683,7 +630,7 @@ void WebView::VisibleSSLStateChanged(const content::WebContents* source) {
   SecurityStatus old_status = security_status_;
   security_status_.Update(entry->GetSSL());
 
-  OnSecurityStatusChanged(old_status);
+  client_->SecurityStatusChanged(old_status);
 }
 
 bool WebView::ShouldCreateWebContents(
@@ -712,9 +659,10 @@ bool WebView::ShouldCreateWebContents(
     return false;
   }
 
-  return ShouldHandleNavigation(target_url,
-                                user_gesture ? disposition : NEW_POPUP,
-                                user_gesture);
+  return client_->ShouldHandleNavigation(
+      target_url,
+      user_gesture ? disposition : NEW_POPUP,
+      user_gesture);
 }
 
 void WebView::HandleKeyboardEvent(
@@ -722,7 +670,7 @@ void WebView::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  OnUnhandledKeyboardEvent(event);
+  client_->UnhandledKeyboardEvent(event);
 }
 
 void WebView::WebContentsCreated(content::WebContents* source,
@@ -733,7 +681,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_.get());
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -756,8 +704,9 @@ void WebView::AddNewContents(content::WebContents* source,
 
   scoped_ptr<content::WebContents> contents(new_contents);
 
-  WebView* new_view = CreateNewWebView(initial_pos,
-                                       user_gesture ? disposition : NEW_POPUP);
+  WebView* new_view =
+      client_->CreateNewWebView(initial_pos,
+                                user_gesture ? disposition : NEW_POPUP);
   if (!new_view) {
     return;
   }
@@ -774,13 +723,13 @@ void WebView::LoadProgressChanged(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
 
   // XXX: Is there a way to update this when we adopt a WebContents?
-  OnLoadProgressChanged(progress);
+  client_->LoadProgressChanged(progress);
 }
 
 void WebView::CloseContents(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  OnCloseRequested();
+  client_->CloseRequested();
 }
 
 bool WebView::AddMessageToConsole(content::WebContents* source,
@@ -790,7 +739,7 @@ bool WebView::AddMessageToConsole(content::WebContents* source,
                                   const base::string16& source_id) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  return OnAddMessageToConsole(level, message, line_no, source_id);
+  return client_->AddMessageToConsole(level, message, line_no, source_id);
 }
 
 void WebView::BeforeUnloadFired(content::WebContents* source,
@@ -801,7 +750,7 @@ void WebView::BeforeUnloadFired(content::WebContents* source,
   // We take care of the unload handler on deletion
   *proceed_to_fire_unload = false;
 
-  OnPrepareToCloseResponse(proceed);
+  client_->PrepareToCloseResponseReceived(proceed);
 }
 
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
@@ -815,7 +764,7 @@ void WebView::RunFileChooser(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  FilePicker* file_picker = CreateFilePicker(rvh);
+  FilePicker* file_picker = client_->CreateFilePicker(rvh);
   if (!file_picker) {
     std::vector<content::FileChooserFileInfo> empty;
     rvh->FilesSelectedInChooser(empty, params.mode);
@@ -829,13 +778,13 @@ void WebView::EnterFullscreenModeForTab(content::WebContents* source,
                                         const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  OnToggleFullscreenMode(true);
+  client_->ToggleFullscreenMode(true);
 }
 
 void WebView::ExitFullscreenModeForTab(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  OnToggleFullscreenMode(false);
+  client_->ToggleFullscreenMode(false);
 }
 
 bool WebView::IsFullscreenForTabOrPending(
@@ -843,6 +792,58 @@ bool WebView::IsFullscreenForTabOrPending(
   DCHECK_VALID_SOURCE_CONTENTS
 
   return IsFullscreen();
+}
+
+void WebView::FindReply(content::WebContents* source,
+                        int request_id,
+                        int number_of_matches,
+                        const gfx::Rect& selection_rect,
+                        int active_match_ordinal,
+                        bool final_update) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (active_match_ordinal != -1 &&
+      find_in_page_.current != active_match_ordinal)  {
+      find_in_page_.current = active_match_ordinal;
+      client_->FindInPageCurrentChanged();
+  }
+
+  if (number_of_matches != -1 &&
+      find_in_page_.count != number_of_matches)  {
+      find_in_page_.count = number_of_matches;
+      client_->FindInPageCountChanged();
+  }
+}
+
+void WebView::RequestMediaAccessPermission(
+    content::WebContents* source,
+    const content::MediaStreamRequest& request,
+    const content::MediaResponseCallback& callback) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  MediaCaptureDevicesDispatcher::GetInstance()->RequestMediaAccessPermission(
+      request,
+      callback);
+}
+
+bool WebView::CheckMediaAccessPermission(content::WebContents* source,
+                                         const GURL& security_origin,
+                                         content::MediaStreamType type) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  DCHECK(type == content::MEDIA_DEVICE_VIDEO_CAPTURE ||
+         type == content::MEDIA_DEVICE_AUDIO_CAPTURE);
+
+  TemporarySavedPermissionType permission =
+      type == content::MEDIA_DEVICE_VIDEO_CAPTURE ?
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA :
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC;
+
+  TemporarySavedPermissionStatus status =
+      GetBrowserContext()->GetTemporarySavedPermissionContext()
+        ->GetPermissionStatus(permission,
+                              security_origin,
+                              web_contents_->GetLastCommittedURL().GetOrigin());
+  return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
@@ -868,17 +869,16 @@ void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
   frame->InitParent(parent);
 }
 
-void WebView::RenderProcessGone(base::TerminationStatus status) {}
+void WebView::RenderViewReady() {
+  client_->CrashedStatusChanged();
+}
+
+void WebView::RenderProcessGone(base::TerminationStatus status) {
+  client_->CrashedStatusChanged();
+}
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
-  DCHECK(!in_swap_);
-  base::AutoReset<bool> in_swap(&in_swap_, true);
-
-  // Fake a response for any pending touch ACK's
-  gesture_provider_->OnTouchEventAck(false);
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
-
   if (old_host && old_host->GetView()) {
     static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
   }
@@ -926,7 +926,7 @@ void WebView::DidStartProvisionalLoadForFrame(
   }
 
   if (!frame->parent()) {
-    OnLoadStarted(validated_url);
+    client_->LoadStarted(validated_url);
   }
 
   certificate_error_manager_.DidStartProvisionalLoadForFrame(frame);
@@ -947,7 +947,9 @@ void WebView::DidCommitProvisionalLoadForFrame(
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  OnLoadCommitted(url, entry->GetPageType() == content::PAGE_TYPE_ERROR);
+  client_->LoadCommitted(url,
+                         entry->GetPageType() == content::PAGE_TYPE_ERROR,
+                         entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailProvisionalLoad(
@@ -962,7 +964,7 @@ void WebView::DidFailProvisionalLoad(
 
   if (!frame->parent() &&
       validated_url.spec() != content::kUnreachableWebDataURL) {
-    DispatchLoadFailed(validated_url, error_code, error_description);
+    DispatchLoadFailed(validated_url, error_code, error_description, true);
   }
 
   if (error_code != net::ERR_ABORTED) {
@@ -976,10 +978,18 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelPendingRequests();
+    // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+    //  WebContentsObserver
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequests();
 
     blocked_content_ = CONTENT_TYPE_NONE;
-    OnContentBlocked();
+    client_->ContentBlocked();
+
+    RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+    if (rwhv) {
+      rwhv->ResetGestureDetection();
+    }
   }
 }
 
@@ -996,6 +1006,10 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
+  // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+  //  WebContentsObserver
+  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+      ->CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1009,7 +1023,9 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  OnLoadSucceeded(validated_url);
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  client_->LoadSucceeded(validated_url, entry->GetHttpStatusCode());
 }
 
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
@@ -1030,20 +1046,22 @@ void WebView::DidGetRedirectForResourceRequest(
     return;
   }
 
-  OnLoadRedirected(details.new_url, details.original_url);
+  client_->LoadRedirected(details.new_url,
+                          details.original_url,
+                          details.http_response_code);
 }
 
 void WebView::NavigationEntryCommitted(
     const content::LoadCommittedDetails& load_details) {
-  OnNavigationEntryCommitted();
+  client_->NavigationEntryCommitted();
 }
 
 void WebView::DidStartLoading() {
-  OnLoadingChanged();
+  client_->LoadingChanged();
 }
 
 void WebView::DidStopLoading() {
-  OnLoadingChanged();
+  client_->LoadingChanged();
 }
 
 void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
@@ -1066,6 +1084,10 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
+    // XXX(chrisccoulson): Move frame tree management in to its own class
+    //  and have PermissionRequestDispatcher be an observer of that
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
@@ -1080,7 +1102,7 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   int count = controller.GetEntryCount();
   for (int i = 0; i < count; ++i) {
     if (controller.GetEntryAtIndex(i) == entry) {
-      OnNavigationEntryChanged(i);
+      client_->NavigationEntryChanged(i);
       return;
     }
   }
@@ -1091,7 +1113,7 @@ void WebView::DidUpdateFaviconURL(
   std::vector<content::FaviconURL>::const_iterator it;
   for (it = candidates.begin(); it != candidates.end(); ++it) {
     if (it->icon_type == content::FaviconURL::FAVICON) {
-      OnIconChanged(it->icon_url);
+      client_->IconChanged(it->icon_url);
       return;
     }
   }
@@ -1111,137 +1133,23 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
-void WebView::OnURLChanged() {}
-void WebView::OnTitleChanged() {}
-void WebView::OnIconChanged(const GURL& icon) {}
-void WebView::OnCommandsUpdated() {}
-
-void WebView::OnLoadingChanged() {}
-void WebView::OnLoadProgressChanged(double progress) {}
-
-void WebView::OnLoadStarted(const GURL& validated_url) {}
-void WebView::OnLoadRedirected(const GURL& url,
-                               const GURL& original_url) {}
-void WebView::OnLoadCommitted(const GURL& url,
-                              bool is_error_page) {}
-void WebView::OnLoadStopped(const GURL& validated_url) {}
-void WebView::OnLoadFailed(const GURL& validated_url,
-                           int error_code,
-                           const std::string& error_description) {}
-void WebView::OnLoadSucceeded(const GURL& validated_url) {}
-
-void WebView::OnNavigationEntryCommitted() {}
-void WebView::OnNavigationListPruned(bool from_front, int count) {}
-void WebView::OnNavigationEntryChanged(int index) {}
-
-bool WebView::OnAddMessageToConsole(int32 level,
-                                    const base::string16& message,
-                                    int32 line_no,
-                                    const base::string16& source_id) {
-  return false;
-}
-
-void WebView::OnToggleFullscreenMode(bool enter) {}
-
-void WebView::OnWebPreferencesDestroyed() {}
-
-void WebView::OnRequestGeolocationPermission(
-    scoped_ptr<SimplePermissionRequest> request) {}
-
-void WebView::OnUnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {}
-
-void WebView::OnFrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {}
-
-void WebView::OnDownloadRequested(const GURL& url,
-				  const std::string& mimeType,
-				  const bool shouldPrompt,
-				  const base::string16& suggestedFilename,
-				  const std::string& cookies,
-				  const std::string& referrer) {}
-
-bool WebView::ShouldHandleNavigation(const GURL& url,
-                                     WindowOpenDisposition disposition,
-                                     bool user_gesture) {
-  return true;
-}
-
-WebFrame* WebView::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  return new WebFrame(render_frame_host, this);
-}
-
-WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  return nullptr;
-}
-
-WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition) {
-  NOTREACHED() <<
-      "Your CanCreateWindows() implementation should be returning false!";
-  return nullptr;
-}
-
-FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
-  return nullptr;
-}
-
-void WebView::OnEvictCurrentFrame() {}
-
-void WebView::OnTextInputStateChanged() {}
-void WebView::OnFocusedNodeChanged() {}
-void WebView::OnSelectionBoundsChanged() {}
-void WebView::OnImeCancelComposition() {}
-void WebView::OnSelectionChanged() {}
-
-void WebView::OnUpdateCursor(const content::WebCursor& cursor) {}
-
-void WebView::OnSecurityStatusChanged(const SecurityStatus& old) {}
-void WebView::OnCertificateError(scoped_ptr<CertificateError> error) {}
-void WebView::OnContentBlocked() {}
-
-void WebView::OnPrepareToCloseResponse(bool proceed) {}
-void WebView::OnCloseRequested() {}
-
-WebView::WebView()
-    : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
+WebView::WebView(WebViewClient* client)
+    : client_(client),
+      text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
       show_ime_if_needed_(false),
       focused_node_is_editable_(false),
       selection_cursor_position_(0),
       selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
-      gesture_provider_(GestureProvider::Create(this)),
-      in_swap_(false),
-      restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      initial_index_(0),
+      init_data_(new InitData()),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
-      did_scroll_focused_editable_node_into_view_(false),
-      auto_scroll_timer_(false, false),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
       weak_factory_(this) {
-  gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
-}
-
-base::string16 WebView::GetSelectedText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::string16();
-  }
-
-  return rwhv->GetSelectedText();
-}
-
-const base::string16& WebView::GetSelectionText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::EmptyString16();
-  }
-
-  return rwhv->selection_text();
+  DCHECK(client_);
 }
 
 WebView::~WebView() {
@@ -1307,26 +1215,25 @@ void WebView::Init(Params* params) {
   } else {
     CHECK(params->context) << "Didn't specify a BrowserContext or WebContents";
 
-    BrowserContext* context = params->incognito ?
+    scoped_refptr<BrowserContext> context = params->incognito ?
         params->context->GetOffTheRecordContext() :
         params->context->GetOriginalContext();
 
-    content::WebContents::CreateParams content_params(context);
+    content::WebContents::CreateParams content_params(context.get());
     content_params.initial_size = GetViewSizeDip();
     content_params.initially_hidden = !IsVisible();
     web_contents_.reset(static_cast<content::WebContentsImpl *>(
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    if (!restore_state_.empty()) {
+    if (!init_data_->restore_state.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              restore_state_, context);
+              init_data_->restore_state, context.get());
       web_contents_->GetController().Restore(
-          initial_index_,
-          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
+          init_data_->restore_index,
+          init_data_->restore_type,
           &entries.get());
-      restore_state_.clear();
     }
 
     CreateHelpers(web_contents_.get());
@@ -1361,14 +1268,8 @@ void WebView::Init(Params* params) {
   root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
   DCHECK(root_frame_.get());
 
-  if (params->context) {
-    if (!initial_url_.is_empty()) {
-      SetURL(initial_url_);
-      initial_url_ = GURL();
-    } else if (initial_data_) {
-      web_contents_->GetController().LoadURLWithParams(*initial_data_);
-      initial_data_.reset();
-    }
+  if (params->context && init_data_->load_params) {
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
   }
 
   web_contents_->GetController().LoadIfNecessary();
@@ -1380,6 +1281,10 @@ void WebView::Init(Params* params) {
                    this) ==
          g_all_web_views.Get().end());
   g_all_web_views.Get().push_back(this);
+
+  init_data_.reset();
+
+  client_->Initialized();
 }
 
 // static
@@ -1404,10 +1309,15 @@ WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
 }
 
 const GURL& WebView::GetURL() const {
-  if (!web_contents_) {
-    return initial_url_;
+  if (web_contents_) {
+    return web_contents_->GetVisibleURL();
   }
-  return web_contents_->GetVisibleURL();
+
+  if (init_data_->load_params) {
+    return init_data_->load_params->url;
+  }
+
+  return GURL::EmptyGURL();
 }
 
 void WebView::SetURL(const GURL& url) {
@@ -1415,14 +1325,15 @@ void WebView::SetURL(const GURL& url) {
     return;
   }
 
+  content::NavigationController::LoadURLParams params(url);
+  params.transition_type = ui::PAGE_TRANSITION_TYPED;
+
   if (!web_contents_) {
-    initial_url_ = url;
-    initial_data_.reset();
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
     return;
   }
 
-  content::NavigationController::LoadURLParams params(url);
-  params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
@@ -1451,31 +1362,33 @@ void WebView::SetState(content::NavigationController::RestoreType type,
                        std::vector<sessions::SerializedNavigationEntry> state,
                        int index) {
   DCHECK(!web_contents_);
-  restore_type_ = type;
-  restore_state_ = state;
-  initial_index_ = index;
+  init_data_->restore_type = type;
+  init_data_->restore_state = state;
+  init_data_->restore_index = index;
 }
 
-void WebView::LoadData(const std::string& encodedData,
-                       const std::string& mimeType,
-                       const GURL& baseUrl) {
+void WebView::LoadData(const std::string& encoded_data,
+                       const std::string& mime_type,
+                       const GURL& base_url) {
   std::string url("data:");
-  url.append(mimeType);
+  url.append(mime_type);
   url.append(",");
-  url.append(encodedData);
+  url.append(encoded_data);
 
   content::NavigationController::LoadURLParams params((GURL(url)));
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
-  params.base_url_for_data_url = baseUrl;
-  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
+  params.base_url_for_data_url = base_url;
+  params.virtual_url_for_data_url =
+      base_url.is_empty() ? GURL(url::kAboutBlankURL) : base_url;
   params.can_load_local_resources = true;
-  
-  if (web_contents_) {
-    web_contents_->GetController().LoadURLWithParams(params);
-  } else {
-    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
-    initial_url_ = GURL();
+
+  if (!web_contents_) {
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
+    return;
   }
+
+  web_contents_->GetController().LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {
@@ -1565,7 +1478,7 @@ void WebView::WasResized() {
     rwhv->GetRenderWidgetHost()->WasResized();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::ScreenUpdated() {
@@ -1588,7 +1501,7 @@ void WebView::VisibilityChanged() {
     web_contents_->WasHidden();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::FocusChanged() {
@@ -1603,15 +1516,11 @@ void WebView::FocusChanged() {
     rwhv->Blur();
   }
 
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::InputPanelVisibilityChanged() {
-  if (!IsInputPanelVisible()) {
-    did_scroll_focused_editable_node_into_view_ = false;
-  }
-
-  MaybeResetAutoScrollTimer();
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::UpdateWebPreferences() {
@@ -1625,6 +1534,84 @@ void WebView::UpdateWebPreferences() {
   }
 
   rvh->OnWebkitPreferencesChanged();
+}
+
+int WebView::GetFindInPageCount() const {
+  return find_in_page_.count;
+}
+
+int WebView::GetFindInPageCurrent() const {
+  return find_in_page_.current;
+}
+
+std::string WebView::GetFindInPageText() const {
+  return find_in_page_.text;
+}
+
+bool WebView::GetFindInPageCaseSensitive() const {
+  return find_in_page_.case_sensitive;
+}
+
+void WebView::SetFindInPageText(const std::string& text) {
+  find_in_page_.text = text;
+  RestartFindInPage();
+}
+
+void WebView::SetFindInPageCaseSensitive(bool case_sensitive) {
+  find_in_page_.case_sensitive = case_sensitive;
+  RestartFindInPage();
+}
+
+void WebView::RestartFindInPage() {
+  if (!web_contents_) {
+      return;
+  }
+
+  web_contents_->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
+
+  find_in_page_.current = 0;
+  client_->FindInPageCurrentChanged();
+  find_in_page_.count = 0;
+  client_->FindInPageCountChanged();
+
+  if (!find_in_page_.text.empty()) {
+    find_in_page_.request_id++;
+
+    blink::WebFindOptions options;
+    options.forward = true;
+    options.findNext = false;
+    options.matchCase = find_in_page_.case_sensitive;
+
+    web_contents_->Find(find_in_page_.request_id,
+                        base::UTF8ToUTF16(find_in_page_.text),
+                        options);
+  }
+}
+
+void WebView::FindInPageNext() {
+  if (!web_contents_) {
+    return;
+  }
+
+  blink::WebFindOptions options;
+  options.forward = true;
+  options.findNext = true;
+
+  web_contents_->Find(find_in_page_.request_id,
+                      base::UTF8ToUTF16(find_in_page_.text), options);
+}
+
+void WebView::FindInPagePrevious() {
+  if (!web_contents_) {
+    return;
+  }
+
+  blink::WebFindOptions options;
+  options.forward = false;
+  options.findNext = true;
+
+  web_contents_->Find(find_in_page_.request_id,
+                      base::UTF8ToUTF16(find_in_page_.text), options);
 }
 
 BrowserContext* WebView::GetBrowserContext() const {
@@ -1886,7 +1873,7 @@ void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {
 
   if (allow) {
     blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
-    OnContentBlocked();
+    client_->ContentBlocked();
   }
 
   web_contents_->SendToAllFrames(
@@ -1907,7 +1894,7 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
   if (allow) {
     blocked_content_ &= ~CONTENT_TYPE_MIXED_DISPLAY;
     blocked_content_ &= ~CONTENT_TYPE_MIXED_SCRIPT;
-    OnContentBlocked();
+    client_->ContentBlocked();
   }
 
   web_contents_->SendToAllFrames(
@@ -1918,7 +1905,7 @@ void WebView::SetCanTemporarilyRunInsecureContent(bool allow) {
 
 void WebView::PrepareToClose() {
   base::Closure no_before_unload_handler_response_task =
-      base::Bind(&WebView::OnPrepareToCloseResponse,
+      base::Bind(&WebView::DispatchPrepareToCloseResponse,
                  AsWeakPtr(), true);
 
   if (!web_contents_) {
@@ -1938,6 +1925,16 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload(false);
 }
 
+void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                              const content::ContextMenuParams& params) {
+  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  menu->Show();
+}
+
 void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             const gfx::Rect& bounds,
                             int selected_item,
@@ -1945,7 +1942,7 @@ void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                             bool allow_multiple_selection) {
   DCHECK(!active_popup_menu_);
 
-  WebPopupMenu* menu = CreatePopupMenu(render_frame_host);
+  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
   if (!menu) {
     static_cast<content::RenderFrameHostImpl *>(
         render_frame_host)->DidCancelPopupMenu();
@@ -1963,39 +1960,6 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
-}
-
-void WebView::RequestGeolocationPermission(
-    const GURL& requesting_frame,
-    int bridge_id,
-    const base::Callback<void(content::PermissionStatus)>& callback) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  scoped_ptr<SimplePermissionRequest> request(
-      new SimplePermissionRequest(
-        &permission_request_manager_,
-        request_id,
-        requesting_frame,
-        web_contents_->GetLastCommittedURL().GetOrigin(),
-        callback));
-
-  OnRequestGeolocationPermission(request.Pass());
-}
-
-void WebView::CancelGeolocationPermissionRequest(
-    const GURL& requesting_frame,
-    int bridge_id) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  permission_request_manager_.CancelPendingRequestForID(request_id);
 }
 
 void WebView::AllowCertificateError(
@@ -2035,7 +1999,7 @@ void WebView::AllowCertificateError(
       resource_type,
       strict_enforcement,
       overridable ? callback : base::Callback<void(bool)>()));
-  OnCertificateError(error.Pass());
+  client_->OnCertificateError(error.Pass());
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
@@ -2048,31 +2012,38 @@ void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
 }
 
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
+  blink::WebMouseEvent e(event);
+
+  if (e.type == blink::WebInputEvent::MouseEnter ||
+      e.type == blink::WebInputEvent::MouseLeave) {
+    global_mouse_position_.SetPoint(event.globalX, event.globalY);
+    e.type = blink::WebInputEvent::MouseMove;
+  }
+
+  e.movementX = e.globalX - global_mouse_position_.x();
+  e.movementY = e.globalY - global_mouse_position_.y();
+
+  global_mouse_position_.SetPoint(e.globalX, e.globalY);
+
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
     return;
   }
 
-  rvh->ForwardMouseEvent(event);
+  rvh->ForwardMouseEvent(e);
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
-  auto rv = gesture_provider_->OnTouchEvent(event);
-  if (!rv.succeeded) {
+  if (!touch_state_.Update(event)) {
     return;
   }
 
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    gesture_provider_->OnTouchEventAck(false);
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return;
   }
 
-  scoped_ptr<ui::MotionEvent> motion_event =
-      gesture_provider_->GetTouchState();
-  host->ForwardTouchEventWithLatencyInfo(
-      MakeWebTouchEvent(*motion_event, rv.did_generate_scroll),
-      ui::LatencyInfo());
+  rwhv->HandleTouchEvent(touch_state_);
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
@@ -2091,7 +2062,7 @@ void WebView::ImeCommitText(const base::string16& text,
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeConfirmComposition(text, replacement_range, false);
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
@@ -2105,7 +2076,7 @@ void WebView::ImeSetComposingText(
     return;
   }
 
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown); 
+  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
   host->ImeSetComposition(text, underlines,
                           selection_range.start(),
                           selection_range.end());
@@ -2114,13 +2085,19 @@ void WebView::ImeSetComposingText(
 
 void WebView::DownloadRequested(
     const GURL& url,
-    const std::string& mimeType,
-    const bool shouldPrompt,
-    const base::string16& suggestedFilename,
+    const std::string& mime_type,
+    const bool should_prompt,
+    const base::string16& suggested_filename,
     const std::string& cookies,
-    const std::string& referrer) {
-  OnDownloadRequested(url, mimeType, shouldPrompt,
-      suggestedFilename, cookies, referrer);
+    const std::string& referrer,
+    const std::string& user_agent) {
+  client_->DownloadRequested(url,
+                             mime_type,
+                             should_prompt,
+                             suggested_filename,
+                             cookies,
+                             referrer,
+                             user_agent);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
@@ -2140,21 +2117,55 @@ void WebView::DidCommitCompositorFrame() {
   }
 }
 
+blink::WebScreenInfo WebView::GetScreenInfo() const {
+  return client_->GetScreenInfo();
+}
+
+gfx::Rect WebView::GetViewBoundsPix() const {
+  return client_->GetViewBoundsPix();
+}
+
+bool WebView::IsVisible() const {
+  return client_->IsVisible();
+}
+
+bool WebView::HasFocus() const {
+  return client_->HasFocus();
+}
+
 bool WebView::IsInputPanelVisible() const {
-  return false;
+  return client_->IsInputPanelVisible();
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type) {
-  return nullptr;
+  return client_->CreateJavaScriptDialog(javascript_message_type);
 }
 
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return nullptr;
+  return client_->CreateBeforeUnloadDialog();
 }
 
 bool WebView::CanCreateWindows() const {
-  return false;
+  return client_->CanCreateWindows();
+}
+
+base::string16 WebView::GetSelectedText() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return base::string16();
+  }
+
+  return rwhv->GetSelectedText();
+}
+
+const base::string16& WebView::GetSelectionText() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return base::EmptyString16();
+  }
+
+  return rwhv->selection_text();
 }
 
 } // namespace oxide

@@ -6,7 +6,7 @@
 diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 --- a/build/linux/system.gyp
 +++ b/build/linux/system.gyp
-@@ -194,17 +194,17 @@
+@@ -186,17 +186,17 @@
                    '<!@(<(pkg-config) --libs-only-l gtk+-unix-print-2.0)',
                  ],
                },
@@ -28,26 +28,26 @@ diff --git a/build/linux/system.gyp b/build/linux/system.gyp
 diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
 --- a/ui/gfx/gfx.gyp
 +++ b/ui/gfx/gfx.gyp
-@@ -305,16 +305,18 @@
-         'win/dpi.h',
-         'win/hwnd_util.cc',
-         'win/hwnd_util.h',
-         'win/scoped_set_map_mode.h',
-         'win/singleton_hwnd.cc',
-         'win/singleton_hwnd.h',
-         'win/window_impl.cc',
-         'win/window_impl.h',
+@@ -58,16 +58,18 @@
+         'geometry/vector2d.cc',
+         'geometry/vector2d.h',
+         'geometry/vector2d_conversions.cc',
+         'geometry/vector2d_conversions.h',
+         'geometry/vector2d_f.cc',
+         'geometry/vector2d_f.h',
+         'geometry/vector3d_f.cc',
+         'geometry/vector3d_f.h',
 +        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.cc',
 +        '<(DEPTH)/../../../shared/port/gfx/gfx_utils_oxide.h',
        ],
        'includes': [
          '../../build/android/increase_size_for_speed.gypi',
        ],
-       'conditions': [
-         ['OS=="ios"', {
-           # Linkable dependents need to set the linker flag '-ObjC' in order to
-           # use the categories in this target (e.g. NSString+CrStringDrawing.h).
-@@ -390,17 +392,17 @@
+     },
+     {
+       'target_name': 'gfx',
+       'type': '<(component)',
+@@ -402,17 +404,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -215,9 +215,9 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
  #endif
  
  #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
-@@ -58,17 +58,17 @@ std::string DriverEGL::GetPlatformExtens
- // static
+@@ -54,17 +54,17 @@ std::string DriverEGL::GetPlatformExtens
  std::string DriverEGL::GetClientExtensions() {
+   DCHECK(g_driver_egl.fn.eglQueryStringFn);
    const char* str =
        g_driver_egl.fn.eglQueryStringFn(EGL_NO_DISPLAY, EGL_EXTENSIONS);
    return str ? std::string(str) : "";
@@ -276,10 +276,10 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -387,17 +390,17 @@ struct GL_EXPORT DriverEGL {
+@@ -386,17 +389,17 @@ struct GL_EXPORT DriverEGL {
+   ProcsEGL debug_fn;
    ExtensionsEGL ext;
  
-  private:
    static std::string GetPlatformExtensions();
    static std::string GetClientExtensions();
  };
@@ -295,7 +295,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
    ProcsGLX fn;
    ProcsGLX debug_fn;
    ExtensionsGLX ext;
-@@ -429,16 +432,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -428,16 +431,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -360,11 +360,11 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
  namespace {
  
- Display* g_display = NULL;
- const char* g_glx_extensions = NULL;
+ Display* g_display = nullptr;
+ const char* g_glx_extensions = nullptr;
  bool g_glx_context_create = false;
  bool g_glx_create_context_robustness_supported = false;
-@@ -325,17 +327,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+@@ -326,17 +328,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
      return true;
  
    // http://crbug.com/245466
@@ -383,25 +383,25 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
    int major, minor;
    if (!glXQueryVersion(g_display, &major, &minor)) {
-@@ -399,16 +401,17 @@ bool GLSurfaceGLX::IsOMLSyncControlSuppo
+@@ -454,16 +456,17 @@ void* GLSurfaceGLX::GetConfig(gfx::Accel
+     }
+   }
+   if (found) {
+     return configs.get()[i];
+   }
+   return nullptr;
  }
- 
- void* GLSurfaceGLX::GetDisplay() {
-   return g_display;
- }
- 
- GLSurfaceGLX::~GLSurfaceGLX() {}
  
 +#if 0
  NativeViewGLSurfaceGLX::NativeViewGLSurfaceGLX(gfx::AcceleratedWidget window)
-   : parent_window_(window),
-     window_(0),
-     config_(NULL) {
+     : parent_window_(window), window_(0), config_(nullptr) {
  }
  
  gfx::AcceleratedWidget NativeViewGLSurfaceGLX::GetDrawableHandle() const {
    return window_;
-@@ -585,16 +588,17 @@ bool NativeViewGLSurfaceGLX::PostSubBuff
+ }
+ 
+@@ -578,16 +581,17 @@ gfx::SwapResult NativeViewGLSurfaceGLX::
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();
@@ -412,20 +412,20 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  }
 +#endif
  
- PbufferGLSurfaceGLX::PbufferGLSurfaceGLX(const gfx::Size& size)
-   : size_(size),
-     config_(NULL),
-     pbuffer_(0) {
-   // Some implementations of Pbuffer do not support having a 0 size. For such
-   // cases use a (1, 1) surface.
+ UnmappedNativeViewGLSurfaceGLX::UnmappedNativeViewGLSurfaceGLX(
+     const gfx::Size& size)
+     : size_(size), config_(nullptr), window_(0) {
+   // Ensure that we don't create a window with zero size.
    if (size_.GetArea() == 0)
+     size_.SetSize(1, 1);
+ }
 diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
 --- a/ui/gl/gl_surface_glx.h
 +++ b/ui/gl/gl_surface_glx.h
-@@ -43,16 +43,17 @@ class GL_EXPORT GLSurfaceGLX : public GL
- 
-  protected:
+@@ -45,16 +45,17 @@ class GL_EXPORT GLSurfaceGLX : public GL
    ~GLSurfaceGLX() override;
+ 
+   static void* GetConfig(gfx::AcceleratedWidget window);
  
   private:
    DISALLOW_COPY_AND_ASSIGN(GLSurfaceGLX);
@@ -440,7 +440,7 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
  
    // Implement GLSurfaceGLX.
    bool Initialize() override;
-@@ -86,16 +87,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
+@@ -88,16 +89,17 @@ class GL_EXPORT NativeViewGLSurfaceGLX :
  
    void* config_;
    gfx::Size size_;
@@ -452,9 +452,9 @@ diff --git a/ui/gl/gl_surface_glx.h b/ui/gl/gl_surface_glx.h
 +#endif
  
  // A surface used to render to an offscreen pbuffer.
- class GL_EXPORT PbufferGLSurfaceGLX : public GLSurfaceGLX {
+ class GL_EXPORT UnmappedNativeViewGLSurfaceGLX : public GLSurfaceGLX {
   public:
-   explicit PbufferGLSurfaceGLX(const gfx::Size& size);
+   explicit UnmappedNativeViewGLSurfaceGLX(const gfx::Size& size);
  
    // Implement GLSurfaceGLX.
    bool Initialize() override;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
+#include <QVariant>
 
 class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
@@ -30,6 +31,9 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
 
   Q_PROPERTY(ProcessModel processModel READ processModel WRITE setProcessModel NOTIFY processModelChanged)
   Q_PROPERTY(int maxRendererProcessCount READ maxRendererProcessCount WRITE setMaxRendererProcessCount NOTIFY maxRendererProcessCountChanged)
+
+  Q_PROPERTY(QVariant availableAudioCaptureDevices READ availableAudioCaptureDevices NOTIFY availableAudioCaptureDevicesChanged)
+  Q_PROPERTY(QVariant availableVideoCaptureDevices READ availableVideoCaptureDevices NOTIFY availableVideoCaptureDevicesChanged)
 
   Q_ENUMS(ProcessModel)
 
@@ -57,13 +61,21 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   int maxRendererProcessCount() const;
   void setMaxRendererProcessCount(int count);
 
+  QVariant availableAudioCaptureDevices();
+  QVariant availableVideoCaptureDevices();
+
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 
  Q_SIGNALS:
   void processModelChanged();
   void maxRendererProcessCountChanged();
+  void availableAudioCaptureDevicesChanged();
+  void availableVideoCaptureDevicesChanged();
 
  private:
+  Q_PRIVATE_SLOT(d_func(), void availableAudioCaptureDevicesDidChange());
+  Q_PRIVATE_SLOT(d_func(), void availableVideoCaptureDevicesDidChange());
+
   QScopedPointer<OxideQQuickGlobalPrivate> d_ptr;
 };
 

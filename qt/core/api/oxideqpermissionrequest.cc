@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@
 #include "base/logging.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_permission_request.h"
+#include "shared/browser/permissions/oxide_permission_request.h"
 
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
@@ -44,17 +44,20 @@ OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQPermissionRequestPrivate(request.Pass()),
-      did_respond_(false) {}
+    : OxideQPermissionRequestPrivate(request.Pass()) {}
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {
-  if (did_respond_) {
-    qWarning() << "Can only respond once to a permission request";
+  if (request_->is_cancelled()) {
+    qWarning() <<
+        "OxideQSimplePermissionRequest: Can't respond to a cancelled "
+        "permission request";
     return false;
   }
 
-  if (request()->is_cancelled()) {
-    qWarning() << "Can't respond to a cancelled permission request";
+  if (!request_->IsPending()) {
+    qWarning() <<
+        "OxideQSimplePermissionRequest: Can only respond once to a permission "
+        "request";
     return false;
   }
 
@@ -66,7 +69,8 @@ OxideQSimplePermissionRequestPrivate::request() const {
   return static_cast<oxide::SimplePermissionRequest *>(request_.get());
 }
 
-OxideQSimplePermissionRequestPrivate::~OxideQSimplePermissionRequestPrivate() {}
+OxideQSimplePermissionRequestPrivate::
+    ~OxideQSimplePermissionRequestPrivate() {}
 
 // static
 OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
@@ -77,11 +81,13 @@ OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
       *new OxideQSimplePermissionRequestPrivate(request.Pass()));
 }
 
-OxideQGeolocationPermissionRequestPrivate::OxideQGeolocationPermissionRequestPrivate(
-    scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
+OxideQGeolocationPermissionRequestPrivate::
+    OxideQGeolocationPermissionRequestPrivate(
+      scoped_ptr<oxide::SimplePermissionRequest> request)
+      : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
 
-OxideQGeolocationPermissionRequestPrivate::~OxideQGeolocationPermissionRequestPrivate() {}
+OxideQGeolocationPermissionRequestPrivate::
+    ~OxideQGeolocationPermissionRequestPrivate() {}
 
 // static
 OxideQGeolocationPermissionRequest*
@@ -93,6 +99,47 @@ OxideQGeolocationPermissionRequestPrivate::Create(
       *new OxideQGeolocationPermissionRequestPrivate(request.Pass()));
 }
 
+OxideQMediaAccessPermissionRequestPrivate::
+    OxideQMediaAccessPermissionRequestPrivate(
+      scoped_ptr<oxide::MediaAccessPermissionRequest> request)
+      : OxideQPermissionRequestPrivate(request.Pass()) {}
+
+bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
+  if (request_->is_cancelled()) {
+    qWarning() <<
+        "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
+        "permission request";
+    return false;
+  }
+
+  if (!request_->IsPending()) {
+    qWarning() <<
+        "OxideQMediaAccessPermissionRequest: Can only respond once to a "
+        "permission request";
+    return false;
+  }
+
+  return true;
+}
+
+oxide::MediaAccessPermissionRequest*
+OxideQMediaAccessPermissionRequestPrivate::request() const {
+  return static_cast<oxide::MediaAccessPermissionRequest*>(request_.get());
+}
+
+OxideQMediaAccessPermissionRequestPrivate::
+    ~OxideQMediaAccessPermissionRequestPrivate() {}
+
+// static
+OxideQMediaAccessPermissionRequest*
+OxideQMediaAccessPermissionRequestPrivate::Create(
+    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+  DCHECK(request);
+
+  return new OxideQMediaAccessPermissionRequest(
+      *new OxideQMediaAccessPermissionRequestPrivate(request.Pass()));
+}
+
 OxideQPermissionRequest::OxideQPermissionRequest(
     OxideQPermissionRequestPrivate& dd)
     : d_ptr(&dd) {
@@ -101,6 +148,8 @@ OxideQPermissionRequest::OxideQPermissionRequest(
   d->q_ptr = this;
   d->request_->SetCancelCallback(
       base::Bind(&OxideQPermissionRequestPrivate::OnCancelled,
+                 // The callback cannot run after |d| is deleted, as it
+                 // exclusively owns |request_|
                  base::Unretained(d)));
 }
 
@@ -149,7 +198,6 @@ void OxideQSimplePermissionRequest::allow() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Allow();
 }
 
@@ -160,7 +208,6 @@ void OxideQSimplePermissionRequest::deny() {
     return;
   }
 
-  d->did_respond_ = true;
   d->request()->Deny();
 }
 
@@ -184,4 +231,42 @@ void OxideQGeolocationPermissionRequest::accept() {
   }
 
   allow();
+}
+
+OxideQMediaAccessPermissionRequest::OxideQMediaAccessPermissionRequest(
+    OxideQMediaAccessPermissionRequestPrivate& dd)
+    : OxideQPermissionRequest(dd) {}
+
+OxideQMediaAccessPermissionRequest::~OxideQMediaAccessPermissionRequest() {}
+
+bool OxideQMediaAccessPermissionRequest::isForAudio() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return d->request()->audio_requested();
+}
+
+bool OxideQMediaAccessPermissionRequest::isForVideo() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return d->request()->video_requested();
+}
+
+void OxideQMediaAccessPermissionRequest::allow() {
+  Q_D(OxideQMediaAccessPermissionRequest);
+
+  if (!d->canRespond()) {
+    return;
+  }
+
+  d->request()->Allow();
+}
+
+void OxideQMediaAccessPermissionRequest::deny() {
+  Q_D(OxideQMediaAccessPermissionRequest);
+
+  if (!d->canRespond()) {
+    return;
+  }
+
+  d->request()->Deny();
 }

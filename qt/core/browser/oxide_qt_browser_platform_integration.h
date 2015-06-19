@@ -33,29 +33,47 @@ QT_END_NAMESPACE;
 namespace oxide {
 namespace qt {
 
-class BrowserPlatformIntegration final
-    : public QObject,
-      public oxide::BrowserPlatformIntegration {
+class BrowserPlatformIntegration : public QObject,
+                                   public oxide::BrowserPlatformIntegration {
   Q_OBJECT
 
  public:
   BrowserPlatformIntegration();
-  ~BrowserPlatformIntegration();
+  ~BrowserPlatformIntegration() override;
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
 
  private:
-  bool LaunchURLExternally(const GURL& url) final;
-  bool IsTouchSupported() final;
-  intptr_t GetNativeDisplay() final;
-  blink::WebScreenInfo GetDefaultScreenInfo() final;
-  oxide::GLContextDependent* GetGLShareContext() final;
-  scoped_ptr<oxide::MessagePump> CreateUIMessagePump() final;
-  void BrowserThreadInit(content::BrowserThread::ID id) final;
-  content::LocationProvider* CreateLocationProvider() final;
-  ApplicationState GetApplicationState() final;
-  std::string GetApplicationLocale() final;
+  void UpdateApplicationState();
+
+  // oxide::BrowserPlatformIntegration implementation
+  bool LaunchURLExternally(const GURL& url) override;
+  bool IsTouchSupported() override;
+  intptr_t GetNativeDisplay() override;
+  blink::WebScreenInfo GetDefaultScreenInfo() override;
+  oxide::GLContextDependent* GetGLShareContext() override;
+  scoped_ptr<oxide::MessagePump> CreateUIMessagePump() override;
+  void BrowserThreadInit(content::BrowserThread::ID id) override;
+  content::LocationProvider* CreateLocationProvider() override;
+  ApplicationState GetApplicationState() override;
+  ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
+
+  // QObject implementation
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
+  // Whether the application is suspended. If the Qt platform is ubuntu,
+  // we detect Qt::ApplicationSuspended synthetically because it doesn't
+  // set applicatonState accordingly (we get Qt::ApplicationInactive when
+  // the app is unfocused, but that doesn't necessarily mean the app will
+  // be suspended)
+  // See https://launchpad.net/bugs/1456706
+  bool suspended_;
+
+  // The current application state. We track this here because we have 2
+  // sources for state changes, and we want to ensure we only notify observers
+  // when the state really does change
+  ApplicationState state_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

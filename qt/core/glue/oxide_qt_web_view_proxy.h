@@ -38,6 +38,7 @@ typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
+class QHoverEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
@@ -45,6 +46,7 @@ class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
+class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
 class OxideQWebPreferences;
@@ -76,6 +78,22 @@ enum LocationBarMode {
   LOCATION_BAR_MODE_HIDDEN
 };
 
+enum WebProcessStatus {
+  WEB_PROCESS_RUNNING,
+  WEB_PROCESS_KILLED,
+  WEB_PROCESS_CRASHED
+};
+
+enum EditingCommands {
+  EDITING_COMMAND_UNDO,
+  EDITING_COMMAND_REDO,
+  EDITING_COMMAND_CUT,
+  EDITING_COMMAND_COPY,
+  EDITING_COMMAND_PASTE,
+  EDITING_COMMAND_ERASE,
+  EDITING_COMMAND_SELECT_ALL
+};
+
 class CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}
@@ -93,6 +111,14 @@ class CompositorFrameHandle {
   virtual QImage GetSoftwareFrame() = 0;
   virtual unsigned int GetAcceleratedFrameTexture() = 0;
   virtual EGLImageKHR GetImageFrame() = 0;
+};
+
+struct FindInPageState {
+  int request_id;
+  QString text;
+  bool case_sensitive;
+  int current;
+  int count;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
@@ -136,11 +162,15 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void visibilityChanged() = 0;
 
   virtual void handleFocusEvent(QFocusEvent* event) = 0;
+  virtual void handleHoverEvent(QHoverEvent* event,
+                                const QPoint& window_pos,
+                                const QPoint& global_pos) = 0;
   virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleWheelEvent(QWheelEvent* event) = 0;
+  virtual void handleWheelEvent(QWheelEvent* event,
+                                const QPoint& window_pos) = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 
@@ -148,6 +178,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void goForward() = 0;
   virtual void stop() = 0;
   virtual void reload() = 0;
+
+  virtual OxideQFindController* findInPage() = 0;
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
@@ -196,6 +228,10 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void setLocationBarAnimated(bool animated) = 0;
   virtual void locationBarShow(bool animate) = 0;
   virtual void locationBarHide(bool animate) = 0;
+
+  virtual WebProcessStatus webProcessStatus() const = 0;
+
+  virtual void executeEditingCommand(EditingCommands command) const = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);

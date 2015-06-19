@@ -17,10 +17,16 @@
 
 #include "oxide_qt_platform_delegate.h"
 
+#include <QLocale>
+
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
 
 namespace oxide {
 namespace qt {
+
+std::string PlatformDelegate::GetApplicationLocale() {
+  return QLocale::system().name().toStdString();
+}
 
 oxide::BrowserPlatformIntegration*
 PlatformDelegate::CreateBrowserIntegration() {

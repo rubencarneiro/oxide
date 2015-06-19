@@ -50,6 +50,10 @@ class WebContextProxyClient {
 
   virtual void DestroyDefault() = 0;
 
+  virtual void DefaultAudioCaptureDeviceChanged() = 0;
+
+  virtual void DefaultVideoCaptureDeviceChanged() = 0;
+
   class IOClient {
    public:
     virtual ~IOClient() {}

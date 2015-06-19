@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,9 @@
 #include <QEvent>
 #include <QEventLoop>
 
+#include "base/atomicops.h"
 #include "base/logging.h"
+#include "base/time/time.h"
 
 QT_USE_NAMESPACE
 
@@ -32,7 +34,10 @@ namespace qt {
 
 namespace {
 
-int g_chromium_event_type = QEvent::None;
+QEvent::Type GetChromiumEventType() {
+  static int g_event_type = QEvent::registerEventType();
+  return QEvent::Type(g_event_type);
+}
 
 int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
   int delay = static_cast<int>(
@@ -43,19 +48,21 @@ int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
 
 } // namespace
 
-void MessagePump::timerEvent(QTimerEvent* event) {
-  DCHECK(event->timerId() == delayed_work_timer_id_);
-
-  // Clear the timer
-  ScheduleDelayedWork(base::TimeTicks());
-
-  base::TimeTicks next_delayed_work_time;
-  state_->delegate->DoDelayedWork(&next_delayed_work_time);
-  ScheduleDelayedWork(next_delayed_work_time);
+void MessagePump::PostWorkEvent() {
+  QCoreApplication::postEvent(this, new QEvent(GetChromiumEventType()));
 }
 
-void MessagePump::customEvent(QEvent* event) {
-  DCHECK(event->type() == g_chromium_event_type);
+void MessagePump::CancelTimer() {
+  if (delayed_work_timer_id_ == 0) {
+    return;
+  }
+
+  killTimer(delayed_work_timer_id_);
+  delayed_work_timer_id_ = 0;
+}
+
+void MessagePump::RunOneTask() {
+  DCHECK(state_);
 
   bool did_work = state_->delegate->DoWork();
   if (state_->should_quit) {
@@ -64,9 +71,12 @@ void MessagePump::customEvent(QEvent* event) {
 
   base::TimeTicks next_delayed_work_time;
   did_work |= state_->delegate->DoDelayedWork(&next_delayed_work_time);
-  ScheduleDelayedWork(next_delayed_work_time);
   if (state_->should_quit) {
     return;
+  }
+
+  if (!next_delayed_work_time.is_null()) {
+    ScheduleDelayedWork(next_delayed_work_time);
   }
 
   if (did_work) {
@@ -76,14 +86,6 @@ void MessagePump::customEvent(QEvent* event) {
 
   if (state_->delegate->DoIdleWork()) {
     ScheduleWork();
-  }
-}
-
-MessagePump::MessagePump() :
-    delayed_work_timer_id_(0),
-    state_(nullptr) {
-  if (g_chromium_event_type == QEvent::None) {
-    g_chromium_event_type = QEvent::registerEventType();
   }
 }
 
@@ -104,49 +106,75 @@ void MessagePump::Run(base::MessagePump::Delegate* delegate) {
 }
 
 void MessagePump::Quit() {
-  DCHECK(state_ && state_->event_loop) <<
-      "Called Quit() without calling Run()";
+  CHECK(state_ && state_->event_loop) << "Called Quit() without calling Run()";
 
   state_->should_quit = true;
   state_->event_loop->exit();
 }
 
 void MessagePump::ScheduleWork() {
-  if (!state_) {
-    // Handle being called before Start()
+  // ScheduleWork can be called from any thread
+  if (base::subtle::NoBarrier_CompareAndSwap(&work_scheduled_, 0, 1)) {
     return;
   }
 
-  QCoreApplication::postEvent(
-      this, new QEvent(QEvent::Type(g_chromium_event_type)));
+  PostWorkEvent();
 }
 
 void MessagePump::ScheduleDelayedWork(
     const base::TimeTicks& delayed_work_time) {
-  if (delayed_work_time != delayed_work_time_) {
-    delayed_work_time_ = delayed_work_time;
-    killTimer(delayed_work_timer_id_);
-    delayed_work_timer_id_ = 0;
-
-    if (!delayed_work_time_.is_null()) {
-      delayed_work_timer_id_ =
-          startTimer(GetTimeIntervalMilliseconds(delayed_work_time_));
-    }
+  CancelTimer();
+  int interval = GetTimeIntervalMilliseconds(delayed_work_time);
+  if (interval > 0) {
+    delayed_work_timer_id_ = startTimer(interval);
+  } else {
+    ScheduleWork();
   }
 }
 
-void MessagePump::Start(Delegate* delegate) {
-  DCHECK(!state_) <<
-      "Called Start() more than once, or somebody already called Run()";
-
-  top_level_state_.delegate = delegate;
+void MessagePump::OnStart() {
+  top_level_state_.delegate = base::MessageLoop::current();
   state_ = &top_level_state_;
 
-  SetupRunLoop();
-
-  // Schedule events that might have already been posted
-  ScheduleWork();
+  if (base::subtle::NoBarrier_Load(&work_scheduled_)) {
+    // Post an event for work that's already been scheduled
+    PostWorkEvent();
+  }
 }
+
+void MessagePump::timerEvent(QTimerEvent* event) {
+  DCHECK(event->timerId() == delayed_work_timer_id_);
+
+  CancelTimer();
+
+  if (!state_) {
+    // Start() hasn't been called yet. Post an event to retry
+    ScheduleWork();
+    return;
+  }
+
+  RunOneTask();
+}
+
+void MessagePump::customEvent(QEvent* event) {
+  DCHECK(event->type() == GetChromiumEventType());
+
+  if (!state_) {
+    // Start() hasn't been called yet. Returning here means that OnStart()
+    // will post an event to run scheduled work
+    return;
+  }
+
+  base::subtle::NoBarrier_Store(&work_scheduled_, 0);
+  RunOneTask();
+}
+
+MessagePump::MessagePump()
+    : work_scheduled_(0),
+      delayed_work_timer_id_(0),
+      state_(nullptr) {}
+
+MessagePump::~MessagePump() {}
 
 } // namespace qt
 } // namespace oxide

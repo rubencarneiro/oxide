@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,7 @@
 #include <QObject>
 #include <QtGlobal>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "base/time/time.h"
+#include "base/macros.h"
 
 #include "shared/browser/oxide_message_pump.h"
 
@@ -33,25 +31,37 @@ QT_END_NAMESPACE
 
 QT_USE_NAMESPACE
 
+namespace base {
+class TimeTicks;
+}
+
 namespace oxide {
 namespace qt {
 
-class MessagePump final : public QObject,
-                          public oxide::MessagePump {
+class MessagePump : public QObject,
+                    public oxide::MessagePump {
  public:
   MessagePump();
-
-  void Run(Delegate* delegate) final;
-
-  void Quit() final;
-
-  void ScheduleWork() final;
-
-  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) final;
-
-  void Start(Delegate* delegate) final;
+  ~MessagePump() override;
 
  private:
+  void PostWorkEvent();
+  void CancelTimer();
+  void RunOneTask();
+
+  // base::MessagePump implementation
+  void Run(Delegate* delegate) override;
+  void Quit() override;
+  void ScheduleWork() override;
+  void ScheduleDelayedWork(const base::TimeTicks& delayed_work_time) override;
+
+  // oxide::MessagePump implementation
+  void OnStart() override;
+
+  // QObject implementation
+  void timerEvent(QTimerEvent* event) override;
+  void customEvent(QEvent* event) override;
+
   struct RunState {
     RunState() :
         delegate(nullptr),
@@ -63,10 +73,8 @@ class MessagePump final : public QObject,
     bool should_quit;
   };
 
-  void timerEvent(QTimerEvent* event) final;
-  void customEvent(QEvent* event) final;
+  int32_t work_scheduled_;
 
-  base::TimeTicks delayed_work_time_;
   int delayed_work_timer_id_;
 
   RunState* state_;

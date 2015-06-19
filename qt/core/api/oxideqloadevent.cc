@@ -26,6 +26,7 @@ class OxideQLoadEventPrivate {
       : type(OxideQLoadEvent::TypeStarted),
         error_domain(OxideQLoadEvent::ErrorDomainNone),
         error_code(0),
+        http_status_code(0),
         is_error(false) {}
 
   QUrl url;
@@ -33,13 +34,15 @@ class OxideQLoadEventPrivate {
   OxideQLoadEvent::ErrorDomain error_domain;
   QString error_string;
   int error_code;
+  int http_status_code;
   QUrl original_url;
   bool is_error;
 };
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  Type type,
-                                 bool is_error)
+                                 bool is_error,
+                                 int http_status_code)
     : d_ptr(new OxideQLoadEventPrivate()) {
   Q_D(OxideQLoadEvent);
 
@@ -50,12 +53,14 @@ OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
   d->url = url;
   d->type = type;
   d->is_error = is_error;
+  d->http_status_code = http_status_code;
 }
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
                                  ErrorDomain error_domain,
                                  const QString& error_string,
-                                 int error_code)
+                                 int error_code,
+                                 int http_status_code)
     : d_ptr(new OxideQLoadEventPrivate()) {
   Q_D(OxideQLoadEvent);
 
@@ -64,16 +69,19 @@ OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
   d->error_domain = error_domain;
   d->error_string = error_string;
   d->error_code = error_code;
+  d->http_status_code = http_status_code;
 }
 
 OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
-                                 const QUrl& original_url)
+                                 const QUrl& original_url,
+                                 int http_status_code)
     : d_ptr(new OxideQLoadEventPrivate()) {
   Q_D(OxideQLoadEvent);
 
   d->url = url;
   d->type = OxideQLoadEvent::TypeRedirected;
   d->original_url = original_url;
+  d->http_status_code = http_status_code;
 }
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
@@ -106,6 +114,12 @@ int OxideQLoadEvent::errorCode() const {
   Q_D(const OxideQLoadEvent);
 
   return d->error_code;
+}
+
+int OxideQLoadEvent::httpStatusCode() const {
+  Q_D(const OxideQLoadEvent);
+
+  return d->http_status_code;
 }
 
 QUrl OxideQLoadEvent::originalUrl() const {

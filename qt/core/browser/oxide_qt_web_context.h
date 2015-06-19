@@ -33,6 +33,7 @@
 #include "net/cookies/canonical_cookie.h"
 
 #include "qt/core/glue/oxide_qt_web_context_proxy.h"
+#include "shared/browser/media/oxide_media_capture_devices_context_client.h"
 
 QT_BEGIN_NAMESPACE
 class QNetworkAccessManager;
@@ -68,7 +69,8 @@ class WebContextGetter : public base::RefCountedThreadSafe<WebContextGetter> {
   DISALLOW_COPY_AND_ASSIGN(WebContextGetter);
 };
 
-class WebContext : public WebContextProxy {
+class WebContext : public WebContextProxy,
+                   public oxide::MediaCaptureDevicesContextClient {
  public:
   WebContext(WebContextProxyClient* client);
   ~WebContext();
@@ -136,6 +138,15 @@ class WebContext : public WebContextProxy {
   void setAllowedExtraUrlSchemes(const QStringList& schemes) override;
   int maxCacheSizeHint() const override;
   void setMaxCacheSizeHint(int size) override;
+  QString defaultAudioCaptureDeviceId() const override;
+  bool setDefaultAudioCaptureDeviceId(const QString& id) override;
+  QString defaultVideoCaptureDeviceId() const override;
+  bool setDefaultVideoCaptureDeviceId(const QString& id) override;
+  void clearTemporarySavedPermissionStatuses() override;
+
+  // oxide::MediaCaptureDevicesContextClient implementation
+  void DefaultAudioDeviceChanged() override;
+  void DefaultVideoDeviceChanged() override;
 
   WebContextProxyClient* client_;
 

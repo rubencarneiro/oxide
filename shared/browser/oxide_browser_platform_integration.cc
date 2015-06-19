@@ -90,4 +90,9 @@ void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
                     ApplicationStateChanged());
 }
 
+ui::ClipboardOxideFactory
+BrowserPlatformIntegration::GetClipboardOxideFactory() {
+  return nullptr;
+}
+
 } // namespace oxide

@@ -37,10 +37,7 @@ class PowerSaveBlockerImpl::Delegate
   Delegate(PowerSaveBlockerType type,
            Reason reason,
            const std::string& description) {
-    if (!g_factory) {
-      NOTREACHED();
-      return;
-    }
+    DCHECK(g_factory);
 
     delegate_ = g_factory(type, reason, description);
     if (!delegate_.get()) {

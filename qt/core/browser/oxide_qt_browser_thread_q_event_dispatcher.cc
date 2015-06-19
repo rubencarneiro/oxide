@@ -214,7 +214,11 @@ void BrowserThreadQEventDispatcher::ScheduleTimer(int timer_id) {
         FROM_HERE,
         base::TimeDelta::FromMilliseconds(interval),
         base::Bind(&BrowserThreadQEventDispatcher::OnTimerExpired,
+                   // The callback cannot run after |this| is deleted, as it
+                   // owns the timer instance via |timers_|
                    base::Unretained(this),
+                   // The callback cannot run after |timer_instance| is
+                   // deleted, as it owns the Timer via its |timer| member
                    base::Unretained(timer_instance.get())));
 
     std::list<linked_ptr<TimerInstance> >::iterator it = timers_.begin();

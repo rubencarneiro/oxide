@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,18 +17,88 @@
 
 #include "oxideqquickglobal_p.h"
 
+#include <QList>
+#include <QMap>
+#include <QString>
+
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqmediacapturedevices.h"
 
 #include "oxideqquickwebcontext_p.h"
 
+namespace {
+
+QVariant AudioCaptureDeviceToVariant(const OxideQAudioCaptureDevice& device) {
+  QMap<QString, QVariant> rv;
+  rv["id"] = device.id();
+  rv["displayName"] = device.displayName();
+  return rv;
+}
+
+QVariant VideoCaptureDeviceToVariant(const OxideQVideoCaptureDevice& device) {
+  QMap<QString, QVariant> rv;
+  rv["id"] = device.id();
+  rv["displayName"] = device.displayName();
+
+  switch (device.position()) {
+    case OxideQVideoCaptureDevice::PositionFrontFace:
+      rv["position"] = "frontface";
+    case OxideQVideoCaptureDevice::PositionBackFace:
+      rv["position"] = "backface";
+    default:
+      rv["position"] = "unspecified";
+  }
+    
+  return rv;
+}
+
+}
+
 class OxideQQuickGlobalPrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickGlobal)
+  Q_DISABLE_COPY(OxideQQuickGlobalPrivate)
+
  public:
-  ~OxideQQuickGlobalPrivate() {}
-  OxideQQuickGlobalPrivate() {}
+  ~OxideQQuickGlobalPrivate();
+
+ private:
+  OxideQQuickGlobalPrivate(OxideQQuickGlobal* q);
+
+  void availableAudioCaptureDevicesDidChange();
+  void availableVideoCaptureDevicesDidChange();
+
+  OxideQQuickGlobal* q_ptr;
+
+  bool audio_capture_devices_need_update_;
+  QList<QVariant> audio_capture_devices_;
+
+  bool video_capture_devices_need_update_;
+  QList<QVariant> video_capture_devices_;
 };
 
+OxideQQuickGlobalPrivate::OxideQQuickGlobalPrivate(OxideQQuickGlobal* q)
+    : q_ptr(q),
+      audio_capture_devices_need_update_(true),
+      video_capture_devices_need_update_(true) {}
+
+void OxideQQuickGlobalPrivate::availableAudioCaptureDevicesDidChange() {
+  Q_Q(OxideQQuickGlobal);
+
+  audio_capture_devices_need_update_ = true;
+  Q_EMIT q->availableAudioCaptureDevicesChanged();
+}
+
+void OxideQQuickGlobalPrivate::availableVideoCaptureDevicesDidChange() {
+  Q_Q(OxideQQuickGlobal);
+
+  video_capture_devices_need_update_ = true;
+  Q_EMIT q->availableVideoCaptureDevicesChanged();
+}
+
+OxideQQuickGlobalPrivate::~OxideQQuickGlobalPrivate() {}
+
 OxideQQuickGlobal::OxideQQuickGlobal() :
-    d_ptr(new OxideQQuickGlobalPrivate()) {
+    d_ptr(new OxideQQuickGlobalPrivate(this)) {
   Q_STATIC_ASSERT(
       ProcessModelMultiProcess ==
         static_cast<ProcessModel>(OxideProcessModelMultiProcess));
@@ -47,9 +117,18 @@ OxideQQuickGlobal::OxideQQuickGlobal() :
   Q_STATIC_ASSERT(
       ProcessModelSitePerProcess ==
         static_cast<ProcessModel>(OxideProcessModelSitePerProcess));
+
+  connect(OxideQMediaCaptureDevices::instance(),
+          SIGNAL(availableAudioDevicesChanged()),
+          SLOT(availableAudioCaptureDevicesDidChange()));
+  connect(OxideQMediaCaptureDevices::instance(),
+          SIGNAL(availableVideoDevicesChanged()),
+          SLOT(availableVideoCaptureDevicesDidChange()));
 }
 
-OxideQQuickGlobal::~OxideQQuickGlobal() {}
+OxideQQuickGlobal::~OxideQQuickGlobal() {
+  OxideQMediaCaptureDevices::instance()->disconnect(this);
+}
 
 OxideQQuickGlobal::ProcessModel OxideQQuickGlobal::processModel() const {
   return static_cast<ProcessModel>(oxideGetProcessModel());
@@ -91,3 +170,45 @@ void OxideQQuickGlobal::setMaxRendererProcessCount(int count) {
 OxideQQuickWebContext* OxideQQuickGlobal::defaultWebContext() {
   return OxideQQuickWebContext::defaultContext(true);
 }
+
+QVariant OxideQQuickGlobal::availableAudioCaptureDevices() {
+  Q_D(OxideQQuickGlobal);
+
+  if (!d->audio_capture_devices_need_update_) {
+    return d->audio_capture_devices_;
+  }
+
+  d->audio_capture_devices_need_update_ = false;
+  d->audio_capture_devices_.clear();
+
+  QList<OxideQAudioCaptureDevice> devices =
+      OxideQMediaCaptureDevices::instance()->availableAudioDevices();
+
+  for (const auto& device : devices) {
+    d->audio_capture_devices_ << AudioCaptureDeviceToVariant(device);
+  }
+
+  return d->audio_capture_devices_;
+}
+
+QVariant OxideQQuickGlobal::availableVideoCaptureDevices() {
+  Q_D(OxideQQuickGlobal);
+
+  if (!d->video_capture_devices_need_update_) {
+    return d->video_capture_devices_;
+  }
+
+  d->video_capture_devices_need_update_ = false;
+  d->video_capture_devices_.clear();
+
+  QList<OxideQVideoCaptureDevice> devices =
+      OxideQMediaCaptureDevices::instance()->availableVideoDevices();
+
+  for (const auto& device : devices) {
+    d->video_capture_devices_ << VideoCaptureDeviceToVariant(device);
+  }
+
+  return d->video_capture_devices_;
+}
+
+#include "moc_oxideqquickglobal_p.cpp"

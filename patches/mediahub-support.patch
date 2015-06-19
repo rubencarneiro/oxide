@@ -1,13 +1,13 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -215,9 +215,17 @@ BrowserPluginDelegate* ContentRendererCl
-     const GURL& original_url) {
-   return nullptr;
+@@ -227,9 +227,17 @@ std::string ContentRendererClient::GetUs
+   return std::string();
  }
  
- std::string ContentRendererClient::GetUserAgentOverrideForURL(const GURL& url) {
-   return std::string();
+ scoped_ptr<blink::WebAppBannerClient>
+ ContentRendererClient::CreateAppBannerClient(RenderFrame* render_frame) {
+   return nullptr;
  }
  
 +blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
@@ -22,9 +22,9 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -30,16 +30,18 @@ class SingleThreadTaskRunner;
- 
+@@ -32,16 +32,18 @@ class SingleThreadTaskRunner;
  namespace blink {
+ class WebAppBannerClient;
  class WebAudioDevice;
  class WebClipboard;
  class WebFrame;
@@ -41,7 +41,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebPrescientNetworking;
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
-@@ -50,16 +52,17 @@ class WebURLRequest;
+@@ -53,16 +55,17 @@ class WebURLRequest;
  class WebWorkerContentSettingsClientProxy;
  struct WebPluginParams;
  struct WebURLError;
@@ -57,17 +57,17 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  namespace content {
  class BrowserPluginDelegate;
  class DocumentState;
+ class MediaStreamRendererFactory;
  class RenderFrame;
- class RenderView;
-@@ -295,13 +298,20 @@ class CONTENT_EXPORT ContentRendererClie
-   // Records a sample string to a Rappor privacy-preserving metric.
-   // See: https://www.chromium.org/developers/design-documents/rappor
-   virtual void RecordRappor(const std::string& metric,
-                             const std::string& sample) {}
+@@ -313,13 +316,20 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
+       RenderFrame* render_frame);
  
-   // Records a domain and registry of a url to a Rappor privacy-preserving
-   // metric. See: https://www.chromium.org/developers/design-documents/rappor
-   virtual void RecordRapporURL(const std::string& metric, const GURL& url) {}
+   // Gives the embedder a chance to add properties to the context menu.
+   // Currently only called when the context menu is for an image.
+   virtual void AddImageContextMenuProperties(
+       const blink::WebURLResponse& response,
+       std::map<std::string, std::string>* properties) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2024,16 +2024,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -1938,16 +1938,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(url, client);
  
  #if defined(OS_ANDROID)
@@ -109,4 +109,4 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
                   static_cast<RenderFrame*>(this)),
        render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_),
        media_log, render_thread->GetMediaThreadTaskRunner(),
-       render_thread->compositor_message_loop_proxy(),
+       render_thread->compositor_task_runner(),

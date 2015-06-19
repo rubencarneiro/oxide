@@ -20,15 +20,21 @@
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/logging.h"
+#include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/common/referrer.h"
+#include "net/base/mime_util.h"
 #include "net/cookies/cookie_monster.h"
+#include "net/http/http_content_disposition.h"
+#include "net/http/http_request_headers.h"
+#include "net/http/http_response_headers.h"
 #include "net/url_request/url_request_context.h"
 #include "url/gurl.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_context_delegate.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_web_view.h"
@@ -44,7 +50,65 @@ struct ResourceDispatcherHostDelegate::DownloadRequestParams {
   std::string mime_type;
   int render_process_id;
   int render_view_id;
+  std::string user_agent;
 };
+
+void ResourceDispatcherHostDelegate::DownloadStarting(
+    net::URLRequest* request,
+    content::ResourceContext* resource_context,
+    int child_id,
+    int route_id,
+    int request_id,
+    bool is_content_initiated,
+    bool must_download,
+    const std::string& suggested_filename,
+    ScopedVector<content::ResourceThrottle>* throttles) {
+  std::string suggested_name = suggested_filename;
+  std::string mime_type;
+
+  net::HttpResponseHeaders* response_headers = request->response_headers();
+  if (response_headers) {
+    if (suggested_name.empty()) {
+      std::string disposition;
+      response_headers->GetNormalizedHeader(
+          "content-disposition",
+          &disposition);
+      net::HttpContentDisposition content_disposition(disposition, std::string());
+      suggested_name = content_disposition.filename();
+    }
+
+    response_headers->GetMimeType(&mime_type);
+  }
+  request->Cancel();
+
+  if (!suggested_name.empty() && mime_type.empty()) {
+    base::FilePath::StringType ext =
+        base::FilePath(suggested_name).Extension();
+    if (!ext.empty()) {
+      ext.erase(ext.begin());
+    }
+    net::GetMimeTypeFromExtension(ext, &mime_type);
+  }
+
+  // POST request cannot be repeated in general, so prevent client from
+  // retrying the same request, even if it is with a GET.
+  if ("GET" == request->method()) {
+    content::Referrer referrer;
+    referrer.url = GURL(request->referrer());
+    DispatchDownloadRequest(
+        request->url(),
+        request->first_party_for_cookies(),
+        is_content_initiated,
+        base::UTF8ToUTF16(suggested_name),
+        false,
+        referrer,
+        mime_type,
+        child_id,
+        route_id,
+        resource_context,
+        request);
+  }
+}
 
 void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     const GURL& url,
@@ -56,8 +120,12 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     const std::string& mime_type,
     int render_process_id,
     int render_view_id,
-    content::ResourceContext* resource_context) {
+    content::ResourceContext* resource_context,
+    net::URLRequest* url_request) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+
+  BrowserContextIOData* io_data =
+      BrowserContextIOData::FromResourceContext(resource_context);
 
   DownloadRequestParams params;
   params.url = url;
@@ -69,10 +137,28 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.render_process_id = render_process_id;
   params.render_view_id = render_view_id;
 
-  BrowserContextIOData* io_data =
-      BrowserContextIOData::FromResourceContext(resource_context);
+  net::HttpRequestHeaders headers;
+  std::string user_agent;
+  if (url_request->is_pending()) {
+    url_request->extra_request_headers().GetHeader(
+        net::HttpRequestHeaders::kUserAgent, &params.user_agent);
+  } else if (io_data->GetDelegate().get()) {
+    scoped_refptr<BrowserContextDelegate> delegate(
+        BrowserContextIOData::FromResourceContext(resource_context)->GetDelegate());
+    if (delegate.get()) {
+      params.user_agent = delegate->GetUserAgentOverride(url);
+    }
+  }
+  if (params.user_agent.empty()) {
+    params.user_agent = io_data->GetUserAgent();
+  }
 
-  if (io_data && io_data->CanAccessCookies(url, first_party_url, false)) {
+  if (url_request->is_pending()) {
+    std::string cookies;
+    url_request->extra_request_headers().GetHeader(
+        net::HttpRequestHeaders::kCookie, &cookies);
+    DispatchDownloadRequestWithCookies(params, cookies);
+  } else if (io_data && io_data->CanAccessCookies(url, first_party_url, false)) {
     net::CookieStore* cookie_store =
         GetCookieStoreForContext(resource_context);
     if (cookie_store) {
@@ -122,7 +208,8 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
     params.use_prompt,
     params.suggested_name,
     cookies,
-    params.referrer.spec());
+    params.referrer.spec(),
+    params.user_agent);
 }
 
 net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForContext(
@@ -145,31 +232,11 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     const GURL& url,
     int child_id,
-    int route_id) {
+    int route_id,
+    bool is_main_frame,
+    ui::PageTransition page_transition,
+    bool has_user_gesture) {
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
-}
-
-bool ResourceDispatcherHostDelegate::ShouldDownloadUrl(const GURL& url,
-    const GURL& first_party_url,
-    bool is_content_initiated,
-    const base::string16& suggested_name,
-    const bool use_prompt,
-    const content::Referrer& referrer,
-    const std::string& mime_type,
-    int render_process_id,
-    int render_view_id,
-    content::ResourceContext* resource_context) {
-  DispatchDownloadRequest(url,
-                          first_party_url,
-                          is_content_initiated,
-                          suggested_name,
-                          use_prompt,
-                          referrer,
-                          mime_type,
-                          render_process_id,
-                          render_view_id,
-                          resource_context);
-  return false;
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}

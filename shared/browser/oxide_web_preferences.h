@@ -131,7 +131,7 @@ class WebPreferences {
 
   bool attributes_[ATTR_LAST];
 
-  ObserverList<WebPreferencesObserver> observers_;
+  base::ObserverList<WebPreferencesObserver> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebPreferences);
 };

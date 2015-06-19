@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
@@ -46,6 +47,10 @@ namespace content {
 class RenderWidgetHostImpl;
 }
 
+namespace ui {
+class MotionEvent;
+}
+
 namespace oxide {
 
 class RenderWidgetHostViewDelegate;
@@ -53,6 +58,7 @@ class WebView;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
+    public GestureProviderClient,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
@@ -73,8 +79,10 @@ class RenderWidgetHostView final :
     return compositor_frame_metadata_;
   }
 
-  // content::RenderWidgetHostViewBase implementation
-  void Blur() final;
+  void HandleTouchEvent(const ui::MotionEvent& event);
+  void ResetGestureDetection();
+
+  void Blur();
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const final;
@@ -153,11 +161,14 @@ class RenderWidgetHostView final :
   bool LockMouse() final;
   void UnlockMouse() final;
 
-  // cc::DelegatedFrameResourceCollectionClient implementation
-  void UnusedResourcesAreAvailable() final;
+  // GestureProviderClient implementation
+  void OnGestureEvent(const blink::WebGestureEvent& event) final;
 
   // RendererFrameEvictorClient implemenetation
   void EvictCurrentFrame() final;
+
+  // cc::DelegatedFrameResourceCollectionClient implementation
+  void UnusedResourcesAreAvailable() final;
 
   // ===================
 
@@ -206,6 +217,8 @@ class RenderWidgetHostView final :
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   bool top_controls_shrink_blink_size_;
+
+  scoped_ptr<GestureProvider> gesture_provider_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

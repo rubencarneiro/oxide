@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -55,6 +55,7 @@
 #endif
 #include "gpu/command_buffer/service/gpu_switches.h"
 #include "ipc/ipc_descriptors.h"
+#include "media/base/media_switches.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
 #include "ui/gl/gl_switches.h"
@@ -317,6 +318,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
       command_line->AppendSwitch(switches::kEnableMediaHubAudio);
     }
   }
+
+  if (IsEnvironmentOptionEnabled("TESTING_MODE")) {
+    command_line->AppendSwitch(switches::kUseFakeDeviceForMediaStream);
+  }
 }
 
 void AddFormFactorSpecificCommandLineArguments() {
@@ -441,7 +446,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
 
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 #if defined(V8_USE_EXTERNAL_STARTUP_DATA)
-  CHECK(gin::V8Initializer::LoadV8Snapshot());
+  gin::V8Initializer::LoadV8Snapshot();
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();
@@ -472,7 +477,7 @@ void BrowserProcessMainImpl::Shutdown() {
   }
   state_ = STATE_SHUTTING_DOWN;
 
-  MessageLoopForUI::current()->Stop();
+  MessagePump::Get()->Stop();
 
   WebContentsUnloader::GetInstance()->WaitForPendingUnloadsToFinish();
 

@@ -85,6 +85,8 @@ ScriptMessageHandlerRenderer::ScriptMessageHandlerRenderer(
   handler_.set_msg_id(msg_id);
   handler_.SetCallback(
       base::Bind(&ScriptMessageHandlerRenderer::ReceiveMessageCallback,
+                 // The callback cannot run after |this| is deleted, as it
+                 // exclusively owns |handler_|
                  base::Unretained(this)));
 }
 

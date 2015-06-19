@@ -61,9 +61,9 @@ class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
 class SSLHostStateDelegate;
+class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
-class UserScriptMaster;
 
 class BrowserContextIOData {
  public:
@@ -98,6 +98,10 @@ class BrowserContextIOData {
                         const GURL& first_party_url,
                         bool write);
 
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
 
@@ -125,10 +129,24 @@ class BrowserContextIOData {
   scoped_refptr<net::CookieStore> cookie_store_;
 
   scoped_ptr<net::HostMappingRules> host_mapping_rules_;
+
+  scoped_ptr<TemporarySavedPermissionContext>
+      temporary_saved_permission_context_;
 };
 
-class BrowserContext : public content::BrowserContext,
-                       public base::NonThreadSafe {
+class BrowserContext;
+
+struct BrowserContextTraits {
+  static void Destruct(const BrowserContext* x);
+};
+
+// This class holds the context needed for a browsing session. It lives on
+// and must only be accessed on the UI thread - note that it uses a thread-safe
+// refcount only so that we can override the delete behaviour
+class BrowserContext
+    : public content::BrowserContext,
+      public base::RefCountedThreadSafe<BrowserContext, BrowserContextTraits>,
+      public base::NonThreadSafe {
  public:
 
   struct Params {
@@ -164,13 +182,11 @@ class BrowserContext : public content::BrowserContext,
 
   static scoped_refptr<BrowserContext> Create(const Params& params);
 
+  typedef base::Callback<void(BrowserContext*)> BrowserContextCallback;
+  static void ForEach(const BrowserContextCallback& callback);
+
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
-
-  // We don't use base::RefCounted here because BrowserContext always
-  // comes in pairs, and we want a shared reference count between each half
-  void AddRef() const;
-  void Release() const;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,
@@ -179,14 +195,15 @@ class BrowserContext : public content::BrowserContext,
   BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
-  virtual BrowserContext* GetOffTheRecordContext() = 0;
-  virtual BrowserContext* GetOriginalContext() = 0;
+  virtual scoped_refptr<BrowserContext> GetOffTheRecordContext() = 0;
+  virtual BrowserContext* GetOriginalContext() const = 0;
+  virtual bool HasOffTheRecordContext() const = 0;
 
-  bool IsOffTheRecord() const final;
+  bool IsOffTheRecord() const override; // from content::BrowserContext
 
   bool IsSameContext(BrowserContext* other) const;
 
-  base::FilePath GetPath() const final;
+  base::FilePath GetPath() const override; // from content::BrowserContext
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
 
@@ -213,13 +230,18 @@ class BrowserContext : public content::BrowserContext,
 
   const std::vector<std::string>& GetHostMappingRules() const;
 
-  UserScriptMaster& UserScriptManager();
-
-  content::ResourceContext* GetResourceContext() final;
+  // from content::BrowserContext
+  content::ResourceContext* GetResourceContext() override;
 
   scoped_refptr<net::CookieStore> GetCookieStore();
 
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
  protected:
+  friend class BrowserContextDestroyer; // for destructor
+
   BrowserContext(BrowserContextIOData* io_data);
   virtual ~BrowserContext();
 
@@ -231,45 +253,36 @@ class BrowserContext : public content::BrowserContext,
  private:
   friend class BrowserContextObserver; // for {Add,Remove}Observer
 
+  // content::BrowserContext implementation
   scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
-      const base::FilePath& partition_path) final;
-
-  net::URLRequestContextGetter* GetRequestContext() final;
+      const base::FilePath& partition_path) override;
+  net::URLRequestContextGetter* GetRequestContext() override;
   net::URLRequestContextGetter* GetRequestContextForRenderProcess(
-      int renderer_child_id) final;
-
-  net::URLRequestContextGetter* GetMediaRequestContext() final;
+      int renderer_child_id) override;
+  net::URLRequestContextGetter* GetMediaRequestContext() override;
   net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
-      int renderer_child_id) final;
-
-  net::URLRequestContextGetter*
-      GetMediaRequestContextForStoragePartition(
-          const base::FilePath& partition_path,
-          bool in_memory) final;
-
-  content::DownloadManagerDelegate* GetDownloadManagerDelegate() final;
-
-  content::BrowserPluginGuestManager* GetGuestManager() final;
-  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() final;
-  content::PushMessagingService* GetPushMessagingService() final;
-  content::SSLHostStateDelegate* GetSSLHostStateDelegate() final;
-  content::PermissionManager* GetPermissionManager() final;
+      int renderer_child_id) override;
+  net::URLRequestContextGetter* GetMediaRequestContextForStoragePartition(
+      const base::FilePath& partition_path,
+      bool in_memory) override;
+  content::DownloadManagerDelegate* GetDownloadManagerDelegate() override;
+  content::BrowserPluginGuestManager* GetGuestManager() override;
+  storage::SpecialStoragePolicy* GetSpecialStoragePolicy() override;
+  content::PushMessagingService* GetPushMessagingService() override;
+  content::SSLHostStateDelegate* GetSSLHostStateDelegate() override;
+  content::PermissionManager* GetPermissionManager() override;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
 
-  static void Delete(const BrowserContext* context);
-
-  virtual bool HasOffTheRecordContext() const = 0;
-
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  ObserverList<BrowserContextObserver> observers_;
+  base::ObserverList<BrowserContextObserver> observers_;
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   scoped_ptr<PermissionManager> permission_manager_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(BrowserContext);
+  DISALLOW_COPY_AND_ASSIGN(BrowserContext);
 };
 
 } // namespace oxide

@@ -36,7 +36,7 @@ bool UserScript::URLMatchesGlobs(const std::vector<std::string>& globs,
 }
 
 // static
-void UserScript::PickleGlobs(::Pickle* pickle,
+void UserScript::PickleGlobs(base::Pickle* pickle,
                              const std::vector<std::string>& globs) {
   pickle->WriteUInt64(globs.size());
   for (std::vector<std::string>::const_iterator it = globs.begin();
@@ -46,7 +46,7 @@ void UserScript::PickleGlobs(::Pickle* pickle,
 }
 
 // static
-void UserScript::UnpickleGlobs(PickleIterator* iter,
+void UserScript::UnpickleGlobs(base::PickleIterator* iter,
                                std::vector<std::string>* globs) {
   globs->clear();
 
@@ -60,7 +60,7 @@ void UserScript::UnpickleGlobs(PickleIterator* iter,
 }
 
 // static
-void UserScript::PickleURLPatternSet(::Pickle* pickle,
+void UserScript::PickleURLPatternSet(base::Pickle* pickle,
                                      const extensions::URLPatternSet& set) {
   pickle->WriteUInt64(set.size());
   for (extensions::URLPatternSet::const_iterator it = set.begin();
@@ -71,7 +71,7 @@ void UserScript::PickleURLPatternSet(::Pickle* pickle,
 }
 
 // static
-void UserScript::UnpickleURLPatternSet(PickleIterator* iter,
+void UserScript::UnpickleURLPatternSet(base::PickleIterator* iter,
                                        extensions::URLPatternSet* set) {
   set->ClearPatterns();
 
@@ -113,7 +113,7 @@ void UserScript::add_exclude_url_pattern(const URLPattern& pattern) {
   exclude_pattern_set_.AddPattern(pattern);
 }
 
-void UserScript::Pickle(::Pickle* pickle) const {
+void UserScript::Pickle(base::Pickle* pickle) const {
   pickle->WriteInt(run_location());
   pickle->WriteBool(match_all_frames());
   pickle->WriteBool(incognito_enabled());
@@ -129,7 +129,7 @@ void UserScript::Pickle(::Pickle* pickle) const {
   pickle->WriteData(content().data(), content().length());
 }
 
-void UserScript::Unpickle(PickleIterator* iter) {
+void UserScript::Unpickle(base::PickleIterator* iter) {
   CHECK(iter->ReadInt(reinterpret_cast<int*>(&run_location_)));
   CHECK(iter->ReadBool(&match_all_frames_));
   CHECK(iter->ReadBool(&incognito_enabled_));

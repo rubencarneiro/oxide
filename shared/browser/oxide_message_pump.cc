@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,20 +17,18 @@
 
 #include "oxide_message_pump.h"
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/run_loop.h"
+#include "base/threading/thread_local.h"
 
 namespace oxide {
 
-void MessagePump::SetupRunLoop() {
-  run_loop_.reset(new base::RunLoop());
-  run_loop_->BeforeRun();
-}
+namespace {
 
-void MessagePump::Stop() {
-  CHECK_EQ(task_depth_, 0) <<
-      "Stopping Oxide whilst dispatching a task from the event queue is bad!";
-  run_loop_->AfterRun();
+base::LazyInstance<base::ThreadLocalPointer<MessagePump>> g_lazy_tls =
+    LAZY_INSTANCE_INITIALIZER;
+
 }
 
 void MessagePump::WillProcessTask(const base::PendingTask& pending_task) {
@@ -39,14 +37,49 @@ void MessagePump::WillProcessTask(const base::PendingTask& pending_task) {
 
 void MessagePump::DidProcessTask(const base::PendingTask& pending_task) {
   --task_depth_;
-  DCHECK(task_depth_ >= 0);
+  DCHECK_GE(task_depth_, 0);
 }
 
-MessagePump::MessagePump() :
-    task_depth_(0) {
-  base::MessageLoop::current()->AddTaskObserver(this);
+// static
+MessagePump* MessagePump::Get() {
+  return g_lazy_tls.Pointer()->Get();
 }
 
-MessagePump::~MessagePump() {}
+MessagePump::MessagePump()
+    : task_depth_(0) {
+  CHECK(!Get());
+  g_lazy_tls.Pointer()->Set(this);
+}
+
+MessagePump::~MessagePump() {
+  g_lazy_tls.Pointer()->Set(nullptr);
+}
+
+void MessagePump::Start() {
+  base::MessageLoop* loop = base::MessageLoop::current();
+
+  CHECK(!loop->is_running()) <<
+      "Called Start() more than once or whilst inside a RunLoop";
+
+  loop->AddTaskObserver(this);
+
+  run_loop_.reset(new base::RunLoop());
+  run_loop_->BeforeRun();
+
+  OnStart();
+}
+
+void MessagePump::Stop() {
+  base::MessageLoop* loop = base::MessageLoop::current();
+
+  CHECK(loop->is_running() && run_loop_) <<
+      "Called Stop() before calling Start()";
+  CHECK_EQ(task_depth_, 0) << "Called Stop() inside a task";
+
+  run_loop_->AfterRun();
+  run_loop_.reset();
+
+  loop->RemoveTaskObserver(this);
+}
 
 } // namespace oxide

@@ -80,15 +80,16 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
 
   scoped_ptr<base::SharedMemory> shmem(new base::SharedMemory(handle, true));
 
-  CHECK(shmem->Map(sizeof(Pickle::Header)));
-  Pickle::Header* header = reinterpret_cast<Pickle::Header *>(shmem->memory());
-  int size = sizeof(Pickle::Header) + header->payload_size;
+  CHECK(shmem->Map(sizeof(base::Pickle::Header)));
+  base::Pickle::Header* header =
+      reinterpret_cast<base::Pickle::Header *>(shmem->memory());
+  int size = sizeof(base::Pickle::Header) + header->payload_size;
   shmem->Unmap();
 
   CHECK(shmem->Map(size));
 
-  Pickle pickle(reinterpret_cast<char *>(shmem->memory()), size);
-  PickleIterator iter(pickle);
+  base::Pickle pickle(reinterpret_cast<char *>(shmem->memory()), size);
+  base::PickleIterator iter(pickle);
 
   uint64 num_scripts = 0;
   CHECK(iter.ReadUInt64(&num_scripts));
@@ -121,15 +122,13 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
   v8::HandleScope handle_scope(isolate);
   v8::Context::Scope context_scope(message_manager->GetV8Context());
 
-  v8::Local<v8::String> wrapped_script_head(v8::String::NewFromUtf8(
-      isolate,
-      "(function(oxide) {\n"
-  ));
+  v8::Local<v8::String> wrapped_script_head(
+      v8::String::NewFromUtf8(isolate,
+                              "(function(oxide) {\n"));
 
   v8::Local<v8::String> src(
-      v8::String::NewFromUtf8(
-          isolate,
-	  script_source.code.utf8().c_str()));
+      v8::String::NewFromUtf8(isolate,
+                              script_source.code.utf8().c_str()));
   DCHECK(!src.IsEmpty() && src->Length() > 0);
 
   v8::Local<v8::String> wrapped_script_tail(
@@ -137,31 +136,32 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
 
   v8::Local<v8::String> wrapped_src(
       v8::String::Concat(wrapped_script_head,
-          v8::String::Concat(src, wrapped_script_tail)));
+                         v8::String::Concat(src, wrapped_script_tail)));
 
-  v8::Local<v8::Script> script(
-      v8::Script::Compile(wrapped_src));
+  v8::Local<v8::Script> script(v8::Script::Compile(wrapped_src));
 
   v8::TryCatch try_catch;
-  v8::Local<v8::Function> function(script->Run().As<v8::Function>());
-  if (try_catch.HasCaught()) {
-    LOG(ERROR) << "Caught exception when running script: "
-               << *v8::String::Utf8Value(try_catch.Message()->Get());
-    return;
-  }
-
-  v8::Local<v8::Value> argv[] = {
-      message_manager->GetOxideApiObject(message_manager->isolate())
-  };
-
   {
     blink::WebScopedMicrotaskSuppression mts;
+
+    v8::Local<v8::Function> function(script->Run().As<v8::Function>());
+    if (try_catch.HasCaught()) {
+      LOG(ERROR) << "Caught exception when running script: "
+                 << *v8::String::Utf8Value(try_catch.Message()->Get());
+      return;
+    }
+
+    v8::Local<v8::Value> argv[] = {
+        message_manager->GetOxideApiObject(message_manager->isolate())
+    };
+
     frame->callFunctionEvenIfScriptDisabled(
         function,
         message_manager->GetV8Context()->Global(),
         arraysize(argv),
         argv);
   }
+
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when calling script: "
                << *v8::String::Utf8Value(try_catch.Message()->Get());

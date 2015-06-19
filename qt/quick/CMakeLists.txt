@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_javascript_dialog.cc
     oxide_qquick_prompt_dialog.cc
     oxide_qquick_software_frame_node.cc
+    oxide_qquick_web_context_menu.cc
     oxide_qquick_web_popup_menu.cc
     ${MOC_EXTRA})
 

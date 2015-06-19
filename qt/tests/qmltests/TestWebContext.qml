@@ -51,4 +51,8 @@ WebContext {
 
      throw new Error("Timeout whilst deleting cookies");
   }
+
+  function clearTemporarySavedPermissionStatuses() {
+    OxideTestingUtils.clearTemporarySavedPermissionStatuses(this);
+  }
 }

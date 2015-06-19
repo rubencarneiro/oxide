@@ -45,9 +45,10 @@ class WebContextIODelegate;
 }
 }
 
-class OxideQQuickWebContextPrivate : public QObject,
-                                     public oxide::qt::WebContextProxyHandle,
-                                     public oxide::qt::WebContextProxyClient {
+class Q_DECL_EXPORT OxideQQuickWebContextPrivate
+    : public QObject,
+      public oxide::qt::WebContextProxyHandle,
+      public oxide::qt::WebContextProxyClient {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
   OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebContext, oxide::qt::WebContextProxyHandle)
@@ -60,6 +61,8 @@ class OxideQQuickWebContextPrivate : public QObject,
   void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
 
   static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
+
+  void clearTemporarySavedPermissionStatuses();
 
   // XXX(chrisccoulson): Add CookieManager proxy and remove these
   bool isInitialized() const;
@@ -103,6 +106,8 @@ class OxideQQuickWebContextPrivate : public QObject,
   void CookiesDeleted(int request_id, int num_deleted) override;
   QNetworkAccessManager* GetCustomNetworkAccessManager() override;
   void DestroyDefault() override;
+  void DefaultAudioCaptureDeviceChanged() override;
+  void DefaultVideoCaptureDeviceChanged() override;
 
   bool constructed_;
 
