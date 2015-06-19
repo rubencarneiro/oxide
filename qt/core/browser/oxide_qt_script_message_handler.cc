@@ -23,25 +23,27 @@
 
 #include "base/bind.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/values.h"
 
 #include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 #include "shared/common/oxide_script_message.h"
 
 #include "oxide_qt_script_message.h"
+#include "oxide_qt_variant_value_converter.h"
 
 namespace oxide {
 namespace qt {
 
 bool ScriptMessageHandler::ReceiveMessageCallback(
     oxide::ScriptMessage* message,
-    std::string* error_desc) {
+    scoped_ptr<base::Value>* error_payload) {
   scoped_ptr<ScriptMessage> m(new ScriptMessage(message));
 
-  QString qerror;
-  bool success = client_->ReceiveMessage(m.release(), qerror);
+  QVariant error;
+  bool success = client_->ReceiveMessage(m.release(), &error);
 
   if (!success) {
-    *error_desc = qerror.toStdString();
+    *error_payload = VariantValueConverter::FromVariantValue(error);
   }
 
   return success;

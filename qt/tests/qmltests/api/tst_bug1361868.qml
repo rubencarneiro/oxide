@@ -15,7 +15,7 @@ TestWebView {
       msgId: "GEOLOCATION-RESPONSE"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        webView.lastGeolocationStatus = msg.args.status;
+        webView.lastGeolocationStatus = msg.payload;
       }
     }
   ]
@@ -32,7 +32,7 @@ TestWebView {
 
       webView.getTestApi().evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       var r = webView.getTestApi().getBoundingClientRectForSelector("#button");

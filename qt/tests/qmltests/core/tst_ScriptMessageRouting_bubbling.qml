@@ -19,7 +19,7 @@ TestWebView {
       msgId: "TEST"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        msg.reply({ out: msg.args.in, handler: "view" });
+        msg.reply({ out: msg.payload, handler: "view" });
       }
     }
   ]
@@ -40,13 +40,13 @@ TestWebView {
           webView.rootFrame,
           { msgId: "TEST", contexts: [ "oxide://testutils/" ],
             callback: function(msg) {
-              msg.reply({ out: msg.args.in, handler: "frame" });
+              msg.reply({ out: msg.payload, handler: "frame" });
             }
           });
 
       var frame = webView.rootFrame.childFrames[0];
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", { in: 10 });
+      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
       compare(res.handler, "frame", "Got response from wrong handler");
       compare(res.out, 10, "Invalid result");
 
@@ -56,7 +56,7 @@ TestWebView {
     function test_ScriptMessageRouting_bubbling2_to_webview() {
       var frame = webView.rootFrame.childFrames[0];
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", { in: 10 });
+      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
       compare(res.handler, "view", "Got response from wrong handler");
       compare(res.out, 10, "Invalid result");
     }

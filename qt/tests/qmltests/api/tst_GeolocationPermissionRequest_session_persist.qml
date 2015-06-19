@@ -51,7 +51,7 @@ Item {
           msgId: "GEOLOCATION-RESPONSE"
           contexts: [ "oxide://testutils/" ]
           callback: function(msg) {
-            _internal.lastGeolocationStatus = msg.args.status;
+            _internal.lastGeolocationStatus = msg.payload;
           }
         }
       ]
@@ -64,7 +64,7 @@ Item {
     when: windowShown
 
     function _test_accept(req) {
-      req.accept();
+      req.allow();
     }
 
     function _test_deny(req) {

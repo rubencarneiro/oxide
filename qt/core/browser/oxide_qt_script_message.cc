@@ -17,14 +17,12 @@
 
 #include "oxide_qt_script_message.h"
 
-#include <QByteArray>
-#include <QJsonDocument>
-
 #include "base/logging.h"
 
 #include "shared/browser/oxide_script_message_impl_browser.h"
-#include "shared/common/oxide_script_message_request.h"
+#include "shared/common/oxide_script_message_params.h"
 
+#include "oxide_qt_variant_value_converter.h"
 #include "oxide_qt_web_frame.h"
 
 namespace oxide {
@@ -47,28 +45,22 @@ QUrl ScriptMessage::context() const {
   return QUrl(QString::fromStdString(impl_->context().spec()));
 }
 
-QVariant ScriptMessage::args() const {
-  if (!args_.isValid()) {
-    QJsonDocument jsondoc(QJsonDocument::fromJson(
-        QByteArray(impl_->args().data(), impl_->args().length())));
-    args_ = jsondoc.toVariant();
-  }
-
-  return args_;
+QVariant ScriptMessage::payload() const {
+  return payload_;
 }
 
-void ScriptMessage::reply(const QVariant& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-  impl_->Reply(QString(jsondoc.toJson()).toStdString());
+void ScriptMessage::reply(const QVariant& payload) {
+  impl_->Reply(VariantValueConverter::FromVariantValue(payload));
 }
 
-void ScriptMessage::error(const QString& msg) {
-  impl_->Error(oxide::ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
-               msg.toStdString());
+void ScriptMessage::error(const QVariant& payload) {
+  impl_->Error(oxide::ScriptMessageParams::ERROR_HANDLER_REPORTED_ERROR,
+               VariantValueConverter::FromVariantValue(payload));
 }
 
 ScriptMessage::ScriptMessage(oxide::ScriptMessage* message)
-    : impl_(static_cast<oxide::ScriptMessageImplBrowser*>(message)) {}
+    : impl_(static_cast<oxide::ScriptMessageImplBrowser*>(message)),
+      payload_(VariantValueConverter::ToVariantValue(message->payload())) {}
 
 ScriptMessage::~ScriptMessage() {}
 

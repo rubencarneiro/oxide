@@ -42,8 +42,8 @@ class OxideQQuickScriptMessageRequestPrivate
 
  private:
   // oxide::qt::ScriptMessageRequestProxyClient
-  void ReceiveReply(const QVariant& args) override;
-  void ReceiveError(int error, const QString& msg) override;
+  void ReceiveReply(const QVariant& payload) override;
+  void ReceiveError(int error, const QVariant& payload) override;
 
   QJSValue reply_callback;
   QJSValue error_callback;

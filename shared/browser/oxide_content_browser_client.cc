@@ -48,7 +48,6 @@
 #include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
-#include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -72,7 +71,6 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }
 

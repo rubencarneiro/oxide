@@ -45,12 +45,12 @@ class ScriptMessage : public ScriptMessageProxy {
   WebFrameProxyHandle* frame() const override;
   QString msgId() const override;
   QUrl context() const override;
-  QVariant args() const override;
-  void reply(const QVariant& args) override;
-  void error(const QString& msg) override;
+  QVariant payload() const override;
+  void reply(const QVariant& payload) override;
+  void error(const QVariant& payload) override;
 
   scoped_refptr<oxide::ScriptMessageImplBrowser> impl_;
-  mutable QVariant args_;
+  QVariant payload_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessage);
 };

@@ -40,12 +40,12 @@ TestWebView {
           frame,
           { msgId: "TEST", contexts: [ "oxide://testutils/" ],
             callback: function(msg) {
-              msg.reply({ out: msg.args.in });
+              msg.reply(msg.payload);
             }
           });
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", { in: 10 });
-      compare(res.out, 10, "Unexpected return value from handler");
+      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
+      compare(res, 10, "Unexpected return value from handler");
       frame.removeMessageHandler(handler);
     }
 

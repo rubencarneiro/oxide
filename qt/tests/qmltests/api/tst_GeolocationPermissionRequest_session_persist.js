@@ -3,5 +3,5 @@
 // ==/UserScript==
 
 document.addEventListener("oxidegeolocationresult", function(event) {
-  oxide.sendMessage("GEOLOCATION-RESPONSE", { status: event.detail.status });
+  oxide.sendMessage("GEOLOCATION-RESPONSE", event.detail.status);
 });

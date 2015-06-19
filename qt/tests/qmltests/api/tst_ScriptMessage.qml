@@ -18,7 +18,7 @@ TestWebView {
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
         webView.lastMessageFrameSource = msg.frame;
-        msg.reply({ out: msg.args.in, id: msg.id, context: msg.context });
+        msg.reply({ out: msg.payload, id: msg.id, context: msg.context });
       }
     },
     ScriptMessageHandler {
@@ -59,7 +59,7 @@ TestWebView {
     }
 
     function test_ScriptMessage1_reply() {
-      var res = webView.getTestApi().sendMessageToSelf("TEST-REPLY", { in: 10 });
+      var res = webView.getTestApi().sendMessageToSelf("TEST-REPLY", 10);
       compare(res.out, 10, "Invalid response from message handler");
       compare(webView.lastMessageFrameSource, webView.rootFrame,
               "Invalid source frame for message");
@@ -69,7 +69,7 @@ TestWebView {
 
     function test_ScriptMessage2_error() {
       try {
-        webView.getTestApi().sendMessageToSelf("TEST-ERROR", {});
+        webView.getTestApi().sendMessageToSelf("TEST-ERROR");
         fail("Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");

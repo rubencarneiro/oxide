@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,13 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
-#define _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
+#ifndef _OXIDE_SHARED_COMMON_PARAM_TRAITS_H_
+#define _OXIDE_SHARED_COMMON_PARAM_TRAITS_H_
 
-// Dictates which type of media playback is being initialized.
-enum OxideHostMsg_MediaPlayer_Initialize_Type {
-  MEDIA_PLAYER_TYPE_URL,
-  MEDIA_PLAYER_TYPE_MEDIA_SOURCE,
+#include <string>
+
+#include "ipc/ipc_param_traits.h"
+
+namespace base {
+class PickleIterator;
+}
+
+namespace oxide {
+struct ScriptMessageParams;
+}
+
+namespace IPC {
+
+class Message;
+
+template <>
+struct ParamTraits<oxide::ScriptMessageParams> {
+  typedef oxide::ScriptMessageParams param_type;
+  static void Write(Message* m, const param_type& p);
+  static bool Read(const Message* m, base::PickleIterator* iter, param_type* r);
+  static void Log(const param_type& p, std::string* l);
 };
 
-#endif // _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
+} // namespace IPC
+
+#endif // _OXIDE_SHARED_COMMON_PARAM_TRAITS_H_
