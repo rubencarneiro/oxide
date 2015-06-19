@@ -64,7 +64,7 @@ Item {
     when: windowShown
 
     function _test_accept(req) {
-      req.accept();
+      req.allow();
     }
 
     function _test_deny(req) {

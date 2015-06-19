@@ -50,6 +50,10 @@ TestWebView {
       webView.context.clearTemporarySavedPermissionStatuses();
     }
 
+    function _test_allow() {
+      webView.lastGeolocationRequest.allow();
+    }
+
     function _test_accept() {
       webView.lastGeolocationRequest.accept();
     }
@@ -64,9 +68,10 @@ TestWebView {
 
     function test_GeolocationPermissionRequest1_main_frame_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
-        { function: _test_destroy, expected: 1 }
+        { function: _test_destroy, expected: 1 },
+        { function: _test_accept, expected: 0 },
       ];
     }
 
@@ -97,7 +102,7 @@ TestWebView {
 
     function test_GeolocationPermissionRequest2_subframe_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
         { function: _test_destroy, expected: 1 }
       ];
