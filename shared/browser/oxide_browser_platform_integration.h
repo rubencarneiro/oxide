@@ -96,6 +96,8 @@ class BrowserPlatformIntegration {
   // Get the current application state
   virtual ApplicationState GetApplicationState();
 
+  virtual std::string GetAppName() = 0;
+
  protected:
   BrowserPlatformIntegration();
 

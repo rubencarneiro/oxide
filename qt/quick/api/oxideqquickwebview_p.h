@@ -345,6 +345,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void navigationRequested(OxideQNavigationRequest* request);
   void newViewRequested(OxideQNewViewRequest* request);
   void geolocationPermissionRequested(const QJSValue& request);
+  Q_REVISION(5) void notificationPermissionRequested(const QJSValue& request);
   Q_REVISION(4) void mediaAccessPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,

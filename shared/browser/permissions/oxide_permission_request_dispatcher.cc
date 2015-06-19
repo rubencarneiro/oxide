@@ -140,6 +140,9 @@ void PermissionRequestDispatcher::RequestPermission(
     case content::PermissionType::GEOLOCATION:
       client_->RequestGeolocationPermission(request.Pass());
       break;
+    case content::PermissionType::NOTIFICATIONS:
+      client_->RequestNotificationPermission(request.Pass());
+      break;
     default:
       NOTIMPLEMENTED();
       break;

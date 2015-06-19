@@ -1262,7 +1262,7 @@ void WebView::Init(Params* params) {
   DCHECK(root_frame_.get());
 
   if (params->context && init_data_->load_params) {
-    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);
   }
 
   web_contents_->GetController().LoadIfNecessary();

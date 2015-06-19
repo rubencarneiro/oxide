@@ -32,6 +32,7 @@ class OxideQLoadEvent;
 class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
+class OxideQSimplePermissionRequest;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -128,6 +129,8 @@ class WebViewProxyClient {
       OxideQGeolocationPermissionRequest* request) = 0;
   virtual void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) = 0;
+  virtual void RequestNotificationPermission(
+      OxideQSimplePermissionRequest* request) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

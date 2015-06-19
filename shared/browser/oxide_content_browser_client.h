@@ -49,6 +49,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
  private:
   // content::ContentBrowserClient implementation
   std::string GetApplicationLocale() final;
+  content::PlatformNotificationService* GetPlatformNotificationService() final;
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) final;
   void RenderProcessWillLaunch(content::RenderProcessHost* host) final;

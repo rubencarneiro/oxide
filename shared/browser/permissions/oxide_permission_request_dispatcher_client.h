@@ -38,6 +38,9 @@ class PermissionRequestDispatcherClient {
 
   virtual void RequestMediaAccessPermission(
       scoped_ptr<MediaAccessPermissionRequest> request) {}
+
+  virtual void RequestNotificationPermission(
+      scoped_ptr<SimplePermissionRequest> request) {}
 };
 
 } // namespace oxide

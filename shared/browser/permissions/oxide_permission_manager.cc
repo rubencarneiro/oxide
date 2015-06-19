@@ -21,6 +21,7 @@
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"
+#include "shared/browser/oxide_platform_notification_service.h"
 
 #include "shared/browser/oxide_browser_context.h"
 
@@ -57,6 +58,7 @@ content::PermissionStatus ToPermissionStatus(
 bool IsPermissionTypeSupported(content::PermissionType permission) {
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
+    case content::PermissionType::NOTIFICATIONS:
       return true;
     default:
       return false;
@@ -68,6 +70,8 @@ TemporarySavedPermissionType ToTemporarySavedPermissionType(
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
       return TEMPORARY_SAVED_PERMISSION_TYPE_GEOLOCATION;
+    case content::PermissionType::NOTIFICATIONS:
+      return TEMPORARY_SAVED_PERMISSION_TYPE_NOTIFICATIONS;
     default:
       NOTREACHED();
       // XXX(chrisccoulson): Perhaps we need __builtin_unreachable here?
@@ -134,6 +138,7 @@ const PermissionRequestCallback WrapCallback(
     case content::PermissionType::GEOLOCATION:
       return base::Bind(&RespondToGeolocationPermissionRequest,
                         wrapped_callback);
+    case content::PermissionType::NOTIFICATIONS:
     default:
       return wrapped_callback;
   }

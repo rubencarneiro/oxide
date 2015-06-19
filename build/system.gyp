@@ -18,6 +18,25 @@
   'variables': {
     'pkg_config': 'pkg-config'
   },
+  'targets': [
+    {
+      'target_name': 'libnotify',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '<!@(<(pkg_config) --cflags libnotify)'
+        ]
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(<(pkg_config) --libs-only-L --libs-only-other libnotify)',
+        ],
+        'libraries': [
+          '<!@(<(pkg_config) --libs-only-l libnotify)',
+        ],
+      },
+    },
+  ],
   'conditions': [
     ['target_arch=="arm"', {
       'targets': [

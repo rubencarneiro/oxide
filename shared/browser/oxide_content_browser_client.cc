@@ -53,6 +53,7 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
+#include "oxide_platform_notification_service.h"
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
@@ -299,7 +300,14 @@ ContentBrowserClient::ContentBrowserClient(
     const std::string& application_locale,
     BrowserPlatformIntegration* integration)
     : application_locale_(application_locale),
-      platform_integration_(integration) {}
+      platform_integration_(integration) {
+  PlatformNotificationService::GetInstance()->Initialize(integration->GetAppName());
+}
+
+content::PlatformNotificationService*
+ContentBrowserClient::GetPlatformNotificationService() {
+  return PlatformNotificationService::GetInstance();
+}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 

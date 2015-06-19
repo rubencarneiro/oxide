@@ -161,6 +161,11 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
+std::string
+BrowserPlatformIntegration::GetAppName() {
+  return QCoreApplication::applicationName().toStdString();
+}
+
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
   if (event->type() == QEvent::ApplicationActivate ||
       event->type() == QEvent::ApplicationDeactivate) {

@@ -17,6 +17,7 @@
 {
   'variables': {
     'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
+    'pkg_config': 'pkg-config'
   },
   'conditions': [
     ['enable_mediahub==1', {
@@ -264,6 +265,7 @@
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/url/url.gyp:url_lib',
         '<(DEPTH)/v8/tools/gyp/v8.gyp:v8',
+        '../build/system.gyp:libnotify',
       ],
       'include_dirs': [
         '..',
@@ -357,6 +359,8 @@
         'browser/oxide_message_pump.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
+        'browser/oxide_platform_notification_service.h',
+        'browser/oxide_platform_notification_service.cc',
         'browser/oxide_power_save_blocker.cc',
         'browser/oxide_power_save_blocker.h',
         'browser/oxide_quota_permission_context.cc',
