@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -420,20 +420,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -426,20 +426,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1499,17 +1497,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1505,17 +1503,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    is_loading_ = false;
    frame_tree_node_->DidStopLoading();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1522,17 +1519,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1528,17 +1525,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
    new media::MojoRendererService(request.Pass());
  }
  #endif
-@@ -1991,30 +1987,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -1998,30 +1994,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -117,7 +117,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -401,20 +399,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -406,20 +404,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -139,7 +139,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -524,20 +521,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -529,20 +526,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
        const AccessibilityHostMsg_FindInPageResultParams& params);
    void OnAccessibilitySnapshotResponse(int callback_id,
                                         const ui::AXTreeUpdate& snapshot);
@@ -189,7 +189,7 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
    virtual void HidePopupMenu() {};
 -#endif
  
- #if defined(TOOLKIT_VIEWS) || defined(USE_AURA)
+ #if defined(USE_AURA)
    // Shows a Link Disambiguation Popup. |target_rect| is the area the user
    // touched that resulted in ambiguity, in DIPs in the host's coordinate
    // system, |zoomed_bitmap| is an enlarged image of that |target_rect|, and

@@ -230,8 +230,11 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_.reset();
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
-    settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
+    settings.renderer_settings.allow_antialiasing = false;
+
+    // XXX(chrisccoulson): Should remove, but we get no compositing without it
+    settings.impl_side_painting = false;
 
     cc::LayerTreeHost::InitParams params;
     params.client = this;
