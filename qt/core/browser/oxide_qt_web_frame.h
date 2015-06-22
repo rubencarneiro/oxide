@@ -66,11 +66,11 @@ class WebFrame : public oxide::WebFrame,
   WebFrameProxyHandle* childFrameAt(int index) const override;
   bool sendMessage(const QUrl& context,
                    const QString& msg_id,
-                   const QVariant& args,
+                   const QVariant& payload,
                    ScriptMessageRequestProxyHandle* req) override;
   void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
-                          const QVariant& args) override;
+                          const QVariant& payload) override;
   QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
 
   WebFrameProxyClient* client_;

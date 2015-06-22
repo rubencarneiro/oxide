@@ -24,7 +24,9 @@
 
 namespace oxide {
 
+class ContentBrowserClient;
 class ContentClient;
+class ContentRendererClient;
 class PlatformDelegate;
 
 class ContentMainDelegate final : public content::ContentMainDelegate {
@@ -45,6 +47,9 @@ class ContentMainDelegate final : public content::ContentMainDelegate {
 
  private:
   PlatformDelegate* delegate_;
+  scoped_ptr<ContentBrowserClient> content_browser_client_;
+  scoped_ptr<ContentRendererClient> content_renderer_client_;
+  scoped_ptr<content::ContentUtilityClient> content_utility_client_;
   scoped_ptr<ContentClient> content_client_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);

@@ -94,6 +94,8 @@ OxideQCertificateError::OxideQCertificateError(
 
   d->error_->SetCancelCallback(
       base::Bind(&OxideQCertificateErrorPrivate::OnCancel,
+                 // The callback cannot run after |d| is deleted, as it
+                 // excusively owns |error_|
                  base::Unretained(d)));
   
   COMPILE_ASSERT(

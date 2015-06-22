@@ -35,9 +35,9 @@ TestCase {
   }
 
   function test_OxideGlobal2_availableVideoCaptureDevices() {
-    result.waitFor(function() { return Oxide.availableVideoCaptureDevices().length > 0; });
+    result.waitFor(function() { return Oxide.availableVideoCaptureDevices.length > 0; });
 
-    var devices = Oxide.availableVideoCaptureDevices();
+    var devices = Oxide.availableVideoCaptureDevices;
     compare(devices.length, 1);
     compare(devices[0].id, "/dev/video0");
     compare(devices[0].displayName.substr(0, 13), "fake_device_0");

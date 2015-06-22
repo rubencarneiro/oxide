@@ -20,10 +20,13 @@
 #include <string>
 
 #include "base/memory/shared_memory.h"
+#include "base/memory/singleton.h"
 #include "base/pickle.h"
 #include "base/process/process.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/string_util.h"
+#include "components/keyed_service/content/browser_context_dependency_manager.h"
+#include "components/keyed_service/content/browser_context_keyed_service_factory.h"
 #include "content/public/browser/notification_service.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_process_host.h"
@@ -59,6 +62,64 @@ bool GetValue(const base::StringPiece& line,
 
 }
 
+class UserScriptMasterFactory : public BrowserContextKeyedServiceFactory {
+ public:
+  static UserScriptMasterFactory* GetInstance();
+  static UserScriptMaster* GetForContext(content::BrowserContext* context);
+
+ private:
+  friend struct DefaultSingletonTraits<UserScriptMasterFactory>;
+
+  UserScriptMasterFactory();
+  ~UserScriptMasterFactory() override;
+
+  // BrowserContextKeyedServiceFactory methods:
+  KeyedService* BuildServiceInstanceFor(
+      content::BrowserContext* context) const override;
+  content::BrowserContext* GetBrowserContextToUse(
+      content::BrowserContext* context) const override;
+
+  DISALLOW_COPY_AND_ASSIGN(UserScriptMasterFactory);
+};
+
+UserScriptMasterFactory::UserScriptMasterFactory()
+    : BrowserContextKeyedServiceFactory(
+        "UserScriptMaster",
+        BrowserContextDependencyManager::GetInstance()) {}
+
+UserScriptMasterFactory::~UserScriptMasterFactory() {}
+
+KeyedService* UserScriptMasterFactory::BuildServiceInstanceFor(
+    content::BrowserContext* context) const {
+  return new UserScriptMaster(BrowserContext::FromContent(context));
+}
+
+content::BrowserContext* UserScriptMasterFactory::GetBrowserContextToUse(
+    content::BrowserContext* context) const {
+  return BrowserContext::FromContent(context)->GetOriginalContext();
+}
+
+// static
+UserScriptMasterFactory* UserScriptMasterFactory::GetInstance() {
+  return Singleton<UserScriptMasterFactory>::get();
+}
+
+// static
+UserScriptMaster* UserScriptMasterFactory::GetForContext(
+    content::BrowserContext* context) {
+  return static_cast<UserScriptMaster*>(
+      GetInstance()->GetServiceForBrowserContext(context, true));
+}
+
+
+UserScriptMaster::UserScriptMaster(BrowserContext* context) :
+    context_(context) {
+  registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
+                 content::NotificationService::AllBrowserContextsAndSources());
+}
+
+UserScriptMaster::~UserScriptMaster() {}
+
 void UserScriptMaster::SendUpdate(content::RenderProcessHost* process) {
   if (!shmem_) {
     return;
@@ -79,18 +140,33 @@ void UserScriptMaster::SendUpdate(content::RenderProcessHost* process) {
   }
 }
 
-UserScriptMaster::UserScriptMaster(BrowserContext* context) :
-    context_(context) {
-  registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
-                 content::NotificationService::AllBrowserContextsAndSources());
+void UserScriptMaster::Observe(
+    int type,
+    const content::NotificationSource& source,
+    const content::NotificationDetails& details) {
+  if (type != content::NOTIFICATION_RENDERER_PROCESS_CREATED) {
+    return;
+  }
+
+  content::RenderProcessHost* process =
+      content::Source<content::RenderProcessHost>(source).ptr();
+  if (!context_->IsSameContext(
+      BrowserContext::FromContent(process->GetBrowserContext()))) {
+    return;
+  }
+
+  SendUpdate(process);
 }
 
-UserScriptMaster::~UserScriptMaster() {}
+// static
+UserScriptMaster* UserScriptMaster::Get(content::BrowserContext* context) {
+  return UserScriptMasterFactory::GetForContext(context);
+}
 
 void UserScriptMaster::SerializeUserScriptsAndSendUpdates(
     std::vector<const UserScript *>& scripts) {
   // XXX: Should probably do this off the UI thread
-  Pickle pickle;
+  base::Pickle pickle;
   pickle.WriteUInt64(scripts.size());
   for (size_t i = 0; i < scripts.size(); ++i) {
     const UserScript* script = scripts[i];
@@ -117,24 +193,6 @@ void UserScriptMaster::SerializeUserScriptsAndSendUpdates(
 
     SendUpdate(process);
   }
-}
-
-void UserScriptMaster::Observe(
-    int type,
-    const content::NotificationSource& source,
-    const content::NotificationDetails& details) {
-  if (type != content::NOTIFICATION_RENDERER_PROCESS_CREATED) {
-    return;
-  }
-
-  content::RenderProcessHost* process =
-      content::Source<content::RenderProcessHost>(source).ptr();
-  if (!context_->IsSameContext(
-      BrowserContext::FromContent(process->GetBrowserContext()))) {
-    return;
-  }
-
-  SendUpdate(process);
 }
 
 // static

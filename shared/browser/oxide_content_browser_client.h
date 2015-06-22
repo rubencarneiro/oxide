@@ -18,16 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
+#include <string>
 #include <vector>
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
-
-namespace base {
-template <typename Type> struct DefaultLazyInstanceTraits;
-}
 
 namespace content {
 class QuotaPermissionContext;
@@ -43,17 +40,13 @@ class ResourceDispatcherHostDelegate;
 
 class ContentBrowserClient final : public content::ContentBrowserClient {
  public:
+  ContentBrowserClient(const std::string& application_locale,
+                       BrowserPlatformIntegration* integration);
+  ~ContentBrowserClient();
+
   // XXX(chrisccoulson): Try not to add anything here
 
  private:
-  friend class ContentMainDelegate; // For SetPlatformIntegration
-  friend struct base::DefaultLazyInstanceTraits<ContentBrowserClient>;
-
-  ContentBrowserClient();
-  ~ContentBrowserClient();
-
-  void SetPlatformIntegration(BrowserPlatformIntegration* integration);
-
   // content::ContentBrowserClient implementation
   std::string GetApplicationLocale() final;
   content::BrowserMainParts* CreateBrowserMainParts(
@@ -100,6 +93,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       bool expired_previous_decision,
       const base::Callback<void(bool)>& callback,
       content::CertificateRequestResultType* result) final;
+  content::MediaObserver* GetMediaObserver() final;
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,
@@ -112,7 +106,8 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                        bool opener_suppressed,
                        content::ResourceContext* context,
                        int render_process_id,
-                       int opener_id,
+                       int opener_render_view_id,
+                       int opener_render_frame_id,
                        bool* no_javascript_access) final;
   void ResourceDispatcherHostCreated() final;
   content::AccessTokenStore* CreateAccessTokenStore() final;
@@ -123,6 +118,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
       std::string* os_version) final;
 
+  std::string application_locale_;
   scoped_ptr<BrowserPlatformIntegration> platform_integration_;
 
   scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;

@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_APP_PLATFORM_DELEGATE_H_
 #define _OXIDE_SHARED_APP_PLATFORM_DELEGATE_H_
 
+#include <string>
+
 namespace oxide {
 
 class BrowserPlatformIntegration;
@@ -25,6 +27,9 @@ class BrowserPlatformIntegration;
 class PlatformDelegate {
  public:
   virtual ~PlatformDelegate() {}
+
+  // Get the application locale
+  virtual std::string GetApplicationLocale() = 0;
 
   virtual BrowserPlatformIntegration* CreateBrowserIntegration() = 0;
 

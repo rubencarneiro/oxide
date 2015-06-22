@@ -52,15 +52,20 @@
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
+#include "shared/browser/media/oxide_media_capture_devices_context.h"
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_user_script_master.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
 #include "oxide_qt_browser_startup.h"
 
 namespace oxide {
 namespace qt {
+
+using oxide::MediaCaptureDevicesContext;
+using oxide::UserScriptMaster;
 
 namespace {
 
@@ -150,6 +155,8 @@ struct WebContext::ConstructProperties {
   int devtools_port;
   std::string devtools_ip;
   std::vector<std::string> host_mapping_rules;
+  std::string default_audio_capture_device_id;
+  std::string default_video_capture_device_id;
 };
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
@@ -363,7 +370,8 @@ void WebContext::UpdateUserScripts() {
     }
   }
 
-  context_->UserScriptManager().SerializeUserScriptsAndSendUpdates(scripts);
+  UserScriptMaster::Get(context_.get())
+      ->SerializeUserScriptsAndSendUpdates(scripts);
 }
 
 void WebContext::CookieSetCallback(
@@ -467,6 +475,7 @@ WebContext::~WebContext() {
 
   if (context_.get()) {
     context_->SetDelegate(nullptr);
+    MediaCaptureDevicesContext::Get(context_.get())->set_client(nullptr);
   }
 }
 
@@ -532,6 +541,23 @@ oxide::BrowserContext* WebContext::GetContext() {
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
 
+  MediaCaptureDevicesContext* dc =
+      MediaCaptureDevicesContext::Get(context_.get());
+
+  if (!construct_props_->default_audio_capture_device_id.empty()) {
+    if (!dc->SetDefaultAudioDeviceId(
+        construct_props_->default_audio_capture_device_id)) {
+      client_->DefaultAudioCaptureDeviceChanged();
+    }
+  }
+  if (!construct_props_->default_video_capture_device_id.empty()) {
+    if (!dc->SetDefaultVideoDeviceId(
+        construct_props_->default_video_capture_device_id)) {
+      client_->DefaultVideoCaptureDeviceChanged();
+    }
+  }
+
+  dc->set_client(this);
   context_->SetDelegate(delegate_.get());
 
   construct_props_.reset();
@@ -895,6 +921,74 @@ int WebContext::maxCacheSizeHint() const {
 void WebContext::setMaxCacheSizeHint(int size) {
   DCHECK(!IsInitialized());
   construct_props_->max_cache_size_hint = size;
+}
+
+QString WebContext::defaultAudioCaptureDeviceId() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(
+        MediaCaptureDevicesContext::Get(context_.get())
+          ->GetDefaultAudioDeviceId());
+  }
+
+  return QString::fromStdString(
+      construct_props_->default_audio_capture_device_id);
+}
+
+bool WebContext::setDefaultAudioCaptureDeviceId(const QString& id) {
+  if (IsInitialized()) {
+    return MediaCaptureDevicesContext::Get(context_.get())
+        ->SetDefaultAudioDeviceId(id.toStdString());
+  }
+
+  // XXX(chrisccoulson): We don't check if this is a valid ID here
+  construct_props_->default_audio_capture_device_id = id.toStdString();
+  client_->DefaultAudioCaptureDeviceChanged();
+  return true;
+}
+
+QString WebContext::defaultVideoCaptureDeviceId() const {
+  if (IsInitialized()) {
+    return QString::fromStdString(
+        MediaCaptureDevicesContext::Get(context_.get())
+          ->GetDefaultVideoDeviceId());
+  }
+
+  return QString::fromStdString(
+      construct_props_->default_video_capture_device_id);
+}
+
+bool WebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
+  if (IsInitialized()) {
+    return MediaCaptureDevicesContext::Get(context_.get())
+        ->SetDefaultVideoDeviceId(id.toStdString());
+  }
+
+  // XXX(chrisccoulson): We don't check if this is a valid ID here
+  construct_props_->default_video_capture_device_id = id.toStdString();
+  client_->DefaultVideoCaptureDeviceChanged();
+  return true;
+}
+
+void WebContext::clearTemporarySavedPermissionStatuses() {
+  if (!context_.get()) {
+    return;
+  }
+
+  context_->GetTemporarySavedPermissionContext()->Clear();
+  if (!context_->HasOffTheRecordContext()) {
+    return;
+  }
+
+  context_->GetOffTheRecordContext()
+      ->GetTemporarySavedPermissionContext()->Clear();
+}
+
+void WebContext::DefaultAudioDeviceChanged() {
+  client_->DefaultAudioCaptureDeviceChanged();
+}
+
+void WebContext::DefaultVideoDeviceChanged() {
+  client_->DefaultVideoCaptureDeviceChanged();
 }
 
 } // namespace qt

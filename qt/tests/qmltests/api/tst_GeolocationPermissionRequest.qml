@@ -32,7 +32,7 @@ TestWebView {
       msgId: "GEOLOCATION-RESPONSE"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        webView.lastGeolocationStatus = msg.args.status;
+        webView.lastGeolocationStatus = msg.payload;
       }
     }
   ]
@@ -47,6 +47,11 @@ TestWebView {
       cancelSpy.clear();
       webView.lastGeolocationRequest = null;
       webView.lastGeolocationStatus = -1;
+      webView.context.clearTemporarySavedPermissionStatuses();
+    }
+
+    function _test_allow() {
+      webView.lastGeolocationRequest.allow();
     }
 
     function _test_accept() {
@@ -63,9 +68,10 @@ TestWebView {
 
     function test_GeolocationPermissionRequest1_main_frame_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
-        { function: _test_destroy, expected: 1 }
+        { function: _test_destroy, expected: 1 },
+        { function: _test_accept, expected: 0 },
       ];
     }
 
@@ -76,7 +82,7 @@ TestWebView {
 
       webView.getTestApi().evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       if (!webView.lastGeolocationRequest) {
@@ -96,7 +102,7 @@ TestWebView {
 
     function test_GeolocationPermissionRequest2_subframe_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
         { function: _test_destroy, expected: 1 }
       ];
@@ -109,7 +115,7 @@ TestWebView {
 
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       if (!webView.lastGeolocationRequest) {

@@ -41,7 +41,7 @@ TestWebView {
       var handler = messageHandler.createObject(webView.rootFrame, data.handler);
 
       try {
-        webView.getTestApi().sendMessageToSelf("TEST", {});
+        webView.getTestApi().sendMessageToSelf("TEST");
         verify(!data.expectError, "Should have thrown");
       } catch(e) {
         verify(e instanceof TestUtils.MessageError, "Invalid exception type");

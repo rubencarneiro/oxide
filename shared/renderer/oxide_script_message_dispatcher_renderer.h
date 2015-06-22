@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,25 +20,26 @@
 
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "content/public/renderer/render_frame_observer.h"
 #include "v8/include/v8.h"
 
-#include "shared/common/oxide_script_message_request.h"
-
-struct OxideMsg_SendMessage_Params;
+#include "shared/common/oxide_script_message_params.h"
 
 namespace blink {
 class WebLocalFrame;
+}
+
+namespace IPC {
+class Message;
 }
 
 namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageDispatcherRenderer final : public content::RenderFrameObserver {
+class ScriptMessageDispatcherRenderer : public content::RenderFrameObserver {
  public:
   ScriptMessageDispatcherRenderer(content::RenderFrame* frame);
   ~ScriptMessageDispatcherRenderer();
@@ -46,23 +47,27 @@ class ScriptMessageDispatcherRenderer final : public content::RenderFrameObserve
   static ScriptMessageDispatcherRenderer* FromWebFrame(
       blink::WebLocalFrame* frame);
 
-  linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(int world_id);
+  linked_ptr<ScriptMessageManager> ScriptMessageManagerForWorldId(
+      int world_id);
 
  private:
-  typedef std::vector<linked_ptr<ScriptMessageManager> > ScriptMessageManagerVector;
+  typedef std::vector<linked_ptr<ScriptMessageManager>>
+      ScriptMessageManagerVector;
 
+  void OnReceiveMessage(const IPC::Message& message);
+
+  void ReturnError(ScriptMessageParams::Error error,
+                   const ScriptMessageParams& orig);
+
+  // content::RenderFrameObserver implementation
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int extension_group,
-                              int world_id) final;
+                              int world_id) override;
   void WillReleaseScriptContext(v8::Handle<v8::Context> context,
-                                int world_id) final;
-  bool OnMessageReceived(const IPC::Message& message) final;
+                                int world_id) override;
 
-  void OnReceiveMessage(const OxideMsg_SendMessage_Params& params);
-
-  void ReturnError(ScriptMessageRequest::Error error,
-                   const std::string& msg,
-                   const OxideMsg_SendMessage_Params& orig);
+  // IPC::Listener implementation
+  bool OnMessageReceived(const IPC::Message& message) override;
 
   ScriptMessageManagerVector script_message_managers_;
 

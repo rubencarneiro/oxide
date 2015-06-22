@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/values.h"
 #include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
@@ -33,17 +34,18 @@ namespace oxide {
 
 namespace {
 
-std::string V8StringToStdString(
+scoped_ptr<base::StringValue> V8StringToValue(
     v8::Local<v8::String> string) {
   v8::String::Value v(string);
   base::string16 s(static_cast<const base::char16 *>(*v), v.length());
-  return base::UTF16ToUTF8(s);
+  return make_scoped_ptr(new base::StringValue(base::UTF16ToUTF8(s)));
 }
 
 }
 
 bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
-    ScriptMessage* message, std::string* error) {
+    ScriptMessage* message,
+    scoped_ptr<base::Value>* error_payload) {
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
@@ -69,7 +71,7 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
     // alive by its caller (ScriptMessageDispatcherRenderer::OnReceiveMessage).
     // Our caller will dispose of ScriptMessage, before the current V8 handle
     // scope exists
-    *error = V8StringToStdString(try_catch.Message()->Get());
+    *error_payload = V8StringToValue(try_catch.Message()->Get());
     return false;
   }
 
@@ -85,6 +87,8 @@ ScriptMessageHandlerRenderer::ScriptMessageHandlerRenderer(
   handler_.set_msg_id(msg_id);
   handler_.SetCallback(
       base::Bind(&ScriptMessageHandlerRenderer::ReceiveMessageCallback,
+                 // The callback cannot run after |this| is deleted, as it
+                 // exclusively owns |handler_|
                  base::Unretained(this)));
 }
 

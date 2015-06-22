@@ -86,9 +86,6 @@ class Compositor final : public cc::LayerTreeHostClient,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) final;
-  void ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                           float page_scale,
-                           float top_controls_delta) final;
   void RequestNewOutputSurface() final;
   void DidInitializeOutputSurface() final;
   void DidFailToInitializeOutputSurface() final;
@@ -96,6 +93,9 @@ class Compositor final : public cc::LayerTreeHostClient,
   void DidCommit() final;
   void DidCommitAndDrawFrame() final;
   void DidCompleteSwapBuffers() final;
+  void RecordFrameTimingEvents(
+      scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
+      scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) override;
   void DidCompletePageScaleAnimation() final;
 
   CompositorClient* client_;

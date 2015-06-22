@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "url/gurl.h"
@@ -42,10 +41,11 @@ namespace oxide {
 class ScriptMessageHandlerRenderer;
 class ScriptMessageRequestImplRenderer;
 
-class ScriptMessageManager final :
-    public base::SupportsWeakPtr<ScriptMessageManager> {
+class ScriptMessageManager
+    : public base::SupportsWeakPtr<ScriptMessageManager> {
  public:
-  typedef std::vector<ScriptMessageRequestImplRenderer *> ScriptMessageRequestVector;
+  typedef std::vector<ScriptMessageRequestImplRenderer*>
+      ScriptMessageRequestVector;
 
   ScriptMessageManager(content::RenderFrame* frame,
                        v8::Handle<v8::Context> context,
@@ -76,7 +76,8 @@ class ScriptMessageManager final :
 
  private:
   friend class ScriptMessageRequestImplRenderer;
-  typedef std::map<std::string, linked_ptr<ScriptMessageHandlerRenderer> > ScriptMessageHandlerMap;
+  typedef std::map<std::string, linked_ptr<ScriptMessageHandlerRenderer>>
+      ScriptMessageHandlerMap;
 
   static std::string V8StringToStdString(v8::Local<v8::String> string);
 
@@ -91,11 +92,14 @@ class ScriptMessageManager final :
   static void SendMessage(const v8::FunctionCallbackInfo<v8::Value>& args);
   void SendMessageInner(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-  static void AddMessageHandler(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void AddMessageHandler(
+      const v8::FunctionCallbackInfo<v8::Value>& args);
   void AddMessageHandlerInner(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-  static void RemoveMessageHandler(const v8::FunctionCallbackInfo<v8::Value>& args);
-  void RemoveMessageHandlerInner(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void RemoveMessageHandler(
+      const v8::FunctionCallbackInfo<v8::Value>& args);
+  void RemoveMessageHandlerInner(
+      const v8::FunctionCallbackInfo<v8::Value>& args);
 
   void AddScriptMessageRequest(ScriptMessageRequestImplRenderer* req);
   void RemoveScriptMessageRequest(ScriptMessageRequestImplRenderer* req);
@@ -116,7 +120,7 @@ class ScriptMessageManager final :
 
   ScopedPersistent<v8::External> closure_data_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageManager);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageManager);
 };
 
 } // namespace oxide

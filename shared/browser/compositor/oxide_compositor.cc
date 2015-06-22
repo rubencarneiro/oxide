@@ -168,9 +168,6 @@ void Compositor::ApplyViewportDeltas(
     const gfx::Vector2dF& elastic_overscroll_delta,
     float page_scale,
     float top_controls_delta) {}
-void Compositor::ApplyViewportDeltas(const gfx::Vector2d& scroll_delta,
-                                     float page_scale,
-                                     float top_controls_delta) {}
 
 void Compositor::RequestNewOutputSurface() {
   scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
@@ -204,6 +201,9 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
+void Compositor::RecordFrameTimingEvents(
+    scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
+    scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 // static
@@ -232,7 +232,6 @@ void Compositor::SetVisibility(bool visible) {
     cc::LayerTreeSettings settings;
     settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
-    settings.throttle_frame_production = true;
 
     cc::LayerTreeHost::InitParams params;
     params.client = this;

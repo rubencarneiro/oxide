@@ -61,9 +61,9 @@ class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
 class SSLHostStateDelegate;
+class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
-class UserScriptMaster;
 
 class BrowserContextIOData {
  public:
@@ -98,6 +98,10 @@ class BrowserContextIOData {
                         const GURL& first_party_url,
                         bool write);
 
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
 
@@ -125,6 +129,9 @@ class BrowserContextIOData {
   scoped_refptr<net::CookieStore> cookie_store_;
 
   scoped_ptr<net::HostMappingRules> host_mapping_rules_;
+
+  scoped_ptr<TemporarySavedPermissionContext>
+      temporary_saved_permission_context_;
 };
 
 class BrowserContext;
@@ -223,12 +230,14 @@ class BrowserContext
 
   const std::vector<std::string>& GetHostMappingRules() const;
 
-  UserScriptMaster& UserScriptManager();
-
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
 
   scoped_refptr<net::CookieStore> GetCookieStore();
+
+  // XXX: This will be going away
+  // (see the comment in oxide_temporary_saved_permission_context.h)
+  TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
 
  protected:
   friend class BrowserContextDestroyer; // for destructor
@@ -268,7 +277,7 @@ class BrowserContext
 
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  ObserverList<BrowserContextObserver> observers_;
+  base::ObserverList<BrowserContextObserver> observers_;
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   scoped_ptr<PermissionManager> permission_manager_;

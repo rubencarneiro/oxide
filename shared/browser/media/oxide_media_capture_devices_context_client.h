@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,33 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
-#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "content/public/browser/browser_message_filter.h"
-
-namespace content {
-class RenderProcessHost;
-}
+#ifndef _OXIDE_SHARED_BROWSER_MEDIA_MEDIA_CAPTURE_DEVICES_CONTEXT_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_MEDIA_MEDIA_CAPTURE_DEVICES_CONTEXT_CLIENT_H_
 
 namespace oxide {
 
-class ScriptMessageDispatcherBrowser final :
-    public content::BrowserMessageFilter {
+// Allows a client to receive notifications of changes to
+// MediaCaptureDevicesContext
+class MediaCaptureDevicesContextClient {
  public:
-  ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
-  ~ScriptMessageDispatcherBrowser();
+  virtual ~MediaCaptureDevicesContextClient() {}
 
-  bool OnMessageReceived(const IPC::Message& message) final;
+  virtual void DefaultAudioDeviceChanged() = 0;
 
- private:
-  const int render_process_id_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageDispatcherBrowser);
+  virtual void DefaultVideoDeviceChanged() = 0;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#endif // _OXIDE_SHARED_BROWSER_MEDIA_MEDIA_CAPTURE_DEVICES_CONTEXT_CLIENT_H_

@@ -57,6 +57,7 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
+        'api/internal/oxideqmediacapturedevices_p.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
@@ -94,6 +95,8 @@
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
         'browser/oxide_qt_user_script.h',
+        'browser/oxide_qt_variant_value_converter.cc',
+        'browser/oxide_qt_variant_value_converter.h',
         'browser/oxide_qt_web_context.cc',
         'browser/oxide_qt_web_context.h',
         'browser/oxide_qt_web_context_menu.cc',
@@ -208,6 +211,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
@@ -228,8 +232,9 @@
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
-        'api/oxideqmediacapturedevice.cc',
-        'api/oxideqmediacapturedevice.h',
+        'api/oxideqmediacapturedevices.cc',
+        'api/oxideqmediacapturedevices.h',
+        'api/oxideqmediacapturedevices_p.h',
         'api/oxideqnetworkcallbackevents.cc',
         'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
@@ -271,6 +276,11 @@
         {
           'action_name': 'moc_oxideqloadevent.cc',
           'moc_input': 'api/oxideqloadevent.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqmediacapturedevices.cc',
+          'moc_input': 'api/oxideqmediacapturedevices.h',
           'includes': [ 'moc.gypi' ]
         },
         {

@@ -92,7 +92,7 @@ TestWebView {
         msgId: "from-user-script",
         contexts: ["oxide://main-world"],
         callback: function(msg, frame) {
-          received = msg.args;
+          received = msg.payload;
         }
       });
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,14 @@
 #include <string>
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_script_message_handler_proxy.h"
 #include "shared/common/oxide_script_message_handler.h"
+
+namespace base {
+class Value;
+}
 
 namespace oxide {
 
@@ -45,7 +50,7 @@ class ScriptMessageHandler : public ScriptMessageHandlerProxy {
 
  private:
   bool ReceiveMessageCallback(oxide::ScriptMessage* message,
-                              std::string* error_desc);
+                              scoped_ptr<base::Value>* error_payload);
 
   // ScriptMessageHandlerProxy implementation
   QString msgId() const override;

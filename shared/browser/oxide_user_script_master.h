@@ -23,6 +23,7 @@
 #include "base/basictypes.h"
 #include "base/compiler_specific.h"
 #include "base/memory/scoped_ptr.h"
+#include "components/keyed_service/core/keyed_service.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 
@@ -31,6 +32,7 @@ class SharedMemory;
 }
 
 namespace content {
+class BrowserContext;
 class RenderProcessHost;
 }
 
@@ -39,21 +41,27 @@ namespace oxide {
 class BrowserContext;
 class UserScript;
 
-class UserScriptMaster final : public content::NotificationObserver {
+class UserScriptMaster : public KeyedService,
+                         public content::NotificationObserver {
  public:
-  UserScriptMaster(BrowserContext* context);
-  ~UserScriptMaster();
+  static UserScriptMaster* Get(content::BrowserContext* context);
 
   void SerializeUserScriptsAndSendUpdates(std::vector<const UserScript *>& scripts);
-
-  void Observe(int type,
-               const content::NotificationSource& source,
-               const content::NotificationDetails& details) final;
 
   static void ParseMetadata(UserScript* script);
 
  private:
+  friend class UserScriptMasterFactory;
+
+  UserScriptMaster(BrowserContext* context);
+  ~UserScriptMaster();
+
   void SendUpdate(content::RenderProcessHost* process);
+
+  // content::NotificationObserver implementation
+  void Observe(int type,
+               const content::NotificationSource& source,
+               const content::NotificationDetails& details) override;
 
   BrowserContext* context_;
   scoped_ptr<base::SharedMemory> shmem_;

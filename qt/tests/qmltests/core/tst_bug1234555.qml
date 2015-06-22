@@ -41,8 +41,7 @@ TestWebView {
       verify(webView.waitFor(function() { return errorsReceived.length == numberSent; }),
              "Timed out waiting for responses");
       errorsReceived.forEach(function(error) {
-        compare(error.msg, "The frame disappeared whilst waiting for a response");
-        compare(error.code, ScriptMessageRequest.ErrorDestinationNotFound);
+        compare(error.code, ScriptMessageRequest.ErrorHandlerDidNotRespond);
       });
     }
   }

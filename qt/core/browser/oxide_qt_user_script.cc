@@ -91,7 +91,10 @@ void UserScript::init(const QUrl& url) {
       content::BrowserThread::GetMessageLoopProxyForThread(
         content::BrowserThread::FILE).get(),
       base::FilePath(url.toLocalFile().toStdString()),
-      base::Bind(&UserScript::OnGotFileContents, base::Unretained(this))));
+      base::Bind(&UserScript::OnGotFileContents,
+                 // The callback won't run after |this| is deleted because
+                 // it cancels the job
+                 base::Unretained(this))));
   if (!load_job_) {
     state_ = FailedLoad;
     client_->ScriptLoadFailed();

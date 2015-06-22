@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ namespace oxide {
 ScriptMessageImplRenderer::~ScriptMessageImplRenderer() {}
 
 void ScriptMessageImplRenderer::DoSendResponse(
-    const OxideMsg_SendMessage_Params& params) {
+    const ScriptMessageParams& params) {
   if (!manager()) {
     return;
   }
@@ -40,11 +40,13 @@ void ScriptMessageImplRenderer::DoSendResponse(
 ScriptMessageImplRenderer::ScriptMessageImplRenderer(
     ScriptMessageManager* mm,
     int serial,
-    bool want_reply,
     const std::string& msg_id,
-    const std::string& args,
-    const v8::Handle<v8::Object>& handle) :
-    ScriptMessage(serial, mm->GetContextURL(), want_reply, msg_id, args),
+    base::ListValue* wrapped_payload,
+    const v8::Handle<v8::Object>& handle)
+    : ScriptMessage(serial,
+                    mm->GetContextURL(),
+                    msg_id,
+                    wrapped_payload),
     ScriptReferencedObject<ScriptMessageImplRenderer>(mm, handle) {}
 
 } // namespace oxide

@@ -34,6 +34,7 @@
 #include "content/public/common/web_preferences.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_messages.h"
@@ -47,7 +48,6 @@
 #include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
-#include "oxide_script_message_dispatcher_browser.h"
 #include "oxide_user_agent_override_provider.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
@@ -62,10 +62,6 @@
 
 namespace oxide {
 
-ContentBrowserClient::ContentBrowserClient() {}
-
-ContentBrowserClient::~ContentBrowserClient() {}
-
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
   return new BrowserMainParts();
@@ -75,7 +71,6 @@ void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_SetUserAgent(
       BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
   host->AddFilter(new UserAgentOverrideProvider(host));
 }
 
@@ -196,6 +191,10 @@ void ContentBrowserClient::AllowCertificateError(
                                  result);
 }
 
+content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
+  return MediaCaptureDevicesDispatcher::GetInstance();
+}
+
 bool ContentBrowserClient::CanCreateWindow(
     const GURL& opener_url,
     const GURL& opener_top_level_frame_url,
@@ -209,7 +208,8 @@ bool ContentBrowserClient::CanCreateWindow(
     bool opener_suppressed,
     content::ResourceContext* context,
     int render_process_id,
-    int opener_id,
+    int opener_render_view_id,
+    int opener_render_frame_id,
     bool* no_javascript_access) {
   *no_javascript_access = false;
 
@@ -277,12 +277,6 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 #endif
 }
 
-void ContentBrowserClient::SetPlatformIntegration(
-    BrowserPlatformIntegration* integration) {
-  CHECK(integration && !platform_integration_);
-  platform_integration_.reset(integration);
-}
-
 gpu::GpuControlList::OsType
 ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
     std::string* os_version) {
@@ -297,7 +291,15 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 
 std::string
 ContentBrowserClient::GetApplicationLocale() {
-  return platform_integration_->GetApplicationLocale();
+  return application_locale_;
 }
+
+ContentBrowserClient::ContentBrowserClient(
+    const std::string& application_locale,
+    BrowserPlatformIntegration* integration)
+    : application_locale_(application_locale),
+      platform_integration_(integration) {}
+
+ContentBrowserClient::~ContentBrowserClient() {}
 
 } // namespace oxide

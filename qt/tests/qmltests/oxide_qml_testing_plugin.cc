@@ -34,6 +34,9 @@
 #include <QtQml>
 #include <QVariant>
 
+#include "qt/quick/api/oxideqquickwebcontext_p.h"
+#include "qt/quick/api/oxideqquickwebcontext_p_p.h"
+
 namespace {
 
 QList<pid_t> getChildProcesses(pid_t pid) {
@@ -212,6 +215,12 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE void clearClipboard() {
     QGuiApplication::clipboard()->clear();
+  }
+
+  Q_INVOKABLE void clearTemporarySavedPermissionStatuses(
+      OxideQQuickWebContext* context) {
+    OxideQQuickWebContextPrivate::get(context)
+        ->clearTemporarySavedPermissionStatuses();
   }
 };
 

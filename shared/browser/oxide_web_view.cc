@@ -35,7 +35,6 @@
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
-#include "content/public/browser/media_capture_devices.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
@@ -52,7 +51,6 @@
 #include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
-#include "content/public/common/media_stream_request.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
@@ -60,6 +58,7 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
+#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
@@ -71,11 +70,12 @@
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
+#include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
-
-#include "third_party/WebKit/public/web/WebFindOptions.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -84,6 +84,7 @@
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
+#include "oxide_script_message_contents_helper.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_context_menu.h"
@@ -165,14 +166,10 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
 }
 
 void CreateHelpers(content::WebContents* contents,
-                   WebViewContentsHelper* opener = nullptr) {
-  if (!opener) {
-    new WebViewContentsHelper(contents);
-  }
-  else {
-    new WebViewContentsHelper(contents, opener);
-  }
-
+                   content::WebContents* opener = nullptr) {
+  new WebViewContentsHelper(contents, opener);
+  PermissionRequestDispatcher::CreateForWebContents(contents);
+  ScriptMessageContentsHelper::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
@@ -222,7 +219,20 @@ WebView* WebViewIterator::GetNext() {
 WebView::Params::Params()
     : context(nullptr),
       incognito(false) {}
+
 WebView::Params::~Params() {}
+
+struct WebView::InitData {
+  InitData()
+      : restore_type(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+        restore_index(0) {}
+
+  scoped_ptr<content::NavigationController::LoadURLParams> load_params;
+
+  content::NavigationController::RestoreType restore_type;
+  std::vector<sessions::SerializedNavigationEntry> restore_state;
+  int restore_index;
+};
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
@@ -558,7 +568,14 @@ content::WebContents* WebView::OpenURLFromTab(
       opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
   contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
-  contents_params.opener = opener_suppressed ? nullptr : web_contents_.get();
+  contents_params.opener_render_process_id =
+      web_contents_->GetRenderProcessHost()->GetID();
+  // XXX(chrisccoulson): This is probably wrong, but we're going to revisit
+  //  navigations anyway, and opener_suppressed is currently always true so
+  //  this is ignored
+  contents_params.opener_render_frame_id =
+      web_contents_->GetMainFrame()->GetRoutingID();
+  contents_params.opener_suppressed = opener_suppressed;
 
   scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
@@ -567,7 +584,7 @@ content::WebContents* WebView::OpenURLFromTab(
     return nullptr;
   }
 
-  CreateHelpers(contents.get(), web_contents_helper_);
+  CreateHelpers(contents.get(), web_contents_.get());
 
   WebView* new_view =
       client_->CreateNewWebView(GetViewBoundsPix(), disposition);
@@ -666,7 +683,7 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_helper_);
+  CreateHelpers(new_contents, web_contents_.get());
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -806,91 +823,29 @@ void WebView::RequestMediaAccessPermission(
     const content::MediaResponseCallback& callback) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
-      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
+  MediaCaptureDevicesDispatcher::GetInstance()->RequestMediaAccessPermission(
+      request,
+      callback);
+}
 
-  if (request.video_type == content::MEDIA_NO_SERVICE &&
-      request.audio_type == content::MEDIA_NO_SERVICE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
+bool WebView::CheckMediaAccessPermission(content::WebContents* source,
+                                         const GURL& security_origin,
+                                         content::MediaStreamType type) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  DCHECK(type == content::MEDIA_DEVICE_VIDEO_CAPTURE ||
+         type == content::MEDIA_DEVICE_AUDIO_CAPTURE);
 
-  // Desktop / tab capture not supported
-  if (request.video_type == content::MEDIA_DESKTOP_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_DESKTOP_AUDIO_CAPTURE ||
-      request.video_type == content::MEDIA_TAB_VIDEO_CAPTURE ||
-      request.audio_type == content::MEDIA_TAB_AUDIO_CAPTURE) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
+  TemporarySavedPermissionType permission =
+      type == content::MEDIA_DEVICE_VIDEO_CAPTURE ?
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_CAMERA :
+        TEMPORARY_SAVED_PERMISSION_TYPE_MEDIA_DEVICE_MIC;
 
-  // Only MEDIA_GENERATE_STREAM is valid here - MEDIA_DEVICE_ACCESS doesn't
-  // come from media stream, MEDIA_ENUMERATE_DEVICES doesn't trigger a
-  // permission request and MEDIA_OPEN_DEVICE is used from pepper
-  if (request.request_type != content::MEDIA_GENERATE_STREAM) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NOT_SUPPORTED,
-                 nullptr);
-    return;
-  }
-
-  content::MediaCaptureDevices* devices =
-      content::MediaCaptureDevices::GetInstance();
-
-  if (request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE &&
-      devices->GetAudioCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
-  if (request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE &&
-      devices->GetVideoCaptureDevices().empty()) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_NO_HARDWARE,
-                 nullptr);
-    return;
-  }
-
-  content::RenderFrameHost* rfh =
-      content::RenderFrameHost::FromID(request.render_process_id,
-                                       request.render_frame_id);
-  if (!rfh) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
-  if (!frame) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_PERMISSION_DENIED,
-                 nullptr);
-    return;
-  }
-
-  scoped_ptr<MediaAccessPermissionRequest> req(
-      new MediaAccessPermissionRequest(
-        &permission_request_manager_,
-        frame,
-        request.security_origin,
-        web_contents_->GetLastCommittedURL().GetOrigin(),
-        request.audio_type == content::MEDIA_DEVICE_AUDIO_CAPTURE,
-        request.video_type == content::MEDIA_DEVICE_VIDEO_CAPTURE,
-        callback));
-
-  client_->RequestMediaAccessPermission(req.Pass());
+  TemporarySavedPermissionStatus status =
+      GetBrowserContext()->GetTemporarySavedPermissionContext()
+        ->GetPermissionStatus(permission,
+                              security_origin,
+                              web_contents_->GetLastCommittedURL().GetOrigin());
+  return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
 void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
@@ -1025,7 +980,10 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    permission_request_manager_.CancelPendingRequests();
+    // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+    //  WebContentsObserver
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequests();
 
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
@@ -1050,7 +1008,10 @@ void WebView::DidNavigateAnyFrame(
     return;
   }
 
-  permission_request_manager_.CancelPendingRequestsForFrame(frame);
+  // XXX(chrisccoulson): Make PermissionRequestDispatcher a
+  //  WebContentsObserver
+  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+      ->CancelPendingRequestsForFrame(frame);
   certificate_error_manager_.DidNavigateFrame(frame);
 }
 
@@ -1125,7 +1086,10 @@ void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
       frames.push(f->GetChildAt(i));
     }
     certificate_error_manager_.FrameDetached(f);
-    permission_request_manager_.CancelPendingRequestsForFrame(f);
+    // XXX(chrisccoulson): Move frame tree management in to its own class
+    //  and have PermissionRequestDispatcher be an observer of that
+    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
+        ->CancelPendingRequestsForFrame(f);
     frames.pop();
   }
 
@@ -1180,8 +1144,7 @@ WebView::WebView(WebViewClient* client)
       selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
-      restore_type_(content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      initial_index_(0),
+      init_data_(new InitData()),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
@@ -1265,15 +1228,14 @@ void WebView::Init(Params* params) {
         content::WebContents::Create(content_params)));
     CHECK(web_contents_.get()) << "Failed to create WebContents";
 
-    if (!restore_state_.empty()) {
+    if (!init_data_->restore_state.empty()) {
       ScopedVector<content::NavigationEntry> entries =
           sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-              restore_state_, context.get());
+              init_data_->restore_state, context.get());
       web_contents_->GetController().Restore(
-          initial_index_,
-          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY,
+          init_data_->restore_index,
+          init_data_->restore_type,
           &entries.get());
-      restore_state_.clear();
     }
 
     CreateHelpers(web_contents_.get());
@@ -1308,14 +1270,8 @@ void WebView::Init(Params* params) {
   root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
   DCHECK(root_frame_.get());
 
-  if (params->context) {
-    if (!initial_url_.is_empty()) {
-      SetURL(initial_url_);
-      initial_url_ = GURL();
-    } else if (initial_data_) {
-      web_contents_->GetController().LoadURLWithParams(*initial_data_);
-      initial_data_.reset();
-    }
+  if (params->context && init_data_->load_params) {
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
   }
 
   web_contents_->GetController().LoadIfNecessary();
@@ -1327,6 +1283,8 @@ void WebView::Init(Params* params) {
                    this) ==
          g_all_web_views.Get().end());
   g_all_web_views.Get().push_back(this);
+
+  init_data_.reset();
 
   client_->Initialized();
 }
@@ -1353,10 +1311,15 @@ WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
 }
 
 const GURL& WebView::GetURL() const {
-  if (!web_contents_) {
-    return initial_url_;
+  if (web_contents_) {
+    return web_contents_->GetVisibleURL();
   }
-  return web_contents_->GetVisibleURL();
+
+  if (init_data_->load_params) {
+    return init_data_->load_params->url;
+  }
+
+  return GURL::EmptyGURL();
 }
 
 void WebView::SetURL(const GURL& url) {
@@ -1364,14 +1327,15 @@ void WebView::SetURL(const GURL& url) {
     return;
   }
 
+  content::NavigationController::LoadURLParams params(url);
+  params.transition_type = ui::PAGE_TRANSITION_TYPED;
+
   if (!web_contents_) {
-    initial_url_ = url;
-    initial_data_.reset();
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
     return;
   }
 
-  content::NavigationController::LoadURLParams params(url);
-  params.transition_type = ui::PAGE_TRANSITION_TYPED;
   web_contents_->GetController().LoadURLWithParams(params);
 }
 
@@ -1400,31 +1364,33 @@ void WebView::SetState(content::NavigationController::RestoreType type,
                        std::vector<sessions::SerializedNavigationEntry> state,
                        int index) {
   DCHECK(!web_contents_);
-  restore_type_ = type;
-  restore_state_ = state;
-  initial_index_ = index;
+  init_data_->restore_type = type;
+  init_data_->restore_state = state;
+  init_data_->restore_index = index;
 }
 
-void WebView::LoadData(const std::string& encodedData,
-                       const std::string& mimeType,
-                       const GURL& baseUrl) {
+void WebView::LoadData(const std::string& encoded_data,
+                       const std::string& mime_type,
+                       const GURL& base_url) {
   std::string url("data:");
-  url.append(mimeType);
+  url.append(mime_type);
   url.append(",");
-  url.append(encodedData);
+  url.append(encoded_data);
 
   content::NavigationController::LoadURLParams params((GURL(url)));
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
-  params.base_url_for_data_url = baseUrl;
-  params.virtual_url_for_data_url = baseUrl.is_empty() ? GURL(url::kAboutBlankURL) : baseUrl;
+  params.base_url_for_data_url = base_url;
+  params.virtual_url_for_data_url =
+      base_url.is_empty() ? GURL(url::kAboutBlankURL) : base_url;
   params.can_load_local_resources = true;
 
-  if (web_contents_) {
-    web_contents_->GetController().LoadURLWithParams(params);
-  } else {
-    initial_data_.reset(new content::NavigationController::LoadURLParams(params));
-    initial_url_ = GURL();
+  if (!web_contents_) {
+    init_data_->load_params.reset(
+        new content::NavigationController::LoadURLParams(params));
+    return;
   }
+
+  web_contents_->GetController().LoadURLWithParams(params);
 }
 
 std::string WebView::GetTitle() const {
@@ -1996,39 +1962,6 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
-}
-
-void WebView::RequestGeolocationPermission(
-    const GURL& requesting_frame,
-    int bridge_id,
-    const base::Callback<void(content::PermissionStatus)>& callback) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  scoped_ptr<SimplePermissionRequest> request(
-      new SimplePermissionRequest(
-        &permission_request_manager_,
-        request_id,
-        requesting_frame,
-        web_contents_->GetLastCommittedURL().GetOrigin(),
-        callback));
-
-  client_->RequestGeolocationPermission(request.Pass());
-}
-
-void WebView::CancelGeolocationPermissionRequest(
-    const GURL& requesting_frame,
-    int bridge_id) {
-  PermissionRequestID request_id(
-      web_contents_->GetRenderProcessHost()->GetID(),
-      web_contents_->GetRenderViewHost()->GetRoutingID(),
-      bridge_id,
-      requesting_frame);
-
-  permission_request_manager_.CancelPendingRequestForID(request_id);
 }
 
 void WebView::AllowCertificateError(
