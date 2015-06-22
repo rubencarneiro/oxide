@@ -1235,7 +1235,7 @@ void WebView::Init(Params* params) {
       web_contents_->GetController().Restore(
           init_data_->restore_index,
           init_data_->restore_type,
-          &entries);
+          &entries.get());
     }
 
     CreateHelpers(web_contents_.get());

@@ -36,7 +36,7 @@
 #include "shared/browser/compositor/oxide_mailbox_buffer_map.h"
 
 namespace base {
-class MessageLoopProxy;
+class SingleThreadTaskRunner;
 }
 
 namespace cc {
@@ -168,8 +168,8 @@ class CompositorThreadProxy final
 
   const CompositingMode mode_;
 
-  scoped_refptr<base::MessageLoopProxy> owner_message_loop_;
-  scoped_refptr<base::MessageLoopProxy> impl_message_loop_;
+  scoped_refptr<base::SingleThreadTaskRunner> owner_message_loop_;
+  scoped_refptr<base::SingleThreadTaskRunner> impl_message_loop_;
 
   base::ThreadChecker owner_thread_checker_;
   base::ThreadChecker impl_thread_checker_;

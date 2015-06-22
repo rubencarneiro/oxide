@@ -23,7 +23,8 @@
 #include "base/callback.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop_proxy.h"
+#include "base/single_thread_task_runner.h"
+#include "base/thread_task_runner_handle.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/compositor_frame_metadata.h"
@@ -294,7 +295,7 @@ CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
 
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
-      owner_message_loop_(base::MessageLoopProxy::current()),
+      owner_message_loop_(base::ThreadTaskRunnerHandle::Get()),
       mailbox_buffer_map_(mode_) {
   owner().compositor = compositor;
   impl_thread_checker_.DetachFromThread();
@@ -308,10 +309,10 @@ void CompositorThreadProxy::SetOutputSurface(
     CompositorOutputSurface* output_surface) {
   DCHECK(!output_surface || !impl().output_surface);
   DCHECK(!impl_message_loop_ ||
-         impl_message_loop_ == base::MessageLoopProxy::current());
+         impl_message_loop_ == base::ThreadTaskRunnerHandle::Get());
 
   impl().output_surface = output_surface;
-  impl_message_loop_ = base::MessageLoopProxy::current();
+  impl_message_loop_ = base::ThreadTaskRunnerHandle::Get();
 
   mailbox_buffer_map_.SetOutputSurfaceID(
       output_surface ? output_surface->surface_id() : 0);

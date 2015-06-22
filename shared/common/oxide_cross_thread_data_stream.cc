@@ -23,8 +23,8 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop_proxy.h"
 #include "base/single_thread_task_runner.h"
+#include "base/thread_task_runner_handle.h"
 #include "net/base/io_buffer.h"
 
 namespace oxide {
@@ -348,7 +348,7 @@ void CrossThreadDataStream::SetDataAvailableCallback(
   base::AutoLock lock(lock_);
 
   data_available_callback_= callback;
-  read_thread_task_runner_ = base::MessageLoopProxy::current();
+  read_thread_task_runner_ = base::ThreadTaskRunnerHandle::Get();
 }
 
 void CrossThreadDataStream::SetDidReadCallback(
@@ -358,7 +358,7 @@ void CrossThreadDataStream::SetDidReadCallback(
   base::AutoLock lock(lock_);
 
   did_read_callback_ = callback;
-  write_thread_task_runner_ = base::MessageLoopProxy::current();
+  write_thread_task_runner_ = base::ThreadTaskRunnerHandle::Get();
 }
 
 } // namespace oxide
