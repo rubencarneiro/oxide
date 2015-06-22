@@ -57,7 +57,7 @@ TestWebView {
              "Timed out waiting for successful load");
 
       var testApi = webView.getTestApi();
-      var res = webView.waitFor(function () { return resultUpdated(testApi); })
+      var res = TestUtils.waitFor(function () { return resultUpdated(testApi); })
 
       compare(res, "Main world content script found oxide.sendMessage",
               "Unexpected result message");
@@ -74,7 +74,7 @@ TestWebView {
              "Timed out waiting for successful load");
 
       var testApi = webView.getTestApi();
-      var res = webView.waitFor(function () { return resultUpdated(testApi); })
+      var res = TestUtils.waitFor(function () { return resultUpdated(testApi); })
 
       compare(res, "Main world content script DID NOT found oxide.sendMessage",
               "Unexpected result message");

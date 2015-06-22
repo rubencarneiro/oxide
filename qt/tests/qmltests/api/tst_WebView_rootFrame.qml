@@ -68,7 +68,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
-      webView.waitFor(function() { return done; });
+      TestUtils.waitFor(function() { return done; });
 
       webView.context.popupBlockerEnabled = true;
       webView.newViewRequested.disconnect(create_view);

@@ -53,6 +53,6 @@ WebContext {
   }
 
   function clearTemporarySavedPermissionStatuses() {
-    OxideTestingUtils.clearTemporarySavedPermissionStatuses(this);
+    Utils.clearTemporarySavedPermissionStatuses(this);
   }
 }

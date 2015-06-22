@@ -112,7 +112,7 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
     }
 
@@ -143,7 +143,7 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
     }
 

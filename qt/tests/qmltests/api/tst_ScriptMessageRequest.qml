@@ -82,7 +82,7 @@ TestWebView {
         errorCode = code;
       };
 
-      verify(webView.waitFor(function() { return hasError; }),
+      verify(TestUtils.waitFor(function() { return hasError; }),
              "Timed out waiting for error");
       compare(errorCode, ScriptMessageRequest.ErrorDestinationNotFound,
               "Unexpected error code");
@@ -97,7 +97,7 @@ TestWebView {
         errorCode = code;
       };
 
-      verify(webView.waitFor(function() { return hasError; }),
+      verify(TestUtils.waitFor(function() { return hasError; }),
              "Timed out waiting for error");
       compare(errorCode, ScriptMessageRequest.ErrorUncaughtException,
               "Unexpected error code");
@@ -112,7 +112,7 @@ TestWebView {
         errorCode = code;
       };
 
-      verify(webView.waitFor(function() { return hasError; }),
+      verify(TestUtils.waitFor(function() { return hasError; }),
              "Timed out waiting for error");
       compare(errorCode, ScriptMessageRequest.ErrorNoHandler,
               "Unexpected error code");
@@ -127,7 +127,7 @@ TestWebView {
         errorCode = code;
       };
 
-      verify(webView.waitFor(function() { return hasError; }),
+      verify(TestUtils.waitFor(function() { return hasError; }),
              "Timed out waiting for error");
       compare(errorCode, ScriptMessageRequest.ErrorHandlerReportedError,
               "Unexpected error code");
@@ -145,7 +145,7 @@ TestWebView {
         errorCode = code;
       };
 
-      verify(webView.waitFor(function() { return hasError; }),
+      verify(TestUtils.waitFor(function() { return hasError; }),
              "Timed out waiting for error");
       compare(errorCode, ScriptMessageRequest.ErrorHandlerDidNotRespond,
               "Unexpected error code");

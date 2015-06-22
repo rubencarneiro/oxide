@@ -56,7 +56,7 @@ TestWebView {
       sendMessage();
       sendMessage();
 
-      verify(webView.waitFor(function() { return webView.receivedResponses.length == numberSent; }),
+      verify(TestUtils.waitFor(function() { return webView.receivedResponses.length == numberSent; }),
              "Timed out waiting for responses");
     }
   }

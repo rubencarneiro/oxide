@@ -57,7 +57,7 @@ TestWebView {
       compare(spy.count, 1, "Should have had 1 fullscreenChanged signal");
       compare(webView.fullscreen, true, "WebView.fullscreen should be true");
 
-      verify(webView.waitFor(function() { return fullscreenChangeEvents == 1; }),
+      verify(TestUtils.waitFor(function() { return fullscreenChangeEvents == 1; }),
              "Timed out waiting for webkitfullscreenchange event");
 
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
@@ -66,7 +66,7 @@ TestWebView {
       compare(spy.count, 2, "Should have had another fullscreenChanged signal");
       compare(webView.fullscreen, false, "WebView.fullscreen should be false");
 
-      verify(webView.waitFor(function() { return fullscreenChangeEvents == 2; }),
+      verify(TestUtils.waitFor(function() { return fullscreenChangeEvents == 2; }),
              "Timed out waiting for webkitfullscreenchange event");
     }
   }

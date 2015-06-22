@@ -38,7 +38,7 @@ TestWebView {
       var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
 
-      verify(webView.waitFor(
+      verify(TestUtils.waitFor(
                  function() { return webView.lastGeolocationStatus != -1; },
                  null, true),
              "Timed out waiting for a response");

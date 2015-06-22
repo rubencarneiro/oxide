@@ -60,7 +60,7 @@ TestWebView {
     when: windowShown
 
     function setup() {
-      OxideTestingUtils.clearClipboard();
+      Utils.clearClipboard();
     }
 
     function test_paste_data() {
@@ -74,7 +74,7 @@ TestWebView {
     function test_paste(data) {
       var isImage = (data.mimeType.indexOf("image/") === 0)
 
-      OxideTestingUtils.copyToClipboard(data.mimeType, data.content);
+      Utils.copyToClipboard(data.mimeType, data.content);
 
       webView.url = "http://testsuite/tst_Clipboard.html";
 
@@ -85,8 +85,8 @@ TestWebView {
       }
       keyPress("v", Qt.ControlModifier)
 
-      verify(webView.waitFor(function() { return expect_mime_type(data.mimeType); }));
-      verify(webView.waitFor(function() { return expect_has_file(isImage); }));
+      verify(TestUtils.waitFor(function() { return expect_mime_type(data.mimeType); }));
+      verify(TestUtils.waitFor(function() { return expect_has_file(isImage); }));
 
       if (isImage) {
         /**
@@ -99,9 +99,9 @@ TestWebView {
          maximum amount of content that stays the same after the conversion in this
          context.
          */
-        verify(webView.waitFor(function() { return expect_content(data.content, 34); }));
+        verify(TestUtils.waitFor(function() { return expect_content(data.content, 34); }));
       } else {
-        verify(webView.waitFor(function() { return expect_content(data.content); }));
+        verify(TestUtils.waitFor(function() { return expect_content(data.content); }));
       }
     }
 
@@ -113,14 +113,14 @@ TestWebView {
       var data_content = "content"
       set_content(data_content)
 
-      webView.waitFor(function() { return expect_content(data_content); });
+      TestUtils.waitFor(function() { return expect_content(data_content); });
 
       select_textarea_content();
 
       keyPress("c", Qt.ControlModifier)
 
-      verify(webView.waitFor(function() {
-        var current_content = OxideTestingUtils.getFromClipboard(
+      verify(TestUtils.waitFor(function() {
+        var current_content = Utils.getFromClipboard(
             "text/plain");
         return current_content === data_content
       }));

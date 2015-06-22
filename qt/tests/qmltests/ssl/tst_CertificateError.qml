@@ -246,17 +246,17 @@ return style.getPropertyValue(\"color\");", true);
         webView.getTestApiForFrame(frame).evaluateCode(
             "window.location = \"https://testsuite/empty.html\";",
             true);
-        webView.waitFor(function() { return frame.url == "https://testsuite/empty.html" });
+        TestUtils.waitFor(function() { return frame.url == "https://testsuite/empty.html" });
       }
 
       // Test that deleting a frame cancels errors
       function _action_4() {
         var frame = webView.rootFrame.childFrames[0];
-        var obs = OxideTestingUtils.createDestructionObserver(frame);
+        var obs = Utils.createDestructionObserver(frame);
         webView.getTestApi().evaluateCode("
 var f = document.getElementsByTagName(\"iframe\")[0];
 f.parentElement.removeChild(f);", true);
-        webView.waitFor(function() { return obs.destroyed; });
+        TestUtils.waitFor(function() { return obs.destroyed; });
       }
 
       // Test that interrupting a load before it's committed doesn't cancel

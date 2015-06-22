@@ -22,7 +22,7 @@ set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-qt5_use_modules(${QML_PLUGIN} Core Gui Qml)
+qt5_use_modules(${QML_PLUGIN} Core Gui Qml Test)
 target_link_libraries(${QML_PLUGIN} ${OXIDE_QUICKLIB})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
@@ -34,8 +34,27 @@ foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.q
       copy_${QML_PLUGIN}_${f} ALL
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_SOURCE_DIR}/${f}
-        ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
+        ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}
+      DEPENDS ${QML_PLUGIN})
 endforeach()
+
+get_target_property(QML_PLUGIN_LOCATION ${QML_PLUGIN} LOCATION)
+add_custom_target(
+    mkdir_${QML_PLUGIN}.hack ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack)
+add_custom_target(
+    copy_${QML_PLUGIN}_qmldir.hack ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_CURRENT_SOURCE_DIR}/qmldir.hack
+      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/qmldir
+    DEPENDS mkdir_${QML_PLUGIN}.hack)
+add_custom_target(
+    copy_${QML_PLUGIN}_plugin.hack ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${QML_PLUGIN_LOCATION}
+      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
+    DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
 
 set(QML_TEST qmltest)
 set(QML_TEST_SRCS main.cc)

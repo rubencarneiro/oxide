@@ -45,7 +45,7 @@ TestWebView {
           { id: "TEST-ASYNC-REPLY",
             args: { in: 10 }});
 
-      webView.waitFor(function() { return !!webView.lastMessage; });
+      TestUtils.waitFor(function() { return !!webView.lastMessage; });
       compare(webView.lastMessage.frame, webView.rootFrame.childFrames[0]);
 
       webView.getTestApi().evaluateCode(

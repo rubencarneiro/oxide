@@ -95,7 +95,7 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
              "Timed out waiting for geolocation response");
       compare(webView.lastGeolocationStatus, data.expected);
     }
@@ -128,7 +128,7 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
              "Timed out waiting for geolocation response");
       compare(webView.lastGeolocationStatus, data.expected);
     }
