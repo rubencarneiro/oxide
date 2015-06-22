@@ -60,9 +60,13 @@ install(FILES ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir
         DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
 install(TARGETS ${OXIDE_QMLPLUGIN} DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/oxide.qmltypes
-COMMAND export LD_LIBRARY_PATH="${CHROMIUM_OUTPUT_DIR}/Release/lib:${LIB_OUTPUT_DIR}" && export QML2_IMPORT_PATH="${QMLPLUGIN_OUTPUT_DIR}" && qmlplugindump -v -noinstantiate com.canonical.Oxide ${OXIDE_VERSION_MAJOR}.${OXIDE_VERSION_MINOR} ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME} > ${CMAKE_CURRENT_SOURCE_DIR}/oxide.qmltypes)
+# Only generate typeinfo if not cross compiling
+if(NOT CMAKE_CROSSCOMPILING)
+  add_custom_target(generate_oxide_qmltypes ALL
+    COMMAND export LD_LIBRARY_PATH="${CHROMIUM_OUTPUT_DIR}/Release/lib:${LIB_OUTPUT_DIR}" &&
+            export QML2_IMPORT_PATH="${QMLPLUGIN_OUTPUT_DIR}" &&
+            qmlplugindump -v -noinstantiate com.canonical.Oxide ${OXIDE_VERSION_MAJOR}.${OXIDE_VERSION_MINOR} ${OXIDE_QMLPLUGIN_MODULE_NAME} > ${CMAKE_CURRENT_SOURCE_DIR}/oxide.qmltypes
+    WORKING_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}
+  )
 
-add_custom_target(
-  generate_oxide_qmltypes ALL SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/oxide.qmltypes)
+endif()
