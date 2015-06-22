@@ -84,7 +84,7 @@ Column {
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
 
-      webView1.waitFor(function() { return created.loading == false; });
+      TestUtils.waitFor(function() { return created.loading == false; });
       compare(created.getTestApi().evaluateCode("return window.opener.document.domain;", true), "testsuite");
     }
 
@@ -128,7 +128,7 @@ Column {
       compare(created.context, webView1.context, "Unexpected context");
       compare(created.incognito, webView1.incognito, "WebView.incognito should match opener");
 
-      verify(webView1.waitFor(function() { return !created.loading; }));
+      verify(TestUtils.waitFor(function() { return !created.loading; }));
 
       // See https://launchpad.net/bugs/1301004
       skip(created.getTestApi().evaluateCode("return window.opener != null;", true));

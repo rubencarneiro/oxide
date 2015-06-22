@@ -53,7 +53,7 @@ TestWebView {
       webView.url = "about:blank";
       verify(webView.waitForLoadSucceeded());
 
-      webView.waitFor(function() { return !webView.loading; });
+      TestUtils.waitFor(function() { return !webView.loading; });
 
       webView.inTest = true;
       webView.clearLoadEventCounters();
@@ -106,7 +106,7 @@ TestWebView {
       spy.clear();
 
       webView.getTestApi().evaluateCode("window.location = \"" + new_url + "\";", false);
-      webView.waitFor(function() { return spy.count == 2; });
+      verify(TestUtils.waitForSignalSpyCount(spy, 2));
 
       verify(!webView.loading, "WebView.loading should be false once we finish loading");
       compare(expectedLoadEvents.length, 0, "Some load events are missing");
@@ -235,7 +235,7 @@ TestWebView {
       spy.clear();
 
       webView.getTestApi().evaluateCode("window.location = \"" + new_url + "\";", false);
-      webView.waitFor(function() { return spy.count == 2; });
+      verify(TestUtils.waitForSignalSpyCount(spy, 2));
 
       verify(!webView.loading, "WebView.loading should be false once we finish loading");
       compare(expectedLoadEvents.length, 0, "Some load events are missing");
@@ -261,7 +261,7 @@ TestWebView {
       webView.url = new_url;
 
       verify(webView.loading);
-      webView.waitFor(function() { return spy.count == 2; });
+      verify(TestUtils.waitForSignalSpyCount(spy, 2));
 
       verify(!webView.loading, "WebView.loading should be false once we finish loading");
       compare(expectedLoadEvents.length, 0, "Some load events are missing");

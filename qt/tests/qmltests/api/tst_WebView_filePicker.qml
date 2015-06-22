@@ -92,7 +92,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       mouseClick(webView, webView.width / 2, webView.height / 2);
-      verify(webView.waitFor(webView.filePickerShown), "File picker not shown");
+      verify(TestUtils.waitFor(webView.filePickerShown), "File picker not shown");
       var filePicker = webView.currentFilePicker;
       compare(filePicker.width, webView.width);
       compare(filePicker.height, webView.height);
@@ -102,7 +102,7 @@ TestWebView {
       webView.filenames = data.filenames.map(resolvedFilepath);
       mouseClick(filePicker, filePicker.width / 2, filePicker.height / 2,
                  data.button);
-      verify(webView.waitFor(webView.filePickerDismissed),
+      verify(TestUtils.waitFor(webView.filePickerDismissed),
              "File picker not dismissed");
       compare(webView.getTestApi().evaluateCode(
               "document.querySelector(\"#filePicker\").files.length"),

@@ -51,10 +51,7 @@ TestWebView {
     when: windowShown
 
     function _waitForDialog() {
-      webView.waitFor(function() { return webView.currentDialog != null; });
-      if (!webView.currentDialog) {
-        throw "Failed to open dialog";
-      }
+      verify(TestUtils.waitFor(function() { return webView.currentDialog != null; }));
     }
 
     function init() {

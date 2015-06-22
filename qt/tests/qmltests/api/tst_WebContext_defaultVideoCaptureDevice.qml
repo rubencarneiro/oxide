@@ -24,21 +24,6 @@ TestCase {
     signalName: "defaultVideoCaptureDeviceIdChanged"
   }
 
-  TestResult {
-    id: result
-
-    function waitFor(predicate, timeout) {
-      timeout = timeout || 5000;
-      var end = Date.now() + timeout;
-      var i = Date.now();
-      while (i < end && !predicate()) {
-        wait(50);
-        i = Date.now();
-      }
-      return predicate();
-    }
-  }
-
   function init() {
     spy.clear();
   }
@@ -52,7 +37,7 @@ TestCase {
   // Verify that defaultVideoCaptureDeviceId can be set to a valid device
   // and back again
   function test_WebContext_defaultVideoCaptureDevice2() {
-    result.waitFor(function() { return Oxide.availableVideoCaptureDevices.length > 0; });
+    TestUtils.waitFor(function() { return Oxide.availableVideoCaptureDevices.length > 0; });
     var context = webContextFactory.createObject(null, {});
     spy.target = context;
 

@@ -38,7 +38,7 @@ TestWebView {
       webView.url = "about:blank";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(function() { return errorsReceived.length == numberSent; }),
+      verify(TestUtils.waitFor(function() { return errorsReceived.length == numberSent; }),
              "Timed out waiting for responses");
       errorsReceived.forEach(function(error) {
         compare(error.code, ScriptMessageRequest.ErrorHandlerDidNotRespond);

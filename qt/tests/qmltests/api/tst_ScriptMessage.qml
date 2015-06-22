@@ -106,11 +106,11 @@ TestWebView {
         res = r.response;
       };
 
-      webView.waitFor(function() { return !!webView.lastMessage; });
+      TestUtils.waitFor(function() { return !!webView.lastMessage; });
       compare(webView.lastMessage.frame, webView.rootFrame);
 
       webView.lastMessage.reply({ out: 10 });
-      webView.waitFor(function() { return !!res; });
+      TestUtils.waitFor(function() { return !!res; });
       compare(res.out, 10);
     }
   }

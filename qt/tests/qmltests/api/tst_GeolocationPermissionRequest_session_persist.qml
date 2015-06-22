@@ -105,7 +105,7 @@ Item {
 
       data.function(webView.lastGeolocationRequest);
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, data.expected);
 
       spy.clear();
@@ -115,7 +115,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+        verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
@@ -145,7 +145,7 @@ Item {
 
       data.function(webView.lastGeolocationRequest);
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, data.expected);
 
       webView = webViewFactory.createObject(null, {});
@@ -157,7 +157,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+        verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
@@ -195,7 +195,7 @@ Item {
 
       webView.lastGeolocationRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
 
       spy.clear();
@@ -228,7 +228,7 @@ Item {
 
       webView.lastGeolocationRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
 
       spy.clear();
@@ -237,7 +237,7 @@ Item {
       webView.url = data.url2;
       verify(webView.waitForLoadSucceeded());
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
     }
   }

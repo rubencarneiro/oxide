@@ -91,7 +91,7 @@ Column {
       webView.context.popupBlockerEnabled = false;
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
-      webView.waitFor(function() { return column.created != null; });
+      TestUtils.waitFor(function() { return column.created != null; });
 
       var created = column.created;
       spy.target = created;

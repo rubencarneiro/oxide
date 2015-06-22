@@ -111,7 +111,7 @@ Item {
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       spy.clear();
@@ -121,7 +121,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastError != ""; }));
+        verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
         compare(webView.lastError, data.expected);
       } else {
         spy.wait();
@@ -151,7 +151,7 @@ Item {
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       webView = webViewFactory.createObject(null, {});
@@ -163,7 +163,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastError != ""; }));
+        verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
         compare(webView.lastError, data.expected);
       } else {
         spy.wait();
@@ -205,7 +205,7 @@ Item {
 
       webView.lastRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, "OK");
 
       spy.clear();
@@ -258,7 +258,7 @@ Item {
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       spy.clear();
@@ -267,7 +267,7 @@ Item {
       webView.url = data.url2;
       verify(webView.waitForLoadSucceeded());
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
     }
   }
