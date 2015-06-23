@@ -591,6 +591,9 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
       result.type = blink::WebInputEvent::MouseDown;
       result.clickCount = 2;
       break;
+    case QEvent::User: // Marks an artifical wrapper used to represent a triple click
+      result.type = blink::WebInputEvent::MouseDown;
+      result.clickCount = 3;
     default:
       NOTREACHED();
   }

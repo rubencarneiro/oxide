@@ -177,6 +177,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   bool constructed_;
   int load_progress_;
   QUrl icon_;
+  QPair<Qt::MouseButton, ulong> triple_click_marker_;
   OxideQQuickNavigationHistory navigation_history_;
   QQmlComponent* context_menu_;
   QQmlComponent* popup_menu_;
