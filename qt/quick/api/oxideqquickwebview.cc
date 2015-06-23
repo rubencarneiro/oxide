@@ -992,7 +992,7 @@ void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
                            event->modifiers());
       tc_event.setTimestamp(event->timestamp());
       d->proxy->handleMouseEvent(&tc_event);
-      event->setAccepted(tc_event->isAccepted());
+      event->setAccepted(tc_event.isAccepted());
     }
     d->triple_click_marker_ = qMakePair(Qt::NoButton, 0);
   } else {
