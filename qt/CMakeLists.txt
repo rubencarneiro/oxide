@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -178,18 +178,13 @@ oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}
                         DIRECTORY ${CHROMIUM_PRODUCT_DIR}/locales)
 
 if(ENABLE_OXIDEQMLSCENE EQUAL 1)
-  get_target_property(_LOCATION ${OXIDE_QMLRUNNER} LOCATION)
-  oxide_add_package_files(PROGRAMS ${_LOCATION})
+  oxide_add_package_files(PROGRAMS $<TARGET_FILE:${OXIDE_QMLRUNNER}>)
 endif()
 
-get_target_property(_LOCATION ${OXIDE_QMLPLUGIN} LOCATION)
 oxide_add_package_files(OUTDIR qml/${OXIDE_QMLPLUGIN_MODULE_NAME}
-                        FILES ${_LOCATION} ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir)
+                        FILES $<TARGET_FILE:${OXIDE_QMLPLUGIN}> ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir)
 
-get_target_property(_LOCATION ${OXIDE_QUICKLIB} LOCATION)
-# This is a bit broken - the last call returns the path without the
-# SOVERSION. Bleh
-oxide_add_package_files(FILES ${_LOCATION}.${OXIDE_CORELIB_SO_VERSION})
+oxide_add_package_files(FILES $<TARGET_FILE:${OXIDE_QUICKLIB}>)
 
 if(ENABLE_COMPONENT_BUILD)
   oxide_add_package_files(OUTDIR ${OXIDE_SUBPROCESS_DIR}

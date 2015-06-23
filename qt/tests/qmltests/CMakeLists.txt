@@ -49,7 +49,6 @@ foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.q
       DEPENDS ${QML_PLUGIN})
 endforeach()
 
-get_target_property(QML_PLUGIN_LOCATION ${QML_PLUGIN} LOCATION)
 add_custom_target(
     mkdir_${QML_PLUGIN}.hack ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -63,7 +62,7 @@ add_custom_target(
 add_custom_target(
     copy_${QML_PLUGIN}_plugin.hack ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${QML_PLUGIN_LOCATION}
+      $<TARGET_FILE:${QML_PLUGIN}>
       ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
     DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
 
@@ -102,8 +101,6 @@ function(add_qml_test)
     set(_ARGS_SERVER_DIR ${_ARGS_TEST_DIR})
   endif()
 
-  get_target_property(QMLTEST_BINARY ${QML_TEST} LOCATION)
-
   set(TEST_COMMAND
       ${BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
@@ -118,7 +115,7 @@ function(add_qml_test)
   endif()
 
   list(APPEND TEST_COMMAND --
-       ${QMLTEST_BINARY} -name ${_ARGS_NAME}
+       $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
        -add-library-path ${QTPLUGIN_OUTPUT_DIR})
   if (_ARGS_SSL_TESTS)
