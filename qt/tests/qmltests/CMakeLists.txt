@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,14 +16,25 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
+find_package(Qt5QuickTest REQUIRED)
+find_package(Qt5Test REQUIRED)
+
 set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 
 set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-qt5_use_modules(${QML_PLUGIN} Core Gui Qml Test)
-target_link_libraries(${QML_PLUGIN} ${OXIDE_QUICKLIB})
+target_link_libraries(${QML_PLUGIN}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Test
+    ${OXIDE_QUICKLIB})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     AUTOMOC TRUE
@@ -60,8 +71,14 @@ set(QML_TEST qmltest)
 set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
-qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
-target_link_libraries(${QML_TEST} ${OXIDE_CORELIB_NAME})
+target_link_libraries(${QML_TEST}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Quick
+    Qt5::QuickTest
+    Qt5::Test
+    ${OXIDE_CORELIB_NAME})
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}

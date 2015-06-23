@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
 
 # CMake doesn't seem to provide a way to get at QT_INSTALL_QML
 if(NOT CMAKE_CROSSCOMPILING)
@@ -40,9 +44,11 @@ set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
 
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
 
-qt5_use_modules(${OXIDE_QMLPLUGIN} Core Qml Quick)
 target_link_libraries(
     ${OXIDE_QMLPLUGIN}
+    Qt5::Core
+    Qt5::Qml
+    Qt5::Quick
     ${OXIDE_CORELIB_NAME}
     ${OXIDE_QUICKLIB})
 set_target_properties(
