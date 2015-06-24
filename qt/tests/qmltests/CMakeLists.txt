@@ -29,7 +29,15 @@ set_target_properties(
     AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
-foreach(f qmldir TestUtils.js TestUtilsSlave.js TestWebContext.qml TestWebView.qml)
+foreach(f
+    qmldir
+    ScriptMessageTestHandler.qml
+    ScriptMessageTestUtils.js
+    ScriptMessageTestUtilsUserScript.js
+    TestUtils.js
+    TestUtilsSlave.js
+    TestWebContext.qml
+    TestWebView.qml)
   add_custom_target(
       copy_${QML_PLUGIN}_${f} ALL
       COMMAND ${CMAKE_COMMAND} -E copy_if_different

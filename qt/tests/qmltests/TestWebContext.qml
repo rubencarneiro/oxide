@@ -30,7 +30,7 @@ WebContext {
     "MAP invalid:80 255.255.255.255:80"
   ]
 
-  property var _cookiesDeletedSpy: SignalSpy {
+  property var qtest_cookiesDeletedSpy: SignalSpy {
     target: cookieManager
     signalName: "deleteCookiesResponse"
   }
@@ -41,9 +41,9 @@ WebContext {
      var end = Date.now() + 5000;
      var i = Date.now();
      while (i < end) {
-       _cookiesDeletedSpy.clear();
-       _cookiesDeletedSpy.wait();
-       if (_cookiesDeletedSpy.signalArguments[0][0] == id) {
+       qtest_cookiesDeletedSpy.clear();
+       qtest_cookiesDeletedSpy.wait();
+       if (qtest_cookiesDeletedSpy.signalArguments[0][0] == id) {
          return;
        }
        i = Date.now();
@@ -54,5 +54,22 @@ WebContext {
 
   function clearTemporarySavedPermissionStatuses() {
     Utils.clearTemporarySavedPermissionStatuses(this);
+  }
+
+  property var qtest_UserScriptFactory: Component {
+    UserScript {}
+  }
+
+  function addTestUserScript(props) {
+    var script = qtest_UserScriptFactory.createObject(null, props);
+    addUserScript(script);
+  }
+
+  function clearTestUserScripts() {
+    while (userScripts().length > 1) {
+      var script = userScripts()[1];
+      removeUserScript(script);
+      script.destroy();
+    }
   }
 }

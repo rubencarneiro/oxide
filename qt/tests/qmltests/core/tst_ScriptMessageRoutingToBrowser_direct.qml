@@ -11,26 +11,31 @@ TestWebView {
 
   Component {
     id: messageHandler
-    ScriptMessageHandler {}
+    ScriptMessageTestHandler {}
   }
 
   messageHandlers: [
-    ScriptMessageHandler {
+    ScriptMessageTestHandler {
       msgId: "TEST"
-      contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
         msg.error("Message caught by WebView handler");
       }
     }
   ]
 
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
+
+  // Test that messages sent to the browser are delivered directly to frame
+  // handlers
   TestCase {
     id: test
-    name: "ScriptMessageRouting_direct"
+    name: "ScriptMessageRoutingToBrowser_direct"
     when: windowShown
 
     function init() {
-      webView.url = "http://testsuite/tst_ScriptMessageRouting_direct.html";
+      webView.url = "http://testsuite/tst_ScriptMessageRoutingToBrowser_direct.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
     }
@@ -38,23 +43,23 @@ TestWebView {
     function _test_direct(frame) {
       var handler = messageHandler.createObject(
           frame,
-          { msgId: "TEST", contexts: [ "oxide://testutils/" ],
+          { msgId: "TEST",
             callback: function(msg) {
               msg.reply(msg.payload);
             }
           });
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
+      var res = new ScriptMessageTestUtils.FrameHelper(frame).sendMessageToBrowser("TEST", 10);
       compare(res, 10, "Unexpected return value from handler");
       frame.removeMessageHandler(handler);
     }
 
-    function test_ScriptMessageRouting_direct1_rootFrame() {
-      _test_direct(webView.rootFrame);
+    function test_ScriptMessageRoutingToBrowser_direct1_childFrame() {
+      _test_direct(webView.rootFrame.childFrames[0]);
     }
 
-    function test_ScriptMessageRouting_direct2_childFrame() {
-      _test_direct(webView.rootFrame.childFrames[0]);
+    function test_ScriptMessageRoutingToBrowser_direct2_rootFrame() {
+      _test_direct(webView.rootFrame);
     }
   }
 }
