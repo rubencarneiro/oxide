@@ -22,6 +22,7 @@
 #include <QEvent>
 #include <QFlags>
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QHoverEvent>
 #include <QImage>
 #include <QKeyEvent>
@@ -980,7 +981,7 @@ void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
 
   if (d->triple_click_marker_.first != Qt::NoButton) {
     if (event->button() == d->triple_click_marker_.first &&
-        event->timestamp() - d->triple_click_marker_.second < qApp->doubleClickInterval()) {
+        event->timestamp() - d->triple_click_marker_.second < qApp->styleHints()->mouseDoubleClickInterval()) {
       // Create an artifical event to represent a triple click
       // This event SHOULD NOT travel through the Qt event system
       QMouseEvent tc_event(QEvent::User,
@@ -991,7 +992,7 @@ void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
                            event->buttons(),
                            event->modifiers());
       tc_event.setTimestamp(event->timestamp());
-      d->proxy->handleMouseEvent(&tc_event);
+      d->proxy()->handleMouseEvent(&tc_event);
       event->setAccepted(tc_event.isAccepted());
     }
     d->triple_click_marker_ = qMakePair(Qt::NoButton, 0);
