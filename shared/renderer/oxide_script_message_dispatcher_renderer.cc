@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -46,9 +46,89 @@
 namespace oxide {
 
 namespace {
-typedef std::map<content::RenderFrame*, ScriptMessageDispatcherRenderer*> ScriptMessageDispatcherMap;
+typedef std::map<content::RenderFrame*, ScriptMessageDispatcherRenderer*>
+    ScriptMessageDispatcherMap;
 base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
     LAZY_INSTANCE_INITIALIZER;
+}
+
+void ScriptMessageDispatcherRenderer::OnReceiveMessage(
+    const IPC::Message& message) {
+  OxideHostMsg_SendMessage::Param p;
+  if (!OxideHostMsg_SendMessage::Read(&message, &p)) {
+    LOG(ERROR) << "Failed to serialize message";
+    return;
+  }
+
+  ScriptMessageParams params(std::move(base::get<0>(p)));
+
+  bool is_reply = params.type == ScriptMessageParams::TYPE_REPLY;
+
+  linked_ptr<ScriptMessageManager> mm;
+  for (ScriptMessageManagerVector::iterator it =
+           script_message_managers_.begin();
+       it != script_message_managers_.end(); ++it) {
+    if ((*it)->GetContextURL() == params.context) {
+      mm = *it;
+    }
+  }
+
+  if (!mm.get()) {
+    if (!is_reply) {
+      ReturnError(ScriptMessageParams::ERROR_INVALID_CONTEXT,
+                  params);
+    }
+    return;
+  }
+
+  if (!is_reply) {
+    v8::HandleScope handle_scope(mm->isolate());
+    v8::Context::Scope context_scope(mm->GetV8Context());
+
+    v8::Handle<v8::Object> handle(
+        mm->script_message_object_handler().NewInstance());
+    scoped_refptr<ScriptMessageImplRenderer> message(
+        new ScriptMessageImplRenderer(mm.get(),
+                                      params.serial,
+                                      params.msg_id,
+                                      &params.wrapped_payload,
+                                      handle));
+
+    ScriptMessageHandlerRenderer* handler =
+        mm->GetHandlerForMsgID(message->msg_id());
+    if (handler) {
+      handler->handler().OnReceiveMessage(message.get());
+    } else {
+      message->Error(ScriptMessageParams::ERROR_NO_HANDLER);
+    }
+
+    return;
+  }
+
+
+  for (ScriptMessageManager::ScriptMessageRequestVector::const_iterator it =
+        mm->current_script_message_requests().begin();
+       it != mm->current_script_message_requests().end(); ++it) {
+    ScriptMessageRequestImplRenderer* request = *it;
+    if (request->serial() == params.serial &&
+        request->IsWaitingForResponse()) {
+      request->OnReceiveResponse(&params.wrapped_payload, params.error);
+      return;
+    }
+  }
+}
+
+void ScriptMessageDispatcherRenderer::ReturnError(
+    ScriptMessageParams::Error error,
+    const ScriptMessageParams& orig) {
+  ScriptMessageParams params;
+  params.context = orig.context;
+  params.serial = orig.serial,
+  params.type = ScriptMessageParams::TYPE_REPLY;
+  params.error = error;
+  params.msg_id = orig.msg_id;
+
+  Send(new OxideHostMsg_SendMessage(routing_id(), params));
 }
 
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
@@ -66,7 +146,8 @@ void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
     int world_id) {
   v8::HandleScope handle_scope(context->GetIsolate());
 
-  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
+  for (ScriptMessageManagerVector::iterator it =
+           script_message_managers_.begin();
        it != script_message_managers_.end(); ++it) {
     if ((*it)->GetV8Context() == context) {
       script_message_managers_.erase(it);
@@ -75,90 +156,17 @@ void ScriptMessageDispatcherRenderer::WillReleaseScriptContext(
   }
 }
 
-bool ScriptMessageDispatcherRenderer::OnMessageReceived(const IPC::Message& message) {
+bool ScriptMessageDispatcherRenderer::OnMessageReceived(
+    const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ScriptMessageDispatcherRenderer, message)
-    IPC_MESSAGE_HANDLER(OxideMsg_SendMessage, OnReceiveMessage)
+    IPC_MESSAGE_HANDLER_GENERIC(OxideMsg_SendMessage,
+                                OnReceiveMessage(message))
     IPC_MESSAGE_UNHANDLED(handled = false)
+    (void)param__;
   IPC_END_MESSAGE_MAP()
 
   return handled;
-}
-
-void ScriptMessageDispatcherRenderer::OnReceiveMessage(
-    const OxideMsg_SendMessage_Params& params) {
-  bool is_reply = params.type == OxideMsg_SendMessage_Type::Reply;
-
-  linked_ptr<ScriptMessageManager> mm;
-  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
-       it != script_message_managers_.end(); ++it) {
-    if ((*it)->GetContextURL().spec() == params.context) {
-      mm = *it;
-    }
-  }
-
-  if (!mm.get()) {
-    if (!is_reply) {
-      ReturnError(ScriptMessageRequest::ERROR_INVALID_DESTINATION,
-                  "Could not find a script context to deliver the message to",
-                  params);
-    }
-    return;
-  }
-
-  DCHECK(OxideMsg_SendMessage_Type::is_valid(params.type));
-
-  if (!is_reply) {
-    v8::HandleScope handle_scope(mm->isolate());
-    v8::Context::Scope context_scope(mm->GetV8Context());
-
-    v8::Handle<v8::Object> handle(
-        mm->script_message_object_handler().NewInstance());
-    scoped_refptr<ScriptMessageImplRenderer> message(
-        new ScriptMessageImplRenderer(mm.get(), params.serial,
-                                      params.type == OxideMsg_SendMessage_Type::Message,
-                                      params.msg_id,
-                                      params.payload, handle));
-
-    ScriptMessageHandlerRenderer* handler =
-        mm->GetHandlerForMsgID(message->msg_id());
-    if (handler) {
-      handler->handler().OnReceiveMessage(message.get());
-    } else {
-      message->Error(ScriptMessageRequest::ERROR_NO_HANDLER,
-                     "Could not find a handler for message");
-    }
-
-    return;
-  }
-
-
-  for (ScriptMessageManager::ScriptMessageRequestVector::const_iterator it =
-        mm->current_script_message_requests().begin();
-       it != mm->current_script_message_requests().end(); ++it) {
-    ScriptMessageRequestImplRenderer* request = *it;
-    if (request->serial() == params.serial &&
-        request->IsWaitingForResponse()) {
-      request->OnReceiveResponse(params.payload, params.error);
-      return;
-    }
-  }
-}
-
-void ScriptMessageDispatcherRenderer::ReturnError(
-    ScriptMessageRequest::Error error,
-    const std::string& msg,
-    const OxideMsg_SendMessage_Params& orig) {
-  OxideMsg_SendMessage_Params params;
-  params.context = orig.context;
-  params.serial = orig.serial,
-  params.type = OxideMsg_SendMessage_Type::Reply;
-  params.msg_id = orig.msg_id;
-
-  params.error = error;
-  params.payload = msg;
-
-  Send(new OxideHostMsg_SendMessage(routing_id(), params));
 }
 
 ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
@@ -172,7 +180,8 @@ ScriptMessageDispatcherRenderer::ScriptMessageDispatcherRenderer(
 linked_ptr<ScriptMessageManager>
 ScriptMessageDispatcherRenderer::ScriptMessageManagerForWorldId(int world_id) {
   linked_ptr<ScriptMessageManager> message_manager;
-  for (ScriptMessageManagerVector::iterator it = script_message_managers_.begin();
+  for (ScriptMessageManagerVector::iterator it =
+           script_message_managers_.begin();
        it != script_message_managers_.end();
        ++it) {
     if ((*it)->frame() == render_frame() && (*it)->world_id() == world_id) {

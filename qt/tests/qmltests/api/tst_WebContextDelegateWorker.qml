@@ -39,7 +39,7 @@ TestWebView {
 
       var msg = { foo: "bar", baz: 10 };
       d.sendMessage(msg);
-      verify(top.waitFor(function() { return receivedMsg != null; }),
+      verify(TestUtils.waitFor(function() { return receivedMsg != null; }),
              "Timed out waiting for a response");
       compare(receivedMsg, msg, "Unexpected response");
     }

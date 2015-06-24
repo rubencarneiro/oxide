@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@ namespace oxide {
 ScriptMessageImplBrowser::~ScriptMessageImplBrowser() {}
 
 void ScriptMessageImplBrowser::DoSendResponse(
-    const OxideMsg_SendMessage_Params& params) {
+    const ScriptMessageParams& params) {
   // Check that the frame hasn't gone away
   if (!source_frame()) {
     return;
@@ -38,13 +38,13 @@ void ScriptMessageImplBrowser::DoSendResponse(
   rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
 }
 
-ScriptMessageImplBrowser::ScriptMessageImplBrowser(WebFrame* source_frame,
-                                                   int serial,
-                                                   const GURL& context,
-                                                   bool want_reply,
-                                                   const std::string& msg_id,
-                                                   const std::string& args) :
-    ScriptMessage(serial, context, want_reply, msg_id, args),
-    source_frame_(source_frame->GetWeakPtr()) {}
+ScriptMessageImplBrowser::ScriptMessageImplBrowser(
+    WebFrame* source_frame,
+    int serial,
+    const GURL& context,
+    const std::string& msg_id,
+    base::ListValue* wrapped_payload)
+    : ScriptMessage(serial, context, msg_id, wrapped_payload),
+      source_frame_(source_frame->GetWeakPtr()) {}
 
 } // namespace oxide

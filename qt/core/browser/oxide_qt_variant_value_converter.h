@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,33 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
-#define _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
+#define _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "content/public/browser/browser_message_filter.h"
+#include <QtGlobal>
 
-namespace content {
-class RenderProcessHost;
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
+
+QT_BEGIN_NAMESPACE
+class QVariant;
+QT_END_NAMESPACE
+
+namespace base {
+class Value;
 }
 
 namespace oxide {
+namespace qt {
 
-class ScriptMessageDispatcherBrowser final :
-    public content::BrowserMessageFilter {
+class VariantValueConverter {
  public:
-  ScriptMessageDispatcherBrowser(content::RenderProcessHost* render_process_host);
-  ~ScriptMessageDispatcherBrowser();
+  static scoped_ptr<base::Value> FromVariantValue(const QVariant& variant);
 
-  bool OnMessageReceived(const IPC::Message& message) final;
+  static QVariant ToVariantValue(const base::Value* value);
 
  private:
-  const int render_process_id_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageDispatcherBrowser);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(VariantValueConverter);
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_SCRIPT_MESSAGE_DISPATCHER_H_
+#endif // _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_

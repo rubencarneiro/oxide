@@ -48,7 +48,7 @@ class OxideQQuickScriptMessageHandlerPrivate
 
   // oxide::qt::ScriptMessageHandlerProxyClient implementation
   bool ReceiveMessage(oxide::qt::ScriptMessageProxy* message,
-                      QString& error) override;
+                      QVariant* error) override;
 
   QJSValue callback_;
 

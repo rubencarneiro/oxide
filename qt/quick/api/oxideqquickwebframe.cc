@@ -205,13 +205,13 @@ void OxideQQuickWebFrame::removeMessageHandler(
 OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
     const QUrl& context,
     const QString& msg_id,
-    const QVariant& args) {
+    const QVariant& payload) {
   Q_D(OxideQQuickWebFrame);
 
   OxideQQuickScriptMessageRequest* request =
       new OxideQQuickScriptMessageRequest();
 
-  QVariant aux = args;
+  QVariant aux = payload;
   if (aux.userType() == qMetaTypeId<QJSValue>()) {
     aux = aux.value<QJSValue>().toVariant();
   }
@@ -228,10 +228,10 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
 
 void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
                                              const QString& msg_id,
-                                             const QVariant& args) {
+                                             const QVariant& payload) {
   Q_D(OxideQQuickWebFrame);
 
-  QVariant aux = args;
+  QVariant aux = payload;
   if (aux.userType() == qMetaTypeId<QJSValue>()) {
     aux = aux.value<QJSValue>().toVariant();
   }

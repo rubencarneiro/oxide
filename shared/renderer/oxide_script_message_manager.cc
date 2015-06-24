@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,12 +24,14 @@
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/public/child/v8_value_converter.h"
 #include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/common/oxide_constants.h"
+#include "shared/common/oxide_messages.h"
 
 #include "oxide_isolated_world_map.h"
 #include "oxide_script_message_handler_renderer.h"
@@ -193,7 +195,7 @@ void ScriptMessageManager::SendMessageInner(
 
   v8::Local<v8::Value> msg_want_reply_as_val = args[0];
   v8::Local<v8::Value> msg_id_as_val = args[1];
-  v8::Local<v8::Value> msg_args_as_val = args[2];
+  v8::Local<v8::Value> msg_payload = args[2];
 
   DCHECK(msg_want_reply_as_val->IsBoolean());
   if (!msg_id_as_val->IsString()) {
@@ -202,21 +204,38 @@ void ScriptMessageManager::SendMessageInner(
           isolate, "Invalid message ID")));
     return;
   }
-  DCHECK(msg_args_as_val->IsString());
 
   v8::Local<v8::Boolean> msg_want_reply = msg_want_reply_as_val->ToBoolean();
   v8::Local<v8::String> msg_id = msg_id_as_val.As<v8::String>();
-  v8::Local<v8::String> msg_args = msg_args_as_val.As<v8::String>();
 
-  v8::Handle<v8::Object> handle(
-      script_message_request_object_handler_.NewInstance());
+  scoped_ptr<content::V8ValueConverter> converter(
+      content::V8ValueConverter::create());
+  scoped_ptr<base::Value> payload(
+      converter->FromV8Value(msg_payload, isolate->GetCallingContext()));
 
-  scoped_refptr<ScriptMessageRequestImplRenderer> req =
-      new ScriptMessageRequestImplRenderer(
-        this, next_message_id_++, msg_want_reply->Value(),
-        V8StringToStdString(msg_id),
-        V8StringToStdString(msg_args), handle);
-  req->SendMessage();
+  v8::Handle<v8::Object> handle;
+  int serial = ScriptMessageParams::kInvalidSerial;
+
+  if (msg_want_reply->Value()) {
+    handle = script_message_request_object_handler_.NewInstance();
+
+    scoped_refptr<ScriptMessageRequestImplRenderer> req =
+        new ScriptMessageRequestImplRenderer(
+          this, next_message_id_++, handle);
+    serial = req->serial();
+  }
+
+  ScriptMessageParams params;
+  PopulateScriptMessageParams(serial,
+                              GetContextURL(),
+                              V8StringToStdString(msg_id),
+                              payload.Pass(),
+                              &params);
+
+  if (!frame()->Send(new OxideHostMsg_SendMessage(frame()->GetRoutingID(),
+                                                  params))) {
+    return;
+  }
 
   if (msg_want_reply->Value()) {
     args.GetReturnValue().Set(handle);

@@ -218,7 +218,7 @@ Item {
 
       // Save the certificate to verify it gets deleted in the next step
       var certificate = webView.securityStatus.certificate;
-      var obs = OxideTestingUtils.createDestructionObserver(certificate);
+      var obs = Utils.createDestructionObserver(certificate);
 
       // Go back to a http URL
       webView.url = "http://testsuite/empty.html";

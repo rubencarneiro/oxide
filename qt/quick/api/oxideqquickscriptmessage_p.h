@@ -37,7 +37,8 @@ class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
   Q_PROPERTY(OxideQQuickWebFrame* frame READ frame CONSTANT)
   Q_PROPERTY(QUrl context READ context CONSTANT)
   Q_PROPERTY(QString id READ msgId CONSTANT)
-  Q_PROPERTY(QVariant args READ args CONSTANT)
+  Q_PROPERTY(QVariant args READ payload CONSTANT)
+  Q_PROPERTY(QVariant payload READ payload CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQQuickScriptMessage)
   Q_DISABLE_COPY(OxideQQuickScriptMessage)
@@ -48,10 +49,10 @@ class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
   OxideQQuickWebFrame* frame() const;
   QUrl context() const;
   QString msgId() const;
-  QVariant args() const;
+  QVariant payload() const;
 
-  Q_INVOKABLE void reply(const QVariant& args);
-  Q_INVOKABLE void error(const QString& msg);
+  Q_INVOKABLE void reply(const QVariant& payload);
+  Q_INVOKABLE void error(const QVariant& payload);
 
  private:
   OxideQQuickScriptMessage();

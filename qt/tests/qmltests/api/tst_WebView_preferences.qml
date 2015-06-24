@@ -51,10 +51,10 @@ TestWebView {
       verify(webView.preferences, "No default preferences");
       compare(spy.count, 0,
               "Constructing the default shouldn't have caused a signal");
-      compare(OxideTestingUtils.qObjectParent(webView.preferences), webView,
+      compare(Utils.qObjectParent(webView.preferences), webView,
               "WebView should own its default preferences");
 
-      var destructionObserver = OxideTestingUtils.createDestructionObserver(
+      var destructionObserver = Utils.createDestructionObserver(
           webView.preferences);
       var newPrefs = webPreferencesFactory.createObject(null, {});
       webView.preferences = newPrefs;
@@ -63,7 +63,7 @@ TestWebView {
               "Assigning a new preference object should have caused a signal");
       compare(webView.preferences, newPrefs,
               "Should have a new preference object");
-      compare(OxideTestingUtils.qObjectParent(webView.preferences), webView,
+      compare(Utils.qObjectParent(webView.preferences), webView,
               "WebView should own the new preferences");
       verify(destructionObserver.destroyed,
              "The default preference object should have been destroyed");
@@ -81,16 +81,16 @@ TestWebView {
               "Assigning a new preference object should have caused a signal");
       compare(webView.preferences, webview2.preferences,
               "Wrong preference object");
-      compare(OxideTestingUtils.qObjectParent(webView.preferences), webview2,
+      compare(Utils.qObjectParent(webView.preferences), webview2,
               "WebView shouldn't have adopted preferences");
 
       var oldSetting = webView.preferences.javascriptEnabled = !webView.preferences.javascriptEnabled;
-      var destructionObserver = OxideTestingUtils.createDestructionObserver(
+      var destructionObserver = Utils.createDestructionObserver(
           webView.preferences);
-      OxideTestingUtils.destroyQObjectNow(webview2);
+      Utils.destroyQObjectNow(webview2);
 
       compare(spy.count, 2, "Preferences should have been destroyed");
-      compare(OxideTestingUtils.qObjectParent(webView.preferences), webView,
+      compare(Utils.qObjectParent(webView.preferences), webView,
               "WebView should own the replacement preferences");
       compare(webView.preferences.javascriptEnabled, !oldSetting,
               "Expected default preference");
@@ -102,10 +102,10 @@ TestWebView {
       var webview2 = webViewFactory.createObject(null, {preferences: webView.preferences});
 
       compare(webView.preferences, webview2.preferences);
-      compare(OxideTestingUtils.qObjectParent(webview2.preferences), webView);
+      compare(Utils.qObjectParent(webview2.preferences), webView);
 
       var oldSetting = webView.preferences.javascriptEnabled = !webView.preferences.javascriptEnabled;
-      OxideTestingUtils.destroyQObjectNow(webview2);
+      Utils.destroyQObjectNow(webview2);
 
       compare(spy.count, 0, "Preferences should not have been destroyed");
       compare(webView.preferences.javascriptEnabled, oldSetting,
@@ -120,7 +120,7 @@ TestWebView {
 
       compare(spy.count, 1);
       compare(webView.preferences.javascriptEnabled, !oldSetting);
-      compare(OxideTestingUtils.qObjectParent(webView.preferences), webView);
+      compare(Utils.qObjectParent(webView.preferences), webView);
     }
 
     // Test that new webviews created via WebView.newViewRequested inherit the opener
@@ -136,7 +136,7 @@ TestWebView {
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
-      webView.waitFor(function() { return webView.created != null; });
+      TestUtils.waitFor(function() { return webView.created != null; });
 
       webView.context.popupBlockerEnabled = true;
 
@@ -147,7 +147,7 @@ TestWebView {
               webView.preferences.canDisplayInsecureContent);
       compare(created.preferences.localStorageEnabled,
               webView.preferences.localStorageEnabled);
-      compare(OxideTestingUtils.qObjectParent(created.preferences), created,
+      compare(Utils.qObjectParent(created.preferences), created,
               "WebView should own its default preferences");
     }
   }

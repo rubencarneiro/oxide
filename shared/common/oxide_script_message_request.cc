@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,55 +18,35 @@
 #include "oxide_script_message_request.h"
 
 #include "base/logging.h"
-
-#include "shared/common/oxide_messages.h"
+#include "base/values.h"
 
 namespace oxide {
 
-ScriptMessageRequest::ScriptMessageRequest(int serial,
-                                           const GURL& context,
-                                           bool want_reply,
-                                           const std::string& msg_id,
-                                           const std::string& args) :
-    serial_(serial),
-    context_(context),
-    want_reply_(want_reply),
-    msg_id_(msg_id),
-    args_(args),
-    has_sent_message_(false),
-    has_received_response_(false) {}
+ScriptMessageRequest::ScriptMessageRequest(int serial)
+    : serial_(serial),
+      has_received_response_(false) {}
 
 ScriptMessageRequest::~ScriptMessageRequest() {}
-
-bool ScriptMessageRequest::SendMessage() {
-  DCHECK(!has_sent_message_);
-  has_sent_message_ = true;
-
-  OxideMsg_SendMessage_Params params;
-  params.context = context().spec();
-  params.serial = serial();
-  params.type =
-      want_reply_ ? OxideMsg_SendMessage_Type::Message :
-                    OxideMsg_SendMessage_Type::MessageNoReply;
-  params.msg_id = msg_id();
-  params.payload = args();
-
-  return DoSendMessage(params);
-}
 
 bool ScriptMessageRequest::IsWaitingForResponse() const {
   return !has_received_response_;
 }
 
-void ScriptMessageRequest::OnReceiveResponse(const std::string& payload,
-                                             Error error) {
-  DCHECK(has_sent_message_ && !has_received_response_);
+void ScriptMessageRequest::OnReceiveResponse(
+    base::ListValue* wrapped_payload,
+    ScriptMessageParams::Error error) {
+  DCHECK(!has_received_response_);
   has_received_response_ = true;
 
-  if (error == ERROR_OK) {
-    OnReply(payload);
+  scoped_ptr<base::Value> payload;
+  if (!wrapped_payload->Remove(0, &payload)) {
+    payload = base::Value::CreateNullValue();
+  }
+
+  if (error == ScriptMessageParams::ERROR_OK) {
+    OnReply(*payload);
   } else {
-    OnError(error, payload);
+    OnError(error, *payload);
   }
 }
 

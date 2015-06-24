@@ -84,6 +84,7 @@
 #include "oxide_file_picker.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
+#include "oxide_script_message_contents_helper.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_context_menu.h"
@@ -168,6 +169,7 @@ void CreateHelpers(content::WebContents* contents,
                    content::WebContents* opener = nullptr) {
   new WebViewContentsHelper(contents, opener);
   PermissionRequestDispatcher::CreateForWebContents(contents);
+  ScriptMessageContentsHelper::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
