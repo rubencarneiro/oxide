@@ -30,7 +30,7 @@ oxide.addMessageHandler("SEND-MESSAGE-TO-BROWSER", function(msg) {
 });
 
 oxide.addMessageHandler("TEST-GENERATE-JS-EXCEPTION", function(msg) {
-  throw Exception("This is an error");
+  throw Error("This is an exception");
 });
 
 oxide.addMessageHandler("TEST-DONT-RESPOND", function(msg) {});

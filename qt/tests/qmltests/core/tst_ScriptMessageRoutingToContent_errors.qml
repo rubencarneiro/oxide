@@ -41,7 +41,7 @@ TestWebView {
       verify(res instanceof TestUtils.MessageError);
       compare(res.error, ScriptMessageRequest.ErrorUncaughtException,
               "Unexpected error code");
-      console.log(res.message);
+      compare(res.message, "Uncaught Error: This is an exception");
     }
 
     function test_ScriptMessageRoutingToContent_errors3_no_handler() {
