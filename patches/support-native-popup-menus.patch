@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -426,20 +426,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -425,20 +425,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1502,17 +1500,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1499,17 +1497,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    is_loading_ = false;
    frame_tree_node_->DidStopLoading();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1525,17 +1522,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1522,17 +1519,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -55,14 +55,14 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  }
 -#endif
  
- #if defined(ENABLE_MEDIA_MOJO_RENDERER)
- static void CreateMediaRendererService(
-     mojo::InterfaceRequest<mojo::MediaRenderer> request) {
-   // The created object is owned by the pipe.
-   new media::MojoRendererService(request.Pass());
- }
- #endif
-@@ -2004,30 +2000,28 @@ RenderFrameHostImpl::GetParentNativeView
+ void RenderFrameHostImpl::RegisterMojoServices() {
+   GeolocationServiceContext* geolocation_service_context =
+       delegate_ ? delegate_->GetGeolocationServiceContext() : NULL;
+   if (geolocation_service_context) {
+     // TODO(creis): Bind process ID here so that GeolocationServiceImpl
+     // can perform permissions checks once site isolation is complete.
+     // crbug.com/426384
+@@ -1998,30 +1994,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -376,7 +376,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -946,23 +946,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -948,23 +948,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -400,7 +400,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1030,19 +1028,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1032,19 +1030,18 @@ bool RenderFrameImpl::OnMessageReceived(
                          OnSnapshotAccessibilityTree)
      IPC_MESSAGE_HANDLER(FrameMsg_DisownOpener, OnDisownOpener)
      IPC_MESSAGE_HANDLER(FrameMsg_CommitNavigation, OnCommitNavigation)
@@ -421,7 +421,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1645,31 +1642,29 @@ void RenderFrameImpl::OnPostMessageEvent
+@@ -1647,31 +1644,29 @@ void RenderFrameImpl::OnPostMessageEvent
    WebSecurityOrigin target_origin;
    if (!params.target_origin.empty()) {
      target_origin =
@@ -453,7 +453,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2013,17 +2008,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2015,17 +2010,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -475,7 +475,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -283,19 +283,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -286,19 +286,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -495,7 +495,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -658,20 +656,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -665,20 +663,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnTextSurroundingSelectionRequest(size_t max_length);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
    void OnSnapshotAccessibilityTree(int callback_id);
@@ -517,14 +517,14 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -967,20 +964,18 @@ class CONTENT_EXPORT RenderFrameImpl
-   // Only valid if |accessibility_mode_| is anything other than
-   // AccessibilityModeOff.
-   RendererAccessibility* renderer_accessibility_;
- 
-   scoped_ptr<PermissionDispatcher> permission_client_;
+@@ -987,20 +984,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    scoped_ptr<blink::WebAppBannerClient> app_banner_client_;
+ 
+ #if defined(ENABLE_WEBVR)
+   // The VR dispatcher attached to the frame, lazily initialized.
+   scoped_ptr<VRDispatcher> vr_dispatcher_;
+ #endif
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
    // The external popup for the currently showing select popup.
