@@ -40,8 +40,6 @@ bool IsDriverVendorMesa(EGLNativeDisplayType native_display) {
   // We also can't use Chromium's GL bindings, as //ui/gl depends on us
 
   typedef EGLDisplay (*eglGetDisplayFnType)(EGLNativeDisplayType);
-  typedef EGLBoolean (*eglInitializeFnType)(EGLDisplay, EGLint*, EGLint*);
-  typedef EGLBoolean (*eglTerminateFnType)(EGLDisplay);
   typedef const char* (*eglQueryStringFnType)(EGLDisplay, EGLint);
 
   base::FilePath empty;
@@ -50,36 +48,21 @@ bool IsDriverVendorMesa(EGLNativeDisplayType native_display) {
   eglGetDisplayFnType eglGetDisplayFn =
       reinterpret_cast<eglGetDisplayFnType>(
         library.GetFunctionPointer("eglGetDisplay"));
-  eglInitializeFnType eglInitializeFn =
-      reinterpret_cast<eglInitializeFnType>(
-        library.GetFunctionPointer("eglInitialize"));
-  eglTerminateFnType eglTerminateFn =
-      reinterpret_cast<eglTerminateFnType>(
-        library.GetFunctionPointer("eglTerminate"));
   eglQueryStringFnType eglQueryStringFn =
       reinterpret_cast<eglQueryStringFnType>(
         library.GetFunctionPointer("eglQueryString"));
 
-  if (!eglGetDisplayFn ||
-      !eglInitializeFn ||
-      !eglTerminateFn ||
-      !eglQueryStringFn) {
+  if (!eglGetDisplayFn || !eglQueryStringFn) {
     return false;
   }
 
   EGLDisplay display = eglGetDisplayFn(native_display);
 
-  if (!eglInitializeFn(display, nullptr, nullptr)) {
-    return false;
-  }
-
   base::StringPiece egl_vendor(eglQueryStringFn(display, EGL_VENDOR));
   if (egl_vendor == base::StringPiece("Mesa Project")) {
-    eglTerminateFn(display);
     return true;
   }
 
-  eglTerminateFn(display);
   return false;
 }
 
