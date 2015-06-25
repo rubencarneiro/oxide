@@ -58,7 +58,6 @@ PepperHostFactoryBrowser::CreateResourceHost(
 
   // Flash interfaces:
   // TODO:
-  //  PpapiHostMsg_Flash_Create
   //  PpapiHostMsg_FlashClipboard_Create
   //  PpapiHostMsg_FlashDRM_Create
   if (host_->GetPpapiHost()->permissions().HasPermission(

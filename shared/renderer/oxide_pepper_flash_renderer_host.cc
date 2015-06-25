@@ -96,7 +96,6 @@ int32_t PepperFlashRendererHost::OnSetInstanceAlwaysOnTop(
 int32_t PepperFlashRendererHost::OnDrawGlyphs(
     ppapi::host::HostMessageContext* host_context,
     ppapi::proxy::PPBFlash_DrawGlyphs_Params params) {
-  LOG(INFO) << __PRETTY_FUNCTION__;
   if (params.glyph_indices.size() != params.glyph_advances.size() ||
       params.glyph_indices.empty())
     return PP_ERROR_FAILED;

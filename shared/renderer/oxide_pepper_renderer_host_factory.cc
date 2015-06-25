@@ -62,15 +62,15 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
 //       return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashFullscreenHost(
 //            host_, instance, params.pp_resource()));
 //      }
-//      case PpapiHostMsg_FlashMenu_Create::ID: {
-//        ppapi::proxy::SerializedFlashMenu serialized_menu;
-//        if (ppapi::UnpackMessage<PpapiHostMsg_FlashMenu_Create>(
-//                message, &serialized_menu)) {
-//          return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashMenuHost(
-//              host_, instance, params.pp_resource(), serialized_menu));
-//        }
-//        break;
-//      }
+      case PpapiHostMsg_FlashMenu_Create::ID: {
+        ppapi::proxy::SerializedFlashMenu serialized_menu;
+        if (ppapi::UnpackMessage<PpapiHostMsg_FlashMenu_Create>(
+          message, &serialized_menu)) {
+          return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashMenuHost(
+             host_, instance, resource, serialized_menu));
+        }
+        break;
+      }
       default:
         ;
     }
