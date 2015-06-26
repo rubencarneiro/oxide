@@ -29,7 +29,7 @@
 #include "oxide_media_info_loader.h"
 
 namespace base {
-class MessageLoopProxy;
+class SingleThreadTaskRunner;
 }
 
 namespace blink {
