@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
-#define _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
+#ifndef _OXIDE_SHARED_RENDERER_USER_AGENT_SETTINGS_H_
+#define _OXIDE_SHARED_RENDERER_USER_AGENT_SETTINGS_H_
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/renderer/render_process_observer.h"
+
+#include "shared/common/oxide_user_agent_override_set.h"
+
+class GURL;
 
 namespace oxide {
 
-class RenderProcessObserver final : public content::RenderProcessObserver {
+class ContentRendererClient;
+
+class RendererUserAgentSettings : public content::RenderProcessObserver {
  public:
-  RenderProcessObserver();
+  ~RendererUserAgentSettings() override;
+
+  std::string GetUserAgentOverrideForURL(const GURL& url);
 
  private:
+  friend class ContentRendererClient; // For constructor
+
+  RendererUserAgentSettings();
+
+  std::string GetLegacyUserAgentOverrideForURLFromBrowser(const GURL& url);
+
   void OnSetUserAgent(const std::string& user_agent);
+  void OnUpdateUserAgentOverrides(
+      const std::vector<UserAgentOverrideSet::Entry>& overrides);
 
   // content::RenderProcessObserver implementation
-  bool OnControlMessageReceived(const IPC::Message& message) final;
-  void OnRenderProcessShutdown() final;
+  bool OnControlMessageReceived(const IPC::Message& message) override;
 
-  DISALLOW_COPY_AND_ASSIGN(RenderProcessObserver);
+  UserAgentOverrideSet overrides_;
+
+  DISALLOW_COPY_AND_ASSIGN(RendererUserAgentSettings);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
+#endif // _OXIDE_SHARED_RENDERER_USER_AGENT_SETTINGS_H_

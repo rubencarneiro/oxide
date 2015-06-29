@@ -18,7 +18,6 @@
 #include "oxide_browser_context.h"
 
 #include <algorithm>
-#include <libintl.h>
 #include <limits>
 #include <set>
 #include <vector>
@@ -29,7 +28,6 @@
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/weak_ptr.h"
-#include "base/strings/stringprintf.h"
 #include "base/supports_user_data.h"
 #include "base/synchronization/lock.h"
 #include "base/threading/thread_restrictions.h"
@@ -41,7 +39,6 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
-#include "content/public/common/user_agent.h"
 #include "net/base/host_mapping_rules.h"
 #include "net/base/net_errors.h"
 #include "net/base/net_util.h"
@@ -64,10 +61,8 @@
 
 #include "shared/browser/permissions/oxide_permission_manager.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
-#include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/common/oxide_messages.h"
 
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_destroyer.h"
@@ -82,6 +77,7 @@
 #include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
 #include "oxide_url_request_delegated_job_factory.h"
+#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
@@ -102,8 +98,6 @@ const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
 const char kBrowserContextKey[] = "oxide_browser_context_data";
-
-const char kDefaultAcceptLanguage[] = "en-us,en";
 
 const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
 const int kBackLog = 1;
@@ -168,18 +162,6 @@ class TCPServerSocketFactory
   DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
 };
 
-class ResourceContextData : public base::SupportsUserData::Data {
- public:
-  ResourceContextData(BrowserContextIOData* context) :
-      context_(context) {}
-  ~ResourceContextData() override {}
-
-  BrowserContextIOData* get() const { return context_; }
-
- private:
-  BrowserContextIOData* context_;
-};
-
 class MainURLRequestContextGetter : public URLRequestContextGetter {
  public:
   MainURLRequestContextGetter(
@@ -216,11 +198,13 @@ class MainURLRequestContextGetter : public URLRequestContextGetter {
 
 class ResourceContext : public content::ResourceContext {
  public:
-  ResourceContext() :
-      request_context_(nullptr) {}
+  ResourceContext(BrowserContextIOData* io_data)
+      : io_data_(io_data),
+        request_context_(nullptr) {}
 
  private:
-  friend class BrowserContextIOData; // for setting request_context_;
+  friend class BrowserContextIOData; // for setting request_context_ and
+                                     // accessing io_data_
 
   // content::ResourceContext implementation
   net::HostResolver* GetHostResolver() override {
@@ -232,6 +216,7 @@ class ResourceContext : public content::ResourceContext {
     return request_context_;
   }
 
+  BrowserContextIOData* io_data_;
   net::URLRequestContext* request_context_;
 
   DISALLOW_COPY_AND_ASSIGN(ResourceContext);
@@ -240,14 +225,9 @@ class ResourceContext : public content::ResourceContext {
 struct BrowserContextSharedData {
   BrowserContextSharedData(BrowserContext* context,
                            const BrowserContext::Params& params)
-      : product(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
-        user_agent_string_is_default(true),
-        devtools_enabled(params.devtools_enabled),
+      : devtools_enabled(params.devtools_enabled),
         devtools_port(params.devtools_port),
         devtools_ip(params.devtools_ip) {}
-
-  std::string product;
-  bool user_agent_string_is_default;
 
   scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
   bool devtools_enabled;
@@ -256,20 +236,16 @@ struct BrowserContextSharedData {
 };
 
 struct BrowserContextSharedIOData {
-  BrowserContextSharedIOData(const BrowserContext::Params& params)
+  BrowserContextSharedIOData(BrowserContextIOData* context,
+                             const BrowserContext::Params& params)
       : path(params.path),
         cache_path(params.cache_path),
         max_cache_size_hint(params.max_cache_size_hint),
         cookie_policy(net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
-        host_mapping_rules(params.host_mapping_rules) {
-
-   accept_langs = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
-   if (accept_langs == "AcceptLanguage") {
-     accept_langs = kDefaultAcceptLanguage;
-   }
-  }
+        host_mapping_rules(params.host_mapping_rules),
+        user_agent_settings(new UserAgentSettingsIOData(context)) {}
 
   mutable base::Lock lock;
 
@@ -277,14 +253,13 @@ struct BrowserContextSharedIOData {
   base::FilePath cache_path;
   int max_cache_size_hint;
 
-  std::string user_agent_string;
-  std::string accept_langs;
-
   net::StaticCookiePolicy::Type cookie_policy;
   content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
   bool popup_blocker_enabled;
 
   std::vector<std::string> host_mapping_rules;
+
+  scoped_ptr<UserAgentSettingsIOData> user_agent_settings;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -307,7 +282,7 @@ void BrowserContextDelegateTraits::Destruct(const BrowserContextDelegate* x) {
 class BrowserContextIODataImpl : public BrowserContextIOData {
  public:
   BrowserContextIODataImpl(const BrowserContext::Params& params)
-      : data_(params) {}
+      : data_(this, params) {}
 
   BrowserContextSharedIOData& GetSharedData() override {
     return data_;
@@ -370,12 +345,9 @@ void BrowserContextIOData::Init() {
 }
 
 BrowserContextIOData::BrowserContextIOData()
-    : resource_context_(new ResourceContext()),
+    : resource_context_(new ResourceContext(this)),
       temporary_saved_permission_context_(
-        new TemporarySavedPermissionContext()) {
-  resource_context_->SetUserData(kBrowserContextKey,
-                                 new ResourceContextData(this));
-}
+        new TemporarySavedPermissionContext()) {}
 
 BrowserContextIOData::~BrowserContextIOData() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
@@ -384,8 +356,7 @@ BrowserContextIOData::~BrowserContextIOData() {
 // static
 BrowserContextIOData* BrowserContextIOData::FromResourceContext(
     content::ResourceContext* resource_context) {
-  return static_cast<ResourceContextData *>(
-      resource_context->GetUserData(kBrowserContextKey))->get();
+  return static_cast<ResourceContext*>(resource_context)->io_data_;
 }
 
 scoped_refptr<BrowserContextDelegate> BrowserContextIOData::GetDelegate() {
@@ -424,18 +395,6 @@ int BrowserContextIOData::GetMaxCacheSizeHint() const {
   static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
   DCHECK_LE(max_cache_size_hint, upper_limit);
   return max_cache_size_hint;
-}
-
-std::string BrowserContextIOData::GetAcceptLangs() const {
-  const BrowserContextSharedIOData& data = GetSharedData();
-  base::AutoLock lock(data.lock);
-  return data.accept_langs;
-}
-
-std::string BrowserContextIOData::GetUserAgent() const {
-  const BrowserContextSharedIOData& data = GetSharedData();
-  base::AutoLock lock(data.lock);
-  return data.user_agent_string;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -618,6 +577,10 @@ BrowserContextIOData::GetTemporarySavedPermissionContext() const {
   return temporary_saved_permission_context_.get();
 }
 
+UserAgentSettingsIOData* BrowserContextIOData::GetUserAgentSettings() const {
+  return GetSharedData().user_agent_settings.get();
+}
+
 class BrowserContextImpl;
 
 class OTRBrowserContextImpl : public BrowserContext {
@@ -696,7 +659,10 @@ OTRBrowserContextImpl::OTRBrowserContextImpl(
     BrowserContextIODataImpl* original_io_data)
     : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
       original_context_(original),
-      weak_ptr_factory_(this) {}
+      weak_ptr_factory_(this) {
+  BrowserContextDependencyManager::GetInstance()
+      ->CreateBrowserContextServices(this);
+}
 
 BrowserContextImpl::~BrowserContextImpl() {
   CHECK(!otr_context_);
@@ -716,9 +682,6 @@ scoped_refptr<BrowserContext> BrowserContextImpl::GetOffTheRecordContext() {
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
     : BrowserContext(new BrowserContextIODataImpl(params)),
       data_(this, params) {
-  io_data()->GetSharedData().user_agent_string =
-      content::BuildUserAgentFromProduct(data_.product);
-
   if (data_.devtools_enabled &&
       data_.devtools_port < 65535 &&
       data_.devtools_port > 1024) {
@@ -736,8 +699,8 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
           new DevtoolsHttpHandlerDelegate(),
           base::FilePath(),
           base::FilePath(),
-          GetProduct(),
-          GetUserAgent()));
+          UserAgentSettings::Get(this)->GetProduct(),
+          UserAgentSettings::Get(this)->GetUserAgent()));
   }
 
   if (!GetPath().empty()) {
@@ -747,6 +710,9 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
         FROM_HERE,
         base::Bind(&CleanupOldCacheDir, gpu_cache));
   }
+
+  BrowserContextDependencyManager::GetInstance()
+      ->CreateBrowserContextServices(this);
 }
 
 void BrowserContextTraits::Destruct(const BrowserContext* x) {
@@ -950,63 +916,6 @@ base::FilePath BrowserContext::GetCachePath() const {
 int BrowserContext::GetMaxCacheSizeHint() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetMaxCacheSizeHint();
-}
-
-std::string BrowserContext::GetAcceptLangs() const {
-  DCHECK(CalledOnValidThread());
-  return io_data()->GetAcceptLangs();
-}
-
-void BrowserContext::SetAcceptLangs(const std::string& langs) {
-  DCHECK(CalledOnValidThread());
-
-  BrowserContextSharedIOData& data = io_data()->GetSharedData();
-  base::AutoLock lock(data.lock);
-  data.accept_langs = langs;
-}
-
-std::string BrowserContext::GetProduct() const {
-  DCHECK(CalledOnValidThread());
-  return GetSharedData().product;
-}
-
-void BrowserContext::SetProduct(const std::string& product) {
-  DCHECK(CalledOnValidThread());
-
-  BrowserContextSharedData& data = GetSharedData();
-  data.product = product.empty() ?
-      base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING) : product;
-  if (data.user_agent_string_is_default) {
-    SetUserAgent(std::string());
-  }
-}
-
-std::string BrowserContext::GetUserAgent() const {
-  DCHECK(CalledOnValidThread());
-  return io_data()->GetUserAgent();
-}
-
-void BrowserContext::SetUserAgent(const std::string& user_agent) {
-  DCHECK(CalledOnValidThread());
-
-  {
-    BrowserContextSharedIOData& data = io_data()->GetSharedData();
-    base::AutoLock lock(data.lock);
-    data.user_agent_string = user_agent.empty() ?
-        content::BuildUserAgentFromProduct(GetSharedData().product) :
-        user_agent;
-    GetSharedData().user_agent_string_is_default = user_agent.empty();
-  }
-
-  for (content::RenderProcessHost::iterator it =
-          content::RenderProcessHost::AllHostsIterator();
-       !it.IsAtEnd(); it.Advance()) {
-    content::RenderProcessHost* host = it.GetCurrentValue();
-    if (IsSameContext(
-            BrowserContext::FromContent(host->GetBrowserContext()))) {
-      host->Send(new OxideMsg_SetUserAgent(GetUserAgent()));
-    }
-  }
 }
 
 net::StaticCookiePolicy::Type BrowserContext::GetCookiePolicy() const {

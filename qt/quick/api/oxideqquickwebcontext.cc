@@ -67,6 +67,46 @@ QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
   return QVariant(list);
 }
 
+oxide::qt::WebContextProxy::UserAgentOverride ToUserAgentOverride(
+    const QVariant& v,
+    bool* valid) {
+  *valid = false;
+
+  QVariantList entry = v.toList();
+  if (entry.size() != 2) {
+    return oxide::qt::WebContextProxy::UserAgentOverride();
+  }
+
+  oxide::qt::WebContextProxy::UserAgentOverride rv;
+
+  QRegExp re;
+  if (entry[0].canConvert<QRegExp>()) {
+    re = entry[0].toRegExp();
+  } else {
+    re = QRegExp(entry[0].toString());
+  }
+
+  if (!re.isValid()) {
+    return oxide::qt::WebContextProxy::UserAgentOverride();
+  }
+
+  *valid = true;
+
+  rv.first = re.pattern();
+  rv.second = entry[1].toString();
+
+  return rv;
+}
+
+QVariant FromUserAgentOverride(
+    const oxide::qt::WebContextProxy::UserAgentOverride& o) {
+  QVariantList rv;
+  rv.append(o.first);
+  rv.append(o.second);
+
+  return rv;
+}
+
 }
 
 namespace oxide {
@@ -1058,6 +1098,48 @@ void OxideQQuickWebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
 
   // Oxide loops back in to us to emit the signal, as the default will clear
   // if the actual device is removed
+}
+
+QVariantList OxideQQuickWebContext::userAgentOverrides() const {
+  Q_D(const OxideQQuickWebContext);
+
+  QVariantList rv;
+  QList<oxide::qt::WebContextProxy::UserAgentOverride> overrides =
+      d->proxy()->userAgentOverrides();
+
+  for (auto it = overrides.begin(); it != overrides.end(); ++it) {
+    rv.append(FromUserAgentOverride(*it));
+  }
+
+  return rv;
+}
+
+void OxideQQuickWebContext::setUserAgentOverrides(
+    const QVariantList& overrides) {
+  Q_D(OxideQQuickWebContext);
+
+  QList<oxide::qt::WebContextProxy::UserAgentOverride> entries;
+
+  for (auto it = overrides.begin(); it != overrides.end(); ++it) {
+    bool valid = false;
+    oxide::qt::WebContextProxy::UserAgentOverride entry =
+        ToUserAgentOverride(*it, &valid);
+
+    if (!valid) {
+      qWarning() <<
+          "OxideQQuickWebContext::userAgentOverride: Each entry must be a "
+          "list of size 2, with the first item being a valid regular "
+          "expression for URL matching and the second item being the user "
+          "agent string";
+      return;
+    }
+
+    entries.append(entry);
+  }
+
+  d->proxy()->setUserAgentOverrides(entries);
+
+  emit userAgentOverridesChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"

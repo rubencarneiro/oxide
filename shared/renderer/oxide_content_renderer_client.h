@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@ namespace oxide {
 class RendererMediaPlayerManager;
 #endif
 
+class RendererUserAgentSettings;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
@@ -49,6 +50,8 @@ class ContentRendererClient final : public content::ContentRendererClient {
       media::MediaLog* media_log) final;
 #endif
   void OverrideCompositorSettings(cc::LayerTreeSettings* settings) final;
+
+  scoped_ptr<RendererUserAgentSettings> user_agent_settings_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

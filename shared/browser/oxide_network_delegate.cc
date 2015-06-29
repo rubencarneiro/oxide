@@ -23,6 +23,7 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
+#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
@@ -50,6 +51,14 @@ int NetworkDelegate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
+  UserAgentSettingsIOData* ua_settings = context_->GetUserAgentSettings();
+  std::string override_ua =
+      ua_settings->GetUserAgentOverrideForURL(request->url());
+  if (!override_ua.empty()) {
+    headers->SetHeader(net::HttpRequestHeaders::kUserAgent,
+                       override_ua);
+  }
+
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate.get()) {
     return net::OK;
