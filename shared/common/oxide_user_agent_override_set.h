@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_COMMON_USER_AGENT_OVERRIDE_SET_H_
 #define _OXIDE_SHARED_COMMON_USER_AGENT_OVERRIDE_SET_H_
 
+#include <queue>
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,18 +37,30 @@ class UserAgentOverrideSet {
   typedef std::pair<std::string, std::string> Entry;
 
   UserAgentOverrideSet();
-  virtual ~UserAgentOverrideSet();
+  ~UserAgentOverrideSet();
 
   std::string GetOverrideForURL(const GURL& url);
 
   void SetOverrides(const std::vector<Entry>& overrides);
 
  private:
-  typedef std::pair<linked_ptr<RE2>, std::string> InternalEntry;
+  struct CachedEntry {
+    CachedEntry();
+
+    linked_ptr<RE2> re;
+    size_t index;
+    uint8_t use_count;
+  };
+
+  void RecordUsageFor(size_t cache_index);
 
   base::Lock lock_;
 
-  std::vector<InternalEntry> overrides_;
+  std::vector<Entry> overrides_;
+
+  std::vector<CachedEntry> cached_overrides_;
+
+  std::queue<uint8_t> history_;
 
   DISALLOW_COPY_AND_ASSIGN(UserAgentOverrideSet);
 };
