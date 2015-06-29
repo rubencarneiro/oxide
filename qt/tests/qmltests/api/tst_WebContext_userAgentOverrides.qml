@@ -54,7 +54,6 @@ TestWebView {
     }
 
     function test_WebContext_userAgentOverrides1_data_validity(data) {
-      var overrides = [ data.data ];
       webView.context.userAgentOverrides = [ data.data ];
 
       compare(spy.count, data.valid ? 1 : 0);
@@ -93,14 +92,73 @@ TestWebView {
       webView.url = data.url;
       verify(webView.waitForLoadSucceeded());
 
+      compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
+              data.expected);
+    }
+
+    function test_WebContext_userAgentOverrides3_http_data() {
+      return test_WebContext_userAgentOverrides2_navigator_data();
+    }
+
+    function test_WebContext_userAgentOverrides3_http(data) {
+      webView.context.userAgentOverrides = kOverrideSet;
+
+      webView.url = data.url;
+      verify(webView.waitForLoadSucceeded());
+
       var headers = JSON.parse(
           webView.getTestApi().evaluateCode(
             "return document.body.children[0].innerHTML", true));
       compare(headers["user-agent"], data.expected);
+    }
+
+    function test_WebContext_userAgentOverrides4_update(data) {
+      webView.context.userAgentOverrides = kOverrideSet;
+
+      webView.url = "http://5.testsuite/get-headers.py";
+      verify(webView.waitForLoadSucceeded());
+
+      var headers = JSON.parse(
+          webView.getTestApi().evaluateCode(
+            "return document.body.children[0].innerHTML", true));
+      compare(headers["user-agent"], "Override 5");
 
       compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
-              data.expected);
+              "Override 5");
 
+      webView.context.userAgentOverrides = [
+        [ /^http:\/\/[^\.]\.testsuite\//, "Updated override" ]
+      ];
+
+      compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
+              "Updated override");
+
+      webView.reload();
+      verify(webView.waitForLoadSucceeded());
+
+      var headers = JSON.parse(
+          webView.getTestApi().evaluateCode(
+            "return document.body.children[0].innerHTML", true));
+      compare(headers["user-agent"], "Updated override");
+
+      compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
+              "Updated override");
+
+      webView.context.userAgentOverrides = [];
+
+      compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
+              "Default user agent");
+
+      webView.reload();
+      verify(webView.waitForLoadSucceeded());
+
+      var headers = JSON.parse(
+          webView.getTestApi().evaluateCode(
+            "return document.body.children[0].innerHTML", true));
+      compare(headers["user-agent"], "Default user agent");
+
+      compare(webView.getTestApi().evaluateCode("return navigator.userAgent", true),
+              "Default user agent");
     }
   }
 }
