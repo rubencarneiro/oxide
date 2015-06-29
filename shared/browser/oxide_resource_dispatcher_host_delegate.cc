@@ -144,10 +144,14 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     url_request->extra_request_headers().GetHeader(
         net::HttpRequestHeaders::kUserAgent, &params.user_agent);
   } else {
-    params.user_agent =
-        BrowserContextIOData::FromResourceContext(resource_context)
-          ->GetUserAgentSettings()
-          ->GetUserAgentForURL(url);
+    scoped_refptr<BrowserContextDelegate> delegate(io_data->GetDelegate());
+    if (delegate.get()) {
+      params.user_agent = delegate->GetUserAgentOverride(url);
+    }
+    if (params.user_agent.empty()) {
+      params.user_agent =
+          io_data->GetUserAgentSettings()->GetUserAgentForURL(url);
+    }
   }
 
   if (url_request->is_pending()) {
