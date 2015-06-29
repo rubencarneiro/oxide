@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,29 +19,30 @@
 // @run-at document-start
 // ==/UserScript==
 
-oxide.addMessageHandler("GET-DOCUMENT-URI", function(msg) {
-  msg.reply({location: window.document.documentURI});
+oxide.addMessageHandler("SEND-MESSAGE-TO-BROWSER", function(msg) {
+  var r = oxide.sendMessage(msg.payload.id, msg.payload.payload);
+  r.onreply = function(response) {
+    msg.reply({error: 0, response: response});
+  };
+  r.onerror = function(error, response) {
+    msg.reply({error: error, response: response});
+  };
 });
 
-oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
-  var code = msg.payload.code;
-  if (msg.payload.wrap) {
-    code = "(function() {" + code + "})()";
-  }
-  try {
-    msg.reply({result: eval(code)});
-  } catch(e) {
-    msg.error("Code threw exception: \"" + e + "\"");
-  }
+oxide.addMessageHandler("TEST-GENERATE-JS-EXCEPTION", function(msg) {
+  throw Error("This is an exception");
 });
 
-oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
-  var e = document.querySelector(msg.payload);
-  if (!e) {
-    msg.error("No element found");
-    return;
-  }
+oxide.addMessageHandler("TEST-DONT-RESPOND", function(msg) {});
 
-  var r = e.getBoundingClientRect();
-  msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
+oxide.addMessageHandler("TEST-REPLY", function(msg) {
+  msg.reply(eval(msg.payload));
+});
+
+oxide.addMessageHandler("TEST-ERROR", function(msg) {
+  msg.error(msg.payload);
+});
+
+oxide.addMessageHandler("TEST-SEND-MESSAGE-NO-REPLY", function(msg) {
+  oxide.sendMessage(msg.id + "-RESPONSE", msg.payload);
 });

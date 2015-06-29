@@ -56,6 +56,7 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_user_agent_settings.h"
 #include "shared/browser/oxide_user_script_master.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
@@ -65,6 +66,7 @@ namespace oxide {
 namespace qt {
 
 using oxide::MediaCaptureDevicesContext;
+using oxide::UserAgentSettings;
 using oxide::UserScriptMaster;
 
 namespace {
@@ -140,7 +142,8 @@ struct WebContext::ConstructProperties {
         session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
         popup_blocker_enabled(true),
         devtools_enabled(false),
-        devtools_port(kDefaultDevtoolsPort) {}
+        devtools_port(kDefaultDevtoolsPort),
+        legacy_user_agent_override_enabled(false) {}
 
   std::string product;
   std::string user_agent;
@@ -157,6 +160,8 @@ struct WebContext::ConstructProperties {
   std::vector<std::string> host_mapping_rules;
   std::string default_audio_capture_device_id;
   std::string default_video_capture_device_id;
+  std::vector<UserAgentSettings::UserAgentOverride> user_agent_overrides;
+  bool legacy_user_agent_override_enabled;
 };
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
@@ -529,15 +534,21 @@ oxide::BrowserContext* WebContext::GetContext() {
 
   context_ = oxide::BrowserContext::Create(params);
 
+  UserAgentSettings* ua_settings = UserAgentSettings::Get(context_.get());
+
   if (!construct_props_->product.empty()) {
-    context_->SetProduct(construct_props_->product);
+    ua_settings->SetProduct(construct_props_->product);
   }
   if (!construct_props_->user_agent.empty()) {
-    context_->SetUserAgent(construct_props_->user_agent);
+    ua_settings->SetUserAgent(construct_props_->user_agent);
   }
   if (!construct_props_->accept_langs.empty()) {
-    context_->SetAcceptLangs(construct_props_->accept_langs);
+    ua_settings->SetAcceptLangs(construct_props_->accept_langs);
   }
+  ua_settings->SetUserAgentOverrides(construct_props_->user_agent_overrides);
+  ua_settings->SetLegacyUserAgentOverrideEnabled(
+      construct_props_->legacy_user_agent_override_enabled);
+
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
 
@@ -558,6 +569,7 @@ oxide::BrowserContext* WebContext::GetContext() {
   }
 
   dc->set_client(this);
+
   context_->SetDelegate(delegate_.get());
 
   construct_props_.reset();
@@ -598,7 +610,8 @@ void WebContext::makeDefault() {
 
 QString WebContext::product() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetProduct());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetProduct());
   }
 
   return QString::fromStdString(construct_props_->product);
@@ -606,7 +619,8 @@ QString WebContext::product() const {
 
 void WebContext::setProduct(const QString& product) {
   if (IsInitialized()) {
-    context_->SetProduct(product.toStdString());
+    UserAgentSettings::Get(context_.get())->SetProduct(
+        product.toStdString());
   } else {
     construct_props_->product = product.toStdString();
   }
@@ -614,7 +628,8 @@ void WebContext::setProduct(const QString& product) {
 
 QString WebContext::userAgent() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetUserAgent());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetUserAgent());
   }
 
   return QString::fromStdString(construct_props_->user_agent);
@@ -622,7 +637,8 @@ QString WebContext::userAgent() const {
 
 void WebContext::setUserAgent(const QString& user_agent) {
   if (IsInitialized()) {
-    context_->SetUserAgent(user_agent.toStdString());
+    UserAgentSettings::Get(context_.get())->SetUserAgent(
+        user_agent.toStdString());
   } else {
     construct_props_->user_agent = user_agent.toStdString();
   }
@@ -674,7 +690,8 @@ void WebContext::setCachePath(const QUrl& url) {
 
 QString WebContext::acceptLangs() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetAcceptLangs());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetAcceptLangs());
   }
 
   return QString::fromStdString(construct_props_->accept_langs);
@@ -682,7 +699,8 @@ QString WebContext::acceptLangs() const {
 
 void WebContext::setAcceptLangs(const QString& langs) {
   if (IsInitialized()) {
-    context_->SetAcceptLangs(langs.toStdString());
+    UserAgentSettings::Get(context_.get())->SetAcceptLangs(
+        langs.toStdString());
   } else {
     construct_props_->accept_langs = langs.toStdString();
   }
@@ -969,6 +987,43 @@ bool WebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   return true;
 }
 
+QList<WebContextProxy::UserAgentOverride>
+WebContext::userAgentOverrides() const {
+  QList<UserAgentOverride> rv;
+
+  std::vector<UserAgentSettings::UserAgentOverride> overrides;
+  if (IsInitialized()) {
+    overrides =
+        UserAgentSettings::Get(context_.get())->GetUserAgentOverrides();
+  } else {
+    overrides = construct_props_->user_agent_overrides;
+  }
+
+  for (const auto& entry : overrides) {
+    rv.append(
+        qMakePair(QString::fromStdString(entry.first),
+                  QString::fromStdString(entry.second)));
+  }
+
+  return rv;
+}
+
+void WebContext::setUserAgentOverrides(
+    const QList<UserAgentOverride>& overrides) {
+  std::vector<UserAgentSettings::UserAgentOverride> o;
+  for (auto it = overrides.begin(); it != overrides.end(); ++it) {
+    o.push_back(
+        std::make_pair((*it).first.toStdString(),
+                       (*it).second.toStdString()));
+  }
+
+  if (IsInitialized()) {
+    UserAgentSettings::Get(context_.get())->SetUserAgentOverrides(o);
+  } else {
+    construct_props_->user_agent_overrides = o;
+  }
+}
+
 void WebContext::clearTemporarySavedPermissionStatuses() {
   if (!context_.get()) {
     return;
@@ -980,7 +1035,17 @@ void WebContext::clearTemporarySavedPermissionStatuses() {
   }
 
   context_->GetOffTheRecordContext()
-      ->GetTemporarySavedPermissionContext()->Clear();
+      ->GetTemporarySavedPermissionContext()
+      ->Clear();
+}
+
+void WebContext::setLegacyUserAgentOverrideEnabled(bool enabled) {
+  if (IsInitialized()) {
+    UserAgentSettings::Get(context_.get())->SetLegacyUserAgentOverrideEnabled(
+        enabled);
+  } else {
+    construct_props_->legacy_user_agent_override_enabled = enabled;
+  }
 }
 
 void WebContext::DefaultAudioDeviceChanged() {

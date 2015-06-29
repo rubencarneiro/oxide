@@ -4,24 +4,19 @@ import com.canonical.Oxide 1.0
 import com.canonical.Oxide.Testing 1.0
 
 Item {
+  id: top
   width: 200
   height: 200
-
-  Component {
-    id: userScriptFactory
-    UserScript {}
-  }
 
   TestWebContext {
     id: c
     Component.onCompleted: {
-      var script = userScriptFactory.createObject(null, {
-          context: "oxide://testutils/",
+      addTestUserScript({
+          context: "oxide://geotest/",
           url: Qt.resolvedUrl("tst_GeolocationPermissionRequest_session_persist.js"),
           incognitoEnabled: true,
           matchAllFrames: true
       });
-      addUserScript(script);
     }
   }
 
@@ -49,7 +44,7 @@ Item {
       messageHandlers: [
         ScriptMessageHandler {
           msgId: "GEOLOCATION-RESPONSE"
-          contexts: [ "oxide://testutils/" ]
+          contexts: [ "oxide://geotest/" ]
           callback: function(msg) {
             _internal.lastGeolocationStatus = msg.payload;
           }

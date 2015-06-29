@@ -71,13 +71,20 @@ class CrossThreadDataStream
  private:
   int BytesAvailableLocked() const;
 
+  void RunDataAvailableCallbackOnReadThread();
+  void RunDidReadCallbackOnWriteThread();
+
   base::ThreadChecker read_thread_checker_;
   base::ThreadChecker write_thread_checker_;
 
+  // Must only be accessed on the read thread
   base::Closure data_available_callback_;
+
   scoped_refptr<base::SingleThreadTaskRunner> read_thread_task_runner_;
 
+  // Must only be accessed on the write thread
   base::Closure did_read_callback_;
+
   scoped_refptr<base::SingleThreadTaskRunner> write_thread_task_runner_;
 
   mutable base::Lock lock_;

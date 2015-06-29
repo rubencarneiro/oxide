@@ -7,21 +7,15 @@ Item {
   width: 200
   height: 200
 
-  Component {
-    id: userScriptFactory
-    UserScript {}
-  }
-
   TestWebContext {
     id: c
     Component.onCompleted: {
-      var script = userScriptFactory.createObject(null, {
-          context: "oxide://testutils/",
+      addTestUserScript({
+          context: "oxide://mediatest/",
           url: Qt.resolvedUrl("tst_MediaAccessPermissionRequest_session_persist.js"),
           incognitoEnabled: true,
           matchAllFrames: true
       });
-      addUserScript(script);
     }
   }
 
@@ -49,7 +43,7 @@ Item {
       messageHandlers: [
         ScriptMessageHandler {
           msgId: "GUM-RESPONSE"
-          contexts: [ "oxide://testutils/" ]
+          contexts: [ "oxide://mediatest/" ]
           callback: function(msg) {
             _internal.lastError = msg.payload;
           }

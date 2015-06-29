@@ -23,8 +23,8 @@
 #include "ui/gl/gl_surface_egl.h"
 #include "ui/gl/gl_surface_glx.h"
 #include "ui/gl/gl_surface_osmesa.h"
-
-#include "shared/port/gfx/gfx_utils_oxide.h"
+#include "ui/ozone/public/ozone_platform.h"
+#include "ui/ozone/public/surface_factory_ozone.h"
 
 namespace gfx {
 
@@ -113,7 +113,9 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
 }
 
 EGLNativeDisplayType GetPlatformDefaultEGLNativeDisplay() {
-  return GetOxideNativeDisplay();
+  return ui::OzonePlatform::GetInstance()
+      ->GetSurfaceFactoryOzone()
+      ->GetNativeDisplay();
 }
 
 } // namespace gfx

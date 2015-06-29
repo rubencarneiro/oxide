@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_
-#define _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_
+#ifndef _OXIDE_SHARED_BROWSER_RENDER_MESSAGE_FILTER_H_
+#define _OXIDE_SHARED_BROWSER_RENDER_MESSAGE_FILTER_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/browser/browser_message_filter.h"
 
 class GURL;
@@ -31,21 +30,23 @@ class ResourceContext;
 
 namespace oxide {
 
-class UserAgentOverrideProvider final : public content::BrowserMessageFilter {
+class RenderMessageFilter : public content::BrowserMessageFilter {
  public:
-  UserAgentOverrideProvider(content::RenderProcessHost* render_process_host);
-  ~UserAgentOverrideProvider();
+  RenderMessageFilter(content::RenderProcessHost* render_process_host);
+  ~RenderMessageFilter() override;
 
  private:
-  bool OnMessageReceived(const IPC::Message& message) final;
   void OnGetUserAgentOverride(const GURL& url,
                               std::string* user_agent);
 
+  // content::BrowserMessageFilter implementation
+  bool OnMessageReceived(const IPC::Message& message) override;
+
   content::ResourceContext* context_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserAgentOverrideProvider);
+  DISALLOW_COPY_AND_ASSIGN(RenderMessageFilter);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_USER_AGENT_OVERRIDE_PROVIDER_H_
+#endif // _OXIDE_SHARED_BROWSER_RENDER_MESSAGE_FILTER_H_

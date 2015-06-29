@@ -90,19 +90,5 @@ TestApiHost.prototype = {
         this._frame.sendMessage("oxide://testutils/",
                                 "GET-BOUNDING-CLIENT-RECT",
                                 selector));
-  },
-
-  sendMessageToSelf: function(id, payload, gcDuringWait) {
-    var r = this.waitForResult(
-        this._frame.sendMessage("oxide://testutils/",
-                                "SEND-MESSAGE-TO-SELF",
-                                { id: id,
-                                  payload: payload === undefined ? null : payload } ),
-        null, gcDuringWait);
-    if (r.error > 0) {
-      throw new MessageError(r.error, r.response);
-    } else {
-      return r.response;
-    }
   }
 };

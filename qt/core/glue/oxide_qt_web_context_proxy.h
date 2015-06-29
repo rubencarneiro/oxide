@@ -18,11 +18,12 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_PROXY_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_PROXY_H_
 
-#include <QWeakPointer>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
 #include <QUrl>
+#include <QWeakPointer>
 
 #include "qt/core/glue/oxide_qt_proxy_handle.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
@@ -125,7 +126,15 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual QString defaultVideoCaptureDeviceId() const = 0;
   virtual bool setDefaultVideoCaptureDeviceId(const QString& id) = 0;
 
+  typedef QPair<QString, QString> UserAgentOverride;
+
+  virtual QList<UserAgentOverride> userAgentOverrides() const = 0;
+  virtual void setUserAgentOverrides(
+      const QList<UserAgentOverride>& overrides) = 0;
+
   virtual void clearTemporarySavedPermissionStatuses() = 0;
+
+  virtual void setLegacyUserAgentOverrideEnabled(bool enabled) = 0;
 };
 
 } // namespace qt

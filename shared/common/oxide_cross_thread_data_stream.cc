@@ -45,6 +45,26 @@ int CrossThreadDataStream::BytesAvailableLocked() const {
   return bytes;
 }
 
+void CrossThreadDataStream::RunDataAvailableCallbackOnReadThread() {
+  DCHECK(CalledOnReadThread());
+
+  if (data_available_callback_.is_null()) {
+    return;
+  }
+
+  data_available_callback_.Run();
+}
+
+void CrossThreadDataStream::RunDidReadCallbackOnWriteThread() {
+  DCHECK(CalledOnWriteThread());
+
+  if (did_read_callback_.is_null()) {
+    return;
+  }
+
+  did_read_callback_.Run();
+}
+
 CrossThreadDataStream::~CrossThreadDataStream() {
   if (buffer_) {
     free(buffer_);
@@ -167,7 +187,6 @@ char* CrossThreadDataStream::AllocateSpaceForWriting(int requested_size,
 void CrossThreadDataStream::CommitWrite(bool eof) {
   DCHECK(CalledOnWriteThread());
 
-  base::Closure callback;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner;
 
   {
@@ -192,13 +211,13 @@ void CrossThreadDataStream::CommitWrite(bool eof) {
     buffer_reserved_start_ = -1;
     buffer_reserved_end_ = -1;
 
-    callback = data_available_callback_;
     task_runner = read_thread_task_runner_;
   }
 
-  if (!callback.is_null()) {
-    task_runner->PostTask(FROM_HERE, callback);
-  }
+  task_runner->PostTask(
+      FROM_HERE,
+      base::Bind(&CrossThreadDataStream::RunDataAvailableCallbackOnReadThread,
+                 this));
 }
 
 bool CrossThreadDataStream::CanReadData() const {
@@ -234,7 +253,6 @@ void CrossThreadDataStream::ConsumeData(int size) {
   DCHECK(CalledOnReadThread());
   DCHECK(CanReadData());
 
-  base::Closure callback;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner;
 
   {
@@ -251,13 +269,13 @@ void CrossThreadDataStream::ConsumeData(int size) {
       buffer_start_ = 0;
     }
 
-    callback = did_read_callback_;
     task_runner = write_thread_task_runner_;
   }
 
-  if (!callback.is_null()) {
-    task_runner->PostTask(FROM_HERE, callback);
-  }
+  task_runner->PostTask(
+      FROM_HERE,
+      base::Bind(&CrossThreadDataStream::RunDidReadCallbackOnWriteThread,
+                 this));
 }
 
 CrossThreadDataStream::CrossThreadDataStream()

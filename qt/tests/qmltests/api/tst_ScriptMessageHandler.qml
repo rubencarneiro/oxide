@@ -77,20 +77,5 @@ TestWebView {
       handler.callback = handler.callback;
       compare(spy.count, 1, "Shouldn't have had a signal");
     }
-
-    function test_ScriptMessageHandler4_throws() {
-      webView.url = "http://testsuite/empty.html";
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
-      try {
-        webView.getTestApi().sendMessageToSelf("TEST-THROW", {});
-        fail("Should have thrown");
-      } catch(e) {
-        verify(e instanceof TestUtils.MessageError, "Invalid exception type");
-        compare(e.error, ScriptMessageRequest.ErrorUncaughtException,
-                "Unexpected error type");
-        compare(e.message, "Error: This is an error", "Unexpected error message");
-      }
-    }
   }
 }

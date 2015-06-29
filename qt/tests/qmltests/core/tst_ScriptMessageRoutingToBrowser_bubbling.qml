@@ -5,32 +5,36 @@ import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
   id: webView
-  focus: true
   width: 200
   height: 200
 
   Component {
     id: messageHandler
-    ScriptMessageHandler {}
+    ScriptMessageTestHandler {}
   }
 
   messageHandlers: [
-    ScriptMessageHandler {
+    ScriptMessageTestHandler {
       msgId: "TEST"
-      contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        msg.reply({ out: msg.payload, handler: "view" });
+        msg.reply("view");
       }
     }
   ]
 
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
+
+  // These tests verify that messages sent to the browser bubble correctly to an
+  // ancestor frame or webview message handler
   TestCase {
     id: test
-    name: "ScriptMessageRouting_direct"
+    name: "ScriptMessageRoutingToBrowser_bubbling"
     when: windowShown
 
     function init() {
-      webView.url = "http://testsuite/tst_ScriptMessageRouting_bubbling.html";
+      webView.url = "http://testsuite/tst_ScriptMessageRoutingToBrowser_bubbling.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
     }
@@ -38,17 +42,16 @@ TestWebView {
     function test_ScriptMessageRouting_bubbling1_to_parent_frame() {
       var handler = messageHandler.createObject(
           webView.rootFrame,
-          { msgId: "TEST", contexts: [ "oxide://testutils/" ],
+          { msgId: "TEST",
             callback: function(msg) {
-              msg.reply({ out: msg.payload, handler: "frame" });
+              msg.reply("frame");
             }
           });
 
       var frame = webView.rootFrame.childFrames[0];
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
-      compare(res.handler, "frame", "Got response from wrong handler");
-      compare(res.out, 10, "Invalid result");
+      var res = new ScriptMessageTestUtils.FrameHelper(frame).sendMessageToBrowser("TEST");
+      compare(res, "frame", "Got response from wrong handler");
 
       webView.rootFrame.removeMessageHandler(handler);
     }
@@ -56,9 +59,8 @@ TestWebView {
     function test_ScriptMessageRouting_bubbling2_to_webview() {
       var frame = webView.rootFrame.childFrames[0];
 
-      var res = webView.getTestApiForFrame(frame).sendMessageToSelf("TEST", 10);
-      compare(res.handler, "view", "Got response from wrong handler");
-      compare(res.out, 10, "Invalid result");
+      var res = new ScriptMessageTestUtils.FrameHelper(frame).sendMessageToBrowser("TEST");
+      compare(res, "view", "Got response from wrong handler");
     }
   }
 }

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
 #include "net/http/http_util.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
@@ -28,7 +29,8 @@ HttpUserAgentSettings::HttpUserAgentSettings(BrowserContextIOData* context) :
     context_(context) {}
 
 std::string HttpUserAgentSettings::GetAcceptLanguage() const {
-  std::string new_accept_lang_setting = context_->GetAcceptLangs();
+  std::string new_accept_lang_setting =
+      context_->GetUserAgentSettings()->GetAcceptLangs();
   if (new_accept_lang_setting != http_accept_language_setting_) {
     http_accept_language_setting_ = new_accept_lang_setting;
     http_accept_language_ =
@@ -40,7 +42,7 @@ std::string HttpUserAgentSettings::GetAcceptLanguage() const {
 }
 
 std::string HttpUserAgentSettings::GetUserAgent() const {
-  return context_->GetUserAgent();
+  return context_->GetUserAgentSettings()->GetUserAgent();
 }
 
 } // namespace oxide
