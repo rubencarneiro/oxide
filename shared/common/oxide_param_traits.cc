@@ -22,6 +22,7 @@
 
 #include "oxide_messages.h"
 #include "oxide_script_message_params.h"
+#include "oxide_user_agent_override_set.h"
 
 namespace IPC {
 
@@ -65,6 +66,34 @@ bool ParamTraits<oxide::ScriptMessageParams>::Read(const Message* m,
 // static
 void ParamTraits<oxide::ScriptMessageParams>::Log(const param_type& p,
                                                   std::string* l) {
+}
+
+// static
+void ParamTraits<oxide::UserAgentOverrideSet::Entry>::Write(
+    Message* m,
+    const param_type& p) {
+  WriteParam(m, p.first);
+  WriteParam(m, p.second);
+}
+
+// static
+bool ParamTraits<oxide::UserAgentOverrideSet::Entry>::Read(
+    const Message* m,
+    base::PickleIterator* iter,
+    param_type* r) {
+  if (!ReadParam(m, iter, &r->first)) {
+    return false;
+  }
+  if (!ReadParam(m, iter, &r->second)) {
+    return false;
+  }
+
+  return true;
+}
+
+// static
+void ParamTraits<oxide::UserAgentOverrideSet::Entry>::Log(const param_type& p,
+                                                          std::string* l) {
 }
 
 } // namespace IPC
