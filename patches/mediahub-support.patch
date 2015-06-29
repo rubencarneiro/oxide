@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -222,9 +222,17 @@ std::string ContentRendererClient::GetUs
+@@ -223,9 +223,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -41,13 +41,13 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebPrescientNetworking;
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
-@@ -53,16 +55,17 @@ class WebURLRequest;
- class WebWorkerContentSettingsClientProxy;
+@@ -54,16 +56,17 @@ class WebWorkerContentSettingsClientProx
  struct WebPluginParams;
  struct WebURLError;
  }
  
  namespace media {
+ class GpuVideoAcceleratorFactories;
  class MediaLog;
  class RendererFactory;
 +class WebMediaPlayerDelegate;
@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -309,13 +312,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -311,13 +314,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
        RenderFrame* render_frame);
  
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1956,16 +1956,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -1970,16 +1970,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
    if (!web_stream.isNull())
      return CreateWebMediaPlayerForMediaStream(client);
  
