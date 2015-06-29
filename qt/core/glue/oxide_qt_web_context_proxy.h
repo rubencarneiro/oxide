@@ -133,6 +133,8 @@ class Q_DECL_EXPORT WebContextProxy {
       const QList<UserAgentOverride>& overrides) = 0;
 
   virtual void clearTemporarySavedPermissionStatuses() = 0;
+
+  virtual void setLegacyUserAgentOverrideEnabled(bool enabled) = 0;
 };
 
 } // namespace qt

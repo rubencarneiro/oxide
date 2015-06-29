@@ -47,9 +47,12 @@ class RendererUserAgentSettings : public content::RenderProcessObserver {
   void OnSetUserAgent(const std::string& user_agent);
   void OnUpdateUserAgentOverrides(
       const std::vector<UserAgentOverrideSet::Entry>& overrides);
+  void OnSetLegacyUserAgentOverrideEnabled(bool enabled);
 
   // content::RenderProcessObserver implementation
   bool OnControlMessageReceived(const IPC::Message& message) override;
+
+  bool legacy_override_enabled_;
 
   UserAgentOverrideSet overrides_;
 

@@ -130,6 +130,11 @@ class UserAgentSettings : public KeyedService,
   // Initialize |process|
   void RenderProcessCreated(content::RenderProcessHost* process);
 
+  // Whether to enable the legacy user agent override mechanism, which
+  // works by proxying lookups from the renderer to BrowserContextDelegate
+  // via synchronous IPC
+  void SetLegacyUserAgentOverrideEnabled(bool enabled);
+
  private:
   friend class UserAgentSettingsFactory;
   typedef std::set<content::RenderProcessHost*> HostSet;
@@ -140,6 +145,8 @@ class UserAgentSettings : public KeyedService,
   HostSet GetHostSet() const;
   void UpdateUserAgentForHost(content::RenderProcessHost* host);
   void UpdateUserAgentOverridesForHost(content::RenderProcessHost* host);
+  void UpdateLegacyUserAgentOverrideEnabledForHost(
+      content::RenderProcessHost* host);
 
   BrowserContext* context_;
 
@@ -150,6 +157,8 @@ class UserAgentSettings : public KeyedService,
   std::vector<UserAgentOverride> user_agent_overrides_;
 
   UserAgentOverrideSet user_agent_override_set_;
+
+  bool legacy_user_agent_override_enabled_;
 
   DISALLOW_COPY_AND_ASSIGN(UserAgentSettings);
 };

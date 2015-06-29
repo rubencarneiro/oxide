@@ -864,6 +864,12 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
     return;
   }
 
+  if (delegate) {
+    qWarning() <<
+        "OxideQQuickWebContext: userAgentOverrideDelegate is deprecated. "
+        "Please consider switching to userAgentOverrides instead";
+  }
+
   if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
     return;
   }
@@ -882,6 +888,8 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
   }
 
   d->detachedDelegateWorker(old);
+
+  d->proxy()->setLegacyUserAgentOverrideEnabled(!!delegate);
 
   emit userAgentOverrideDelegateChanged();
 }

@@ -58,6 +58,9 @@ IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserAgentOverrides,
                      std::vector<oxide::UserAgentOverrideSet::Entry>)
 
+IPC_MESSAGE_CONTROL1(OxideMsg_SetLegacyUserAgentOverrideEnabled,
+                     bool)
+
 IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
                     oxide::ScriptMessageParams)
 

@@ -146,6 +146,7 @@ class WebContext : public WebContextProxy,
   void setUserAgentOverrides(
       const QList<UserAgentOverride>& overrides) override;
   void clearTemporarySavedPermissionStatuses() override;
+  void setLegacyUserAgentOverrideEnabled(bool enabled) override;
 
   // oxide::MediaCaptureDevicesContextClient implementation
   void DefaultAudioDeviceChanged() override;

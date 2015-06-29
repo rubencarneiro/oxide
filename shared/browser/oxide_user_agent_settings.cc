@@ -139,7 +139,8 @@ std::string UserAgentSettingsIOData::GetUserAgentOverrideForURL(
 UserAgentSettings::UserAgentSettings(BrowserContext* context)
     : context_(context),
       product_(base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING)),
-      user_agent_string_is_default_(true) {
+      user_agent_string_is_default_(true),
+      legacy_user_agent_override_enabled_(false) {
   UserAgentSettingsIOData* io_data =
       BrowserContextIOData::FromResourceContext(
         context_->GetResourceContext())->GetUserAgentSettings();
@@ -173,6 +174,13 @@ void UserAgentSettings::UpdateUserAgentForHost(
 void UserAgentSettings::UpdateUserAgentOverridesForHost(
     content::RenderProcessHost* host) {
   host->Send(new OxideMsg_UpdateUserAgentOverrides(user_agent_overrides_));
+}
+
+void UserAgentSettings::UpdateLegacyUserAgentOverrideEnabledForHost(
+    content::RenderProcessHost* host) {
+  host->Send(
+      new OxideMsg_SetLegacyUserAgentOverrideEnabled(
+        legacy_user_agent_override_enabled_));
 }
 
 // static
@@ -288,6 +296,20 @@ void UserAgentSettings::RenderProcessCreated(
     content::RenderProcessHost* process) {
   UpdateUserAgentForHost(process);
   UpdateUserAgentOverridesForHost(process);
+  UpdateLegacyUserAgentOverrideEnabledForHost(process);
+}
+
+void UserAgentSettings::SetLegacyUserAgentOverrideEnabled(bool enabled) {
+  if (enabled == legacy_user_agent_override_enabled_) {
+    return;
+  }
+
+  legacy_user_agent_override_enabled_ = enabled;
+
+  std::set<content::RenderProcessHost*> hosts = GetHostSet();
+  for (auto host : hosts) {
+    UpdateLegacyUserAgentOverrideEnabledForHost(host);
+  }
 }
 
 } // namespace oxide

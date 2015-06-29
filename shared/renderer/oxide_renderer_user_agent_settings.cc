@@ -27,11 +27,16 @@
 
 namespace oxide {
 
-RendererUserAgentSettings::RendererUserAgentSettings() {}
+RendererUserAgentSettings::RendererUserAgentSettings()
+    : legacy_override_enabled_(false) {}
 
 std::string
 RendererUserAgentSettings::GetLegacyUserAgentOverrideForURLFromBrowser(
     const GURL& url) {
+  if (!legacy_override_enabled_) {
+    return std::string();
+  }
+
   // Strip username / password / fragment identifier if they exist
   GURL::Replacements rep;
   rep.ClearUsername();
@@ -74,6 +79,11 @@ void RendererUserAgentSettings::OnUpdateUserAgentOverrides(
   overrides_.SetOverrides(overrides);
 }
 
+void RendererUserAgentSettings::OnSetLegacyUserAgentOverrideEnabled(
+    bool enabled) {
+  legacy_override_enabled_ = enabled;
+}
+
 bool RendererUserAgentSettings::OnControlMessageReceived(
     const IPC::Message& message) {
   bool handled = true;
@@ -81,6 +91,8 @@ bool RendererUserAgentSettings::OnControlMessageReceived(
     IPC_MESSAGE_HANDLER(OxideMsg_SetUserAgent, OnSetUserAgent)
     IPC_MESSAGE_HANDLER(OxideMsg_UpdateUserAgentOverrides,
                         OnUpdateUserAgentOverrides)
+    IPC_MESSAGE_HANDLER(OxideMsg_SetLegacyUserAgentOverrideEnabled,
+                        OnSetLegacyUserAgentOverrideEnabled)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 

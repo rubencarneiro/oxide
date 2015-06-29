@@ -142,7 +142,8 @@ struct WebContext::ConstructProperties {
         session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
         popup_blocker_enabled(true),
         devtools_enabled(false),
-        devtools_port(kDefaultDevtoolsPort) {}
+        devtools_port(kDefaultDevtoolsPort),
+        legacy_user_agent_override_enabled(false) {}
 
   std::string product;
   std::string user_agent;
@@ -160,6 +161,7 @@ struct WebContext::ConstructProperties {
   std::string default_audio_capture_device_id;
   std::string default_video_capture_device_id;
   std::vector<UserAgentSettings::UserAgentOverride> user_agent_overrides;
+  bool legacy_user_agent_override_enabled;
 };
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
@@ -544,6 +546,8 @@ oxide::BrowserContext* WebContext::GetContext() {
     ua_settings->SetAcceptLangs(construct_props_->accept_langs);
   }
   ua_settings->SetUserAgentOverrides(construct_props_->user_agent_overrides);
+  ua_settings->SetLegacyUserAgentOverrideEnabled(
+      construct_props_->legacy_user_agent_override_enabled);
 
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
@@ -1033,6 +1037,15 @@ void WebContext::clearTemporarySavedPermissionStatuses() {
   context_->GetOffTheRecordContext()
       ->GetTemporarySavedPermissionContext()
       ->Clear();
+}
+
+void WebContext::setLegacyUserAgentOverrideEnabled(bool enabled) {
+  if (IsInitialized()) {
+    UserAgentSettings::Get(context_.get())->SetLegacyUserAgentOverrideEnabled(
+        enabled);
+  } else {
+    construct_props_->legacy_user_agent_override_enabled = enabled;
+  }
 }
 
 void WebContext::DefaultAudioDeviceChanged() {
