@@ -48,10 +48,9 @@ class ResourceDispatcherHostLoginDelegate
 
 private:
   friend class ResourceDispatcherHostDelegate;
-  void DispatchRequest(WebView* webview);
+  void DispatchRequest(int render_process_id, int render_frame_id);
   void DispatchCancelledCallback();
   void OnRequestCancelled() override;
-  WebView* GetWebView(net::URLRequest* request);
 
   net::URLRequest* request_;
   std::string host_;

@@ -22,8 +22,8 @@
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
-#include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/browser/resource_context.h"
+#include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/browser/resource_request_info.h"
 #include "net/base/auth.h"
 #include "net/url_request/url_request.h"
@@ -41,19 +41,16 @@ ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
   host_ = auth_info->challenger.ToString();
   realm_ = auth_info->realm;
 
-  WebView* webview = GetWebView(request_);
-  if (!webview) {
-    // Deny the request if we can not get access to the webview, as there is
-    // no other sensible thing to do.
-    Deny();
-    return;
-  }
+  int render_process_id;
+  int render_frame_id;
+  content::ResourceRequestInfo::GetRenderFrameForRequest(
+      request, &render_process_id, &render_frame_id);
 
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
       base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchRequest,
-          this, webview));
+          this, render_process_id, render_frame_id));
 }
 
 ResourceDispatcherHostLoginDelegate::~ResourceDispatcherHostLoginDelegate() {}
@@ -130,23 +127,22 @@ void ResourceDispatcherHostLoginDelegate::Allow(const std::string &username,
   request_ = nullptr;
 }
 
-WebView* ResourceDispatcherHostLoginDelegate::GetWebView(
-    net::URLRequest* request) {
-  int processId;
-  int frameId;
-  content::ResourceRequestInfo::GetRenderFrameForRequest(request, &processId,
-                                                         &frameId);
-  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(processId,
-                                                                   frameId);
+void ResourceDispatcherHostLoginDelegate::DispatchRequest(
+    int render_process_id, int render_frame_id) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  content::RenderFrameHost* rfh =
+      content::RenderFrameHost::FromID(render_process_id, render_frame_id);
   if (!rfh) {
-    return nullptr;
+    Deny();
+    return;
   }
 
-  return WebView::FromRenderFrameHost(rfh);
-}
-
-void ResourceDispatcherHostLoginDelegate::DispatchRequest(WebView* webview) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  WebView* webview = WebView::FromRenderFrameHost(rfh);
+  if (!webview) {
+    Deny();
+    return;
+  }
 
   webview->HttpAuthenticationRequested(this);
 }
