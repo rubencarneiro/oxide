@@ -137,7 +137,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
 
     qmlRegisterType<OxideQQuickWebContext, 3>(uri, 1, 9, "WebContext");
-
     qmlRegisterUncreatableType<OxideQHttpAuthenticationRequest>(uri, 1, 9, "HttpAuthenticationRequest",
         "HttpAuthenticationRequest is delivered by WebView.httpAuthenticationRequested");
     qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
