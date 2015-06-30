@@ -26,13 +26,13 @@ TestWebView {
              "Timed out waiting for successful load");
 
       mouseClick(webView, webView.width / 2, webView.height / 2);
-      verify(webView.waitFor(function() { return webView.picked; }),
+      verify(TestUtils.waitFor(function() { return webView.picked; }),
              "Timed out waiting for filepicker to be dismissed");
 
       // Check that the renderer doesn’t crash. If it does,
       // it might not be right away, so give it some time.
       for (var i = 0; i < 5; ++i) {
-        webView.wait(500);
+        Utils.wait(500);
         // Calling into the test API will raise an exception
         // if the renderer process has crashed.
         webView.getTestApi().documentURI;

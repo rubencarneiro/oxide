@@ -41,14 +41,14 @@ TestWebView {
       compare(spy.count, 1, "Should have had a signal");
       compare(webView.context.userScripts.length, 2, "Unexpected number of user scripts");
       compare(webView.context.userScripts[1], script, "Unexpected script");
-      compare(OxideTestingUtils.qObjectParent(script), webView.context,
+      compare(Utils.qObjectParent(script), webView.context,
               "UserScript should be owned by the WebContext");
 
       webView.context.removeUserScript(script);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");
-      compare(OxideTestingUtils.qObjectParent(script), null,
+      compare(Utils.qObjectParent(script), null,
               "UserScript should have no owner now");
     }
 
@@ -56,7 +56,7 @@ TestWebView {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {});
       otherContext.addUserScript(script);
-      compare(OxideTestingUtils.qObjectParent(script), otherContext,
+      compare(Utils.qObjectParent(script), otherContext,
               "UserScript should be owned by the other context");
 
       webView.context.addUserScript(script);
@@ -64,14 +64,14 @@ TestWebView {
       compare(spy.count, 1, "Should have had a signal");
       compare(webView.context.userScripts.length, 2, "Unexpected number of user scripts");
       compare(webView.context.userScripts[1], script, "Unexpected script");
-      compare(OxideTestingUtils.qObjectParent(script), otherContext,
+      compare(Utils.qObjectParent(script), otherContext,
               "UserScript should still be owned by the other context");
 
       webView.context.removeUserScript(script);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");
-      compare(OxideTestingUtils.qObjectParent(script), otherContext,
+      compare(Utils.qObjectParent(script), otherContext,
               "UserScript should still be owned by the other context");
     }
 
@@ -79,7 +79,7 @@ TestWebView {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {});
       otherContext.addUserScript(script);
-      compare(OxideTestingUtils.qObjectParent(script), otherContext,
+      compare(Utils.qObjectParent(script), otherContext,
               "UserScript should be owned by the other context");
 
       webView.context.addUserScript(script);
@@ -87,10 +87,10 @@ TestWebView {
       compare(spy.count, 1, "Should have had a signal");
       compare(webView.context.userScripts.length, 2, "Unexpected number of user scripts");
       compare(webView.context.userScripts[1], script, "Unexpected script");
-      compare(OxideTestingUtils.qObjectParent(script), otherContext,
+      compare(Utils.qObjectParent(script), otherContext,
               "UserScript should still be owned by the other context");
 
-      OxideTestingUtils.destroyQObjectNow(otherContext);
+      Utils.destroyQObjectNow(otherContext);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");
@@ -104,11 +104,11 @@ TestWebView {
       webView.context.addUserScript(script);
 
       otherContext.removeUserScript(script);
-      compare(OxideTestingUtils.qObjectParent(script), null,
+      compare(Utils.qObjectParent(script), null,
               "UserScript should be unowned");
 
       webView.context.addUserScript(script);
-      compare(OxideTestingUtils.qObjectParent(script), webView.context,
+      compare(Utils.qObjectParent(script), webView.context,
               "Context should now own UserScript");
 
       webView.context.removeUserScript(script);

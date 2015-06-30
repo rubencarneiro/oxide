@@ -53,13 +53,13 @@ TestWebView {
     function test_customDialogComponent() {
       webView.alertDialog = customDialogComponent;
       webView.url = "http://testsuite/tst_WebView_alertDialog.html";
-      verify(webView.waitFor(webView.dialogShown), "Alert dialog not shown");
+      verify(TestUtils.waitFor(webView.dialogShown), "Alert dialog not shown");
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
       compare(dialog.message, "JavaScript alert dialog");
       mouseClick(dialog, dialog.width / 2, dialog.height / 2);
-      verify(webView.waitFor(webView.dialogDismissed),
+      verify(TestUtils.waitFor(webView.dialogDismissed),
              "Alert dialog not dismissed");
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");

@@ -64,6 +64,7 @@ class SSLHostStateDelegate;
 class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
+class UserAgentSettingsIOData;
 
 class BrowserContextIOData {
  public:
@@ -83,9 +84,6 @@ class BrowserContextIOData {
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
 
-  std::string GetAcceptLangs() const;
-  std::string GetUserAgent() const;
-
   virtual bool IsOffTheRecord() const = 0;
 
   URLRequestContext* CreateMainRequestContext(
@@ -101,6 +99,8 @@ class BrowserContextIOData {
   // XXX: This will be going away
   // (see the comment in oxide_temporary_saved_permission_context.h)
   TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
+  UserAgentSettingsIOData* GetUserAgentSettings() const;
 
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
@@ -206,15 +206,6 @@ class BrowserContext
   base::FilePath GetPath() const override; // from content::BrowserContext
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
-
-  std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
-
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
-
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
 
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);

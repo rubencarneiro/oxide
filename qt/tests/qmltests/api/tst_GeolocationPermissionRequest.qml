@@ -32,7 +32,7 @@ TestWebView {
       msgId: "GEOLOCATION-RESPONSE"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        webView.lastGeolocationStatus = msg.args.status;
+        webView.lastGeolocationStatus = msg.payload;
       }
     }
   ]
@@ -50,6 +50,10 @@ TestWebView {
       webView.context.clearTemporarySavedPermissionStatuses();
     }
 
+    function _test_allow() {
+      webView.lastGeolocationRequest.allow();
+    }
+
     function _test_accept() {
       webView.lastGeolocationRequest.accept();
     }
@@ -64,9 +68,10 @@ TestWebView {
 
     function test_GeolocationPermissionRequest1_main_frame_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
-        { function: _test_destroy, expected: 1 }
+        { function: _test_destroy, expected: 1 },
+        { function: _test_accept, expected: 0 },
       ];
     }
 
@@ -77,7 +82,7 @@ TestWebView {
 
       webView.getTestApi().evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       if (!webView.lastGeolocationRequest) {
@@ -90,14 +95,14 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
              "Timed out waiting for geolocation response");
       compare(webView.lastGeolocationStatus, data.expected);
     }
 
     function test_GeolocationPermissionRequest2_subframe_data() {
       return [
-        { function: _test_accept, expected: 0 },
+        { function: _test_allow, expected: 0 },
         { function: _test_deny, expected: 1 },
         { function: _test_destroy, expected: 1 }
       ];
@@ -110,7 +115,7 @@ TestWebView {
 
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       if (!webView.lastGeolocationRequest) {
@@ -123,7 +128,7 @@ TestWebView {
 
       data.function();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }),
              "Timed out waiting for geolocation response");
       compare(webView.lastGeolocationStatus, data.expected);
     }

@@ -17,7 +17,6 @@
 
 #include "oxide_qt_web_frame.h"
 
-#include <QJsonDocument>
 #include <QObject>
 #include <QString>
 #include <QVariant>
@@ -30,6 +29,7 @@
 
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_script_message_request.h"
+#include "oxide_qt_variant_value_converter.h"
 #include "oxide_qt_web_view.h"
 
 namespace oxide {
@@ -111,14 +111,15 @@ WebFrameProxyHandle* WebFrame::childFrameAt(int index) const {
 
 bool WebFrame::sendMessage(const QUrl& context,
                            const QString& msg_id,
-                           const QVariant& args,
+                           const QVariant& payload,
                            ScriptMessageRequestProxyHandle* req) {
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
+  scoped_ptr<base::Value> payload_value(
+      VariantValueConverter::FromVariantValue(payload));
 
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
       SendMessage(GURL(context.toString().toStdString()),
                   msg_id.toStdString(),
-                  QString(jsondoc.toJson()).toStdString());
+                  payload_value.Pass());
   if (!smr) {
     return false;
   }
@@ -130,13 +131,11 @@ bool WebFrame::sendMessage(const QUrl& context,
 
 void WebFrame::sendMessageNoReply(const QUrl& context,
                                   const QString& msg_id,
-                                  const QVariant& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromVariant(args));
-
+                                  const QVariant& payload) {
   SendMessageNoReply(
       GURL(context.toString().toStdString()),
       msg_id.toStdString(),
-      QString(jsondoc.toJson()).toStdString());
+      VariantValueConverter::FromVariantValue(payload));
 }
 
 QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {

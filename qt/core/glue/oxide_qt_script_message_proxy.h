@@ -41,9 +41,9 @@ class Q_DECL_EXPORT ScriptMessageProxy {
   virtual WebFrameProxyHandle* frame() const = 0;
   virtual QString msgId() const = 0;
   virtual QUrl context() const = 0;
-  virtual QVariant args() const = 0;
-  virtual void reply(const QVariant& args) = 0;
-  virtual void error(const QString& msg) = 0;
+  virtual QVariant payload() const = 0;
+  virtual void reply(const QVariant& payload) = 0;
+  virtual void error(const QVariant& payload) = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageProxy);

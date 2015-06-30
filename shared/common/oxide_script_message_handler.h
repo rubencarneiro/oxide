@@ -21,10 +21,14 @@
 #include <string>
 #include <vector>
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "url/gurl.h"
+
+namespace base {
+class Value;
+}
 
 namespace oxide {
 
@@ -32,7 +36,8 @@ class ScriptMessage;
 
 class ScriptMessageHandler final {
  public:
-  typedef base::Callback<bool(ScriptMessage*, std::string*)> HandlerCallback;
+  typedef base::Callback<bool(ScriptMessage*, scoped_ptr<base::Value>*)>
+      HandlerCallback;
 
   ScriptMessageHandler();
 

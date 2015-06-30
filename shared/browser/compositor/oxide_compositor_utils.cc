@@ -21,12 +21,13 @@
 #include "base/containers/hash_tables.h"
 #include "base/logging.h"
 #include "base/memory/singleton.h"
-#include "base/message_loop/message_loop_proxy.h"
 #include "base/single_thread_task_runner.h"
 #include "base/synchronization/waitable_event.h"
+#include "base/threading/simple_thread.h"
 #include "base/threading/thread.h"
 #include "base/threading/thread_restrictions.h"
 #include "cc/output/context_provider.h"
+#include "cc/raster/task_graph_runner.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
@@ -149,6 +150,21 @@ class CompositorThread : public base::Thread {
   void Init() override;
 };
 
+class RasterThread : public base::SimpleThread {
+ public:
+  RasterThread(cc::TaskGraphRunner* task_graph_runner)
+      : base::SimpleThread("CompositorTileWorker1"),
+        task_graph_runner_(task_graph_runner) {}
+
+ private:
+  // base::SimpleThread implementation
+  void Run() override { task_graph_runner_->Run(); }
+
+  cc::TaskGraphRunner* task_graph_runner_;
+
+  DISALLOW_COPY_AND_ASSIGN(RasterThread);
+};
+
 class CompositorUtilsImpl : public CompositorUtils,
                             public base::MessageLoop::TaskObserver {
  public:
@@ -173,6 +189,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   gfx::GLSurfaceHandle GetSharedSurfaceHandle() override;
   bool CanUseGpuCompositing() const override;
   CompositingMode GetCompositingMode() const override;
+  cc::TaskGraphRunner* GetTaskGraphRunner() const override;
 
   bool CalledOnMainOrCompositorThread() const;
   bool CalledOnGpuThread() const;
@@ -210,6 +227,8 @@ class CompositorUtilsImpl : public CompositorUtils,
 
   scoped_refptr<base::SingleThreadTaskRunner> compositor_task_runner_;
 
+  scoped_ptr<cc::TaskGraphRunner> task_graph_runner_;
+
   struct IncomingData {
     IncomingData()
         : fetch_pending(false),
@@ -231,6 +250,7 @@ class CompositorUtilsImpl : public CompositorUtils,
 
   struct MainData {
     scoped_ptr<CompositorThread> compositor_thread;
+    scoped_ptr<RasterThread> raster_thread;
   } main_unsafe_access_;
 
   struct GpuData {
@@ -297,7 +317,8 @@ CompositorThread::~CompositorThread() {
 
 CompositorUtilsImpl::CompositorUtilsImpl()
     : client_id_(-1),
-      has_share_context_(false) {
+      has_share_context_(false),
+      task_graph_runner_(new cc::TaskGraphRunner()) {
   main_thread_checker_.DetachFromThread();
   compositor_thread_checker_.DetachFromThread();
   gpu_thread_checker_.DetachFromThread();
@@ -461,7 +482,10 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
   main().compositor_thread.reset(new CompositorThread());
   main().compositor_thread->Start();
 
-  compositor_task_runner_ = main().compositor_thread->message_loop_proxy();
+  compositor_task_runner_ = main().compositor_thread->task_runner();
+
+  main().raster_thread.reset(new RasterThread(task_graph_runner_.get()));
+  main().raster_thread->Start();
 
   content::CauseForGpuLaunch cause =
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
@@ -483,6 +507,10 @@ void CompositorUtilsImpl::Shutdown() {
   // Shut down the compositor thread first, to prevent more calls in to
   // CreateGLFrameHandle
   main().compositor_thread.reset();
+
+  task_graph_runner_->Shutdown();
+  main().raster_thread->Join();
+  main().raster_thread.reset();
 
   // Detach the GPU thread MessageLoop::TaskObserver, to stop processing
   // and existing incoming requests
@@ -632,6 +660,10 @@ CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
   }
 
   return COMPOSITING_MODE_SOFTWARE;
+}
+
+cc::TaskGraphRunner* CompositorUtilsImpl::GetTaskGraphRunner() const {
+  return task_graph_runner_.get();
 }
 
 bool CompositorUtilsImpl::CalledOnMainOrCompositorThread() const {

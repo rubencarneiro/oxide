@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,16 +22,16 @@
 
 namespace ui {
 
-class SurfaceFactoryOzoneOxide final : public SurfaceFactoryOzone {
+class SurfaceFactoryOzoneOxide : public SurfaceFactoryOzone {
  public:
   SurfaceFactoryOzoneOxide();
 
  private:
+  intptr_t GetNativeDisplay() override;
   bool LoadEGLGLES2Bindings(
       AddGLLibraryCallback add_gl_library,
-      SetGLGetProcAddressProcCallback set_gl_get_proc_address) final;
-
-  const int32* GetEGLSurfaceProperties(const int32* desired_list) final;
+      SetGLGetProcAddressProcCallback set_gl_get_proc_address) override;
+  const int32* GetEGLSurfaceProperties(const int32* desired_list) override;
 };
 
 } // namespace ui

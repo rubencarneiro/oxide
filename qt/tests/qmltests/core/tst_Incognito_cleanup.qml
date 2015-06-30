@@ -32,9 +32,9 @@ Item {
       webView.getTestApi().evaluateCode("document.cookie = \"foo=bar\"", false);
       compare(webView.getTestApi().evaluateCode("document.cookie", false), "foo=bar");
 
-      var obs = OxideTestingUtils.createDestructionObserver(webView);
+      var obs = Utils.createDestructionObserver(webView);
       webView.destroy();
-      webView.waitFor(function() { return obs.destroyed; });
+      TestUtils.waitFor(function() { return obs.destroyed; });
 
       webView = webViewFactory.createObject(top, {});
       webView.url = "http://testsuite/empty.html";

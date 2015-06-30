@@ -40,6 +40,7 @@
 #include "oxide_browser_platform_integration.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_resource_dispatcher_host_login_delegate.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -145,15 +146,15 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   if (url_request->is_pending()) {
     url_request->extra_request_headers().GetHeader(
         net::HttpRequestHeaders::kUserAgent, &params.user_agent);
-  } else if (io_data->GetDelegate().get()) {
-    scoped_refptr<BrowserContextDelegate> delegate(
-        BrowserContextIOData::FromResourceContext(resource_context)->GetDelegate());
+  } else {
+    scoped_refptr<BrowserContextDelegate> delegate(io_data->GetDelegate());
     if (delegate.get()) {
       params.user_agent = delegate->GetUserAgentOverride(url);
     }
-  }
-  if (params.user_agent.empty()) {
-    params.user_agent = io_data->GetUserAgent();
+    if (params.user_agent.empty()) {
+      params.user_agent =
+          io_data->GetUserAgentSettings()->GetUserAgentForURL(url);
+    }
   }
 
   if (url_request->is_pending()) {

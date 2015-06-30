@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent 6a28c407ac67c31b5c4ec76345b57913b156c210
+# Parent accabb44e7e6be4431c7c69d0289d6fcd8cba460
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h
 +++ b/content/public/common/content_switches.h
-@@ -158,17 +158,17 @@ CONTENT_EXPORT extern const char kGpuPro
+@@ -161,17 +161,17 @@ CONTENT_EXPORT extern const char kGpuPro
  CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
  CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
  CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
@@ -23,8 +23,8 @@ diff --git a/content/public/common/content_switches.h b/content/public/common/co
  CONTENT_EXPORT extern const char kLoggingLevel[];
  CONTENT_EXPORT extern const char kLogNetLog[];
  extern const char kLogPluginMessages[];
- extern const char kMaxUntiledLayerHeight[];
-@@ -191,17 +191,17 @@ CONTENT_EXPORT extern const char kPpapiP
+ CONTENT_EXPORT extern const char kMainFrameResizesAreOrientationChanges[];
+@@ -197,17 +197,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];
  CONTENT_EXPORT extern const char kProcessPerTab[];

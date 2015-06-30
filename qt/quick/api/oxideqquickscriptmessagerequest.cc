@@ -27,23 +27,27 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
                                     oxide::qt::ScriptMessageRequestProxyHandle);
 
 void OxideQQuickScriptMessageRequestPrivate::ReceiveReply(
-    const QVariant& args) {
+    const QVariant& payload) {
   if (!reply_callback.engine()) {
     return;
   }
 
   QJSValueList jsargs;
-  jsargs.append(reply_callback.engine()->toScriptValue(args));
+  jsargs.append(reply_callback.engine()->toScriptValue(payload));
 
   reply_callback.call(jsargs);
 }
 
 void OxideQQuickScriptMessageRequestPrivate::ReceiveError(
     int error,
-    const QString& msg) {
+    const QVariant& payload) {
+  if (!error_callback.engine()) {
+    return;
+  }
+
   QJSValueList jsargs;
   jsargs.append(QJSValue(error));
-  jsargs.append(QJSValue(msg));
+  jsargs.append(error_callback.engine()->toScriptValue(payload));
 
   error_callback.call(jsargs);
 }
