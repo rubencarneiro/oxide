@@ -70,7 +70,8 @@ void ResourceDispatcherHostLoginDelegate::OnRequestCancelled() {
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
-      base::Bind(&ResourceDispatcherHostLoginDelegate::DispatchCancelledCallback,
+      base::Bind(
+          &ResourceDispatcherHostLoginDelegate::DispatchCancelledCallback,
           this));
 }
 
@@ -78,10 +79,7 @@ void ResourceDispatcherHostLoginDelegate::DispatchCancelledCallback() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   if (!cancelled_callback_.is_null()) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        cancelled_callback_);
+    cancelled_callback_.Run();
   }
 }
 
