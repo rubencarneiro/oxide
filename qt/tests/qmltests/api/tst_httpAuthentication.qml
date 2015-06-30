@@ -67,7 +67,7 @@ TestWebView {
     function test_requestMembers() {
         expectedRequests++
         webView.url = credentialsUrl
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
         compare(lastRequest.realm, "Fake Realm")
         compare(lastRequest.host, "testsuite:80")
     }
@@ -75,25 +75,25 @@ TestWebView {
     function test_wrong_password() {
         expectedRequests++
         webView.url = credentialsUrl
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
         expectedRequests++
         lastRequest.allow(currentUser, "wrong")
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
     }
 
     function test_wrong_username() {
         expectedRequests++
         webView.url = credentialsUrl
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
         expectedRequests++
         lastRequest.allow(currentUser + "_wrong", "pass")
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
     }
 
     function test_right_credentials() {
         expectedRequests++
         webView.url = credentialsUrl
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
         lastRequest.allow(currentUser, "pass")
         webView.waitForLoadSucceeded()
         compare(lastStatusCode, 200)
@@ -103,7 +103,7 @@ TestWebView {
     function test_explicit_cancellation() {
         webView.url = credentialsUrl
         expectedRequests++
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
 
         lastRequest.deny()
         webView.waitForLoadSucceeded()
@@ -115,11 +115,12 @@ TestWebView {
     function test_cancel_by_navigation() {
         webView.url = credentialsUrl
         expectedRequests++
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
 
         expectedCancellations++
         webView.url = "about:blank"
-        verify(waitFor(receivedCancellation), "Authentication not cancelled")
+        verify(TestUtils.waitFor(receivedCancellation),
+               "Authentication not cancelled")
 
         webView.waitForLoadSucceeded()
         compare(expectedRequests, totalRequests)
@@ -129,7 +130,7 @@ TestWebView {
         ignoreRequests = true
         webView.url = credentialsUrl
         expectedRequests++
-        verify(waitFor(receivedRequest), "No authentication request")
+        verify(TestUtils.waitFor(receivedRequest), "No authentication request")
 
         // force garbage collection so the request object will be destroyed
         // as we did not keep any reference to it.
