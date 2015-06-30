@@ -57,7 +57,6 @@ class UserAgentSettingsFactory : public BrowserContextKeyedServiceFactory {
       content::BrowserContext* context) const override;
   content::BrowserContext* GetBrowserContextToUse(
       content::BrowserContext* context) const override;
-  bool ServiceIsCreatedWithBrowserContext() const override;
 
   DISALLOW_COPY_AND_ASSIGN(UserAgentSettingsFactory);
 };
@@ -77,12 +76,6 @@ KeyedService* UserAgentSettingsFactory::BuildServiceInstanceFor(
 content::BrowserContext* UserAgentSettingsFactory::GetBrowserContextToUse(
     content::BrowserContext* context) const {
   return BrowserContext::FromContent(context)->GetOriginalContext();
-}
-
-bool UserAgentSettingsFactory::ServiceIsCreatedWithBrowserContext() const {
-  // We need it to initialize the default UA string before it's used on the
-  // IO thread
-  return true;
 }
 
 // static
