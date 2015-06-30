@@ -37,7 +37,6 @@ class ResourceDispatcherHostLoginDelegate
   ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,
                                       net::URLRequest* request);
   ~ResourceDispatcherHostLoginDelegate() override;
-  void OnRequestCancelled() override;
 
   void Deny();
   void Allow(const std::string& username, const std::string& password);
@@ -51,6 +50,7 @@ private:
   friend class ResourceDispatcherHostDelegate;
   void DispatchRequest(WebView* webview);
   void DispatchCancelledCallback();
+  void OnRequestCancelled() override;
   WebView* GetWebView(net::URLRequest* request);
 
   net::URLRequest* request_;
