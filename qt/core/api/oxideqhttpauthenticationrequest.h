@@ -57,8 +57,6 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
       oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
 
   QScopedPointer<OxideQHttpAuthenticationRequestPrivate> d_ptr;
-
- friend class oxide::qt::WebView;
 };
 
 #endif // OXIDE_Q_HTTP_AUTHENTICATION_REQUEST

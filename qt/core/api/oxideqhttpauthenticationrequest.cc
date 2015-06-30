@@ -49,6 +49,14 @@ OxideQHttpAuthenticationRequestPrivate::~OxideQHttpAuthenticationRequestPrivate(
   }
 }
 
+// static
+OxideQHttpAuthenticationRequest* OxideQHttpAuthenticationRequestPrivate::Create(
+    oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
+  DCHECK(login_delegate);
+
+  return new OxideQHttpAuthenticationRequest(login_delegate);
+}
+
 void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
   Q_Q(OxideQHttpAuthenticationRequest);
 

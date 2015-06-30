@@ -58,7 +58,7 @@
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
-#include "qt/core/api/oxideqhttpauthenticationrequest.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest_p.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -749,7 +749,7 @@ void WebView::HttpAuthenticationRequested(
         oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
   // The client takes ownership of the request
   client_->HttpAuthenticationRequested(
-      new OxideQHttpAuthenticationRequest(login_delegate));
+      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,

@@ -33,6 +33,9 @@ class OxideQHttpAuthenticationRequestPrivate {
  public:
   virtual ~OxideQHttpAuthenticationRequestPrivate();
 
+  static OxideQHttpAuthenticationRequest* Create(
+      oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
+
  private:
   OxideQHttpAuthenticationRequestPrivate(
       oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
