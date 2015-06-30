@@ -39,9 +39,9 @@ class OxideQHttpAuthenticationRequestPrivate {
   void RequestCancelled();
 
   OxideQHttpAuthenticationRequest* q_ptr;
-  QString realm_;
   oxide::ResourceDispatcherHostLoginDelegate* login_delegate_;
+  QString host_;
+  QString realm_;
 };
 
 #endif // _OXIDE_QT_CORE_API_HTTP_AUTHENTICATION_REQUEST_P_H_
-
