@@ -34,32 +34,31 @@ class WebView;
 class ResourceDispatcherHostLoginDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
  public:
-    ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,
-                                        net::URLRequest* request);
-    ~ResourceDispatcherHostLoginDelegate() override;
-    void OnRequestCancelled() override;
+  ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,
+                                      net::URLRequest* request);
+  ~ResourceDispatcherHostLoginDelegate() override;
+  void OnRequestCancelled() override;
 
-    void Deny();
-    void Allow(const std::string& username, const std::string& password);
+  void Deny();
+  void Allow(const std::string& username, const std::string& password);
 
-    void SetCancelledCallback(const base::Closure& cancelled_callback);
+  void SetCancelledCallback(const base::Closure& cancelled_callback);
 
-    std::string Host() const;
-    std::string Realm() const;
+  std::string Host() const;
+  std::string Realm() const;
 
 private:
-    friend class ResourceDispatcherHostDelegate;
-    void DispatchRequest(WebView* webview);
-    void DispatchCancelledCallback();
-    WebView* GetWebView(net::URLRequest* request);
+  friend class ResourceDispatcherHostDelegate;
+  void DispatchRequest(WebView* webview);
+  void DispatchCancelledCallback();
+  WebView* GetWebView(net::URLRequest* request);
 
-    net::URLRequest* request_;
-    std::string host_;
-    std::string realm_;
-    base::Closure cancelled_callback_;
+  net::URLRequest* request_;
+  std::string host_;
+  std::string realm_;
+  base::Closure cancelled_callback_;
 };
 
 } // namespace oxide
 
 #endif // OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_LOGIN_DELEGATE
-
