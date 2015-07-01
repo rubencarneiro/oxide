@@ -22,7 +22,7 @@
 #include <QString>
 
 namespace oxide {
-  class ResourceDispatcherHostLoginDelegate;
+class ResourceDispatcherHostLoginDelegate;
 }
 
 class OxideQHttpAuthenticationRequest;
