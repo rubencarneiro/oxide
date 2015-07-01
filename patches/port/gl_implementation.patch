@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -402,17 +404,17 @@
+@@ -401,17 +403,17 @@
              'harfbuzz_font_skia.h',
              'render_text.cc',
              'render_text.h',
@@ -215,11 +215,11 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
  #endif
  
  #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
-@@ -54,17 +54,17 @@ std::string DriverEGL::GetPlatformExtens
+@@ -50,17 +50,17 @@ std::string DriverEGL::GetPlatformExtens
+ 
+ // static
  std::string DriverEGL::GetClientExtensions() {
-   DCHECK(g_driver_egl.fn.eglQueryStringFn);
-   const char* str =
-       g_driver_egl.fn.eglQueryStringFn(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+   const char* str = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
    return str ? std::string(str) : "";
  }
  #endif
@@ -256,7 +256,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -317,16 +317,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -312,16 +312,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -276,7 +276,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -386,17 +389,17 @@ struct GL_EXPORT DriverEGL {
+@@ -384,17 +387,17 @@ struct GL_EXPORT DriverEGL {
    ProcsEGL debug_fn;
    ExtensionsEGL ext;
  
@@ -289,13 +289,13 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 +#if defined(OS_LINUX)
  struct GL_EXPORT DriverGLX {
    void InitializeStaticBindings();
+   void InitializeExtensionBindings();
    void InitializeDebugBindings();
    void ClearBindings();
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-   ExtensionsGLX ext;
-@@ -428,16 +431,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -427,16 +430,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
