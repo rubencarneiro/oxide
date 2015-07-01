@@ -93,7 +93,7 @@ class WebViewProxyClient {
   virtual void CommandsUpdated() = 0;
   virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;
-  virtual void LoadEvent(OxideQLoadEvent* event) = 0;
+  virtual void LoadEvent(const OxideQLoadEvent& event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;

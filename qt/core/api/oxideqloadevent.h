@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,16 +18,16 @@
 #ifndef OXIDE_Q_LOAD_EVENT_H
 #define OXIDE_Q_LOAD_EVENT_H
 
-#include <QObject>
-#include <QScopedPointer>
+#include <QMetaType>
+#include <QSharedDataPointer>
 #include <QString>
 #include <QtGlobal>
 #include <QUrl>
 
-class OxideQLoadEventPrivate;
+class OxideQLoadEventData;
 
-class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
-  Q_OBJECT
+class Q_DECL_EXPORT OxideQLoadEvent {
+  Q_GADGET
   Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(Type type READ type CONSTANT)
 
@@ -51,9 +51,6 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   Q_ENUMS(Type)
   Q_ENUMS(ErrorDomain)
 
-  Q_DECLARE_PRIVATE(OxideQLoadEvent)
-  Q_DISABLE_COPY(OxideQLoadEvent)
-
  public:
 
   enum Type {
@@ -76,19 +73,34 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
     ErrorDomainDNS
   };
 
-  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                Type type,
-                                bool is_error = false,
-                                int http_status_code = -1);
-  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                ErrorDomain error_domain,
-                                const QString& error_string,
-                                int error_code,
-                                int http_status_code);
-  Q_DECL_HIDDEN OxideQLoadEvent(const QUrl& url,
-                                const QUrl& original_url,
-                                int http_status_code);
-  virtual ~OxideQLoadEvent();
+  Q_DECL_HIDDEN static OxideQLoadEvent createStarted(const QUrl& url);
+  Q_DECL_HIDDEN static OxideQLoadEvent createStopped(const QUrl& url);
+  Q_DECL_HIDDEN static OxideQLoadEvent createSucceeded(const QUrl& url,
+                                                       int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createFailed(
+      const QUrl& url,
+      ErrorDomain error_domain,
+      const QString& error_string,
+      int error_code,
+      int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createCommitted(const QUrl& url,
+                                                       bool is_error,
+                                                       int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createRedirected(
+      const QUrl& url,
+      const QUrl& original_url,
+      int http_status_code);
+
+  Q_DECL_HIDDEN OxideQLoadEvent(
+      const QSharedDataPointer<OxideQLoadEventData>& dd);
+
+  OxideQLoadEvent();
+  OxideQLoadEvent(const OxideQLoadEvent& other);
+  ~OxideQLoadEvent();
+
+  OxideQLoadEvent operator=(const OxideQLoadEvent& other);
+  bool operator==(const OxideQLoadEvent& other) const;
+  bool operator!=(const OxideQLoadEvent& other) const;
 
   QUrl url() const;
   Type type() const;
@@ -100,7 +112,9 @@ class Q_DECL_EXPORT OxideQLoadEvent : public QObject {
   bool isError() const;
 
  private:
-  QScopedPointer<OxideQLoadEventPrivate> d_ptr;
+  QSharedDataPointer<OxideQLoadEventData> d;
 };
+
+Q_DECLARE_METATYPE(OxideQLoadEvent)
 
 #endif // OXIDE_Q_LOAD_EVENT_H

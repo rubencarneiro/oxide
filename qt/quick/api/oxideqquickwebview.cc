@@ -248,15 +248,15 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
+void OxideQQuickWebViewPrivate::LoadEvent(const OxideQLoadEvent& event) {
   Q_Q(OxideQQuickWebView);
 
   emit q->loadEvent(event);
 
   // The deprecated signal doesn't get TypeCommitted or TypeRedirected
   if (!using_old_load_event_signal_ ||
-      event->type() == OxideQLoadEvent::TypeCommitted ||
-      event->type() == OxideQLoadEvent::TypeRedirected) {
+      event.type() == OxideQLoadEvent::TypeCommitted ||
+      event.type() == OxideQLoadEvent::TypeRedirected) {
     return;
   }
 

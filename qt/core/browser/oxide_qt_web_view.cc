@@ -572,60 +572,61 @@ void WebView::LoadProgressChanged(double progress) {
 }
 
 void WebView::LoadStarted(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStarted);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStarted(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadRedirected(const GURL& url,
                              const GURL& original_url,
                              int http_status_code) {
-  OxideQLoadEvent event(
-     QUrl(QString::fromStdString(url.spec())),
-     QUrl(QString::fromStdString(original_url.spec())),
-     http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createRedirected(
+        QUrl(QString::fromStdString(url.spec())),
+        QUrl(QString::fromStdString(original_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadCommitted(const GURL& url,
                             bool is_error_page,
                             int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(url.spec())),
-      OxideQLoadEvent::TypeCommitted,
-      is_error_page,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createCommitted(
+        QUrl(QString::fromStdString(url.spec())),
+        is_error_page,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadStopped(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStopped);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStopped(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadFailed(const GURL& validated_url,
                          int error_code,
                          const std::string& error_description,
                          int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      ErrorDomainFromErrorCode(error_code),
-      QString::fromStdString(error_description),
-      error_code,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createFailed(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        ErrorDomainFromErrorCode(error_code),
+        QString::fromStdString(error_description),
+        error_code,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadSucceeded(const GURL& validated_url, int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeSucceeded,
-      false,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createSucceeded(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::NavigationEntryCommitted() {

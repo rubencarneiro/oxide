@@ -319,7 +319,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void incognitoChanged();
   Q_REVISION(1) void loadingStateChanged();
-  Q_REVISION(1) void loadEvent(OxideQLoadEvent* event);
+  Q_REVISION(1) void loadEvent(const OxideQLoadEvent& event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
@@ -359,7 +359,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
 
   // Deprecated since 1.3
-  void loadingChanged(OxideQLoadEvent* loadEvent);
+  void loadingChanged(const OxideQLoadEvent& loadEvent);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());

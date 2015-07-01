@@ -21,6 +21,7 @@
 #include <QNetworkCookie>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
+#include <QtQml/private/qqmlvaluetype_p.h>
 
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -45,11 +46,12 @@
 #include "qt/quick/api/oxideqquickwebcontextdelegateworker_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-
-QT_USE_NAMESPACE
+#include "qt/quick/valuetypeprovider/oxide_qquick_load_event.h"
+#include "qt/quick/valuetypeprovider/oxide_qquick_value_type_provider.h"
 
 typedef QList<QNetworkCookie> CookieList;
 
+QML_DECLARE_TYPE(QNetworkCookie)
 QML_DECLARE_TYPE(CookieList)
 
 namespace {
@@ -60,6 +62,11 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   Q_UNUSED(script_engine);
 
   return new OxideQQuickGlobal();
+}
+
+oxide::qquick::ValueTypeProvider* GetValueTypeProvider() {
+  static oxide::qquick::ValueTypeProvider g_provider;
+  return &g_provider;
 }
 
 }
@@ -74,6 +81,10 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qRegisterMetaType<QNetworkCookie>();
     qRegisterMetaType<CookieList>();
 
+    qRegisterMetaType<OxideQLoadEvent>();
+
+    QQml_addValueTypeProvider(GetValueTypeProvider());
+
     qmlRegisterSingletonType<OxideQQuickGlobal>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
@@ -86,7 +97,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
         "GeolocationPermissionRequest",
         "GeolocationPermissionRequest is delivered by WebView.geolocationPermissionRequested");
-    qmlRegisterUncreatableType<OxideQLoadEvent>(uri, 1, 0, "LoadEvent",
+    qmlRegisterUncreatableType<oxide::qquick::LoadEvent>(uri, 1, 0, "LoadEvent",
         "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 1, 0, "NavigationHistory",
         "NavigationHistory is accessed via WebView.navigationHistory");
@@ -114,7 +125,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
-    qmlRegisterUncreatableType<OxideQLoadEvent, 1>(uri, 1, 3, "LoadEvent",
+    qmlRegisterUncreatableType<oxide::qquick::LoadEvent, 1>(uri, 1, 3, "LoadEvent",
         "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
@@ -132,7 +143,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQFindController>(uri, 1, 8, "FindController",
         "FindInPage is accessed via WebView.findController");
-    qmlRegisterUncreatableType<OxideQLoadEvent, 2>(uri, 1, 8, "LoadEvent",
+    qmlRegisterUncreatableType<oxide::qquick::LoadEvent, 2>(uri, 1, 8, "LoadEvent",
         "LoadEvent is delivered by WebView.loadEvent");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
 
@@ -142,7 +153,5 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
   }
 };
-
-QML_DECLARE_TYPE(QNetworkCookie)
 
 #include "oxide_qml_plugin.moc"

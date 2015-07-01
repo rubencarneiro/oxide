@@ -102,7 +102,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
-  void LoadEvent(OxideQLoadEvent* event) override;
+  void LoadEvent(const OxideQLoadEvent& event) override;
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;

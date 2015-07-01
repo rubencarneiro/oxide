@@ -43,7 +43,10 @@ endif()
 set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
 
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
-
+target_include_directories(
+    ${OXIDE_QMLPLUGIN} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 target_link_libraries(
     ${OXIDE_QMLPLUGIN}
     Qt5::Core
