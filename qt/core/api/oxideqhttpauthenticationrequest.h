@@ -26,10 +26,10 @@
 class OxideQHttpAuthenticationRequestPrivate;
 
 namespace oxide {
-  namespace qt {
-    class WebView;
-  }
-  class ResourceDispatcherHostLoginDelegate;
+namespace qt {
+class WebView;
+}
+class ResourceDispatcherHostLoginDelegate;
 }
 
 class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
