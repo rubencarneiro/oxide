@@ -94,8 +94,6 @@ const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
-const char kBrowserContextKey[] = "oxide_browser_context_data";
-
 const char kDownloadManagerDelegateKeyName[] =
   "OxideDownloadManagerDelegateKeyName";
 
