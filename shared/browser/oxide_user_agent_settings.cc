@@ -181,6 +181,11 @@ UserAgentSettings* UserAgentSettings::Get(content::BrowserContext* context) {
   return UserAgentSettingsFactory::GetForContext(context);
 }
 
+// static
+BrowserContextKeyedServiceFactory* UserAgentSettings::GetFactory() {
+  return UserAgentSettingsFactory::GetInstance();
+}
+
 std::string UserAgentSettings::GetUserAgent() const {
   DCHECK(CalledOnValidThread());
 

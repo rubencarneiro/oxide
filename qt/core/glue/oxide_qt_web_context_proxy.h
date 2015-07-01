@@ -49,6 +49,9 @@ class Q_DECL_EXPORT WebContextProxy {
  public:
   static WebContextProxy* create(WebContextProxyClient* client);
 
+  static void getValidDevtoolsPorts(int* min, int* max);
+  static bool checkIPAddress(const QString& address);
+
   virtual ~WebContextProxy();
 
   static WebContextProxyHandle* defaultContext();

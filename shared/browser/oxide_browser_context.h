@@ -153,25 +153,16 @@ class BrowserContext
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
            int max_cache_size_hint,
-           content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
-           bool devtools_enabled,
-           int devtools_port,
-           const std::string& devtools_ip)
-        : path(path),
-          cache_path(cache_path),
-          max_cache_size_hint(max_cache_size_hint),
-          session_cookie_mode(session_cookie_mode),
-          devtools_enabled(devtools_enabled),
-          devtools_port(devtools_port),
-          devtools_ip(devtools_ip) {}
+           content::CookieStoreConfig::SessionCookieMode session_cookie_mode)
+           : path(path),
+             cache_path(cache_path),
+             max_cache_size_hint(max_cache_size_hint),
+             session_cookie_mode(session_cookie_mode) {}
 
     base::FilePath path;
     base::FilePath cache_path;
     int max_cache_size_hint;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
-    bool devtools_enabled;
-    int devtools_port;
-    std::string devtools_ip;
     std::vector<std::string> host_mapping_rules;
   };
 
@@ -215,10 +206,6 @@ class BrowserContext
   bool IsPopupBlockerEnabled() const;
   void SetIsPopupBlockerEnabled(bool enabled);
 
-  bool GetDevtoolsEnabled() const;
-  int GetDevtoolsPort() const;
-  std::string GetDevtoolsBindIp() const;
-
   const std::vector<std::string>& GetHostMappingRules() const;
 
   // from content::BrowserContext
@@ -237,9 +224,6 @@ class BrowserContext
   virtual ~BrowserContext();
 
   BrowserContextIOData* io_data() const { return io_data_; }
-
-  virtual BrowserContextSharedData& GetSharedData() = 0;
-  virtual const BrowserContextSharedData& GetSharedData() const = 0;
 
  private:
   friend class BrowserContextObserver; // for {Add,Remove}Observer

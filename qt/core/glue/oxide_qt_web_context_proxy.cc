@@ -17,7 +17,10 @@
 
 #include "oxide_qt_web_context_proxy.h"
 
+#include "net/base/ip_address_number.h"
+
 #include "qt/core/browser/oxide_qt_web_context.h"
+#include "shared/browser/oxide_devtools_manager.h"
 
 namespace oxide {
 namespace qt {
@@ -25,6 +28,17 @@ namespace qt {
 // static
 WebContextProxy* WebContextProxy::create(WebContextProxyClient* client) {
   return new WebContext(client);
+}
+
+// static
+void WebContextProxy::getValidDevtoolsPorts(int* min, int* max) {
+  oxide::DevToolsManager::GetValidPorts(min, max);
+}
+
+// static
+bool WebContextProxy::checkIPAddress(const QString& address) {
+  net::IPAddressNumber unused;
+  return net::ParseIPLiteralToNumber(address.toStdString(), &unused);
 }
 
 WebContextProxy::~WebContextProxy() {}
