@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
+
 qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickuserscript_p_p.h
              api/oxideqquickwebcontext_p_p.h
@@ -50,13 +55,18 @@ set(OXIDE_QUICKLIB_SRCS
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
-qt5_use_modules(${OXIDE_QUICKLIB} Core Gui Qml Quick)
 target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
-target_link_libraries(${OXIDE_QUICKLIB} ${OXIDE_CORELIB_NAME})
+target_link_libraries(
+    ${OXIDE_QUICKLIB}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Quick
+    ${OXIDE_CORELIB_NAME})
 set_target_properties(
     ${OXIDE_QUICKLIB} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${LIB_OUTPUT_DIR}
