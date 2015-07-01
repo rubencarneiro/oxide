@@ -94,9 +94,6 @@ const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
-const char kDownloadManagerDelegateKeyName[] =
-  "OxideDownloadManagerDelegateKeyName";
-
 void CleanupOldCacheDir(const base::FilePath& path) {
   if (!base::DirectoryExists(path)) {
     return;
@@ -672,14 +669,8 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
 }
 
 content::DownloadManagerDelegate*
-    BrowserContext::GetDownloadManagerDelegate() {
-  // The embedder owns the delegate, dont transfer ownership.
-  if (!GetUserData(kDownloadManagerDelegateKeyName)) {
-    SetUserData(kDownloadManagerDelegateKeyName
-        , new DownloadManagerDelegate());
-  }
-  return static_cast<oxide::DownloadManagerDelegate*>(
-      GetUserData(kDownloadManagerDelegateKeyName));
+BrowserContext::GetDownloadManagerDelegate() {
+  return DownloadManagerDelegate::Get(this);
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
