@@ -210,6 +210,7 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
@@ -229,6 +230,9 @@
         'api/oxideqdownloadrequest_p.h',
         'api/oxideqglobal.cc',
         'api/oxideqglobal.h',
+        'api/oxideqhttpauthenticationrequest.cc',
+        'api/oxideqhttpauthenticationrequest.h',
+        'api/oxideqhttpauthenticationrequest_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -271,6 +275,11 @@
         {
           'action_name': 'moc_oxideqdownloadrequest.cc',
           'moc_input': 'api/oxideqdownloadrequest.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqhttpauthenticationrequest.cc',
+          'moc_input': 'api/oxideqhttpauthenticationrequest.h',
           'includes': [ 'moc.gypi' ]
         },
         {

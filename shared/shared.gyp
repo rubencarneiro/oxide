@@ -376,6 +376,8 @@
         'browser/oxide_render_widget_host_view_delegate.h',
         'browser/oxide_resource_dispatcher_host_delegate.cc',
         'browser/oxide_resource_dispatcher_host_delegate.h',
+        'browser/oxide_resource_dispatcher_host_login_delegate.cc',
+        'browser/oxide_resource_dispatcher_host_login_delegate.h',
         'browser/oxide_script_message_contents_helper.cc',
         'browser/oxide_script_message_contents_helper.h',
         'browser/oxide_script_message_impl_browser.cc',

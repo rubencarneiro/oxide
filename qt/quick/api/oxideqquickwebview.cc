@@ -43,6 +43,7 @@
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
@@ -459,6 +460,31 @@ void OxideQQuickWebViewPrivate::RequestMediaAccessPermission(
 
   engine->collectGarbage();
 
+}
+
+void OxideQQuickWebViewPrivate::HttpAuthenticationRequested(
+    OxideQHttpAuthenticationRequest* authentication_request) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete authentication_request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(authentication_request);
+    if (!val.isQObject()) {
+      delete authentication_request;
+      return;
+    }
+
+    emit q->httpAuthenticationRequested(val);
+  }
+
+  engine->collectGarbage();
 }
 
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
