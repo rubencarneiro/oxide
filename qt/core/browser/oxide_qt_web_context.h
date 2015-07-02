@@ -148,6 +148,9 @@ class WebContext : public WebContextProxy,
   void clearTemporarySavedPermissionStatuses() override;
   void setLegacyUserAgentOverrideEnabled(bool enabled) override;
 
+  bool doNotTrack() const override;
+  void setDoNotTrack(bool dnt) override;
+
   // oxide::MediaCaptureDevicesContextClient implementation
   void DefaultAudioDeviceChanged() override;
   void DefaultVideoDeviceChanged() override;

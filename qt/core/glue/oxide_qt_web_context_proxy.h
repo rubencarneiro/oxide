@@ -135,6 +135,9 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual void clearTemporarySavedPermissionStatuses() = 0;
 
   virtual void setLegacyUserAgentOverrideEnabled(bool enabled) = 0;
+
+  virtual bool doNotTrack() const = 0;
+  virtual void setDoNotTrack(bool dnt) = 0;
 };
 
 } // namespace qt

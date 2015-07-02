@@ -84,6 +84,8 @@ class BrowserContextIOData {
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
 
+  bool GetDoNotTrack() const;
+
   virtual bool IsOffTheRecord() const = 0;
 
   URLRequestContext* CreateMainRequestContext(
@@ -220,6 +222,9 @@ class BrowserContext
   std::string GetDevtoolsBindIp() const;
 
   const std::vector<std::string>& GetHostMappingRules() const;
+
+  bool GetDoNotTrack() const;
+  void SetDoNotTrack(bool dnt);
 
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
