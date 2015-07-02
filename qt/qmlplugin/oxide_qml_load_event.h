@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#ifndef _OXIDE_QQUICK_VALUETYPEPROVIDER_LOAD_EVENT_H_
-#define _OXIDE_QQUICK_VALUETYPEPROVIDER_LOAD_EVENT_H_
+#ifndef _OXIDE_QMLPLUGIN_LOAD_EVENT_H_
+#define _OXIDE_QMLPLUGIN_LOAD_EVENT_H_
 
 #include <QtGlobal>
 #include <QtQml/private/qqmlvaluetype_p.h>
@@ -24,9 +24,9 @@
 #include "qt/core/api/oxideqloadevent.h"
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
-class Q_DECL_EXPORT LoadEvent : public QQmlValueTypeBase<OxideQLoadEvent> {
+class LoadEvent : public QQmlValueTypeBase<OxideQLoadEvent> {
   Q_OBJECT
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
@@ -81,7 +81,7 @@ class Q_DECL_EXPORT LoadEvent : public QQmlValueTypeBase<OxideQLoadEvent> {
   bool isEqual(const QVariant& other) const override;
 };
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide
 
-#endif // _OXIDE_QQUICK_VALUETYPEPROVIDER_LOAD_EVENT_H_
+#endif // _OXIDE_QMLPLUGIN_LOAD_EVENT_H_

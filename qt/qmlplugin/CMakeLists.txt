@@ -40,7 +40,12 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
-set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
+set(OXIDE_QMLPLUGIN_SRCS
+    oxide_qml_download_request.cc
+    oxide_qml_load_event.cc
+    oxide_qml_plugin.cc
+    oxide_qml_ssl_certificate.cc
+    oxide_qml_value_type_provider.cc)
 
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
 target_include_directories(

@@ -15,12 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#include "oxide_qquick_load_event.h"
+#include "oxide_qml_load_event.h"
 
 #include <QMetaType>
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
 LoadEvent::LoadEvent(QObject* parent)
     : QQmlValueTypeBase<OxideQLoadEvent>(qMetaTypeId<OxideQLoadEvent>(),
@@ -72,5 +72,5 @@ bool LoadEvent::isEqual(const QVariant& other) const {
   return v == other.value<OxideQLoadEvent>();
 }
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide

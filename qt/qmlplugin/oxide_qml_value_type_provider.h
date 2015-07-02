@@ -15,16 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#ifndef _OXIDE_QQUICK_VALUETYPEPROVIDER_VALUE_TYPE_PROVIDER_H_
-#define _OXIDE_QQUICK_VALUETYPEPROVIDER_VALUE_TYPE_PROVIDER_H_
+#ifndef _OXIDE_QMLPLUGIN_VALUE_TYPE_PROVIDER_H_
+#define _OXIDE_QMLPLUGIN_VALUE_TYPE_PROVIDER_H_
 
 #include <QtGlobal>
 #include <QtQml/private/qqmlglobal_p.h>
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
-class Q_DECL_EXPORT ValueTypeProvider : public QQmlValueTypeProvider {
+class ValueTypeProvider : public QQmlValueTypeProvider {
  public:
   ValueTypeProvider();
   ~ValueTypeProvider() override;
@@ -138,7 +138,7 @@ class Q_DECL_EXPORT ValueTypeProvider : public QQmlValueTypeProvider {
   Q_DISABLE_COPY(ValueTypeProvider)
 };
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide
 
-#endif // _OXIDE_QQUICK_VALUETYPEPROVIDER_VALUE_TYPE_PROVIDER_H_
+#endif // _OXIDE_QMLPLUGIN_VALUE_TYPE_PROVIDER_H_

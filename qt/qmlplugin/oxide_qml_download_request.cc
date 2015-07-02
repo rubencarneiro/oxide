@@ -15,12 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#include "oxide_qquick_download_request.h"
+#include "oxide_qml_download_request.h"
 
 #include <QMetaType>
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
 DownloadRequest::DownloadRequest(QObject* parent)
     : QQmlValueTypeBase<OxideQDownloadRequest>(
@@ -69,5 +69,5 @@ bool DownloadRequest::isEqual(const QVariant& other) const {
   return v == other.value<OxideQDownloadRequest>();
 }
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide

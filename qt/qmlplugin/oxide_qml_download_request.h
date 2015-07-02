@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#ifndef _OXIDE_QQUICK_VALUETYPEPROVIDER_DOWNLOAD_REQUEST_H_
-#define _OXIDE_QQUICK_VALUETYPEPROVIDER_DOWNLOAD_REQUEST_H_
+#ifndef _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_
+#define _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_
 
 #include <QtGlobal>
 #include <QtQml/private/qqmlvaluetype_p.h>
@@ -24,10 +24,9 @@
 #include "qt/core/api/oxideqdownloadrequest.h"
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
-class Q_DECL_EXPORT DownloadRequest
-    : public QQmlValueTypeBase<OxideQDownloadRequest> {
+class DownloadRequest : public QQmlValueTypeBase<OxideQDownloadRequest> {
   Q_OBJECT
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
@@ -57,7 +56,7 @@ class Q_DECL_EXPORT DownloadRequest
   bool isEqual(const QVariant& other) const override;
 };
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide
 
-#endif // _OXIDE_QQUICK_VALUETYPEPROVIDER_DOWNLOAD_REQUEST_H_
+#endif // _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_

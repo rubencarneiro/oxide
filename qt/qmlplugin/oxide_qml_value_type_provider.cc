@@ -15,18 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#include "oxide_qquick_value_type_provider.h"
+#include "oxide_qml_value_type_provider.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 
-#include "oxide_qquick_download_request.h"
-#include "oxide_qquick_load_event.h"
-#include "oxide_qquick_ssl_certificate.h"
+#include "oxide_qml_download_request.h"
+#include "oxide_qml_load_event.h"
+#include "oxide_qml_ssl_certificate.h"
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
 bool ValueTypeProvider::create(int type, QQmlValueType*& v) {
   if (type == qMetaTypeId<OxideQLoadEvent>()) {
@@ -181,5 +181,5 @@ ValueTypeProvider::ValueTypeProvider() {}
 
 ValueTypeProvider::~ValueTypeProvider() {}
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide

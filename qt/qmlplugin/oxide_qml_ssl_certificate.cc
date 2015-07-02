@@ -15,12 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#include "oxide_qquick_ssl_certificate.h"
+#include "oxide_qml_ssl_certificate.h"
 
 #include <QMetaType>
 
 namespace oxide {
-namespace qquick {
+namespace qmlplugin {
 
 SslCertificate::SslCertificate(QObject* parent)
     : QQmlValueTypeBase<OxideQSslCertificate>(
@@ -95,5 +95,5 @@ bool SslCertificate::isEqual(const QVariant& other) const {
   return v == other.value<OxideQSslCertificate>();
 }
 
-} // namespace qquick
+} // namespace qmlplugin
 } // namespace oxide

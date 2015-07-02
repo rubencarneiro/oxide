@@ -52,10 +52,6 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_software_frame_node.cc
     oxide_qquick_web_context_menu.cc
     oxide_qquick_web_popup_menu.cc
-    valuetypeprovider/oxide_qquick_download_request.cc
-    valuetypeprovider/oxide_qquick_load_event.cc
-    valuetypeprovider/oxide_qquick_ssl_certificate.cc
-    valuetypeprovider/oxide_qquick_value_type_provider.cc
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
@@ -63,7 +59,6 @@ target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-    ${Qt5Qml_PRIVATE_INCLUDE_DIRS}
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 target_link_libraries(
     ${OXIDE_QUICKLIB}
