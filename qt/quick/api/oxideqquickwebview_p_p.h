@@ -134,7 +134,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void ScheduleUpdate() override;
   void EvictCurrentFrame() override;
   void SetInputMethodEnabled(bool enabled) override;
-  void DownloadRequested(OxideQDownloadRequest* download_request) override;
+  void DownloadRequested(
+      const OxideQDownloadRequest& download_request) override;
   void HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequest* authentication_request) override;
   void CertificateError(OxideQCertificateError* cert_error) override;

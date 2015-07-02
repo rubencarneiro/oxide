@@ -73,26 +73,21 @@ class Q_DECL_EXPORT OxideQLoadEvent {
     ErrorDomainDNS
   };
 
-  Q_DECL_HIDDEN static OxideQLoadEvent createStarted(const QUrl& url);
-  Q_DECL_HIDDEN static OxideQLoadEvent createStopped(const QUrl& url);
-  Q_DECL_HIDDEN static OxideQLoadEvent createSucceeded(const QUrl& url,
-                                                       int http_status_code);
-  Q_DECL_HIDDEN static OxideQLoadEvent createFailed(
-      const QUrl& url,
-      ErrorDomain error_domain,
-      const QString& error_string,
-      int error_code,
-      int http_status_code);
-  Q_DECL_HIDDEN static OxideQLoadEvent createCommitted(const QUrl& url,
-                                                       bool is_error,
-                                                       int http_status_code);
-  Q_DECL_HIDDEN static OxideQLoadEvent createRedirected(
-      const QUrl& url,
-      const QUrl& original_url,
-      int http_status_code);
-
-  Q_DECL_HIDDEN OxideQLoadEvent(
-      const QSharedDataPointer<OxideQLoadEventData>& dd);
+  static OxideQLoadEvent createStarted(const QUrl& url);
+  static OxideQLoadEvent createStopped(const QUrl& url);
+  static OxideQLoadEvent createSucceeded(const QUrl& url,
+                                         int http_status_code);
+  static OxideQLoadEvent createFailed(const QUrl& url,
+                                      ErrorDomain error_domain,
+                                      const QString& error_string,
+                                      int error_code,
+                                      int http_status_code);
+  static OxideQLoadEvent createCommitted(const QUrl& url,
+                                         bool is_error,
+                                         int http_status_code);
+  static OxideQLoadEvent createRedirected(const QUrl& url,
+                                          const QUrl& original_url,
+                                          int http_status_code);
 
   OxideQLoadEvent();
   OxideQLoadEvent(const OxideQLoadEvent& other);
@@ -112,6 +107,9 @@ class Q_DECL_EXPORT OxideQLoadEvent {
   bool isError() const;
 
  private:
+  Q_DECL_HIDDEN OxideQLoadEvent(
+      const QSharedDataPointer<OxideQLoadEventData>& dd);
+
   QSharedDataPointer<OxideQLoadEventData> d;
 };
 

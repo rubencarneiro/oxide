@@ -138,7 +138,8 @@ class WebViewProxyClient {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual void DownloadRequested(OxideQDownloadRequest* download_request) = 0;
+  virtual void DownloadRequested(
+      const OxideQDownloadRequest& download_request) = 0;
 
   virtual void HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequest* authentication_request) = 0;

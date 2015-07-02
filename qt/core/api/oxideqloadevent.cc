@@ -36,6 +36,10 @@ class OxideQLoadEventData : public QSharedData {
   bool is_error;
 };
 
+OxideQLoadEvent::OxideQLoadEvent(
+    const QSharedDataPointer<OxideQLoadEventData>& dd)
+    : d(dd) {}
+
 // static
 OxideQLoadEvent OxideQLoadEvent::createStarted(const QUrl& url) {
   QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
@@ -113,10 +117,6 @@ OxideQLoadEvent OxideQLoadEvent::createRedirected(const QUrl& url,
 
   return OxideQLoadEvent(data);
 }
-
-OxideQLoadEvent::OxideQLoadEvent(
-    const QSharedDataPointer<OxideQLoadEventData>& dd)
-    : d(dd) {}
 
 OxideQLoadEvent::OxideQLoadEvent()
     : d(new OxideQLoadEventData()) {}

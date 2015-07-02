@@ -560,10 +560,10 @@ void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
 }
 
 void OxideQQuickWebViewPrivate::DownloadRequested(
-    OxideQDownloadRequest* downloadRequest) {
+    const OxideQDownloadRequest& download_request) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->downloadRequested(downloadRequest);
+  emit q->downloadRequested(download_request);
 }
 
 void OxideQQuickWebViewPrivate::CertificateError(

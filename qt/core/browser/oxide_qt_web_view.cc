@@ -743,7 +743,7 @@ void WebView::DownloadRequested(const GURL& url,
       QString::fromStdString(referrer),
       QString::fromStdString(user_agent));
 
-  client_->DownloadRequested(&download_request);
+  client_->DownloadRequested(download_request);
 }
 
 void WebView::HttpAuthenticationRequested(

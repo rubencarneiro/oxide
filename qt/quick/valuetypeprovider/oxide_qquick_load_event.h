@@ -41,6 +41,8 @@ class Q_DECL_EXPORT LoadEvent : public QQmlValueTypeBase<OxideQLoadEvent> {
   Q_ENUMS(Type)
   Q_ENUMS(ErrorDomain)
 
+  Q_DISABLE_COPY(LoadEvent)
+
  public:
   LoadEvent(QObject* parent = nullptr);
   ~LoadEvent() override;
@@ -75,8 +77,8 @@ class Q_DECL_EXPORT LoadEvent : public QQmlValueTypeBase<OxideQLoadEvent> {
   bool isError() const;
 
   // QQmlValueType implementation
-  QString toString() const;
-  bool isEqual(const QVariant& other) const;
+  QString toString() const override;
+  bool isEqual(const QVariant& other) const override;
 };
 
 } // namespace qquick

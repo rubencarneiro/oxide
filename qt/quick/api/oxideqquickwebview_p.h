@@ -350,7 +350,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
-  void downloadRequested(OxideQDownloadRequest* request);
+  void downloadRequested(const OxideQDownloadRequest& request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
   Q_REVISION(2) void prepareToCloseResponse(bool proceed);

@@ -46,6 +46,7 @@
 #include "qt/quick/api/oxideqquickwebcontextdelegateworker_p.h"
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/quick/valuetypeprovider/oxide_qquick_download_request.h"
 #include "qt/quick/valuetypeprovider/oxide_qquick_load_event.h"
 #include "qt/quick/valuetypeprovider/oxide_qquick_value_type_provider.h"
 
@@ -81,6 +82,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qRegisterMetaType<QNetworkCookie>();
     qRegisterMetaType<CookieList>();
 
+    qRegisterMetaType<OxideQDownloadRequest>();
     qRegisterMetaType<OxideQLoadEvent>();
 
     QQml_addValueTypeProvider(GetValueTypeProvider());
@@ -92,7 +94,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "CertificateError is delivered by WebView.certificateError");
     qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
-    qmlRegisterUncreatableType<OxideQDownloadRequest>(uri, 1, 0, "DownloadRequest",
+    qmlRegisterUncreatableType<oxide::qquick::DownloadRequest>(uri, 1, 0, "DownloadRequest",
         "DownloadRequest is delivered by WebView.downloadRequested");
     qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
         "GeolocationPermissionRequest",
