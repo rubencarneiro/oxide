@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
 
-#include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
@@ -69,7 +68,7 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
     Q_EMIT q->certStatusChanged();
   }
   if (old.cert() != status.cert()) {
-    cert_.reset();
+    cert_ = OxideQSslCertificate();
     Q_EMIT q->certificateChanged();
   }
 }
@@ -185,20 +184,20 @@ OxideQSecurityStatus::certStatus() const {
       d->web_view_->GetSecurityStatus().cert_status());
 }
 
-OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
+OxideQSslCertificate OxideQSecurityStatus::certificate() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (d->cert_) {
-    return d->cert_.get();
+  if (d->cert_.isValid()) {
+    return d->cert_;
   }
 
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->GetSecurityStatus().cert();
   if (!cert.get()) {
-    return nullptr;
+    return OxideQSslCertificate();
   }
 
-  d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
+  d->cert_ = OxideQSslCertificateData::Create(cert.get());
 
-  return d->cert_.get();
+  return d->cert_;
 }

@@ -196,7 +196,7 @@ Item {
       compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelNone);
       compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
       compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
-      verify(!webView.securityStatus.certificate);
+      verify(!webView.securityStatus.certificate.isValid);
 
       // Load test URL and wait for it to load
       webView.url = data.url;

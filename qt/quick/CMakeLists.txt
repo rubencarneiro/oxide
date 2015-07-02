@@ -54,6 +54,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_web_popup_menu.cc
     valuetypeprovider/oxide_qquick_download_request.cc
     valuetypeprovider/oxide_qquick_load_event.cc
+    valuetypeprovider/oxide_qquick_ssl_certificate.cc
     valuetypeprovider/oxide_qquick_value_type_provider.cc
     ${MOC_EXTRA})
 

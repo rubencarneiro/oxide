@@ -48,6 +48,7 @@
 #include "qt/quick/api/oxideqquickwebview_p.h"
 #include "qt/quick/valuetypeprovider/oxide_qquick_download_request.h"
 #include "qt/quick/valuetypeprovider/oxide_qquick_load_event.h"
+#include "qt/quick/valuetypeprovider/oxide_qquick_ssl_certificate.h"
 #include "qt/quick/valuetypeprovider/oxide_qquick_value_type_provider.h"
 
 typedef QList<QNetworkCookie> CookieList;
@@ -84,6 +85,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qRegisterMetaType<OxideQDownloadRequest>();
     qRegisterMetaType<OxideQLoadEvent>();
+    qRegisterMetaType<OxideQSslCertificate>();
 
     QQml_addValueTypeProvider(GetValueTypeProvider());
 
@@ -113,7 +115,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "ScriptMessageRequest is returned from WebFrame.sendMessage");
     qmlRegisterUncreatableType<OxideQSecurityStatus>(uri, 1, 0, "SecurityStatus",
         "SecurityStatus is accessed via WebView.securityStatus");
-    qmlRegisterUncreatableType<OxideQSslCertificate>(uri, 1, 0, "SslCertificate",
+    qmlRegisterUncreatableType<oxide::qquick::SslCertificate>(uri, 1, 0, "SslCertificate",
         "SslCertificate is accessed via SecurityStatus.certificate");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
         "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and WebFrame.parentFrame");

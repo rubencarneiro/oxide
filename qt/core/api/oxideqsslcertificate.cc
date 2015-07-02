@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -64,30 +64,53 @@ static QDateTime ToQDateTime(const base::Time& time) {
   return QDateTime::fromMSecsSinceEpoch(ms);
 }
 
-OxideQSslCertificatePrivate::OxideQSslCertificatePrivate(
-    net::X509Certificate* cert)
+OxideQSslCertificateData::OxideQSslCertificateData() {}
+
+OxideQSslCertificateData::OxideQSslCertificateData(net::X509Certificate* cert)
     : x509_cert_(cert) {}
 
-OxideQSslCertificatePrivate::~OxideQSslCertificatePrivate() {}
+OxideQSslCertificateData::~OxideQSslCertificateData() {}
 
 // static
-OxideQSslCertificate* OxideQSslCertificatePrivate::Create(
-    net::X509Certificate* cert,
-    QObject* parent) {
-  return new OxideQSslCertificate(
-      *new OxideQSslCertificatePrivate(cert),
-      parent);
+OxideQSslCertificate OxideQSslCertificateData::Create(
+    net::X509Certificate* cert) {
+  QSharedDataPointer<OxideQSslCertificateData> data(
+      new OxideQSslCertificateData(cert));
+  return OxideQSslCertificate(data);
 }
 
-OxideQSslCertificate::OxideQSslCertificate(OxideQSslCertificatePrivate& dd,
-                                           QObject* parent)
-    : QObject(parent),
-      d_ptr(&dd) {}
+OxideQSslCertificate::OxideQSslCertificate(
+    const QSharedDataPointer<OxideQSslCertificateData>& dd)
+    : d(dd) {}
+
+OxideQSslCertificate::OxideQSslCertificate()
+    : d(new OxideQSslCertificateData()) {}
 
 OxideQSslCertificate::~OxideQSslCertificate() {}
 
+OxideQSslCertificate::OxideQSslCertificate(const OxideQSslCertificate& other)
+    : d(other.d) {}
+
+OxideQSslCertificate OxideQSslCertificate::operator=(
+    const OxideQSslCertificate& other) {
+  d = other.d;
+  return *this;
+}
+
+bool OxideQSslCertificate::operator==(
+    const OxideQSslCertificate& other) const {
+  return d == other.d;
+}
+
+bool OxideQSslCertificate::operator!=(
+    const OxideQSslCertificate& other) const {
+  return !(*this == other);
+}
+
 QString OxideQSslCertificate::serialNumber() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QString();
+  }
 
   const std::string& serial_number = d->x509_cert_->serial_number();
   QByteArray ba(serial_number.data(), int(serial_number.size()));
@@ -96,43 +119,57 @@ QString OxideQSslCertificate::serialNumber() const {
 }
 
 QString OxideQSslCertificate::subjectDisplayName() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QString();
+  }
 
   return QString::fromStdString(d->x509_cert_->subject().GetDisplayName());
 }
 
 QString OxideQSslCertificate::issuerDisplayName() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QString();
+  }
 
   return QString::fromStdString(d->x509_cert_->issuer().GetDisplayName());
 }
 
 QStringList OxideQSslCertificate::getSubjectInfo(PrincipalAttr attr) const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QStringList();
+  }
 
   return GetPrincipalValue(d->x509_cert_->subject(), attr);
 }
 
 QStringList OxideQSslCertificate::getIssuerInfo(PrincipalAttr attr) const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QStringList();
+  }
 
   return GetPrincipalValue(d->x509_cert_->issuer(), attr);
 }
 
 QDateTime OxideQSslCertificate::effectiveDate() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QDateTime();
+  }
 
   return ToQDateTime(d->x509_cert_->valid_start());
 }
 
 QDateTime OxideQSslCertificate::expiryDate() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QDateTime();
+  }
 
   return ToQDateTime(d->x509_cert_->valid_expiry());
 }
 
 QString OxideQSslCertificate::fingerprintSHA1() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QString();
+  }
 
   const net::SHA1HashValue& hash = d->x509_cert_->fingerprint();
   QByteArray ba(reinterpret_cast<const char *>(hash.data), sizeof(hash.data));
@@ -141,22 +178,26 @@ QString OxideQSslCertificate::fingerprintSHA1() const {
 }
 
 bool OxideQSslCertificate::isExpired() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return false;
+  }
 
   return d->x509_cert_->HasExpired();
 }
 
-OxideQSslCertificate* OxideQSslCertificate::issuer() const {
-  Q_D(const OxideQSslCertificate);
+OxideQSslCertificate OxideQSslCertificate::issuer() const {
+  if (!isValid()) {
+    return OxideQSslCertificate();
+  }
 
-  if (d->issuer_) {
-    return d->issuer_.get();
+  if (d->issuer_.get()) {
+    return *d->issuer_;
   }
 
   const net::X509Certificate::OSCertHandles& handles =
       d->x509_cert_->GetIntermediateCertificates();
   if (handles.empty()) {
-    return nullptr;
+    return OxideQSslCertificate();
   }
 
   net::X509Certificate::OSCertHandle handle = handles[0];
@@ -168,19 +209,22 @@ OxideQSslCertificate* OxideQSslCertificate::issuer() const {
 
   scoped_refptr<net::X509Certificate> cert =
       net::X509Certificate::CreateFromHandle(handle, intermediates);
-  d->issuer_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
 
-  return d->issuer_.get();
+  QSharedDataPointer<OxideQSslCertificateData> data(
+      new OxideQSslCertificateData(cert.get()));
+  d->issuer_.reset(new OxideQSslCertificate(data));
+
+  return *d->issuer_;
 }
 
-OxideQSslCertificate* OxideQSslCertificate::copy() const {
-  Q_D(const OxideQSslCertificate);
-
-  return OxideQSslCertificatePrivate::Create(d->x509_cert_.get());
+OxideQSslCertificate OxideQSslCertificate::copy() const {
+  return OxideQSslCertificate(*this);
 }
 
 QString OxideQSslCertificate::toPem() const {
-  Q_D(const OxideQSslCertificate);
+  if (!isValid()) {
+    return QString();
+  }
 
   std::string pem;
   if (!net::X509Certificate::GetPEMEncoded(d->x509_cert_->os_cert_handle(),
@@ -189,4 +233,8 @@ QString OxideQSslCertificate::toPem() const {
   }
 
   return QString::fromStdString(pem);
+}
+
+bool OxideQSslCertificate::isValid() const {
+  return !!d->x509_cert_;
 }
