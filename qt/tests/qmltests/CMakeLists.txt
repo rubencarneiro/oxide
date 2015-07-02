@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,14 +16,25 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
+find_package(Qt5QuickTest REQUIRED)
+find_package(Qt5Test REQUIRED)
+
 set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
 
 set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
 
 add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-qt5_use_modules(${QML_PLUGIN} Core Gui Qml Test)
-target_link_libraries(${QML_PLUGIN} ${OXIDE_QUICKLIB})
+target_link_libraries(${QML_PLUGIN}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Test
+    ${OXIDE_QUICKLIB})
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     AUTOMOC TRUE
@@ -46,7 +57,6 @@ foreach(f
       DEPENDS ${QML_PLUGIN})
 endforeach()
 
-get_target_property(QML_PLUGIN_LOCATION ${QML_PLUGIN} LOCATION)
 add_custom_target(
     mkdir_${QML_PLUGIN}.hack ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -60,7 +70,7 @@ add_custom_target(
 add_custom_target(
     copy_${QML_PLUGIN}_plugin.hack ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${QML_PLUGIN_LOCATION}
+      $<TARGET_FILE:${QML_PLUGIN}>
       ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
     DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
 
@@ -68,8 +78,14 @@ set(QML_TEST qmltest)
 set(QML_TEST_SRCS main.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
-qt5_use_modules(${QML_TEST} Core Gui Qml Quick QuickTest Test)
-target_link_libraries(${QML_TEST} ${OXIDE_CORELIB_NAME})
+target_link_libraries(${QML_TEST}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Quick
+    Qt5::QuickTest
+    Qt5::Test
+    ${OXIDE_CORELIB_NAME})
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
@@ -93,8 +109,6 @@ function(add_qml_test)
     set(_ARGS_SERVER_DIR ${_ARGS_TEST_DIR})
   endif()
 
-  get_target_property(QMLTEST_BINARY ${QML_TEST} LOCATION)
-
   set(TEST_COMMAND
       ${BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
@@ -109,7 +123,7 @@ function(add_qml_test)
   endif()
 
   list(APPEND TEST_COMMAND --
-       ${QMLTEST_BINARY} -name ${_ARGS_NAME}
+       $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
        -add-library-path ${QTPLUGIN_OUTPUT_DIR})
   if (_ARGS_SSL_TESTS)

@@ -1273,7 +1273,7 @@ void WebView::Init(Params* params) {
   DCHECK(root_frame_.get());
 
   if (params->context && init_data_->load_params) {
-    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);
   }
 
   web_contents_->GetController().LoadIfNecessary();
@@ -2102,6 +2102,11 @@ void WebView::DownloadRequested(
                              cookies,
                              referrer,
                              user_agent);
+}
+
+void WebView::HttpAuthenticationRequested(
+    ResourceDispatcherHostLoginDelegate* login_delegate) {
+  client_->HttpAuthenticationRequested(login_delegate);
 }
 
 CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {

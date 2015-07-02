@@ -98,6 +98,7 @@ class Compositor;
 class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
+class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
 class WebContextMenu;
 class WebFrame;
@@ -309,6 +310,9 @@ class WebView : public ScriptMessageTarget,
       const std::string& cookies,
       const std::string& referrer,
       const std::string& user_agent);
+
+  void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
 
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();

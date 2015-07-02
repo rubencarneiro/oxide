@@ -42,6 +42,8 @@
 #include "oxidequseragentoverriderequest_p.h"
 #include "oxidequseragentoverriderequest_p_p.h"
 
+using oxide::qt::WebContextProxy;
+
 namespace {
 
 QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
@@ -67,17 +69,17 @@ QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
   return QVariant(list);
 }
 
-oxide::qt::WebContextProxy::UserAgentOverride ToUserAgentOverride(
+WebContextProxy::UserAgentOverride ToUserAgentOverride(
     const QVariant& v,
     bool* valid) {
   *valid = false;
 
   QVariantList entry = v.toList();
   if (entry.size() != 2) {
-    return oxide::qt::WebContextProxy::UserAgentOverride();
+    return WebContextProxy::UserAgentOverride();
   }
 
-  oxide::qt::WebContextProxy::UserAgentOverride rv;
+  WebContextProxy::UserAgentOverride rv;
 
   QRegExp re;
   if (entry[0].canConvert<QRegExp>()) {
@@ -87,7 +89,7 @@ oxide::qt::WebContextProxy::UserAgentOverride ToUserAgentOverride(
   }
 
   if (!re.isValid()) {
-    return oxide::qt::WebContextProxy::UserAgentOverride();
+    return WebContextProxy::UserAgentOverride();
   }
 
   *valid = true;
@@ -99,7 +101,7 @@ oxide::qt::WebContextProxy::UserAgentOverride ToUserAgentOverride(
 }
 
 QVariant FromUserAgentOverride(
-    const oxide::qt::WebContextProxy::UserAgentOverride& o) {
+    const WebContextProxy::UserAgentOverride& o) {
   QVariantList rv;
   rv.append(o.first);
   rv.append(o.second);
@@ -218,7 +220,7 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebContext,
 
 OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
     OxideQQuickWebContext* q)
-    : oxide::qt::WebContextProxyHandle(oxide::qt::WebContextProxy::create(this), q),
+    : oxide::qt::WebContextProxyHandle(WebContextProxy::create(this), q),
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
       network_request_delegate_(nullptr),
@@ -267,7 +269,7 @@ void OxideQQuickWebContextPrivate::userScript_append(
 
 int OxideQQuickWebContextPrivate::userScript_count(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
-  oxide::qt::WebContextProxy* p =
+  WebContextProxy* p =
       OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext*>(prop->object))->proxy();
 
@@ -277,7 +279,7 @@ int OxideQQuickWebContextPrivate::userScript_count(
 OxideQQuickUserScript* OxideQQuickWebContextPrivate::userScript_at(
     QQmlListProperty<OxideQQuickUserScript>* prop,
     int index) {
-  oxide::qt::WebContextProxy* p =
+  WebContextProxy* p =
       OxideQQuickWebContextPrivate::get(
         static_cast<OxideQQuickWebContext*>(prop->object))->proxy();
 
@@ -293,7 +295,7 @@ void OxideQQuickWebContextPrivate::userScript_clear(
     QQmlListProperty<OxideQQuickUserScript>* prop) {
   OxideQQuickWebContext* context =
       static_cast<OxideQQuickWebContext *>(prop->object);
-  oxide::qt::WebContextProxy* p =
+  WebContextProxy* p =
       OxideQQuickWebContextPrivate::get(context)->proxy();
 
   while (p->userScripts().size() > 0) {
@@ -484,8 +486,7 @@ void OxideQQuickWebContext::componentComplete() {
 
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
-  oxide::qt::WebContextProxyHandle* h =
-      oxide::qt::WebContextProxy::defaultContext();
+  oxide::qt::WebContextProxyHandle* h = WebContextProxy::defaultContext();
   if (h) {
     return OxideQQuickWebContextPrivate::fromProxyHandle(h);
   }
@@ -499,7 +500,7 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
   QQmlEngine::setObjectOwnership(c, QQmlEngine::CppOwnership);
 
   OxideQQuickWebContextPrivate::get(c)->proxy()->makeDefault();
-  Q_ASSERT(oxide::qt::WebContextProxy::defaultContext());
+  Q_ASSERT(WebContextProxy::defaultContext());
 
   return c;
 }
@@ -688,15 +689,15 @@ OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const 
   Q_STATIC_ASSERT(
       CookiePolicyAllowAll ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextProxy::CookiePolicyAllowAll));
+        WebContextProxy::CookiePolicyAllowAll));
   Q_STATIC_ASSERT(
       CookiePolicyBlockAll ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextProxy::CookiePolicyBlockAll));
+        WebContextProxy::CookiePolicyBlockAll));
   Q_STATIC_ASSERT(
       CookiePolicyBlockThirdParty ==
       static_cast<CookiePolicy>(
-        oxide::qt::WebContextProxy::CookiePolicyBlockThirdParty));
+        WebContextProxy::CookiePolicyBlockThirdParty));
 
   return static_cast<CookiePolicy>(d->proxy()->cookiePolicy());
 }
@@ -704,8 +705,8 @@ OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const 
 void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   Q_D(OxideQQuickWebContext);
 
-  oxide::qt::WebContextProxy::CookiePolicy p =
-      static_cast<oxide::qt::WebContextProxy::CookiePolicy>(policy);
+  WebContextProxy::CookiePolicy p =
+      static_cast<WebContextProxy::CookiePolicy>(policy);
 
   if (policy == cookiePolicy()) {
     return;
@@ -723,15 +724,15 @@ OxideQQuickWebContext::sessionCookieMode() const {
   Q_STATIC_ASSERT(
       SessionCookieModeEphemeral ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextProxy::SessionCookieModeEphemeral));
+        WebContextProxy::SessionCookieModeEphemeral));
   Q_STATIC_ASSERT(
       SessionCookieModePersistent ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextProxy::SessionCookieModePersistent));
+        WebContextProxy::SessionCookieModePersistent));
   Q_STATIC_ASSERT(
       SessionCookieModeRestored ==
       static_cast<SessionCookieMode>(
-        oxide::qt::WebContextProxy::SessionCookieModeRestored));
+        WebContextProxy::SessionCookieModeRestored));
   return static_cast<SessionCookieMode>(d->proxy()->sessionCookieMode());
 }
 
@@ -745,8 +746,8 @@ void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
     return;
   }
 
-  oxide::qt::WebContextProxy::SessionCookieMode m =
-      static_cast<oxide::qt::WebContextProxy::SessionCookieMode>(mode);
+  WebContextProxy::SessionCookieMode m =
+      static_cast<WebContextProxy::SessionCookieMode>(mode);
 
   if (mode == sessionCookieMode()) {
     return;
@@ -903,13 +904,6 @@ bool OxideQQuickWebContext::devtoolsEnabled() const {
 void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->proxy()->isInitialized()) {
-    qWarning() <<
-        "OxideQQuickWebContext: Cannot set devToolsEnabled once the context "
-        "is in use";
-    return;
-  }
-
   if (devtoolsEnabled() == enabled) {
     return;
   }
@@ -928,14 +922,24 @@ int OxideQQuickWebContext::devtoolsPort() const {
 void OxideQQuickWebContext::setDevtoolsPort(int port) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->proxy()->isInitialized()) {
+  if (devtoolsEnabled() && d->proxy()->isInitialized()) {
     qWarning() <<
-        "OxideQQuickWebContext: Cannot set devToolsPort once the context is "
-        "in use";
+        "OxideQQuickWebContext: Cannot set devtoolsPort whilst "
+        "devtoolsEnabled is set to true";
     return;
   }
 
   if (devtoolsPort() == port) {
+    return;
+  }
+
+  int min, max;
+  WebContextProxy::getValidDevtoolsPorts(&min, &max);
+
+  if (port < min || port > max) {
+    qWarning() <<
+        "OxideQQuickWebContext: devtoolsPort was set to an invalid value. "
+        "It must be set between " << min << " and " << max;
     return;
   }
 
@@ -953,14 +957,21 @@ QString OxideQQuickWebContext::devtoolsBindIp() const {
 void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->proxy()->isInitialized()) {
+  if (devtoolsEnabled() && d->proxy()->isInitialized()) {
     qWarning() <<
-        "OxideQQuickWebContext: Cannot set devToolsBindIp once the context is "
-        "in use";
+        "OxideQQuickWebContext: Cannot set devtoolsBindIp whilst "
+        "devtoolsEnabled is set to true";
     return;
   }
 
   if (devtoolsBindIp() == bindIp) {
+    return;
+  }
+
+  if (!WebContextProxy::checkIPAddress(bindIp)) {
+    qWarning() <<
+        "OxideQQuickWebContext: devtoolsBindIp was set to an invalid value. "
+        "It must be set to a valid IPv4 or IPv6 address";
     return;
   }
 
@@ -1112,7 +1123,7 @@ QVariantList OxideQQuickWebContext::userAgentOverrides() const {
   Q_D(const OxideQQuickWebContext);
 
   QVariantList rv;
-  QList<oxide::qt::WebContextProxy::UserAgentOverride> overrides =
+  QList<WebContextProxy::UserAgentOverride> overrides =
       d->proxy()->userAgentOverrides();
 
   for (auto it = overrides.begin(); it != overrides.end(); ++it) {
@@ -1126,12 +1137,11 @@ void OxideQQuickWebContext::setUserAgentOverrides(
     const QVariantList& overrides) {
   Q_D(OxideQQuickWebContext);
 
-  QList<oxide::qt::WebContextProxy::UserAgentOverride> entries;
+  QList<WebContextProxy::UserAgentOverride> entries;
 
   for (auto it = overrides.begin(); it != overrides.end(); ++it) {
     bool valid = false;
-    oxide::qt::WebContextProxy::UserAgentOverride entry =
-        ToUserAgentOverride(*it, &valid);
+    WebContextProxy::UserAgentOverride entry = ToUserAgentOverride(*it, &valid);
 
     if (!valid) {
       qWarning() <<

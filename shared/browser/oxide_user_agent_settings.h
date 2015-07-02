@@ -30,6 +30,8 @@
 
 #include "shared/common/oxide_user_agent_override_set.h"
 
+class BrowserContextKeyedServiceFactory;
+
 namespace content {
 class BrowserContext;
 class RenderProcessHost;
@@ -90,6 +92,8 @@ class UserAgentSettings : public KeyedService,
                           public base::NonThreadSafe {
  public:
   static UserAgentSettings* Get(content::BrowserContext* context);
+
+  static BrowserContextKeyedServiceFactory* GetFactory();
 
   // Get the default user agent string
   std::string GetUserAgent() const;

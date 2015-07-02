@@ -56,6 +56,7 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_devtools_manager.h"
 #include "shared/browser/oxide_user_agent_settings.h"
 #include "shared/browser/oxide_user_script_master.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
@@ -65,6 +66,7 @@
 namespace oxide {
 namespace qt {
 
+using oxide::DevToolsManager;
 using oxide::MediaCaptureDevicesContext;
 using oxide::UserAgentSettings;
 using oxide::UserScriptMaster;
@@ -142,7 +144,7 @@ struct WebContext::ConstructProperties {
         session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
         popup_blocker_enabled(true),
         devtools_enabled(false),
-        devtools_port(kDefaultDevtoolsPort),
+        devtools_port(-1),
         legacy_user_agent_override_enabled(false) {}
 
   std::string product;
@@ -526,10 +528,7 @@ oxide::BrowserContext* WebContext::GetContext() {
       construct_props_->data_path,
       construct_props_->cache_path,
       construct_props_->max_cache_size_hint,
-      construct_props_->session_cookie_mode,
-      construct_props_->devtools_enabled,
-      construct_props_->devtools_port,
-      construct_props_->devtools_ip);
+      construct_props_->session_cookie_mode);
   params.host_mapping_rules = construct_props_->host_mapping_rules;
 
   context_ = oxide::BrowserContext::Create(params);
@@ -569,6 +568,15 @@ oxide::BrowserContext* WebContext::GetContext() {
   }
 
   dc->set_client(this);
+
+  DevToolsManager* devtools = DevToolsManager::Get(context_.get());
+  if (!construct_props_->devtools_ip.empty()) {
+    devtools->SetAddress(construct_props_->devtools_ip);
+  }
+  if (construct_props_->devtools_port != -1) {
+    devtools->SetPort(construct_props_->devtools_port);
+  }
+  devtools->SetEnabled(construct_props_->devtools_enabled);
 
   context_->SetDelegate(delegate_.get());
 
@@ -768,41 +776,51 @@ void WebContext::setPopupBlockerEnabled(bool enabled) {
 
 bool WebContext::devtoolsEnabled() const {
   if (IsInitialized()) {
-    return context_->GetDevtoolsEnabled();
+    return DevToolsManager::Get(context_.get())->enabled();
   }
 
   return construct_props_->devtools_enabled;
 }
 
 void WebContext::setDevtoolsEnabled(bool enabled) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_enabled = enabled;
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetEnabled(enabled);
+  } else {
+    construct_props_->devtools_enabled = enabled;
+  }
 }
 
 int WebContext::devtoolsPort() const {
   if (IsInitialized()) {
-    return context_->GetDevtoolsPort();
+    return DevToolsManager::Get(context_.get())->port();
   }
 
   return construct_props_->devtools_port;
 }
 
 void WebContext::setDevtoolsPort(int port) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_port = port;
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetPort(port);
+  } else {
+    construct_props_->devtools_port = port;
+  }
 }
 
 QString WebContext::devtoolsBindIp() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetDevtoolsBindIp());
+    return QString::fromStdString(
+        DevToolsManager::Get(context_.get())->address());
   }
 
   return QString::fromStdString(construct_props_->devtools_ip);
 }
 
 void WebContext::setDevtoolsBindIp(const QString& ip) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_ip = ip.toStdString();
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetAddress(ip.toStdString());
+  } else {
+    construct_props_->devtools_ip = ip.toStdString();
+  }
 }
 
 int WebContext::setCookies(const QUrl& url,

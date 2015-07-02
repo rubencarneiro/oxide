@@ -32,7 +32,6 @@
 #include "base/synchronization/lock.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/worker_pool.h"
-#include "components/devtools_http_handler/devtools_http_handler.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "content/browser/loader/resource_dispatcher_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -49,7 +48,6 @@
 #include "net/http/http_server_properties_impl.h"
 #include "net/http/transport_security_persister.h"
 #include "net/http/transport_security_state.h"
-#include "net/socket/tcp_server_socket.h"
 #include "net/ssl/channel_id_service.h"
 #include "net/ssl/channel_id_store.h"
 #include "net/ssl/default_channel_id_store.h"
@@ -68,7 +66,6 @@
 #include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_devtools_http_handler_delegate.h"
 #include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
@@ -97,14 +94,6 @@ const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
 const char kFtpScheme[] = "ftp";
 
-const char kBrowserContextKey[] = "oxide_browser_context_data";
-
-const char kDevtoolsDefaultServerIp[] = "127.0.0.1";
-const int kBackLog = 1;
-
-const char kDownloadManagerDelegateKeyName[] =
-  "OxideDownloadManagerDelegateKeyName";
-
 void CleanupOldCacheDir(const base::FilePath& path) {
   if (!base::DirectoryExists(path)) {
     return;
@@ -131,36 +120,6 @@ void CleanupOldCacheDir(const base::FilePath& path) {
 }
 
 } // namespace
-
-class TCPServerSocketFactory
-    : public devtools_http_handler::DevToolsHttpHandler::ServerSocketFactory {
- public:
-  TCPServerSocketFactory(const std::string& address, int port)
-      : address_(address),
-        port_(port) {}
-
- private:
-  scoped_ptr<net::ServerSocket> CreateForHttpServer() override {
-    scoped_ptr<net::TCPServerSocket> socket(
-        new net::TCPServerSocket(nullptr, net::NetLog::Source()));
-    if (socket->ListenWithAddressAndPort(address_, port_, kBackLog) != net::OK) {
-      return scoped_ptr<net::ServerSocket>();
-    }
-
-    return socket.Pass();
-  }
-
-  scoped_ptr<net::ServerSocket> CreateForTethering(
-      std::string* out_name) override {
-    // Not supported
-    return scoped_ptr<net::ServerSocket>();
-  }
-
-  std::string address_;
-  int port_;
-
-  DISALLOW_COPY_AND_ASSIGN(TCPServerSocketFactory);
-};
 
 class MainURLRequestContextGetter : public URLRequestContextGetter {
  public:
@@ -220,19 +179,6 @@ class ResourceContext : public content::ResourceContext {
   net::URLRequestContext* request_context_;
 
   DISALLOW_COPY_AND_ASSIGN(ResourceContext);
-};
-
-struct BrowserContextSharedData {
-  BrowserContextSharedData(BrowserContext* context,
-                           const BrowserContext::Params& params)
-      : devtools_enabled(params.devtools_enabled),
-        devtools_port(params.devtools_port),
-        devtools_ip(params.devtools_ip) {}
-
-  scoped_ptr<devtools_http_handler::DevToolsHttpHandler> devtools_http_handler;
-  bool devtools_enabled;
-  int devtools_port;
-  std::string devtools_ip;
 };
 
 struct BrowserContextSharedIOData {
@@ -600,9 +546,6 @@ class OTRBrowserContextImpl : public BrowserContext {
   }
   BrowserContext* GetOriginalContext() const override;
 
-  BrowserContextSharedData& GetSharedData() override;
-  const BrowserContextSharedData& GetSharedData() const override;
-
   bool HasOffTheRecordContext() const override { return true; }
 
   scoped_refptr<BrowserContextImpl> original_context_;
@@ -613,13 +556,6 @@ class OTRBrowserContextImpl : public BrowserContext {
 class BrowserContextImpl : public BrowserContext {
  public:
   BrowserContextImpl(const BrowserContext::Params& params);
-
-  BrowserContextSharedData& GetSharedData() override {
-    return data_;
-  }
-  const BrowserContextSharedData& GetSharedData() const override {
-    return data_;
-  }
 
  private:
   ~BrowserContextImpl() override;
@@ -634,8 +570,6 @@ class BrowserContextImpl : public BrowserContext {
     return otr_context_ != nullptr;
   }
 
-  BrowserContextSharedData data_;
-
   base::WeakPtr<OTRBrowserContextImpl> otr_context_;
 };
 
@@ -643,15 +577,6 @@ OTRBrowserContextImpl::~OTRBrowserContextImpl() {}
 
 BrowserContext* OTRBrowserContextImpl::GetOriginalContext() const {
   return original_context_.get();
-}
-
-BrowserContextSharedData& OTRBrowserContextImpl::GetSharedData() {
-  return original_context_->GetSharedData();
-}
-
-const BrowserContextSharedData&
-OTRBrowserContextImpl::GetSharedData() const {
-  return original_context_->GetSharedData();
 }
 
 OTRBrowserContextImpl::OTRBrowserContextImpl(
@@ -680,29 +605,7 @@ scoped_refptr<BrowserContext> BrowserContextImpl::GetOffTheRecordContext() {
 }
 
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
-    : BrowserContext(new BrowserContextIODataImpl(params)),
-      data_(this, params) {
-  if (data_.devtools_enabled &&
-      data_.devtools_port < 65535 &&
-      data_.devtools_port > 1024) {
-    net::IPAddressNumber unused;
-    std::string ip =
-        net::ParseIPLiteralToNumber(data_.devtools_ip, &unused) ?
-          data_.devtools_ip : kDevtoolsDefaultServerIp;
-
-    scoped_ptr<TCPServerSocketFactory> factory(
-        new TCPServerSocketFactory(ip, data_.devtools_port));
-    data_.devtools_http_handler.reset(
-        new devtools_http_handler::DevToolsHttpHandler(
-          factory.Pass(),
-          std::string(),
-          new DevtoolsHttpHandlerDelegate(),
-          base::FilePath(),
-          base::FilePath(),
-          UserAgentSettings::Get(this)->GetProduct(),
-          UserAgentSettings::Get(this)->GetUserAgent()));
-  }
-
+    : BrowserContext(new BrowserContextIODataImpl(params)) {
   if (!GetPath().empty()) {
     base::FilePath gpu_cache = GetPath().Append(FILE_PATH_LITERAL("GPUCache"));
     content::BrowserThread::PostTask(
@@ -766,14 +669,8 @@ BrowserContext::GetMediaRequestContextForStoragePartition(
 }
 
 content::DownloadManagerDelegate*
-    BrowserContext::GetDownloadManagerDelegate() {
-  // The embedder owns the delegate, dont transfer ownership.
-  if (!GetUserData(kDownloadManagerDelegateKeyName)) {
-    SetUserData(kDownloadManagerDelegateKeyName
-        , new DownloadManagerDelegate());
-  }
-  return static_cast<oxide::DownloadManagerDelegate*>(
-      GetUserData(kDownloadManagerDelegateKeyName));
+BrowserContext::GetDownloadManagerDelegate() {
+  return DownloadManagerDelegate::Get(this);
 }
 
 content::BrowserPluginGuestManager* BrowserContext::GetGuestManager() {
@@ -955,21 +852,6 @@ void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
                       GetOffTheRecordContext()->observers_,
                       NotifyPopupBlockerEnabledChanged());
   }
-}
-
-bool BrowserContext::GetDevtoolsEnabled() const {
-  DCHECK(CalledOnValidThread());
-  return GetSharedData().devtools_enabled;
-}
-
-int BrowserContext::GetDevtoolsPort() const {
-  DCHECK(CalledOnValidThread());
-  return GetSharedData().devtools_port;
-}
-
-std::string BrowserContext::GetDevtoolsBindIp() const {
-  DCHECK(CalledOnValidThread());
-  return GetSharedData().devtools_ip;
 }
 
 const std::vector<std::string>& BrowserContext::GetHostMappingRules() const {
