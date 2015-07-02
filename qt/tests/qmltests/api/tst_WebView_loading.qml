@@ -37,7 +37,7 @@ TestWebView {
                  "Unexpected originalUrl");
     test.compare(event.httpStatusCode,
                  event.type != LoadEvent.TypeStarted && event.type != LoadEvent.TypeStopped ?
-                  expected.httpStatusCode : -1,
+                  expected.httpStatusCode : 0,
                  "Unexpected value of httpStatusCode");
     test.compare(loading, expected.loading,
                  "Unexpected state of WebView.loading");

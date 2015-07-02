@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqdownloadrequest.h"
-#include "oxideqdownloadrequest_p.h"
 
 #include "net/http/http_request_headers.h"
 #include "url/gurl.h"
@@ -25,23 +24,34 @@ namespace {
 const QString kCookieListDelimiter = ";";
 }
 
-OxideQDownloadRequestPrivate::OxideQDownloadRequestPrivate(
-    const QUrl& url,
-    const QString& mimeType,
-    const bool shouldPrompt,
-    const QString& suggestedFilename,
-    const QStringList& cookies,
-    const QString& referrer,
-    const QString& userAgent)
-  : url_(url),
-    mime_type_(mimeType),
-    should_prompt_(shouldPrompt),
-    suggested_filename_(suggestedFilename),
-    cookies_(cookies),
-    referrer_(referrer),
-    user_agent_(userAgent) {}
+class OxideQDownloadRequestData : public QSharedData {
+ public:
+  OxideQDownloadRequestData(const QUrl& url,
+                            const QString& mime_type,
+                            bool should_prompt,
+                            const QString& suggested_filename,
+                            const QStringList& cookies,
+                            const QString& referrer,
+                            const QString& user_agent)
+      : url(url),
+        mime_type(mime_type),
+        should_prompt(should_prompt),
+        suggested_filename(suggested_filename),
+        cookies(cookies),
+        referrer(referrer),
+        user_agent(user_agent) {}
 
-OxideQDownloadRequestPrivate::~OxideQDownloadRequestPrivate() {}
+  OxideQDownloadRequestData()
+      : should_prompt(false) {}
+
+  QUrl url;
+  QString mime_type;
+  bool should_prompt;
+  QString suggested_filename;
+  QStringList cookies;
+  QString referrer;
+  QString user_agent;
+};
 
 OxideQDownloadRequest::OxideQDownloadRequest(
     const QUrl& url,
@@ -50,59 +60,66 @@ OxideQDownloadRequest::OxideQDownloadRequest(
     const QString& suggestedFilename,
     const QString& cookies,
     const QString& referrer,
-    const QString& userAgent,
-    QObject* parent) :
-      QObject(parent),
-      d_ptr(new OxideQDownloadRequestPrivate(url,
+    const QString& userAgent)
+    : d(new OxideQDownloadRequestData(
+          url,
           mimeType,
           shouldPrompt,
           suggestedFilename,
           cookies.split(kCookieListDelimiter, QString::SkipEmptyParts),
           referrer,
-          userAgent)) {
-}
+          userAgent)) {}
+
+OxideQDownloadRequest::OxideQDownloadRequest()
+    : d(new OxideQDownloadRequestData()) {}
 
 OxideQDownloadRequest::~OxideQDownloadRequest() {}
 
-QUrl OxideQDownloadRequest::url() const {
-  Q_D(const OxideQDownloadRequest);
+OxideQDownloadRequest::OxideQDownloadRequest(
+    const OxideQDownloadRequest& other)
+    : d(other.d) {}
 
-  return d->url_;
+OxideQDownloadRequest OxideQDownloadRequest::operator=(
+    const OxideQDownloadRequest& other) {
+  d = other.d;
+  return *this;
+}
+
+bool OxideQDownloadRequest::operator==(
+    const OxideQDownloadRequest& other) const {
+  return d == other.d;
+}
+
+bool OxideQDownloadRequest::operator!=(
+    const OxideQDownloadRequest& other) const {
+  return !(*this == other);
+}
+
+QUrl OxideQDownloadRequest::url() const {
+  return d->url;
 }
 
 QString OxideQDownloadRequest::mimeType() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->mime_type_;
+  return d->mime_type;
 }
 
 bool OxideQDownloadRequest::shouldPrompt() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->should_prompt_;
+  return d->should_prompt;
 }
 
 QString OxideQDownloadRequest::suggestedFilename() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->suggested_filename_;
+  return d->suggested_filename;
 }
 
 QStringList OxideQDownloadRequest::cookies() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->cookies_;
+  return d->cookies;
 }
 
 QString OxideQDownloadRequest::referrer() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->referrer_;
+  return d->referrer;
 }
 
 QString OxideQDownloadRequest::userAgent() const {
-  Q_D(const OxideQDownloadRequest);
-
-  return d->user_agent_;
+  return d->user_agent;
 }
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqsslcertificate.h"
 
 namespace oxide {
 class CertificateError;
@@ -49,7 +50,7 @@ class OxideQCertificateErrorPrivate final {
 
   OxideQCertificateError* q_ptr;
 
-  scoped_ptr<OxideQSslCertificate> certificate_;
+  OxideQSslCertificate certificate_;
   scoped_ptr<oxide::CertificateError> error_;
 
   bool did_respond_;

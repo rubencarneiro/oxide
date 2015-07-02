@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,21 +13,21 @@
 
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
 
-#ifndef OXIDE_Q_DOWNLOAD_REQUEST
-#define OXIDE_Q_DOWNLOAD_REQUEST
+#ifndef _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_
+#define _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_
 
-#include <QSharedDataPointer>
-#include <QString>
-#include <QStringList>
 #include <QtGlobal>
-#include <QUrl>
+#include <QtQml/private/qqmlvaluetype_p.h>
 
-class OxideQDownloadRequestData;
+#include "qt/core/api/oxideqdownloadrequest.h"
 
-class Q_DECL_EXPORT OxideQDownloadRequest {
-  Q_GADGET
+namespace oxide {
+namespace qmlplugin {
+
+class DownloadRequest : public QQmlValueTypeBase<OxideQDownloadRequest> {
+  Q_OBJECT
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(QString mimeType READ mimeType CONSTANT)
@@ -37,22 +37,11 @@ class Q_DECL_EXPORT OxideQDownloadRequest {
   Q_PROPERTY(QString referrer READ referrer CONSTANT)
   Q_PROPERTY(QString userAgent READ userAgent CONSTANT)
 
+  Q_DISABLE_COPY(DownloadRequest)
+
  public:
-  OxideQDownloadRequest(const QUrl& url,
-                        const QString& mimeType,
-                        const bool shouldPrompt,
-                        const QString& suggestedFilename,
-                        const QString& cookies,
-                        const QString& referrer,
-                        const QString& userAgent);
-  OxideQDownloadRequest();
-  ~OxideQDownloadRequest();
-
-  OxideQDownloadRequest(const OxideQDownloadRequest& other);
-  OxideQDownloadRequest operator=(const OxideQDownloadRequest& other);
-
-  bool operator==(const OxideQDownloadRequest& other) const;
-  bool operator!=(const OxideQDownloadRequest& other) const;
+  DownloadRequest(QObject* parent = nullptr);
+  ~DownloadRequest() override;
 
   QUrl url() const;
   QString mimeType() const;
@@ -62,10 +51,12 @@ class Q_DECL_EXPORT OxideQDownloadRequest {
   QString referrer() const;
   QString userAgent() const;
 
- private:
-  QSharedDataPointer<OxideQDownloadRequestData> d;
+  // QQmlValueType implementation
+  QString toString() const override;
+  bool isEqual(const QVariant& other) const override;
 };
 
-Q_DECLARE_METATYPE(OxideQDownloadRequest)
+} // namespace qmlplugin
+} // namespace oxide
 
-#endif // OXIDE_Q_DOWNLOAD_REQUEST
+#endif // _OXIDE_QMLPLUGIN_DOWNLOAD_REQUEST_H_
