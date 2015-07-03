@@ -43,7 +43,10 @@
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 #include "oxide_web_content_settings_client.h"
-#include "oxide_pepper_render_frame_observer.h"
+
+#if defined(ENABLE_PLUGINS)
+#include "pepper/oxide_pepper_render_frame_observer.h"
+#endif
 
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
@@ -65,7 +68,9 @@ void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebContentSettingsClient(render_frame);
+#if defined(ENABLE_PLUGINS)
   new PepperRenderFrameObserver(render_frame);
+#endif
 #if defined(ENABLE_MEDIAHUB)
   new RendererMediaPlayerManager(render_frame);
 #endif

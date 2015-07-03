@@ -62,13 +62,9 @@ class PepperFlashBrowserHost final : public ppapi::host::ResourceHost {
   int32_t OnGetLocalDataRestrictions(ppapi::host::HostMessageContext* context);
 
   void GetLocalDataRestrictions(ppapi::host::ReplyMessageContext reply_context,
-                                const GURL& document_url,
-                                const GURL& plugin_url,
-                                scoped_refptr<BrowserContext> browser_context);
-
+                                int32_t restrictions);
   content::BrowserPpapiHost* host_;
   int render_process_id_;
-  scoped_refptr<BrowserContext> browser_context_;
   base::WeakPtrFactory<PepperFlashBrowserHost> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(PepperFlashBrowserHost);

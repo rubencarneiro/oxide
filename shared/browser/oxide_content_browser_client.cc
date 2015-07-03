@@ -58,7 +58,7 @@
 #include "content/public/browser/browser_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 
-#include "oxide_pepper_host_factory_browser.h"
+#include "pepper/oxide_pepper_host_factory_browser.h"
 #endif
 
 namespace oxide {
@@ -109,6 +109,7 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
+    switches::kEnablePepperFlashPlugin,
     switches::kFormFactor,
     switches::kLimitMaxDecodedImageBytes,
     switches::kEnableMediaHubAudio,
@@ -265,8 +266,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (view) {
     prefs->supports_multiple_windows = view->CanCreateWindows();
   }
-
-  prefs->flash_3d_enabled = false;
 }
 
 content::LocationProvider*

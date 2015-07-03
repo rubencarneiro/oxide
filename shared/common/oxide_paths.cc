@@ -26,7 +26,8 @@ namespace oxide {
 namespace {
 
 const base::FilePath::CharType* kPepperFlashPluginDirs[] = {
-  FILE_PATH_LITERAL("/usr/lib/pepperflashplugin-nonfree")
+  FILE_PATH_LITERAL("/usr/lib/adobe-flashplugin"),
+  FILE_PATH_LITERAL("/opt/google/chrome/PepperFlash"),
 };
 const base::FilePath::CharType kPepperFlashPluginFilename[] =
   FILE_PATH_LITERAL("libpepflashplayer.so");

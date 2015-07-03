@@ -20,7 +20,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_pepper_flash_browser_host.h"
-#include "oxide_browser_context.h"
 
 #include "base/logging.h"
 #include "base/time/time.h"
@@ -34,24 +33,48 @@
 #include "ppapi/host/ppapi_host.h"
 #include "ppapi/proxy/ppapi_messages.h"
 #include "ppapi/shared_impl/time_conversion.h"
+#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 
 namespace oxide {
 
 namespace {
 
-// Get the CookieSettings on the UI thread for the given render process ID.
-scoped_refptr<oxide::BrowserContext> GetCookieSettings(int render_process_id) {
+// Do work on the UI thread
+int32_t GetRestictions(int render_process_id,
+    const GURL& document_url,
+    const GURL& plugin_url
+) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::UI));
 
-  content::RenderProcessHost* render_process_host =
-      content::RenderProcessHost::FromID(render_process_id);
-
-  if (render_process_host && render_process_host->GetBrowserContext()) {
-    return BrowserContext::FromContent(render_process_host->GetBrowserContext());
+  int32_t restrictions = PP_FLASHLSORESTRICTIONS_NONE;
+  if (!document_url.is_valid()) {
+    return restrictions;
   }
 
-  return NULL;
+  BrowserContextIOData* io_data = nullptr;
+  content::RenderProcessHost* render_process_host =
+      content::RenderProcessHost::FromID(render_process_id);
+  if (render_process_host != nullptr) {
+    io_data = BrowserContextIOData::FromResourceContext(
+      render_process_host->GetBrowserContext()->GetResourceContext());
+  }
+
+  if (io_data == nullptr) {
+    return restrictions;
+  }
+
+  // TODO(chrisccoulson): Implement PP_FLASHLSORESTRICTIONS_IN_MEMORY when
+  // we have content settings
+
+  if (io_data->CanAccessCookies(
+      document_url,
+      plugin_url,
+      false) != STORAGE_PERMISSION_ALLOW) {
+      restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
+  }
+
+  return restrictions;
 }
 
 }  // namespace
@@ -99,7 +122,7 @@ int32_t PepperFlashBrowserHost::OnGetLocalTimeZoneOffset(
   // sandbox.
 
   host_context->reply_msg = PpapiPluginMsg_Flash_GetLocalTimeZoneOffsetReply(
-                               ppapi::PPGetLocalTimeZoneOffset(t));
+    ppapi::PPGetLocalTimeZoneOffset(t));
 
   return PP_OK;
 }
@@ -110,64 +133,24 @@ int32_t PepperFlashBrowserHost::OnGetLocalDataRestrictions(
   GURL document_url = host_->GetDocumentURLForInstance(pp_instance());
   GURL plugin_url = host_->GetPluginURLForInstance(pp_instance());
 
-  if (browser_context_.get()) {
-    // XXX: do the same rule apply regarding thread and access?
-    GetLocalDataRestrictions(context->MakeReplyMessageContext(),
-                              document_url,
-                              plugin_url,
-                              browser_context_);
-  } else {
-      content::BrowserThread::PostTaskAndReplyWithResult(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&GetCookieSettings, render_process_id_),
-        base::Bind(&PepperFlashBrowserHost::GetLocalDataRestrictions,
-                   weak_factory_.GetWeakPtr(),
-                   context->MakeReplyMessageContext(),
-                   document_url,
-                   plugin_url));
-  }
+  content::BrowserThread::PostTaskAndReplyWithResult(
+    content::BrowserThread::UI,
+    FROM_HERE,
+    base::Bind(&GetRestictions, render_process_id_, document_url, plugin_url),
+    base::Bind(&PepperFlashBrowserHost::GetLocalDataRestrictions,
+               weak_factory_.GetWeakPtr(),
+               context->MakeReplyMessageContext()));
 
   return PP_OK_COMPLETIONPENDING;
 }
 
 void PepperFlashBrowserHost::GetLocalDataRestrictions(
     ppapi::host::ReplyMessageContext reply_context,
-    const GURL& document_url,
-    const GURL& plugin_url,
-    scoped_refptr<BrowserContext> browser_context) {
-
+    int32_t restrictions) {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
 
-  if (!browser_context_.get()) {
-    browser_context_ = browser_context;
-  } else {
-    DCHECK(browser_context_.get() == browser_context.get());
-  }
-
-  PP_FlashLSORestrictions restrictions = PP_FLASHLSORESTRICTIONS_NONE;
-  if (browser_context_.get() && document_url.is_valid()) {
-    if (browser_context_->GetSessionCookieMode() == content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES) {
-      restrictions = PP_FLASHLSORESTRICTIONS_IN_MEMORY;
-    } else {
-      scoped_refptr<BrowserContextDelegate> delegate(browser_context_->GetDelegate());
-      if (delegate.get()) {
-        if (delegate->CanAccessStorage(document_url, document_url, false,
-                                   STORAGE_TYPE_COOKIES) != STORAGE_PERMISSION_ALLOW) {
-            restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
-        }
-      } else {
-        net::StaticCookiePolicy policy(browser_context_->GetCookiePolicy());
-        if (policy.CanGetCookies(document_url, document_url) != net::OK) {
-          restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
-        }
-      }
-    }
-  }
-
   SendReply(reply_context,
-            PpapiPluginMsg_Flash_GetLocalDataRestrictionsReply(
-                static_cast<int32_t>(restrictions)));
+            PpapiPluginMsg_Flash_GetLocalDataRestrictionsReply(restrictions));
 }
 
 } // namespace oxide
