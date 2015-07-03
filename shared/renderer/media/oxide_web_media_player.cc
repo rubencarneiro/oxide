@@ -212,6 +212,12 @@ void WebMediaPlayer::setRate(double rate) {
   NOTIMPLEMENTED();
 }
 
+void WebMediaPlayer::setSinkId(
+      const blink::WebString& deviceId,
+      blink::WebCallbacks<void, blink::WebSetSinkIdError>*) {
+  NOTIMPLEMENTED();
+}
+
 void WebMediaPlayer::setVolume(double volume) {
   player_manager_->SetVolume(player_id_, volume);
 }
