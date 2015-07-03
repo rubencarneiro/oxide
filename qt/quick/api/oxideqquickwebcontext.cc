@@ -1119,6 +1119,7 @@ void OxideQQuickWebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   // if the actual device is removed
 }
 
+
 QVariantList OxideQQuickWebContext::userAgentOverrides() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -1131,6 +1132,12 @@ QVariantList OxideQQuickWebContext::userAgentOverrides() const {
   }
 
   return rv;
+}
+
+bool OxideQQuickWebContext::doNotTrack() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->proxy()->doNotTrack();
 }
 
 void OxideQQuickWebContext::setUserAgentOverrides(
@@ -1158,6 +1165,18 @@ void OxideQQuickWebContext::setUserAgentOverrides(
   d->proxy()->setUserAgentOverrides(entries);
 
   emit userAgentOverridesChanged();
+}
+
+void OxideQQuickWebContext::setDoNotTrack(bool dnt) {
+  Q_D(OxideQQuickWebContext);
+
+  if (doNotTrack() == dnt) {
+    return;
+  }
+
+  d->proxy()->setDoNotTrack(dnt);
+
+  emit doNotTrackEnabledChanged();
 }
 
 #include "moc_oxideqquickwebcontext_p.cpp"
