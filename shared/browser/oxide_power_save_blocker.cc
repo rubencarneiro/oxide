@@ -23,6 +23,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/command_line.h"
 #include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
@@ -43,12 +44,16 @@ const char kUnityScreenPath[] = "/com/canonical/Unity/Screen";
 const char kUnityScreenInterface[] = "com.canonical.Unity.Screen";
 const int kInvalidCookie = -1;
 
+const char kFreeDesktopScreenSaverName[] = "org.freedesktop.ScreenSaver";
+const char kFreeDesktopScreenSaverPath[] = "/org/freedesktop/ScreenSaver";
+const char kFreeDestopScreenSaverInterface[] = "org.freedesktop.ScreenSaver";
+
 }
 
 class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
                          public BrowserPlatformIntegrationObserver {
  public:
-  PowerSaveBlocker();
+  PowerSaveBlocker(const std::string& description);
 
  private:
   virtual ~PowerSaveBlocker() {}
@@ -59,12 +64,19 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   void ApplyBlock();
   void RemoveBlock();
 
+  void ApplyBlockFreedesktop();
+  void RemoveBlockFreedesktop();
+
   // BrowserPlatformIntegrationObserver implementation
   void ApplicationStateChanged() final;
 
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
-  int cookie_;
+  union {
+    int unity_cookie_;
+    uint32 freedesktop_cookie_;
+  };
+  std::string description_;
 };
 
 void PowerSaveBlocker::Init() {
@@ -103,12 +115,11 @@ void PowerSaveBlocker::ApplyBlock() {
         new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
     scoped_ptr<dbus::MessageWriter> message_writer;
     message_writer.reset(new dbus::MessageWriter(method_call.get()));
-
     scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
         method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
     if (response) {
       dbus::MessageReader message_reader(response.get());
-      if (!message_reader.PopInt32(&cookie_)) {
+      if (!message_reader.PopInt32(&unity_cookie_)) {
         LOG(ERROR) << "Invalid response for screen blanking inhibition request: "
                    << response->ToString();
       }
@@ -116,7 +127,7 @@ void PowerSaveBlocker::ApplyBlock() {
       LOG(ERROR) << "Failed to inhibit screen blanking";
     }
   } else {
-    NOTIMPLEMENTED();
+    ApplyBlockFreedesktop();
   }
 }
 
@@ -125,7 +136,7 @@ void PowerSaveBlocker::RemoveBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    if (cookie_ != kInvalidCookie) {
+    if (unity_cookie_ != kInvalidCookie) {
       DCHECK(bus_.get());
       scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
           kUnityScreenServiceName,
@@ -134,10 +145,10 @@ void PowerSaveBlocker::RemoveBlock() {
       method_call.reset(
           new dbus::MethodCall(kUnityScreenInterface, "removeDisplayOnRequest"));
       dbus::MessageWriter message_writer(method_call.get());
-      message_writer.AppendInt32(cookie_);
+      message_writer.AppendInt32(unity_cookie_);
       object_proxy->CallMethodAndBlock(
           method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
-      cookie_ = kInvalidCookie;
+      unity_cookie_ = kInvalidCookie;
     }
 
     if (bus_.get()) {
@@ -145,7 +156,60 @@ void PowerSaveBlocker::RemoveBlock() {
       bus_ = nullptr;
     }
   } else {
-    NOTIMPLEMENTED();
+    RemoveBlockFreedesktop();
+  }
+}
+
+void PowerSaveBlocker::ApplyBlockFreedesktop() {
+  DCHECK(!bus_.get());
+  dbus::Bus::Options options;
+  options.bus_type = dbus::Bus::SESSION;
+  options.connection_type = dbus::Bus::PRIVATE;
+  bus_ = new dbus::Bus(options);
+
+  scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
+        kFreeDesktopScreenSaverName,
+        dbus::ObjectPath(kFreeDesktopScreenSaverPath));
+  scoped_ptr<dbus::MethodCall> method_call;
+  method_call.reset(
+      new dbus::MethodCall(kFreeDestopScreenSaverInterface, "Inhibit"));
+  scoped_ptr<dbus::MessageWriter> message_writer;
+  message_writer.reset(new dbus::MessageWriter(method_call.get()));
+  message_writer->AppendString(base::CommandLine::ForCurrentProcess()->GetProgram().value());
+  message_writer->AppendString(description_);
+
+  scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
+      method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
+  if (response) {
+    dbus::MessageReader message_reader(response.get());
+    if (!message_reader.PopUint32(&freedesktop_cookie_)) {
+      LOG(ERROR) << "Invalid response for screen blanking inhibition request: "
+                 << response->ToString();
+    }
+  } else {
+    LOG(ERROR) << "Failed to inhibit screen blanking";
+  }
+}
+
+void PowerSaveBlocker::RemoveBlockFreedesktop() {
+  if (freedesktop_cookie_ != uint32(kInvalidCookie)) {
+    DCHECK(bus_.get());
+    scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
+        kFreeDesktopScreenSaverName,
+        dbus::ObjectPath(kFreeDesktopScreenSaverPath));
+    scoped_ptr<dbus::MethodCall> method_call;
+    method_call.reset(
+        new dbus::MethodCall(kFreeDestopScreenSaverInterface, "Uninhibit"));
+    dbus::MessageWriter message_writer(method_call.get());
+    message_writer.AppendUint32(freedesktop_cookie_);
+    object_proxy->CallMethodAndBlock(
+        method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
+    freedesktop_cookie_ = kInvalidCookie;
+  }
+
+  if (bus_.get()) {
+    bus_->ShutdownAndBlock();
+    bus_ = nullptr;
   }
 }
 
@@ -153,23 +217,25 @@ void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
   if (state != BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-      cookie_ == kInvalidCookie) {
+      unity_cookie_ == kInvalidCookie) {
     Init();
   } else if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-             cookie_ != kInvalidCookie) {
+             unity_cookie_ != kInvalidCookie) {
     CleanUp();
   }
 }
 
-PowerSaveBlocker::PowerSaveBlocker()
+PowerSaveBlocker::PowerSaveBlocker(const std::string& description)
     : form_factor_(oxide::GetFormFactorHint())
-    , cookie_(kInvalidCookie) {}
+    , unity_cookie_(kInvalidCookie)
+    , description_(description)
+{}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,
     content::PowerSaveBlocker::Reason reason,
     const std::string& description) {
-  return new PowerSaveBlocker();
+  return new PowerSaveBlocker(description);
 }
 
 } // namespace oxide
