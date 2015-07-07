@@ -58,6 +58,7 @@ class BrowserPlatformIntegration : public QObject,
   content::LocationProvider* CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
+  media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;

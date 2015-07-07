@@ -32,6 +32,9 @@ class GURL;
 namespace content {
 class LocationProvider;
 }
+namespace media {
+class VideoCaptureDeviceFactory;
+}
 
 namespace oxide {
 
@@ -95,6 +98,8 @@ class BrowserPlatformIntegration {
 
   // Get the current application state
   virtual ApplicationState GetApplicationState();
+
+  virtual media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() = 0;
 
  protected:
   BrowserPlatformIntegration();

@@ -1,0 +1,25 @@
+diff -r 77c616091ced media/media.gyp
+--- a/media/media.gyp	Tue May 05 08:48:09 2015 +0300
++++ b/media/media.gyp	Thu May 07 09:04:37 2015 +0300
+@@ -577,10 +577,6 @@
+         'video/capture/linux/v4l2_capture_delegate_single_plane.h',
+         'video/capture/linux/video_capture_device_chromeos.cc',
+         'video/capture/linux/video_capture_device_chromeos.h',
+-        'video/capture/linux/video_capture_device_factory_linux.cc',
+-        'video/capture/linux/video_capture_device_factory_linux.h',
+-        'video/capture/linux/video_capture_device_linux.cc',
+-        'video/capture/linux/video_capture_device_linux.h',
+         'video/capture/mac/platform_video_capturing_mac.h',
+         'video/capture/mac/video_capture_device_avfoundation_mac.h',
+         'video/capture/mac/video_capture_device_avfoundation_mac.mm',
+@@ -625,7 +621,9 @@
+         'video/video_decode_accelerator.h',
+         'video/video_encode_accelerator.cc',
+         'video/video_encode_accelerator.h',
+-        'formats/webm/webm_webvtt_parser.h'
++        'formats/webm/webm_webvtt_parser.h',
++        '<(DEPTH)/../../../shared/port/media/video_capture_device_factory_oxide.cc',
++        '<(DEPTH)/../../../shared/port/media/video_capture_device_factory_oxide.h',
+       ],
+       'direct_dependent_settings': {
+         'include_dirs': [
