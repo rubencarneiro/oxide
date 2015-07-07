@@ -1,11 +1,11 @@
 # HG changeset patch
-# Parent f59a088a4ec2082befac9191c7106c2994a6417f
+# Parent a43e2531a59b74ae44e8d23907b3a5a4e14dfb37
 # User oxide
 
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -1520,17 +1520,19 @@ void WebContentsImpl::CreateNewWindow(
+@@ -1664,17 +1664,19 @@ void WebContentsImpl::CreateNewWindow(
    if (delegate_ &&
        !delegate_->ShouldCreateWebContents(this,
                                            route_id,
@@ -29,13 +29,13 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/browser/web_contents_delegate.cc
 --- a/content/public/browser/web_contents_delegate.cc
 +++ b/content/public/browser/web_contents_delegate.cc
-@@ -132,17 +132,19 @@ bool WebContentsDelegate::OnGoToEntryOff
+@@ -133,17 +133,19 @@ bool WebContentsDelegate::OnGoToEntryOff
  bool WebContentsDelegate::ShouldCreateWebContents(
      WebContents* web_contents,
      int route_id,
      int main_frame_route_id,
      WindowContainerType window_container_type,
-     const base::string16& frame_name,
+     const std::string& frame_name,
      const GURL& target_url,
      const std::string& partition_id,
 -    SessionStorageNamespace* session_storage_namespace) {
@@ -53,13 +53,13 @@ diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/br
 diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h
 --- a/content/public/browser/web_contents_delegate.h
 +++ b/content/public/browser/web_contents_delegate.h
-@@ -309,17 +309,19 @@ class CONTENT_EXPORT WebContentsDelegate
+@@ -293,17 +293,19 @@ class CONTENT_EXPORT WebContentsDelegate
    virtual bool ShouldCreateWebContents(
        WebContents* web_contents,
        int route_id,
        int main_frame_route_id,
        WindowContainerType window_container_type,
-       const base::string16& frame_name,
+       const std::string& frame_name,
        const GURL& target_url,
        const std::string& partition_id,
 -      SessionStorageNamespace* session_storage_namespace);
@@ -71,6 +71,6 @@ diff --git a/content/public/browser/web_contents_delegate.h b/content/public/bro
    // typically happens when popups are created.
    virtual void WebContentsCreated(WebContents* source_contents,
                                    int opener_render_frame_id,
-                                   const base::string16& frame_name,
+                                   const std::string& frame_name,
                                    const GURL& target_url,
                                    WebContents* new_contents) {}
