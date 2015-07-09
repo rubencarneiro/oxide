@@ -76,7 +76,7 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
   union {
-    int unity_cookie_;
+    int32 unity_cookie_;
     uint32 freedesktop_cookie_;
   };
   std::string description_;
