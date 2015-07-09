@@ -48,6 +48,9 @@ const char kFreeDesktopScreenSaverName[] = "org.freedesktop.ScreenSaver";
 const char kFreeDesktopScreenSaverPath[] = "/org/freedesktop/ScreenSaver";
 const char kFreeDestopScreenSaverInterface[] = "org.freedesktop.ScreenSaver";
 
+const char kDefaultApplicationName[] = "Oxide";
+const char kDefaultInhibitReason[] = "Active Application";
+
 }
 
 class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
@@ -115,6 +118,7 @@ void PowerSaveBlocker::ApplyBlock() {
         new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
     scoped_ptr<dbus::MessageWriter> message_writer;
     message_writer.reset(new dbus::MessageWriter(method_call.get()));
+
     scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
         method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
     if (response) {
@@ -161,6 +165,16 @@ void PowerSaveBlocker::RemoveBlock() {
 }
 
 void PowerSaveBlocker::ApplyBlockFreedesktop() {
+  std::string application_name{kDefaultApplicationName};
+  std::string description{kDefaultInhibitReason};
+
+  if (!base::CommandLine::ForCurrentProcess()->GetProgram().empty()) {
+    application_name = base::CommandLine::ForCurrentProcess()->GetProgram().value();
+  }
+  if (!description_.empty()) {
+    description = description_;
+  }
+
   DCHECK(!bus_.get());
   dbus::Bus::Options options;
   options.bus_type = dbus::Bus::SESSION;
@@ -175,8 +189,8 @@ void PowerSaveBlocker::ApplyBlockFreedesktop() {
       new dbus::MethodCall(kFreeDestopScreenSaverInterface, "Inhibit"));
   scoped_ptr<dbus::MessageWriter> message_writer;
   message_writer.reset(new dbus::MessageWriter(method_call.get()));
-  message_writer->AppendString(base::CommandLine::ForCurrentProcess()->GetProgram().value());
-  message_writer->AppendString(description_);
+  message_writer->AppendString(application_name);
+  message_writer->AppendString(description);
 
   scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
       method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
@@ -199,7 +213,7 @@ void PowerSaveBlocker::RemoveBlockFreedesktop() {
         dbus::ObjectPath(kFreeDesktopScreenSaverPath));
     scoped_ptr<dbus::MethodCall> method_call;
     method_call.reset(
-        new dbus::MethodCall(kFreeDestopScreenSaverInterface, "Uninhibit"));
+        new dbus::MethodCall(kFreeDestopScreenSaverInterface, "UnInhibit"));
     dbus::MessageWriter message_writer(method_call.get());
     message_writer.AppendUint32(freedesktop_cookie_);
     object_proxy->CallMethodAndBlock(
