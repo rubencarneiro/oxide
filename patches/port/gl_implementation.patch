@@ -47,13 +47,13 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -401,17 +403,17 @@
-             'harfbuzz_font_skia.h',
-             'render_text.cc',
-             'render_text.h',
-             'render_text_harfbuzz.cc',
-             'render_text_harfbuzz.h',
-             'text_utils_skia.cc',
+@@ -437,17 +439,17 @@
+                           '--working_directory=vector_icons/',
+                           '--output_cc=<(vector_icons_cc_file)',
+                           '--output_h=<(vector_icons_public_h_file)',
+               ],
+               'message': 'Aggregating vector resources.',
+             },
            ],
          }],
 -        ['use_x11==1', {
@@ -215,7 +215,7 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
  #endif
  
  #if defined(OS_WIN) || defined(USE_X11) || defined(OS_ANDROID) || defined(USE_OZONE)
-@@ -50,17 +50,17 @@ std::string DriverEGL::GetPlatformExtens
+@@ -47,16 +47,16 @@ std::string DriverEGL::GetPlatformExtens
  
  // static
  std::string DriverEGL::GetClientExtensions() {
@@ -227,13 +227,12 @@ diff --git a/ui/gl/gl_bindings.cc b/ui/gl/gl_bindings.cc
 -#if defined(USE_X11)
 +#if defined(OS_LINUX)
  std::string DriverGLX::GetPlatformExtensions() {
-   DCHECK(g_driver_glx.fn.glXQueryExtensionsStringFn);
-   const char* str =
-       g_driver_glx.fn.glXQueryExtensionsStringFn(gfx::GetXDisplay(), 0);
+   const char* str = glXQueryExtensionsString(gfx::GetXDisplay(), 0);
    return str ? std::string(str) : "";
  }
  #endif
  
+ }  // namespace gfx
 diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 --- a/ui/gl/gl_bindings.h
 +++ b/ui/gl/gl_bindings.h
@@ -322,7 +321,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 --- a/ui/gl/gl_implementation.cc
 +++ b/ui/gl/gl_implementation.cc
-@@ -59,16 +59,19 @@ WGLApi* g_current_wgl_context;
+@@ -61,16 +61,19 @@ WGLApi* g_current_wgl_context;
  #elif defined(USE_X11)
  
  EGLApi* g_current_egl_context;
