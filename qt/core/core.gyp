@@ -227,7 +227,6 @@
         'api/oxideqcertificateerror_p.h',
         'api/oxideqdownloadrequest.cc',
         'api/oxideqdownloadrequest.h',
-        'api/oxideqdownloadrequest_p.h',
         'api/oxideqglobal.cc',
         'api/oxideqglobal.h',
         'api/oxideqhttpauthenticationrequest.cc',

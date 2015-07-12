@@ -102,7 +102,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
-  void LoadEvent(OxideQLoadEvent* event) override;
+  void LoadEvent(const OxideQLoadEvent& event) override;
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
@@ -134,7 +134,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void ScheduleUpdate() override;
   void EvictCurrentFrame() override;
   void SetInputMethodEnabled(bool enabled) override;
-  void DownloadRequested(OxideQDownloadRequest* download_request) override;
+  void DownloadRequested(
+      const OxideQDownloadRequest& download_request) override;
   void HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequest* authentication_request) override;
   void CertificateError(OxideQCertificateError* cert_error) override;

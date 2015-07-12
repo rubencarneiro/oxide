@@ -82,6 +82,8 @@ TestWebView {
       var cdata = cert_data_from_id(data.cert);
 
       while (cdata) {
+        verify(certificate.isValid);
+
         compare(certificate.serialNumber, cdata.serial);
         compare(certificate.effectiveDate.getTime(), cdata.startDate);
         compare(certificate.expiryDate.getTime(), cdata.expiryDate);
@@ -106,7 +108,7 @@ TestWebView {
         cdata = cert_data_from_id(cdata.parent);
       }
 
-      verify(!certificate);
+      verify(!certificate.isValid);
     }
   }
 }
