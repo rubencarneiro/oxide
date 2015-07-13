@@ -27,7 +27,6 @@
 #include "base/logging.h"
 #include "base/time/time.h"
 
-QT_USE_NAMESPACE
 
 namespace oxide {
 namespace qt {
