@@ -83,12 +83,12 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1970,16 +1970,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
-   if (!web_stream.isNull())
+@@ -2017,16 +2017,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(client);
  
  #if defined(OS_ANDROID)
-   return CreateAndroidWebMediaPlayer(client, GetMediaPermission(), initial_cdm);
+   return CreateAndroidWebMediaPlayer(client, encrypted_client,
+                                      GetMediaPermission(), initial_cdm);
  #else
    scoped_refptr<media::MediaLog> media_log(new RenderMediaLog());
  

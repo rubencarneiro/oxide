@@ -46,7 +46,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.cc b/content/brow
 +        os_type_override_, os_version_override_, gpu_info_);
  
      disabled_extensions_ =
-         JoinString(gpu_driver_bug_list_->GetDisabledExtensions(), ' ');
+         base::JoinString(gpu_driver_bug_list_->GetDisabledExtensions(), " ");
    }
    gpu::GpuDriverBugList::AppendWorkaroundsFromCommandLine(
        &gpu_driver_bugs_, *base::CommandLine::ForCurrentProcess());
@@ -163,7 +163,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -340,9 +340,15 @@ const wchar_t* ContentBrowserClient::Get
+@@ -352,9 +352,15 @@ base::string16 ContentBrowserClient::Get
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
      WebContents* web_contents) {
@@ -200,7 +200,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
-@@ -625,13 +626,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -661,13 +662,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)
@@ -220,7 +220,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
 diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
 --- a/gpu/config/gpu_control_list.cc
 +++ b/gpu/config/gpu_control_list.cc
-@@ -1331,29 +1331,31 @@ GpuControlList::GpuControlList()
+@@ -1336,29 +1336,31 @@ GpuControlList::GpuControlList()
  }
  
  GpuControlList::~GpuControlList() {
@@ -255,7 +255,7 @@ diff --git a/gpu/config/gpu_control_list.cc b/gpu/config/gpu_control_list.cc
      return false;
  
    const base::ListValue* list = NULL;
-@@ -1371,17 +1373,19 @@ bool GpuControlList::LoadList(const base
+@@ -1376,17 +1378,19 @@ bool GpuControlList::LoadList(const base
      if (entry.get() == NULL)
        return false;
      if (entry->id() > max_entry_id)
