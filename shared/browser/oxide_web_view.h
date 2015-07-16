@@ -409,7 +409,7 @@ class WebView : public ScriptMessageTarget,
       int route_id,
       int main_frame_route_id,
       WindowContainerType window_container_type,
-      const base::string16& frame_name,
+      const std::string& frame_name,
       const GURL& target_url,
       const std::string& partition_id,
       content::SessionStorageNamespace* session_storage_namespace,
@@ -419,7 +419,7 @@ class WebView : public ScriptMessageTarget,
                            const content::NativeWebKeyboardEvent& event) final;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
-                          const base::string16& frame_name,
+                          const std::string& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) final;
   void AddNewContents(content::WebContents* source,
@@ -482,7 +482,8 @@ class WebView : public ScriptMessageTarget,
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
-      const base::string16& error_description) final;
+      const base::string16& error_description,
+      bool was_ignored_by_handler) final;
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
@@ -495,7 +496,8 @@ class WebView : public ScriptMessageTarget,
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
                    int error_code,
-                   const base::string16& error_description) final;
+                   const base::string16& error_description,
+                   bool was_ignored_by_handler) final;
   void DidGetRedirectForResourceRequest(
       content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;

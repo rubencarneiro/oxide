@@ -18,6 +18,7 @@
 #include "oxide_user_script.h"
 
 #include "base/pickle.h"
+#include "base/strings/pattern.h"
 #include "base/strings/string_util.h"
 #include "extensions/common/url_pattern.h"
 
@@ -27,7 +28,7 @@ bool UserScript::URLMatchesGlobs(const std::vector<std::string>& globs,
                                  const GURL& url) const {
   for (std::vector<std::string>::const_iterator it = globs.begin();
        it != globs.end(); ++it) {
-    if (MatchPattern(url.spec(), *it)) {
+    if (base::MatchPattern(url.spec(), *it)) {
       return true;
     }
   }

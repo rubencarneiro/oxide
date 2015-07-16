@@ -134,11 +134,6 @@ bool NetworkDelegate::OnCanAccessFile(const net::URLRequest& request,
   return true;
 }
 
-bool NetworkDelegate::OnCanThrottleRequest(
-    const net::URLRequest& request) const {
-  return false;
-}
-
 bool NetworkDelegate::OnCanEnablePrivacyMode(
     const GURL& url,
     const GURL& first_party_for_cookies) const {

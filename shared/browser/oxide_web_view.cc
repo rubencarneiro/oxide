@@ -640,7 +640,7 @@ bool WebView::ShouldCreateWebContents(
     int route_id,
     int main_frame_route_id,
     WindowContainerType window_container_type,
-    const base::string16& frame_name,
+    const std::string& frame_name,
     const GURL& target_url,
     const std::string& partition_id,
     content::SessionStorageNamespace* session_storage_namespace,
@@ -677,7 +677,7 @@ void WebView::HandleKeyboardEvent(
 
 void WebView::WebContentsCreated(content::WebContents* source,
                                  int source_frame_id,
-                                 const base::string16& frame_name,
+                                 const std::string& frame_name,
                                  const GURL& target_url,
                                  content::WebContents* new_contents) {
   DCHECK_VALID_SOURCE_CONTENTS
@@ -958,7 +958,8 @@ void WebView::DidFailProvisionalLoad(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     int error_code,
-    const base::string16& error_description) {
+    const base::string16& error_description,
+    bool was_ignored_by_handler) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     return;
@@ -1033,7 +1034,8 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
                           const GURL& validated_url,
                           int error_code,
-                          const base::string16& error_description) {
+                          const base::string16& error_description,
+                          bool was_ignored_by_handler) {
   if (render_frame_host->GetParent()) {
     return;
   }
@@ -1235,7 +1237,7 @@ void WebView::Init(Params* params) {
       web_contents_->GetController().Restore(
           init_data_->restore_index,
           init_data_->restore_type,
-          &entries.get());
+          &entries);
     }
 
     CreateHelpers(web_contents_.get());

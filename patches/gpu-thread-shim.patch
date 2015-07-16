@@ -19,13 +19,13 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 +
  namespace content {
  
- namespace {
- 
- class GpuChannelManagerMessageFilter : public IPC::MessageFilter {
-  public:
-   GpuChannelManagerMessageFilter(
-       GpuMemoryBufferFactory* gpu_memory_buffer_factory)
-@@ -192,17 +194,20 @@ void GpuChannelManager::OnEstablishChann
+ GpuChannelManager::GpuChannelManager(
+     MessageRouter* router,
+     GpuWatchdog* watchdog,
+     base::SingleThreadTaskRunner* io_task_runner,
+     base::WaitableEvent* shutdown_event,
+     IPC::SyncChannel* channel,
+@@ -132,17 +134,20 @@ void GpuChannelManager::OnEstablishChann
                                             bool share_context,
                                             bool allow_future_sync_points) {
    IPC::ChannelHandle channel_handle;
@@ -68,7 +68,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -541,16 +542,20 @@
+@@ -545,16 +546,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -92,7 +92,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -26,16 +26,21 @@
+@@ -27,16 +27,21 @@
  #endif
  
  namespace content {
@@ -114,15 +114,15 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -92,20 +97,37 @@ GpuChildThread::GpuChildThread(const InP
- #if !defined(OS_ANDROID)
-   // For single process and in-process GPU mode, we need to load and
-   // initialize the GL implementation and locate the GL entry points here.
-   // On Android, GLSurface::InitializeOneOff() is called from BrowserMainLoop
-   // before getting here. crbug.com/326295
+@@ -147,20 +152,37 @@ GpuChildThread::GpuChildThread(
+   DCHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
+              switches::kSingleProcess) ||
+          base::CommandLine::ForCurrentProcess()->HasSwitch(
+              switches::kInProcessGPU));
+ 
    if (!gfx::GLSurface::InitializeOneOff())
      VLOG(1) << "gfx::GLSurface::InitializeOneOff failed";
- #endif
+ 
 +  g_lazy_tls.Pointer()->Set(this);
    g_thread_safe_sender.Get() = thread_safe_sender();
 +  g_thread_safe_task_runner.Get() = message_loop()->task_runner();
@@ -146,12 +146,12 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 +  return inst->gpu_channel_manager_.get();
  }
  
- void GpuChildThread::Shutdown() {
-   ChildThreadImpl::Shutdown();
-   logging::SetLogMessageHandler(NULL);
- }
- 
- void GpuChildThread::Init(const base::Time& process_start_time) {
+ // static
+ gfx::GpuMemoryBufferType GpuChildThread::GetGpuMemoryBufferFactoryType() {
+   std::vector<gfx::GpuMemoryBufferType> supported_types;
+   GpuMemoryBufferFactory::GetSupportedTypes(&supported_types);
+   DCHECK(!supported_types.empty());
+   // Note: We always use the preferred type.
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
@@ -173,26 +173,26 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  }
  
  namespace content {
+ class GpuMemoryBufferFactory;
  class GpuWatchdogThread;
  
- // The main thread of the GPU child process. There will only ever be one of
-@@ -41,16 +45,19 @@ class GpuChildThread : public ChildThrea
-                           bool dead_on_arrival,
-                           const gpu::GPUInfo& gpu_info,
-                           const DeferredMessages& deferred_messages);
+@@ -44,16 +48,19 @@ class GpuChildThread : public ChildThrea
+                  const DeferredMessages& deferred_messages,
+                  GpuMemoryBufferFactory* gpu_memory_buffer_factory);
  
-   explicit GpuChildThread(const InProcessChildThreadParams& params);
+   GpuChildThread(const InProcessChildThreadParams& params,
+                  GpuMemoryBufferFactory* gpu_memory_buffer_factory);
  
    ~GpuChildThread() override;
  
 +  CONTENT_EXPORT static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 +  CONTENT_EXPORT static GpuChannelManager* GetChannelManager();
 +
+   static gfx::GpuMemoryBufferType GetGpuMemoryBufferFactoryType();
+ 
    void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
  
    // ChildThread overrides.
-   bool Send(IPC::Message* msg) override;
-   bool OnControlMessageReceived(const IPC::Message& msg) override;

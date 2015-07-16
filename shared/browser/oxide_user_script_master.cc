@@ -50,7 +50,7 @@ bool GetValue(const base::StringPiece& line,
   std::string temp(line.data() + index + prefix.length(),
                    line.length() - index - prefix.length());
 
-  if (temp.empty() || !IsWhitespace(temp[0])) {
+  if (temp.empty() || !base::IsUnicodeWhitespace(temp[0])) {
     return false;
   }
 
@@ -216,12 +216,12 @@ void UserScriptMaster::ParseMetadata(UserScript* script) {
 
       std::string value;
       if (GetValue(line, kIncludeDeclaration, &value)) {
-        ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
-        ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
         script->add_include_glob(value);
       } else if (GetValue(line, kExcludeDeclaration, &value)) {
-        ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
-        ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
         script->add_exclude_glob(value);
       } else if (GetValue(line, kMatchDeclaration, &value)) {
         URLPattern pattern(URLPattern::SCHEME_HTTP | URLPattern::SCHEME_HTTPS);
