@@ -115,9 +115,8 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
                               info.minRowBytes());
 
     for (SkRegion::Iterator it(outdated_region); !it.done(); it.next()) {
-      const SkIRect& src_rect = it.rect();
-      SkRect dst_rect = SkRect::Make(src_rect);
-      surface_->getCanvas()->drawBitmapRect(back_bitmap, &src_rect, dst_rect);
+      SkRect rect = SkRect::Make(it.rect());
+      surface_->getCanvas()->drawBitmapRect(back_bitmap, &rect, rect, nullptr);
     }
   }
 
