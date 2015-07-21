@@ -54,6 +54,9 @@
         '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
+      'ldflags': [
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
+      ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
