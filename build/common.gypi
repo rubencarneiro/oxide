@@ -21,6 +21,7 @@
     'print_ld_stats%': 0,
     'enable_tcmalloc%': 0,
     'disable_nacl': 1,
+    'ffmpeg_component': 'shared_library',
     'linux_use_bundled_gold': 0,
     'linux_use_bundled_binutils': 0,
     'linux_use_gold_flags': 1,
