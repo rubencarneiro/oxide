@@ -32,6 +32,7 @@
 
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 
+#include "oxide_browser_platform_integration.h"
 #include "oxide_browser_platform_integration_observer.h"
 #include "oxide_form_factor.h"
 
@@ -48,7 +49,6 @@ const char kFreeDesktopScreenSaverName[] = "org.freedesktop.ScreenSaver";
 const char kFreeDesktopScreenSaverPath[] = "/org/freedesktop/ScreenSaver";
 const char kFreeDestopScreenSaverInterface[] = "org.freedesktop.ScreenSaver";
 
-const char kDefaultApplicationName[] = "Oxide";
 const char kDefaultInhibitReason[] = "Active Application";
 
 }
@@ -67,6 +67,9 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   void ApplyBlock();
   void RemoveBlock();
 
+  void ApplyBlockUnityScreenService();
+  void RemoveBlockUnityScreenService();
+
   void ApplyBlockFreedesktop();
   void RemoveBlockFreedesktop();
 
@@ -76,8 +79,8 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
   union {
-    int32 unity_cookie_;
-    uint32 freedesktop_cookie_;
+    int32_t unity_cookie_;
+    uint32_t freedesktop_cookie_;
   };
   std::string description_;
 };
@@ -104,32 +107,7 @@ void PowerSaveBlocker::ApplyBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    DCHECK(!bus_.get());
-    dbus::Bus::Options options;
-    options.bus_type = dbus::Bus::SYSTEM;
-    options.connection_type = dbus::Bus::PRIVATE;
-    bus_ = new dbus::Bus(options);
-
-    scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
-          kUnityScreenServiceName,
-          dbus::ObjectPath(kUnityScreenPath));
-    scoped_ptr<dbus::MethodCall> method_call;
-    method_call.reset(
-        new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
-    scoped_ptr<dbus::MessageWriter> message_writer;
-    message_writer.reset(new dbus::MessageWriter(method_call.get()));
-
-    scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
-        method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
-    if (response) {
-      dbus::MessageReader message_reader(response.get());
-      if (!message_reader.PopInt32(&unity_cookie_)) {
-        LOG(ERROR) << "Invalid response for screen blanking inhibition request: "
-                   << response->ToString();
-      }
-    } else {
-      LOG(ERROR) << "Failed to inhibit screen blanking";
-    }
+    ApplyBlockUnityScreenService();
   } else {
     ApplyBlockFreedesktop();
   }
@@ -140,37 +118,68 @@ void PowerSaveBlocker::RemoveBlock() {
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
-    if (unity_cookie_ != kInvalidCookie) {
-      DCHECK(bus_.get());
-      scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
-          kUnityScreenServiceName,
-          dbus::ObjectPath(kUnityScreenPath));
-      scoped_ptr<dbus::MethodCall> method_call;
-      method_call.reset(
-          new dbus::MethodCall(kUnityScreenInterface, "removeDisplayOnRequest"));
-      dbus::MessageWriter message_writer(method_call.get());
-      message_writer.AppendInt32(unity_cookie_);
-      object_proxy->CallMethodAndBlock(
-          method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
-      unity_cookie_ = kInvalidCookie;
-    }
-
-    if (bus_.get()) {
-      bus_->ShutdownAndBlock();
-      bus_ = nullptr;
-    }
+    RemoveBlockUnityScreenService();
   } else {
     RemoveBlockFreedesktop();
   }
 }
 
+void PowerSaveBlocker::ApplyBlockUnityScreenService() {
+  DCHECK(!bus_.get());
+  dbus::Bus::Options options;
+  options.bus_type = dbus::Bus::SYSTEM;
+  options.connection_type = dbus::Bus::PRIVATE;
+  bus_ = new dbus::Bus(options);
+
+  scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
+        kUnityScreenServiceName,
+        dbus::ObjectPath(kUnityScreenPath));
+  scoped_ptr<dbus::MethodCall> method_call;
+  method_call.reset(
+      new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
+  scoped_ptr<dbus::MessageWriter> message_writer;
+  message_writer.reset(new dbus::MessageWriter(method_call.get()));
+
+  scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
+      method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
+  if (response) {
+    dbus::MessageReader message_reader(response.get());
+    if (!message_reader.PopInt32(&unity_cookie_)) {
+      LOG(ERROR) << "Invalid response for screen blanking inhibition request: "
+                 << response->ToString();
+    }
+  } else {
+    LOG(ERROR) << "Failed to inhibit screen blanking";
+  }
+}
+
+void PowerSaveBlocker::RemoveBlockUnityScreenService() {
+  if (unity_cookie_ != kInvalidCookie) {
+    DCHECK(bus_.get());
+    scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
+        kUnityScreenServiceName,
+        dbus::ObjectPath(kUnityScreenPath));
+    scoped_ptr<dbus::MethodCall> method_call;
+    method_call.reset(
+        new dbus::MethodCall(kUnityScreenInterface, "removeDisplayOnRequest"));
+    dbus::MessageWriter message_writer(method_call.get());
+    message_writer.AppendInt32(unity_cookie_);
+    object_proxy->CallMethodAndBlock(
+        method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT);
+    unity_cookie_ = kInvalidCookie;
+  }
+
+  if (bus_.get()) {
+    bus_->ShutdownAndBlock();
+    bus_ = nullptr;
+  }
+}
+
 void PowerSaveBlocker::ApplyBlockFreedesktop() {
-  std::string application_name{kDefaultApplicationName};
+  std::string application_name =
+      BrowserPlatformIntegration::GetInstance()->GetApplicationName();
   std::string description{kDefaultInhibitReason};
 
-  if (!base::CommandLine::ForCurrentProcess()->GetProgram().empty()) {
-    application_name = base::CommandLine::ForCurrentProcess()->GetProgram().value();
-  }
   if (!description_.empty()) {
     description = description_;
   }
@@ -206,7 +215,7 @@ void PowerSaveBlocker::ApplyBlockFreedesktop() {
 }
 
 void PowerSaveBlocker::RemoveBlockFreedesktop() {
-  if (freedesktop_cookie_ != uint32(kInvalidCookie)) {
+  if (freedesktop_cookie_ != uint32_t(kInvalidCookie)) {
     DCHECK(bus_.get());
     scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
         kFreeDesktopScreenSaverName,
