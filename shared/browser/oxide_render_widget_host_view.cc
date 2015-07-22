@@ -673,8 +673,6 @@ void RenderWidgetHostView::SetDelegate(
 }
 
 void RenderWidgetHostView::Blur() {
-  host_->SetInputMethodActive(false);
-
   host_->SetActive(false);
   host_->Blur();
 }
@@ -721,9 +719,6 @@ void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
 void RenderWidgetHostView::Focus() {
   host_->Focus();
   host_->SetActive(true);
-
-  // XXX: Should we have a run-time check to see if this is required?
-  host_->SetInputMethodActive(true);
 }
 
 } // namespace oxide

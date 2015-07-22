@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -223,9 +223,17 @@ std::string ContentRendererClient::GetUs
+@@ -209,9 +209,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -22,7 +22,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -32,16 +32,18 @@ class SingleThreadTaskRunner;
+@@ -30,16 +30,18 @@ class SingleThreadTaskRunner;
  namespace blink {
  class WebAppBannerClient;
  class WebAudioDevice;
@@ -41,7 +41,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebPrescientNetworking;
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
-@@ -54,16 +56,17 @@ class WebWorkerContentSettingsClientProx
+@@ -52,16 +54,17 @@ class WebWorkerContentSettingsClientProx
  struct WebPluginParams;
  struct WebURLError;
  }
@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -311,13 +314,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -292,13 +295,20 @@ class CONTENT_EXPORT ContentRendererClie
    virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
        RenderFrame* render_frame);
  
@@ -83,10 +83,10 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2017,16 +2017,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2009,16 +2009,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(client);
  
- #if defined(OS_ANDROID)
+ #if defined(OS_ANDROID) && !defined(ENABLE_MEDIA_PIPELINE_ON_ANDROID)
    return CreateAndroidWebMediaPlayer(client, encrypted_client,
                                       GetMediaPermission(), initial_cdm);
  #else
