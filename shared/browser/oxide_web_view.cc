@@ -1028,7 +1028,11 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  client_->LoadSucceeded(validated_url, entry->GetHttpStatusCode());
+  // Some transient about:blank navigations are not committed so those
+  // endup with no navigation entries whatsoever.
+  if (entry) {
+    client_->LoadSucceeded(validated_url, entry->GetHttpStatusCode());
+  }
 }
 
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
