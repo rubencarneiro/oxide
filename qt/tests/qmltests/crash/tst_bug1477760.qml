@@ -10,7 +10,9 @@ TestWebView {
 
   Component {
     id: webViewFactory
-    TestWebView {}
+    TestWebView {
+      context: webView.context
+    }
   }
 
   property var created: null
@@ -25,13 +27,15 @@ TestWebView {
     when: windowShown
 
     function test_bug1477760() {
-      webView.url = "http://testsuite/tst_nav.html";
+      webView.url = "http://testsuite/tst_bug1477760.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
       mouseClick(webView, webView.width / 2, webView.height / 2);
 
       TestUtils.waitFor(function() { return !!webView.created; });
+      verify(webView.created.waitForLoadSucceeded(),
+             "Timed out waiting for successful load");
     }
   }
 }
