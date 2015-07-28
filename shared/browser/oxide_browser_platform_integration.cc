@@ -25,6 +25,8 @@ namespace oxide {
 
 namespace {
 
+const char kDefaultApplicationName[] = "Oxide";
+
 BrowserPlatformIntegration* g_instance;
 
 }
@@ -72,6 +74,10 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
   return APPLICATION_STATE_ACTIVE;
+}
+
+std::string BrowserPlatformIntegration::GetApplicationName() {
+  return kDefaultApplicationName;
 }
 
 void BrowserPlatformIntegration::AddObserver(
