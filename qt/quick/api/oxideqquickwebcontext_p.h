@@ -73,6 +73,8 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
 
   Q_PROPERTY(QVariantList userAgentOverrides READ userAgentOverrides WRITE setUserAgentOverrides NOTIFY userAgentOverridesChanged REVISION 3)
 
+  Q_PROPERTY(bool doNotTrackEnabled READ doNotTrack WRITE setDoNotTrack NOTIFY doNotTrackEnabledChanged REVISION 3)
+
   Q_ENUMS(CookiePolicy)
   Q_ENUMS(SessionCookieMode)
 
@@ -169,6 +171,9 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   QVariantList userAgentOverrides() const;
   void setUserAgentOverrides(const QVariantList& overrides);
 
+  bool doNotTrack() const;
+  void setDoNotTrack(bool dnt);
+
  Q_SIGNALS:
   void productChanged();
   void userAgentChanged();
@@ -191,6 +196,7 @@ class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
   Q_REVISION(3) void defaultAudioCaptureDeviceIdChanged();
   Q_REVISION(3) void defaultVideoCaptureDeviceIdChanged();
   Q_REVISION(3) void userAgentOverridesChanged();
+  Q_REVISION(3) void doNotTrackEnabledChanged();
 
  private:
   Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());

@@ -228,9 +228,7 @@ int BrowserMainParts::PreCreateThreads() {
 
   // In between now and PreMainMessageLoopRun, Chromium runs code that starts
   // the GPU thread, so we need to decide now whether to use a share context.
-  // This sucks a bit, because it means that GpuDataManagerImpl is initialized
-  // twice. Note also that this decision is based on basic graphics info only
-  content::GpuDataManagerImpl::GetInstance()->Initialize();
+  // Note that this decision is based on basic graphics info only
   if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
           gpu::USE_VIRTUALIZED_GL_CONTEXTS) ||
       gfx::GetGLImplementation() == gfx::kGLImplementationDesktopGL) {

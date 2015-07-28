@@ -191,7 +191,8 @@ struct BrowserContextSharedIOData {
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
         host_mapping_rules(params.host_mapping_rules),
-        user_agent_settings(new UserAgentSettingsIOData(context)) {}
+        user_agent_settings(new UserAgentSettingsIOData(context)),
+        do_not_track(false) {}
 
   mutable base::Lock lock;
 
@@ -206,6 +207,8 @@ struct BrowserContextSharedIOData {
   std::vector<std::string> host_mapping_rules;
 
   scoped_ptr<UserAgentSettingsIOData> user_agent_settings;
+
+  bool do_not_track;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -341,6 +344,12 @@ int BrowserContextIOData::GetMaxCacheSizeHint() const {
   static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
   DCHECK_LE(max_cache_size_hint, upper_limit);
   return max_cache_size_hint;
+}
+
+bool BrowserContextIOData::GetDoNotTrack() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.do_not_track;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -869,10 +878,33 @@ scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
   return io_data()->cookie_store_;
 }
 
+
 TemporarySavedPermissionContext*
 BrowserContext::GetTemporarySavedPermissionContext() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetTemporarySavedPermissionContext();
+}
+
+bool BrowserContext::GetDoNotTrack() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetSharedData().do_not_track;
+}
+
+void BrowserContext::SetDoNotTrack(bool dnt) {
+  DCHECK(CalledOnValidThread());
+
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.do_not_track = dnt;
+
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyDoNotTrackChanged());
+  if (HasOffTheRecordContext()) {
+    FOR_EACH_OBSERVER(BrowserContextObserver,
+                      GetOffTheRecordContext()->observers_,
+                      NotifyDoNotTrackChanged());
+  }
 }
 
 } // namespace oxide

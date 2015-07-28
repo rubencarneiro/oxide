@@ -26,6 +26,10 @@
 
 namespace oxide {
 
+namespace {
+const char kDoNotTrackHeaderName[] = "DNT";
+}
+
 int NetworkDelegate::OnBeforeURLRequest(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
@@ -33,6 +37,12 @@ int NetworkDelegate::OnBeforeURLRequest(
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate.get()) {
     return net::OK;
+  }
+
+  bool do_not_track = context_->GetDoNotTrack();
+  if (do_not_track) {
+    request->SetExtraRequestHeaderByName(
+        kDoNotTrackHeaderName, "1", true);
   }
 
   return delegate->OnBeforeURLRequest(request, callback, new_url);
