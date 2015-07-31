@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -402,17 +404,17 @@
+@@ -404,17 +406,17 @@
              'render_text.cc',
              'render_text.h',
              'render_text_harfbuzz.cc',
@@ -161,13 +161,13 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -151,28 +155,28 @@
-           ],
+@@ -145,28 +149,28 @@
+         ],
          }],
-         ['OS=="linux"', {
+         ['OS in ("android", "linux")', {
            'sources': [
-             'gl_image_linux_dma_buffer.cc',
-             'gl_image_linux_dma_buffer.h',
+             'gl_implementation_osmesa.cc',
+             'gl_implementation_osmesa.h',
            ],
          }],
 -        ['use_x11 == 1', {
