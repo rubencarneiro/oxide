@@ -303,11 +303,6 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   UpdateCursorOnWebView();
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline,
-                                                int flags) {}
-
 void RenderWidgetHostView::ImeCancelComposition() {
   if (!delegate_) {
     return;
