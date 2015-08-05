@@ -6,14 +6,14 @@
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -24,16 +24,18 @@
+@@ -20,16 +20,18 @@
+ #include "gpu/command_buffer/service/mailbox_manager.h"
+ #include "gpu/command_buffer/service/memory_program_cache.h"
+ #include "gpu/command_buffer/service/shader_translator_cache.h"
+ #include "gpu/command_buffer/service/sync_point_manager.h"
  #include "ipc/message_filter.h"
  #include "ui/gl/gl_bindings.h"
  #include "ui/gl/gl_share_group.h"
- #if defined(USE_OZONE)
- #include "ui/ozone/public/gpu_platform_support.h"
- #include "ui/ozone/public/ozone_platform.h"
- #endif
  
 +#include "shared/port/content/common/gpu_service_shim_oxide.h"
 +
@@ -25,7 +25,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      base::SingleThreadTaskRunner* io_task_runner,
      base::WaitableEvent* shutdown_event,
      IPC::SyncChannel* channel,
-@@ -132,17 +134,20 @@ void GpuChannelManager::OnEstablishChann
+@@ -128,17 +130,20 @@ void GpuChannelManager::OnEstablishChann
                                             bool share_context,
                                             bool allow_future_sync_points) {
    IPC::ChannelHandle channel_handle;
@@ -40,7 +40,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 +        share_group_ = new gfx::GLShareGroup;
 +      }
        DCHECK(!mailbox_manager_.get());
-       mailbox_manager_ = new gpu::gles2::MailboxManagerImpl;
+       mailbox_manager_ = gpu::gles2::MailboxManager::Create();
      }
      share_group = share_group_.get();
      mailbox_manager = mailbox_manager_.get();
@@ -68,7 +68,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -545,16 +546,20 @@
+@@ -551,16 +552,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -114,7 +114,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -147,20 +152,37 @@ GpuChildThread::GpuChildThread(
+@@ -151,20 +156,37 @@ GpuChildThread::GpuChildThread(
    DCHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
               switches::kSingleProcess) ||
           base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -168,20 +168,20 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +class SingleThreadTaskRunner;
 +}
 +
+ namespace gpu {
+ class SyncPointManager;
+ }
+ 
  namespace sandbox {
  class TargetServices;
  }
  
- namespace content {
- class GpuMemoryBufferFactory;
- class GpuWatchdogThread;
- 
-@@ -44,16 +48,19 @@ class GpuChildThread : public ChildThrea
-                  const DeferredMessages& deferred_messages,
-                  GpuMemoryBufferFactory* gpu_memory_buffer_factory);
+@@ -50,16 +54,19 @@ class GpuChildThread : public ChildThrea
+                  gpu::SyncPointManager* sync_point_manager);
  
    GpuChildThread(const InProcessChildThreadParams& params,
-                  GpuMemoryBufferFactory* gpu_memory_buffer_factory);
+                  GpuMemoryBufferFactory* gpu_memory_buffer_factory,
+                  gpu::SyncPointManager* sync_point_manager);
  
    ~GpuChildThread() override;
  

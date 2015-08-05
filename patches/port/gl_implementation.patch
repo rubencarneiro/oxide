@@ -47,14 +47,14 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -437,17 +439,17 @@
-                           '--working_directory=vector_icons/',
-                           '--output_cc=<(vector_icons_cc_file)',
-                           '--output_h=<(vector_icons_public_h_file)',
-               ],
-               'message': 'Aggregating vector resources.',
-             },
+@@ -404,17 +406,17 @@
+             'render_text.cc',
+             'render_text.h',
+             'render_text_harfbuzz.cc',
+             'render_text_harfbuzz.h',
+             'text_utils_skia.cc',
            ],
+         }, {  # desktop platforms
          }],
 -        ['use_x11==1', {
 +        ['OS=="linux"', {
@@ -161,13 +161,13 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -151,28 +155,28 @@
-           ],
+@@ -145,28 +149,28 @@
+         ],
          }],
-         ['OS=="linux"', {
+         ['OS in ("android", "linux")', {
            'sources': [
-             'gl_image_linux_dma_buffer.cc',
-             'gl_image_linux_dma_buffer.h',
+             'gl_implementation_osmesa.cc',
+             'gl_implementation_osmesa.h',
            ],
          }],
 -        ['use_x11 == 1', {
@@ -255,7 +255,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -312,16 +312,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -336,16 +336,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -275,7 +275,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -384,17 +387,17 @@ struct GL_EXPORT DriverEGL {
+@@ -408,17 +411,17 @@ struct GL_EXPORT DriverEGL {
    ProcsEGL debug_fn;
    ExtensionsEGL ext;
  
@@ -294,7 +294,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -427,16 +430,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -451,16 +454,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  

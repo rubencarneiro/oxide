@@ -350,7 +350,9 @@ std::string CollectDriverVersionATI() {
   base::StringTokenizer t(contents, "\r\n");
   while (t.GetNext()) {
     std::string line = t.token();
-    if (base::StartsWithASCII(line, "ReleaseVersion=", true)) {
+    if (base::StartsWith(line,
+                         "ReleaseVersion=",
+                         base::CompareCase::SENSITIVE)) {
       size_t begin = line.find_first_of("0123456789");
       if (begin != std::string::npos) {
         size_t end = line.find_first_not_of("0123456789.", begin);
@@ -543,7 +545,7 @@ gpu::CollectInfoResult CollectBasicGraphicsInfoLinux(gpu::GPUInfo* gpu_info) {
 
 gpu::CollectInfoResult CollectDriverInfoGLLinux(gpu::GPUInfo* gpu_info) {
   std::string gl_version = gpu_info->gl_version;
-  if (base::StartsWithASCII(gl_version, "OpenGL ES", true)) {
+  if (base::StartsWith(gl_version, "OpenGL ES", base::CompareCase::SENSITIVE)) {
     gl_version = gl_version.substr(10);
   }
   std::vector<std::string> pieces;
