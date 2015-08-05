@@ -139,10 +139,10 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -559,20 +556,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
-       const AccessibilityHostMsg_FindInPageResultParams& params);
-   void OnAccessibilitySnapshotResponse(int callback_id,
-                                        const ui::AXTreeUpdate& snapshot);
+@@ -560,20 +557,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+   void OnAccessibilitySnapshotResponse(
+       int callback_id,
+       const ui::AXTreeUpdate<ui::AXNodeData>& snapshot);
    void OnToggleFullscreen(bool enter_fullscreen);
    void OnDidStartLoading(bool to_different_document);
    void OnDidStopLoading();
