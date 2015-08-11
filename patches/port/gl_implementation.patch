@@ -141,15 +141,15 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_switches.h',
          'gl_version_info.cc',
          'gl_version_info.h',
-@@ -116,16 +117,19 @@
-         'gpu_timing.cc',
-         'gpu_timing.h',
+@@ -118,16 +119,19 @@
          'scoped_binders.cc',
          'scoped_binders.h',
          'scoped_make_current.cc',
          'scoped_make_current.h',
          'sync_control_vsync_provider.cc',
          'sync_control_vsync_provider.h',
+         'trace_util.cc',
+         'trace_util.h',
 +        '<(DEPTH)/../../../shared/port/gl/gl_context_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_implementation_oxide_linux.cc',
 +        '<(DEPTH)/../../../shared/port/gl/gl_surface_oxide_linux.cc',
@@ -161,7 +161,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -145,28 +149,28 @@
+@@ -147,28 +151,28 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -321,7 +321,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
 diff --git a/ui/gl/gl_implementation.cc b/ui/gl/gl_implementation.cc
 --- a/ui/gl/gl_implementation.cc
 +++ b/ui/gl/gl_implementation.cc
-@@ -61,16 +61,19 @@ WGLApi* g_current_wgl_context;
+@@ -62,16 +62,19 @@ WGLApi* g_current_wgl_context;
  #elif defined(USE_X11)
  
  EGLApi* g_current_egl_context;
