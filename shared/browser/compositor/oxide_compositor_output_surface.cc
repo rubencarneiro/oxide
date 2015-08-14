@@ -20,6 +20,7 @@
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
 
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
@@ -56,6 +57,10 @@ CompositorOutputSurface::CompositorOutputSurface(
 
 void CompositorOutputSurface::DoSwapBuffers(CompositorFrameData* frame) {
   DCHECK(CalledOnValidThread());
+  DCHECK(frame->gl_frame_data || frame->software_frame_data);
+
+  frame->surface_id = surface_id();
+
   proxy_->SwapCompositorFrame(frame);
   client_->DidSwapBuffers();
 }
