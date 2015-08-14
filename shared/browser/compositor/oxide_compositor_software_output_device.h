@@ -50,7 +50,7 @@ class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice,
   // cc::SoftwareOutputDevice implementation
   void Resize(const gfx::Size& pixel_size, float scale_factor) override;
   SkCanvas* BeginPaint(const gfx::Rect& damage_rect) override;
-  void EndPaint(cc::SoftwareFrameData* software_frame_data) override;
+  void EndPaint() override;
   void DiscardBackbuffer() override;
   void EnsureBackbuffer() override;
 
