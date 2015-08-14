@@ -92,8 +92,8 @@ std::string GetDriverVersionFromString(const std::string& version_string) {
   } else {
     sub_string = version_string.substr(begin);
   }
-  std::vector<std::string> pieces;
-  base::SplitString(sub_string, '.', &pieces);
+  std::vector<std::string> pieces = base::SplitString(
+      sub_string, ".", base::TRIM_WHITESPACE, base::SPLIT_WANT_ALL);
   if (pieces.size() < 2) {
     return "0";
   }
@@ -115,8 +115,8 @@ std::pair<std::string, size_t> GetVersionFromString(
   } else {
     sub_string = version_string.substr(begin);
   }
-  std::vector<std::string> pieces;
-  base::SplitString(sub_string, '.', &pieces);
+  std::vector<std::string> pieces = base::SplitString(
+      sub_string, ".", base::TRIM_WHITESPACE, base::SPLIT_WANT_ALL);
   if (pieces.size() >= 2) {
     return std::make_pair(pieces[0] + "." + pieces[1], end);
   } else {
@@ -548,8 +548,9 @@ gpu::CollectInfoResult CollectDriverInfoGLLinux(gpu::GPUInfo* gpu_info) {
   if (base::StartsWith(gl_version, "OpenGL ES", base::CompareCase::SENSITIVE)) {
     gl_version = gl_version.substr(10);
   }
-  std::vector<std::string> pieces;
-  base::SplitStringAlongWhitespace(gl_version, &pieces);
+  std::vector<std::string> pieces = base::SplitString(
+      gl_version, base::kWhitespaceASCII, base::KEEP_WHITESPACE,
+      base::SPLIT_WANT_ALL);
   // In linux, the gl version string might be in the format of
   //   GLVersion DriverVendor DriverVersion
   if (pieces.size() < 3) {

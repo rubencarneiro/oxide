@@ -278,30 +278,6 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  IPC_MESSAGE_ROUTED0(FrameHostMsg_HidePopup)
 -
 -#endif
-diff --git a/content/common/view_messages.h b/content/common/view_messages.h
---- a/content/common/view_messages.h
-+++ b/content/common/view_messages.h
-@@ -937,18 +937,19 @@ IPC_MESSAGE_ROUTED0(ViewMsg_ShowImeIfNee
- // Sent by the browser when an IME update that requires acknowledgement has been
- // processed on the browser side.
- IPC_MESSAGE_ROUTED0(ViewMsg_ImeEventAck)
- 
- // Extracts the data at the given rect, returning it through the
- // ViewHostMsg_SmartClipDataExtracted IPC.
- IPC_MESSAGE_ROUTED1(ViewMsg_ExtractSmartClipData,
-                     gfx::Rect /* rect */)
-+#endif
- 
--#elif defined(OS_MACOSX)
-+#if defined(OS_MACOSX)
- // Let the RenderView know its window has changed visibility.
- IPC_MESSAGE_ROUTED1(ViewMsg_SetWindowVisibility,
-                     bool /* visibile */)
- 
- // Let the RenderView know its window's frame has changed.
- IPC_MESSAGE_ROUTED2(ViewMsg_WindowFrameChanged,
-                     gfx::Rect /* window frame */,
-                     gfx::Rect /* content view frame */)
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
@@ -541,7 +517,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -544,20 +544,18 @@ RenderThreadImpl::RenderThreadImpl(
+@@ -545,20 +545,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
@@ -565,7 +541,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -687,23 +687,21 @@ gfx::Rect RenderWidget::AdjustValidation
+@@ -696,23 +696,21 @@ gfx::Rect RenderWidget::AdjustValidation
  
  void RenderWidget::SetScreenMetricsEmulationParameters(
      bool enabled,
