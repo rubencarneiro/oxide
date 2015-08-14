@@ -374,8 +374,7 @@ class WebView : public ScriptMessageTarget,
 
   // CompositorClient implementation
   void CompositorDidCommit() final;
-  void CompositorSwapFrame(uint32 surface_id,
-                           CompositorFrameHandle* frame) final;
+  void CompositorSwapFrame(CompositorFrameHandle* handle) final;
 
   // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() final;

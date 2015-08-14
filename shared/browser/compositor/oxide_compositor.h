@@ -39,6 +39,7 @@ class Size;
 namespace oxide {
 
 class CompositorClient;
+class CompositorFrameData;
 class CompositorFrameHandle;
 class CompositorLock;
 class CompositorThreadProxy;
@@ -67,8 +68,7 @@ class Compositor final : public cc::LayerTreeHostClient,
 
   Compositor(CompositorClient* client);
 
-  void SendSwapCompositorFrameToClient(uint32 surface_id,
-                                       CompositorFrameHandle* frame);
+  void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
 
   void LockCompositor();
   void UnlockCompositor();

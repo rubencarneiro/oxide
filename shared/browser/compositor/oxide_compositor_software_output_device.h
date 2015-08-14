@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -35,20 +35,24 @@ class SharedBitmap;
 
 namespace oxide {
 
-class CompositorSoftwareOutputDevice final : public cc::SoftwareOutputDevice,
-                                             public base::NonThreadSafe {
+class CompositorFrameData;
+
+class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice,
+                                       public base::NonThreadSafe {
  public:
   CompositorSoftwareOutputDevice();
   ~CompositorSoftwareOutputDevice();
 
+  void PopulateFrameDataForSwap(CompositorFrameData* data);
+  void ReclaimResources(unsigned id);
+
  private:
   // cc::SoftwareOutputDevice implementation
-  void Resize(const gfx::Size& pixel_size, float scale_factor) final;
-  SkCanvas* BeginPaint(const gfx::Rect& damage_rect) final;
-  void EndPaint(cc::SoftwareFrameData* frame_data) final;
-  void DiscardBackbuffer() final;
-  void EnsureBackbuffer() final;
-  void ReclaimSoftwareFrame(unsigned id) final;
+  void Resize(const gfx::Size& pixel_size, float scale_factor) override;
+  SkCanvas* BeginPaint(const gfx::Rect& damage_rect) override;
+  void EndPaint(cc::SoftwareFrameData* software_frame_data) override;
+  void DiscardBackbuffer() override;
+  void EnsureBackbuffer() override;
 
   // =========
   unsigned GetNextId();

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_ACK_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_ACK_H_
 
-#include "base/memory/scoped_ptr.h"
+#include "gpu/command_buffer/common/mailbox.h"
 
 namespace oxide {
 
-class CompositorFrameHandle;
-
-class CompositorClient {
+class CompositorFrameAck {
  public:
-  virtual ~CompositorClient() {}
+  CompositorFrameAck();
+  ~CompositorFrameAck();
 
-  virtual void CompositorDidCommit() = 0;
-
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
+  gpu::Mailbox gl_frame_mailbox;
+  unsigned software_frame_id;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_ACK_H_

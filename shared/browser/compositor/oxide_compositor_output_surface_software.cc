@@ -21,20 +21,38 @@
 #include "cc/output/compositor_frame.h"
 #include "cc/output/output_surface_client.h"
 
+#include "oxide_compositor_frame_ack.h"
+#include "oxide_compositor_frame_data.h"
+#include "oxide_compositor_software_output_device.h"
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
-  DCHECK(frame->software_frame_data);
-  DCHECK_NE(frame->software_frame_data->id, 0U);
-  DCHECK(!frame->software_frame_data->size.IsEmpty());
-  DCHECK(frame->software_frame_data->size == surface_size_);
-  CompositorOutputSurface::SwapBuffers(frame);
+  CompositorFrameData data;
+  data.surface_id = surface_id();
+  data.device_scale = frame->metadata.device_scale_factor;
+  data.software_frame_data = make_scoped_ptr(new SoftwareFrameData());
+
+  static_cast<CompositorSoftwareOutputDevice*>(software_device())
+      ->PopulateFrameDataForSwap(&data);
+
+  DoSwapBuffers(&data);
+}
+
+void CompositorOutputSurfaceSoftware::ReclaimResources(
+    const CompositorFrameAck& ack) {
+  DCHECK(CalledOnValidThread());
+  DCHECK_GT(ack.software_frame_id, 0U);
+  DCHECK(ack.gl_frame_mailbox.IsZero());
+
+  static_cast<CompositorSoftwareOutputDevice*>(software_device())
+      ->ReclaimResources(ack.software_frame_id);
+  CompositorOutputSurface::ReclaimResources(ack);
 }
 
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
-    uint32 surface_id,
+    uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
     scoped_refptr<CompositorThreadProxy> proxy)
     : CompositorOutputSurface(surface_id, software_device.Pass(), proxy) {}
