@@ -69,6 +69,7 @@
 #include "url/url_constants.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
@@ -391,14 +392,13 @@ void WebView::CompositorDidCommit() {
   rwhv->CompositorDidCommit();
 }
 
-void WebView::CompositorSwapFrame(uint32 surface_id,
-                                  CompositorFrameHandle* frame) {
-  received_surface_ids_.push(surface_id);
+void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
+  received_surface_ids_.push(handle->data()->surface_id);
 
   if (current_compositor_frame_.get()) {
     previous_compositor_frames_.push_back(current_compositor_frame_);
   }
-  current_compositor_frame_ = frame;
+  current_compositor_frame_ = handle;
 
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = pending_compositor_frame_metadata_;

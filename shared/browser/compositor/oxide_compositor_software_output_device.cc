@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,6 @@
 #include "oxide_compositor_software_output_device.h"
 
 #include "base/logging.h"
-#include "cc/output/software_frame_data.h"
 #include "cc/resources/shared_bitmap.h"
 #include "content/common/host_shared_bitmap_manager.h"
 #include "skia/ext/refptr.h"
@@ -27,6 +26,8 @@
 #include "third_party/skia/include/core/SkImageInfo.h"
 #include "third_party/skia/include/core/SkRegion.h"
 #include "ui/gfx/skia_util.h"
+
+#include "oxide_compositor_frame_data.h"
 
 namespace oxide {
 
@@ -125,19 +126,14 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   return surface_->getCanvas();
 }
 
-void CompositorSoftwareOutputDevice::EndPaint(cc::SoftwareFrameData* frame_data) {
+void CompositorSoftwareOutputDevice::EndPaint(
+    cc::SoftwareFrameData* software_frame_data) {
   DCHECK(CalledOnValidThread());
   DCHECK(in_paint_);
-  DCHECK(frame_data);
   DCHECK_NE(backing_frame_.id, 0U);
   DCHECK(backing_frame_.size == viewport_pixel_size_);
 
   in_paint_ = false;
-
-  frame_data->id = backing_frame_.id;
-  frame_data->size = backing_frame_.size;
-  frame_data->damage_rect = damage_rect_;
-  frame_data->bitmap_id = backing_frame_.bitmap->id();
 
   previous_frame_ = backing_frame_;
   pending_frames_.push_back(backing_frame_);
@@ -182,12 +178,45 @@ void CompositorSoftwareOutputDevice::EnsureBackbuffer() {
         content::HostSharedBitmapManager::current()->AllocateSharedBitmap(
           viewport_pixel_size_);
     DCHECK(shared_bitmap);
-    backing_frame_.bitmap = linked_ptr<cc::SharedBitmap>(shared_bitmap.release());
+    backing_frame_.bitmap =
+        linked_ptr<cc::SharedBitmap>(shared_bitmap.release());
     backing_frame_.size = viewport_pixel_size_;
   }
 }
 
-void CompositorSoftwareOutputDevice::ReclaimSoftwareFrame(unsigned id) {
+unsigned CompositorSoftwareOutputDevice::GetNextId() {
+  unsigned id = next_frame_id_++;
+  if (id == 0) {
+    id = next_frame_id_++;
+  }
+
+  return id;
+}
+
+CompositorSoftwareOutputDevice::CompositorSoftwareOutputDevice()
+    : next_frame_id_(1),
+      in_paint_(false),
+      is_backbuffer_discarded_(false) {
+  DetachFromThread();
+}
+
+CompositorSoftwareOutputDevice::~CompositorSoftwareOutputDevice() {}
+
+void CompositorSoftwareOutputDevice::PopulateFrameDataForSwap(
+    CompositorFrameData* data) {
+  DCHECK(CalledOnValidThread());
+  DCHECK(!in_paint_);
+  DCHECK_NE(previous_frame_.id, 0U);
+  DCHECK_EQ(previous_frame_.id, previous_damage_rects_.back().id);
+
+  data->size_in_pixels = previous_frame_.size;
+  data->software_frame_data->id = previous_frame_.id;
+  data->software_frame_data->damage_rect =
+      previous_damage_rects_.back().damage;
+  data->software_frame_data->bitmap_id = previous_frame_.bitmap->id();
+}
+
+void CompositorSoftwareOutputDevice::ReclaimResources(unsigned id) {
   DCHECK(CalledOnValidThread());
   if (id == 0) {
     return;
@@ -210,23 +239,5 @@ void CompositorSoftwareOutputDevice::ReclaimSoftwareFrame(unsigned id) {
 
   pending_frames_.erase(it);
 }
-
-unsigned CompositorSoftwareOutputDevice::GetNextId() {
-  unsigned id = next_frame_id_++;
-  if (id == 0) {
-    id = next_frame_id_++;
-  }
-
-  return id;
-}
-
-CompositorSoftwareOutputDevice::CompositorSoftwareOutputDevice()
-    : next_frame_id_(1),
-      in_paint_(false),
-      is_backbuffer_discarded_(false) {
-  DetachFromThread();
-}
-
-CompositorSoftwareOutputDevice::~CompositorSoftwareOutputDevice() {}
 
 } // namespace oxide

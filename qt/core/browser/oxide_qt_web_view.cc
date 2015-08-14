@@ -73,6 +73,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
@@ -291,8 +292,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
       : frame_(frame) {
     if (frame_.get()) {
       rect_ = QRect(0, location_bar_content_offset,
-                    frame_->size_in_pixels().width(),
-                    frame_->size_in_pixels().height());
+                    frame_->data()->size_in_pixels.width(),
+                    frame_->data()->size_in_pixels.height());
     }
   }
 
@@ -302,13 +303,16 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     if (!frame_.get()) {
       return CompositorFrameHandle::TYPE_INVALID;
     }
-    if (frame_->gl_frame_data()) {
-      return CompositorFrameHandle::TYPE_ACCELERATED;
-    }
-    if (frame_->image_frame_data()) {
+    if (frame_->data()->gl_frame_data) {
+      DCHECK_NE(frame_->data()->gl_frame_data->type,
+                oxide::GLFrameData::Type::INVALID);
+      if (frame_->data()->gl_frame_data->type ==
+          oxide::GLFrameData::Type::TEXTURE) {
+        return CompositorFrameHandle::TYPE_ACCELERATED;
+      }
       return CompositorFrameHandle::TYPE_IMAGE;
     }
-    if (frame_->software_frame_data()) {
+    if (frame_->data()->software_frame_data) {
       return CompositorFrameHandle::TYPE_SOFTWARE;
     }
 
@@ -323,19 +327,19 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QImage GetSoftwareFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
     return QImage(
-        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
-        frame_->size_in_pixels().width(),
-        frame_->size_in_pixels().height(),
+        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
+        frame_->data()->size_in_pixels.width(),
+        frame_->data()->size_in_pixels.height(),
         QImage::Format_ARGB32);
   }
 
   unsigned int GetAcceleratedFrameTexture() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->gl_frame_data()->texture_id();
+    return frame_->data()->gl_frame_data->resource.texture;
   }
 
   EGLImageKHR GetImageFrame() final {
-    return frame_->image_frame_data()->image();
+    return frame_->data()->gl_frame_data->resource.egl_image;
   }
 
  private:
