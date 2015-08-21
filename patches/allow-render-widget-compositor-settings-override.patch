@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -217,9 +217,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -219,9 +219,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -302,13 +306,16 @@ class CONTENT_EXPORT ContentRendererClie
-       std::map<std::string, std::string>* properties) {}
+@@ -310,13 +314,16 @@ class CONTENT_EXPORT ContentRendererClie
+       const GURL& url) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -463,16 +465,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -465,16 +467,18 @@ void RenderWidgetCompositor::Initialize(
      settings.use_external_begin_frame_source = true;
  
    if (widget_->for_oopif()) {

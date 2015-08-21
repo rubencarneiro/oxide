@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -209,9 +209,17 @@ std::string ContentRendererClient::GetUs
+@@ -211,9 +211,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -59,15 +59,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -292,13 +295,20 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
-       RenderFrame* render_frame);
- 
-   // Gives the embedder a chance to add properties to the context menu.
-   // Currently only called when the context menu is for an image.
-   virtual void AddImageContextMenuProperties(
+@@ -300,13 +303,20 @@ class CONTENT_EXPORT ContentRendererClie
        const blink::WebURLResponse& response,
        std::map<std::string, std::string>* properties) {}
+ 
+   // Notifies that a service worker context has been created. This function
+   // is called from the worker thread.
+   virtual void DidInitializeServiceWorkerContextOnWorkerThread(
+       v8::Local<v8::Context> context,
+       const GURL& url) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2009,16 +2009,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2021,16 +2021,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
      return CreateWebMediaPlayerForMediaStream(client);
  
  #if defined(OS_ANDROID) && !defined(ENABLE_MEDIA_PIPELINE_ON_ANDROID)
@@ -106,7 +106,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    media::WebMediaPlayerParams params(
        base::Bind(&ContentRendererClient::DeferMediaLoad,
                   base::Unretained(GetContentClient()->renderer()),
-                  static_cast<RenderFrame*>(this)),
+                  static_cast<RenderFrame*>(this), has_played_media_),
        render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_),
        media_log, render_thread->GetMediaThreadTaskRunner(),
        render_thread->compositor_task_runner(),
