@@ -117,7 +117,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
 
     for (SkRegion::Iterator it(outdated_region); !it.done(); it.next()) {
       SkRect rect = SkRect::Make(it.rect());
-      surface_->getCanvas()->drawBitmapRect(back_bitmap, &rect, rect, nullptr);
+      surface_->getCanvas()->drawBitmapRect(back_bitmap, rect, rect, nullptr);
     }
   }
 
@@ -126,8 +126,7 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   return surface_->getCanvas();
 }
 
-void CompositorSoftwareOutputDevice::EndPaint(
-    cc::SoftwareFrameData* software_frame_data) {
+void CompositorSoftwareOutputDevice::EndPaint() {
   DCHECK(CalledOnValidThread());
   DCHECK(in_paint_);
   DCHECK_NE(backing_frame_.id, 0U);

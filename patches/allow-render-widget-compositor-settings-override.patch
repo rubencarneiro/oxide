@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -231,9 +231,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -217,9 +217,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -21,7 +21,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -52,16 +52,20 @@ class WebSpeechSynthesizerClient;
+@@ -50,16 +50,20 @@ class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLResponse;
  class WebURLRequest;
@@ -42,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -321,13 +325,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -302,13 +306,16 @@ class CONTENT_EXPORT ContentRendererClie
        std::map<std::string, std::string>* properties) {}
  
    // Allow overriding default media player
@@ -62,7 +62,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
 --- a/content/renderer/gpu/render_widget_compositor.cc
 +++ b/content/renderer/gpu/render_widget_compositor.cc
-@@ -31,17 +31,19 @@
+@@ -34,17 +34,19 @@
  #include "cc/output/swap_promise.h"
  #include "cc/resources/single_release_callback.h"
  #include "cc/scheduler/begin_frame_source.h"

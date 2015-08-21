@@ -95,6 +95,12 @@ void ContentRendererClient::RenderViewCreated(
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
     settings->setUseMobileViewportStyle(true);
+
+    // XXX(chrisccoulson): This should be set when the layout viewport provides
+    // scrollbars (desktop), but basing this on the form-factor may not be the
+    // right way. It looks like blink hides the layout scrollbars when viewport
+    // meta is enabled
+    settings->setHidePinchScrollbarsNearMinScale(false);
   }
 }
 
@@ -143,15 +149,6 @@ void ContentRendererClient::OverrideCompositorSettings(
     settings->scrollbar_fade_delay_ms = 300;
     settings->scrollbar_fade_resize_delay_ms = 2000;
     settings->scrollbar_fade_duration_ms = 300;
-  }
-
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorDesktop) {
-    settings->scrollbar_show_scale_threshold = 1.05f;
-  } else {
-    settings->scrollbar_show_scale_threshold = 1.f;
   }
 
   settings->use_external_begin_frame_source = false;

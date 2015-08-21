@@ -165,7 +165,7 @@ bool URLRequestDelegatedJobFactory::CanDelegateProtocol(
   static bool initialized = false;
   static base::hash_set<std::string> blacklisted_protocols;
 
-  std::string lscheme(base::StringToLowerASCII(scheme));
+  std::string lscheme(base::ToLowerASCII(scheme));
 
   if (!initialized) {
     initialized = true;
