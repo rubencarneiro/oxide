@@ -19,6 +19,7 @@
 #define _OXIDE_QMLPLUGIN_SSL_CERTIFICATE_H_
 
 #include <QJSValue>
+#include <QMetaType>
 #include <QtGlobal>
 #include <QtQml/private/qqmlvaluetype_p.h>
 

@@ -18,6 +18,7 @@
 #ifndef OXIDE_Q_DOWNLOAD_REQUEST
 #define OXIDE_Q_DOWNLOAD_REQUEST
 
+#include <QMetaType>
 #include <QSharedDataPointer>
 #include <QString>
 #include <QStringList>

@@ -19,6 +19,7 @@
 #define OXIDE_Q_SSL_CERTIFICATE
 
 #include <QDateTime>
+#include <QMetaType>
 #include <QSharedDataPointer>
 #include <QString>
 #include <QStringList>
