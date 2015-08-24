@@ -30,7 +30,6 @@ namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
   CompositorFrameData data;
-  data.surface_id = surface_id();
   data.device_scale = frame->metadata.device_scale_factor;
   data.software_frame_data = make_scoped_ptr(new SoftwareFrameData());
 

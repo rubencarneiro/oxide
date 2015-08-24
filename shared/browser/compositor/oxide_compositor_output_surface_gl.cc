@@ -146,7 +146,6 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   gl->Flush();
 
   CompositorFrameData data;
-  data.surface_id = surface_id();
   data.size_in_pixels = back_buffer_.size;
   data.device_scale = frame->metadata.device_scale_factor;
   data.gl_frame_data = make_scoped_ptr(new GLFrameData());
