@@ -27,6 +27,7 @@
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
 
+#include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
@@ -184,20 +185,20 @@ OxideQSecurityStatus::certStatus() const {
       d->web_view_->GetSecurityStatus().cert_status());
 }
 
-OxideQSslCertificate OxideQSecurityStatus::certificate() const {
+QVariant OxideQSecurityStatus::certificate() const {
   Q_D(const OxideQSecurityStatus);
 
   if (d->cert_.isValid()) {
-    return d->cert_;
+    return QVariant::fromValue(d->cert_);
   }
 
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->GetSecurityStatus().cert();
   if (!cert.get()) {
-    return OxideQSslCertificate();
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
   d->cert_ = OxideQSslCertificateData::Create(cert.get());
 
-  return d->cert_;
+  return QVariant::fromValue(d->cert_);
 }

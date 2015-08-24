@@ -185,19 +185,19 @@ bool OxideQSslCertificate::isExpired() const {
   return d->x509_cert_->HasExpired();
 }
 
-OxideQSslCertificate OxideQSslCertificate::issuer() const {
+QVariant OxideQSslCertificate::issuer() const {
   if (!isValid()) {
-    return OxideQSslCertificate();
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
   if (d->issuer_.get()) {
-    return *d->issuer_;
+    return QVariant::fromValue(*d->issuer_);
   }
 
   const net::X509Certificate::OSCertHandles& handles =
       d->x509_cert_->GetIntermediateCertificates();
   if (handles.empty()) {
-    return OxideQSslCertificate();
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
   net::X509Certificate::OSCertHandle handle = handles[0];
@@ -214,7 +214,7 @@ OxideQSslCertificate OxideQSslCertificate::issuer() const {
       new OxideQSslCertificateData(cert.get()));
   d->issuer_.reset(new OxideQSslCertificate(data));
 
-  return *d->issuer_;
+  return QVariant::fromValue(*d->issuer_);
 }
 
 OxideQSslCertificate OxideQSslCertificate::copy() const {
