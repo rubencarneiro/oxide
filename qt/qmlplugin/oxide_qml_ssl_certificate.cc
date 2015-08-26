@@ -75,7 +75,7 @@ bool SslCertificate::isExpired() const {
 
 QJSValue SslCertificate::issuer() const {
   // If we just return the variant here, the QML engine doesn't convert it
-  // to a SslCertificate
+  // to a SslCertificate. See https://bugreports.qt.io/browse/QTBUG-47940
   QVariant i = v.issuer();
   if (i.isNull()) {
     return QJSValue(QJSValue::NullValue);
