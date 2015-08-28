@@ -101,4 +101,9 @@ BrowserPlatformIntegration::GetClipboardOxideFactory() {
   return nullptr;
 }
 
+VibrationManagerOxideFactory
+BrowserPlatformIntegration::GetVibrationManagerOxideFactory() {
+  return nullptr;
+}
+
 } // namespace oxide

@@ -28,6 +28,7 @@
 
 #include "shared/port/ui_base/clipboard_oxide.h"
 
+#include "oxide_vibration_manager.h"
 
 class GURL;
 
@@ -100,6 +101,9 @@ class BrowserPlatformIntegration {
 
   // Get the application name
   virtual std::string GetApplicationName();
+
+  // Get the proper vibration manager factory
+  virtual VibrationManagerOxideFactory GetVibrationManagerOxideFactory();
 
  protected:
   BrowserPlatformIntegration();

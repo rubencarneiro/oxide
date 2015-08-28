@@ -42,6 +42,7 @@
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_screen_utils.h"
+#include "oxide_qt_vibration_manager.h"
 
 namespace oxide {
 namespace qt {
@@ -192,6 +193,10 @@ BrowserPlatformIntegration::~BrowserPlatformIntegration() {
 
 ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
   return ClipboardQt::DoCreate;
+}
+
+VibrationManagerOxideFactory BrowserPlatformIntegration::GetVibrationManagerOxideFactory() {
+  return VibrationManager::Create;
 }
 
 QThread* GetIOQThread() {
