@@ -42,7 +42,7 @@ class PepperHostFactoryBrowser final : public ppapi::host::HostFactory {
  private:
   content::BrowserPpapiHost* host_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(PepperHostFactoryBrowser);
+  DISALLOW_COPY_AND_ASSIGN(PepperHostFactoryBrowser);
 };
 
 } // namespace oxide

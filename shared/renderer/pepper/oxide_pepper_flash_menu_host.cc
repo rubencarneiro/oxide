@@ -3,22 +3,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Copyright (C) 2014 Canonical Ltd.
-
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
 #include "oxide_pepper_flash_menu_host.h"
 
 #include "base/strings/utf_string_conversions.h"
@@ -55,17 +39,19 @@ bool ConvertMenuData(const PP_Flash_Menu* in_menu,
                      size_t depth,
                      std::vector<content::MenuItem>* out_menu,
                      std::vector<int32_t>* menu_id_map) {
-  if (depth > kMaxMenuDepth || !in_menu)
+  if (depth > kMaxMenuDepth || !in_menu) {
     return false;
+  }
 
   // Clear the output, just in case.
   out_menu->clear();
 
-  if (!in_menu->count)
+  if (!in_menu->count) {
     return true;  // Nothing else to do.
-
-  if (!in_menu->items || in_menu->count > kMaxMenuEntries)
+  }
+  if (!in_menu->items || in_menu->count > kMaxMenuEntries) {
     return false;
+  }
   for (uint32_t i = 0; i < in_menu->count; i++) {
     content::MenuItem item;
 
@@ -86,10 +72,12 @@ bool ConvertMenuData(const PP_Flash_Menu* in_menu,
       default:
         return false;
     }
-    if (in_menu->items[i].name)
+    if (in_menu->items[i].name) {
       item.label = base::UTF8ToUTF16(in_menu->items[i].name);
-    if (menu_id_map->size() >= kMaxMenuIdMapEntries)
+    }
+    if (menu_id_map->size() >= kMaxMenuIdMapEntries) {
       return false;
+    }
     item.action = static_cast<unsigned>(menu_id_map->size());
     // This sets |(*menu_id_map)[item.action] = in_menu->items[i].id|.
     menu_id_map->push_back(in_menu->items[i].id);
@@ -97,8 +85,9 @@ bool ConvertMenuData(const PP_Flash_Menu* in_menu,
     item.checked = PP_ToBool(in_menu->items[i].checked);
     if (type == PP_FLASH_MENUITEM_TYPE_SUBMENU) {
       if (!ConvertMenuData(
-              in_menu->items[i].submenu, depth + 1, &item.submenu, menu_id_map))
+              in_menu->items[i].submenu, depth + 1, &item.submenu, menu_id_map)) {
         return false;
+      }
     }
 
     out_menu->push_back(item);
@@ -133,8 +122,9 @@ PepperFlashMenuHost::~PepperFlashMenuHost() {
   if (showing_context_menu_) {
     content::RenderFrame* render_frame =
         renderer_ppapi_host_->GetRenderFrameForInstance(pp_instance());
-    if (render_frame)
+    if (render_frame) {
       render_frame->CancelContextMenu(context_menu_request_id_);
+    }
   }
 }
 
@@ -151,7 +141,6 @@ int32_t PepperFlashMenuHost::OnResourceMessageReceived(
 int32_t PepperFlashMenuHost::OnHostMsgShow(
     ppapi::host::HostMessageContext* context,
     const PP_Point& location) {
-  LOG(INFO) << __PRETTY_FUNCTION__;
   // Note that all early returns must do a SendMenuReply. The sync result for
   // this message isn't used, so to forward the error to the plugin, we need to
   // additionally call SendMenuReply explicitly.
@@ -182,7 +171,6 @@ int32_t PepperFlashMenuHost::OnHostMsgShow(
   params.y = render_frame_pt.y();
 
   showing_context_menu_ = true;
-  LOG(INFO) << __PRETTY_FUNCTION__ << "calling show contextmenu";
   context_menu_request_id_ = render_frame->ShowContextMenu(this, params);
 
   // Note: the show message is sync so this OK is for the sync reply which we

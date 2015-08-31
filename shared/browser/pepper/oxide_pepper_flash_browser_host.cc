@@ -3,22 +3,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Copyright (C) 2014 Canonical Ltd.
-
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
 #include "oxide_pepper_flash_browser_host.h"
 
 #include "base/logging.h"
@@ -41,7 +25,7 @@ namespace oxide {
 namespace {
 
 // Do work on the UI thread
-int32_t GetRestictions(int render_process_id,
+int32_t GetRestrictions(int render_process_id,
     const GURL& document_url,
     const GURL& plugin_url
 ) {
@@ -55,12 +39,12 @@ int32_t GetRestictions(int render_process_id,
   BrowserContextIOData* io_data = nullptr;
   content::RenderProcessHost* render_process_host =
       content::RenderProcessHost::FromID(render_process_id);
-  if (render_process_host != nullptr) {
+  if (render_process_host) {
     io_data = BrowserContextIOData::FromResourceContext(
       render_process_host->GetBrowserContext()->GetResourceContext());
   }
 
-  if (io_data == nullptr) {
+  if (!io_data) {
     return restrictions;
   }
 
@@ -136,7 +120,7 @@ int32_t PepperFlashBrowserHost::OnGetLocalDataRestrictions(
   content::BrowserThread::PostTaskAndReplyWithResult(
     content::BrowserThread::UI,
     FROM_HERE,
-    base::Bind(&GetRestictions, render_process_id_, document_url, plugin_url),
+    base::Bind(&GetRestrictions, render_process_id_, document_url, plugin_url),
     base::Bind(&PepperFlashBrowserHost::GetLocalDataRestrictions,
                weak_factory_.GetWeakPtr(),
                context->MakeReplyMessageContext()));

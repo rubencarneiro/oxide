@@ -16,15 +16,16 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "content/public/renderer/renderer_ppapi_host.h"
-#include "chrome/renderer/pepper/pepper_shared_memory_message_filter.h"
 #include "ppapi/host/ppapi_host.h"
 
+#include "oxide_pepper_shared_memory_message_filter.h"
 #include "oxide_pepper_render_frame_observer.h"
 #include "oxide_pepper_renderer_host_factory.h"
 
 namespace oxide {
 
-PepperRenderFrameObserver::PepperRenderFrameObserver(content::RenderFrame* render_frame)
+PepperRenderFrameObserver::PepperRenderFrameObserver(
+    content::RenderFrame* render_frame)
     : RenderFrameObserver(render_frame) {}
 
 PepperRenderFrameObserver::~PepperRenderFrameObserver() {}
