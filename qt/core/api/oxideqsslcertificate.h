@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,17 @@
 #define OXIDE_Q_SSL_CERTIFICATE
 
 #include <QDateTime>
-#include <QObject>
-#include <QScopedPointer>
+#include <QMetaType>
+#include <QSharedDataPointer>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
+#include <QVariant>
 
-class OxideQSslCertificatePrivate;
+class OxideQSslCertificateData;
 
-class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
-  Q_OBJECT
+class Q_DECL_EXPORT OxideQSslCertificate {
+  Q_GADGET
 
   Q_PROPERTY(QString serialNumber READ serialNumber CONSTANT)
   Q_PROPERTY(QString subjectDisplayName READ subjectDisplayName CONSTANT)
@@ -39,12 +40,9 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
 
   Q_PROPERTY(bool isExpired READ isExpired CONSTANT)
 
-  Q_PROPERTY(OxideQSslCertificate* issuer READ issuer CONSTANT)
+  Q_PROPERTY(QVariant issuer READ issuer CONSTANT)
 
   Q_ENUMS(PrincipalAttr)
-
-  Q_DECLARE_PRIVATE(OxideQSslCertificate)
-  Q_DISABLE_COPY(OxideQSslCertificate)
 
  public:
 
@@ -57,7 +55,14 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
     PrincipalAttrStateOrProvinceName
   };
 
+  OxideQSslCertificate();
   ~OxideQSslCertificate();
+
+  OxideQSslCertificate(const OxideQSslCertificate& other);
+  OxideQSslCertificate operator=(const OxideQSslCertificate& other);
+
+  bool operator==(const OxideQSslCertificate& other) const;
+  bool operator!=(const OxideQSslCertificate& other) const;
 
   QString serialNumber() const;
 
@@ -74,16 +79,20 @@ class Q_DECL_EXPORT OxideQSslCertificate Q_DECL_FINAL : public QObject {
 
   bool isExpired() const;
 
-  OxideQSslCertificate* issuer() const;
-  Q_INVOKABLE OxideQSslCertificate* copy() const;
+  QVariant issuer() const;
+  Q_INVOKABLE OxideQSslCertificate copy() const;
 
   Q_INVOKABLE QString toPem() const;
 
- private:
-  OxideQSslCertificate(OxideQSslCertificatePrivate& dd,
-                       QObject* parent = nullptr);
+  bool isValid() const;
 
-  QScopedPointer<OxideQSslCertificatePrivate> d_ptr;
+ private:
+  friend class OxideQSslCertificateData;
+  OxideQSslCertificate(const QSharedDataPointer<OxideQSslCertificateData>& dd);
+
+  QSharedDataPointer<OxideQSslCertificateData> d;
 };
+
+Q_DECLARE_METATYPE(OxideQSslCertificate)
 
 #endif // OXIDE_Q_SSL_CERTIFICATE

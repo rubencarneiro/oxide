@@ -212,6 +212,12 @@ void WebMediaPlayer::setRate(double rate) {
   NOTIMPLEMENTED();
 }
 
+void WebMediaPlayer::setSinkId(
+      const blink::WebString& deviceId,
+      blink::WebCallbacks<void, blink::WebSetSinkIdError*>*) {
+  NOTIMPLEMENTED();
+}
+
 void WebMediaPlayer::setVolume(double volume) {
   player_manager_->SetVolume(player_id_, volume);
 }
@@ -378,7 +384,7 @@ bool WebMediaPlayer::didPassCORSAccessCheck() const {
 }
 
 double WebMediaPlayer::mediaTimeForTimeValue(double timeValue) const {
-  return media::ConvertSecondsToTimestamp(timeValue).InSecondsF();
+  return base::TimeDelta::FromSecondsD(timeValue).InSecondsF();
 }
 
 unsigned WebMediaPlayer::decodedFrameCount() const {
@@ -653,7 +659,7 @@ void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
 // Convert a WebString to ASCII, falling back on an empty string in the case
 // of a non-ASCII string.
 static std::string ToASCIIOrEmpty(const blink::WebString& string) {
-  return base::IsStringASCII(string) ? base::UTF16ToASCII(string)
+  return base::IsStringASCII(string) ? string.utf8()
                                      : std::string();
 }
 
@@ -843,53 +849,6 @@ WebMediaPlayer::CancelKeyRequestInternal(const std::string& key_system,
 void WebMediaPlayer::setContentDecryptionModule(
     blink::WebContentDecryptionModule* cdm) {
   NOTIMPLEMENTED();
-}
-
-void WebMediaPlayer::OnKeyAdded(const std::string& session_id) {
-  EmeUMAHistogramCounts(current_key_system_, "KeyAdded", 1);
-
-  client_->keyAdded(
-      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
-      WebString::fromUTF8(session_id));
-}
-
-void WebMediaPlayer::OnKeyError(const std::string& session_id,
-                                       media::MediaKeys::KeyError error_code,
-                                       uint32 system_code) {
-  EmeUMAHistogramEnumeration(current_key_system_, "KeyError",
-                             error_code, media::MediaKeys::kMaxKeyError);
-
-  unsigned short short_system_code = 0;
-  if (system_code > std::numeric_limits<unsigned short>::max()) {
-    LOG(WARNING) << "system_code exceeds unsigned short limit.";
-    short_system_code = std::numeric_limits<unsigned short>::max();
-  } else {
-    short_system_code = static_cast<unsigned short>(system_code);
-  }
-
-  client_->keyError(
-      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
-      WebString::fromUTF8(session_id),
-      static_cast<blink::WebMediaPlayerClient::MediaKeyErrorCode>(error_code),
-      short_system_code);
-}
-
-void WebMediaPlayer::OnKeyMessage(const std::string& session_id,
-                                         const std::vector<uint8>& message,
-                                         const GURL& destination_url) {
-  DCHECK(destination_url.is_empty() || destination_url.is_valid());
-
-  client_->keyMessage(
-      WebString::fromUTF8(media::GetPrefixedKeySystemName(current_key_system_)),
-      WebString::fromUTF8(session_id),
-      message.empty() ? nullptr : &message[0],
-      message.size(),
-      destination_url);
-}
-
-void WebMediaPlayer::OnMediaSourceOpened(
-    blink::WebMediaSource* web_media_source) {
-  client_->mediaSourceOpened(web_media_source);
 }
 
 void WebMediaPlayer::enterFullscreen() {

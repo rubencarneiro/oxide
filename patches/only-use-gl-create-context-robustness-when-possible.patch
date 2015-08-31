@@ -72,10 +72,10 @@ diff --git a/ui/gl/gl_context_egl.cc b/ui/gl/gl_context_egl.cc
 diff --git a/ui/gl/gl_context_egl.h b/ui/gl/gl_context_egl.h
 --- a/ui/gl/gl_context_egl.h
 +++ b/ui/gl/gl_context_egl.h
-@@ -41,15 +41,16 @@ class GLContextEGL : public GLContextRea
-   ~GLContextEGL() override;
- 
+@@ -42,15 +42,16 @@ class GLContextEGL : public GLContextRea
   private:
+   void Destroy();
+ 
    EGLContext context_;
    EGLDisplay display_;
    EGLConfig config_;
@@ -155,13 +155,13 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
 diff --git a/ui/gl/gl_context_glx.h b/ui/gl/gl_context_glx.h
 --- a/ui/gl/gl_context_glx.h
 +++ b/ui/gl/gl_context_glx.h
-@@ -37,15 +37,16 @@ class GL_EXPORT GLContextGLX : public GL
-   bool WasAllocatedUsingRobustnessExtension() override;
- 
+@@ -38,15 +38,16 @@ class GL_EXPORT GLContextGLX : public GL
   protected:
    ~GLContextGLX() override;
  
   private:
+   void Destroy();
+ 
    void* context_;
    XDisplay* display_;
 +  bool was_allocated_using_robustness_extension_;

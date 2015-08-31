@@ -19,11 +19,10 @@
 
 #include <utility>
 
-#include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/thread_task_runner_handle.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
-#include "cc/raster/task_graph_runner.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
@@ -39,6 +38,7 @@
 #include "url/gurl.h"
 
 #include "oxide_compositor_client.h"
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_frame_handle.h"
 #include "oxide_compositor_output_surface_gl.h"
 #include "oxide_compositor_output_surface_software.h"
@@ -47,9 +47,6 @@
 #include "oxide_compositor_utils.h"
 
 namespace oxide {
-
-base::LazyInstance<cc::TaskGraphRunner> g_task_graph_runner =
-    LAZY_INSTANCE_INITIALIZER;
 
 namespace {
 
@@ -96,13 +93,14 @@ Compositor::Compositor(CompositorClient* client)
 }
 
 void Compositor::SendSwapCompositorFrameToClient(
-    uint32 surface_id,
-    CompositorFrameHandle* frame) {
+    scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
   // XXX: What if we are hidden?
   // XXX: Should we check that surface_id matches the last created
   //  surface?
-  client_->CompositorSwapFrame(surface_id, frame);
+  scoped_refptr<CompositorFrameHandle> handle =
+      new CompositorFrameHandle(proxy_, frame.Pass());
+  client_->CompositorSwapFrame(handle.get());
 }
 
 void Compositor::LockCompositor() {
@@ -230,17 +228,18 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_.reset();
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
-    settings.renderer_settings.allow_antialiasing = false;
     settings.use_external_begin_frame_source = false;
+    settings.renderer_settings.allow_antialiasing = false;
 
     cc::LayerTreeHost::InitParams params;
     params.client = this;
     params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
     params.gpu_memory_buffer_manager =
         content::BrowserGpuMemoryBufferManager::current();
-    params.task_graph_runner = g_task_graph_runner.Pointer();
+    params.task_graph_runner =
+        CompositorUtils::GetInstance()->GetTaskGraphRunner();
     params.settings = &settings;
-    params.main_task_runner = base::MessageLoopProxy::current();
+    params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
 
     layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
         CompositorUtils::GetInstance()->GetTaskRunner(),

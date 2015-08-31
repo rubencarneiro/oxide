@@ -53,6 +53,7 @@
 #include "oxide_lifecycle_observer.h"
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
+#include "oxide_render_process_initializer.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
@@ -209,8 +210,6 @@ void BrowserMainParts::PreEarlyInitialization() {
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
   base::MessageLoop::InitMessagePumpForUIFactory(nullptr);
-
-  lifecycle_observer_.reset(new LifecycleObserver());
 }
 
 int BrowserMainParts::PreCreateThreads() {
@@ -229,9 +228,7 @@ int BrowserMainParts::PreCreateThreads() {
 
   // In between now and PreMainMessageLoopRun, Chromium runs code that starts
   // the GPU thread, so we need to decide now whether to use a share context.
-  // This sucks a bit, because it means that GpuDataManagerImpl is initialized
-  // twice. Note also that this decision is based on basic graphics info only
-  content::GpuDataManagerImpl::GetInstance()->Initialize();
+  // Note that this decision is based on basic graphics info only
   if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
           gpu::USE_VIRTUALIZED_GL_CONTEXTS) ||
       gfx::GetGLImplementation() == gfx::kGLImplementationDesktopGL) {
@@ -283,6 +280,9 @@ void BrowserMainParts::PreMainMessageLoopRun() {
 
   CompositorUtils::GetInstance()->Initialize(gl_share_context_.get());
   net::NetModule::SetResourceProvider(NetResourceProvider);
+
+  lifecycle_observer_.reset(new LifecycleObserver());
+  render_process_initializer_.reset(new RenderProcessInitializer());
 }
 
 bool BrowserMainParts::MainMessageLoopRun(int* result_code) {

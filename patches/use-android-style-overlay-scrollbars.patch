@@ -1,42 +1,11 @@
-# Description: Use Android-style overlay and pinch-viewport scrollbars, and
-#  disable scrollbars for the main frame when pinch-viewport is enabled (the
-#  pinch-viewport scrollbars will be used there). This makes an assumption
-#  that overlay scrollbars and pinch-viewport are mobile-only. If we want to
-#  support these on desktop in the future, then we'll need to rethink this
+# Description: Use Android-style overlay scrollbars. This makes an assumption
+#  that overlay scrollbars are mobile-only. If we want to support these on
+#  desktop in the future, then we'll need to rethink this
 # Author: Chris Coulson <chris.coulson@canonical.com>
 
-diff --git a/third_party/WebKit/Source/core/frame/FrameView.cpp b/third_party/WebKit/Source/core/frame/FrameView.cpp
---- a/third_party/WebKit/Source/core/frame/FrameView.cpp
-+++ b/third_party/WebKit/Source/core/frame/FrameView.cpp
-@@ -2990,21 +2990,24 @@ bool FrameView::isFlippedDocument() cons
-     if (!layoutView)
-         return false;
- 
-     return layoutView->hasFlippedBlocksWritingMode();
- }
- 
- bool FrameView::scrollbarsDisabled() const
- {
-+     if (!m_frame->settings() || !m_frame->settings()->useMobileViewportStyle())
-+         return false;
-+
-     // FIXME: This decision should be made based on whether or not to use
-     // viewport scrollbars for the main frame. This is implicitly just Android,
-     // but should be made explicit.
-     // http://crbug.com/434533
--#if !OS(ANDROID)
-+#if 0
-     return false;
- #else
-     return m_frame->isMainFrame();
- #endif
- }
- 
- AXObjectCache* FrameView::axObjectCache() const
- {
-diff --git a/third_party/WebKit/Source/core/frame/PinchViewport.cpp b/third_party/WebKit/Source/core/frame/PinchViewport.cpp
---- a/third_party/WebKit/Source/core/frame/PinchViewport.cpp
-+++ b/third_party/WebKit/Source/core/frame/PinchViewport.cpp
+diff --git a/third_party/WebKit/Source/core/frame/VisualViewport.cpp b/third_party/WebKit/Source/core/frame/VisualViewport.cpp
+--- a/third_party/WebKit/Source/core/frame/VisualViewport.cpp
++++ b/third_party/WebKit/Source/core/frame/VisualViewport.cpp
 @@ -38,16 +38,17 @@
  #include "core/inspector/InspectorInstrumentation.h"
  #include "core/layout/LayoutView.h"
@@ -55,7 +24,7 @@ diff --git a/third_party/WebKit/Source/core/frame/PinchViewport.cpp b/third_part
  #include "platform/scroll/Scrollbar.h"
  #include "platform/scroll/ScrollbarTheme.h"
  #include "public/platform/Platform.h"
-@@ -351,21 +352,21 @@ void PinchViewport::setupScrollbar(WebSc
+@@ -348,21 +349,21 @@ void VisualViewport::setupScrollbar(WebS
          m_webOverlayScrollbarHorizontal : m_webOverlayScrollbarVertical;
  
      int thumbThickness = frameHost().settings().pinchOverlayScrollbarThickness();

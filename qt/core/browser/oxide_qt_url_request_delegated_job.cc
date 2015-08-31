@@ -244,6 +244,8 @@ void URLRequestDelegatedJobProxy::DoStart(const std::string& method,
 
   stream_->SetDidReadCallback(
       base::Bind(&URLRequestDelegatedJobProxy::OnDidRead,
+                 // Callback is cleared in destructor, and is guaranteed
+                 // to not run after that
                  base::Unretained(this)));
 
   WebContext* context = context_getter_->GetContext();
@@ -467,6 +469,8 @@ URLRequestDelegatedJob::URLRequestDelegatedJob(
       read_buf_size_(0) {
   stream_->SetDataAvailableCallback(
       base::Bind(&URLRequestDelegatedJob::OnDataAvailable,
+                 // Callback is cleared in destructor, and is guaranteed
+                 // to not run after that
                  base::Unretained(this)));
 }
 

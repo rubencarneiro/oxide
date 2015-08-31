@@ -5,10 +5,10 @@
 diff --git a/base/threading/thread_restrictions.h b/base/threading/thread_restrictions.h
 --- a/base/threading/thread_restrictions.h
 +++ b/base/threading/thread_restrictions.h
-@@ -56,16 +56,20 @@ class WatcherThreadManager;
- }
+@@ -59,16 +59,20 @@ class WatcherThreadManager;
  }
  namespace net {
+ class NetworkChangeNotifierMac;
  namespace internal {
  class AddressTrackerLinux;
  }
@@ -26,7 +26,7 @@ diff --git a/base/threading/thread_restrictions.h b/base/threading/thread_restri
  
  namespace android {
  class JavaHandlerThread;
-@@ -182,16 +186,18 @@ class BASE_EXPORT ThreadRestrictions {
+@@ -187,16 +191,18 @@ class BASE_EXPORT ThreadRestrictions {
    friend class MessagePumpDefault;
    friend class SequencedWorkerPool;
    friend class SimpleThread;

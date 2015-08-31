@@ -196,7 +196,7 @@ Item {
       compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelNone);
       compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
       compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
-      verify(!webView.securityStatus.certificate);
+      compare(webView.securityStatus.certificate, null);
 
       // Load test URL and wait for it to load
       webView.url = data.url;
@@ -207,7 +207,7 @@ Item {
       compare(webView.securityStatus.contentStatus, data.contentStatus);
       compare(webView.securityStatus.certStatus, data.certStatus);
       if (!data.certificate) {
-        verify(!webView.securityStatus.certificate);
+        compare(webView.securityStatus.certificate, null);
       } else {
         compare(webView.securityStatus.certificate.fingerprintSHA1, data.certificate);
       }
@@ -215,10 +215,6 @@ Item {
       compare(contentStatusSpy.count, data.contentStatusSignals[0]);
       compare(certStatusSpy.count, data.certStatusSignals[0]);
       compare(certificateSpy.count, data.certificateSignals[0]);
-
-      // Save the certificate to verify it gets deleted in the next step
-      var certificate = webView.securityStatus.certificate;
-      var obs = OxideTestingUtils.createDestructionObserver(certificate);
 
       // Go back to a http URL
       webView.url = "http://testsuite/empty.html";
@@ -228,16 +224,11 @@ Item {
       compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelNone);
       compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
       compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
-      verify(!webView.securityStatus.certificate);
+      compare(webView.securityStatus.certificate, null);
       compare(securityLevelSpy.count, data.securityLevelSignals[1]);
       compare(contentStatusSpy.count, data.contentStatusSignals[1]);
       compare(certStatusSpy.count, data.certStatusSignals[1]);
       compare(certificateSpy.count, data.certificateSignals[1]);
-
-      // Now verify that the certificate was deleted
-      if (data.certificate) {
-        verify(obs.destroyed);
-      }
 
       webView.destroy();
     }

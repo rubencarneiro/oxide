@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,7 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "v8/include/v8.h"
 
@@ -33,16 +32,13 @@ namespace oxide {
 
 class ScriptMessageManager;
 
-class ScriptMessageRequestImplRenderer final :
-    public base::RefCounted<ScriptMessageRequestImplRenderer>,
-    public ScriptMessageRequest,
-    public ScriptReferencedObject<ScriptMessageRequestImplRenderer> {
+class ScriptMessageRequestImplRenderer
+    : public base::RefCounted<ScriptMessageRequestImplRenderer>,
+      public ScriptMessageRequest,
+      public ScriptReferencedObject<ScriptMessageRequestImplRenderer> {
  public:
   ScriptMessageRequestImplRenderer(ScriptMessageManager* mm,
                                    int serial,
-                                   bool want_reply,
-                                   const std::string& msg_id,
-                                   const std::string& args,
                                    const v8::Handle<v8::Object>& handle);
 
   v8::Handle<v8::Function> GetOnReplyCallback(v8::Isolate* isolate) const;
@@ -57,19 +53,19 @@ class ScriptMessageRequestImplRenderer final :
   friend class base::RefCounted<ScriptMessageRequestImplRenderer>;
   ~ScriptMessageRequestImplRenderer();
 
-  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) final;
-
-  void OnReply(const std::string& args) final;
-  void OnError(Error error, const std::string& msg) final;
-
   void DispatchResponse(v8::Handle<v8::Function> function,
                         int argc,
                         v8::Local<v8::Value> argv[]);
 
+  // ScriptMessageRequest implementation
+  void OnReply(const base::Value& payload) override;
+  void OnError(ScriptMessageParams::Error error,
+               const base::Value& payload) override;
+
   ScopedPersistent<v8::Function> reply_callback_;
   ScopedPersistent<v8::Function> error_callback_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequestImplRenderer);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageRequestImplRenderer);
 };
 
 } // namespace

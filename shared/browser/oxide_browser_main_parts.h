@@ -40,6 +40,7 @@ namespace oxide {
 class GLContextDependent;
 class IOThread;
 class LifecycleObserver;
+class RenderProcessInitializer;
 
 class BrowserMainParts : public content::BrowserMainParts {
  public:
@@ -67,6 +68,8 @@ class BrowserMainParts : public content::BrowserMainParts {
   scoped_ptr<gfx::Screen> primary_screen_;
 
   scoped_ptr<LifecycleObserver> lifecycle_observer_;
+
+  scoped_ptr<RenderProcessInitializer> render_process_initializer_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
 };

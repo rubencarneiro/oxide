@@ -26,17 +26,16 @@
 #include <queue>
 
 #include "base/macros.h"
+#include "base/memory/linked_ptr.h"
 #include "base/synchronization/lock.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
-namespace cc {
-class CompositorFrame;
-}
-
 namespace oxide {
+
+class CompositorFrameData;
 
 // This class maintains a map of mailbox names to actual GPU buffers on
 // behalf of CompositorThreadProxy
@@ -45,16 +44,7 @@ class MailboxBufferMap {
   MailboxBufferMap(CompositingMode mode);
   ~MailboxBufferMap();
 
-  struct DelayedFrameSwap {
-    DelayedFrameSwap(uint32_t surface_id, cc::CompositorFrame* frame);
-
-    uint32_t surface_id;
-    gfx::Size size;
-    float scale;
-    gpu::Mailbox mailbox;
-  };
-
-  typedef std::queue<DelayedFrameSwap> DelayedFrameSwapQueue;
+  typedef std::queue<linked_ptr<CompositorFrameData>> DelayedFrameQueue;
 
   // Sets the output surface ID. This is used to reject new additions
   // from an older surface, if they arrive after the surface has changed
@@ -65,7 +55,7 @@ class MailboxBufferMap {
   bool AddTextureMapping(uint32_t surface_id,
                          const gpu::Mailbox& mailbox,
                          GLuint texture,
-                         DelayedFrameSwapQueue* ready_frame_swaps);
+                         DelayedFrameQueue* ready_frames);
 
   // Add a mapping from |mailbox| to |egl_image| for |surface_id|. Returns
   // true if the mapping was added. In this case, MailboxBufferMap takes
@@ -73,7 +63,7 @@ class MailboxBufferMap {
   bool AddEGLImageMapping(uint32_t surface_id,
                           const gpu::Mailbox& mailbox,
                           EGLImageKHR egl_image,
-                          DelayedFrameSwapQueue* ready_frame_swaps);
+                          DelayedFrameQueue* ready_frames);
 
   // Notification that the GPU buffer for |mailbox| was destroyed by the
   // compositor
@@ -91,15 +81,16 @@ class MailboxBufferMap {
   // for the resource identified by |mailbox| for COMPOSITING_MODE_EGLIMAGE
   void ReclaimMailboxBufferResources(const gpu::Mailbox& mailbox);
 
-  // Test if the frame swap can begin, and queue if not
-  bool CanBeginFrameSwap(uint32_t surface_id, cc::CompositorFrame* frame);
+  // Test if the frame swap can begin, and queue if not. The queued frame
+  // will be returned by a later call to Add{Texture,EGLImage}Mapping
+  bool CanBeginFrameSwap(CompositorFrameData* frame);
                                 
  private:
   struct MailboxBufferData;
 
   void AddMapping(const gpu::Mailbox& mailbox,
                   const MailboxBufferData& data,
-                  DelayedFrameSwapQueue* ready_frame_swaps);
+                  DelayedFrameQueue* ready_frames);
 
   CompositingMode mode_;
 
@@ -121,7 +112,7 @@ class MailboxBufferMap {
 
   std::map<gpu::Mailbox, MailboxBufferData> map_;
 
-  DelayedFrameSwapQueue delayed_frame_swaps_;
+  DelayedFrameQueue delayed_frames_;
 
   DISALLOW_COPY_AND_ASSIGN(MailboxBufferMap);
 };

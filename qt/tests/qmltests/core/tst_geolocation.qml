@@ -34,19 +34,19 @@ TestWebView {
     }
 
     function test_geolocation_get(data) {
-      OxideTestingUtils.setAppProperty("_oxide_geo_testcase", data.testcase);
+      Utils.setAppProperty("_oxide_geo_testcase", data.testcase);
       webView.url = "http://testsuite/tst_geolocation_get.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(function() { return expect_result("location", data.result); }));
+      verify(TestUtils.waitFor(function() { return expect_result("location", data.result); }));
     }
 
     function test_geolocation_watch() {
-      OxideTestingUtils.removeAppProperty("_oxide_geo_testcase");
+      Utils.removeAppProperty("_oxide_geo_testcase");
       webView.url = "http://testsuite/tst_geolocation_watch.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(function() { return expect_result("updates", "5"); }, 15000));
+      verify(TestUtils.waitFor(function() { return expect_result("updates", "5"); }, 15000));
       verify(expect_result("errors", "0"));
     }
   }

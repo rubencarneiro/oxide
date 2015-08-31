@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <string>
+
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
@@ -95,6 +97,9 @@ class BrowserPlatformIntegration {
 
   // Get the current application state
   virtual ApplicationState GetApplicationState();
+
+  // Get the application name
+  virtual std::string GetApplicationName();
 
  protected:
   BrowserPlatformIntegration();

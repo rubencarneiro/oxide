@@ -18,12 +18,14 @@
 #include "oxide_resource_dispatcher_host_delegate.h"
 
 #include "base/bind.h"
-#include "base/callback.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/browser/resource_context.h"
+#include "content/public/browser/resource_request_info.h"
 #include "content/public/common/referrer.h"
 #include "net/base/mime_util.h"
 #include "net/cookies/cookie_monster.h"
@@ -37,6 +39,8 @@
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_redirection_intercept_throttle.h"
+#include "oxide_resource_dispatcher_host_login_delegate.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -142,15 +146,15 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   if (url_request->is_pending()) {
     url_request->extra_request_headers().GetHeader(
         net::HttpRequestHeaders::kUserAgent, &params.user_agent);
-  } else if (io_data->GetDelegate().get()) {
-    scoped_refptr<BrowserContextDelegate> delegate(
-        BrowserContextIOData::FromResourceContext(resource_context)->GetDelegate());
+  } else {
+    scoped_refptr<BrowserContextDelegate> delegate(io_data->GetDelegate());
     if (delegate.get()) {
       params.user_agent = delegate->GetUserAgentOverride(url);
     }
-  }
-  if (params.user_agent.empty()) {
-    params.user_agent = io_data->GetUserAgent();
+    if (params.user_agent.empty()) {
+      params.user_agent =
+          io_data->GetUserAgentSettings()->GetUserAgentForURL(url);
+    }
   }
 
   if (url_request->is_pending()) {
@@ -193,8 +197,8 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
           params.render_process_id, params.render_view_id);
   if (!rvh) {
     LOG(ERROR) << "Invalid or non-existent render_process_id & render_view_id:"
-	       << params.render_process_id << ", " << params.render_view_id
-	       << "during download url delegate dispatch";
+               << params.render_process_id << ", " << params.render_view_id
+               << "during download url delegate dispatch";
     return;
   }
 
@@ -237,6 +241,14 @@ bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     ui::PageTransition page_transition,
     bool has_user_gesture) {
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
+}
+
+content::ResourceDispatcherHostLoginDelegate*
+    ResourceDispatcherHostDelegate::CreateLoginDelegate(
+    net::AuthChallengeInfo* auth_info,
+    net::URLRequest* request) {
+  // Chromium will own the delegate
+  return new ResourceDispatcherHostLoginDelegate(auth_info, request);
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}

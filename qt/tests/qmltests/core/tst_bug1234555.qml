@@ -5,9 +5,12 @@ import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
   id: webView
-  focus: true
   width: 200
   height: 200
+
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
 
   TestCase {
     id: test
@@ -24,7 +27,7 @@ TestWebView {
 
       function sendMessage(frame) {
         numberSent++;
-        var req = frame.sendMessage("oxide://testutils/", "DONT-RESPOND", {});
+        var req = frame.sendMessageNoWait("TEST-DONT-RESPOND");
         req.onerror = function(code, msg) {
           errorsReceived.push({code: code, msg: msg});
         };
@@ -32,17 +35,16 @@ TestWebView {
 
       // FIXME(chrisccoulson): Doesn't work for top-level navigations
       //  see https://launchpad.net/bugs/1287581
-      //sendMessage(webView.rootFrame);
-      sendMessage(webView.rootFrame.childFrames[0]);
+      //sendMessage(new ScriptMessageTestUtils.FrameHelper(webView.rootFrame));
+      sendMessage(new ScriptMessageTestUtils.FrameHelper(webView.rootFrame.childFrames[0]));
 
       webView.url = "about:blank";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(webView.waitFor(function() { return errorsReceived.length == numberSent; }),
+      verify(TestUtils.waitFor(function() { return errorsReceived.length == numberSent; }),
              "Timed out waiting for responses");
       errorsReceived.forEach(function(error) {
-        compare(error.msg, "The frame disappeared whilst waiting for a response");
-        compare(error.code, ScriptMessageRequest.ErrorDestinationNotFound);
+        compare(error.code, ScriptMessageRequest.ErrorHandlerDidNotRespond);
       });
     }
   }

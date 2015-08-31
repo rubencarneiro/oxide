@@ -40,7 +40,6 @@ class GLContextDependent : public gfx::GLContext {
   // gfx::GLContext implementation
   bool Initialize(gfx::GLSurface* compatible_surface,
                   gfx::GpuPreference gpu_preference) override;
-  void Destroy() override;
   bool MakeCurrent(gfx::GLSurface* surface) override;
   void ReleaseCurrent(gfx::GLSurface* surface) override;
   bool IsCurrent(gfx::GLSurface* surface) override;

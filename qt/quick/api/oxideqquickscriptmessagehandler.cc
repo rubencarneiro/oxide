@@ -29,14 +29,14 @@ OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageHandler,
 
 bool OxideQQuickScriptMessageHandlerPrivate::ReceiveMessage(
     oxide::qt::ScriptMessageProxy* message,
-    QString& error) {
+    QVariant* error) {
   QJSValueList args;
   args.append(callback_.engine()->newQObject(
       OxideQQuickScriptMessagePrivate::create(message)));
 
   QJSValue rv = callback_.call(args);
   if (rv.isError()) {
-    error = rv.toString();
+    *error = QVariant(rv.toString());
     return false;
   }
 

@@ -54,6 +54,9 @@
         '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
+      'ldflags': [
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
+      ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
@@ -95,6 +98,8 @@
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
         'browser/oxide_qt_user_script.h',
+        'browser/oxide_qt_variant_value_converter.cc',
+        'browser/oxide_qt_variant_value_converter.h',
         'browser/oxide_qt_web_context.cc',
         'browser/oxide_qt_web_context.h',
         'browser/oxide_qt_web_context_menu.cc',
@@ -208,6 +213,7 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
@@ -224,9 +230,11 @@
         'api/oxideqcertificateerror_p.h',
         'api/oxideqdownloadrequest.cc',
         'api/oxideqdownloadrequest.h',
-        'api/oxideqdownloadrequest_p.h',
         'api/oxideqglobal.cc',
         'api/oxideqglobal.h',
+        'api/oxideqhttpauthenticationrequest.cc',
+        'api/oxideqhttpauthenticationrequest.h',
+        'api/oxideqhttpauthenticationrequest_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -269,6 +277,11 @@
         {
           'action_name': 'moc_oxideqdownloadrequest.cc',
           'moc_input': 'api/oxideqdownloadrequest.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqhttpauthenticationrequest.cc',
+          'moc_input': 'api/oxideqhttpauthenticationrequest.h',
           'includes': [ 'moc.gypi' ]
         },
         {

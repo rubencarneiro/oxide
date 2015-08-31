@@ -52,13 +52,13 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(OxideTestingUtils.qObjectParent(d), context,
+      compare(Utils.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
 
       context[data.prop] = d;
       compare(spy.count, 1, "Shouldn't have had another signal");
 
-      var dobs = OxideTestingUtils.createDestructionObserver(d);
+      var dobs = Utils.createDestructionObserver(d);
 
       context[data.prop] = null;
       compare(spy.count, 2, "Expected a signal");
@@ -77,7 +77,7 @@ TestWebView {
       context[data.prop] = d;
       compare(spy.count, 0, "Shouldn't have had a signal");
       compare(context[data.prop], null, "Unexpected value");
-      compare(OxideTestingUtils.qObjectParent(d), context2,
+      compare(Utils.qObjectParent(d), context2,
               "Shouldn't have been reparented");
 
       context2[data.prop] = null;
@@ -94,7 +94,7 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(OxideTestingUtils.qObjectParent(d), context,
+      compare(Utils.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
     }
 
@@ -110,10 +110,10 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(OxideTestingUtils.qObjectParent(d), context,
+      compare(Utils.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
 
-      OxideTestingUtils.destroyQObjectNow(d);
+      Utils.destroyQObjectNow(d);
       
       compare(spy.count, 2, "Expected a signal");
       compare(context[data.prop], null, "Value should have been cleared");
@@ -126,15 +126,15 @@ TestWebView {
 
       compare(context.networkRequestDelegate, d);
       compare(context.storageAccessPermissionDelegate, d);
-      compare(OxideTestingUtils.qObjectParent(d), context);
+      compare(Utils.qObjectParent(d), context);
 
       context.networkRequestDelegate = null;
 
       compare(context.networkRequestDelegate, null);
       compare(context.storageAccessPermissionDelegate, d);
-      compare(OxideTestingUtils.qObjectParent(d), context);
+      compare(Utils.qObjectParent(d), context);
 
-      var dobs = OxideTestingUtils.createDestructionObserver(d);
+      var dobs = Utils.createDestructionObserver(d);
 
       context.storageAccessPermissionDelegate = null;
 

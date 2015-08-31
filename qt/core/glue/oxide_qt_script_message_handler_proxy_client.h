@@ -23,7 +23,7 @@
 #include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 QT_BEGIN_NAMESPACE
-class QString;
+class QVariant;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -36,7 +36,7 @@ class ScriptMessageHandlerProxyClient {
   virtual ~ScriptMessageHandlerProxyClient() {}
 
   virtual bool ReceiveMessage(ScriptMessageProxy* message,
-                              QString& error) = 0;
+                              QVariant* error) = 0;
 };
 
 } // namespace qt

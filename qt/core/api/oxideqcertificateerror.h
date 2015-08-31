@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,9 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqsslcertificate.h"
+
 class OxideQCertificateErrorPrivate;
-class OxideQSslCertificate;
 
 class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   Q_OBJECT
@@ -36,7 +37,7 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   Q_PROPERTY(bool overridable READ overridable CONSTANT)
   Q_PROPERTY(bool strictEnforcement READ strictEnforcement CONSTANT)
 
-  Q_PROPERTY(OxideQSslCertificate* certificate READ certificate CONSTANT)
+  Q_PROPERTY(OxideQSslCertificate certificate READ certificate CONSTANT)
   Q_PROPERTY(Error certError READ certError CONSTANT)
 
   Q_ENUMS(Error)
@@ -70,7 +71,7 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   bool overridable() const;
   bool strictEnforcement() const;
 
-  OxideQSslCertificate* certificate() const;
+  OxideQSslCertificate certificate() const;
   Error certError() const;
 
  public Q_SLOTS:

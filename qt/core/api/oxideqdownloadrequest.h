@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,17 +18,17 @@
 #ifndef OXIDE_Q_DOWNLOAD_REQUEST
 #define OXIDE_Q_DOWNLOAD_REQUEST
 
-#include <QObject>
-#include <QScopedPointer>
+#include <QMetaType>
+#include <QSharedDataPointer>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
 #include <QUrl>
 
-class OxideQDownloadRequestPrivate;
+class OxideQDownloadRequestData;
 
-class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
-  Q_OBJECT
+class Q_DECL_EXPORT OxideQDownloadRequest {
+  Q_GADGET
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(QString mimeType READ mimeType CONSTANT)
@@ -38,20 +38,22 @@ class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
   Q_PROPERTY(QString referrer READ referrer CONSTANT)
   Q_PROPERTY(QString userAgent READ userAgent CONSTANT)
 
-  Q_DECLARE_PRIVATE(OxideQDownloadRequest)
-  Q_DISABLE_COPY(OxideQDownloadRequest)
-
  public:
-  OxideQDownloadRequest(
-      const QUrl& url,
-      const QString& mimeType,
-      const bool shouldPrompt,
-      const QString& suggestedFilename,
-      const QString& cookies,
-      const QString& referrer,
-      const QString& userAgent,
-      QObject* parent = 0);
-  virtual ~OxideQDownloadRequest();
+  OxideQDownloadRequest(const QUrl& url,
+                        const QString& mimeType,
+                        const bool shouldPrompt,
+                        const QString& suggestedFilename,
+                        const QString& cookies,
+                        const QString& referrer,
+                        const QString& userAgent);
+  OxideQDownloadRequest();
+  ~OxideQDownloadRequest();
+
+  OxideQDownloadRequest(const OxideQDownloadRequest& other);
+  OxideQDownloadRequest operator=(const OxideQDownloadRequest& other);
+
+  bool operator==(const OxideQDownloadRequest& other) const;
+  bool operator!=(const OxideQDownloadRequest& other) const;
 
   QUrl url() const;
   QString mimeType() const;
@@ -62,8 +64,9 @@ class Q_DECL_EXPORT OxideQDownloadRequest : public QObject {
   QString userAgent() const;
 
  private:
-
-  QScopedPointer<OxideQDownloadRequestPrivate> d_ptr;
+  QSharedDataPointer<OxideQDownloadRequestData> d;
 };
+
+Q_DECLARE_METATYPE(OxideQDownloadRequest)
 
 #endif // OXIDE_Q_DOWNLOAD_REQUEST

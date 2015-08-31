@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,9 +17,159 @@
 
 #include "surface_factory_ozone_oxide.h"
 
+#include <map>
+#include <utility>
+
+#include "base/files/file_path.h"
+#include "base/logging.h"
+#include "base/scoped_native_library.h"
+#include "base/strings/string_piece.h"
 #include "EGL/egl.h"
 
+#include "../../../shared/port/gfx/gfx_utils_oxide.h"
+
 namespace ui {
+
+namespace {
+
+struct MirMesaEGLNativeDisplay;
+
+bool IsDriverVendorMesa(EGLNativeDisplayType native_display) {
+  // We can't create a context here, as we haven't yet chosen an appropriate
+  // config so we can't create a surface.
+  // We also can't use Chromium's GL bindings, as //ui/gl depends on us
+
+  typedef EGLDisplay (*eglGetDisplayFnType)(EGLNativeDisplayType);
+  typedef const char* (*eglQueryStringFnType)(EGLDisplay, EGLint);
+
+  base::FilePath empty;
+  base::ScopedNativeLibrary library(empty);
+
+  eglGetDisplayFnType eglGetDisplayFn =
+      reinterpret_cast<eglGetDisplayFnType>(
+        library.GetFunctionPointer("eglGetDisplay"));
+  eglQueryStringFnType eglQueryStringFn =
+      reinterpret_cast<eglQueryStringFnType>(
+        library.GetFunctionPointer("eglQueryString"));
+
+  if (!eglGetDisplayFn || !eglQueryStringFn) {
+    return false;
+  }
+
+  EGLDisplay display = eglGetDisplayFn(native_display);
+
+  base::StringPiece egl_vendor(eglQueryStringFn(display, EGL_VENDOR));
+  if (egl_vendor == base::StringPiece("Mesa Project")) {
+    return true;
+  }
+
+  return false;
+}
+
+bool TestIsValidMirMesaDisplay(const base::ScopedNativeLibrary& library,
+                               const char* function_name,
+                               EGLNativeDisplayType display) {
+  typedef int (*MirEGLNativeDisplayIsValidFunc)(MirMesaEGLNativeDisplay*);
+
+  MirEGLNativeDisplayIsValidFunc function =
+      reinterpret_cast<MirEGLNativeDisplayIsValidFunc>(
+        library.GetFunctionPointer(function_name));
+  if (!function) {
+    return false;
+  }
+
+  return function(reinterpret_cast<MirMesaEGLNativeDisplay*>(display));
+}
+
+bool IsRunningOnMesaMir(EGLNativeDisplayType native_display) {
+  if (!IsDriverVendorMesa(native_display)) {
+    return false;
+  }
+
+  base::FilePath empty;
+  base::ScopedNativeLibrary library(empty);
+  DCHECK(library.is_valid());
+
+  static const char* kTestFunctions[] = {
+    "mir_egl_mesa_display_is_valid",
+    "mir_client_mesa_egl_native_display_is_valid",
+    "mir_server_mesa_egl_native_display_is_valid"
+  };
+
+  for (size_t i = 0; i < arraysize(kTestFunctions); ++i) {
+    if (TestIsValidMirMesaDisplay(library,
+                                  kTestFunctions[i],
+                                  native_display)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool IsRunningOnMesaDrm(EGLNativeDisplayType native_display) {
+  if (!IsDriverVendorMesa(native_display)) {
+    return false;
+  }
+
+  if (!native_display) {
+    return false;
+  }
+
+  base::FilePath empty;
+  base::ScopedNativeLibrary library(empty);
+  DCHECK(library.is_valid());
+
+  void* gbm_create_device = library.GetFunctionPointer("gbm_create_device");
+  if (!gbm_create_device) {
+    return false;
+  }
+
+  void* first_pointer = *reinterpret_cast<void**>(native_display);
+  return first_pointer == gbm_create_device;
+}
+
+bool PBufferSurfacesSupported(EGLNativeDisplayType native_display) {
+  if (IsRunningOnMesaMir(native_display)) {
+    return false;
+  }
+
+  if (IsRunningOnMesaDrm(native_display)) {
+    return false;
+  }
+
+  return true;
+}
+
+std::map<EGLint, EGLint> GetPlatformAttribOverrides(
+    EGLNativeDisplayType native_display) {
+  std::map<EGLint, EGLint> overrides;
+
+  if (!PBufferSurfacesSupported(native_display)) {
+    overrides[EGL_SURFACE_TYPE] = EGL_WINDOW_BIT;
+  }
+
+  return overrides;
+}
+
+std::pair<EGLint, EGLint> FilterAttribute(
+    EGLint attrib,
+    EGLint value,
+    std::map<EGLint, EGLint>* overrides) {
+  auto it = overrides->find(attrib);
+  if (it != overrides->end()) {
+    value = it->second;
+    overrides->erase(it);
+  }
+
+  return std::make_pair(attrib, value);
+}
+
+}
+
+intptr_t SurfaceFactoryOzoneOxide::GetNativeDisplay() {
+  return gfx::GetOxideNativeDisplay();
+}
 
 bool SurfaceFactoryOzoneOxide::LoadEGLGLES2Bindings(
     AddGLLibraryCallback add_gl_library,
@@ -27,35 +177,52 @@ bool SurfaceFactoryOzoneOxide::LoadEGLGLES2Bindings(
   return false;
 }
 
-const int32* SurfaceFactoryOzoneOxide::GetEGLSurfaceProperties(
-    const int32* desired_list) {
-  // The Mir EGL backend in mesa doesn't support pbuffer surfaces,
-  // so the default attributes passed to eglChooseConfig in Chromium
-  // will result in 0 configs - see https://launchpad.net/bugs/1307709
+const int32_t* SurfaceFactoryOzoneOxide::GetEGLSurfaceProperties(
+    const int32_t* desired_list) {
+  static const int kMaxNumberOfAttribs = 7;
 
-  // This detection is a bit of a hack. Not sure if there's a better way
-  // to do this?
-  char* egl_platform = getenv("EGL_PLATFORM");
-  if (!egl_platform || 
-        ((strcmp(egl_platform, "mir") != 0) && (strcmp(egl_platform, "drm") != 0))) {
+  static bool s_initialized = false;
+  static EGLint s_config_attribs[kMaxNumberOfAttribs * 2 + 1] = { EGL_NONE };
+
+  if (s_initialized) {
+    return s_config_attribs;
+  }
+
+  s_initialized = true;
+
+  std::map<EGLint, EGLint> attribute_overrides =
+      GetPlatformAttribOverrides(GetNativeDisplay());
+  if (attribute_overrides.size() == 0) {
     return desired_list;
   }
- 
-  // We should probably filter EGL_PBUFFER_BIT out of desired_list,
-  // but for now just copy kConfigAttribs from gl_surface_egl.cc and omit
-  // EGL_PBUFFER_BIT as it's easier
-  static const EGLint kConfigAttribs[] = {
-    EGL_BUFFER_SIZE, 32,
-    EGL_ALPHA_SIZE, 8,
-    EGL_BLUE_SIZE, 8,
-    EGL_GREEN_SIZE, 8,
-    EGL_RED_SIZE, 8,
-    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-    EGL_NONE
-  };
 
-  return kConfigAttribs;
+  int i = 0;
+  while (i < kMaxNumberOfAttribs) {
+    int j = i * 2;
+
+    if (desired_list[j] == EGL_NONE) {
+      break;
+    }
+
+    ++i;
+
+    auto filtered = FilterAttribute(desired_list[j],
+                                    desired_list[j + 1],
+                                    &attribute_overrides);
+    s_config_attribs[j] = filtered.first;
+    s_config_attribs[j + 1] = filtered.second;
+  }
+
+  CHECK_EQ(desired_list[i * 2], EGL_NONE) <<
+      "If you hit this then you need to increase kMaxNumberOfAttribs";
+  CHECK_EQ(attribute_overrides.size(), 0U) <<
+      "If you hit this, some override attributes were not present in the set "
+      "from Chromium. You'll need to provide extra code to add them";
+  CHECK_LE(i, kMaxNumberOfAttribs);
+
+  s_config_attribs[i * 2] = EGL_NONE;
+
+  return s_config_attribs;
 }
 
 SurfaceFactoryOzoneOxide::SurfaceFactoryOzoneOxide() {}

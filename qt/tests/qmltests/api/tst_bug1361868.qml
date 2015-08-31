@@ -15,7 +15,7 @@ TestWebView {
       msgId: "GEOLOCATION-RESPONSE"
       contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        webView.lastGeolocationStatus = msg.args.status;
+        webView.lastGeolocationStatus = msg.payload;
       }
     }
   ]
@@ -32,13 +32,13 @@ TestWebView {
 
       webView.getTestApi().evaluateCode(
 "document.addEventListener(\"oxidegeolocationresult\", function(event) {
-  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", { status: event.detail.status });
+  oxide.sendMessage(\"GEOLOCATION-RESPONSE\", event.detail.status);
 });", true);
 
       var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
       mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
 
-      verify(webView.waitFor(
+      verify(TestUtils.waitFor(
                  function() { return webView.lastGeolocationStatus != -1; },
                  null, true),
              "Timed out waiting for a response");

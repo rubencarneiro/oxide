@@ -11,10 +11,13 @@ TestWebView {
 
   property QtObject lastMessage: null
 
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
+
   messageHandlers: [
-    ScriptMessageHandler {
+    ScriptMessageTestHandler {
       msgId: "TEST-ASYNC-REPLY"
-      contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
         lastMessage = msg;
       }
@@ -38,14 +41,11 @@ TestWebView {
              "Timed out waiting for successful load");
       spy.clear();
 
-      var res = null
-      var req = webView.rootFrame.childFrames[0].sendMessage(
-          "oxide://testutils/",
-          "SEND-MESSAGE-TO-SELF", 
-          { id: "TEST-ASYNC-REPLY",
-            args: { in: 10 }});
+      var req = new ScriptMessageTestUtils.FrameHelper(
+          webView.rootFrame.childFrames[0]).sendMessageToBrowserNoWait(
+            "TEST-ASYNC-REPLY");
 
-      webView.waitFor(function() { return !!webView.lastMessage; });
+      TestUtils.waitFor(function() { return !!webView.lastMessage; });
       compare(webView.lastMessage.frame, webView.rootFrame.childFrames[0]);
 
       webView.getTestApi().evaluateCode(

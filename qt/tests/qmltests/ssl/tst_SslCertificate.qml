@@ -106,7 +106,7 @@ TestWebView {
         cdata = cert_data_from_id(cdata.parent);
       }
 
-      verify(!certificate);
+      compare(certificate, null);
     }
   }
 }

@@ -23,19 +23,21 @@
 #include "base/callback.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop_proxy.h"
+#include "base/single_thread_task_runner.h"
+#include "base/thread_task_runner_handle.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/gl_frame_data.h"
-#include "cc/output/software_frame_data.h"
 #include "content/common/host_shared_bitmap_manager.h"
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/GLES2/gl2extchromium.h"
 
 #include "oxide_compositor.h"
+#include "oxide_compositor_frame_ack.h"
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_frame_handle.h"
 #include "oxide_compositor_gpu_shims.h"
 #include "oxide_compositor_output_surface.h"
@@ -53,22 +55,17 @@ void CompositorThreadProxy::GetTextureFromMailboxResponseOnOwnerThread(
     return;
   }
 
-  MailboxBufferMap::DelayedFrameSwapQueue ready_frame_swaps;
+  MailboxBufferMap::DelayedFrameQueue ready_frames;
 
-  mailbox_buffer_map_.AddTextureMapping(
-      surface_id,
-      mailbox,
-      texture,
-      &ready_frame_swaps);
+  mailbox_buffer_map_.AddTextureMapping(surface_id,
+                                        mailbox,
+                                        texture,
+                                        &ready_frames);
 
-  while (!ready_frame_swaps.empty()) {
-    const MailboxBufferMap::DelayedFrameSwap& swap = ready_frame_swaps.front();
-    SendSwapGLFrameOnOwnerThread(
-        swap.surface_id,
-        swap.size,
-        swap.scale,
-        swap.mailbox);
-    ready_frame_swaps.pop();           
+  while (!ready_frames.empty()) {
+    linked_ptr<CompositorFrameData> frame = ready_frames.front();
+    ready_frames.pop();
+    SendSwapGLFrameOnOwnerThread(make_scoped_ptr(frame.release()));
   }
 }
 
@@ -80,12 +77,12 @@ void CompositorThreadProxy::CreateEGLImageFromMailboxResponseOnOwnerThread(
     return;
   }
 
-  MailboxBufferMap::DelayedFrameSwapQueue ready_frame_swaps;
+  MailboxBufferMap::DelayedFrameQueue ready_frames;
 
   if (!mailbox_buffer_map_.AddEGLImageMapping(surface_id,
                                               mailbox,
                                               egl_image,
-                                              &ready_frame_swaps)) {
+                                              &ready_frames)) {
     GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,
         base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
@@ -93,49 +90,39 @@ void CompositorThreadProxy::CreateEGLImageFromMailboxResponseOnOwnerThread(
                    egl_image));
   }
 
-  while (!ready_frame_swaps.empty()) {
-    const MailboxBufferMap::DelayedFrameSwap& swap = ready_frame_swaps.front();
-    SendSwapGLFrameOnOwnerThread(
-        swap.surface_id,
-        swap.size,
-        swap.scale,
-        swap.mailbox);
-    ready_frame_swaps.pop();           
+  while (!ready_frames.empty()) {
+    linked_ptr<CompositorFrameData> frame = ready_frames.front();
+    ready_frames.pop();
+    SendSwapGLFrameOnOwnerThread(make_scoped_ptr(frame.release()));
   }
 }
 
 void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
-    uint32 surface_id,
-    const gfx::Size& size,
-    float scale,
-    unsigned id,
-    const gfx::Rect& damage_rect,
-    const cc::SharedBitmapId& bitmap_id) {
+    scoped_ptr<CompositorFrameData> frame) {
+  DCHECK(frame->software_frame_data);
+
   scoped_ptr<cc::SharedBitmap> bitmap(
       content::HostSharedBitmapManager::current()->GetSharedBitmapFromId(
-        size, bitmap_id));
+        frame->size_in_pixels, frame->software_frame_data->bitmap_id));
   if (!bitmap) {
-    // This occurs if the output surface was destroyed
+    // This occurs if the output surface was destroyed, so there's no point
+    // in sending an ack
     return;
   }
-
-  scoped_refptr<CompositorFrameHandle> frame(
-      new CompositorFrameHandle(surface_id, this, size, scale));
-  frame->software_frame_data_.reset(
-      new SoftwareFrameData(id, damage_rect, bitmap->pixels()));
 
   if (!owner().compositor) {
-    DidSkipSwapCompositorFrame(surface_id, &frame);
+    DidSkipSwapCompositorFrame(frame.Pass());
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
+  frame->software_frame_data->pixels = bitmap->pixels();
+
+  owner().compositor->SendSwapCompositorFrameToClient(frame.Pass());
 }
 
 void CompositorThreadProxy::DidCompleteGLFrameOnImplThread(
-    uint32_t surface_id,
-    scoped_ptr<cc::CompositorFrame> frame) {
-  if (!mailbox_buffer_map_.CanBeginFrameSwap(surface_id, frame.get())) {
+    scoped_ptr<CompositorFrameData> frame) {
+  if (!mailbox_buffer_map_.CanBeginFrameSwap(frame.get())) {
     return;
   }
 
@@ -143,40 +130,39 @@ void CompositorThreadProxy::DidCompleteGLFrameOnImplThread(
       FROM_HERE,
       base::Bind(&CompositorThreadProxy::SendSwapGLFrameOnOwnerThread,
                  this,
-                 surface_id,
-                 frame->gl_frame_data->size,
-                 frame->metadata.device_scale_factor,
-                 frame->gl_frame_data->mailbox));
+                 base::Passed(&frame)));
 }
 
 void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
-    uint32_t surface_id,
-    const gfx::Size& size,
-    float scale,
-    const gpu::Mailbox& mailbox) {
-  scoped_refptr<CompositorFrameHandle> frame(
-      new CompositorFrameHandle(surface_id, this, size, scale));
+    scoped_ptr<CompositorFrameData> frame) {
+  DCHECK(frame->gl_frame_data);
 
   switch (mode_) {
     case COMPOSITING_MODE_TEXTURE: {
       GLuint texture =
-          mailbox_buffer_map_.ConsumeTextureFromMailbox(mailbox);
+          mailbox_buffer_map_.ConsumeTextureFromMailbox(
+            frame->gl_frame_data->mailbox);
       if (texture == 0) {
-        // This should only occur if the output surface was destroyed
+        // This should only occur if the output surface was destroyed, so
+        // there's no need to send an ack
         return;
       }
-      frame->gl_frame_data_.reset(new GLFrameData(mailbox, texture));
+      frame->gl_frame_data->resource.texture = texture;
+      frame->gl_frame_data->type = GLFrameData::Type::TEXTURE;
       break;
     }
 
     case COMPOSITING_MODE_EGLIMAGE: {
       EGLImageKHR egl_image =
-          mailbox_buffer_map_.ConsumeEGLImageFromMailbox(mailbox);
+          mailbox_buffer_map_.ConsumeEGLImageFromMailbox(
+            frame->gl_frame_data->mailbox);
       if (egl_image == EGL_NO_IMAGE_KHR) {
-        // This should only occur if the output surface was destroyed
+        // This should only occur if the output surface was destroyed, so
+        // there's no need to send an ack
         return;
       }
-      frame->image_frame_data_.reset(new ImageFrameData(mailbox, egl_image));
+      frame->gl_frame_data->resource.egl_image = egl_image;
+      frame->gl_frame_data->type = GLFrameData::Type::EGLIMAGE;
       break;
     }
 
@@ -185,19 +171,19 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   }
 
   if (!owner().compositor) {
-    DidSkipSwapCompositorFrame(surface_id, &frame);
+    DidSkipSwapCompositorFrame(frame.Pass());
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(surface_id, frame.get());
+  owner().compositor->SendSwapCompositorFrameToClient(frame.Pass());
 }
 
 void CompositorThreadProxy::DidSkipSwapCompositorFrame(
-    uint32_t surface_id,
-    scoped_refptr<CompositorFrameHandle>* frame) {
+    scoped_ptr<CompositorFrameData> frame) {
+  uint32_t surface_id = frame->surface_id;
+
   FrameHandleVector frames;
-  frames.push_back(*frame);
-  *frame = nullptr;
+  frames.push_back(new CompositorFrameHandle(this, frame.Pass()));
 
   impl_message_loop_->PostTask(
       FROM_HERE,
@@ -207,7 +193,7 @@ void CompositorThreadProxy::DidSkipSwapCompositorFrame(
 }
 
 void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
-    uint32 surface_id,
+    uint32_t surface_id,
     FrameHandleVector returned_frames) {
   if (impl().output_surface &&
       surface_id == impl().output_surface->surface_id()) {
@@ -215,67 +201,52 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
   }
 
   while (!returned_frames.empty()) {
-    scoped_refptr<CompositorFrameHandle> frame(returned_frames.back());
+    scoped_refptr<CompositorFrameHandle> handle(returned_frames.back());
     returned_frames.pop_back();
 
-    if (!frame.get()) {
+    if (!handle.get()) {
       continue;
     }
 
-    cc::CompositorFrameAck ack;
-    if (frame->gl_frame_data() || frame->image_frame_data()) {
-      ack.gl_frame_data.reset(new cc::GLFrameData());
-      ack.gl_frame_data->size = frame->size_in_pixels();
-      if (frame->gl_frame_data()) {
-        scoped_ptr<GLFrameData> gl_frame_data = frame->gl_frame_data_.Pass();
-        ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
-      } else {
-        scoped_ptr<ImageFrameData> image_frame_data =
-            frame->image_frame_data_.Pass();
-        ack.gl_frame_data->mailbox = image_frame_data->mailbox();
-      }
-      mailbox_buffer_map_.ReclaimMailboxBufferResources(
-          ack.gl_frame_data->mailbox);
-    } else if (frame->software_frame_data()) {
-      scoped_ptr<SoftwareFrameData> software_frame_data =
-          frame->software_frame_data_.Pass();
-      ack.last_software_frame_id = software_frame_data->id();
-    } else {
-      NOTREACHED();
+    scoped_ptr<CompositorFrameData> frame = handle->data_.Pass();
+
+    CompositorFrameAck ack;
+    switch (mode_) {
+      case COMPOSITING_MODE_SOFTWARE:
+        ack.software_frame_id = frame->software_frame_data->id;
+        break;
+      case COMPOSITING_MODE_TEXTURE:
+      case COMPOSITING_MODE_EGLIMAGE:
+        ack.gl_frame_mailbox = frame->gl_frame_data->mailbox;
+        mailbox_buffer_map_.ReclaimMailboxBufferResources(
+            ack.gl_frame_mailbox);
+        break;
     }
 
     if (impl().output_surface &&
-        frame->surface_id_ == impl().output_surface->surface_id()) {
+        frame->surface_id == impl().output_surface->surface_id()) {
       impl().output_surface->ReclaimResources(ack);
     }
   }
 }
 
 void CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread(
-    uint32 surface_id,
-    const gfx::Size& size_in_pixels,
-    scoped_ptr<GLFrameData> gl_frame_data,
-    scoped_ptr<SoftwareFrameData> software_frame_data,
-    scoped_ptr<ImageFrameData> image_frame_data) {
-  cc::CompositorFrameAck ack;
-  if (gl_frame_data.get() || image_frame_data.get()) {
-    ack.gl_frame_data.reset(new cc::GLFrameData());
-    ack.gl_frame_data->size = size_in_pixels;
-    if (gl_frame_data.get()) {
-      ack.gl_frame_data->mailbox = gl_frame_data->mailbox();
-    } else {
-      ack.gl_frame_data->mailbox = image_frame_data->mailbox();
-    }
-    mailbox_buffer_map_.ReclaimMailboxBufferResources(
-        ack.gl_frame_data->mailbox);
-  } else if (software_frame_data.get()) {
-    ack.last_software_frame_id = software_frame_data->id();
-  } else {
-    NOTREACHED();
+    scoped_ptr<CompositorFrameData> frame) {
+  CompositorFrameAck ack;
+  switch (mode_) {
+    case COMPOSITING_MODE_SOFTWARE:
+      ack.software_frame_id = frame->software_frame_data->id;
+      break;
+    case COMPOSITING_MODE_TEXTURE:
+    case COMPOSITING_MODE_EGLIMAGE:
+      ack.gl_frame_mailbox = frame->gl_frame_data->mailbox;
+      mailbox_buffer_map_.ReclaimMailboxBufferResources(
+          ack.gl_frame_mailbox);
+      break;
   }
 
   if (!impl().output_surface ||
-      surface_id != impl().output_surface->surface_id()) {
+      frame->surface_id != impl().output_surface->surface_id()) {
     return;
   }
 
@@ -294,7 +265,7 @@ CompositorThreadProxy::ImplData& CompositorThreadProxy::impl() {
 
 CompositorThreadProxy::CompositorThreadProxy(Compositor* compositor)
     : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
-      owner_message_loop_(base::MessageLoopProxy::current()),
+      owner_message_loop_(base::ThreadTaskRunnerHandle::Get()),
       mailbox_buffer_map_(mode_) {
   owner().compositor = compositor;
   impl_thread_checker_.DetachFromThread();
@@ -308,10 +279,10 @@ void CompositorThreadProxy::SetOutputSurface(
     CompositorOutputSurface* output_surface) {
   DCHECK(!output_surface || !impl().output_surface);
   DCHECK(!impl_message_loop_ ||
-         impl_message_loop_ == base::MessageLoopProxy::current());
+         impl_message_loop_ == base::ThreadTaskRunnerHandle::Get());
 
   impl().output_surface = output_surface;
-  impl_message_loop_ = base::MessageLoopProxy::current();
+  impl_message_loop_ = base::ThreadTaskRunnerHandle::Get();
 
   mailbox_buffer_map_.SetOutputSurfaceID(
       output_surface ? output_surface->surface_id() : 0);
@@ -346,15 +317,14 @@ void CompositorThreadProxy::MailboxBufferDestroyed(
   mailbox_buffer_map_.MailboxBufferDestroyed(mailbox);
 }
 
-void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
+void CompositorThreadProxy::SwapCompositorFrame(CompositorFrameData* frame) {
+  scoped_ptr<CompositorFrameData> frame_copy =
+      CompositorFrameData::AllocFrom(frame);
+
   switch (mode_) {
     case COMPOSITING_MODE_TEXTURE:
     case COMPOSITING_MODE_EGLIMAGE: {
-      DCHECK(frame->gl_frame_data);
-
-      scoped_ptr<cc::CompositorFrame> f(new cc::CompositorFrame());
-      f->gl_frame_data = frame->gl_frame_data.Pass();
-      f->metadata = frame->metadata;
+      DCHECK(frame_copy->gl_frame_data);
 
       cc::ContextProvider* context_provider =
           impl().output_surface->context_provider();
@@ -362,10 +332,8 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
 
       if (!context_provider->ContextCapabilities().gpu.sync_query) {
         gl->Finish();
-        DidCompleteGLFrameOnImplThread(impl().output_surface->surface_id(),
-                                       f.Pass());
+        DidCompleteGLFrameOnImplThread(frame_copy.Pass());
       } else {
-
         uint32_t query_id;
         gl->GenQueriesEXT(1, &query_id);
         gl->BeginQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM, query_id);
@@ -373,8 +341,7 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
             query_id,
             base::Bind(&CompositorThreadProxy::DidCompleteGLFrameOnImplThread,
                        this,
-                       impl().output_surface->surface_id(),
-                       base::Passed(&f)));
+                       base::Passed(&frame_copy)));
         gl->EndQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM);
         gl->Flush();
         gl->DeleteQueriesEXT(1, &query_id);
@@ -382,25 +349,15 @@ void CompositorThreadProxy::SwapCompositorFrame(cc::CompositorFrame* frame) {
       break;
     }
     case COMPOSITING_MODE_SOFTWARE: {
-      DCHECK(frame->software_frame_data);
-
-      cc::SoftwareFrameData* software_frame_data = frame->software_frame_data.get();
+      DCHECK(frame_copy->software_frame_data);
 
       owner_message_loop_->PostTask(
           FROM_HERE,
           base::Bind(&CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread,
                      this,
-                     impl().output_surface->surface_id(),
-                     software_frame_data->size,
-                     frame->metadata.device_scale_factor,
-                     software_frame_data->id,
-                     software_frame_data->damage_rect,
-                     software_frame_data->bitmap_id));
+                     base::Passed(&frame_copy)));
       break;
     }
-
-    default:
-      NOTREACHED();
   }
 }
 
@@ -426,18 +383,17 @@ void CompositorThreadProxy::DidSwapCompositorFrame(
 }
 
 void CompositorThreadProxy::ReclaimResourcesForFrame(
-    CompositorFrameHandle* frame) {
+    CompositorFrameData* frame) {
   DCHECK(frame);
-  DCHECK(frame->proxy_ == this);
+
+  scoped_ptr<CompositorFrameData> frame_copy =
+      CompositorFrameData::AllocFrom(frame);
 
   impl_message_loop_->PostTask(
       FROM_HERE,
       base::Bind(
         &CompositorThreadProxy::SendReclaimResourcesToOutputSurfaceOnImplThread,
-        this, frame->surface_id_, frame->size_in_pixels(),
-        base::Passed(&frame->gl_frame_data_),
-        base::Passed(&frame->software_frame_data_),
-        base::Passed(&frame->image_frame_data_)));
+        this, base::Passed(&frame_copy)));
 }
 
 } // namespace oxide

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,8 +30,7 @@ class CompositorClient {
 
   virtual void CompositorDidCommit() = 0;
 
-  virtual void CompositorSwapFrame(uint32 surface_id,
-                                   CompositorFrameHandle* frame) = 0;
+  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
 };
 
 } // namespace oxide

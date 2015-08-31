@@ -116,10 +116,6 @@ class RenderWidgetHostView final :
       const std::vector<content::WebPluginGeometry>& moves) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void SetIsLoading(bool is_loading) final;
-  void TextInputTypeChanged(ui::TextInputType type,
-                            ui::TextInputMode mode,
-                            bool can_compose_inline,
-                            int flags) final;
   void ImeCancelComposition() final;
   void RenderProcessGone(base::TerminationStatus status, int error_code) final;
   void Destroy() final;

@@ -89,8 +89,6 @@ class NetworkDelegate final : public net::NetworkDelegate {
   bool OnCanAccessFile(const net::URLRequest& request,
                        const base::FilePath& path) const final;
 
-  bool OnCanThrottleRequest(const net::URLRequest& request) const final;
-
   bool OnCanEnablePrivacyMode(
       const GURL& url,
       const GURL& first_party_for_cookies) const final;

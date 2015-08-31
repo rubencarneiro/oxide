@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,46 +20,46 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 
+#include "shared/common/oxide_script_message_params.h"
 #include "shared/common/oxide_script_message_request.h"
 
 class GURL;
+
+namespace base {
+class Value;
+}
 
 namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageRequestImplBrowser final : public ScriptMessageRequest {
+class ScriptMessageRequestImplBrowser : public ScriptMessageRequest {
  public:
-  typedef base::Callback<void(const std::string&)> ReplyCallback;
-  typedef base::Callback<void(ScriptMessageRequest::Error, const std::string&)> ErrorCallback;
+  typedef base::Callback<void(const base::Value&)> ReplyCallback;
+  typedef base::Callback<void(ScriptMessageParams::Error, const base::Value&)>
+      ErrorCallback;
 
   ScriptMessageRequestImplBrowser(WebFrame* frame,
-                                  int serial,
-                                  const GURL& context,
-                                  bool want_reply,
-                                  const std::string& msg_id,
-                                  const std::string& args);
-  virtual ~ScriptMessageRequestImplBrowser();
+                                  int serial);
+  ~ScriptMessageRequestImplBrowser() override;
 
   void SetReplyCallback(const ReplyCallback& callback);
   void SetErrorCallback(const ErrorCallback& callback);
 
  private:
-  bool DoSendMessage(const OxideMsg_SendMessage_Params& params) final;
-
-  void OnReply(const std::string& args) final;
-  void OnError(Error error, const std::string& msg) final;
+  void OnReply(const base::Value& payload) override;
+  void OnError(ScriptMessageParams::Error error,
+               const base::Value& payload) override;
 
   base::WeakPtr<WebFrame> frame_;
   ReplyCallback reply_callback_;
   ErrorCallback error_callback_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequestImplBrowser);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageRequestImplBrowser);
 };
 
 } // namespace oxide

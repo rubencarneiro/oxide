@@ -5,9 +5,12 @@ import com.canonical.Oxide.Testing 1.0
 
 TestWebView {
   id: webView
-  focus: true
   width: 200
   height: 200
+
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
 
   TestCase {
     id: test
@@ -19,11 +22,11 @@ TestWebView {
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
-      webView.rootFrame.childFrames[0].sendMessageNoReply(
-        "oxide://testutils/", "DONT-RESPOND", {});
+      new ScriptMessageTestUtils.FrameHelper(
+          webView.rootFrame.childFrames[0]).sendMessageNoReply("TEST-DONT-RESPOND");
 
-      webView.rootFrame.sendMessageNoReply(
-        "oxide://testutils/", "DONT-RESPOND", {});
+      new ScriptMessageTestUtils.FrameHelper(
+          webView.rootFrame).sendMessageNoReply("TEST-DONT-RESPOND");
 
       webView.url = "about:blank";
       verify(webView.waitForLoadSucceeded(),
