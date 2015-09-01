@@ -1,0 +1,30 @@
+# Description: Always define ANGLE_COMMIT_HASH, even if git isn't
+#  installed (in which case, it's defined as "invalid-hash"). This fixes
+#  a weird bug where the compiler generates code for memcpy in
+#  gpu::gles2::ProgramCache::ComputeProgramHash that does a misaligned
+#  access (it assumes that the string literal is 4-byte aligned, but this
+#  is not true if it's defined as "")
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/third_party/angle/src/commit_id.py b/third_party/angle/src/commit_id.py
+--- a/third_party/angle/src/commit_id.py
++++ b/third_party/angle/src/commit_id.py
+@@ -1,17 +1,17 @@
+ import subprocess as sp
+ import sys
+ import os
+ 
+ # Usage: commit_id.py check <angle_dir> (checks if git is present)
+ # Usage: commit_id.py gen <angle_dir> <file_to_write> (generates commit id)
+ 
+ def grab_output(command, cwd):
+-    return sp.Popen(command, stdout=sp.PIPE, shell=True, cwd=cwd).communicate()[0].strip()
++    return sp.check_call(command, stdout=sp.PIPE, shell=True, cwd=cwd).communicate()[0].strip()
+ 
+ operation = sys.argv[1]
+ cwd = sys.argv[2]
+ 
+ if operation == 'check':
+     index_path = os.path.join(cwd, '.git', 'index')
+     if os.path.exists(index_path):
+         print("1")
