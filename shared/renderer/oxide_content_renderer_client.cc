@@ -60,9 +60,15 @@ void ContentRendererClient::RenderThreadStarted() {
   new UserScriptSlave();
 
   net::NetModule::SetResourceProvider(NetResourceProvider);
+
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
+  // Oxide has no mechanism to display page popups
+  blink::WebRuntimeFeatures::enablePagePopup(true);
+  // Oxide does not support NavigatorContentUtils.
+  // See https://launchpad.net/bugs/1214046
+  blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
 }
 
 void ContentRendererClient::RenderFrameCreated(
