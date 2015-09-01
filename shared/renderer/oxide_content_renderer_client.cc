@@ -65,7 +65,7 @@ void ContentRendererClient::RenderThreadStarted() {
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
   // Oxide has no mechanism to display page popups
-  blink::WebRuntimeFeatures::enablePagePopup(true);
+  blink::WebRuntimeFeatures::enablePagePopup(false);
   // Oxide does not support NavigatorContentUtils.
   // See https://launchpad.net/bugs/1214046
   blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
