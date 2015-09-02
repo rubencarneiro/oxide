@@ -59,15 +59,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -295,13 +298,20 @@ class CONTENT_EXPORT ContentRendererClie
-   // is called from the worker thread.
-   virtual void DidInitializeServiceWorkerContextOnWorkerThread(
+@@ -297,13 +300,20 @@ class CONTENT_EXPORT ContentRendererClie
        v8::Local<v8::Context> context,
        const GURL& url) {}
  
    // Notifies that a service worker context will be destroyed. This function
    // is called from the worker thread.
-   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
+   virtual void WillDestroyServiceWorkerContextOnWorkerThread(
+       v8::Local<v8::Context> context,
+       const GURL& url) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
