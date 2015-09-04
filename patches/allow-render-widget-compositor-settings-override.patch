@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -307,13 +311,16 @@ class CONTENT_EXPORT ContentRendererClie
-       const GURL& url) {}
+@@ -305,13 +309,16 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
