@@ -21,7 +21,6 @@
 #include <QNetworkCookie>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
-#include <QtQml/private/qqmlvaluetype_p.h>
 
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -47,10 +46,14 @@
 #include "qt/quick/api/oxideqquickwebframe_p.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
+#ifdef LEGACY_QMLVALUE_TYPES
+#include <QtQml/private/qqmlvaluetype_p.h>
+
 #include "oxide_qml_download_request.h"
 #include "oxide_qml_load_event.h"
 #include "oxide_qml_ssl_certificate.h"
 #include "oxide_qml_value_type_provider.h"
+#endif
 
 typedef QList<QNetworkCookie> CookieList;
 
@@ -67,10 +70,12 @@ QObject* GlobalSingletonFactory(QQmlEngine* engine,
   return new OxideQQuickGlobal();
 }
 
+#ifdef LEGACY_QMLVALUE_TYPES
 oxide::qmlplugin::ValueTypeProvider* GetValueTypeProvider() {
   static oxide::qmlplugin::ValueTypeProvider g_provider;
   return &g_provider;
 }
+#endif
 
 }
 
@@ -88,7 +93,16 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qRegisterMetaType<OxideQLoadEvent>();
     qRegisterMetaType<OxideQSslCertificate>();
 
+#ifdef LEGACY_QMLVALUE_TYPES
     QQml_addValueTypeProvider(GetValueTypeProvider());
+
+    qmlRegisterUncreatableType<oxide::qmlplugin::DownloadRequest>(uri, 1, 0, "DownloadRequest",
+        "DownloadRequest is delivered by WebView.downloadRequested");
+    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent>(uri, 1, 0, "LoadEvent",
+        "LoadEvent is delivered by WebView.loadingChanged");
+    qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(uri, 1, 0, "SslCertificate",
+        "SslCertificate is accessed via SecurityStatus.certificate");
+#endif
 
     qmlRegisterSingletonType<OxideQQuickGlobal>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
@@ -97,13 +111,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "CertificateError is delivered by WebView.certificateError");
     qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
-    qmlRegisterUncreatableType<oxide::qmlplugin::DownloadRequest>(uri, 1, 0, "DownloadRequest",
-        "DownloadRequest is delivered by WebView.downloadRequested");
     qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
         "GeolocationPermissionRequest",
         "GeolocationPermissionRequest is delivered by WebView.geolocationPermissionRequested");
-    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent>(uri, 1, 0, "LoadEvent",
-        "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 1, 0, "NavigationHistory",
         "NavigationHistory is accessed via WebView.navigationHistory");
     qmlRegisterUncreatableType<OxideQNavigationRequest>(uri, 1, 0, "NavigationRequest",
@@ -116,8 +126,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "ScriptMessageRequest is returned from WebFrame.sendMessage");
     qmlRegisterUncreatableType<OxideQSecurityStatus>(uri, 1, 0, "SecurityStatus",
         "SecurityStatus is accessed via WebView.securityStatus");
-    qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(uri, 1, 0, "SslCertificate",
-        "SslCertificate is accessed via SecurityStatus.certificate");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
         "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and WebFrame.parentFrame");
 
@@ -130,8 +138,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
-    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent, 1>(uri, 1, 3, "LoadEvent",
-        "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
 
@@ -148,8 +154,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterUncreatableType<OxideQFindController>(uri, 1, 8, "FindController",
         "FindInPage is accessed via WebView.findController");
-    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent, 2>(uri, 1, 8, "LoadEvent",
-        "LoadEvent is delivered by WebView.loadEvent");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
 
     qmlRegisterType<OxideQQuickWebContext, 3>(uri, 1, 9, "WebContext");

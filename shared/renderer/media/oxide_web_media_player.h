@@ -68,8 +68,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   bool canEnterFullscreen() const;
   void setSinkId(
       const blink::WebString& deviceId,
-      blink::WebCallbacks<void, blink::WebSetSinkIdError>*);
-  
+      blink::WebCallbacks<void, blink::WebSetSinkIdError*>*);
+
   // Resource loading.
   void load(LoadType load_type,
                     const blink::WebURL& url,
@@ -187,16 +187,6 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
       const blink::WebString& session_id);
   void setContentDecryptionModule(
       blink::WebContentDecryptionModule* cdm);
-
-  void OnKeyAdded(const std::string& session_id);
-  void OnKeyError(const std::string& session_id,
-                  media::MediaKeys::KeyError error_code,
-                  uint32 system_code);
-  void OnKeyMessage(const std::string& session_id,
-                    const std::vector<uint8>& message,
-                    const GURL& destination_url);
-
-  void OnMediaSourceOpened(blink::WebMediaSource* web_media_source);
 
  protected:
   // Helper method to update the playing state.

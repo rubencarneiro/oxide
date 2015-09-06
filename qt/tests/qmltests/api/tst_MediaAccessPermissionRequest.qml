@@ -71,15 +71,15 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest1_properties(data) {
-      webView.url = "http://testsuite/tst_MediaAccessPermissionRequest.html?" + data.params;
+      webView.url = "https://testsuite/tst_MediaAccessPermissionRequest.html?" + data.params;
       verify(webView.waitForLoadSucceeded());
 
       if (!webView.lastRequest) {
         spy.wait();
       }
 
-      compare(webView.lastRequest.origin, "http://testsuite/");
-      compare(webView.lastRequest.embedder, "http://testsuite/");
+      compare(webView.lastRequest.origin, "https://testsuite/");
+      compare(webView.lastRequest.embedder, "https://testsuite/");
       compare(webView.lastRequest.isCancelled, false);
       compare(webView.lastRequest.isForAudio, data.isForAudio);
       compare(webView.lastRequest.isForVideo, data.isForVideo);
@@ -94,7 +94,7 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest2_main_frame(data) {
-      webView.url = "http://testsuite/tst_MediaAccessPermissionRequest.html?video=1";
+      webView.url = "https://testsuite/tst_MediaAccessPermissionRequest.html?video=1";
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApi().evaluateCode(
@@ -106,8 +106,8 @@ TestWebView {
         spy.wait();
       }
 
-      compare(webView.lastRequest.origin, "http://testsuite/");
-      compare(webView.lastRequest.embedder, "http://testsuite/");
+      compare(webView.lastRequest.origin, "https://testsuite/");
+      compare(webView.lastRequest.embedder, "https://testsuite/");
       compare(webView.lastRequest.isCancelled, false);
 
       data.function();
@@ -125,7 +125,7 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest3_subframe(data) {
-      webView.url = "http://foo.testsuite/tst_MediaAccessPermissionRequest_subframe.html";
+      webView.url = "https://foo.testsuite/tst_MediaAccessPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded());
 
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
@@ -137,8 +137,8 @@ TestWebView {
         spy.wait();
       }
 
-      compare(webView.lastRequest.origin, "http://testsuite/");
-      compare(webView.lastRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastRequest.origin, "https://testsuite/");
+      compare(webView.lastRequest.embedder, "https://foo.testsuite/");
       compare(webView.lastRequest.isCancelled, false);
 
       data.function();
@@ -148,7 +148,7 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest4_main_frame_navigation_cancel() {
-      webView.url = "http://testsuite/tst_MediaAccessPermissionRequest.html?video=1";
+      webView.url = "https://testsuite/tst_MediaAccessPermissionRequest.html?video=1";
       verify(webView.waitForLoadSucceeded());
 
       if (!webView.lastRequest) {
@@ -167,7 +167,7 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest5_subframe_navigation_cancel() {
-      webView.url = "http://testsuite/tst_MediaAccessPermissionRequest_subframe.html";
+      webView.url = "https://testsuite/tst_MediaAccessPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded());
 
       if (!webView.lastRequest) {
@@ -186,7 +186,7 @@ TestWebView {
     }
 
     function test_MediaAccessPermissionRequest5_subframe_delete_cancel() {
-      webView.url = "http://testsuite/tst_MediaAccessPermissionRequest_subframe.html";
+      webView.url = "https://testsuite/tst_MediaAccessPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded());
 
       if (!webView.lastRequest) {

@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QMLPLUGIN_SSL_CERTIFICATE_H_
 #define _OXIDE_QMLPLUGIN_SSL_CERTIFICATE_H_
 
+#include <QJSValue>
+#include <QMetaType>
 #include <QtGlobal>
 #include <QtQml/private/qqmlvaluetype_p.h>
 
@@ -38,9 +40,7 @@ class SslCertificate : public QQmlValueTypeBase<OxideQSslCertificate> {
 
   Q_PROPERTY(bool isExpired READ isExpired CONSTANT)
 
-  Q_PROPERTY(OxideQSslCertificate issuer READ issuer CONSTANT)
-
-  Q_PROPERTY(bool isValid READ isValid CONSTANT)
+  Q_PROPERTY(QJSValue issuer READ issuer CONSTANT)
 
   Q_ENUMS(PrincipalAttr)
 
@@ -79,12 +79,10 @@ class SslCertificate : public QQmlValueTypeBase<OxideQSslCertificate> {
 
   bool isExpired() const;
 
-  OxideQSslCertificate issuer() const;
+  QJSValue issuer() const;
   Q_INVOKABLE OxideQSslCertificate copy() const;
 
   Q_INVOKABLE QString toPem() const;
-
-  bool isValid() const;
 
   // QQmlValueType implementation
   QString toString() const override;
@@ -93,5 +91,7 @@ class SslCertificate : public QQmlValueTypeBase<OxideQSslCertificate> {
 
 } // namespace qmlplugin
 } // namespace oxide
+
+Q_DECLARE_METATYPE(oxide::qmlplugin::SslCertificate*)
 
 #endif // _OXIDE_QMLPLUGIN_SSL_CERTIFICATE_H_

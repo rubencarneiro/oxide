@@ -23,6 +23,7 @@
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <QMetaType>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QScopedPointer>
