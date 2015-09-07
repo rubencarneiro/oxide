@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -210,9 +210,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -214,9 +214,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -42,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -305,13 +309,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -309,13 +313,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
  
    // Allow overriding default media player
@@ -86,10 +86,10 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
      settings.use_external_begin_frame_source = false;
    }
  
-   settings.max_staging_buffers = 32;
+   settings.max_staging_buffer_usage_in_bytes = 32 * 1024 * 1024;  // 32MB
    // Use 1/4th of staging buffers on low-end devices.
    if (base::SysInfo::IsLowEndDevice())
-     settings.max_staging_buffers /= 4;
+     settings.max_staging_buffer_usage_in_bytes /= 4;
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +

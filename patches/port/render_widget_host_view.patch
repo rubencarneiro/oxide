@@ -43,9 +43,9 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/media/audio_input_renderer_host.h',
        'browser/renderer_host/media/audio_input_sync_writer.cc',
        'browser/renderer_host/media/audio_input_sync_writer.h',
-       'browser/renderer_host/media/audio_renderer_host.cc',
-       'browser/renderer_host/media/audio_renderer_host.h',
-@@ -1299,18 +1299,18 @@
+       'browser/renderer_host/media/audio_output_device_enumerator.cc',
+       'browser/renderer_host/media/audio_output_device_enumerator.h',
+@@ -1301,18 +1301,18 @@
        'browser/renderer_host/render_widget_host_delegate.cc',
        'browser/renderer_host/render_widget_host_delegate.h',
        'browser/renderer_host/render_widget_host_impl.cc',
@@ -66,7 +66,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_widget_host_view_mac_dictionary_helper.mm',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.h',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.mm',
-@@ -1581,16 +1581,18 @@
+@@ -1583,16 +1583,18 @@
        'browser/webui/web_ui_message_handler.cc',
        'browser/zygote_host/zygote_host_impl_linux.cc',
        'browser/zygote_host/zygote_host_impl_linux.h',
