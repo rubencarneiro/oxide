@@ -28,6 +28,7 @@
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
 #include "net/base/net_module.h"
+#include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
@@ -112,6 +113,13 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
   }
 
   return user_agent_settings_->GetUserAgentOverrideForURL(url);
+}
+
+void ContentRendererClient::AddImageContextMenuProperties(
+    const blink::WebURLResponse& response,
+    std::map<std::string, std::string>* properties) {
+  (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
+      response.mimeType().utf8();
 }
 
 #if defined(ENABLE_MEDIAHUB)

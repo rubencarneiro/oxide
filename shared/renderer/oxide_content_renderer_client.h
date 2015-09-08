@@ -42,6 +42,9 @@ class ContentRendererClient final : public content::ContentRendererClient {
   void RenderFrameCreated(content::RenderFrame* render_frame) final;
   void RenderViewCreated(content::RenderView* render_view) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
+  void AddImageContextMenuProperties(
+      const blink::WebURLResponse& response,
+      std::map<std::string, std::string>* properties) final;
 #if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(
       blink::WebFrame* frame,
