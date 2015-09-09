@@ -20,18 +20,18 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
  namespace content {
  
  GpuChannelManager::GpuChannelManager(
-     MessageRouter* router,
+     IPC::SyncChannel* channel,
      GpuWatchdog* watchdog,
+     base::SingleThreadTaskRunner* task_runner,
      base::SingleThreadTaskRunner* io_task_runner,
      base::WaitableEvent* shutdown_event,
-     IPC::SyncChannel* channel,
-@@ -128,17 +130,20 @@ void GpuChannelManager::OnEstablishChann
+@@ -151,17 +153,20 @@ scoped_ptr<GpuChannel> GpuChannelManager
+ void GpuChannelManager::OnEstablishChannel(int client_id,
+                                            uint64_t client_tracing_id,
                                             bool share_context,
                                             bool allow_future_sync_points) {
-   IPC::ChannelHandle channel_handle;
- 
-   gfx::GLShareGroup* share_group = NULL;
-   gpu::gles2::MailboxManager* mailbox_manager = NULL;
+   gfx::GLShareGroup* share_group = nullptr;
+   gpu::gles2::MailboxManager* mailbox_manager = nullptr;
    if (share_context) {
      if (!share_group_.get()) {
 -      share_group_ = new gfx::GLShareGroup;
@@ -46,7 +46,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      mailbox_manager = mailbox_manager_.get();
    }
  
-   scoped_ptr<GpuChannel> channel(new GpuChannel(this,
+   scoped_ptr<GpuChannel> channel =
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi

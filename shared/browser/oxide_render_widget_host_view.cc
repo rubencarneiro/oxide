@@ -358,6 +358,13 @@ void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   *result = delegate_->GetScreenInfo();
 }
 
+bool RenderWidgetHostView::GetScreenColorProfile(
+    std::vector<char>* color_profile) {
+  DCHECK(color_profile->empty());
+  NOTREACHED();
+  return false;
+}
+
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
   return GetViewBounds();
 }

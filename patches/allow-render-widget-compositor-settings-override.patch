@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -219,9 +219,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -214,9 +214,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -21,7 +21,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -50,16 +50,20 @@ class WebSpeechSynthesizerClient;
+@@ -49,16 +49,20 @@ class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLResponse;
  class WebURLRequest;
@@ -42,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -314,13 +318,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -309,13 +313,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
  
    // Allow overriding default media player
@@ -82,14 +82,14 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -475,16 +477,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -461,16 +463,18 @@ void RenderWidgetCompositor::Initialize(
      settings.use_external_begin_frame_source = false;
    }
  
-   settings.max_staging_buffers = 32;
+   settings.max_staging_buffer_usage_in_bytes = 32 * 1024 * 1024;  // 32MB
    // Use 1/4th of staging buffers on low-end devices.
    if (base::SysInfo::IsLowEndDevice())
-     settings.max_staging_buffers /= 4;
+     settings.max_staging_buffer_usage_in_bytes /= 4;
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +
