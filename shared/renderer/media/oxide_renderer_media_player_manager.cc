@@ -91,6 +91,10 @@ void RendererMediaPlayerManager::SetVolume(int player_id, double volume) {
   Send(new OxideHostMsg_MediaPlayer_SetVolume(routing_id(), player_id, volume));
 }
 
+void RendererMediaPlayerManager::SetRate(int player_id, double rate) {
+  Send(new OxideHostMsg_MediaPlayer_SetRate(routing_id(), player_id, rate));
+}
+
 void RendererMediaPlayerManager::SetPoster(int player_id, const GURL& poster) {
   Send(new OxideHostMsg_MediaPlayer_SetPoster(routing_id(), player_id, poster));
 }
