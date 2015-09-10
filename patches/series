@@ -35,3 +35,4 @@ implement-webrtc-get-cpu-features-arm.patch
 enable-optional-neon-for-skia.patch
 add-suggested-filename-to-download-starting-resource-delegate.patch
 always-define-angle-commit-hash.patch
+pa-context-application-name.patch

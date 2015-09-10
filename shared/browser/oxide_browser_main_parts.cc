@@ -25,6 +25,7 @@
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/config/gpu_info_collector.h"
+#include "media/audio/audio_manager.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
@@ -259,6 +260,9 @@ int BrowserMainParts::PreCreateThreads() {
 }
 
 void BrowserMainParts::PreMainMessageLoopRun() {
+  media::AudioManager::SetGlobalAppName(
+      BrowserPlatformIntegration::GetInstance()->GetApplicationName());
+
   // With in-process GPU, nothing calls CollectContextGraphicsInfo, so we do
   // this now. Note that this will have no effect on driver bug workarounds
   // (those are added to the command line from the basic info found in
