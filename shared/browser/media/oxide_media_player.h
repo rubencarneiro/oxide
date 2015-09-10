@@ -44,6 +44,8 @@ class MediaPlayer {
 
   // Set the player volume.
   virtual void SetVolume(double volume) = 0;
+ 
+  virtual void SetRate(double rate) = 0;
 
   // Get the media information from the player.
   virtual int GetVideoWidth() = 0;

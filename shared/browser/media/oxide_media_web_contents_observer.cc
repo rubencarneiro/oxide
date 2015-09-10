@@ -42,6 +42,9 @@ bool MediaWebContentsObserver::OnMessageReceived(
     IPC_MESSAGE_FORWARD(OxideHostMsg_MediaPlayer_SetVolume,
                         GetMediaPlayerManager(render_frame_host),
                         BrowserMediaPlayerManager::OnSetVolume)
+    IPC_MESSAGE_FORWARD(OxideHostMsg_MediaPlayer_SetRate,
+                        GetMediaPlayerManager(render_frame_host),
+                        BrowserMediaPlayerManager::OnSetRate)
     IPC_MESSAGE_FORWARD(OxideHostMsg_MediaPlayer_SetPoster,
                         GetMediaPlayerManager(render_frame_host),
                         BrowserMediaPlayerManager::OnSetPoster)

@@ -48,6 +48,7 @@ class MediaPlayerMediaHub : public MediaPlayer,
   void SeekTo(base::TimeDelta timestamp) override;
   void Release() override;
   void SetVolume(double volume) override;
+  void SetRate(double rate) override;
   int GetVideoWidth() override;
   int GetVideoHeight() override;
   base::TimeDelta GetCurrentTime() override;
@@ -98,6 +99,7 @@ class MediaPlayerMediaHub : public MediaPlayer,
   std::string cookies_;
 
   MediaHubClientHandle media_hub_client_;
+  MediaHubDelegate::Status status_;
 
   base::WeakPtrFactory<MediaPlayerMediaHub> weak_factory_;
 
