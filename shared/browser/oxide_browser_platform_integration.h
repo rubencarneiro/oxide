@@ -99,7 +99,7 @@ class BrowserPlatformIntegration {
   virtual ApplicationState GetApplicationState();
 
   // Time limit, in milliseconds, to distinguish between aggregate or just
-  // successive mouse mouse click events. 
+  // successive mouse click events. 
   virtual int GetClickInterval() = 0;
 
   // Get the application name
