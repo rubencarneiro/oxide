@@ -1269,7 +1269,7 @@ void WebView::Init(Params* params) {
   DCHECK(root_frame_.get());
 
   if (params->context && init_data_->load_params) {
-    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);    
+    web_contents_->GetController().LoadURLWithParams(*init_data_->load_params);
   }
 
   web_contents_->GetController().LoadIfNecessary();
@@ -2014,16 +2014,8 @@ void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
   blink::WebMouseEvent e(event);
 
-  if (e.type == blink::WebInputEvent::MouseEnter ||
-      e.type == blink::WebInputEvent::MouseLeave) {
-    global_mouse_position_.SetPoint(event.globalX, event.globalY);
-    e.type = blink::WebInputEvent::MouseMove;
-  }
-
-  e.movementX = e.globalX - global_mouse_position_.x();
-  e.movementY = e.globalY - global_mouse_position_.y();
-
-  global_mouse_position_.SetPoint(e.globalX, e.globalY);
+  mouse_state_.UpdateFromSourceEvent(event);
+  mouse_state_.CoerceForwardEvent(e);
 
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {

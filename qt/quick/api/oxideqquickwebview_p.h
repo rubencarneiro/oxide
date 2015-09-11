@@ -386,7 +386,6 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_OVERRIDE;
   void keyPressEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
   void keyReleaseEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
-  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseMoveEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;

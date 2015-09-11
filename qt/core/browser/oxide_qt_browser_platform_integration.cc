@@ -20,6 +20,7 @@
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QPointer>
 #include <QString>
 #include <QThread>
@@ -159,6 +160,10 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
   return state_;
+}
+
+int BrowserPlatformIntegration::GetClickInterval() {
+  return qApp->styleHints()->mouseDoubleClickInterval();
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {

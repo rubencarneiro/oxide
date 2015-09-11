@@ -963,13 +963,6 @@ void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
   d->proxy()->handleKeyEvent(event);
 }
 
-void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  d->triple_click_marker_ = qMakePair(event->button(), event->timestamp());
-  d->proxy()->handleMouseEvent(event);
-}
-
 void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
@@ -979,27 +972,8 @@ void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
 void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
-  if (d->triple_click_marker_.first != Qt::NoButton) {
-    if (event->button() == d->triple_click_marker_.first &&
-        event->timestamp() - d->triple_click_marker_.second < qApp->styleHints()->mouseDoubleClickInterval()) {
-      // Create an artifical event to represent a triple click
-      // This event SHOULD NOT travel through the Qt event system
-      QMouseEvent tc_event(QEvent::User,
-                           event->localPos(),
-                           event->windowPos(),
-                           event->screenPos(),
-                           event->button(),
-                           event->buttons(),
-                           event->modifiers());
-      tc_event.setTimestamp(event->timestamp());
-      d->proxy()->handleMouseEvent(&tc_event);
-      event->setAccepted(tc_event.isAccepted());
-    }
-    d->triple_click_marker_ = qMakePair(Qt::NoButton, 0);
-  } else {
-    forceActiveFocus();
-    d->proxy()->handleMouseEvent(event);
-  }
+  forceActiveFocus();
+  d->proxy()->handleMouseEvent(event);
 }
 
 void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
