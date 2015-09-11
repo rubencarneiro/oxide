@@ -32,14 +32,14 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
       height_(0),
       duration_(0),
       media_hub_client_(0),
+      status_(MediaHubDelegate::null),
       weak_factory_(this) {
 
   const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kMediaHubFixedSessionDomains)) {
     std::string ds = command_line.GetSwitchValueASCII(switches::kMediaHubFixedSessionDomains);
-    std::vector<std::string> dl;
-
-    base::SplitString(ds, ',', &dl);
+    std::vector<std::string> dl =
+      base::SplitString(ds, ",", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
     for (std::vector<std::string>::iterator it = dl.begin(); it != dl.end(); ++it) {
       if (first_party_for_cookies_.DomainIs(it->c_str())) {
         use_fixed_session_ = true;
@@ -113,11 +113,11 @@ void MediaPlayerMediaHub::SeekTo(base::TimeDelta timestamp) {
 }
 
 base::TimeDelta MediaPlayerMediaHub::GetCurrentTime() {
-  return base::TimeDelta::FromMilliseconds(mediahub_get_position(media_hub_client_));
+  return base::TimeDelta::FromMicroseconds(mediahub_get_position(media_hub_client_) / 1000);
 }
 
 base::TimeDelta MediaPlayerMediaHub::GetDuration() {
-  return base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_));
+  return base::TimeDelta::FromMicroseconds(mediahub_get_duration(media_hub_client_) / 1000);
 }
 
 void MediaPlayerMediaHub::Release() {
@@ -125,6 +125,10 @@ void MediaPlayerMediaHub::Release() {
 
 void MediaPlayerMediaHub::SetVolume(double volume) {
   mediahub_set_volume(media_hub_client_, volume);
+}
+
+void MediaPlayerMediaHub::SetRate(double rate) {
+  mediahub_set_rate(media_hub_client_, rate);
 }
 
 bool MediaPlayerMediaHub::CanPause() {
@@ -160,22 +164,26 @@ void MediaPlayerMediaHub::end_of_stream() {
 }
 
 void MediaPlayerMediaHub::playback_status_changed(MediaHubDelegate::Status status) {
+  if (status == status_) {
+    return;
+  }
+  status_ = status;
   switch (status) {
   case null:
   case ready:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
+                                      base::TimeDelta::FromMicroseconds(mediahub_get_duration(media_hub_client_) / 1000),
                                       0, 0, true);
     break;
   case playing:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
+                                      base::TimeDelta::FromMicroseconds(mediahub_get_duration(media_hub_client_) / 1000),
                                       0, 0, true);
     manager_->OnPlayerPlay(player_id());
     break;
   case paused:
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(mediahub_get_duration(media_hub_client_)),
+                                      base::TimeDelta::FromMicroseconds(mediahub_get_duration(media_hub_client_) / 1000),
                                       0, 0, true);
     manager_->OnPlayerPause(player_id());
     break;
@@ -202,14 +210,14 @@ void MediaPlayerMediaHub::CheckStatus() {
 
   if (duration != duration_) {
     manager_->OnMediaMetadataChanged(player_id(),
-                                      base::TimeDelta::FromMilliseconds(duration),
+                                      base::TimeDelta::FromMicroseconds(duration / 1000),
                                       0, 0, true);
     duration_ = duration;
   }
 
   manager_->OnTimeUpdate(player_id(),
-      base::TimeDelta::FromMilliseconds(
-          mediahub_get_position(media_hub_client_)));
+      base::TimeDelta::FromMicroseconds(
+          mediahub_get_position(media_hub_client_) / 1000));
 }
 
 }  // namespace media

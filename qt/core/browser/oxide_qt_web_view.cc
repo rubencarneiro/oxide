@@ -58,6 +58,7 @@
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest_p.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -72,6 +73,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
@@ -290,8 +292,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
       : frame_(frame) {
     if (frame_.get()) {
       rect_ = QRect(0, location_bar_content_offset,
-                    frame_->size_in_pixels().width(),
-                    frame_->size_in_pixels().height());
+                    frame_->data()->size_in_pixels.width(),
+                    frame_->data()->size_in_pixels.height());
     }
   }
 
@@ -301,13 +303,16 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
     if (!frame_.get()) {
       return CompositorFrameHandle::TYPE_INVALID;
     }
-    if (frame_->gl_frame_data()) {
-      return CompositorFrameHandle::TYPE_ACCELERATED;
-    }
-    if (frame_->image_frame_data()) {
+    if (frame_->data()->gl_frame_data) {
+      DCHECK_NE(frame_->data()->gl_frame_data->type,
+                oxide::GLFrameData::Type::INVALID);
+      if (frame_->data()->gl_frame_data->type ==
+          oxide::GLFrameData::Type::TEXTURE) {
+        return CompositorFrameHandle::TYPE_ACCELERATED;
+      }
       return CompositorFrameHandle::TYPE_IMAGE;
     }
-    if (frame_->software_frame_data()) {
+    if (frame_->data()->software_frame_data) {
       return CompositorFrameHandle::TYPE_SOFTWARE;
     }
 
@@ -322,19 +327,19 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QImage GetSoftwareFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
     return QImage(
-        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
-        frame_->size_in_pixels().width(),
-        frame_->size_in_pixels().height(),
+        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
+        frame_->data()->size_in_pixels.width(),
+        frame_->data()->size_in_pixels.height(),
         QImage::Format_ARGB32);
   }
 
   unsigned int GetAcceleratedFrameTexture() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->gl_frame_data()->texture_id();
+    return frame_->data()->gl_frame_data->resource.texture;
   }
 
   EGLImageKHR GetImageFrame() final {
-    return frame_->image_frame_data()->image();
+    return frame_->data()->gl_frame_data->resource.egl_image;
   }
 
  private:
@@ -571,60 +576,61 @@ void WebView::LoadProgressChanged(double progress) {
 }
 
 void WebView::LoadStarted(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStarted);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStarted(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadRedirected(const GURL& url,
                              const GURL& original_url,
                              int http_status_code) {
-  OxideQLoadEvent event(
-     QUrl(QString::fromStdString(url.spec())),
-     QUrl(QString::fromStdString(original_url.spec())),
-     http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createRedirected(
+        QUrl(QString::fromStdString(url.spec())),
+        QUrl(QString::fromStdString(original_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadCommitted(const GURL& url,
                             bool is_error_page,
                             int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(url.spec())),
-      OxideQLoadEvent::TypeCommitted,
-      is_error_page,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createCommitted(
+        QUrl(QString::fromStdString(url.spec())),
+        is_error_page,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadStopped(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStopped);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStopped(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadFailed(const GURL& validated_url,
                          int error_code,
                          const std::string& error_description,
                          int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      ErrorDomainFromErrorCode(error_code),
-      QString::fromStdString(error_description),
-      error_code,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createFailed(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        ErrorDomainFromErrorCode(error_code),
+        QString::fromStdString(error_description),
+        error_code,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadSucceeded(const GURL& validated_url, int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeSucceeded,
-      false,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createSucceeded(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::NavigationEntryCommitted() {
@@ -741,7 +747,14 @@ void WebView::DownloadRequested(const GURL& url,
       QString::fromStdString(referrer),
       QString::fromStdString(user_agent));
 
-  client_->DownloadRequested(&download_request);
+  client_->DownloadRequested(download_request);
+}
+
+void WebView::HttpAuthenticationRequested(
+        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
+  // The client takes ownership of the request
+  client_->HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,

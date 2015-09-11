@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,44 +17,33 @@
 
 #include "oxide_script_message_request_impl_browser.h"
 
-#include "content/public/browser/render_frame_host.h"
-
-#include "shared/common/oxide_messages.h"
-
 #include "oxide_web_frame.h"
 
 namespace oxide {
 
-bool ScriptMessageRequestImplBrowser::DoSendMessage(
-    const OxideMsg_SendMessage_Params& params) {
- 
-  content::RenderFrameHost* rfh = frame_->render_frame_host();
-  return rfh->Send(new OxideMsg_SendMessage(rfh->GetRoutingID(), params));
-}
-
-void ScriptMessageRequestImplBrowser::OnReply(const std::string& args) {
-  if (!reply_callback_.is_null()) {
-    reply_callback_.Run(args);
+void ScriptMessageRequestImplBrowser::OnReply(const base::Value& payload) {
+  if (reply_callback_.is_null()) {
+    return;
   }
+
+  reply_callback_.Run(payload);
 }
 
 void ScriptMessageRequestImplBrowser::OnError(
-    ScriptMessageRequest::Error error,
-    const std::string& msg) {
-  if (!error_callback_.is_null()) {
-    error_callback_.Run(error, msg);
+    ScriptMessageParams::Error error,
+    const base::Value& payload) {
+  if (error_callback_.is_null()) {
+    return;
   }
+
+  error_callback_.Run(error, payload);
 }
 
 ScriptMessageRequestImplBrowser::ScriptMessageRequestImplBrowser(
     WebFrame* frame,
-    int serial,
-    const GURL& context,
-    bool want_reply,
-    const std::string& msg_id,
-    const std::string& args) :
-    ScriptMessageRequest(serial, context, want_reply, msg_id, args),
-    frame_(frame->GetWeakPtr()) {}
+    int serial)
+    : ScriptMessageRequest(serial),
+      frame_(frame->GetWeakPtr()) {}
 
 ScriptMessageRequestImplBrowser::~ScriptMessageRequestImplBrowser() {
   if (frame_) {

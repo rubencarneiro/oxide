@@ -85,7 +85,7 @@ TestWebView {
     function test_customDialogComponent(data) {
       webView.promptDialog = customDialogComponent;
       webView.url = "http://testsuite/tst_WebView_promptDialog.html";
-      verify(webView.waitFor(webView.dialogShown), "Prompt dialog not shown");
+      verify(TestUtils.waitFor(webView.dialogShown), "Prompt dialog not shown");
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
@@ -95,7 +95,7 @@ TestWebView {
         dialog.value = data.param;
       }
       mouseClick(dialog, dialog.width / 2, dialog.height / 2, data.button);
-      verify(webView.waitFor(webView.dialogDismissed),
+      verify(TestUtils.waitFor(webView.dialogDismissed),
              "Confirm dialog not dismissed");
       compareResultAndValue(data.result, data.value);
       verify(webView.waitForLoadSucceeded(),

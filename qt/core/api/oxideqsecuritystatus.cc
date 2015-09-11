@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -69,7 +69,7 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
     Q_EMIT q->certStatusChanged();
   }
   if (old.cert() != status.cert()) {
-    cert_.reset();
+    cert_ = OxideQSslCertificate();
     Q_EMIT q->certificateChanged();
   }
 }
@@ -185,20 +185,20 @@ OxideQSecurityStatus::certStatus() const {
       d->web_view_->GetSecurityStatus().cert_status());
 }
 
-OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
+QVariant OxideQSecurityStatus::certificate() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (d->cert_) {
-    return d->cert_.get();
+  if (d->cert_.isValid()) {
+    return QVariant::fromValue(d->cert_);
   }
 
   scoped_refptr<net::X509Certificate> cert =
       d->web_view_->GetSecurityStatus().cert();
   if (!cert.get()) {
-    return nullptr;
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
-  d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
+  d->cert_ = OxideQSslCertificateData::Create(cert.get());
 
-  return d->cert_.get();
+  return QVariant::fromValue(d->cert_);
 }

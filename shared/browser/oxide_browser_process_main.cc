@@ -254,10 +254,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 
-  if (AndroidProperties::GetInstance()->Available()) {
-    command_line->AppendSwitch(switches::kDisableOneCopy);
-  }
-
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
   if (!renderer_cmd_prefix.empty()) {
@@ -331,7 +327,6 @@ void AddFormFactorSpecificCommandLineArguments() {
 
   if (form_factor != FORM_FACTOR_DESKTOP) {
     command_line->AppendSwitch(switches::kEnableViewport);
-    command_line->AppendSwitch(switches::kEnableViewportMeta);
     command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
     command_line->AppendSwitch(switches::kEnablePinch);
     // Note, overlay scrollbars do not work properly on desktop yet
@@ -447,6 +442,7 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   CHECK(base::i18n::InitializeICU()) << "Failed to initialize ICU";
 #if defined(V8_USE_EXTERNAL_STARTUP_DATA)
   gin::V8Initializer::LoadV8Snapshot();
+  gin::V8Initializer::LoadV8Natives();
 #endif  // V8_USE_EXTERNAL_STARTUP_DATA
 
   main_delegate_->PreSandboxStartup();

@@ -29,7 +29,8 @@
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/lazy_instance.h"
-#include "base/message_loop/message_loop_proxy.h"
+#include "base/single_thread_task_runner.h"
+#include "base/thread_task_runner_handle.h"
 #include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
@@ -140,7 +141,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
 
   QThread* thread = QThread::currentThread();
   thread->setEventDispatcher(
-      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+      new BrowserThreadQEventDispatcher(base::ThreadTaskRunnerHandle::Get()));
   g_io_thread.Get() = thread;
 }
 
@@ -151,7 +152,7 @@ BrowserPlatformIntegration::CreateLocationProvider() {
   QThread* thread = QThread::currentThread();
   if (!thread->eventDispatcher()) {
     thread->setEventDispatcher(
-      new BrowserThreadQEventDispatcher(base::MessageLoopProxy::current()));
+      new BrowserThreadQEventDispatcher(base::ThreadTaskRunnerHandle::Get()));
   }
 
   return new LocationProvider();
@@ -164,6 +165,10 @@ BrowserPlatformIntegration::GetApplicationState() {
 
 int BrowserPlatformIntegration::GetClickInterval() {
   return qApp->styleHints()->mouseDoubleClickInterval();
+}
+
+std::string BrowserPlatformIntegration::GetApplicationName() {
+  return qApp->applicationName().toStdString();
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {

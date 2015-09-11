@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
-#define _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
+#define _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
 
 #include <QtGlobal>
-#include <QString>
-#include <QStringList>
-#include <QUrl>
 
-class OxideQDownloadRequest;
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 
-class OxideQDownloadRequestPrivate {
+QT_BEGIN_NAMESPACE
+class QVariant;
+QT_END_NAMESPACE
+
+namespace base {
+class Value;
+}
+
+namespace oxide {
+namespace qt {
+
+class VariantValueConverter {
  public:
-  OxideQDownloadRequestPrivate(
-      const QUrl& url,
-      const QString& mimeType,
-      const bool shouldPrompt,
-      const QString& suggestedFilename,
-      const QStringList& cookies,
-      const QString& referrer,
-      const QString& userAgent);
-  virtual ~OxideQDownloadRequestPrivate();
+  static scoped_ptr<base::Value> FromVariantValue(const QVariant& variant);
+
+  static QVariant ToVariantValue(const base::Value* value);
 
  private:
-  friend class OxideQDownloadRequest;
-
-  QUrl url_;
-  QString mime_type_;
-  bool should_prompt_;
-  QString suggested_filename_;
-  QStringList cookies_;
-  QString referrer_;
-  QString user_agent_;
+  DISALLOW_IMPLICIT_CONSTRUCTORS(VariantValueConverter);
 };
 
-#endif // _OXIDE_QT_CORE_API_DOWNLOAD_REQUEST_P_H_
+} // namespace qt
+} // namespace oxide
 
+#endif // _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,20 +20,24 @@
 
 #include <string>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "v8/include/v8.h"
 
 #include "shared/common/oxide_script_message_handler.h"
 
 #include "shared/renderer/oxide_v8_scoped_persistent.h"
 
+namespace base {
+class Value;
+}
+
 namespace oxide {
 
 class ScriptMessage;
 class ScriptMessageManager;
 
-class ScriptMessageHandlerRenderer final {
+class ScriptMessageHandlerRenderer {
  public:
   ScriptMessageHandlerRenderer(ScriptMessageManager* mm,
                                const std::string& msg_id,
@@ -42,7 +46,8 @@ class ScriptMessageHandlerRenderer final {
   ScriptMessageHandler& handler() { return handler_; }
 
  private:
-  bool ReceiveMessageCallback(ScriptMessage* message, std::string* error);
+  bool ReceiveMessageCallback(ScriptMessage* message,
+                              scoped_ptr<base::Value>* error_payload);
 
   ScriptMessageManager* manager_;
   ScriptMessageHandler handler_;

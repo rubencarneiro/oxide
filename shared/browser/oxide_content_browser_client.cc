@@ -37,7 +37,6 @@
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/common/oxide_messages.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_android_properties.h"
@@ -47,9 +46,9 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
+#include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
-#include "oxide_script_message_dispatcher_browser.h"
-#include "oxide_user_agent_override_provider.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
@@ -70,10 +69,7 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
-  host->Send(new OxideMsg_SetUserAgent(
-      BrowserContext::FromContent(host->GetBrowserContext())->GetUserAgent()));
-  host->AddFilter(new ScriptMessageDispatcherBrowser(host));
-  host->AddFilter(new UserAgentOverrideProvider(host));
+  host->AddFilter(new RenderMessageFilter(host));
 }
 
 net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
@@ -100,7 +96,7 @@ ContentBrowserClient::CreateRequestContextForStoragePartition(
 
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
-  return BrowserContext::FromContent(browser_context)->GetAcceptLangs();
+  return UserAgentSettings::Get(browser_context)->GetAcceptLangs();
 }
 
 void ContentBrowserClient::AppendExtraCommandLineSwitches(
@@ -258,6 +254,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->shrinks_standalone_images_to_fit = false;
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
+    prefs->viewport_meta_enabled = true;
   }
 
   prefs->supports_multiple_windows = false;

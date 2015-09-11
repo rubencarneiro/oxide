@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,15 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
-#include "shared/common/oxide_script_message_request.h"
+#include "shared/common/oxide_script_message_params.h"
+
+namespace base {
+class Value;
+}
 
 namespace oxide {
 
@@ -46,14 +49,14 @@ class ScriptMessageRequest : public ScriptMessageRequestProxy {
   void SetRequest(scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req);
 
  private:
-  void ReceiveReplyCallback(const std::string& args);
-  void ReceiveErrorCallback(oxide::ScriptMessageRequest::Error error,
-                            const std::string& msg);
+  void ReceiveReplyCallback(const base::Value& payload);
+  void ReceiveErrorCallback(oxide::ScriptMessageParams::Error error,
+                            const base::Value& payload);
 
   ScriptMessageRequestProxyClient* client_;
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> request_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptMessageRequest);
+  DISALLOW_COPY_AND_ASSIGN(ScriptMessageRequest);
 };
 
 } // namespace qt

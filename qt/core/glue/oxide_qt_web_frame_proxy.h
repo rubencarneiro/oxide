@@ -57,11 +57,11 @@ class Q_DECL_EXPORT WebFrameProxy {
 
   virtual bool sendMessage(const QUrl& context,
                            const QString& msg_id,
-                           const QVariant& args,
+                           const QVariant& payload,
                            ScriptMessageRequestProxyHandle* req) = 0;
   virtual void sendMessageNoReply(const QUrl& context,
                                   const QString& msg_id,
-                                  const QVariant& args) = 0;
+                                  const QVariant& payload) = 0;
 
   virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
 };

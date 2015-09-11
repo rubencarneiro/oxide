@@ -24,7 +24,7 @@ Item {
       anchors.fill: parent
 
       function waitForStateUpdate(state) {
-        return waitFor(function() { return (currentState !== state); });
+        return TestUtils.waitFor(function() { return (currentState !== state); });
       }
     }
   }
@@ -124,10 +124,10 @@ Item {
       tryCompare(restored, "url", webView.url);
       verify(restored.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(restored.waitFor(function() {
+      verify(TestUtils.waitFor(function() {
           return parseFloat(restored.getTestApi().evaluateCode(
               "document.body.scrollLeft")) == 300; }));
-      verify(restored.waitFor(function() {
+      verify(TestUtils.waitFor(function() {
           return parseFloat(restored.getTestApi().evaluateCode(
               "document.body.scrollTop")) == 700; }));
       restored.destroy();
@@ -141,7 +141,7 @@ Item {
       keyClick("e");
       keyClick("$");
       keyClick("t");
-      webView.waitFor(function() {
+      TestUtils.waitFor(function() {
           return webView.getTestApi().evaluateCode(
               "document.querySelector('#textInput').value") == "Te$t"; });
       verify(webView.waitForStateUpdate(webView.currentState));
@@ -156,7 +156,7 @@ Item {
       tryCompare(restored, "url", webView.url);
       verify(restored.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      verify(restored.waitFor(function() {
+      verify(TestUtils.waitFor(function() {
           return restored.getTestApi().evaluateCode(
               "document.querySelector('#textInput').value") == "Te$t"; }));
       restored.destroy();
@@ -196,7 +196,7 @@ Item {
       restored.loadEvent.connect(_loadEvent);
 
       tryCompare(restored, "url", url);
-      restored.waitFor(function() {
+      TestUtils.waitFor(function() {
           return (expectedLoadEvents.length === 0);
       });
       restored.destroy();

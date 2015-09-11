@@ -70,16 +70,16 @@ QString OxideQQuickScriptMessage::msgId() const {
   return d->proxy()->msgId();
 }
 
-QVariant OxideQQuickScriptMessage::args() const {
+QVariant OxideQQuickScriptMessage::payload() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->proxy()->args();
+  return d->proxy()->payload();
 }
 
-void OxideQQuickScriptMessage::reply(const QVariant& args) {
+void OxideQQuickScriptMessage::reply(const QVariant& payload) {
   Q_D(OxideQQuickScriptMessage);
 
-  QVariant aux = args;
+  QVariant aux = payload;
   if (aux.userType() == qMetaTypeId<QJSValue>()) {
     aux = aux.value<QJSValue>().toVariant();
   }
@@ -87,8 +87,13 @@ void OxideQQuickScriptMessage::reply(const QVariant& args) {
   d->proxy()->reply(aux);
 }
 
-void OxideQQuickScriptMessage::error(const QString& msg) {
+void OxideQQuickScriptMessage::error(const QVariant& payload) {
   Q_D(OxideQQuickScriptMessage);
 
-  d->proxy()->error(msg);
+  QVariant aux = payload;
+  if (aux.userType() == qMetaTypeId<QJSValue>()) {
+    aux = aux.value<QJSValue>().toVariant();
+  }
+
+  d->proxy()->error(aux);
 }

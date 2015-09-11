@@ -31,6 +31,7 @@
 #include <QProcess>
 #include <QString>
 #include <QtGlobal>
+#include <QtTest>
 #include <QtQml>
 #include <QVariant>
 
@@ -222,6 +223,10 @@ class OxideTestingUtils : public QObject {
     OxideQQuickWebContextPrivate::get(context)
         ->clearTemporarySavedPermissionStatuses();
   }
+
+  Q_INVOKABLE void wait(int ms) {
+    QTest::qWait(ms);
+  }
 };
 
 QObject* UtilsFactory(QQmlEngine* engine, QJSEngine* script_engine) {
@@ -237,14 +242,13 @@ class OxideQmlTestingPlugin : public QQmlExtensionPlugin {
 
  public:
   void registerTypes(const char* uri) {
-    Q_ASSERT(QLatin1String(uri) == QLatin1String("com.canonical.Oxide.Testing"));
-
     qmlRegisterSingletonType<OxideTestingUtils>(
-        uri, 1, 0, "OxideTestingUtils", UtilsFactory);
+        uri, 1, 0, "Utils", UtilsFactory);
     qmlRegisterUncreatableType<DestructionObserver>(
         uri, 1, 0, "DestructionObserver",
         "Create this with OxideTestingUtils.createDestructionObserver()");
-    qmlRegisterType<ExternalProtocolHandler>(uri, 1, 0, "ExternalProtocolHandler");
+    qmlRegisterType<ExternalProtocolHandler>(
+        uri, 1, 0, "ExternalProtocolHandler");
   }
 };
 

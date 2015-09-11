@@ -44,6 +44,7 @@
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
@@ -67,7 +68,6 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
-QT_USE_NAMESPACE
 
 using oxide::qquick::AcceleratedFrameNode;
 using oxide::qquick::ImageFrameNode;
@@ -248,15 +248,15 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
+void OxideQQuickWebViewPrivate::LoadEvent(const OxideQLoadEvent& event) {
   Q_Q(OxideQQuickWebView);
 
   emit q->loadEvent(event);
 
   // The deprecated signal doesn't get TypeCommitted or TypeRedirected
   if (!using_old_load_event_signal_ ||
-      event->type() == OxideQLoadEvent::TypeCommitted ||
-      event->type() == OxideQLoadEvent::TypeRedirected) {
+      event.type() == OxideQLoadEvent::TypeCommitted ||
+      event.type() == OxideQLoadEvent::TypeRedirected) {
     return;
   }
 
@@ -462,6 +462,31 @@ void OxideQQuickWebViewPrivate::RequestMediaAccessPermission(
 
 }
 
+void OxideQQuickWebViewPrivate::HttpAuthenticationRequested(
+    OxideQHttpAuthenticationRequest* authentication_request) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete authentication_request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(authentication_request);
+    if (!val.isQObject()) {
+      delete authentication_request;
+      return;
+    }
+
+    emit q->httpAuthenticationRequested(val);
+  }
+
+  engine->collectGarbage();
+}
+
 void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
     QKeyEvent* event) {
   Q_Q(OxideQQuickWebView);
@@ -535,10 +560,10 @@ void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
 }
 
 void OxideQQuickWebViewPrivate::DownloadRequested(
-    OxideQDownloadRequest* downloadRequest) {
+    const OxideQDownloadRequest& download_request) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->downloadRequested(downloadRequest);
+  emit q->downloadRequested(download_request);
 }
 
 void OxideQQuickWebViewPrivate::CertificateError(

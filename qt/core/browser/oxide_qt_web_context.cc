@@ -56,6 +56,8 @@
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/browser/oxide_devtools_manager.h"
+#include "shared/browser/oxide_user_agent_settings.h"
 #include "shared/browser/oxide_user_script_master.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
@@ -64,7 +66,9 @@
 namespace oxide {
 namespace qt {
 
+using oxide::DevToolsManager;
 using oxide::MediaCaptureDevicesContext;
+using oxide::UserAgentSettings;
 using oxide::UserScriptMaster;
 
 namespace {
@@ -140,7 +144,9 @@ struct WebContext::ConstructProperties {
         session_cookie_mode(content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
         popup_blocker_enabled(true),
         devtools_enabled(false),
-        devtools_port(kDefaultDevtoolsPort) {}
+        devtools_port(-1),
+        legacy_user_agent_override_enabled(false),
+        do_not_track(false) {}
 
   std::string product;
   std::string user_agent;
@@ -157,6 +163,9 @@ struct WebContext::ConstructProperties {
   std::vector<std::string> host_mapping_rules;
   std::string default_audio_capture_device_id;
   std::string default_video_capture_device_id;
+  std::vector<UserAgentSettings::UserAgentOverride> user_agent_overrides;
+  bool legacy_user_agent_override_enabled;
+  bool do_not_track;
 };
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
@@ -521,25 +530,29 @@ oxide::BrowserContext* WebContext::GetContext() {
       construct_props_->data_path,
       construct_props_->cache_path,
       construct_props_->max_cache_size_hint,
-      construct_props_->session_cookie_mode,
-      construct_props_->devtools_enabled,
-      construct_props_->devtools_port,
-      construct_props_->devtools_ip);
+      construct_props_->session_cookie_mode);
   params.host_mapping_rules = construct_props_->host_mapping_rules;
 
   context_ = oxide::BrowserContext::Create(params);
 
+  UserAgentSettings* ua_settings = UserAgentSettings::Get(context_.get());
+
   if (!construct_props_->product.empty()) {
-    context_->SetProduct(construct_props_->product);
+    ua_settings->SetProduct(construct_props_->product);
   }
   if (!construct_props_->user_agent.empty()) {
-    context_->SetUserAgent(construct_props_->user_agent);
+    ua_settings->SetUserAgent(construct_props_->user_agent);
   }
   if (!construct_props_->accept_langs.empty()) {
-    context_->SetAcceptLangs(construct_props_->accept_langs);
+    ua_settings->SetAcceptLangs(construct_props_->accept_langs);
   }
+  ua_settings->SetUserAgentOverrides(construct_props_->user_agent_overrides);
+  ua_settings->SetLegacyUserAgentOverrideEnabled(
+      construct_props_->legacy_user_agent_override_enabled);
+
   context_->SetCookiePolicy(construct_props_->cookie_policy);
   context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
+  context_->SetDoNotTrack(construct_props_->do_not_track);
 
   MediaCaptureDevicesContext* dc =
       MediaCaptureDevicesContext::Get(context_.get());
@@ -558,6 +571,16 @@ oxide::BrowserContext* WebContext::GetContext() {
   }
 
   dc->set_client(this);
+
+  DevToolsManager* devtools = DevToolsManager::Get(context_.get());
+  if (!construct_props_->devtools_ip.empty()) {
+    devtools->SetAddress(construct_props_->devtools_ip);
+  }
+  if (construct_props_->devtools_port != -1) {
+    devtools->SetPort(construct_props_->devtools_port);
+  }
+  devtools->SetEnabled(construct_props_->devtools_enabled);
+
   context_->SetDelegate(delegate_.get());
 
   construct_props_.reset();
@@ -598,7 +621,8 @@ void WebContext::makeDefault() {
 
 QString WebContext::product() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetProduct());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetProduct());
   }
 
   return QString::fromStdString(construct_props_->product);
@@ -606,7 +630,8 @@ QString WebContext::product() const {
 
 void WebContext::setProduct(const QString& product) {
   if (IsInitialized()) {
-    context_->SetProduct(product.toStdString());
+    UserAgentSettings::Get(context_.get())->SetProduct(
+        product.toStdString());
   } else {
     construct_props_->product = product.toStdString();
   }
@@ -614,7 +639,8 @@ void WebContext::setProduct(const QString& product) {
 
 QString WebContext::userAgent() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetUserAgent());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetUserAgent());
   }
 
   return QString::fromStdString(construct_props_->user_agent);
@@ -622,7 +648,8 @@ QString WebContext::userAgent() const {
 
 void WebContext::setUserAgent(const QString& user_agent) {
   if (IsInitialized()) {
-    context_->SetUserAgent(user_agent.toStdString());
+    UserAgentSettings::Get(context_.get())->SetUserAgent(
+        user_agent.toStdString());
   } else {
     construct_props_->user_agent = user_agent.toStdString();
   }
@@ -674,7 +701,8 @@ void WebContext::setCachePath(const QUrl& url) {
 
 QString WebContext::acceptLangs() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetAcceptLangs());
+    return QString::fromStdString(
+        UserAgentSettings::Get(context_.get())->GetAcceptLangs());
   }
 
   return QString::fromStdString(construct_props_->accept_langs);
@@ -682,7 +710,8 @@ QString WebContext::acceptLangs() const {
 
 void WebContext::setAcceptLangs(const QString& langs) {
   if (IsInitialized()) {
-    context_->SetAcceptLangs(langs.toStdString());
+    UserAgentSettings::Get(context_.get())->SetAcceptLangs(
+        langs.toStdString());
   } else {
     construct_props_->accept_langs = langs.toStdString();
   }
@@ -750,41 +779,51 @@ void WebContext::setPopupBlockerEnabled(bool enabled) {
 
 bool WebContext::devtoolsEnabled() const {
   if (IsInitialized()) {
-    return context_->GetDevtoolsEnabled();
+    return DevToolsManager::Get(context_.get())->enabled();
   }
 
   return construct_props_->devtools_enabled;
 }
 
 void WebContext::setDevtoolsEnabled(bool enabled) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_enabled = enabled;
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetEnabled(enabled);
+  } else {
+    construct_props_->devtools_enabled = enabled;
+  }
 }
 
 int WebContext::devtoolsPort() const {
   if (IsInitialized()) {
-    return context_->GetDevtoolsPort();
+    return DevToolsManager::Get(context_.get())->port();
   }
 
   return construct_props_->devtools_port;
 }
 
 void WebContext::setDevtoolsPort(int port) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_port = port;
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetPort(port);
+  } else {
+    construct_props_->devtools_port = port;
+  }
 }
 
 QString WebContext::devtoolsBindIp() const {
   if (IsInitialized()) {
-    return QString::fromStdString(context_->GetDevtoolsBindIp());
+    return QString::fromStdString(
+        DevToolsManager::Get(context_.get())->address());
   }
 
   return QString::fromStdString(construct_props_->devtools_ip);
 }
 
 void WebContext::setDevtoolsBindIp(const QString& ip) {
-  DCHECK(!IsInitialized());
-  construct_props_->devtools_ip = ip.toStdString();
+  if (IsInitialized()) {
+    DevToolsManager::Get(context_.get())->SetAddress(ip.toStdString());
+  } else {
+    construct_props_->devtools_ip = ip.toStdString();
+  }
 }
 
 int WebContext::setCookies(const QUrl& url,
@@ -905,7 +944,7 @@ void WebContext::setHostMappingRules(const QStringList& rules) {
 void WebContext::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   std::set<std::string> set;
   for (int i = 0; i < schemes.size(); ++i) {
-    set.insert(base::StringToLowerASCII(schemes.at(i).toStdString()));
+    set.insert(base::ToLowerASCII(schemes.at(i).toStdString()));
   }
   delegate_->SetAllowedExtraURLSchemes(set);
 }
@@ -969,6 +1008,43 @@ bool WebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   return true;
 }
 
+QList<WebContextProxy::UserAgentOverride>
+WebContext::userAgentOverrides() const {
+  QList<UserAgentOverride> rv;
+
+  std::vector<UserAgentSettings::UserAgentOverride> overrides;
+  if (IsInitialized()) {
+    overrides =
+        UserAgentSettings::Get(context_.get())->GetUserAgentOverrides();
+  } else {
+    overrides = construct_props_->user_agent_overrides;
+  }
+
+  for (const auto& entry : overrides) {
+    rv.append(
+        qMakePair(QString::fromStdString(entry.first),
+                  QString::fromStdString(entry.second)));
+  }
+
+  return rv;
+}
+
+void WebContext::setUserAgentOverrides(
+    const QList<UserAgentOverride>& overrides) {
+  std::vector<UserAgentSettings::UserAgentOverride> o;
+  for (auto it = overrides.begin(); it != overrides.end(); ++it) {
+    o.push_back(
+        std::make_pair((*it).first.toStdString(),
+                       (*it).second.toStdString()));
+  }
+
+  if (IsInitialized()) {
+    UserAgentSettings::Get(context_.get())->SetUserAgentOverrides(o);
+  } else {
+    construct_props_->user_agent_overrides = o;
+  }
+}
+
 void WebContext::clearTemporarySavedPermissionStatuses() {
   if (!context_.get()) {
     return;
@@ -980,7 +1056,17 @@ void WebContext::clearTemporarySavedPermissionStatuses() {
   }
 
   context_->GetOffTheRecordContext()
-      ->GetTemporarySavedPermissionContext()->Clear();
+      ->GetTemporarySavedPermissionContext()
+      ->Clear();
+}
+
+void WebContext::setLegacyUserAgentOverrideEnabled(bool enabled) {
+  if (IsInitialized()) {
+    UserAgentSettings::Get(context_.get())->SetLegacyUserAgentOverrideEnabled(
+        enabled);
+  } else {
+    construct_props_->legacy_user_agent_override_enabled = enabled;
+  }
 }
 
 void WebContext::DefaultAudioDeviceChanged() {
@@ -989,6 +1075,22 @@ void WebContext::DefaultAudioDeviceChanged() {
 
 void WebContext::DefaultVideoDeviceChanged() {
   client_->DefaultVideoCaptureDeviceChanged();
+}
+
+bool WebContext::doNotTrack() const {
+    if (IsInitialized()) {
+    return context_->GetDoNotTrack();
+  }
+
+  return construct_props_->do_not_track;
+}
+
+void WebContext::setDoNotTrack(bool dnt) {
+  if (IsInitialized()) {
+    context_->SetDoNotTrack(dnt);
+  } else {
+    construct_props_->do_not_track = dnt;
+  }
 }
 
 } // namespace qt

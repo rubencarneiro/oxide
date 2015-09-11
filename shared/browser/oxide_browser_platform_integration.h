@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <string>
+
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
@@ -99,6 +101,9 @@ class BrowserPlatformIntegration {
   // Time limit, in milliseconds, to distinguish between aggregate or just
   // successive mouse mouse click events. 
   virtual int GetClickInterval() = 0;
+
+  // Get the application name
+  virtual std::string GetApplicationName();
 
  protected:
   BrowserPlatformIntegration();

@@ -48,6 +48,7 @@ namespace oxide {
 class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
+class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
 class WebContextMenu;
 class WebFrame;
@@ -206,6 +207,9 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void FindInPageCurrentChanged();
   virtual void FindInPageCountChanged();
+
+  virtual void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
 };
 
 } // namespace oxide

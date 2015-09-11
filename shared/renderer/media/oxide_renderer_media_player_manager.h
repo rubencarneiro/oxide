@@ -56,6 +56,8 @@ class RendererMediaPlayerManager :
   // Sets the player volume.
   void SetVolume(int player_id, double volume);
 
+  void SetRate(int player_id, double rate);
+
   // Sets the poster image.
   void SetPoster(int player_id, const GURL& poster);
 

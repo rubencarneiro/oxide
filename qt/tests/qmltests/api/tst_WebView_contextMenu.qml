@@ -20,7 +20,7 @@ TestWebView {
   }
 
   function waitForContextMenu() {
-    return waitFor(function() { return currentContextMenu != null; });
+    return TestUtils.waitFor(function() { return currentContextMenu != null; });
   }
 
   onDownloadRequested: {

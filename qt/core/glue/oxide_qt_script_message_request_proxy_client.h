@@ -21,7 +21,6 @@
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
-class QString;
 class QVariant;
 QT_END_NAMESPACE;
 
@@ -32,8 +31,8 @@ class ScriptMessageRequestProxyClient {
  public:
   virtual ~ScriptMessageRequestProxyClient() {}
 
-  virtual void ReceiveReply(const QVariant& args) = 0;
-  virtual void ReceiveError(int error, const QString& msg) = 0;
+  virtual void ReceiveReply(const QVariant& payload) = 0;
+  virtual void ReceiveError(int error, const QVariant& payload) = 0;
 };
 
 } // namespace qt

@@ -29,7 +29,6 @@ QT_BEGIN_NAMESPACE
 class QEventLoop;
 QT_END_NAMESPACE
 
-QT_USE_NAMESPACE
 
 namespace base {
 class TimeTicks;

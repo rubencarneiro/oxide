@@ -58,6 +58,7 @@ class BrowserPlatformIntegration : public QObject,
   content::LocationProvider* CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   virtual int GetClickInterval() override;
+  std::string GetApplicationName() override;
   ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
 
   // QObject implementation
