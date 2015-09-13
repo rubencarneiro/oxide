@@ -214,7 +214,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     EditingCommandSelectAll
   };
 
-  void componentComplete();
+  void componentComplete() Q_DECL_OVERRIDE;
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -374,6 +374,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   // QObject implementation
   void connectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
+  bool event(QEvent* event) Q_DECL_OVERRIDE;
 
   // QQuickItem implementation
   void itemChange(QQuickItem::ItemChange change,

@@ -23,8 +23,6 @@ namespace oxide {
 
 WebViewClient::~WebViewClient() {}
 
-void WebViewClient::Initialized() {}
-
 bool WebViewClient::IsInputPanelVisible() const {
   return false;
 }
@@ -129,8 +127,10 @@ WebPopupMenu* WebViewClient::CreatePopupMenu(
   return nullptr;
 }
 
-WebView* WebViewClient::CreateNewWebView(const gfx::Rect& initial_pos,
-                                         WindowOpenDisposition disposition) {
+WebView* WebViewClient::CreateNewWebView(
+    const gfx::Rect& initial_pos,
+    WindowOpenDisposition disposition,
+    scoped_ptr<content::WebContents> contents) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
   return nullptr;

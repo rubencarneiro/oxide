@@ -26,6 +26,12 @@
 
 class OxideQSecurityStatusPrivate;
 
+namespace oxide {
+namespace qt {
+class WebViewProxy;
+}
+}
+
 class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
@@ -88,8 +94,9 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   void certificateChanged();
 
  private:
-  OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
-                       QObject* parent = nullptr);
+  friend class oxide::qt::WebViewProxy;
+
+  Q_DECL_HIDDEN OxideQSecurityStatus();
 
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };
