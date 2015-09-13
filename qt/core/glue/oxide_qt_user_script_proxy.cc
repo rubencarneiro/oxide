@@ -23,8 +23,9 @@ namespace oxide {
 namespace qt {
 
 // static
-UserScriptProxy* UserScriptProxy::create(UserScriptProxyClient* client) {
-  return new UserScript(client);
+UserScriptProxy* UserScriptProxy::create(UserScriptProxyClient* client,
+                                         const QUrl& url) {
+  return new UserScript(client, url);
 }
 
 UserScriptProxy::~UserScriptProxy() {}

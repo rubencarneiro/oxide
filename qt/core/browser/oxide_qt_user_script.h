@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -39,13 +39,13 @@ class UserScriptProxyClient;
 class UserScript : public UserScriptProxy {
  public:
   enum State {
-    Constructing,
     Loading,
     Loaded,
     FailedLoad
   };
 
-  UserScript(UserScriptProxyClient* client);
+  UserScript(UserScriptProxyClient* client,
+             const QUrl& url);
   ~UserScript() override;
 
   static UserScript* FromProxyHandle(UserScriptProxyHandle* handle);
@@ -68,7 +68,6 @@ class UserScript : public UserScriptProxy {
   void setIncognitoEnabled(bool enabled) override;
   QUrl context() const override;
   void setContext(const QUrl& context) override;
-  void init(const QUrl& url) override;
 
   UserScriptProxyClient* client_;
 
