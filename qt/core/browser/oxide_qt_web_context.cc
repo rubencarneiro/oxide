@@ -371,8 +371,7 @@ void WebContext::UpdateUserScripts() {
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
     UserScript* script = UserScript::FromProxyHandle(user_scripts_.at(i));
-    if (script->state() == UserScript::Loading ||
-        script->state() == UserScript::Constructing) {
+    if (!script || script->state() == UserScript::Loading) {
       return;
     } else if (script->state() == UserScript::Loaded) {
       scripts.push_back(script->impl());

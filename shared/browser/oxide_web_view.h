@@ -30,6 +30,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -135,28 +136,25 @@ class WebView : public ScriptMessageTarget,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
-  WebView(WebViewClient* client);
-  virtual ~WebView();
-
-  // Maps to content::NavigationController::RestoreType
-  enum RestoreType {
-    RESTORE_CURRENT_SESSION,
-    RESTORE_LAST_SESSION_EXITED_CLEANLY,
-    RESTORE_LAST_SESSION_CRASHED,
-  };
 
   struct Params {
     Params();
     ~Params();
 
+    WebViewClient* client;
     BrowserContext* context;
-    scoped_ptr<content::WebContents> contents;
     bool incognito;
+    std::vector<sessions::SerializedNavigationEntry> restore_entries;
+    content::NavigationController::RestoreType restore_type;
+    int restore_index;
   };
 
-  void Init(Params* params);
+  WebView(const Params& params);
+  WebView(scoped_ptr<content::WebContents> contents,
+          WebViewClient* client);
 
-  // XXX(chrisccoulson): Remove this
+  ~WebView() override;
+
   WebViewClient* client() const { return client_; }
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
@@ -173,9 +171,6 @@ class WebView : public ScriptMessageTarget,
   void SetURL(const GURL& url);
 
   std::vector<sessions::SerializedNavigationEntry> GetState() const;
-  void SetState(content::NavigationController::RestoreType type,
-                std::vector<sessions::SerializedNavigationEntry> state,
-                int index);
 
   void LoadData(const std::string& encoded_data,
                 const std::string& mime_type,
@@ -341,6 +336,10 @@ class WebView : public ScriptMessageTarget,
   const base::string16& GetSelectionText() const;
 
  private:
+  WebView(WebViewClient* client);
+
+  void CommonInit(scoped_ptr<content::WebContents> contents);
+
   RenderWidgetHostView* GetRenderWidgetHostView() const;
   content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
@@ -538,10 +537,6 @@ class WebView : public ScriptMessageTarget,
 
   gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
-
-  struct InitData;
-
-  scoped_ptr<InitData> init_data_;
 
   content::NotificationRegistrar registrar_;
 
