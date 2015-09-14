@@ -114,8 +114,6 @@
         '<(tcmalloc_dir)/src/central_freelist.h',
         '<(tcmalloc_dir)/src/common.cc',
         '<(tcmalloc_dir)/src/common.h',
-        '<(tcmalloc_dir)/src/deep-heap-profile.cc',
-        '<(tcmalloc_dir)/src/deep-heap-profile.h',
         '<(tcmalloc_dir)/src/free_list.cc',
         '<(tcmalloc_dir)/src/free_list.h',
         '<(tcmalloc_dir)/src/heap-profile-table.cc',

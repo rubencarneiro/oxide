@@ -60,7 +60,7 @@ void RendererFrameEvictor::CullUnlockedFrames() {
 
 // static
 RendererFrameEvictor* RendererFrameEvictor::GetInstance() {
-  return Singleton<RendererFrameEvictor>::get();
+  return base::Singleton<RendererFrameEvictor>::get();
 }
 
 RendererFrameEvictor::~RendererFrameEvictor() {}

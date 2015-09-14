@@ -23,7 +23,9 @@
 #include "content/public/browser/media_observer.h"
 #include "content/public/common/media_stream_request.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace content {
 class BrowserContext;
@@ -80,7 +82,7 @@ class MediaCaptureDevicesDispatcher : public content::MediaObserver {
       const content::MediaResponseCallback& callback);
 
  private:
-  friend struct DefaultSingletonTraits<MediaCaptureDevicesDispatcher>;
+  friend struct base::DefaultSingletonTraits<MediaCaptureDevicesDispatcher>;
   friend class MediaCaptureDevicesDispatcherObserver;
 
   MediaCaptureDevicesDispatcher();

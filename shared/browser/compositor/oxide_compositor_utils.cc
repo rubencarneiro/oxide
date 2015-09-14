@@ -195,7 +195,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   bool CalledOnGpuThread() const;
 
  private:
-  friend struct DefaultSingletonTraits<CompositorUtilsImpl>;
+  friend struct base::DefaultSingletonTraits<CompositorUtilsImpl>;
 
   CompositorUtilsImpl();
   ~CompositorUtilsImpl() override;
@@ -469,7 +469,7 @@ CompositorUtilsImpl::MainData& CompositorUtilsImpl::main() {
 
 // static
 CompositorUtilsImpl* CompositorUtilsImpl::GetInstance() {
-  return Singleton<CompositorUtilsImpl>::get();
+  return base::Singleton<CompositorUtilsImpl>::get();
 }
 
 void CompositorUtilsImpl::Initialize(bool has_share_context) {
