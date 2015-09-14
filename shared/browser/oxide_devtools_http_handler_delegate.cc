@@ -38,6 +38,12 @@ std::string DevtoolsHttpHandlerDelegate::GetPageThumbnailData(const GURL& url) {
   return std::string();
 }
 
+content::DevToolsExternalAgentProxyDelegate*
+DevtoolsHttpHandlerDelegate::HandleWebSocketConnection(
+    const std::string& path) {
+  return nullptr;
+}
+
 DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
 
 DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}

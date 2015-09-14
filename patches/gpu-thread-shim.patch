@@ -6,7 +6,7 @@
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -20,16 +20,18 @@
+@@ -22,16 +22,18 @@
  #include "gpu/command_buffer/service/mailbox_manager.h"
  #include "gpu/command_buffer/service/memory_program_cache.h"
  #include "gpu/command_buffer/service/shader_translator_cache.h"
@@ -25,11 +25,11 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      base::SingleThreadTaskRunner* task_runner,
      base::SingleThreadTaskRunner* io_task_runner,
      base::WaitableEvent* shutdown_event,
-@@ -151,17 +153,20 @@ scoped_ptr<GpuChannel> GpuChannelManager
- void GpuChannelManager::OnEstablishChannel(int client_id,
+@@ -155,17 +157,20 @@ void GpuChannelManager::OnEstablishChann
                                             uint64_t client_tracing_id,
                                             bool share_context,
-                                            bool allow_future_sync_points) {
+                                            bool allow_future_sync_points,
+                                            bool allow_real_time_streams) {
    gfx::GLShareGroup* share_group = nullptr;
    gpu::gles2::MailboxManager* mailbox_manager = nullptr;
    if (share_context) {
@@ -46,7 +46,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
      mailbox_manager = mailbox_manager_.get();
    }
  
-   scoped_ptr<GpuChannel> channel =
+   scoped_ptr<GpuChannel> channel = CreateGpuChannel(
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi
@@ -68,7 +68,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -558,16 +559,20 @@
+@@ -559,16 +560,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
