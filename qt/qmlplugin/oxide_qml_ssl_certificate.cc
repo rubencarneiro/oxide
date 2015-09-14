@@ -17,7 +17,17 @@
 
 #include "oxide_qml_ssl_certificate.h"
 
+#include <QJSEngine>
 #include <QMetaType>
+#include <QQmlEngine>
+#include <QtQml/private/qqmldata_p.h>
+#include <QtQml/private/qv4engine_p.h>
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#include <QtQml/private/qv4value_p.h>
+#else
+#include <QtQml/private/qv4persistent_p.h>
+#endif
+#include <QtQml/private/qv8engine_p.h>
 
 namespace oxide {
 namespace qmlplugin {
@@ -67,8 +77,23 @@ bool SslCertificate::isExpired() const {
   return v.isExpired();
 }
 
-OxideQSslCertificate SslCertificate::issuer() const {
-  return v.issuer();
+QJSValue SslCertificate::issuer() const {
+  // If we just return the variant here, the QML engine doesn't convert it
+  // to a SslCertificate. See https://bugreports.qt.io/browse/QTBUG-47940
+  QVariant i = v.issuer();
+  if (i.isNull()) {
+    return QJSValue(QJSValue::NullValue);
+  }
+
+  SslCertificate* rv = new SslCertificate();
+  rv->setValue(i);
+
+  QQmlData *data = QQmlData::get(this, false);
+  if (!data || data->jsWrapper.isNullOrUndefined()) {
+    return QJSValue(QJSValue::NullValue);
+  }
+
+  return data->jsWrapper.engine()->v8Engine->publicEngine()->newQObject(rv);
 }
 
 OxideQSslCertificate SslCertificate::copy() const {
@@ -77,10 +102,6 @@ OxideQSslCertificate SslCertificate::copy() const {
 
 QString SslCertificate::toPem() const {
   return v.toPem();
-}
-
-bool SslCertificate::isValid() const {
-  return v.isValid();
 }
 
 QString SslCertificate::toString() const {

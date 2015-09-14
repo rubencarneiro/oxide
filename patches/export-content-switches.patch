@@ -1,29 +1,10 @@
 # HG changeset patch
-# Parent accabb44e7e6be4431c7c69d0289d6fcd8cba460
+# Parent a90a10697435aea9ea7039c7c831337dea8f03cf
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h
 +++ b/content/public/common/content_switches.h
-@@ -161,17 +161,17 @@ CONTENT_EXPORT extern const char kGpuPro
- CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
- CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
- CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
- CONTENT_EXPORT extern const char kGpuStartupDialog[];
- extern const char kGpuVendorID[];
- CONTENT_EXPORT extern const char kHostResolverRules[];
- CONTENT_EXPORT extern const char kIgnoreCertificateErrors[];
- CONTENT_EXPORT extern const char kIgnoreGpuBlacklist[];
--extern const char kInProcessGPU[];
-+CONTENT_EXPORT extern const char kInProcessGPU[];
- CONTENT_EXPORT extern const char kIPCConnectionTimeout[];
- CONTENT_EXPORT extern const char kJavaScriptFlags[];
- extern const char kLoadPlugin[];
- CONTENT_EXPORT extern const char kLogGpuControlListDecisions[];
- CONTENT_EXPORT extern const char kLoggingLevel[];
- CONTENT_EXPORT extern const char kLogNetLog[];
- extern const char kLogPluginMessages[];
- CONTENT_EXPORT extern const char kMainFrameResizesAreOrientationChanges[];
 @@ -197,17 +197,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];

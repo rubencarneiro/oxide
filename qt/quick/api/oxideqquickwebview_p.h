@@ -30,7 +30,6 @@ QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
 
-QT_USE_NAMESPACE
 
 class OxideQFindController;
 class OxideQLoadEvent;

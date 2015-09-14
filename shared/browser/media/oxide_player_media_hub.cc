@@ -37,9 +37,8 @@ MediaPlayerMediaHub::MediaPlayerMediaHub(
   const base::CommandLine& command_line = *base::CommandLine::ForCurrentProcess();
   if (command_line.HasSwitch(switches::kMediaHubFixedSessionDomains)) {
     std::string ds = command_line.GetSwitchValueASCII(switches::kMediaHubFixedSessionDomains);
-    std::vector<std::string> dl;
-
-    base::SplitString(ds, ',', &dl);
+    std::vector<std::string> dl =
+      base::SplitString(ds, ",", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
     for (std::vector<std::string>::iterator it = dl.begin(); it != dl.end(); ++it) {
       if (first_party_for_cookies_.DomainIs(it->c_str())) {
         use_fixed_session_ = true;

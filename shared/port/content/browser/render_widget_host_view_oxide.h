@@ -37,15 +37,11 @@ class CONTENT_EXPORT RenderWidgetHostViewOxide
   virtual ~RenderWidgetHostViewOxide();
 
  private:
-  void OnTextInputStateChangedThunk(
-      const ViewHostMsg_TextInputState_Params& params);
-
   // content::RenderWidgetHostViewBase implementation
+  void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) final;
   void SelectionBoundsChanged(
       const ViewHostMsg_SelectionBounds_Params& params) final;
-
-  // IPC::Listener implementation
-  bool OnMessageReceived(const IPC::Message& msg) final;
 
   virtual void OnTextInputStateChanged(ui::TextInputType type,
                                        bool show_ime_if_needed) = 0;

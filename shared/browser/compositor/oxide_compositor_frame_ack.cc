@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,18 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "gpu_client_shim_oxide.h"
+#include "oxide_compositor_frame_ack.h"
 
-#include "content/common/gpu/client/command_buffer_proxy_impl.h"
-#include "content/common/gpu/client/context_provider_command_buffer.h"
+namespace oxide {
 
-namespace content {
-namespace oxide_gpu_shim {
+CompositorFrameAck::CompositorFrameAck()
+    : software_frame_id(0) {}
 
-int32_t GetContextProviderRouteID(
-    content::ContextProviderCommandBuffer* provider) {
-  return provider->GetCommandBufferProxy()->route_id();
-}
+CompositorFrameAck::~CompositorFrameAck() {}
 
-} // namespace oxide_gpu_shim
-} // namespace content
+} // namespace oxide

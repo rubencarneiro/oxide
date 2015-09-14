@@ -69,6 +69,7 @@
 #include "url/url_constants.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
@@ -412,14 +413,13 @@ void WebView::CompositorDidCommit() {
   rwhv->CompositorDidCommit();
 }
 
-void WebView::CompositorSwapFrame(uint32 surface_id,
-                                  CompositorFrameHandle* frame) {
-  received_surface_ids_.push(surface_id);
+void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
+  received_surface_ids_.push(handle->data()->surface_id);
 
   if (current_compositor_frame_.get()) {
     previous_compositor_frames_.push_back(current_compositor_frame_);
   }
-  current_compositor_frame_ = frame;
+  current_compositor_frame_ = handle;
 
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = pending_compositor_frame_metadata_;
@@ -661,7 +661,7 @@ bool WebView::ShouldCreateWebContents(
     int route_id,
     int main_frame_route_id,
     WindowContainerType window_container_type,
-    const base::string16& frame_name,
+    const std::string& frame_name,
     const GURL& target_url,
     const std::string& partition_id,
     content::SessionStorageNamespace* session_storage_namespace,
@@ -698,7 +698,7 @@ void WebView::HandleKeyboardEvent(
 
 void WebView::WebContentsCreated(content::WebContents* source,
                                  int source_frame_id,
-                                 const base::string16& frame_name,
+                                 const std::string& frame_name,
                                  const GURL& target_url,
                                  content::WebContents* new_contents) {
   DCHECK_VALID_SOURCE_CONTENTS
@@ -978,7 +978,8 @@ void WebView::DidFailProvisionalLoad(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     int error_code,
-    const base::string16& error_description) {
+    const base::string16& error_description,
+    bool was_ignored_by_handler) {
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     return;
@@ -1047,13 +1048,17 @@ void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
 
   content::NavigationEntry* entry =
       web_contents_->GetController().GetLastCommittedEntry();
-  client_->LoadSucceeded(validated_url, entry->GetHttpStatusCode());
+  // Some transient about:blank navigations dont have navigation entries.
+  client_->LoadSucceeded(
+      validated_url,
+      entry ? entry->GetHttpStatusCode() : 0);
 }
 
 void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
                           const GURL& validated_url,
                           int error_code,
-                          const base::string16& error_description) {
+                          const base::string16& error_description,
+                          bool was_ignored_by_handler) {
   if (render_frame_host->GetParent()) {
     return;
   }
@@ -1182,7 +1187,7 @@ WebView::WebView(const Params& params)
     web_contents_->GetController().Restore(
         params.restore_index,
         params.restore_type,
-        &entries.get());
+        &entries);
     web_contents_->GetController().LoadIfNecessary();
   }
 }

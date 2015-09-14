@@ -38,6 +38,7 @@
 #include "url/gurl.h"
 
 #include "oxide_compositor_client.h"
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_frame_handle.h"
 #include "oxide_compositor_output_surface_gl.h"
 #include "oxide_compositor_output_surface_software.h"
@@ -92,13 +93,14 @@ Compositor::Compositor(CompositorClient* client)
 }
 
 void Compositor::SendSwapCompositorFrameToClient(
-    uint32 surface_id,
-    CompositorFrameHandle* frame) {
+    scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
   // XXX: What if we are hidden?
   // XXX: Should we check that surface_id matches the last created
   //  surface?
-  client_->CompositorSwapFrame(surface_id, frame);
+  scoped_refptr<CompositorFrameHandle> handle =
+      new CompositorFrameHandle(proxy_, frame.Pass());
+  client_->CompositorSwapFrame(handle.get());
 }
 
 void Compositor::LockCompositor() {

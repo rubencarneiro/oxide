@@ -19,10 +19,12 @@
 #define OXIDE_Q_SSL_CERTIFICATE
 
 #include <QDateTime>
+#include <QMetaType>
 #include <QSharedDataPointer>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
+#include <QVariant>
 
 class OxideQSslCertificateData;
 
@@ -38,9 +40,7 @@ class Q_DECL_EXPORT OxideQSslCertificate {
 
   Q_PROPERTY(bool isExpired READ isExpired CONSTANT)
 
-  Q_PROPERTY(OxideQSslCertificate issuer READ issuer CONSTANT)
-
-  Q_PROPERTY(bool isValid READ isValid CONSTANT)
+  Q_PROPERTY(QVariant issuer READ issuer CONSTANT)
 
   Q_ENUMS(PrincipalAttr)
 
@@ -79,7 +79,7 @@ class Q_DECL_EXPORT OxideQSslCertificate {
 
   bool isExpired() const;
 
-  OxideQSslCertificate issuer() const;
+  QVariant issuer() const;
   Q_INVOKABLE OxideQSslCertificate copy() const;
 
   Q_INVOKABLE QString toPem() const;

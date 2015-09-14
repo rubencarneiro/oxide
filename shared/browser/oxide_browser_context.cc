@@ -191,7 +191,8 @@ struct BrowserContextSharedIOData {
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
         host_mapping_rules(params.host_mapping_rules),
-        user_agent_settings(new UserAgentSettingsIOData(context)) {}
+        user_agent_settings(new UserAgentSettingsIOData(context)),
+        do_not_track(false) {}
 
   mutable base::Lock lock;
 
@@ -206,6 +207,8 @@ struct BrowserContextSharedIOData {
   std::vector<std::string> host_mapping_rules;
 
   scoped_ptr<UserAgentSettingsIOData> user_agent_settings;
+
+  bool do_not_track;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -343,6 +346,12 @@ int BrowserContextIOData::GetMaxCacheSizeHint() const {
   return max_cache_size_hint;
 }
 
+bool BrowserContextIOData::GetDoNotTrack() const {
+  const BrowserContextSharedIOData& data = GetSharedData();
+  base::AutoLock lock(data.lock);
+  return data.do_not_track;
+}
+
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     content::ProtocolHandlerMap& protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
@@ -453,25 +462,28 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
        it != protocol_handlers.end();
        ++it) {
-    set_protocol = job_factory->SetProtocolHandler(it->first,
-                                                   it->second.release());
+    set_protocol =
+        job_factory->SetProtocolHandler(it->first,
+                                        make_scoped_ptr(it->second.release()));
     DCHECK(set_protocol);
   }
   protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
-      new net::FileProtocolHandler(
+      make_scoped_ptr(new net::FileProtocolHandler(
         content::BrowserThread::GetMessageLoopProxyForThread(
-          content::BrowserThread::FILE)));
+          content::BrowserThread::FILE))));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
-      oxide::kDataScheme, new net::DataProtocolHandler());
+      oxide::kDataScheme,
+      make_scoped_ptr(new net::DataProtocolHandler()));
   DCHECK(set_protocol);
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFtpScheme,
-      new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
+      make_scoped_ptr(new net::FtpProtocolHandler(
+        ftp_transaction_factory_.get())));
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
@@ -869,10 +881,33 @@ scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
   return io_data()->cookie_store_;
 }
 
+
 TemporarySavedPermissionContext*
 BrowserContext::GetTemporarySavedPermissionContext() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetTemporarySavedPermissionContext();
+}
+
+bool BrowserContext::GetDoNotTrack() const {
+  DCHECK(CalledOnValidThread());
+  return io_data()->GetSharedData().do_not_track;
+}
+
+void BrowserContext::SetDoNotTrack(bool dnt) {
+  DCHECK(CalledOnValidThread());
+
+  BrowserContextSharedIOData& data = io_data()->GetSharedData();
+  base::AutoLock lock(data.lock);
+  data.do_not_track = dnt;
+
+  FOR_EACH_OBSERVER(BrowserContextObserver,
+                    GetOriginalContext()->observers_,
+                    NotifyDoNotTrackChanged());
+  if (HasOffTheRecordContext()) {
+    FOR_EACH_OBSERVER(BrowserContextObserver,
+                      GetOffTheRecordContext()->observers_,
+                      NotifyDoNotTrackChanged());
+  }
 }
 
 } // namespace oxide

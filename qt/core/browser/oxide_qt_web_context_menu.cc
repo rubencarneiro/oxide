@@ -24,6 +24,7 @@
 #include "base/strings/utf_string_conversions.h"
 
 #include "qt/core/glue/oxide_qt_web_context_menu_proxy.h"
+#include "shared/browser/oxide_web_view.h"
 
 namespace oxide {
 namespace qt {
@@ -59,7 +60,11 @@ MediaType WebContextMenu::mediaType() const {
 }
 
 QPoint WebContextMenu::position() const {
-  return QPoint(params_.x, params_.y);
+  // The position is expressed in device-independent pixels (DIP), it needs to
+  // be multiplied by the device pixel ratio (DPR) to obtain physical pixels.
+  oxide::WebView* webview = oxide::WebView::FromWebContents(web_contents());
+  const float dpr = webview->GetScreenInfo().deviceScaleFactor;
+  return QPoint(params_.x * dpr, params_.y * dpr);
 }
 
 QUrl WebContextMenu::linkUrl() const {

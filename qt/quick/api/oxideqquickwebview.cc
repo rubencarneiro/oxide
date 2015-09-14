@@ -68,7 +68,6 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
-QT_USE_NAMESPACE
 
 using oxide::qquick::AcceleratedFrameNode;
 using oxide::qquick::ImageFrameNode;

@@ -40,7 +40,6 @@ class SingleThreadTaskRunner;
 }
 
 namespace cc {
-class CompositorFrame;
 class CompositorFrameAck;
 }
 
@@ -52,15 +51,15 @@ class Size;
 namespace oxide {
 
 class Compositor;
+class CompositorFrameData;
 class CompositorFrameHandle;
 class CompositorOutputSurface;
 class GLFrameData;
-class ImageFrameData;
 class SoftwareFrameData;
 
 // This class bridges Compositor (which lives on the owner thread) and its
 // client, and CompositorOutputSurface (which lives on the impl thread)
-class CompositorThreadProxy final
+class CompositorThreadProxy 
     : public base::RefCountedThreadSafe<CompositorThreadProxy> {
  public:
   typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
@@ -84,7 +83,7 @@ class CompositorThreadProxy final
 
   // Called from the compositor to tell the client to swap, called on
   // the impl thread
-  void SwapCompositorFrame(cc::CompositorFrame* frame);
+  void SwapCompositorFrame(CompositorFrameData* frame);
 
   // Called from the client to tell the compositor that a frame swap
   // completed. |returned_frames| contains the buffers that the client
@@ -96,7 +95,7 @@ class CompositorThreadProxy final
   // Called when CompositorFrameHandle is deleted, so that associated
   // resources can be reclaimed. Called on the owner thread or another
   // thread whilst the owner thread is frozen
-  void ReclaimResourcesForFrame(CompositorFrameHandle* frame);
+  void ReclaimResourcesForFrame(CompositorFrameData* frame);
 
  private:
   friend class base::RefCountedThreadSafe<CompositorThreadProxy>;
@@ -115,41 +114,28 @@ class CompositorThreadProxy final
       EGLImageKHR egl_image);
 
   // Owner thread handler for a new software frame
-  void SendSwapSoftwareFrameOnOwnerThread(uint32_t surface_id,
-                                          const gfx::Size& size,
-                                          float scale,
-                                          unsigned id,
-                                          const gfx::Rect& damage_rect,
-                                          const cc::SharedBitmapId& bitmap_id);
+  void SendSwapSoftwareFrameOnOwnerThread(
+      scoped_ptr<CompositorFrameData> frame);
 
   // Called when the fence for a new GL frame is passed on the GPU thread
-  void DidCompleteGLFrameOnImplThread(uint32_t surface_id,
-                                      scoped_ptr<cc::CompositorFrame> frame);
+  void DidCompleteGLFrameOnImplThread(scoped_ptr<CompositorFrameData> frame);
 
   // Owner thread handler for a new GL frame
-  void SendSwapGLFrameOnOwnerThread(uint32_t surface_id,
-                                    const gfx::Size& size,
-                                    float scale,
-                                    const gpu::Mailbox& mailbox);
+  void SendSwapGLFrameOnOwnerThread(scoped_ptr<CompositorFrameData> frame);
 
   // Called when the client is not notified of a new frame, eg, if it has
-  // disappeared. This is called on the owner thread
-  void DidSkipSwapCompositorFrame(
-      uint32_t surface_id,
-      scoped_refptr<CompositorFrameHandle>* frame);
+  // disappeared. Note that |frame| will be modified.
+  // This is called on the owner thread.
+  void DidSkipSwapCompositorFrame(scoped_ptr<CompositorFrameData> frame);
 
   // Impl thread handler for DidSwapCompositorFrame
   void SendDidSwapBuffersToOutputSurfaceOnImplThread(
-      uint32 surface_id,
+      uint32_t surface_id,
       FrameHandleVector returned_frames);
 
   // Impl thread handler for ReclaimResourcesForFrame
   void SendReclaimResourcesToOutputSurfaceOnImplThread(
-      uint32 surface_id,
-      const gfx::Size& size_in_pixels,
-      scoped_ptr<GLFrameData> gl_frame_data,
-      scoped_ptr<SoftwareFrameData> software_frame_data,
-      scoped_ptr<ImageFrameData> image_frame_data);
+      scoped_ptr<CompositorFrameData> frame);
 
   struct OwnerData {
     OwnerData() : compositor(nullptr) {}

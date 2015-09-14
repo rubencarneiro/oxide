@@ -51,8 +51,6 @@ bool GLContextDependent::Initialize(gfx::GLSurface* compatible_surface,
   return true;
 }
 
-void GLContextDependent::Destroy() {}
-
 bool GLContextDependent::MakeCurrent(gfx::GLSurface* surface) {
   NOTREACHED();
   return false;

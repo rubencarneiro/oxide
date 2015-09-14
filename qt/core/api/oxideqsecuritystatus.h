@@ -21,8 +21,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
-
-#include "qt/core/api/oxideqsslcertificate.h"
+#include <QVariant>
 
 class OxideQSecurityStatusPrivate;
 
@@ -39,7 +38,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_PROPERTY(ContentStatusFlags contentStatus READ contentStatus NOTIFY contentStatusChanged)
   Q_PROPERTY(CertStatusFlags certStatus READ certStatus NOTIFY certStatusChanged)
 
-  Q_PROPERTY(OxideQSslCertificate certificate READ certificate NOTIFY certificateChanged)
+  Q_PROPERTY(QVariant certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
   Q_FLAGS(ContentStatusFlags)
@@ -85,7 +84,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   ContentStatusFlags contentStatus() const;
   CertStatusFlags certStatus() const;
 
-  OxideQSslCertificate certificate() const;
+  QVariant certificate() const;
 
  Q_SIGNALS:
   void securityLevelChanged();
