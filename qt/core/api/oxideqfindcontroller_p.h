@@ -22,26 +22,30 @@
 #include <QString>
 
 namespace oxide {
-class WebView;
+namespace qt {
+class FindController;
+}
 }
 
 class OxideQFindControllerPrivate {
+  Q_DECLARE_PUBLIC(OxideQFindController)
+
  public:
   ~OxideQFindControllerPrivate();
 
   static OxideQFindControllerPrivate* get(OxideQFindController* q);
 
-  oxide::WebView* view;
+  oxide::qt::FindController* controller() const { return controller_.data(); }
 
  private:
-  friend class OxideQFindController;
-  OxideQFindControllerPrivate();
+  OxideQFindControllerPrivate(OxideQFindController* q);
+
+  OxideQFindController* q_ptr;
+
+  QScopedPointer<oxide::qt::FindController> controller_;
 
   QString text_;
   bool case_sensitive_;
-  int count_;
-  int current_;
-  int request_id_;
 };
 
 #endif // _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_

@@ -84,6 +84,7 @@
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_file_picker.h"
+#include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
@@ -422,12 +423,10 @@ void WebView::OnInputPanelVisibilityChanged() {
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 OxideQFindController* find_controller,
                  OxideQSecurityStatus* security_status)
     : client_(client),
       has_input_method_state_(false),
-      security_status_(security_status),
-      find_in_page_controller_(find_controller) {
+      security_status_(security_status) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     connect(im, SIGNAL(visibleChanged()),
@@ -1016,14 +1015,6 @@ void WebView::CloseRequested() {
   client_->CloseRequested();
 }
 
-void WebView::FindInPageCountChanged() {
-  Q_EMIT find_in_page_controller_->countChanged();
-}
-
-void WebView::FindInPageCurrentChanged() {
-  Q_EMIT find_in_page_controller_->currentChanged();
-}
-
 size_t WebView::GetScriptMessageHandlerCount() const {
   return message_handlers_.size();
 }
@@ -1546,7 +1537,7 @@ WebView::WebView(WebViewProxyClient* client,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, find_controller, security_status) {
+    : WebView(client, security_status) {
   oxide::WebView::Params params;
   params.client = this;
   params.context = context->GetContext();
@@ -1570,8 +1561,8 @@ WebView::WebView(WebViewProxyClient* client,
   oxide::PermissionRequestDispatcher::FromWebContents(
       view_->GetWebContents())->set_client(this);
   OxideQSecurityStatusPrivate::get(security_status_)->view = this;
-  OxideQFindControllerPrivate::get(find_in_page_controller_)->view =
-      view_.get();
+  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
+      view_->GetWebContents());
   EnsurePreferences();
 }
 
@@ -1587,7 +1578,7 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, find_controller, security_status);
+  WebView* new_view = new WebView(client, security_status);
   new_view->view_.reset(new oxide::WebView(rd->contents.Pass(), new_view));
   rd->view = new_view->view_->AsWeakPtr();
 
@@ -1595,8 +1586,8 @@ WebView* WebView::CreateFromNewViewRequest(
       new_view->view_->GetWebContents())->set_client(new_view);
   OxideQSecurityStatusPrivate::get(new_view->security_status_)->view =
       new_view;
-  OxideQFindControllerPrivate::get(new_view->find_in_page_controller_)->view =
-      new_view->view_.get();
+  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
+      new_view->view_->GetWebContents());
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
         new_view->view_->GetWebPreferences())->api_handle();

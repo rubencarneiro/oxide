@@ -58,7 +58,6 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
-#include "third_party/WebKit/public/web/WebFindOptions.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
@@ -83,6 +82,7 @@
 #include "oxide_content_browser_client.h"
 #include "oxide_event_utils.h"
 #include "oxide_file_picker.h"
+#include "oxide_find_controller.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
@@ -166,6 +166,7 @@ void CreateHelpers(content::WebContents* contents,
 #if defined(ENABLE_MEDIAHUB)
   new MediaWebContentsObserver(contents);
 #endif
+  FindController::CreateForWebContents(contents);
 }
 
 
@@ -824,17 +825,8 @@ void WebView::FindReply(content::WebContents* source,
                         bool final_update) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  if (active_match_ordinal != -1 &&
-      find_in_page_.current != active_match_ordinal)  {
-      find_in_page_.current = active_match_ordinal;
-      client_->FindInPageCurrentChanged();
-  }
-
-  if (number_of_matches != -1 &&
-      find_in_page_.count != number_of_matches)  {
-      find_in_page_.count = number_of_matches;
-      client_->FindInPageCountChanged();
-  }
+  FindController::FromWebContents(web_contents_.get())->HandleFindReply(
+      request_id, number_of_matches, active_match_ordinal);
 }
 
 void WebView::RequestMediaAccessPermission(
@@ -1445,72 +1437,6 @@ void WebView::UpdateWebPreferences() {
   }
 
   rvh->OnWebkitPreferencesChanged();
-}
-
-int WebView::GetFindInPageCount() const {
-  return find_in_page_.count;
-}
-
-int WebView::GetFindInPageCurrent() const {
-  return find_in_page_.current;
-}
-
-std::string WebView::GetFindInPageText() const {
-  return find_in_page_.text;
-}
-
-bool WebView::GetFindInPageCaseSensitive() const {
-  return find_in_page_.case_sensitive;
-}
-
-void WebView::SetFindInPageText(const std::string& text) {
-  find_in_page_.text = text;
-  RestartFindInPage();
-}
-
-void WebView::SetFindInPageCaseSensitive(bool case_sensitive) {
-  find_in_page_.case_sensitive = case_sensitive;
-  RestartFindInPage();
-}
-
-void WebView::RestartFindInPage() {
-  web_contents_->StopFinding(content::STOP_FIND_ACTION_CLEAR_SELECTION);
-
-  find_in_page_.current = 0;
-  client_->FindInPageCurrentChanged();
-  find_in_page_.count = 0;
-  client_->FindInPageCountChanged();
-
-  if (!find_in_page_.text.empty()) {
-    find_in_page_.request_id++;
-
-    blink::WebFindOptions options;
-    options.forward = true;
-    options.findNext = false;
-    options.matchCase = find_in_page_.case_sensitive;
-
-    web_contents_->Find(find_in_page_.request_id,
-                        base::UTF8ToUTF16(find_in_page_.text),
-                        options);
-  }
-}
-
-void WebView::FindInPageNext() {
-  blink::WebFindOptions options;
-  options.forward = true;
-  options.findNext = true;
-
-  web_contents_->Find(find_in_page_.request_id,
-                      base::UTF8ToUTF16(find_in_page_.text), options);
-}
-
-void WebView::FindInPagePrevious() {
-  blink::WebFindOptions options;
-  options.forward = false;
-  options.findNext = true;
-
-  web_contents_->Find(find_in_page_.request_id,
-                      base::UTF8ToUTF16(find_in_page_.text), options);
 }
 
 BrowserContext* WebView::GetBrowserContext() const {

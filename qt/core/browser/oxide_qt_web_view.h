@@ -91,7 +91,6 @@ class WebView : public QObject,
 
  private:
   WebView(WebViewProxyClient* client,
-          OxideQFindController* find_controller,
           OxideQSecurityStatus* security_status);
 
   float GetDeviceScaleFactor() const;
@@ -182,8 +181,6 @@ class WebView : public QObject,
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
-  void FindInPageCountChanged() override;
-  void FindInPageCurrentChanged() override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -298,7 +295,6 @@ class WebView : public QObject,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
-  QPointer<OxideQFindController> find_in_page_controller_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

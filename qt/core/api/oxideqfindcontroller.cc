@@ -20,16 +20,14 @@
 
 #include <QtDebug>
 
-#include "content/browser/web_contents/web_contents_impl.h"
-#include "qt/core/browser/oxide_qt_web_view.h"
-#include "shared/browser/oxide_web_view.h"
+#include "qt/core/browser/oxide_qt_find_controller.h"
+#include "shared/browser/oxide_find_controller.h"
 
-OxideQFindControllerPrivate::OxideQFindControllerPrivate()
-    : view(nullptr),
-      case_sensitive_(false),
-      count_(0),
-      current_(0),
-      request_id_(0) {}
+OxideQFindControllerPrivate::OxideQFindControllerPrivate(
+    OxideQFindController* q)
+    : q_ptr(q),
+      controller_(new oxide::qt::FindController(q)),
+      case_sensitive_(false) {}
 
 OxideQFindControllerPrivate::~OxideQFindControllerPrivate() {}
 
@@ -40,24 +38,20 @@ OxideQFindControllerPrivate* OxideQFindControllerPrivate::get(
 }
 
 OxideQFindController::OxideQFindController()
-    : d_ptr(new OxideQFindControllerPrivate()) {}
+    : d_ptr(new OxideQFindControllerPrivate(this)) {}
 
 OxideQFindController::~OxideQFindController() {}
 
 QString OxideQFindController::text() const {
   Q_D(const OxideQFindController);
 
-  if (!d->view) {
-    return QString();
-  }
-
-  return QString::fromStdString(d->view->GetFindInPageText());
+  return d->text_;
 }
 
 void OxideQFindController::setText(const QString& newText) {
   Q_D(OxideQFindController);
 
-  if (!d->view) {
+  if (!d->controller_->IsInitialized()) {
     // FIXME(chrisccoulson)
     qWarning() <<
         "OxideQFindController::setText: Cannot use FindController during "
@@ -65,28 +59,26 @@ void OxideQFindController::setText(const QString& newText) {
     return;
   }
 
-  if (newText == text()) {
+  if (newText == d->text_) {
     return;
   }
 
-  d->view->SetFindInPageText(newText.toStdString());
+  d->text_ = newText;
   emit textChanged();
+
+  d->controller_->StartFinding(d->text_.toStdString(), d->case_sensitive_);
 }
 
 bool OxideQFindController::caseSensitive() const {
   Q_D(const OxideQFindController);
 
-  if (!d->view) {
-    return false;
-  }
-
-  return d->view->GetFindInPageCaseSensitive();
+  return d->case_sensitive_;
 }
 
 void OxideQFindController::setCaseSensitive(bool newCaseSensitive) {
   Q_D(OxideQFindController);
 
-  if (!d->view) {
+  if (!d->controller_->IsInitialized()) {
     // FIXME(chrisccoulson)
     qWarning() <<
         "OxideQFindController::setCaseSensitive: Cannot use FindController "
@@ -94,50 +86,50 @@ void OxideQFindController::setCaseSensitive(bool newCaseSensitive) {
     return;
   }
 
-  if (newCaseSensitive == caseSensitive()) {
+  if (newCaseSensitive == d->case_sensitive_) {
       return;
   }
 
-  d->view->SetFindInPageCaseSensitive(newCaseSensitive);
+  d->case_sensitive_ = newCaseSensitive;
   emit caseSensitiveChanged();
+
+  d->controller_->StartFinding(d->text_.toStdString(), d->case_sensitive_);
 }
 
 int OxideQFindController::count() const {
   Q_D(const OxideQFindController);
 
-  if (!d->view) {
-    return 0;
-  }
-
-  return d->view->GetFindInPageCount();
+  return d->controller_->GetResult().number_of_matches;
 }
 
 int OxideQFindController::current() const {
   Q_D(const OxideQFindController);
 
-  if (!d->view) {
-    return 0;
-  }
-
-  return d->view->GetFindInPageCurrent();
+  return d->controller_->GetResult().active_match_ordinal;
 }
 
 void OxideQFindController::next() {
   Q_D(OxideQFindController);
 
-  if (!d->view) {
+  if (!d->controller_->IsRequestActive()) {
+    qWarning() <<
+        "OxideQFindController::next : There is currently no active "
+        "find-in-page request";
     return;
   }
 
-  d->view->FindInPageNext();
+  d->controller_->GotoNextMatch();
 }
 
 void OxideQFindController::previous() {
   Q_D(OxideQFindController);
 
-  if (!d->view) {
+  if (!d->controller_->IsRequestActive()) {
+    qWarning() <<
+        "OxideQFindController::previous : There is currently no active "
+        "find-in-page request";
     return;
   }
 
-  d->view->FindInPagePrevious();
+  d->controller_->GotoPreviousMatch();
 }
