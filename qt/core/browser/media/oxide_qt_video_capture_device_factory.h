@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_FACTORY_LINUX_H_
-#define OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_FACTORY_LINUX_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
+#define _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
 
 #include "media/base/video_capture_types.h"
 #include "media/capture/video/video_capture_device_factory.h"
@@ -24,12 +24,13 @@
 namespace oxide {
 namespace qt {
 
-class VideoCaptureDeviceFactory
-    : public media::VideoCaptureDeviceFactory {
+class VideoCaptureDeviceFactory : public media::VideoCaptureDeviceFactory {
  public:
   explicit VideoCaptureDeviceFactory() = default;
   ~VideoCaptureDeviceFactory() override = default;
 
+ private:
+  // media::VideoCaptureDeviceFactory overrides
   scoped_ptr<media::VideoCaptureDevice> Create(
       const media::VideoCaptureDevice::Name& device_name) override;
   void GetDeviceNames(media::VideoCaptureDevice::Names* device_names) override;
@@ -37,10 +38,10 @@ class VideoCaptureDeviceFactory
       const media::VideoCaptureDevice::Name& device,
       media::VideoCaptureFormats* supported_formats) override;
 
- private:
   DISALLOW_COPY_AND_ASSIGN(VideoCaptureDeviceFactory);
 };
 
 }
 }
-#endif
+
+#endif // _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_

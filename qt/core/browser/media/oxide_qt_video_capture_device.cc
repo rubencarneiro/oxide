@@ -28,7 +28,8 @@ public:
       : client_(client.Pass()) {
   }
 
-  QList<QVideoFrame::PixelFormat> supportedPixelFormats(QAbstractVideoBuffer::HandleType) const {
+  QList<QVideoFrame::PixelFormat> supportedPixelFormats(
+      QAbstractVideoBuffer::HandleType) const {
     return QList<QVideoFrame::PixelFormat>() << QVideoFrame::Format_RGB32;
   }
 
@@ -36,17 +37,21 @@ public:
     if (!frame.isValid()) {
       return false;
     }
-    QVideoFrame cloneFrame(frame);
+    QVideoFrame clone_frame(frame);
 
-    cloneFrame.map(QAbstractVideoBuffer::ReadOnly);
+    clone_frame.map(QAbstractVideoBuffer::ReadOnly);
 
-    media::VideoCaptureFormat format(gfx::Size(frame.width(), frame.height()), 0,
-        media::PIXEL_FORMAT_RGB32);
-    client_->OnIncomingCapturedData(cloneFrame.bits(),
-        cloneFrame.height() * cloneFrame.bytesPerLine(),
-        format, 0, base::TimeTicks::Now());
+    media::VideoCaptureFormat format(gfx::Size(frame.width(),
+                                               frame.height()),
+                                     0, media::PIXEL_FORMAT_RGB32);
+    client_->OnIncomingCapturedData(
+        clone_frame.bits(),
+        clone_frame.height() * clone_frame.bytesPerLine(),
+        format,
+        0,
+        base::TimeTicks::Now());
 
-    cloneFrame.unmap();
+    clone_frame.unmap();
     return true;
   }
 
@@ -54,7 +59,8 @@ public:
   scoped_ptr<media::VideoCaptureDevice::Client> client_;
 };
 
-VideoCaptureDevice::VideoCaptureDevice(const media::VideoCaptureDevice::Name& device_name)
+VideoCaptureDevice::VideoCaptureDevice(
+    const media::VideoCaptureDevice::Name& device_name)
     : camera_(QByteArray(device_name.name().c_str())) {
   camera_.moveToThread(&thread_);
 }

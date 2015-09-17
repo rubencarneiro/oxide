@@ -15,17 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_VIDEO_CAPTURE_DEVICE_FACTORY_H
-#define OXIDE_VIDEO_CAPTURE_DEVICE_FACTORY_H
+#ifndef _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
+#define _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
 
-#include "media/capture/video/video_capture_device_factory.h"
 #include "media/base/video_capture_types.h"
+#include "media/capture/video/video_capture_device_factory.h"
 
 namespace media {
+
 typedef VideoCaptureDeviceFactory* (VideoCaptureDeviceFactoryFactory)();
 
 MEDIA_EXPORT void SetVideoCaptureDeviceFactoryFactory(
     VideoCaptureDeviceFactoryFactory* factory);
 
 }
-#endif
+
+#endif // _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_

@@ -16,11 +16,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxide_qt_video_capture_device_factory.h"
-#include "oxide_qt_video_capture_device.h"
+
+#include <QList>
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 
-#include <QList>
+#include "oxide_qt_video_capture_device.h"
 
 namespace oxide {
 namespace qt {
@@ -38,9 +39,11 @@ void VideoCaptureDeviceFactory::GetDeviceNames(
   DCHECK(device_names->empty());
 
   QList<QByteArray> devices = QCamera::availableDevices();
-  for (const QByteArray &cameraId: devices) {
-    device_names->push_back(media::VideoCaptureDevice::Name(cameraId.data(),
-        cameraId.data(), media::VideoCaptureDevice::Name::API_TYPE_UNKNOWN));
+  for (const QByteArray& camera_id: devices) {
+    device_names->push_back(media::VideoCaptureDevice::Name(
+        camera_id.data(),
+        camera_id.data(),
+        media::VideoCaptureDevice::Name::API_TYPE_UNKNOWN));
   }
 }
 

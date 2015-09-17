@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_LINUX_H_
-#define OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_LINUX_H_
-
-#include "media/capture/video/video_capture_device.h"
+#ifndef _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_H_
+#define _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_H_
 
 #include <QCamera>
 #include <QThread>
+
+#include "media/capture/video/video_capture_device.h"
 
 namespace oxide {
 namespace qt {
@@ -29,13 +29,16 @@ class CameraFrameGrabber;
 
 class VideoCaptureDevice : public media::VideoCaptureDevice {
  public:
-  explicit VideoCaptureDevice(const media::VideoCaptureDevice::Name& device_name);
+  explicit VideoCaptureDevice(
+      const media::VideoCaptureDevice::Name& device_name);
   ~VideoCaptureDevice() override;
 
+ private:
+  // media::VideoCaptureDevice implementation
   void AllocateAndStart(const media::VideoCaptureParams& params,
                         scoped_ptr<Client> client) override;
   void StopAndDeAllocate() override;
- private:
+
   QCamera camera_;
   QThread thread_;
   scoped_ptr<CameraFrameGrabber> view_finder_;
@@ -46,4 +49,4 @@ class VideoCaptureDevice : public media::VideoCaptureDevice {
 }
 }
 
-#endif
+#endif // _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_H_

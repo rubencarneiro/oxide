@@ -15,13 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "base/logging.h"
+
 #include "video_capture_device_factory_oxide.h"
 
+namespace media {
+
 namespace {
-  media::VideoCaptureDeviceFactoryFactory* gfactory;
+media::VideoCaptureDeviceFactoryFactory* gfactory;
 }
 
-namespace media {
 // static
 VideoCaptureDeviceFactory*
 VideoCaptureDeviceFactory::CreateVideoCaptureDeviceFactory(
@@ -34,7 +37,8 @@ const std::string VideoCaptureDevice::Name::GetModel() const {
   return "";
 }
 
-void SetVideoCaptureDeviceFactoryFactory(VideoCaptureDeviceFactoryFactory* factory) {
+void SetVideoCaptureDeviceFactoryFactory(
+    VideoCaptureDeviceFactoryFactory* factory) {
   gfactory = factory;
 }
 
