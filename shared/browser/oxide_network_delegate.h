@@ -72,6 +72,8 @@ class NetworkDelegate final : public net::NetworkDelegate {
 
   void OnURLRequestDestroyed(net::URLRequest* request) final;
 
+  void OnURLRequestJobOrphaned(net::URLRequest* request) final;
+
   void OnPACScriptError(int line_number, const base::string16& error) final;
 
   AuthRequiredResponse OnAuthRequired(

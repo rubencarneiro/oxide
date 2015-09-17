@@ -108,6 +108,7 @@ class RenderWidgetHostView final :
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
+  void ClearCompositorFrame() final;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(

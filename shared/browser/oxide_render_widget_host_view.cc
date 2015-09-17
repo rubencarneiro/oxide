@@ -218,7 +218,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       std::lround(frame_size.height() / device_scale_factor));
 
   gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
-      gfx::ScaleRect(root_pass->damage_rect, 1.0f / device_scale_factor));
+      gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
+                     1.0f / device_scale_factor));
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -269,6 +270,10 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
+}
+
+void RenderWidgetHostView::ClearCompositorFrame() {
+  DestroyDelegatedContent();
 }
 
 void RenderWidgetHostView::InitAsPopup(
