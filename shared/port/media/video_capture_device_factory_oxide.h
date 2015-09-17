@@ -18,7 +18,7 @@
 #ifndef OXIDE_VIDEO_CAPTURE_DEVICE_FACTORY_H
 #define OXIDE_VIDEO_CAPTURE_DEVICE_FACTORY_H
 
-#include "media/video/capture/video_capture_device_factory.h"
+#include "media/capture/video/video_capture_device_factory.h"
 #include "media/base/video_capture_types.h"
 
 namespace media {

@@ -96,8 +96,8 @@ void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
 
 void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 
-void NetworkDelegate::OnRawBytesRead(const net::URLRequest& request,
-                                     int bytes_read) {}
+void NetworkDelegate::OnNetworkBytesReceived(const net::URLRequest& request,
+                                             int64_t bytes_received) {}
 
 void NetworkDelegate::OnCompleted(net::URLRequest* request, bool started) {}
 
@@ -132,11 +132,6 @@ bool NetworkDelegate::OnCanSetCookie(const net::URLRequest& request,
 bool NetworkDelegate::OnCanAccessFile(const net::URLRequest& request,
                                       const base::FilePath& path) const {
   return true;
-}
-
-bool NetworkDelegate::OnCanThrottleRequest(
-    const net::URLRequest& request) const {
-  return false;
 }
 
 bool NetworkDelegate::OnCanEnablePrivacyMode(

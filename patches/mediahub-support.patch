@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -222,9 +222,17 @@ std::string ContentRendererClient::GetUs
+@@ -202,9 +202,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -22,7 +22,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -32,16 +32,18 @@ class SingleThreadTaskRunner;
+@@ -30,16 +30,18 @@ class SingleThreadTaskRunner;
  namespace blink {
  class WebAppBannerClient;
  class WebAudioDevice;
@@ -37,17 +37,17 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebMediaStreamCenterClient;
  class WebPlugin;
  class WebPluginContainer;
- class WebPluginPlaceholder;
  class WebPrescientNetworking;
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
-@@ -53,16 +55,17 @@ class WebURLRequest;
- class WebWorkerContentSettingsClientProxy;
+ class WebSpeechSynthesizer;
+@@ -51,16 +53,17 @@ class WebWorkerContentSettingsClientProx
  struct WebPluginParams;
  struct WebURLError;
  }
  
  namespace media {
+ class GpuVideoAcceleratorFactories;
  class MediaLog;
  class RendererFactory;
 +class WebMediaPlayerDelegate;
@@ -59,15 +59,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -309,13 +312,20 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual scoped_ptr<blink::WebAppBannerClient> CreateAppBannerClient(
-       RenderFrame* render_frame);
+@@ -295,13 +298,20 @@ class CONTENT_EXPORT ContentRendererClie
+   // is called from the worker thread.
+   virtual void DidInitializeServiceWorkerContextOnWorkerThread(
+       v8::Local<v8::Context> context,
+       const GURL& url) {}
  
-   // Gives the embedder a chance to add properties to the context menu.
-   // Currently only called when the context menu is for an image.
-   virtual void AddImageContextMenuProperties(
-       const blink::WebURLResponse& response,
-       std::map<std::string, std::string>* properties) {}
+   // Notifies that a service worker context will be destroyed. This function
+   // is called from the worker thread.
+   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -83,15 +83,16 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1956,16 +1956,26 @@ blink::WebMediaPlayer* RenderFrameImpl::
-   if (!web_stream.isNull())
-     return CreateWebMediaPlayerForMediaStream(client);
- 
- #if defined(OS_ANDROID)
-   return CreateAndroidWebMediaPlayer(client, GetMediaPermission(), initial_cdm);
+@@ -2070,16 +2070,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
  #else
-   scoped_refptr<media::MediaLog> media_log(new RenderMediaLog());
+   scoped_refptr<media::AudioRendererSink> audio_renderer_sink =
+       render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_);
+   media::WebMediaPlayerParams::Context3DCB context_3d_cb =
+       base::Bind(&GetSharedMainThreadContext3D);
+ #endif  // defined(OS_ANDROID) && !defined(ENABLE_MEDIA_PIPELINE_ON_ANDROID)
  
+   scoped_refptr<media::MediaLog> media_log(new RenderMediaLog());
++
 +  blink::WebMediaPlayer* media_player = 
 +      GetContentClient()->renderer()->OverrideWebMediaPlayer(
 +        frame_,
@@ -102,11 +103,11 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 +  if (media_player)
 +    return media_player;
 +
-   RenderThreadImpl* render_thread = RenderThreadImpl::current();
    media::WebMediaPlayerParams params(
        base::Bind(&ContentRendererClient::DeferMediaLoad,
                   base::Unretained(GetContentClient()->renderer()),
-                  static_cast<RenderFrame*>(this)),
-       render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_),
-       media_log, render_thread->GetMediaThreadTaskRunner(),
-       render_thread->compositor_task_runner(),
+                  static_cast<RenderFrame*>(this), has_played_media_),
+       audio_renderer_sink, media_log, render_thread->GetMediaThreadTaskRunner(),
+       render_thread->GetWorkerTaskRunner(),
+       render_thread->compositor_task_runner(), context_3d_cb,
+       GetMediaPermission(), initial_cdm);

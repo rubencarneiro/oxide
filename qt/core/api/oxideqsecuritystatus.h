@@ -21,10 +21,15 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QtGlobal>
-
-#include "qt/core/api/oxideqsslcertificate.h"
+#include <QVariant>
 
 class OxideQSecurityStatusPrivate;
+
+namespace oxide {
+namespace qt {
+class WebViewProxy;
+}
+}
 
 class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
@@ -33,7 +38,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_PROPERTY(ContentStatusFlags contentStatus READ contentStatus NOTIFY contentStatusChanged)
   Q_PROPERTY(CertStatusFlags certStatus READ certStatus NOTIFY certStatusChanged)
 
-  Q_PROPERTY(OxideQSslCertificate certificate READ certificate NOTIFY certificateChanged)
+  Q_PROPERTY(QVariant certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
   Q_FLAGS(ContentStatusFlags)
@@ -79,7 +84,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   ContentStatusFlags contentStatus() const;
   CertStatusFlags certStatus() const;
 
-  OxideQSslCertificate certificate() const;
+  QVariant certificate() const;
 
  Q_SIGNALS:
   void securityLevelChanged();
@@ -88,8 +93,9 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   void certificateChanged();
 
  private:
-  OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
-                       QObject* parent = nullptr);
+  friend class oxide::qt::WebViewProxy;
+
+  Q_DECL_HIDDEN OxideQSecurityStatus();
 
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };

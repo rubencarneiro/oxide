@@ -18,7 +18,7 @@
 #ifndef OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_LINUX_H_
 #define OXIDE_MEDIA_VIDEO_CAPTURE_LINUX_VIDEO_CAPTURE_DEVICE_LINUX_H_
 
-#include "media/video/capture/video_capture_device.h"
+#include "media/capture/video/video_capture_device.h"
 
 #include <QCamera>
 #include <QThread>

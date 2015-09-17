@@ -462,25 +462,28 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
        it != protocol_handlers.end();
        ++it) {
-    set_protocol = job_factory->SetProtocolHandler(it->first,
-                                                   it->second.release());
+    set_protocol =
+        job_factory->SetProtocolHandler(it->first,
+                                        make_scoped_ptr(it->second.release()));
     DCHECK(set_protocol);
   }
   protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
-      new net::FileProtocolHandler(
+      make_scoped_ptr(new net::FileProtocolHandler(
         content::BrowserThread::GetMessageLoopProxyForThread(
-          content::BrowserThread::FILE)));
+          content::BrowserThread::FILE))));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
-      oxide::kDataScheme, new net::DataProtocolHandler());
+      oxide::kDataScheme,
+      make_scoped_ptr(new net::DataProtocolHandler()));
   DCHECK(set_protocol);
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFtpScheme,
-      new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
+      make_scoped_ptr(new net::FtpProtocolHandler(
+        ftp_transaction_factory_.get())));
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(

@@ -17,48 +17,21 @@
 
 #include "oxide_compositor_frame_handle.h"
 
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
 
-GLFrameData::GLFrameData(const gpu::Mailbox& mailbox,
-                         GLuint texture_id)
-    : mailbox_(mailbox),
-      texture_id_(texture_id) {}
-
-GLFrameData::~GLFrameData() {}
-
-ImageFrameData::ImageFrameData(const gpu::Mailbox& mailbox,
-                               EGLImageKHR image)
-    : mailbox_(mailbox),
-      image_(image) {}
-
-ImageFrameData::~ImageFrameData() {}
-
-SoftwareFrameData::SoftwareFrameData(unsigned id,
-                                     const gfx::Rect& damage_rect,
-                                     uint8* pixels)
-    : id_(id),
-      damage_rect_(damage_rect),
-      pixels_(pixels) {}
-
-SoftwareFrameData::~SoftwareFrameData() {}
+CompositorFrameHandle::CompositorFrameHandle(
+    scoped_refptr<CompositorThreadProxy> proxy,
+    scoped_ptr<CompositorFrameData> data)
+    : proxy_(proxy),
+      data_(data.Pass()) {}
 
 CompositorFrameHandle::~CompositorFrameHandle() {
-  if (software_frame_data_ || gl_frame_data_ || image_frame_data_) {
-    proxy_->ReclaimResourcesForFrame(this);
+  if (data_) {
+    proxy_->ReclaimResourcesForFrame(data_.get());
   }
-  DCHECK(!software_frame_data_ && !gl_frame_data_ && !image_frame_data_);
 }
-
-CompositorFrameHandle::CompositorFrameHandle(
-    uint32 surface_id,
-    scoped_refptr<CompositorThreadProxy> proxy,
-    const gfx::Size& size,
-    float scale)
-    : surface_id_(surface_id),
-      proxy_(proxy),
-      size_in_pixels_(size),
-      device_scale_(scale) {}
 
 } // namespace oxide

@@ -22,38 +22,28 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/single_thread_task_runner.h"
-#include "cc/output/compositor_frame.h"
-#include "cc/output/compositor_frame_metadata.h"
-#include "cc/output/gl_frame_data.h"
 
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_gpu_shims.h"
 
 namespace oxide {
 
-MailboxBufferMap::DelayedFrameSwap::DelayedFrameSwap(
-    uint32_t surface_id,
-    cc::CompositorFrame* frame)
-    : surface_id(surface_id),
-      size(frame->gl_frame_data->size),
-      scale(frame->metadata.device_scale_factor),
-      mailbox(frame->gl_frame_data->mailbox) {}
-
 void MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
                                   const MailboxBufferData& data,
-                                  DelayedFrameSwapQueue* ready_frame_swaps) {
+                                  DelayedFrameQueue* ready_frames) {
   lock_.AssertAcquired();
 
   map_[mailbox] = data;
 
-  while (!delayed_frame_swaps_.empty()) {
-    const DelayedFrameSwap& swap = delayed_frame_swaps_.front();
-    if (map_.find(swap.mailbox) == map_.end() &&
-        swap.surface_id == surface_id_) {
+  while (!delayed_frames_.empty()) {
+    const linked_ptr<CompositorFrameData>& frame = delayed_frames_.front();
+    if (map_.find(frame->gl_frame_data->mailbox) == map_.end() &&
+        frame->surface_id == surface_id_) {
       break;
     }
 
-    ready_frame_swaps->push(swap);
-    delayed_frame_swaps_.pop();
+    ready_frames->push(frame);
+    delayed_frames_.pop();
   }
 }
 
@@ -94,9 +84,9 @@ void MailboxBufferMap::SetOutputSurfaceID(uint32_t surface_id) {
     }
   }
 
-  while (!delayed_frame_swaps_.empty()) {
-    DCHECK_NE(delayed_frame_swaps_.front().surface_id, surface_id);
-    delayed_frame_swaps_.pop();
+  while (!delayed_frames_.empty()) {
+    DCHECK_NE(delayed_frames_.front()->surface_id, surface_id);
+    delayed_frames_.pop();
   }
 }
 
@@ -104,7 +94,7 @@ bool MailboxBufferMap::AddTextureMapping(
     uint32_t surface_id,
     const gpu::Mailbox& mailbox,
     GLuint texture,
-    DelayedFrameSwapQueue* ready_frame_swaps) {
+    DelayedFrameQueue* ready_frames) {
   DCHECK_EQ(mode_, COMPOSITING_MODE_TEXTURE);
   DCHECK_NE(texture, 0U);
 
@@ -120,7 +110,7 @@ bool MailboxBufferMap::AddTextureMapping(
   data.surface_id = surface_id;
   data.data.texture = texture;
 
-  AddMapping(mailbox, data, ready_frame_swaps);
+  AddMapping(mailbox, data, ready_frames);
 
   return true;
 }
@@ -129,7 +119,7 @@ bool MailboxBufferMap::AddEGLImageMapping(
     uint32_t surface_id,
     const gpu::Mailbox& mailbox,
     EGLImageKHR egl_image,
-    DelayedFrameSwapQueue* ready_frame_swaps) {
+    DelayedFrameQueue* ready_frames) {
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
   DCHECK_NE(egl_image, EGL_NO_IMAGE_KHR);
 
@@ -147,7 +137,7 @@ bool MailboxBufferMap::AddEGLImageMapping(
   data.data.image.ref_count = 0;
   data.data.image.egl_image = egl_image;
 
-  AddMapping(mailbox, data, ready_frame_swaps);
+  AddMapping(mailbox, data, ready_frames);
 
   return true;
 }
@@ -227,25 +217,26 @@ void MailboxBufferMap::ReclaimMailboxBufferResources(
   }
 }
 
-bool MailboxBufferMap::CanBeginFrameSwap(uint32_t surface_id,
-                                         cc::CompositorFrame* frame) {
-  DCHECK(frame->gl_frame_data.get());
+bool MailboxBufferMap::CanBeginFrameSwap(CompositorFrameData* frame) {
+  DCHECK(frame->gl_frame_data);
 
   base::AutoLock lock(lock_);
 
-  if (!delayed_frame_swaps_.empty()) {
-    DelayedFrameSwap swap(surface_id, frame);
-    delayed_frame_swaps_.push(swap);
+  if (!delayed_frames_.empty()) {
+    scoped_ptr<CompositorFrameData> frame_copy =
+        CompositorFrameData::AllocFrom(frame);
+    delayed_frames_.push(make_linked_ptr(frame_copy.release()));
     return false;
   }
 
-  if (surface_id != surface_id_) {
+  if (frame->surface_id != surface_id_) {
     return true;
   }
 
   if (map_.find(frame->gl_frame_data->mailbox) == map_.end()) {
-    DelayedFrameSwap swap(surface_id, frame);
-    delayed_frame_swaps_.push(swap);
+    scoped_ptr<CompositorFrameData> frame_copy =
+        CompositorFrameData::AllocFrom(frame);
+    delayed_frames_.push(make_linked_ptr(frame_copy.release()));
     return false;
   }
 

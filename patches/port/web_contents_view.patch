@@ -5,8 +5,8 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1464,18 +1464,18 @@
-       'browser/web_contents/touch_editable_impl_aura.h',
+@@ -1534,18 +1534,18 @@
+       'browser/web_contents/aura/shadow_layer_delegate.h',
        'browser/web_contents/web_contents_android.cc',
        'browser/web_contents/web_contents_android.h',
        'browser/web_contents/web_contents_impl.cc',
@@ -26,7 +26,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/web_contents/web_drag_dest_mac.mm',
        'browser/web_contents/web_drag_source_mac.h',
        'browser/web_contents/web_drag_source_mac.mm',
-@@ -1502,16 +1502,18 @@
+@@ -1572,16 +1572,18 @@
        'browser/webui/web_ui_message_handler.cc',
        'browser/zygote_host/zygote_host_impl_linux.cc',
        'browser/zygote_host/zygote_host_impl_linux.h',

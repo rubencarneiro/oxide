@@ -70,8 +70,6 @@ class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
 
-  virtual void Initialized() = 0;
-
   virtual QObject* GetApiHandle() = 0;
 
   virtual WebContextMenuProxy* CreateWebContextMenu(

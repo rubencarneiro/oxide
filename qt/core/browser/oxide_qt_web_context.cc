@@ -371,8 +371,7 @@ void WebContext::UpdateUserScripts() {
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
     UserScript* script = UserScript::FromProxyHandle(user_scripts_.at(i));
-    if (script->state() == UserScript::Loading ||
-        script->state() == UserScript::Constructing) {
+    if (!script || script->state() == UserScript::Loading) {
       return;
     } else if (script->state() == UserScript::Loaded) {
       scripts.push_back(script->impl());
@@ -944,7 +943,7 @@ void WebContext::setHostMappingRules(const QStringList& rules) {
 void WebContext::setAllowedExtraUrlSchemes(const QStringList& schemes) {
   std::set<std::string> set;
   for (int i = 0; i < schemes.size(); ++i) {
-    set.insert(base::StringToLowerASCII(schemes.at(i).toStdString()));
+    set.insert(base::ToLowerASCII(schemes.at(i).toStdString()));
   }
   delegate_->SetAllowedExtraURLSchemes(set);
 }

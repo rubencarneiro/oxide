@@ -56,6 +56,9 @@
         '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
       ],
+      'ldflags': [
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
+      ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
@@ -77,6 +80,8 @@
         'browser/oxide_qt_event_utils.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
+        'browser/oxide_qt_find_controller.cc',
+        'browser/oxide_qt_find_controller.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
         'browser/oxide_qt_location_provider.cc',

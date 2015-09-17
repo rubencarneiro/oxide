@@ -26,46 +26,46 @@
 class OxideQFindControllerPrivate;
 
 namespace oxide {
-  class WebView;
-  namespace qt {
-      class WebView;
-  }
+namespace qt {
+class WebViewProxy;
+}
 }
 
 class Q_DECL_EXPORT OxideQFindController : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
-    Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
-    Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_PROPERTY(int current READ current NOTIFY currentChanged)
+  Q_OBJECT
+  Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+  Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
+  Q_PROPERTY(int count READ count NOTIFY countChanged)
+  Q_PROPERTY(int current READ current NOTIFY currentChanged)
 
-    Q_DECLARE_PRIVATE(OxideQFindController)
-    Q_DISABLE_COPY(OxideQFindController)
+  Q_DECLARE_PRIVATE(OxideQFindController)
+  Q_DISABLE_COPY(OxideQFindController)
 
-   public:
-    OxideQFindController(oxide::WebView* webview);
-    ~OxideQFindController();
+ public:
+  ~OxideQFindController();
 
-    QString text() const;
-    void setText(const QString& text);
-    bool caseSensitive() const;
-    void setCaseSensitive(bool caseSensitive);
-    int count() const;
-    int current() const;
+  QString text() const;
+  void setText(const QString& text);
+  bool caseSensitive() const;
+  void setCaseSensitive(bool caseSensitive);
+  int count() const;
+  int current() const;
 
-    Q_INVOKABLE void next();
-    Q_INVOKABLE void previous();
+  Q_INVOKABLE void next();
+  Q_INVOKABLE void previous();
 
-   Q_SIGNALS:
-    void textChanged() const;
-    void caseSensitiveChanged() const;
-    void countChanged() const;
-    void currentChanged() const;
+ Q_SIGNALS:
+  void textChanged() const;
+  void caseSensitiveChanged() const;
+  void countChanged() const;
+  void currentChanged() const;
 
-   private:
-    QScopedPointer<OxideQFindControllerPrivate> d_ptr;
+ private:
+  friend class oxide::qt::WebViewProxy;
 
-   friend class oxide::qt::WebView;
+  Q_DECL_HIDDEN OxideQFindController();
+
+  QScopedPointer<OxideQFindControllerPrivate> d_ptr;
 };
 
 #endif // OXIDE_Q_FIND_CONTROLLER

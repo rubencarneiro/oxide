@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -83,10 +83,10 @@ void UserScript::setContext(const QUrl& context) {
   impl_.set_context(GURL(context.toString().toStdString()));
 }
 
-void UserScript::init(const QUrl& url) {
-  DCHECK_EQ(state_, Constructing);
-  state_ = Loading;
-
+UserScript::UserScript(UserScriptProxyClient* client,
+                       const QUrl& url)
+    : client_(client),
+      state_(Loading) {
   load_job_.reset(oxide::FileUtils::GetFileContents(
       content::BrowserThread::GetMessageLoopProxyForThread(
         content::BrowserThread::FILE).get(),
@@ -100,10 +100,6 @@ void UserScript::init(const QUrl& url) {
     client_->ScriptLoadFailed();
   }
 }
-
-UserScript::UserScript(UserScriptProxyClient* client)
-    : client_(client),
-      state_(Constructing) {}
 
 UserScript::~UserScript() {}
 
