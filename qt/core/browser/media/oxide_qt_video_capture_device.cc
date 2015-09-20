@@ -22,10 +22,40 @@
 #include <QPointer>
 #include <QtGlobal>
 
+#include "base/logging.h"
 #include "base/strings/stringprintf.h"
 
 namespace oxide {
 namespace qt {
+
+namespace {
+
+media::VideoPixelFormat ToMediaVideoPixelFormat(
+    QVideoFrame::PixelFormat format) {
+  switch (format) {
+    case QVideoFrame::Format_RGB32:
+      return media::PIXEL_FORMAT_RGB32;
+    case QVideoFrame::Format_ARGB32:
+      return media::PIXEL_FORMAT_ARGB;
+    case QVideoFrame::Format_RGB24:
+      return media::PIXEL_FORMAT_RGB24;
+    case QVideoFrame::Format_YUV420P:
+      return media::PIXEL_FORMAT_I420;
+    case QVideoFrame::Format_YV12:
+      return media::PIXEL_FORMAT_YV12;
+    case QVideoFrame::Format_UYVY:
+      return media::PIXEL_FORMAT_UYVY;
+    case QVideoFrame::Format_NV12:
+      return media::PIXEL_FORMAT_NV12;
+    case QVideoFrame::Format_NV21:
+      return media::PIXEL_FORMAT_NV21;
+    default:
+      NOTREACHED();
+      return media::PIXEL_FORMAT_UNKNOWN;
+  }
+}
+
+}
 
 class CameraFrameGrabber: public QAbstractVideoSurface {
   Q_OBJECT
@@ -60,7 +90,9 @@ bool CameraFrameGrabber::present(const QVideoFrame& frame) {
     return false;
   }
 
-  if (frame.pixelFormat() != QVideoFrame::Format_RGB32) {
+  media::VideoPixelFormat pixel_format =
+      ToMediaVideoPixelFormat(frame.pixelFormat());
+  if (pixel_format == media::PIXEL_FORMAT_UNKNOWN) {
     return false;
   }
 
@@ -69,7 +101,7 @@ bool CameraFrameGrabber::present(const QVideoFrame& frame) {
 
   media::VideoCaptureFormat format(gfx::Size(frame.width(),
                                              frame.height()),
-                                   0, media::PIXEL_FORMAT_RGB32);
+                                   0, pixel_format);
   client_->OnIncomingCapturedData(clone_frame.bits(),
                                   clone_frame.mappedBytes(),
                                   format,
@@ -94,18 +126,20 @@ QList<QVideoFrame::PixelFormat> CameraFrameGrabber::supportedPixelFormats(
     return QList<QVideoFrame::PixelFormat>();
   }
 
-  return QList<QVideoFrame::PixelFormat>() << QVideoFrame::Format_RGB32;
-  // XXX: Support:
-  //  Format_ARGB32
-  //  Format_RGB24
-  //  Format_YUV420P
-  //  Format_YV12
-  //  Format_UYVY
-  //  Format_NV12
-  //  Format_NV21
+  return QList<QVideoFrame::PixelFormat>()
+      << QVideoFrame::Format_RGB32
+      << QVideoFrame::Format_ARGB32
+      << QVideoFrame::Format_RGB24
+      << QVideoFrame::Format_YUV420P
+      << QVideoFrame::Format_YV12
+      << QVideoFrame::Format_UYVY
+      << QVideoFrame::Format_NV12
+      << QVideoFrame::Format_NV21;
 }
 
 void CameraFrameGrabber::cameraError(QCamera::Error error) {
+  LOG(WARNING) << "Camera error " << error << ": " <<
+               qUtf8Printable(camera_->errorString());
   client_->OnError(base::StringPrintf(
       "Received error code %d from camera: %s",
       error, qUtf8Printable(camera_->errorString())));

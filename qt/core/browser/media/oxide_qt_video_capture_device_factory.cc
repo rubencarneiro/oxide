@@ -17,6 +17,7 @@
 
 #include "oxide_qt_video_capture_device_factory.h"
 
+#include <QCamera>
 #include <QList>
 
 #include "shared/browser/oxide_browser_platform_integration.h"
@@ -40,6 +41,10 @@ void VideoCaptureDeviceFactory::GetDeviceNames(
 
   QList<QByteArray> devices = QCamera::availableDevices();
   for (const QByteArray& camera_id: devices) {
+    QCamera camera(camera_id);
+    if (!camera.isCaptureModeSupported(QCamera::CaptureVideo)) {
+      continue;
+    }
     device_names->push_back(media::VideoCaptureDevice::Name(
         camera_id.data(),
         camera_id.data(),
