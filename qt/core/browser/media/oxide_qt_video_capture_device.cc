@@ -82,17 +82,32 @@ class CameraFrameGrabber: public QAbstractVideoSurface {
 };
 
 bool CameraFrameGrabber::present(const QVideoFrame& frame) {
+  if (!isActive()) {
+    setError(StoppedError);
+    return false;
+  }
+
   if (!frame.isValid()) {
+    LOG(WARNING) << "Received an invalid video frame";
+    setError(IncorrectFormatError);
     return false;
   }
 
   if (frame.handleType() != QAbstractVideoBuffer::NoHandle) {
+    LOG(WARNING) <<
+        "Received a video frame with unsupported handle type" <<
+        frame.handleType();
+    setError(IncorrectFormatError);
     return false;
   }
 
   media::VideoPixelFormat pixel_format =
       ToMediaVideoPixelFormat(frame.pixelFormat());
   if (pixel_format == media::PIXEL_FORMAT_UNKNOWN) {
+    LOG(WARNING) <<
+        "Received a video frame with unsupported pixel format: " <<
+        frame.pixelFormat();
+    setError(UnsupportedFormatError);
     return false;
   }
 
