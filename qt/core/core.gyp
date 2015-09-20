@@ -169,6 +169,11 @@
           'includes': [ 'moc.gypi' ]
         },
         {
+          'action_name': 'oxide_qt_video_capture_device.moc',
+          'moc_input': 'browser/media/oxide_qt_video_capture_device.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
           'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
           'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
           'includes': [ 'moc.gypi' ]

@@ -35,13 +35,16 @@ class VideoCaptureDevice : public media::VideoCaptureDevice {
 
  private:
   // media::VideoCaptureDevice implementation
-  void AllocateAndStart(const media::VideoCaptureParams& params,
-                        scoped_ptr<Client> client) override;
+  void AllocateAndStart(
+      const media::VideoCaptureParams& params,
+      scoped_ptr<media::VideoCaptureDevice::Client> client) override;
   void StopAndDeAllocate() override;
 
-  QCamera camera_;
-  QThread thread_;
-  scoped_ptr<CameraFrameGrabber> view_finder_;
+  media::VideoCaptureDevice::Name device_name_;
+
+  // These both live on the UI thread
+  QScopedPointer<CameraFrameGrabber, QScopedPointerDeleteLater> view_finder_;
+  QScopedPointer<QCamera, QScopedPointerDeleteLater> camera_;
 
   DISALLOW_COPY_AND_ASSIGN(VideoCaptureDevice);
 };
