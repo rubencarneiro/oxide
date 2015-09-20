@@ -59,6 +59,7 @@ class BrowserPlatformIntegration : public QObject,
   ApplicationState GetApplicationState() override;
   std::string GetApplicationName() override;
   ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
+  media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;
