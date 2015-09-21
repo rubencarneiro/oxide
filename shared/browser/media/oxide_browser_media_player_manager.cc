@@ -72,6 +72,14 @@ void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
   }
 }
 
+void BrowserMediaPlayerManager::OnSetRate(int player_id, double rate) {
+  MediaPlayer* player = GetPlayer(player_id);
+
+  if (player) {
+    player->SetRate(rate);
+  }
+}
+
 void BrowserMediaPlayerManager::OnSetPoster(int player_id, const GURL& url) {
   // To be overridden by subclasses.
 }

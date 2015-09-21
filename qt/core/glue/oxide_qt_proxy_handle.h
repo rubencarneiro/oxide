@@ -44,7 +44,19 @@ class ProxyHandle {
     proxy->set_handle(this);
   }
 
+  ProxyHandle(QObject* q)
+      : q_ptr(q) {
+    Q_ASSERT(q);
+  }
+
   T* proxy() const { return proxy_.data(); }
+
+  void set_proxy(T* proxy) {
+    Q_ASSERT(proxy);
+    Q_ASSERT(!proxy->handle());
+    proxy_.reset(proxy);
+    proxy->set_handle(this);
+  }
 
   QObject* q_ptr;
 };

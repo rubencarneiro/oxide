@@ -185,6 +185,11 @@ IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetVolume,
                     int /* player_id */,
                     double /* volume */)
 
+// Set the rate.
+IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetRate,
+                    int /* player_id */,
+                    double /* rate */)
+
 // Set the poster image.
 IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetPoster,
                     int /* player_id */,

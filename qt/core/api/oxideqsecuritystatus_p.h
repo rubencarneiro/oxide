@@ -42,17 +42,16 @@ class OxideQSecurityStatusPrivate final {
  public:
   ~OxideQSecurityStatusPrivate();
 
-  static OxideQSecurityStatus* Create(oxide::qt::WebView* view,
-                                      QObject* parent = nullptr);
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
   void Update(const oxide::SecurityStatus& old);
 
+  oxide::qt::WebView* view;
+
  private:
-  OxideQSecurityStatusPrivate(oxide::qt::WebView* view);
+  OxideQSecurityStatusPrivate(OxideQSecurityStatus* q);
 
   OxideQSecurityStatus* q_ptr;
-  oxide::qt::WebView* web_view_;
 
   mutable OxideQSslCertificate cert_;
 };

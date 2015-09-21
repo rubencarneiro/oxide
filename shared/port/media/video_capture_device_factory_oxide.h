@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,20 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_user_script_proxy.h"
+#ifndef _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
+#define _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_
 
-#include "qt/core/browser/oxide_qt_user_script.h"
+#include "media/base/video_capture_types.h"
+#include "media/capture/video/video_capture_device_factory.h"
 
-namespace oxide {
-namespace qt {
+namespace media {
 
-// static
-UserScriptProxy* UserScriptProxy::create(UserScriptProxyClient* client,
-                                         const QUrl& url) {
-  return new UserScript(client, url);
+typedef VideoCaptureDeviceFactory* (VideoCaptureDeviceFactoryFactory)();
+
+MEDIA_EXPORT void SetVideoCaptureDeviceFactoryFactory(
+    VideoCaptureDeviceFactoryFactory* factory);
+
 }
 
-UserScriptProxy::~UserScriptProxy() {}
-
-} // namespace qt
-} // namespace oxide
+#endif // _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_H_

@@ -25,6 +25,17 @@ TestWebView {
     WebView {}
   }
 
+  Component {
+    id: view2
+    WebView {
+      messageHandlers: [
+        ScriptMessageHandler {
+          msgId: "FOO"
+        }
+      ]
+    }
+  }
+
   TestCase {
     id: test
     name: "WebView_messageHandlers"
@@ -116,6 +127,12 @@ TestWebView {
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.messageHandlers.length, 0,
               "Expected no handlers in the WebView now");
+    }
+
+    function test_WebView_messageHandlers6_add_declaratively() {
+      var view = view2.createObject(null, {});
+      compare(view.messageHandlers.length, 1);
+      compare(view.messageHandlers[0].msgId, "FOO");
     }
   }
 }

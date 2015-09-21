@@ -138,9 +138,9 @@ mediahub_open_uri(MediaHubClientHandle handle,
   try {
     Player* player = static_cast<Player*>(handle);
     if (player != 0) {
-      if (player->playback_status().get() == Player::playing);
+      if (player->playback_status().get() == Player::playing) {
         player->stop();
-
+      }
       core::ubuntu::media::Player::HeadersType headers;
       if (!cookies.empty()) {
         headers["Cookie"] = cookies;
@@ -327,6 +327,19 @@ mediahub_set_volume(MediaHubClientHandle handle, double volume)
     Player* player = static_cast<Player*>(handle);
     if (player) {
       player->volume().set(volume);
+    }
+  } catch (std::runtime_error& error) {
+    std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;
+  }
+}
+
+void
+mediahub_set_rate(MediaHubClientHandle handle, double rate)
+{
+  try {
+    Player* player = static_cast<Player*>(handle);
+    if (player) {
+      player->playback_rate().set(rate);
     }
   } catch (std::runtime_error& error) {
     std::cerr << __PRETTY_FUNCTION__ << " " << error.what() << std::endl;

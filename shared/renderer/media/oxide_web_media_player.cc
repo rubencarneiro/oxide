@@ -201,7 +201,7 @@ void WebMediaPlayer::pause() {
 }
 
 void WebMediaPlayer::seek(double seconds) {
-  NOTIMPLEMENTED();
+  player_manager_->Seek(player_id_, base::TimeDelta::FromSeconds(seconds));
 }
 
 bool WebMediaPlayer::supportsSave() const {
@@ -209,7 +209,7 @@ bool WebMediaPlayer::supportsSave() const {
 }
 
 void WebMediaPlayer::setRate(double rate) {
-  NOTIMPLEMENTED();
+  player_manager_->SetRate(player_id_, rate);
 }
 
 void WebMediaPlayer::setSinkId(
