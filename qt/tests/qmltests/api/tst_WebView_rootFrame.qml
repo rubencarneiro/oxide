@@ -22,7 +22,12 @@ TestWebView {
 
   Component {
     id: webViewFactory
-    TestWebView { context: c }
+    TestWebView {
+      context: c
+      property var rootFrame2: undefined
+      property bool initRootFrame2: false
+      onInitRootFrame2Changed: rootFrame2 = rootFrame
+    }
   }
 
   TestCase {
@@ -53,25 +58,8 @@ TestWebView {
     // Verify that accessing WebView.rootFrame before a view is unitialized
     // doesn't crash
     function test_WebView_rootFrame4_uninitialized() {
-      var done = false;
-      function create_view(request) {
-        var created = webViewFactory.createObject(null, { request: request });
-        verify(!created.rootFrame);
-        created.destroy();
-        done = true;
-      }
-
-      webView.newViewRequested.connect(create_view);
-      webView.context.popupBlockerEnabled = false;
-
-      webView.url = "http://testsuite/empty.html";
-      verify(webView.waitForLoadSucceeded());
-
-      webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
-      webView.waitFor(function() { return done; });
-
-      webView.context.popupBlockerEnabled = true;
-      webView.newViewRequested.disconnect(create_view);
+      var view = webViewFactory.createObject(null, { initRootFrame2: true });
+      compare(view.rootFrame2, null);
     }
   }
 }

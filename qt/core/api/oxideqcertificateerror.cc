@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,13 +30,12 @@
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_security_types.h"
 
-#include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"
 
 OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
     scoped_ptr<oxide::CertificateError> error)
     : q_ptr(nullptr),
-      certificate_(OxideQSslCertificatePrivate::Create(error->cert())),
+      certificate_(OxideQSslCertificateData::Create(error->cert())),
       error_(error.Pass()),
       did_respond_(false) {}
 
@@ -94,6 +93,8 @@ OxideQCertificateError::OxideQCertificateError(
 
   d->error_->SetCancelCallback(
       base::Bind(&OxideQCertificateErrorPrivate::OnCancel,
+                 // The callback cannot run after |d| is deleted, as it
+                 // excusively owns |error_|
                  base::Unretained(d)));
   
   COMPILE_ASSERT(
@@ -164,10 +165,10 @@ bool OxideQCertificateError::strictEnforcement() const {
   return d->error_->strict_enforcement();
 }
 
-OxideQSslCertificate* OxideQCertificateError::certificate() const {
+OxideQSslCertificate OxideQCertificateError::certificate() const {
   Q_D(const OxideQCertificateError);
 
-  return d->certificate_.get();
+  return d->certificate_;
 }
 
 OxideQCertificateError::Error OxideQCertificateError::certError() const {

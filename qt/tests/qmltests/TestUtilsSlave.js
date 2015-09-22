@@ -24,8 +24,8 @@ oxide.addMessageHandler("GET-DOCUMENT-URI", function(msg) {
 });
 
 oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
-  var code = msg.args.code;
-  if (msg.args.wrap) {
+  var code = msg.payload.code;
+  if (msg.payload.wrap) {
     code = "(function() {" + code + "})()";
   }
   try {
@@ -36,7 +36,7 @@ oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
 });
 
 oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
-  var e = document.querySelector(msg.args.selector);
+  var e = document.querySelector(msg.payload);
   if (!e) {
     msg.error("No element found");
     return;
@@ -45,19 +45,3 @@ oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
   var r = e.getBoundingClientRect();
   msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
 });
-
-oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
-  var r = oxide.sendMessage(msg.args.id, msg.args.args);
-  r.onreply = function(response) {
-    msg.reply({error: 0, response: response});
-  };
-  r.onerror = function(error, desc) {
-    msg.reply({error: error, response: desc});
-  };
-});
-
-oxide.addMessageHandler("GENERATE-JS-EXCEPTION", function(msg) {
-  throw Exception("This is an error");
-});
-
-oxide.addMessageHandler("DONT-RESPOND", function(msg) {});

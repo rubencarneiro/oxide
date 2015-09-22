@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,11 +23,11 @@
 #include "base/strings/stringprintf.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/public/common/url_constants.h"
-#include "content/public/common/url_utils.h"
 #include "content/public/common/user_agent.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
+#include "net/base/net_module.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
@@ -35,9 +35,9 @@
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
-#include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_net_resource_provider.h"
 
-#include "oxide_render_process_observer.h"
+#include "oxide_renderer_user_agent_settings.h"
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_top_controls_handler.h"
 #include "oxide_user_script_scheduler.h"
@@ -52,12 +52,23 @@
 namespace oxide {
 
 void ContentRendererClient::RenderThreadStarted() {
-  new RenderProcessObserver();
+  content::RenderThread* thread = content::RenderThread::Get();
+
+  user_agent_settings_.reset(new RendererUserAgentSettings());
+  thread->AddObserver(user_agent_settings_.get());
+  
   new UserScriptSlave();
+
+  net::NetModule::SetResourceProvider(NetResourceProvider);
 
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
+  // Oxide has no mechanism to display page popups
+  blink::WebRuntimeFeatures::enablePagePopup(false);
+  // Oxide does not support NavigatorContentUtils.
+  // See https://launchpad.net/bugs/1214046
+  blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
 }
 
 void ContentRendererClient::RenderFrameCreated(
@@ -90,6 +101,12 @@ void ContentRendererClient::RenderViewCreated(
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
     settings->setUseMobileViewportStyle(true);
+
+    // XXX(chrisccoulson): This should be set when the layout viewport provides
+    // scrollbars (desktop), but basing this on the form-factor may not be the
+    // right way. It looks like blink hides the layout scrollbars when viewport
+    // meta is enabled
+    settings->setHidePinchScrollbarsNearMinScale(false);
   }
 }
 
@@ -100,37 +117,7 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
         base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
   }
 
-  // Strip username / password / fragment identifier if they exist
-  GURL::Replacements rep;
-  rep.ClearUsername();
-  rep.ClearPassword();
-  rep.ClearRef();
-
-  GURL u = url.ReplaceComponents(rep);
-
-  // URL's longer than GetMaxURLChars can't be serialized.
-  // Strip query if we are above the max number of chars
-  if (u.spec().size() > content::GetMaxURLChars() &&
-      u.has_query()) {
-    GURL::Replacements rep;
-    rep.ClearQuery();
-    u = u.ReplaceComponents(rep);
-  }
-
-  // If we are still over, just send the origin
-  if (u.spec().size() > content::GetMaxURLChars()) {
-    u = u.GetOrigin();
-  }
-
-  if (u.spec().size() > content::GetMaxURLChars()) {
-    return std::string();
-  }
-
-  std::string user_agent;
-  content::RenderThread::Get()->Send(
-      new OxideHostMsg_GetUserAgentOverride(u, &user_agent));
-
-  return user_agent;
+  return user_agent_settings_->GetUserAgentOverrideForURL(url);
 }
 
 #if defined(ENABLE_MEDIAHUB)
@@ -168,15 +155,6 @@ void ContentRendererClient::OverrideCompositorSettings(
     settings->scrollbar_fade_delay_ms = 300;
     settings->scrollbar_fade_resize_delay_ms = 2000;
     settings->scrollbar_fade_duration_ms = 300;
-  }
-
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorDesktop) {
-    settings->scrollbar_show_scale_threshold = 1.05f;
-  } else {
-    settings->scrollbar_show_scale_threshold = 1.f;
   }
 
   settings->use_external_begin_frame_source = false;

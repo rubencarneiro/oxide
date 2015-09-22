@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,12 +17,9 @@
 
 #include "oxideqloadevent.h"
 
-#include "base/logging.h"
-
-class OxideQLoadEventPrivate {
+class OxideQLoadEventData : public QSharedData {
  public:
-  ~OxideQLoadEventPrivate() {}
-  OxideQLoadEventPrivate()
+  OxideQLoadEventData()
       : type(OxideQLoadEvent::TypeStarted),
         error_domain(OxideQLoadEvent::ErrorDomainNone),
         error_code(0),
@@ -39,97 +36,137 @@ class OxideQLoadEventPrivate {
   bool is_error;
 };
 
-OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
-                                 Type type,
-                                 bool is_error,
-                                 int http_status_code)
-    : d_ptr(new OxideQLoadEventPrivate()) {
-  Q_D(OxideQLoadEvent);
+OxideQLoadEvent::OxideQLoadEvent(
+    const QSharedDataPointer<OxideQLoadEventData>& dd)
+    : d(dd) {}
 
-  DCHECK(type != OxideQLoadEvent::TypeFailed &&
-         type != OxideQLoadEvent::TypeRedirected);
-  DCHECK(type == OxideQLoadEvent::TypeCommitted || !is_error);
+// static
+OxideQLoadEvent OxideQLoadEvent::createStarted(const QUrl& url) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
 
-  d->url = url;
-  d->type = type;
-  d->is_error = is_error;
-  d->http_status_code = http_status_code;
+  data->url = url;
+  data->type = TypeStarted;
+
+  return OxideQLoadEvent(data);
 }
 
-OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
-                                 ErrorDomain error_domain,
-                                 const QString& error_string,
-                                 int error_code,
-                                 int http_status_code)
-    : d_ptr(new OxideQLoadEventPrivate()) {
-  Q_D(OxideQLoadEvent);
+// static
+OxideQLoadEvent OxideQLoadEvent::createStopped(const QUrl& url) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
 
-  d->url = url;
-  d->type = OxideQLoadEvent::TypeFailed;
-  d->error_domain = error_domain;
-  d->error_string = error_string;
-  d->error_code = error_code;
-  d->http_status_code = http_status_code;
+  data->url = url;
+  data->type = TypeStopped;
+
+  return OxideQLoadEvent(data);
 }
 
-OxideQLoadEvent::OxideQLoadEvent(const QUrl& url,
-                                 const QUrl& original_url,
-                                 int http_status_code)
-    : d_ptr(new OxideQLoadEventPrivate()) {
-  Q_D(OxideQLoadEvent);
+// static
+OxideQLoadEvent OxideQLoadEvent::createSucceeded(const QUrl& url,
+                                                 int http_status_code) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
 
-  d->url = url;
-  d->type = OxideQLoadEvent::TypeRedirected;
-  d->original_url = original_url;
-  d->http_status_code = http_status_code;
+  data->url = url;
+  data->type = TypeSucceeded;
+  data->http_status_code = http_status_code;
+
+  return OxideQLoadEvent(data);
 }
+
+// static
+OxideQLoadEvent OxideQLoadEvent::createFailed(const QUrl& url,
+                                              ErrorDomain error_domain,
+                                              const QString& error_string,
+                                              int error_code,
+                                              int http_status_code) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
+
+  data->url = url;
+  data->type = TypeFailed;
+  data->error_domain = error_domain;
+  data->error_string = error_string;
+  data->error_code = error_code;
+  data->http_status_code = http_status_code;
+
+  return OxideQLoadEvent(data);
+}
+
+// static
+OxideQLoadEvent OxideQLoadEvent::createCommitted(const QUrl& url,
+                                                 bool is_error,
+                                                 int http_status_code) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
+
+  data->url = url;
+  data->type = TypeCommitted;
+  data->http_status_code = http_status_code;
+  data->is_error = is_error;
+
+  return OxideQLoadEvent(data);
+}
+
+// static
+OxideQLoadEvent OxideQLoadEvent::createRedirected(const QUrl& url,
+                                                  const QUrl& original_url,
+                                                  int http_status_code) {
+  QSharedDataPointer<OxideQLoadEventData> data(new OxideQLoadEventData());
+
+  data->url = url;
+  data->type = TypeRedirected;
+  data->http_status_code = http_status_code;
+  data->original_url = original_url;
+
+  return OxideQLoadEvent(data);
+}
+
+OxideQLoadEvent::OxideQLoadEvent()
+    : d(new OxideQLoadEventData()) {}
+
+OxideQLoadEvent::OxideQLoadEvent(const OxideQLoadEvent& other)
+    : d(other.d) {}
 
 OxideQLoadEvent::~OxideQLoadEvent() {}
 
-QUrl OxideQLoadEvent::url() const {
-  Q_D(const OxideQLoadEvent);
+OxideQLoadEvent OxideQLoadEvent::operator=(const OxideQLoadEvent& other) {
+  d = other.d;
+  return *this;
+}
 
+bool OxideQLoadEvent::operator==(const OxideQLoadEvent& other) const {
+  return d == other.d;
+}
+
+bool OxideQLoadEvent::operator!=(const OxideQLoadEvent& other) const {
+  return !(*this == other);
+}
+
+QUrl OxideQLoadEvent::url() const {
   return d->url;
 }
 
 OxideQLoadEvent::Type OxideQLoadEvent::type() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->type;
 }
 
 OxideQLoadEvent::ErrorDomain OxideQLoadEvent::errorDomain() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->error_domain;
 }
 
 QString OxideQLoadEvent::errorString() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->error_string;
 }
 
 int OxideQLoadEvent::errorCode() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->error_code;
 }
 
 int OxideQLoadEvent::httpStatusCode() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->http_status_code;
 }
 
 QUrl OxideQLoadEvent::originalUrl() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->original_url;
 }
 
 bool OxideQLoadEvent::isError() const {
-  Q_D(const OxideQLoadEvent);
-
   return d->is_error;
 }

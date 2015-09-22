@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -230,9 +230,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -214,9 +214,12 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -21,7 +21,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -52,16 +52,20 @@ class WebSpeechSynthesizerClient;
+@@ -49,16 +49,20 @@ class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLResponse;
  class WebURLRequest;
@@ -35,15 +35,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 +}
 +
  namespace media {
+ class GpuVideoAcceleratorFactories;
  class MediaLog;
  class RendererFactory;
  class WebMediaPlayerDelegate;
  struct KeySystemInfo;
  }
  
- namespace content {
-@@ -319,13 +323,16 @@ class CONTENT_EXPORT ContentRendererClie
-       std::map<std::string, std::string>* properties) {}
+@@ -309,13 +313,16 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -62,7 +62,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
 --- a/content/renderer/gpu/render_widget_compositor.cc
 +++ b/content/renderer/gpu/render_widget_compositor.cc
-@@ -31,17 +31,19 @@
+@@ -34,17 +34,19 @@
  #include "cc/output/swap_promise.h"
  #include "cc/resources/single_release_callback.h"
  #include "cc/scheduler/begin_frame_source.h"
@@ -83,13 +83,13 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
 @@ -461,16 +463,18 @@ void RenderWidgetCompositor::Initialize(
-   if (widget_->for_oopif()) {
-     // TODO(simonhong): Apply BeginFrame scheduling for OOPIF.
-     // See crbug.com/471411.
      settings.use_external_begin_frame_source = false;
    }
  
-   settings.max_bytes_per_copy_operation = GetMaxBytesPerCopyOperation();
+   settings.max_staging_buffer_usage_in_bytes = 32 * 1024 * 1024;  // 32MB
+   // Use 1/4th of staging buffers on low-end devices.
+   if (base::SysInfo::IsLowEndDevice())
+     settings.max_staging_buffer_usage_in_bytes /= 4;
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +

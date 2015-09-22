@@ -30,8 +30,10 @@ allow-render-widget-compositor-settings-override.patch
 pulse-audio-role.patch
 enable-accelerated-canvas-on-arale.patch
 add-clipboard-create-override-mechanism.patch
-arm-webrtc.patch
 disable-optional-neon-for-openmax.patch
 implement-webrtc-get-cpu-features-arm.patch
 enable-optional-neon-for-skia.patch
 add-suggested-filename-to-download-starting-resource-delegate.patch
+port/video_capture_device_factory.patch
+always-define-angle-commit-hash.patch
+pa-context-application-name.patch

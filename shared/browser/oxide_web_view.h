@@ -30,6 +30,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -98,6 +99,7 @@ class Compositor;
 class CompositorFrameHandle;
 class FilePicker;
 class JavaScriptDialog;
+class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
 class WebContextMenu;
 class WebFrame;
@@ -134,28 +136,25 @@ class WebView : public ScriptMessageTarget,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
-  WebView(WebViewClient* client);
-  virtual ~WebView();
-
-  // Maps to content::NavigationController::RestoreType
-  enum RestoreType {
-    RESTORE_CURRENT_SESSION,
-    RESTORE_LAST_SESSION_EXITED_CLEANLY,
-    RESTORE_LAST_SESSION_CRASHED,
-  };
 
   struct Params {
     Params();
     ~Params();
 
+    WebViewClient* client;
     BrowserContext* context;
-    scoped_ptr<content::WebContents> contents;
     bool incognito;
+    std::vector<sessions::SerializedNavigationEntry> restore_entries;
+    content::NavigationController::RestoreType restore_type;
+    int restore_index;
   };
 
-  void Init(Params* params);
+  WebView(const Params& params);
+  WebView(scoped_ptr<content::WebContents> contents,
+          WebViewClient* client);
 
-  // XXX(chrisccoulson): Remove this
+  ~WebView() override;
+
   WebViewClient* client() const { return client_; }
 
   static WebView* FromWebContents(const content::WebContents* web_contents);
@@ -172,9 +171,6 @@ class WebView : public ScriptMessageTarget,
   void SetURL(const GURL& url);
 
   std::vector<sessions::SerializedNavigationEntry> GetState() const;
-  void SetState(content::NavigationController::RestoreType type,
-                std::vector<sessions::SerializedNavigationEntry> state,
-                int index);
 
   void LoadData(const std::string& encoded_data,
                 const std::string& mime_type,
@@ -203,15 +199,6 @@ class WebView : public ScriptMessageTarget,
   void FocusChanged();
   void InputPanelVisibilityChanged();
   void UpdateWebPreferences();
-
-  int GetFindInPageCount() const;
-  int GetFindInPageCurrent() const;
-  std::string GetFindInPageText() const;
-  void SetFindInPageText(const std::string& text);
-  bool GetFindInPageCaseSensitive() const;
-  void SetFindInPageCaseSensitive(bool case_sensitive);
-  void FindInPageNext();
-  void FindInPagePrevious();
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
@@ -310,6 +297,9 @@ class WebView : public ScriptMessageTarget,
       const std::string& referrer,
       const std::string& user_agent);
 
+  void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
+
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
@@ -337,6 +327,10 @@ class WebView : public ScriptMessageTarget,
   const base::string16& GetSelectionText() const;
 
  private:
+  WebView(WebViewClient* client);
+
+  void CommonInit(scoped_ptr<content::WebContents> contents);
+
   RenderWidgetHostView* GetRenderWidgetHostView() const;
   content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
@@ -370,8 +364,7 @@ class WebView : public ScriptMessageTarget,
 
   // CompositorClient implementation
   void CompositorDidCommit() final;
-  void CompositorSwapFrame(uint32 surface_id,
-                           CompositorFrameHandle* frame) final;
+  void CompositorSwapFrame(CompositorFrameHandle* handle) final;
 
   // WebPreferencesObserver implementation
   void WebPreferencesDestroyed() final;
@@ -405,7 +398,7 @@ class WebView : public ScriptMessageTarget,
       int route_id,
       int main_frame_route_id,
       WindowContainerType window_container_type,
-      const base::string16& frame_name,
+      const std::string& frame_name,
       const GURL& target_url,
       const std::string& partition_id,
       content::SessionStorageNamespace* session_storage_namespace,
@@ -415,7 +408,7 @@ class WebView : public ScriptMessageTarget,
                            const content::NativeWebKeyboardEvent& event) final;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
-                          const base::string16& frame_name,
+                          const std::string& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) final;
   void AddNewContents(content::WebContents* source,
@@ -478,7 +471,8 @@ class WebView : public ScriptMessageTarget,
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
-      const base::string16& error_description) final;
+      const base::string16& error_description,
+      bool was_ignored_by_handler) final;
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
@@ -491,7 +485,8 @@ class WebView : public ScriptMessageTarget,
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
                    int error_code,
-                   const base::string16& error_description) final;
+                   const base::string16& error_description,
+                   bool was_ignored_by_handler) final;
   void DidGetRedirectForResourceRequest(
       content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
@@ -534,10 +529,6 @@ class WebView : public ScriptMessageTarget,
   gfx::Point global_mouse_position_;
   TouchEventState touch_state_;
 
-  struct InitData;
-
-  scoped_ptr<InitData> init_data_;
-
   content::NotificationRegistrar registrar_;
 
   struct WebFrameDeleter {
@@ -559,17 +550,6 @@ class WebView : public ScriptMessageTarget,
   cc::CompositorFrameMetadata compositor_frame_metadata_;
 
   SecurityStatus security_status_;
-
-  struct FindInPageState {
-    int request_id;
-    int current;
-    int count;
-    bool case_sensitive;
-    std::string text;
-    FindInPageState() : request_id(0), current(0), count(0),
-                        case_sensitive(false) {}
-  };
-  FindInPageState find_in_page_;
 
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;

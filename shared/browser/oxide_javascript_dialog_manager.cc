@@ -55,10 +55,12 @@ void JavaScriptDialogManager::RunNextDialogForContents(
   while (!data.queue.empty()) {
     JavaScriptDialog* dialog = data.queue.front();
     data.queue.pop_front();
+
+    data.active = dialog;
     if (dialog->Run()) {
-      data.active = dialog;
       break;
     }
+    data.active = nullptr;
 
     dialog->callback_.Run(dialog->is_before_unload_dialog_, base::string16());
     delete dialog;

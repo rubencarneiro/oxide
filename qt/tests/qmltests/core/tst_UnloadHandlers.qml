@@ -43,9 +43,9 @@ Column {
       webView2.url = "http://testsuite/empty.html";
       verify(webView2.waitForLoadSucceeded());
 
-      var obs = OxideTestingUtils.createDestructionObserver(webView1);
+      var obs = Utils.createDestructionObserver(webView1);
       webView1.destroy(0);
-      webView2.waitFor(function() { return obs.destroyed; });
+      TestUtils.waitFor(function() { return obs.destroyed; });
 
       compare(webView2.getTestApi().evaluateCode("window.localStorage.getItem(\"oxide-shutdown-foo\");", false), "baaa");
     }

@@ -23,6 +23,7 @@
 #include <QGeoCoordinate>
 #include <QGeoPositionInfo>
 #include <QGeoPositionInfoSource>
+#include <QMetaType>
 #include <QMutex>
 #include <QMutexLocker>
 #include <QScopedPointer>
@@ -32,7 +33,8 @@
 #include "base/bind.h"
 #include "base/location.h"
 #include "base/logging.h"
-#include "base/message_loop/message_loop.h"
+#include "base/single_thread_task_runner.h"
+#include "base/thread_task_runner_handle.h"
 #include "base/threading/platform_thread.h"
 #include "content/public/browser/browser_thread.h"
 
@@ -166,7 +168,7 @@ void LocationSourceProxy::error(QGeoPositionInfoSource::Error error) {
 
 LocationSourceProxy::LocationSourceProxy(LocationProvider* provider)
     : geolocation_thread_id_(base::PlatformThread::CurrentId()),
-      geolocation_thread_task_runner_(base::MessageLoopProxy::current()),
+      geolocation_thread_task_runner_(base::ThreadTaskRunnerHandle::Get()),
       provider_(provider->AsWeakPtr()) {
   qRegisterMetaType<QGeoPositionInfo>();
   qRegisterMetaType<QGeoPositionInfoSource::Error>();

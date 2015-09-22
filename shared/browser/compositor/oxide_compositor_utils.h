@@ -35,6 +35,7 @@ class SingleThreadTaskRunner;
 
 namespace cc {
 class ContextProvider;
+class TaskGraphRunner;
 }
 
 namespace gpu {
@@ -100,6 +101,8 @@ class CompositorUtils {
   virtual bool CanUseGpuCompositing() const = 0;
 
   virtual CompositingMode GetCompositingMode() const = 0;
+
+  virtual cc::TaskGraphRunner* GetTaskGraphRunner() const = 0;
 
  protected:
   virtual ~CompositorUtils();

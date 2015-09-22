@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@
 
 #include <QtGlobal>
 
-#include "base/memory/scoped_ptr.h"
+#include "qt/core/api/oxideqsslcertificate.h"
 
 QT_BEGIN_NAMESPACE
 class QObject;
@@ -42,19 +42,18 @@ class OxideQSecurityStatusPrivate final {
  public:
   ~OxideQSecurityStatusPrivate();
 
-  static OxideQSecurityStatus* Create(oxide::qt::WebView* view,
-                                      QObject* parent = nullptr);
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
   void Update(const oxide::SecurityStatus& old);
 
+  oxide::qt::WebView* view;
+
  private:
-  OxideQSecurityStatusPrivate(oxide::qt::WebView* view);
+  OxideQSecurityStatusPrivate(OxideQSecurityStatus* q);
 
   OxideQSecurityStatus* q_ptr;
-  oxide::qt::WebView* web_view_;
 
-  mutable scoped_ptr<OxideQSslCertificate> cert_;
+  mutable OxideQSslCertificate cert_;
 };
 
 #endif // _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_

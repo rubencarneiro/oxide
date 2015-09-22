@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -31,22 +31,11 @@
 #include "oxideqsslcertificate_p.h"
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
-    oxide::qt::WebView* view)
-    : q_ptr(nullptr),
-      web_view_(view) {}
+    OxideQSecurityStatus* q)
+    : view(nullptr),
+      q_ptr(q) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
-
-// static
-OxideQSecurityStatus* OxideQSecurityStatusPrivate::Create(
-    oxide::qt::WebView* view,
-    QObject* parent) {
-  DCHECK(view);
-
-  return new OxideQSecurityStatus(
-      *new OxideQSecurityStatusPrivate(view),
-      parent);
-}
 
 // static
 OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
@@ -57,7 +46,7 @@ OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
 void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
   Q_Q(OxideQSecurityStatus);
 
-  const oxide::SecurityStatus& status = web_view_->GetSecurityStatus();
+  const oxide::SecurityStatus& status = view->GetSecurityStatus();
 
   if (old.security_level() != status.security_level()) {
     Q_EMIT q->securityLevelChanged();
@@ -69,18 +58,13 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
     Q_EMIT q->certStatusChanged();
   }
   if (old.cert() != status.cert()) {
-    cert_.reset();
+    cert_ = OxideQSslCertificate();
     Q_EMIT q->certificateChanged();
   }
 }
 
-OxideQSecurityStatus::OxideQSecurityStatus(OxideQSecurityStatusPrivate& dd,
-                                           QObject* parent)
-    : QObject(parent),
-      d_ptr(&dd) {
-  Q_D(OxideQSecurityStatus);
-  d->q_ptr = this;
-
+OxideQSecurityStatus::OxideQSecurityStatus()
+    : d_ptr(new OxideQSecurityStatusPrivate(this)) {
   COMPILE_ASSERT(
       SecurityLevelNone ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_NONE),
@@ -165,40 +149,56 @@ OxideQSecurityStatus::SecurityLevel
 OxideQSecurityStatus::securityLevel() const {
   Q_D(const OxideQSecurityStatus);
 
+  if (!d->view) {
+    return SecurityLevelNone;
+  }
+
   return static_cast<SecurityLevel>(
-      d->web_view_->GetSecurityStatus().security_level());
+      d->view->GetSecurityStatus().security_level());
 }
 
 OxideQSecurityStatus::ContentStatusFlags
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
+  if (!d->view) {
+    return ContentStatusNormal;
+  }
+
   return static_cast<ContentStatusFlags>(
-      d->web_view_->GetSecurityStatus().content_status());
+      d->view->GetSecurityStatus().content_status());
 }
 
 OxideQSecurityStatus::CertStatusFlags
 OxideQSecurityStatus::certStatus() const {
   Q_D(const OxideQSecurityStatus);
 
+  if (!d->view) {
+    return CertStatusOk;
+  }
+
   return static_cast<CertStatusFlags>(
-      d->web_view_->GetSecurityStatus().cert_status());
+      d->view->GetSecurityStatus().cert_status());
 }
 
-OxideQSslCertificate* OxideQSecurityStatus::certificate() const {
+QVariant OxideQSecurityStatus::certificate() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (d->cert_) {
-    return d->cert_.get();
+  if (d->cert_.isValid()) {
+    return QVariant::fromValue(d->cert_);
+  }
+
+  if (!d->view) {
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
   scoped_refptr<net::X509Certificate> cert =
-      d->web_view_->GetSecurityStatus().cert();
+      d->view->GetSecurityStatus().cert();
   if (!cert.get()) {
-    return nullptr;
+    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 
-  d->cert_.reset(OxideQSslCertificatePrivate::Create(cert.get()));
+  d->cert_ = OxideQSslCertificateData::Create(cert.get());
 
-  return d->cert_.get();
+  return QVariant::fromValue(d->cert_);
 }

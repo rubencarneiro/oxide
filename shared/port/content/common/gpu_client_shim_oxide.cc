@@ -25,7 +25,7 @@ namespace oxide_gpu_shim {
 
 int32_t GetContextProviderRouteID(
     content::ContextProviderCommandBuffer* provider) {
-  return provider->GetCommandBufferProxy()->GetRouteID();
+  return provider->GetCommandBufferProxy()->route_id();
 }
 
 } // namespace oxide_gpu_shim

@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Positioning REQUIRED)
+
 set(PLUGIN mock)
 
 set(PLUGIN_SRCS
@@ -23,7 +27,10 @@ set(PLUGIN_SRCS
     plugin.cc)
 
 add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
-qt5_use_modules(${PLUGIN} Core Gui Positioning)
+target_link_libraries(${PLUGIN}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Positioning)
 target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
 set_target_properties(
     ${PLUGIN} PROPERTIES

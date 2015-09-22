@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
+#include "content/public/child/v8_value_converter.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 
 #include "shared/common/oxide_script_message_request.h"
@@ -31,17 +32,6 @@
 #include "oxide_script_referenced_object.h"
 
 namespace oxide {
-
-namespace {
-
-std::string V8StringToStdString(
-    v8::Local<v8::String> string) {
-  v8::String::Value v(string);
-  base::string16 s(static_cast<const base::char16 *>(*v), v.length());
-  return base::UTF16ToUTF8(s);
-}
-
-}
 
 void ScriptMessageObjectHandler::Reply(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -58,32 +48,16 @@ void ScriptMessageObjectHandler::Reply(
     return;
   }
 
-  v8::Handle<v8::Object> args;
+  v8::Local<v8::Value> payload;
   if (info.Length() > 0) {
-    if (!info[0]->IsObject() && !info[0]->IsUndefined() && !info[0]->IsNull()) {
-      isolate->ThrowException(v8::Exception::Error(
-          v8::String::NewFromUtf8(
-            isolate, "Unexpected argument type")));
-      return;
-    }
-    if (info[0]->IsObject()) {
-      args = info[0].As<v8::Object>();
-    }
-  }
-  if (args.IsEmpty()) {
-    args = v8::Object::New(isolate);
+    payload = info[0];
   }
 
-  v8::TryCatch try_catch;
-  v8::Handle<v8::String> str_args(Stringify(isolate, args));
-  if (str_args.IsEmpty() || try_catch.HasCaught()) {
-    isolate->ThrowException(v8::Exception::Error(
-        v8::String::NewFromUtf8(
-          isolate, "Failed to serialize arguments")));
-    return;
-  }
-
-  message->Reply(V8StringToStdString(str_args));
+  scoped_ptr<content::V8ValueConverter> converter(
+      content::V8ValueConverter::create());
+  message->Reply(
+      make_scoped_ptr(converter->FromV8Value(payload,
+                                             isolate->GetCallingContext())));
 }
 
 void ScriptMessageObjectHandler::Error(
@@ -108,10 +82,12 @@ void ScriptMessageObjectHandler::Error(
     return;
   }
 
-  v8::Handle<v8::String> msg(info[0]->ToString());
-
-  message->Error(ScriptMessageRequest::ERROR_HANDLER_REPORTED_ERROR,
-                 V8StringToStdString(msg));
+  scoped_ptr<content::V8ValueConverter> converter(
+      content::V8ValueConverter::create());
+  message->Error(
+      ScriptMessageParams::ERROR_HANDLER_REPORTED_ERROR,
+      make_scoped_ptr(converter->FromV8Value(info[0],
+                                             isolate->GetCallingContext())));
 }
 
 void ScriptMessageObjectHandler::GetID(
@@ -126,10 +102,11 @@ void ScriptMessageObjectHandler::GetID(
     return;
   }
 
-  info.GetReturnValue().Set(v8::String::NewFromUtf8(isolate, message->msg_id().c_str()));
+  info.GetReturnValue().Set(
+      v8::String::NewFromUtf8(isolate, message->msg_id().c_str()));
 }
 
-void ScriptMessageObjectHandler::GetArgs(
+void ScriptMessageObjectHandler::GetPayload(
     const v8::PropertyCallbackInfo<v8::Value>& info) {
   v8::Isolate* isolate = info.GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -141,53 +118,27 @@ void ScriptMessageObjectHandler::GetArgs(
     return;
   }
 
+  scoped_ptr<content::V8ValueConverter> converter(
+      content::V8ValueConverter::create());
   info.GetReturnValue().Set(
-      v8::JSON::Parse(v8::String::NewFromUtf8(isolate, message->args().c_str())));
-}
-
-v8::Handle<v8::String> ScriptMessageObjectHandler::Stringify(
-    v8::Isolate* isolate,
-    v8::Handle<v8::Object> object) {
-  v8::EscapableHandleScope handle_scope(isolate);
-
-  v8::Handle<v8::Function> func(stringify_func_.NewHandle(isolate));
-
-  v8::Handle<v8::Value> argv[] = { object };
-  v8::Local<v8::Value> res = func->Call(object->CreationContext()->Global(),
-                                        arraysize(argv),
-                                        argv);
-  if (!res->IsString()) {
-    return v8::Handle<v8::String>();
-  }
-
-  return handle_scope.Escape(res.As<v8::String>());
+      converter->ToV8Value(message->payload(), isolate->GetCallingContext()));
 }
 
 ScriptMessageObjectHandler::ScriptMessageObjectHandler(
-    ScriptMessageManager* mm) :
-    ObjectBackedNativeHandler(mm) {
-  v8::Isolate* isolate = mm->isolate();
-  v8::HandleScope handle_scope(isolate);
-  v8::Context::Scope context_scope(mm->GetV8Context());
-
-  v8::Local<v8::String> stringify_src(v8::String::NewFromUtf8(
-      isolate,
-      "(function(o) { return JSON.stringify(o); })"));
-  v8::TryCatch try_catch;
-  v8::Local<v8::Script> stringify_script(v8::Script::Compile(stringify_src));
-  {
-    blink::WebScopedMicrotaskSuppression mts;
-    stringify_func_.reset(isolate, stringify_script->Run().As<v8::Function>());
-  }
-  DCHECK(!try_catch.HasCaught());
-
+    ScriptMessageManager* mm)
+    : ObjectBackedNativeHandler(mm) {
   RouteAccessor("id",
                 base::Bind(&ScriptMessageObjectHandler::GetID,
                            base::Unretained(this)),
                 HandlerSetter(),
                 v8::DontDelete);
   RouteAccessor("args",
-                base::Bind(&ScriptMessageObjectHandler::GetArgs,
+                base::Bind(&ScriptMessageObjectHandler::GetPayload,
+                           base::Unretained(this)),
+                HandlerSetter(),
+                v8::DontDelete);
+  RouteAccessor("payload",
+                base::Bind(&ScriptMessageObjectHandler::GetPayload,
                            base::Unretained(this)),
                 HandlerSetter(),
                 v8::DontDelete);

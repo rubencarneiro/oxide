@@ -1,30 +1,11 @@
 # HG changeset patch
-# Parent 6a28c407ac67c31b5c4ec76345b57913b156c210
+# Parent a90a10697435aea9ea7039c7c831337dea8f03cf
 # User oxide
 
 diff --git a/content/public/common/content_switches.h b/content/public/common/content_switches.h
 --- a/content/public/common/content_switches.h
 +++ b/content/public/common/content_switches.h
-@@ -158,17 +158,17 @@ CONTENT_EXPORT extern const char kGpuPro
- CONTENT_EXPORT extern const char kGpuSandboxAllowSysVShm[];
- CONTENT_EXPORT extern const char kGpuSandboxFailuresFatal[];
- CONTENT_EXPORT extern const char kGpuSandboxStartEarly[];
- CONTENT_EXPORT extern const char kGpuStartupDialog[];
- extern const char kGpuVendorID[];
- CONTENT_EXPORT extern const char kHostResolverRules[];
- CONTENT_EXPORT extern const char kIgnoreCertificateErrors[];
- CONTENT_EXPORT extern const char kIgnoreGpuBlacklist[];
--extern const char kInProcessGPU[];
-+CONTENT_EXPORT extern const char kInProcessGPU[];
- CONTENT_EXPORT extern const char kIPCConnectionTimeout[];
- CONTENT_EXPORT extern const char kJavaScriptFlags[];
- extern const char kLoadPlugin[];
- CONTENT_EXPORT extern const char kLogGpuControlListDecisions[];
- CONTENT_EXPORT extern const char kLoggingLevel[];
- CONTENT_EXPORT extern const char kLogNetLog[];
- extern const char kLogPluginMessages[];
- extern const char kMaxUntiledLayerHeight[];
-@@ -191,17 +191,17 @@ CONTENT_EXPORT extern const char kPpapiP
+@@ -197,17 +197,17 @@ CONTENT_EXPORT extern const char kPpapiP
  extern const char kPpapiStartupDialog[];
  CONTENT_EXPORT extern const char kProcessPerSite[];
  CONTENT_EXPORT extern const char kProcessPerTab[];

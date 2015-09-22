@@ -25,6 +25,17 @@ TestWebView {
     WebView {}
   }
 
+  Component {
+    id: view2
+    WebView {
+      messageHandlers: [
+        ScriptMessageHandler {
+          msgId: "FOO"
+        }
+      ]
+    }
+  }
+
   TestCase {
     id: test
     name: "WebView_messageHandlers"
@@ -42,7 +53,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1, "Should have one handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
-      compare(OxideTestingUtils.qObjectParent(handler), webView,
+      compare(Utils.qObjectParent(handler), webView,
               "Message handler should be owned by the view");
 
       handler = null;
@@ -61,7 +72,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1, "Should have one handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
-      compare(OxideTestingUtils.qObjectParent(handler), webView,
+      compare(Utils.qObjectParent(handler), webView,
               "Message handler should be owned by the view");
 
       handler = null;
@@ -84,7 +95,7 @@ TestWebView {
               "Should still have a handler on the other view");
       compare(webView.messageHandlers.length, 0,
               "Should have no handlers on our view");
-      compare(OxideTestingUtils.qObjectParent(handler), otherView,
+      compare(Utils.qObjectParent(handler), otherView,
               "Incorrect parent");
 
       webView.removeMessageHandler(handler);
@@ -100,7 +111,7 @@ TestWebView {
               "Frame should still have a handler");
       compare(webView.messageHandlers.length, 0,
               "View should not have adopted message handler");
-      compare(OxideTestingUtils.qObjectParent(handler), frame,
+      compare(Utils.qObjectParent(handler), frame,
               "Incorrect parent");
     }
 
@@ -111,11 +122,17 @@ TestWebView {
       compare(webView.messageHandlers.length, 1,
               "WebView should have a handler");
 
-      OxideTestingUtils.destroyQObjectNow(handler);
+      Utils.destroyQObjectNow(handler);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.messageHandlers.length, 0,
               "Expected no handlers in the WebView now");
+    }
+
+    function test_WebView_messageHandlers6_add_declaratively() {
+      var view = view2.createObject(null, {});
+      compare(view.messageHandlers.length, 1);
+      compare(view.messageHandlers[0].msgId, "FOO");
     }
   }
 }

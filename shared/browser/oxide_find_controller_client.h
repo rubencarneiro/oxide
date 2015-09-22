@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
-#define _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
-
-#include <string>
-
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
-#include "content/public/renderer/render_process_observer.h"
+#ifndef _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_
 
 namespace oxide {
 
-class RenderProcessObserver final : public content::RenderProcessObserver {
+class FindControllerClient {
  public:
-  RenderProcessObserver();
+  virtual ~FindControllerClient() {}
 
- private:
-  void OnSetUserAgent(const std::string& user_agent);
+  enum UpdateTypes {
+    UPDATE_TYPE_NONE = 0,
 
-  // content::RenderProcessObserver implementation
-  bool OnControlMessageReceived(const IPC::Message& message) final;
-  void OnRenderProcessShutdown() final;
+    UPDATE_TYPE_NUMBER_OF_MATCHES = 1 << 0,
+    UPDATE_TYPE_ACTIVE_MATCH_ORDINAL = 1 << 1
+  };
 
-  DISALLOW_COPY_AND_ASSIGN(RenderProcessObserver);
+  virtual void ResultUpdated(UpdateTypes flags) = 0;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_RENDERER_RENDER_PROCESS_OBSERVER_H_
+#endif // _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_

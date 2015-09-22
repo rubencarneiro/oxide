@@ -28,11 +28,12 @@
 class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
+class OxideQHttpAuthenticationRequest;
 class OxideQLoadEvent;
 class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
-class OxideQSimplePermissionRequest;
+class OxideQPermissionRequest;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -70,8 +71,6 @@ class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
 
-  virtual void Initialized() = 0;
-
   virtual QObject* GetApiHandle() = 0;
 
   virtual WebContextMenuProxy* CreateWebContextMenu(
@@ -93,7 +92,7 @@ class WebViewProxyClient {
   virtual void CommandsUpdated() = 0;
   virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;
-  virtual void LoadEvent(OxideQLoadEvent* event) = 0;
+  virtual void LoadEvent(const OxideQLoadEvent& event) = 0;
 
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;
@@ -130,7 +129,7 @@ class WebViewProxyClient {
   virtual void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) = 0;
   virtual void RequestNotificationPermission(
-      OxideQSimplePermissionRequest* request) = 0;
+      OxideQPermissionRequest* request) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
@@ -140,7 +139,11 @@ class WebViewProxyClient {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual void DownloadRequested(OxideQDownloadRequest* download_request) = 0;
+  virtual void DownloadRequested(
+      const OxideQDownloadRequest& download_request) = 0;
+
+  virtual void HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequest* authentication_request) = 0;
 
   virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
 

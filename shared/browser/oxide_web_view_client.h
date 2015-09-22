@@ -40,6 +40,7 @@ struct ContextMenuParams;
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderViewHost;
+class WebContents;
 class WebCursor;
 }
 
@@ -48,6 +49,7 @@ namespace oxide {
 class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
+class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
 class WebContextMenu;
 class WebFrame;
@@ -59,8 +61,6 @@ class WebView;
 class WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
-
-  virtual void Initialized();
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
@@ -164,7 +164,8 @@ class WebViewClient : public ScriptMessageTarget {
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                    WindowOpenDisposition disposition);
+                                    WindowOpenDisposition disposition,
+                                    scoped_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
@@ -204,8 +205,8 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void CloseRequested();
 
-  virtual void FindInPageCurrentChanged();
-  virtual void FindInPageCountChanged();
+  virtual void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
 };
 
 } // namespace oxide

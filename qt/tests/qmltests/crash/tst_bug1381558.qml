@@ -39,7 +39,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       timer.start();
-      webView.waitFor(function() { return spy.count > 100; });
+      TestUtils.waitForSignalSpyCount(spy, 100);
       timer.stop();
     }
   }

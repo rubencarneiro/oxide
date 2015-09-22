@@ -23,8 +23,8 @@
 #include <QScreen>
 #include <QString>
 
+#include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
-#include "third_party/WebKit/public/platform/WebScreenOrientationType.h"
 
 namespace oxide {
 namespace qt {

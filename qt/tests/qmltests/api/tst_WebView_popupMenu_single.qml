@@ -49,7 +49,7 @@ TestWebView {
   }
 
   function waitForPopupMenu() {
-    return waitFor(function() { return currentPopupMenu != null; });
+    return TestUtils.waitFor(function() { return currentPopupMenu != null; });
   }
 
   TestCase {
@@ -156,7 +156,7 @@ TestWebView {
     function test_WebView_popupMenu_single5_userInteraction() {
       var popup = webView.currentPopupMenu;
       mouseClick(popup, popup.width / 2, popup.height / 2, Qt.LeftButton);
-      verify(webView.waitFor(function() { return (webView.currentPopupMenu == null); }),
+      verify(TestUtils.waitFor(function() { return (webView.currentPopupMenu == null); }),
              "Timed out waiting for popup to hide");
       var r = webView.getTestApi().evaluateCode(
           "document.querySelector(\"#test\").selectedIndex");

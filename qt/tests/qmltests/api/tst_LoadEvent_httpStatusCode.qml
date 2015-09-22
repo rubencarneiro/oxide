@@ -19,7 +19,7 @@ TestWebView {
     test.compare(event.type, expected, "Unexpected type")
 
     test.compare(event.httpStatusCode,
-                 event.type != LoadEvent.TypeStarted && event.type != LoadEvent.TypeStopped ? expectedHttpStatusCode : -1,
+                 event.type != LoadEvent.TypeStarted && event.type != LoadEvent.TypeStopped ? expectedHttpStatusCode : 0,
                  "Unexpected value of httpStatusCode");
   }
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,20 +27,21 @@
 #include "qt/core/glue/oxide_qt_script_message_request_proxy_client.h"
 #include "shared/browser/oxide_script_message_request_impl_browser.h"
 
+#include "oxide_qt_variant_value_converter.h"
+
 namespace oxide {
 namespace qt {
 
-void ScriptMessageRequest::ReceiveReplyCallback(const std::string& args) {
-  QJsonDocument jsondoc(QJsonDocument::fromJson(
-      QByteArray(args.data(), args.length())));
-
-  client_->ReceiveReply(jsondoc.toVariant());
+void ScriptMessageRequest::ReceiveReplyCallback(const base::Value& payload) {
+  client_->ReceiveReply(VariantValueConverter::ToVariantValue(&payload));
 }
 
 void ScriptMessageRequest::ReceiveErrorCallback(
-    oxide::ScriptMessageRequest::Error error,
-    const std::string& msg) {
-  client_->ReceiveError(error, QString::fromStdString(msg));
+    oxide::ScriptMessageParams::Error error,
+    const base::Value& payload) {
+  client_->ReceiveError(
+      error,
+      VariantValueConverter::ToVariantValue(&payload));
 }
 
 ScriptMessageRequest::ScriptMessageRequest(
@@ -63,10 +64,14 @@ void ScriptMessageRequest::SetRequest(
   request_->SetReplyCallback(
       base::Bind(
         &ScriptMessageRequest::ReceiveReplyCallback,
+        // The callback cannot run after |this| is deleted, as it exclusively
+        // owns |request_|
         base::Unretained(this)));
   request_->SetErrorCallback(
       base::Bind(
         &ScriptMessageRequest::ReceiveErrorCallback,
+        // The callback cannot run after |this| is deleted, as it exclusively
+        // owns |request_|
         base::Unretained(this)));
 }
 

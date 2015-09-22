@@ -9,18 +9,22 @@ TestWebView {
   width: 200
   height: 200
 
-  property var receivedResponses: []
+  property var receivedResponses: 0
   property var numberSent: 0
+  property var lastSerial: -1
 
   messageHandlers: [
-    ScriptMessageHandler {
+    ScriptMessageTestHandler {
       msgId: "TEST"
-      contexts: [ "oxide://testutils/" ]
       callback: function(msg) {
-        msg.reply({});
+        msg.reply(msg.payload);
       }
     }
   ]
+
+  Component.onCompleted: {
+    ScriptMessageTestUtils.init(webView.context);
+  }
 
   TestCase {
     id: test
@@ -33,10 +37,11 @@ TestWebView {
              "Timed out waiting for successful load");
 
       function sendMessage() {
-        var req = webView.rootFrame.sendMessage("oxide://testutils/", "SEND-MESSAGE-TO-SELF", { id: "TEST", args: {} });
-        var serial = numberSent++;
-        req.onreply = function(args) {
-          webView.receivedResponses.push(serial);
+        var req = new ScriptMessageTestUtils.FrameHelper(webView.rootFrame).sendMessageToBrowserNoWait("TEST", webView.numberSent++);
+        req.onreply = function(payload) {
+          webView.receivedResponses++;
+          verify(payload.response > webView.lastSerial);
+          webView.lastSerial = payload.response;
         };
       }
 
@@ -55,8 +60,38 @@ TestWebView {
       sendMessage();
       sendMessage();
       sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
+      sendMessage();
 
-      verify(webView.waitFor(function() { return webView.receivedResponses.length == numberSent; }),
+      verify(TestUtils.waitFor(function() { return webView.receivedResponses == numberSent; }),
              "Timed out waiting for responses");
     }
   }

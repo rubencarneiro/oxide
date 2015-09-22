@@ -4,24 +4,19 @@ import com.canonical.Oxide 1.0
 import com.canonical.Oxide.Testing 1.0
 
 Item {
+  id: top
   width: 200
   height: 200
-
-  Component {
-    id: userScriptFactory
-    UserScript {}
-  }
 
   TestWebContext {
     id: c
     Component.onCompleted: {
-      var script = userScriptFactory.createObject(null, {
-          context: "oxide://testutils/",
+      addTestUserScript({
+          context: "oxide://geotest/",
           url: Qt.resolvedUrl("tst_GeolocationPermissionRequest_session_persist.js"),
           incognitoEnabled: true,
           matchAllFrames: true
       });
-      addUserScript(script);
     }
   }
 
@@ -49,9 +44,9 @@ Item {
       messageHandlers: [
         ScriptMessageHandler {
           msgId: "GEOLOCATION-RESPONSE"
-          contexts: [ "oxide://testutils/" ]
+          contexts: [ "oxide://geotest/" ]
           callback: function(msg) {
-            _internal.lastGeolocationStatus = msg.args.status;
+            _internal.lastGeolocationStatus = msg.payload;
           }
         }
       ]
@@ -64,7 +59,7 @@ Item {
     when: windowShown
 
     function _test_accept(req) {
-      req.accept();
+      req.allow();
     }
 
     function _test_deny(req) {
@@ -105,7 +100,7 @@ Item {
 
       data.function(webView.lastGeolocationRequest);
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, data.expected);
 
       spy.clear();
@@ -115,7 +110,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+        verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
@@ -145,7 +140,7 @@ Item {
 
       data.function(webView.lastGeolocationRequest);
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, data.expected);
 
       webView = webViewFactory.createObject(null, {});
@@ -157,7 +152,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+        verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
@@ -195,7 +190,7 @@ Item {
 
       webView.lastGeolocationRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
 
       spy.clear();
@@ -228,7 +223,7 @@ Item {
 
       webView.lastGeolocationRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
 
       spy.clear();
@@ -237,7 +232,7 @@ Item {
       webView.url = data.url2;
       verify(webView.waitForLoadSucceeded());
 
-      verify(webView.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
+      verify(TestUtils.waitFor(function() { return webView.lastGeolocationStatus != -1; }));
       compare(webView.lastGeolocationStatus, 0);
     }
   }

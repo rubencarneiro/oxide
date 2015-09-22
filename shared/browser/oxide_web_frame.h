@@ -28,6 +28,10 @@
 
 #include "shared/browser/oxide_script_message_target.h"
 
+namespace base {
+class Value;
+}
+
 namespace content {
 class RenderFrameHost;
 }
@@ -74,6 +78,8 @@ class WebFrame : public ScriptMessageTarget {
   // Return the WebView that this frame is in
   WebView* view() const { return view_.get(); }
 
+  void SetView(WebView* view);
+
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }
@@ -92,20 +98,20 @@ class WebFrame : public ScriptMessageTarget {
   // Return the frame at |index|
   WebFrame* GetChildAt(size_t index) const;
 
-  // Send a message with |msg_id| and payload |args| to the isolated world
+  // Send a message with |msg_id| and |payload| to the isolated world
   // addressed by |context|. Returns a request object on success with which you
   // can use to wait for a response
   scoped_ptr<ScriptMessageRequestImplBrowser> SendMessage(
       const GURL& context,
       const std::string& msg_id,
-      const std::string& args);
+      scoped_ptr<base::Value> payload);
 
-  // Send a message with |msg_id| and payload |args| to the isolated world
+  // Send a message with |msg_id| and |payload| to the isolated world
   // addressed by |context|, for which you don't want a response. Returns
   // true on success
   bool SendMessageNoReply(const GURL& context,
                           const std::string& msg_id,
-                          const std::string& args);
+                          scoped_ptr<base::Value> value);
 
   // Return the pending ScriptMessageRequests for this frame
   const ScriptMessageRequestVector& current_script_message_requests() const {

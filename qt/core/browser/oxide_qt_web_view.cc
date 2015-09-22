@@ -58,6 +58,7 @@
 
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest_p.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqnewviewrequest_p.h"
@@ -72,6 +73,7 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
@@ -82,6 +84,7 @@
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_file_picker.h"
+#include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
@@ -281,129 +284,10 @@ blink::WebTopControlsState LocationBarModeToBlinkTopControlsState(
   }
 }
 
-}
-
-class CompositorFrameHandleImpl : public CompositorFrameHandle {
- public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            int location_bar_content_offset)
-      : frame_(frame) {
-    if (frame_.get()) {
-      rect_ = QRect(0, location_bar_content_offset,
-                    frame_->size_in_pixels().width(),
-                    frame_->size_in_pixels().height());
-    }
-  }
-
-  virtual ~CompositorFrameHandleImpl() {}
-
-  CompositorFrameHandle::Type GetType() final {
-    if (!frame_.get()) {
-      return CompositorFrameHandle::TYPE_INVALID;
-    }
-    if (frame_->gl_frame_data()) {
-      return CompositorFrameHandle::TYPE_ACCELERATED;
-    }
-    if (frame_->image_frame_data()) {
-      return CompositorFrameHandle::TYPE_IMAGE;
-    }
-    if (frame_->software_frame_data()) {
-      return CompositorFrameHandle::TYPE_SOFTWARE;
-    }
-
-    NOTREACHED();
-    return CompositorFrameHandle::TYPE_INVALID;
-  }
-
-  const QRect& GetRect() const final {
-    return rect_;
-  }
-
-  QImage GetSoftwareFrame() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
-    return QImage(
-        static_cast<uchar *>(frame_->software_frame_data()->pixels()),
-        frame_->size_in_pixels().width(),
-        frame_->size_in_pixels().height(),
-        QImage::Format_ARGB32);
-  }
-
-  unsigned int GetAcceleratedFrameTexture() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->gl_frame_data()->texture_id();
-  }
-
-  EGLImageKHR GetImageFrame() final {
-    return frame_->image_frame_data()->image();
-  }
-
- private:
-  scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QRect rect_;
-};
-
-void WebView::OnInputPanelVisibilityChanged() {
-  view_->InputPanelVisibilityChanged();
-}
-
-float WebView::GetDeviceScaleFactor() const {
-  QScreen* screen = client_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-
-  return GetDeviceScaleFactorFromQScreen(screen);
-}
-
-bool WebView::ShouldShowInputPanel() const {
-  if (view_->text_input_type() != ui::TEXT_INPUT_TYPE_NONE &&
-      view_->show_ime_if_needed() && view_->focused_node_is_editable()) {
-    return true;
-  }
-
-  return false;
-}
-
-bool WebView::ShouldHideInputPanel() const {
-  if (view_->text_input_type() == ui::TEXT_INPUT_TYPE_NONE &&
-      !view_->focused_node_is_editable()) {
-    return true;
-  }
-
-  return false;
-}
-
-void WebView::SetInputPanelVisibility(bool visible) {
-  client_->SetInputMethodEnabled(visible);
-
-  if (!visible) {
-    has_input_method_state_ = false;
-  }
-
-  // Do not check whether the input method is currently visible here, to avoid
-  // a possible race condition: if hide() and show() are called very quickly
-  // in a row, when show() is called the hide() request might not have
-  // completed yet, and isVisible() could return true.
-  QGuiApplication::inputMethod()->setVisible(visible);
-}
-
-void WebView::RestoreState(qt::RestoreType type, const QByteArray& state) {
-  COMPILE_ASSERT(
-      RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_CURRENT_SESSION),
-      restore_type_enums_current_doesnt_match);
-  COMPILE_ASSERT(
-      RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      restore_type_enums_exited_cleanly_doesnt_match);
-  COMPILE_ASSERT(
-      RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
-      restore_type_enums_crashed_doesnt_match);
-
-  content::NavigationController::RestoreType restore_type =
-      static_cast<content::NavigationController::RestoreType>(type);
-
+void CreateRestoreEntriesFromRestoreState(
+    const QByteArray& state,
+    std::vector<sessions::SerializedNavigationEntry>* entries_out,
+    int* index_out) {
 #define WARN_INVALID_DATA \
     qWarning() << "Failed to read initial state: invalid data"
   std::vector<sessions::SerializedNavigationEntry> entries;
@@ -443,12 +327,162 @@ void WebView::RestoreState(qt::RestoreType type, const QByteArray& state) {
   }
   int index;
   if (!i.ReadInt(&index)) {
-    WARN_INVALID_DATA;
+    WARN_INVALID_DATA; 
     return;
   }
 #undef WARN_INVALID_DATA
 
-  view_->SetState(restore_type, entries, index);
+  entries_out->swap(entries);
+  *index_out = index;
+}
+
+content::NavigationController::RestoreType ToNavigationControllerRestoreType(
+    RestoreType type) {
+  COMPILE_ASSERT(
+      RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_CURRENT_SESSION),
+      restore_type_enums_current_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+      restore_type_enums_exited_cleanly_doesnt_match);
+  COMPILE_ASSERT(
+      RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
+          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
+      restore_type_enums_crashed_doesnt_match);
+
+  return static_cast<content::NavigationController::RestoreType>(type);
+}
+
+}
+
+class CompositorFrameHandleImpl : public CompositorFrameHandle {
+ public:
+  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
+                            int location_bar_content_offset)
+      : frame_(frame) {
+    if (frame_.get()) {
+      rect_ = QRect(0, location_bar_content_offset,
+                    frame_->data()->size_in_pixels.width(),
+                    frame_->data()->size_in_pixels.height());
+    }
+  }
+
+  virtual ~CompositorFrameHandleImpl() {}
+
+  CompositorFrameHandle::Type GetType() final {
+    if (!frame_.get()) {
+      return CompositorFrameHandle::TYPE_INVALID;
+    }
+    if (frame_->data()->gl_frame_data) {
+      DCHECK_NE(frame_->data()->gl_frame_data->type,
+                oxide::GLFrameData::Type::INVALID);
+      if (frame_->data()->gl_frame_data->type ==
+          oxide::GLFrameData::Type::TEXTURE) {
+        return CompositorFrameHandle::TYPE_ACCELERATED;
+      }
+      return CompositorFrameHandle::TYPE_IMAGE;
+    }
+    if (frame_->data()->software_frame_data) {
+      return CompositorFrameHandle::TYPE_SOFTWARE;
+    }
+
+    NOTREACHED();
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+
+  const QRect& GetRect() const final {
+    return rect_;
+  }
+
+  QImage GetSoftwareFrame() final {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+    return QImage(
+        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
+        frame_->data()->size_in_pixels.width(),
+        frame_->data()->size_in_pixels.height(),
+        QImage::Format_ARGB32);
+  }
+
+  unsigned int GetAcceleratedFrameTexture() final {
+    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+    return frame_->data()->gl_frame_data->resource.texture;
+  }
+
+  EGLImageKHR GetImageFrame() final {
+    return frame_->data()->gl_frame_data->resource.egl_image;
+  }
+
+ private:
+  scoped_refptr<oxide::CompositorFrameHandle> frame_;
+  QRect rect_;
+};
+
+void WebView::OnInputPanelVisibilityChanged() {
+  view_->InputPanelVisibilityChanged();
+}
+
+WebView::WebView(WebViewProxyClient* client,
+                 OxideQSecurityStatus* security_status)
+    : client_(client),
+      has_input_method_state_(false),
+      security_status_(security_status) {
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (im) {
+    connect(im, SIGNAL(visibleChanged()),
+            SLOT(OnInputPanelVisibilityChanged()));
+  }
+}
+
+float WebView::GetDeviceScaleFactor() const {
+  QScreen* screen = client_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+
+  return GetDeviceScaleFactorFromQScreen(screen);
+}
+
+bool WebView::ShouldShowInputPanel() const {
+  if (!view_) {
+    // Can be called during WebView construction when |view_| is still null.
+    return false;
+  }
+
+  if (view_->text_input_type() != ui::TEXT_INPUT_TYPE_NONE &&
+      view_->show_ime_if_needed() && view_->focused_node_is_editable()) {
+    return true;
+  }
+
+  return false;
+}
+
+bool WebView::ShouldHideInputPanel() const {
+  if (!view_) {
+    // Can be called during WebView construction when |view_| is still null.
+    return true;
+  }
+
+  if (view_->text_input_type() == ui::TEXT_INPUT_TYPE_NONE &&
+      !view_->focused_node_is_editable()) {
+    return true;
+  }
+
+  return false;
+}
+
+void WebView::SetInputPanelVisibility(bool visible) {
+  client_->SetInputMethodEnabled(visible);
+
+  if (!visible) {
+    has_input_method_state_ = false;
+  }
+
+  // Do not check whether the input method is currently visible here, to avoid
+  // a possible race condition: if hide() and show() are called very quickly
+  // in a row, when show() is called the hide() request might not have
+  // completed yet, and isVisible() could return true.
+  QGuiApplication::inputMethod()->setVisible(visible);
 }
 
 void WebView::EnsurePreferences() {
@@ -459,21 +493,6 @@ void WebView::EnsurePreferences() {
   OxideQWebPreferences* p = new OxideQWebPreferences(client_->GetApiHandle());
   view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
-}
-
-void WebView::Initialized() {
-  oxide::PermissionRequestDispatcher::FromWebContents(
-      view_->GetWebContents())->set_client(this);
-
-  OxideQWebPreferences* p =
-      static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
-  if (!p->parent()) {
-    // This will happen for a WebView created by newViewRequested, as
-    // we clone the openers preferences before the WebView is created
-    p->setParent(client_->GetApiHandle());
-  }
-
-  client_->Initialized();
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
@@ -571,60 +590,61 @@ void WebView::LoadProgressChanged(double progress) {
 }
 
 void WebView::LoadStarted(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStarted);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStarted(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadRedirected(const GURL& url,
                              const GURL& original_url,
                              int http_status_code) {
-  OxideQLoadEvent event(
-     QUrl(QString::fromStdString(url.spec())),
-     QUrl(QString::fromStdString(original_url.spec())),
-     http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createRedirected(
+        QUrl(QString::fromStdString(url.spec())),
+        QUrl(QString::fromStdString(original_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadCommitted(const GURL& url,
                             bool is_error_page,
                             int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(url.spec())),
-      OxideQLoadEvent::TypeCommitted,
-      is_error_page,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createCommitted(
+        QUrl(QString::fromStdString(url.spec())),
+        is_error_page,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadStopped(const GURL& validated_url) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeStopped);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createStopped(
+        QUrl(QString::fromStdString(validated_url.spec())));
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadFailed(const GURL& validated_url,
                          int error_code,
                          const std::string& error_description,
                          int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      ErrorDomainFromErrorCode(error_code),
-      QString::fromStdString(error_description),
-      error_code,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createFailed(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        ErrorDomainFromErrorCode(error_code),
+        QString::fromStdString(error_description),
+        error_code,
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::LoadSucceeded(const GURL& validated_url, int http_status_code) {
-  OxideQLoadEvent event(
-      QUrl(QString::fromStdString(validated_url.spec())),
-      OxideQLoadEvent::TypeSucceeded,
-      false,
-      http_status_code);
-  client_->LoadEvent(&event);
+  OxideQLoadEvent event =
+      OxideQLoadEvent::createSucceeded(
+        QUrl(QString::fromStdString(validated_url.spec())),
+        http_status_code);
+  client_->LoadEvent(event);
 }
 
 void WebView::NavigationEntryCommitted() {
@@ -677,6 +697,10 @@ void WebView::UnhandledKeyboardEvent(
   DCHECK(event.os_event);
   DCHECK(!event.os_event->isAccepted());
 
+  if (!event.os_event) {
+    return;
+  }
+  
   client_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
@@ -741,7 +765,14 @@ void WebView::DownloadRequested(const GURL& url,
       QString::fromStdString(referrer),
       QString::fromStdString(user_agent));
 
-  client_->DownloadRequested(&download_request);
+  client_->DownloadRequested(download_request);
+}
+
+void WebView::HttpAuthenticationRequested(
+        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
+  // The client takes ownership of the request
+  client_->HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
 bool WebView::ShouldHandleNavigation(const GURL& url,
@@ -798,8 +829,10 @@ oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
   return menu;
 }
 
-oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
-                                          WindowOpenDisposition disposition) {
+oxide::WebView* WebView::CreateNewWebView(
+    const gfx::Rect& initial_pos,
+    WindowOpenDisposition disposition,
+    scoped_ptr<content::WebContents> contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
@@ -825,11 +858,14 @@ oxide::WebView* WebView::CreateNewWebView(const gfx::Rect& initial_pos,
   OxideQNewViewRequest request(QRect(initial_pos.x(),
                                      initial_pos.y(),
                                      initial_pos.width(),
-                                     initial_pos.height()), d);
+                                     initial_pos.height()),
+                               d);
+  OxideQNewViewRequestPrivate::get(&request)->contents = contents.Pass();
 
   client_->NewViewRequested(&request);
 
-  oxide::WebView* view = OxideQNewViewRequestPrivate::get(&request)->view.get();
+  oxide::WebView* view =
+      OxideQNewViewRequestPrivate::get(&request)->view.get();
   if (!view) {
     qCritical() <<
         "Either a webview wasn't created in WebView.newViewRequested, or the "
@@ -960,7 +996,7 @@ void WebView::UpdateCursor(const content::WebCursor& cursor) {
 }
 
 void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
-  OxideQSecurityStatusPrivate::get(qsecurity_status_.get())->Update(old);
+  OxideQSecurityStatusPrivate::get(security_status_)->Update(old);
 }
 
 void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
@@ -981,14 +1017,6 @@ void WebView::PrepareToCloseResponseReceived(bool proceed) {
 
 void WebView::CloseRequested() {
   client_->CloseRequested();
-}
-
-void WebView::FindInPageCountChanged() {
-  Q_EMIT find_in_page_controller_->countChanged();
-}
-
-void WebView::FindInPageCurrentChanged() {
-  Q_EMIT find_in_page_controller_->currentChanged();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1029,58 +1057,6 @@ void WebView::RequestMediaAccessPermission(
 
   // The embedder takes ownership of this
   client_->RequestMediaAccessPermission(req.release());
-}
-
-void WebView::init(bool incognito,
-                   WebContextProxyHandle* context,
-                   OxideQNewViewRequest* new_view_request,
-                   const QByteArray& restore_state,
-                   qt::RestoreType restore_type) {
-  DCHECK(!view_->GetWebContents());
-
-  bool script_opened = false;
-
-  if (new_view_request) {
-    OxideQNewViewRequestPrivate* rd =
-        OxideQNewViewRequestPrivate::get(new_view_request);
-    if (rd->view) {
-      qWarning() << "OxideQNewViewRequest: Cannot assign to more than one WebView";
-    } else {
-      rd->view = view_->AsWeakPtr();
-      script_opened = true;
-    }
-  }
-
-  if (script_opened) {
-    // Script opened webviews get initialized via another path
-    return;
-  }
-
-  if (!restore_state.isEmpty()) {
-    RestoreState(restore_type, restore_state);
-  }
-
-  CHECK(context) <<
-      "No context available for WebView. If you see this when running in "
-      "single-process mode, it is possible that the default WebContext has "
-      "been deleted by the application. In single-process mode, there is only "
-      "one WebContext, and this has to live for the life of the application";
-
-  WebContext* c = WebContext::FromProxyHandle(context);
-
-  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
-          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
-    DCHECK(!incognito);
-    DCHECK_EQ(c, WebContext::GetDefault());
-  }
-
-  EnsurePreferences();
-
-  oxide::WebView::Params params;
-  params.context = c->GetContext();
-  params.incognito = incognito;
-
-  view_->Init(&params);
 }
 
 QUrl WebView::url() const {
@@ -1328,10 +1304,6 @@ void WebView::reload() {
   view_->Reload();
 }
 
-OxideQFindController* WebView::findInPage() {
-  return find_in_page_controller_.get();
-}
-
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
   QByteArray encoded_data = html.toUtf8().toPercentEncoding();
   view_->LoadData(std::string(encoded_data.constData(), encoded_data.length()),
@@ -1341,10 +1313,6 @@ void WebView::loadHtml(const QString& html, const QUrl& base_url) {
 
 QList<ScriptMessageHandlerProxyHandle*>& WebView::messageHandlers() {
   return message_handlers_;
-}
-
-bool WebView::isInitialized() const {
-  return view_->GetWebContents() != nullptr;
 }
 
 int WebView::getNavigationEntryCount() const {
@@ -1468,10 +1436,6 @@ void WebView::setCanTemporarilyRunInsecureContent(bool allow) {
   view_->SetCanTemporarilyRunInsecureContent(allow);
 }
 
-OxideQSecurityStatus* WebView::securityStatus() {
-  return qsecurity_status_.get();
-}
-
 ContentTypeFlags WebView::blockedContent() const {
   COMPILE_ASSERT(
       CONTENT_TYPE_NONE ==
@@ -1545,10 +1509,6 @@ void WebView::locationBarHide(bool animate) {
 }
 
 WebProcessStatus WebView::webProcessStatus() const {
-  if (!view_->GetWebContents()) {
-    return WEB_PROCESS_RUNNING;
-  }
-
   base::TerminationStatus status = view_->GetWebContents()->GetCrashedStatus();
   if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
     return WEB_PROCESS_RUNNING;
@@ -1563,9 +1523,6 @@ WebProcessStatus WebView::webProcessStatus() const {
 
 void WebView::executeEditingCommand(EditingCommands command) const {
   content::WebContents* contents = view_->GetWebContents();
-  if (!contents) {
-    return;
-  }
 
   switch (command) {
     case EDITING_COMMAND_UNDO:
@@ -1587,26 +1544,77 @@ void WebView::executeEditingCommand(EditingCommands command) const {
   }
 }
 
-WebView::WebView(WebViewProxyClient* client)
-    : view_(new oxide::WebView(this)),
-      client_(client),
-      has_input_method_state_(false),
-      qsecurity_status_(
-          OxideQSecurityStatusPrivate::Create(this)),
-      find_in_page_controller_(new OxideQFindController(view_.get())) {
-  QInputMethod* im = QGuiApplication::inputMethod();
-  if (im) {
-    connect(im, SIGNAL(visibleChanged()),
-            SLOT(OnInputPanelVisibilityChanged()));
+WebView::WebView(WebViewProxyClient* client,
+                 OxideQFindController* find_controller,
+                 OxideQSecurityStatus* security_status,
+                 WebContext* context,
+                 bool incognito,
+                 const QByteArray& restore_state,
+                 RestoreType restore_type)
+    : WebView(client, security_status) {
+  oxide::WebView::Params params;
+  params.client = this;
+  params.context = context->GetContext();
+  params.incognito = incognito;
+
+  if (!restore_state.isEmpty()) {
+    CreateRestoreEntriesFromRestoreState(restore_state,
+                                         &params.restore_entries,
+                                         &params.restore_index);
+    params.restore_type = ToNavigationControllerRestoreType(restore_type);
   }
+
+  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
+          oxide::PROCESS_MODEL_SINGLE_PROCESS) {
+    DCHECK(!incognito);
+    DCHECK_EQ(context, WebContext::GetDefault());
+  }
+
+  view_.reset(new oxide::WebView(params));
+
+  oxide::PermissionRequestDispatcher::FromWebContents(
+      view_->GetWebContents())->set_client(this);
+  OxideQSecurityStatusPrivate::get(security_status_)->view = this;
+  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
+      view_->GetWebContents());
+  EnsurePreferences();
+}
+
+// static
+WebView* WebView::CreateFromNewViewRequest(
+    WebViewProxyClient* client,
+    OxideQFindController* find_controller,
+    OxideQSecurityStatus* security_status,
+    OxideQNewViewRequest* new_view_request) {
+  OxideQNewViewRequestPrivate* rd =
+      OxideQNewViewRequestPrivate::get(new_view_request);
+  if (rd->view) {
+    return nullptr;
+  }
+
+  WebView* new_view = new WebView(client, security_status);
+  new_view->view_.reset(new oxide::WebView(rd->contents.Pass(), new_view));
+  rd->view = new_view->view_->AsWeakPtr();
+
+  oxide::PermissionRequestDispatcher::FromWebContents(
+      new_view->view_->GetWebContents())->set_client(new_view);
+  OxideQSecurityStatusPrivate::get(new_view->security_status_)->view =
+      new_view;
+  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
+      new_view->view_->GetWebContents());
+  OxideQWebPreferences* p =
+      static_cast<WebPreferences*>(
+        new_view->view_->GetWebPreferences())->api_handle();
+  if (!p->parent()) {
+    p->setParent(new_view->client_->GetApiHandle());
+  }
+
+  return new_view;
 }
 
 WebView::~WebView() {
-  content::WebContents* contents = view_->GetWebContents();
-  if (contents) {
-    oxide::PermissionRequestDispatcher::FromWebContents(
-        contents)->set_client(nullptr);
-  }
+  oxide::PermissionRequestDispatcher::FromWebContents(
+      view_->GetWebContents())->set_client(nullptr);
 
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {

@@ -178,7 +178,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       spy.wait();
       compare(spy.count, 1);
 
-      webView.wait(100);
+      Utils.wait(100);
 
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
       compare(webView.loadsStartedCount, 0, "Shouldn't have started a load for rejected navigation");

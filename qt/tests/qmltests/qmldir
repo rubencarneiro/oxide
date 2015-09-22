@@ -3,3 +3,5 @@ plugin qmloxidetestingplugin
 TestWebContext 1.0 TestWebContext.qml
 TestWebView 1.0 TestWebView.qml
 TestUtils 1.0 TestUtils.js
+ScriptMessageTestUtils 1.0 ScriptMessageTestUtils.js
+ScriptMessageTestHandler 1.0 ScriptMessageTestHandler.qml

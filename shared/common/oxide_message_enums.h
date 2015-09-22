@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,19 +17,6 @@
 
 #ifndef _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
 #define _OXIDE_SHARED_COMMON_MESSAGE_ENUMS_H_
-
-struct OxideMsg_SendMessage_Type {
- public:
-  enum Value {
-    Message,
-    MessageNoReply,
-    Reply
-  };
-
-  static bool is_valid(int type) {
-    return type == Message || type == MessageNoReply || type == Reply;
-  }
-};
 
 // Dictates which type of media playback is being initialized.
 enum OxideHostMsg_MediaPlayer_Initialize_Type {

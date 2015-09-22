@@ -21,7 +21,6 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/files/file_proxy.h"
-#include "base/message_loop/message_loop_proxy.h"
 
 namespace oxide {
 

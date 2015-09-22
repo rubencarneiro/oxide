@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_RESOURCE_DISPATCHER_HOST_DELEGATE_H_
 
+#include "base/callback.h"
 #include "base/macros.h"
 #include "base/strings/string16.h"
 #include "content/public/browser/resource_dispatcher_host_delegate.h"
@@ -34,6 +35,8 @@ class CookieStore;
 }
 
 namespace oxide {
+
+class ResourceDispatcherHostLoginDelegate;
 
 class ResourceDispatcherHostDelegate
     : public content::ResourceDispatcherHostDelegate {
@@ -89,6 +92,11 @@ class ResourceDispatcherHostDelegate
                               ui::PageTransition page_transition,
                               bool has_user_gesture) override;
 
+  content::ResourceDispatcherHostLoginDelegate* CreateLoginDelegate(
+      net::AuthChallengeInfo* auth_info,
+      net::URLRequest* request) override;
+
+private:
   DISALLOW_COPY_AND_ASSIGN(ResourceDispatcherHostDelegate);
 };
 

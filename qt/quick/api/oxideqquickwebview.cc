@@ -43,9 +43,11 @@
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
@@ -66,11 +68,19 @@
 #include "oxideqquickwebframe_p.h"
 #include "oxideqquickwebframe_p_p.h"
 
-QT_USE_NAMESPACE
 
 using oxide::qquick::AcceleratedFrameNode;
 using oxide::qquick::ImageFrameNode;
 using oxide::qquick::SoftwareFrameNode;
+
+namespace {
+
+QEvent::Type GetPrepareToCloseBypassEventType() {
+  static int g_event_type = QEvent::registerEventType();
+  return QEvent::Type(g_event_type);
+}
+
+}
 
 class UpdatePaintNodeScope {
  public:
@@ -99,12 +109,39 @@ void OxideQQuickWebViewAttached::setView(OxideQQuickWebView* view) {
   view_ = view;
 }
 
+struct OxideQQuickWebViewPrivate::ConstructProps {
+  ConstructProps()
+      : incognito(false),
+        context(nullptr),
+        restore_type(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY),
+        location_bar_height(0),
+        location_bar_mode(oxide::qt::LOCATION_BAR_MODE_AUTO),
+        location_bar_animated(true),
+        load_html(false),
+        fullscreen(false) {}
+
+  bool incognito;
+  oxide::qt::WebContextProxyHandle* context;
+  QPointer<OxideQNewViewRequest> new_view_request;
+  QByteArray restore_state;
+  oxide::qt::RestoreType restore_type;
+  QList<oxide::qt::ScriptMessageHandlerProxyHandle*> message_handlers;
+  int location_bar_height;
+  oxide::qt::LocationBarMode location_bar_mode;
+  bool location_bar_animated;
+  bool load_html;
+  QUrl url;
+  QString html;
+  bool fullscreen;
+  QPointer<OxideQWebPreferences> preferences;
+};
+
 OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView,
                                     oxide::qt::WebViewProxyHandle);
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
-    oxide::qt::WebViewProxyHandle(oxide::qt::WebViewProxy::create(this), view),
+    oxide::qt::WebViewProxyHandle(view),
     load_progress_(0),
     constructed_(false),
     navigation_history_(view),
@@ -120,33 +157,9 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
     using_old_load_event_signal_(false),
     handling_unhandled_key_event_(false),
-    construct_props_(new ConstructProps()) {}
-
-void OxideQQuickWebViewPrivate::Initialized() {
-  Q_Q(OxideQQuickWebView);
-
-  Q_ASSERT(construct_props_.data());
-
-  // Initialization created the root frame. This is the only time
-  // this is emitted
-  emit q->rootFrameChanged();
-
-  if (construct_props_->incognito != proxy()->incognito()) {
-    emit q->incognitoChanged();
-  }
-  if (construct_props_->context !=
-      OxideQQuickWebContextPrivate::fromProxyHandle(proxy()->context())) {
-    if (construct_props_->context) {
-      detachContextSignals(
-          OxideQQuickWebContextPrivate::get(construct_props_->context));
-    }
-    attachContextSignals(
-        OxideQQuickWebContextPrivate::get(
-          OxideQQuickWebContextPrivate::fromProxyHandle(proxy()->context())));
-    emit q->contextChanged();
-  }
-
-  construct_props_.reset();
+    construct_props_(new ConstructProps()) {
+  oxide::qt::WebViewProxy::createHelpers(&find_controller_,
+                                         &security_status_);
 }
 
 QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
@@ -247,15 +260,15 @@ void OxideQQuickWebViewPrivate::LoadProgressChanged(double progress) {
   emit q->loadProgressChanged();
 }
 
-void OxideQQuickWebViewPrivate::LoadEvent(OxideQLoadEvent* event) {
+void OxideQQuickWebViewPrivate::LoadEvent(const OxideQLoadEvent& event) {
   Q_Q(OxideQQuickWebView);
 
   emit q->loadEvent(event);
 
   // The deprecated signal doesn't get TypeCommitted or TypeRedirected
   if (!using_old_load_event_signal_ ||
-      event->type() == OxideQLoadEvent::TypeCommitted ||
-      event->type() == OxideQLoadEvent::TypeRedirected) {
+      event.type() == OxideQLoadEvent::TypeCommitted ||
+      event.type() == OxideQLoadEvent::TypeRedirected) {
     return;
   }
 
@@ -462,7 +475,7 @@ void OxideQQuickWebViewPrivate::RequestMediaAccessPermission(
 }
 
 void OxideQQuickWebViewPrivate::RequestNotificationPermission(
-    OxideQSimplePermissionRequest* request) {
+    OxideQPermissionRequest* request) {
   Q_Q(OxideQQuickWebView);
 
   QQmlEngine* engine = qmlEngine(q);
@@ -479,6 +492,31 @@ void OxideQQuickWebViewPrivate::RequestNotificationPermission(
     }
 
     emit q->notificationPermissionRequested(val);
+  }
+
+  engine->collectGarbage();
+}
+
+void OxideQQuickWebViewPrivate::HttpAuthenticationRequested(
+    OxideQHttpAuthenticationRequest* authentication_request) {
+  Q_Q(OxideQQuickWebView);
+
+  // See the comment in RequestGeolocationPermission
+
+  QQmlEngine* engine = qmlEngine(q);
+  if (!engine) {
+    delete authentication_request;
+    return;
+  }
+
+  {
+    QJSValue val = engine->newQObject(authentication_request);
+    if (!val.isQObject()) {
+      delete authentication_request;
+      return;
+    }
+
+    emit q->httpAuthenticationRequested(val);
   }
 
   engine->collectGarbage();
@@ -557,10 +595,10 @@ void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
 }
 
 void OxideQQuickWebViewPrivate::DownloadRequested(
-    OxideQDownloadRequest* downloadRequest) {
+    const OxideQDownloadRequest& download_request) {
   Q_Q(OxideQQuickWebView);
 
-  emit q->downloadRequested(downloadRequest);
+  emit q->downloadRequested(download_request);
 }
 
 void OxideQQuickWebViewPrivate::CertificateError(
@@ -610,13 +648,65 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
   Q_ASSERT(construct_props_.data());
 
-  OxideQQuickWebContext* context = construct_props_->context;
+  if (construct_props_->new_view_request) {
+    set_proxy(oxide::qt::WebViewProxy::create(
+        this,
+        find_controller_.data(),
+        security_status_.data(),
+        construct_props_->new_view_request));
+  }
 
-  proxy()->init(construct_props_->incognito,
-                context ? OxideQQuickWebContextPrivate::get(context) : nullptr,
-                construct_props_->new_view_request,
-                construct_props_->restore_state,
-                construct_props_->restore_type);
+  if (!proxy()) {
+    construct_props_->new_view_request = nullptr;
+    set_proxy(oxide::qt::WebViewProxy::create(
+        this,
+        find_controller_.data(),
+        security_status_.data(),
+        construct_props_->context,
+        construct_props_->incognito,
+        construct_props_->restore_state,
+        construct_props_->restore_type));
+  }
+
+  proxy()->messageHandlers().swap(construct_props_->message_handlers);
+
+  proxy()->setLocationBarHeight(construct_props_->location_bar_height);
+  proxy()->setLocationBarMode(construct_props_->location_bar_mode);
+  proxy()->setLocationBarAnimated(construct_props_->location_bar_animated);
+
+  if (!construct_props_->new_view_request) {
+    if (construct_props_->load_html) {
+      proxy()->loadHtml(construct_props_->html, construct_props_->url);
+    } else if (!construct_props_->url.isEmpty()) {
+      proxy()->setUrl(construct_props_->url);
+    }
+  }
+
+  proxy()->setFullscreen(construct_props_->fullscreen);
+
+  if (construct_props_->preferences) {
+    proxy()->setPreferences(construct_props_->preferences);
+  }
+
+  // Initialization created the root frame. This is the only time
+  // this is emitted
+  emit q->rootFrameChanged();
+
+  if (construct_props_->incognito != proxy()->incognito()) {
+    emit q->incognitoChanged();
+  }
+  if (construct_props_->context != proxy()->context()) {
+    if (construct_props_->context) {
+      detachContextSignals(
+          static_cast<OxideQQuickWebContextPrivate*>(
+            construct_props_->context));
+    }
+    attachContextSignals(
+        static_cast<OxideQQuickWebContextPrivate*>(proxy()->context()));
+    emit q->contextChanged();
+  }
+
+  construct_props_.reset();
 }
 
 // static
@@ -636,8 +726,8 @@ void OxideQQuickWebViewPrivate::messageHandler_append(
 // static
 int OxideQQuickWebViewPrivate::messageHandler_count(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
-  oxide::qt::WebViewProxy* p = OxideQQuickWebViewPrivate::get(
-        static_cast<OxideQQuickWebView *>(prop->object))->proxy();
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
+      static_cast<OxideQQuickWebView*>(prop->object));
 
   return p->messageHandlers().size();
 }
@@ -646,8 +736,8 @@ int OxideQQuickWebViewPrivate::messageHandler_count(
 OxideQQuickScriptMessageHandler* OxideQQuickWebViewPrivate::messageHandler_at(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
     int index) {
-  oxide::qt::WebViewProxy* p = OxideQQuickWebViewPrivate::get(
-        static_cast<OxideQQuickWebView *>(prop->object))->proxy();
+  OxideQQuickWebViewPrivate* p = OxideQQuickWebViewPrivate::get(
+      static_cast<OxideQQuickWebView*>(prop->object));
 
   if (index >= p->messageHandlers().size()) {
     return nullptr;
@@ -662,14 +752,31 @@ void OxideQQuickWebViewPrivate::messageHandler_clear(
     QQmlListProperty<OxideQQuickScriptMessageHandler>* prop) {
   OxideQQuickWebView* web_view =
       static_cast<OxideQQuickWebView *>(prop->object);
-  oxide::qt::WebViewProxy* p =
-      OxideQQuickWebViewPrivate::get(web_view)->proxy();
+  OxideQQuickWebViewPrivate* p =
+      OxideQQuickWebViewPrivate::get(web_view);
 
   while (p->messageHandlers().size() > 0) {
     web_view->removeMessageHandler(
         OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
           p->messageHandlers().at(0)));
   }
+}
+
+QList<oxide::qt::ScriptMessageHandlerProxyHandle*>&
+OxideQQuickWebViewPrivate::messageHandlers() {
+  if (!proxy()) {
+    return construct_props_->message_handlers;
+  }
+
+  return proxy()->messageHandlers();
+}
+
+oxide::qt::WebContextProxyHandle* OxideQQuickWebViewPrivate::context() const {
+  if (!proxy()) {
+    return construct_props_->context;
+  }
+
+  return proxy()->context();
 }
 
 void OxideQQuickWebViewPrivate::contextConstructed() {
@@ -680,6 +787,10 @@ void OxideQQuickWebViewPrivate::contextConstructed() {
 
 void OxideQQuickWebViewPrivate::contextDestroyed() {
   Q_Q(OxideQQuickWebView);
+
+  if (construct_props_) {
+    construct_props_->context = nullptr;
+  }
 
   // XXX: Our underlying BrowserContext lives on, so we're left in a
   // bit of a weird state here (WebView.context will return no context,
@@ -724,6 +835,11 @@ void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
 
 void OxideQQuickWebViewPrivate::screenChanged(QScreen* screen) {
   screenChangedHelper(screen);
+
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->screenUpdated();
 }
 
@@ -765,16 +881,28 @@ void OxideQQuickWebViewPrivate::windowChangedHelper(QQuickWindow* window) {
 
   screenChangedHelper(window_ ? window_->screen() : nullptr);
 
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->screenUpdated();
   proxy()->wasResized();
 }
 
 void OxideQQuickWebViewPrivate::screenGeometryChanged(const QRect& rect) {
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->screenUpdated();
 }
 
 void OxideQQuickWebViewPrivate::screenOrientationChanged(
     Qt::ScreenOrientation orientation) {
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->screenUpdated();
 }
 
@@ -796,51 +924,99 @@ void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
 }
 
 int OxideQQuickWebViewPrivate::locationBarHeight() {
+  if (!proxy()) {
+    return construct_props_->location_bar_height;
+  }
+
   return proxy()->locationBarHeight();
 }
 
 void OxideQQuickWebViewPrivate::setLocationBarHeight(int height) {
-  proxy()->setLocationBarHeight(height);
+  if (!proxy()) {
+    construct_props_->location_bar_height = height;
+  } else {
+    proxy()->setLocationBarHeight(height);
+  }
 }
 
 oxide::qt::LocationBarMode OxideQQuickWebViewPrivate::locationBarMode() const {
+  if (!proxy()) {
+    return construct_props_->location_bar_mode;
+  }
+
   return proxy()->locationBarMode();
 }
 
 void OxideQQuickWebViewPrivate::setLocationBarMode(
     oxide::qt::LocationBarMode mode) {
-  proxy()->setLocationBarMode(mode);
+  if (!proxy()) {
+    construct_props_->location_bar_mode = mode;
+  } else {
+    proxy()->setLocationBarMode(mode);
+  }
 }
 
 bool OxideQQuickWebViewPrivate::locationBarAnimated() const {
+  if (!proxy()) {
+    return construct_props_->location_bar_animated;
+  }
+
   return proxy()->locationBarAnimated();
 }
 
 void OxideQQuickWebViewPrivate::setLocationBarAnimated(bool animated) {
-  proxy()->setLocationBarAnimated(animated);
+  if (!proxy()) {
+    construct_props_->location_bar_animated = animated;
+  } else {
+    proxy()->setLocationBarAnimated(animated);
+  }
 }
 
 int OxideQQuickWebViewPrivate::locationBarOffsetPix() {
+  if (!proxy()) {
+    return 0;
+  }
+
   return proxy()->locationBarOffsetPix();
 }
 
 int OxideQQuickWebViewPrivate::locationBarContentOffsetPix() {
+  if (!proxy()) {
+    return 0;
+  }
+
   return proxy()->locationBarContentOffsetPix();
 }
 
 void OxideQQuickWebViewPrivate::locationBarShow(bool animate) {
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->locationBarShow(animate);
 }
 
 void OxideQQuickWebViewPrivate::locationBarHide(bool animate) {
+  if (!proxy()) {
+    return;
+  }
+
   proxy()->locationBarHide(animate);
 }
 
 int OxideQQuickWebViewPrivate::getNavigationEntryCount() const {
+  if (!proxy()) {
+    return 0;
+  }
+
   return proxy()->getNavigationEntryCount();
 }
 
 int OxideQQuickWebViewPrivate::getNavigationCurrentEntryIndex() const {
+  if (!proxy()) {
+    return -1;
+  }
+
   return proxy()->getNavigationCurrentEntryIndex();
 }
 
@@ -871,7 +1047,7 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   Q_ASSERT(thread() == QThread::currentThread());
 
 #define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
-  if (signal == VIEW_SIGNAL(newViewRequested)) {
+  if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy()) {
     d->proxy()->updateWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
     d->using_old_load_event_signal_ = true;
@@ -884,11 +1060,20 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
 
   Q_ASSERT(thread() == QThread::currentThread());
 
-  if (signal == QMetaMethod::fromSignal(
+  if ((signal == QMetaMethod::fromSignal(
           &OxideQQuickWebView::newViewRequested) ||
-      !signal.isValid()) {
+      !signal.isValid()) && d->proxy()) {
     d->proxy()->updateWebPreferences();
   }
+}
+
+bool OxideQQuickWebView::event(QEvent* event) {
+  if (event->type() == GetPrepareToCloseBypassEventType()) {
+    emit prepareToCloseResponse(true);
+    return true;
+  }
+
+  return QQuickItem::event(event);
 }
 
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
@@ -897,7 +1082,7 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
 
   QQuickItem::itemChange(change, value);
 
-  if (!d->proxy()->isInitialized()) {
+  if (!d->proxy()) {
     return;
   }
 
@@ -909,17 +1094,33 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
 void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  QQuickItem::focusInEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->handleFocusEvent(event);
 }
 
 void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  QQuickItem::focusOutEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->handleFocusEvent(event);
 }
 
 void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return;
+  }
 
   QPointF window_pos = mapToScene(event->posF());
   d->proxy()->handleHoverEvent(event,
@@ -930,6 +1131,10 @@ void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
 void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return;
+  }
+
   QPointF window_pos = mapToScene(event->posF());
   d->proxy()->handleHoverEvent(event,
                                window_pos.toPoint(),
@@ -939,6 +1144,10 @@ void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
 void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return;
+  }
+
   QPointF window_pos = mapToScene(event->posF());
   d->proxy()->handleHoverEvent(event,
                                window_pos.toPoint(),
@@ -947,6 +1156,11 @@ void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
 
 void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QQuickItem::inputMethodEvent(event);
+    return;
+  }
 
   d->proxy()->handleInputMethodEvent(event);
 }
@@ -959,14 +1173,14 @@ QVariant OxideQQuickWebView::inputMethodQuery(
     case Qt::ImEnabled:
       return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
     default:
-      return d->proxy()->inputMethodQuery(query);
+      return d->proxy() ? d->proxy()->inputMethodQuery(query) : QVariant();
   }
 }
 
 void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
   Q_D(OxideQQuickWebView);
 
-  if (d->handling_unhandled_key_event_) {
+  if (d->handling_unhandled_key_event_ || !d->proxy()) {
     QQuickItem::keyPressEvent(event);
     return;
   }
@@ -977,7 +1191,7 @@ void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
 void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
   Q_D(OxideQQuickWebView);
 
-  if (d->handling_unhandled_key_event_) {
+  if (d->handling_unhandled_key_event_ || !d->proxy()) {
     QQuickItem::keyReleaseEvent(event);
     return;
   }
@@ -988,17 +1202,32 @@ void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
 void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    QQuickItem::mouseDoubleClickEvent(event);
+    return;
+  }
+
   d->proxy()->handleMouseEvent(event);
 }
 
 void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    QQuickItem::mouseMoveEvent(event);
+    return;
+  }
+
   d->proxy()->handleMouseEvent(event);
 }
 
 void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QQuickItem::mousePressEvent(event);
+    return;
+  }
 
   forceActiveFocus();
   d->proxy()->handleMouseEvent(event);
@@ -1007,11 +1236,21 @@ void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
 void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    QQuickItem::mouseReleaseEvent(event);
+    return;
+  }
+
   d->proxy()->handleMouseEvent(event);
 }
 
 void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QQuickItem::touchEvent(event);
+    return;
+  }
 
   if (event->type() == QEvent::TouchBegin) {
     forceActiveFocus();
@@ -1021,6 +1260,11 @@ void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
 
 void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QQuickItem::wheelEvent(event);
+    return;
+  }
 
   QPointF window_pos = mapToScene(event->posF());
   d->proxy()->handleWheelEvent(event, window_pos.toPoint());
@@ -1032,7 +1276,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
 
-  if (d->proxy()->isInitialized() && window()) {
+  if (d->proxy() && window()) {
     d->proxy()->wasResized();
   }
 }
@@ -1045,26 +1289,31 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 
   UpdatePaintNodeScope scope(d);
 
-  QSharedPointer<oxide::qt::CompositorFrameHandle> handle =
-      d->proxy()->compositorFrameHandle();
+  oxide::qt::CompositorFrameHandle::Type type =
+      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle;
+
+  if (d->proxy()) {
+    handle = d->proxy()->compositorFrameHandle();
+    type = handle->GetType();
+  }
 
   Q_ASSERT(!d->received_new_compositor_frame_ ||
            (d->received_new_compositor_frame_ && !d->frame_evicted_));
 
-  if (handle->GetType() != d->last_composited_frame_type_) {
+  if (type != d->last_composited_frame_type_) {
     delete oldNode;
     oldNode = nullptr;
   }
 
-  d->last_composited_frame_type_ = handle->GetType();
+  d->last_composited_frame_type_ = type;
 
   if (d->frame_evicted_) {
     delete oldNode;
     return nullptr;
   }
 
-  if (handle->GetType() ==
-      oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
     if (!node) {
       node = new AcceleratedFrameNode(this);
@@ -1077,8 +1326,7 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
     return node;
   }
 
-  if (handle->GetType() ==
-      oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
     ImageFrameNode* node = static_cast<ImageFrameNode *>(oldNode);
     if (!node) {
       node = new ImageFrameNode();
@@ -1091,8 +1339,7 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
     return node;
   }
 
-  if (handle->GetType() ==
-      oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
     SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
     if (!node) {
       node = new SoftwareFrameNode(this);
@@ -1105,8 +1352,7 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
     return node;
   }
 
-  Q_ASSERT(handle->GetType() ==
-           oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
 
   SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
   if (!node) {
@@ -1127,12 +1373,9 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
-    : QQuickItem(parent) {
-  // WebView instantiates NotificationRegistrar, which starts
-  // NotificationService, which uses LazyInstance. Start Chromium now
-  // else we'll crash
+    : QQuickItem(parent),
+      d_ptr(new OxideQQuickWebViewPrivate(this)) {
   oxide::qquick::EnsureChromiumStarted();
-  d_ptr.reset(new OxideQQuickWebViewPrivate(this));
 
   Q_D(OxideQQuickWebView);
 
@@ -1159,13 +1402,13 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   }
 
   d->detachContextSignals(
-      static_cast<OxideQQuickWebContextPrivate *>(d->proxy()->context()));
+      static_cast<OxideQQuickWebContextPrivate *>(d->context()));
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
-  while (d->proxy()->messageHandlers().size() > 0) {
+  while (d->messageHandlers().size() > 0) {
     delete OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
-        d->proxy()->messageHandlers().at(0));
+        d->messageHandlers().at(0));
   }
 }
 
@@ -1177,17 +1420,25 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  OxideQQuickWebContext* context = d->construct_props_->context;
+  OxideQQuickWebContext* context = nullptr;
+  if (d->construct_props_->context) {
+    context =
+        OxideQQuickWebContextPrivate::fromProxyHandle(
+          d->construct_props_->context);
+  }
 
   if (!context && !d->construct_props_->new_view_request) {
     context = OxideQQuickWebContext::defaultContext(true);
-    d->construct_props_->context = context;
-    if (context) {
-      d->attachContextSignals(OxideQQuickWebContextPrivate::get(context));
+    if (!context) {
+      qFatal("OxideQQuickWebView: No context available!");
     }
+    OxideQQuickWebContextPrivate* cd =
+        OxideQQuickWebContextPrivate::get(context);
+    d->construct_props_->context = cd;
+    d->attachContextSignals(cd);
   }
 
-  if (!context ||
+  if (d->construct_props_->new_view_request ||
       OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
     d->completeConstruction();
   }
@@ -1196,17 +1447,27 @@ void OxideQQuickWebView::componentComplete() {
 QUrl OxideQQuickWebView::url() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return QUrl();
+  }
+
   return d->proxy()->url();
 }
 
 void OxideQQuickWebView::setUrl(const QUrl& url) {
   Q_D(OxideQQuickWebView);
 
-  QUrl old_url = d->proxy()->url();
+  QUrl old_url = this->url();
 
-  d->proxy()->setUrl(url);
+  if (!d->proxy()) {
+    d->construct_props_->load_html = false;
+    d->construct_props_->url = url;
+    d->construct_props_->html.clear();
+  } else {
+    d->proxy()->setUrl(url);
+  }
 
-  if (d->proxy()->url() != old_url) {
+  if (this->url() != old_url) {
     // XXX(chrisccoulson): Why is this here? Don't we get this via URLChanged?
     emit urlChanged();
   }
@@ -1214,6 +1475,10 @@ void OxideQQuickWebView::setUrl(const QUrl& url) {
 
 QString OxideQQuickWebView::title() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return QString();
+  }
 
   return d->proxy()->title();
 }
@@ -1227,11 +1492,19 @@ QUrl OxideQQuickWebView::icon() const {
 bool OxideQQuickWebView::canGoBack() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return false;
+  }
+
   return d->proxy()->canGoBack();
 }
 
 bool OxideQQuickWebView::canGoForward() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return false;
+  }
 
   return d->proxy()->canGoForward();
 }
@@ -1239,7 +1512,7 @@ bool OxideQQuickWebView::canGoForward() const {
 bool OxideQQuickWebView::incognito() const {
   Q_D(const OxideQQuickWebView);
 
-  if (!d->proxy()->isInitialized()) {
+  if (!d->proxy()) {
     return d->construct_props_->incognito;
   }
 
@@ -1249,7 +1522,7 @@ bool OxideQQuickWebView::incognito() const {
 void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
 
-  if (d->proxy()->isInitialized()) {
+  if (d->proxy()) {
     qWarning() <<
         "OxideQQuickWebView: incognito can only be set during construction";
     return;
@@ -1272,11 +1545,19 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
 bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return false;
+  }
+
   return d->proxy()->loading();
 }
 
 bool OxideQQuickWebView::fullscreen() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return d->construct_props_->fullscreen;
+  }
 
   return d->proxy()->fullscreen();
 }
@@ -1284,11 +1565,16 @@ bool OxideQQuickWebView::fullscreen() const {
 void OxideQQuickWebView::setFullscreen(bool fullscreen) {
   Q_D(OxideQQuickWebView);
 
-  if (fullscreen == d->proxy()->fullscreen()) {
+  if (fullscreen == this->fullscreen()) {
     return;
   }
 
-  d->proxy()->setFullscreen(fullscreen);
+  if (!d->proxy()) {
+    d->construct_props_->fullscreen = fullscreen;
+  } else {
+    d->proxy()->setFullscreen(fullscreen);
+  }
+
   emit fullscreenChanged();
 }
 
@@ -1300,6 +1586,10 @@ int OxideQQuickWebView::loadProgress() const {
 
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return nullptr;
+  }
 
   oxide::qt::WebFrameProxyHandle* frame = d->proxy()->rootFrame();
   if (!frame) {
@@ -1338,12 +1628,12 @@ void OxideQQuickWebView::addMessageHandler(
     return;
   }
 
-  if (d->proxy()->messageHandlers().contains(hd)) {
-    d->proxy()->messageHandlers().removeOne(hd);
+  if (d->messageHandlers().contains(hd)) {
+    d->messageHandlers().removeOne(hd);
   }
 
   handler->setParent(this);
-  d->proxy()->messageHandlers().append(hd);
+  d->messageHandlers().append(hd);
 
   emit messageHandlersChanged();
 }
@@ -1360,18 +1650,22 @@ void OxideQQuickWebView::removeMessageHandler(
   OxideQQuickScriptMessageHandlerPrivate* hd =
       OxideQQuickScriptMessageHandlerPrivate::get(handler);
 
-  if (!d->proxy()->messageHandlers().contains(hd)) {
+  if (!d->messageHandlers().contains(hd)) {
     return;
   }
 
   handler->setParent(nullptr);
-  d->proxy()->messageHandlers().removeOne(hd);
+  d->messageHandlers().removeOne(hd);
 
   emit messageHandlersChanged();
 }
 
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return 0.f;
+  }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameViewportSizePix().width();
@@ -1380,12 +1674,20 @@ qreal OxideQQuickWebView::viewportWidth() const {
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return 0.f;
+  }
+
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameViewportSizePix().height();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return 0.f;
+  }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameContentSizePix().width();
@@ -1394,6 +1696,10 @@ qreal OxideQQuickWebView::contentWidth() const {
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return 0.f;
+  }
+
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameContentSizePix().height();
 }
@@ -1401,12 +1707,20 @@ qreal OxideQQuickWebView::contentHeight() const {
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return 0.f;
+  }
+
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameScrollOffsetPix().x();
 }
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return 0.f;
+  }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy()->compositorFrameScrollOffsetPix().y();
@@ -1535,11 +1849,7 @@ void OxideQQuickWebView::setFilePicker(QQmlComponent* file_picker) {
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const OxideQQuickWebView);
 
-  if (!d->proxy()->isInitialized()) {
-    return d->construct_props_->context;
-  }
-
-  oxide::qt::WebContextProxyHandle* c = d->proxy()->context();
+  oxide::qt::WebContextProxyHandle* c = d->context();
   if (!c) {
     return nullptr;
   }
@@ -1550,7 +1860,7 @@ OxideQQuickWebContext* OxideQQuickWebView::context() const {
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(OxideQQuickWebView);
 
-  if (d->proxy()->isInitialized()) {
+  if (d->proxy()) {
     qWarning() <<
         "OxideQQuickWebView: context can only be set during construction";
     return;
@@ -1564,19 +1874,22 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
     return;
   }
 
-  if (context == d->construct_props_->context) {
+  OxideQQuickWebContext* old = this->context();
+
+  if (context == old) {
     return;
   }
 
-  OxideQQuickWebContext* old = d->construct_props_->context;
   if (old) {
     d->detachContextSignals(OxideQQuickWebContextPrivate::get(old));
   }
 
+  OxideQQuickWebContextPrivate* cd = nullptr;
   if (context) {
-    d->attachContextSignals(OxideQQuickWebContextPrivate::get(context));
+    cd = OxideQQuickWebContextPrivate::get(context);
+    d->attachContextSignals(cd);
   }
-  d->construct_props_->context = context;
+  d->construct_props_->context = cd;
 
   emit contextChanged();
 }
@@ -1584,17 +1897,28 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
 OxideQWebPreferences* OxideQQuickWebView::preferences() {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    if (!d->construct_props_->preferences) {
+      d->construct_props_->preferences = new OxideQWebPreferences(this);
+    }
+    return d->construct_props_->preferences;
+  }
+
   return d->proxy()->preferences();
 }
 
 void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   Q_D(OxideQQuickWebView);
 
-  if (prefs == d->proxy()->preferences()) {
+  if (prefs == this->preferences()) {
     return;
   }
 
-  d->proxy()->setPreferences(prefs);
+  if (!d->proxy()) {
+    d->construct_props_->preferences = prefs;
+  } else {
+    d->proxy()->setPreferences(prefs);
+  }
 
   emit preferencesChanged();
 }
@@ -1608,7 +1932,7 @@ OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
 OxideQSecurityStatus* OxideQQuickWebView::securityStatus() {
   Q_D(OxideQQuickWebView);
 
-  return d->proxy()->securityStatus();
+  return d->security_status_.data();
 }
 
 OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
@@ -1624,6 +1948,10 @@ OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
       ContentTypeMixedScript ==
         static_cast<ContentTypeFlags>(oxide::qt::CONTENT_TYPE_MIXED_SCRIPT));
 
+  if (!d->proxy()) {
+    return ContentTypeNone;
+  }
+
   return static_cast<ContentType>(d->proxy()->blockedContent());
 }
 
@@ -1637,7 +1965,7 @@ OxideQNewViewRequest* OxideQQuickWebView::request() const {
 void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   Q_D(OxideQQuickWebView);
 
-  if (d->proxy()->isInitialized()) {
+  if (d->proxy()) {
     qWarning() <<
         "OxideQQuickWebView: request must be provided during construction";
     return;
@@ -1656,7 +1984,7 @@ QString OxideQQuickWebView::restoreState() const {
 void OxideQQuickWebView::setRestoreState(const QString& state) {
   Q_D(OxideQQuickWebView);
 
-  if (d->proxy()->isInitialized()) {
+  if (d->proxy()) {
     qWarning() <<
         "OxideQQuickWebView: restoreState must be provided during construction";
     return;
@@ -1679,7 +2007,7 @@ OxideQQuickWebView::RestoreType OxideQQuickWebView::restoreType() const {
 void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
   Q_D(OxideQQuickWebView);
 
-  if (d->proxy()->isInitialized()) {
+  if (d->proxy()) {
     qWarning() <<
         "OxideQQuickWebView: restoreType must be provided during construction";
     return;
@@ -1700,6 +2028,10 @@ void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
 
 QString OxideQQuickWebView::currentState() const {
   Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return QString();
+  }
 
   // Encode the current state in base64 so it can be safely passed around
   // as a string (QML doesn’t know of byte arrays)
@@ -1729,6 +2061,10 @@ OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() cons
   Q_STATIC_ASSERT(
       WebProcessCrashed ==
         static_cast<WebProcessStatus>(oxide::qt::WEB_PROCESS_CRASHED));
+
+  if (!d->proxy()) {
+    return WebProcessRunning;
+  }
 
   return static_cast<WebProcessStatus>(d->proxy()->webProcessStatus());
 }
@@ -1764,6 +2100,10 @@ void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
       EditingCommandSelectAll ==
         static_cast<EditingCommands>(oxide::qt::EDITING_COMMAND_SELECT_ALL));
 
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->executeEditingCommand(
       static_cast<oxide::qt::EditingCommands>(command));
 }
@@ -1771,11 +2111,19 @@ void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
 void OxideQQuickWebView::goBack() {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->goBack();
 }
 
 void OxideQQuickWebView::goForward() {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return;
+  }
 
   d->proxy()->goForward();
 }
@@ -1783,11 +2131,19 @@ void OxideQQuickWebView::goForward() {
 void OxideQQuickWebView::stop() {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->stop();
 }
 
 void OxideQQuickWebView::reload() {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return;
+  }
 
   d->proxy()->reload();
 }
@@ -1795,11 +2151,22 @@ void OxideQQuickWebView::reload() {
 void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    d->construct_props_->load_html = true;
+    d->construct_props_->html = html;
+    d->construct_props_->url = baseUrl;
+    return;
+  }
+
   d->proxy()->loadHtml(html, baseUrl);
 }
 
 void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return;
+  }
 
   d->proxy()->setCanTemporarilyDisplayInsecureContent(allow);
 }
@@ -1807,11 +2174,21 @@ void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
 void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
   Q_D(OxideQQuickWebView);
 
+  if (!d->proxy()) {
+    return;
+  }
+
   d->proxy()->setCanTemporarilyRunInsecureContent(allow);
 }
 
 void OxideQQuickWebView::prepareToClose() {
   Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QCoreApplication::postEvent(this,
+                                new QEvent(GetPrepareToCloseBypassEventType()));
+    return;
+  }
 
   d->proxy()->prepareToClose();
 }
@@ -1819,7 +2196,7 @@ void OxideQQuickWebView::prepareToClose() {
 OxideQFindController* OxideQQuickWebView::findController() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->proxy()->findInPage();
+  return d->find_controller_.data();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

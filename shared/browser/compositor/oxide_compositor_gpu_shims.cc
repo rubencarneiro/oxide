@@ -27,6 +27,7 @@
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
 #include "ui/gl/gl_bindings.h"
+#include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface_egl.h"
 
 #include "shared/port/content/common/gpu_service_shim_oxide.h"
