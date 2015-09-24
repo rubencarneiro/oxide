@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1551,17 +1549,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1552,17 +1550,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    frame_tree_node_->DidStopLoading();
    navigation_handle_.reset();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1574,17 +1571,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1575,17 +1572,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -2060,30 +2056,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -2061,30 +2057,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -261,14 +261,14 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -1147,21 +1143,17 @@ IPC_MESSAGE_ROUTED1(FrameHostMsg_RouteMe
- // Sent when the renderer displays insecure content in a secure origin.
- IPC_MESSAGE_ROUTED0(FrameHostMsg_DidDisplayInsecureContent)
+@@ -1162,21 +1158,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
+                     std::vector<GURL> /* savable resource links */,
+                     std::vector<content::Referrer> /* referrers */)
  
- // Sent when the renderer runs insecure content in a secure origin.
- IPC_MESSAGE_ROUTED2(FrameHostMsg_DidRunInsecureContent,
-                     std::string /* security_origin */,
-                     GURL /* target URL */)
+ // Response to FrameMsg_GetSavableResourceLinks in case the frame contains
+ // non-savable content (i.e. from a non-savable scheme) or if there were
+ // errors gathering the links.
+ IPC_MESSAGE_ROUTED0(FrameHostMsg_SavableResourceLinksError)
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
 -
@@ -357,7 +357,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1040,23 +1040,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -1014,23 +1014,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -381,15 +381,15 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1126,19 +1124,18 @@ bool RenderFrameImpl::OnMessageReceived(
-                         OnSnapshotAccessibilityTree)
-     IPC_MESSAGE_HANDLER(FrameMsg_UpdateOpener, OnUpdateOpener)
+@@ -1102,19 +1100,18 @@ bool RenderFrameImpl::OnMessageReceived(
      IPC_MESSAGE_HANDLER(FrameMsg_CommitNavigation, OnCommitNavigation)
      IPC_MESSAGE_HANDLER(FrameMsg_DidUpdateSandboxFlags, OnDidUpdateSandboxFlags)
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
                          OnTextTrackSettingsChanged)
      IPC_MESSAGE_HANDLER(FrameMsg_PostMessageEvent, OnPostMessageEvent)
      IPC_MESSAGE_HANDLER(FrameMsg_FailedNavigation, OnFailedNavigation)
+     IPC_MESSAGE_HANDLER(FrameMsg_GetSavableResourceLinks,
+                         OnGetSavableResourceLinks)
 -#if defined(OS_ANDROID)
      IPC_MESSAGE_HANDLER(FrameMsg_SelectPopupMenuItems, OnSelectPopupMenuItems)
 -#elif defined(OS_MACOSX)
@@ -402,7 +402,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1766,31 +1763,29 @@ void RenderFrameImpl::OnPostMessageEvent
+@@ -1743,31 +1740,29 @@ void RenderFrameImpl::OnPostMessageEvent
    WebSecurityOrigin target_origin;
    if (!params.target_origin.empty()) {
      target_origin =
@@ -434,7 +434,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2142,17 +2137,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2119,17 +2114,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -498,7 +498,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -1032,20 +1029,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -1033,20 +1030,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    scoped_ptr<blink::WebUSBClient> usb_client_;
  
