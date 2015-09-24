@@ -85,7 +85,6 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
   renderer_prefs->enable_do_not_track = context_->GetDoNotTrack();
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();

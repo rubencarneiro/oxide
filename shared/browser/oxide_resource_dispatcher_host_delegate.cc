@@ -38,6 +38,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_platform_integration.h"
+#include "oxide_navigation_intercept_resource_throttle.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_resource_dispatcher_host_login_delegate.h"
 #include "oxide_user_agent_settings.h"
@@ -231,6 +232,11 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
     ScopedVector<content::ResourceThrottle>* throttles) {
   throttles->push_back(
       new RedirectionInterceptThrottle(request, resource_context));
+
+  if (resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
+    throttles->push_back(
+        new NavigationInterceptResourceThrottle(request));
+  }
 }
 
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(

@@ -103,7 +103,7 @@ Column {
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       // See https://launchpad.net/bugs/1302740
-      skip(navigationSpy.count, 1, "Should have had an onNavigationRequested");
+      compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
       compare(webView2.url, "http://testsuite/empty.html", "Unexpected URL");
     }
 

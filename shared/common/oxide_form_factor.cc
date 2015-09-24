@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
-#define _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
+#include "oxide_form_factor.h"
+
+#include "base/logging.h"
 
 namespace oxide {
 
-enum FormFactor {
-  FORM_FACTOR_DESKTOP,
-  FORM_FACTOR_TABLET,
-  FORM_FACTOR_PHONE
-};
-
-FormFactor GetFormFactorHint();
-
+namespace {
+bool g_initialized = false;
+FormFactor g_form_factor = FORM_FACTOR_DESKTOP;
 }
 
-#endif // _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
+void InitFormFactorHint(FormFactor form_factor) {
+  DCHECK(!g_initialized);
+  g_initialized = true;
+  g_form_factor = form_factor;
+}
+
+FormFactor GetFormFactorHint() {
+  return g_form_factor;
+}
+
+} // namespace oxide

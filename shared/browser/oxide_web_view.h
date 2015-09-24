@@ -313,6 +313,8 @@ class WebView : public ScriptMessageTarget,
       content::JavaScriptMessageType javascript_message_type);
   JavaScriptDialog* CreateBeforeUnloadDialog();
 
+  bool ShouldHandleNavigation(const GURL& url, bool has_user_gesture);
+
   bool CanCreateWindows() const;
 
   ui::TextInputType text_input_type() const { return text_input_type_; }

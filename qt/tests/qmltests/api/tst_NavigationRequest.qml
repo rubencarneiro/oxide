@@ -15,6 +15,7 @@ TestWebView {
   property string lastRequestUrl: ""
   property int lastRequestDisposition: NavigationRequest.DispositionCurrentTab
   property bool lastRequestUserGesture: false
+  property bool lastRequestLoadingState: false
 
   property bool shouldReject: false
 
@@ -27,6 +28,7 @@ TestWebView {
     lastRequestUrl = request.url;
     lastRequestDisposition = request.disposition;
     lastRequestUserGesture = request.userGesture;
+    lastRequestLoadingState = webView.loading;
   }
 
   Component {
@@ -69,6 +71,7 @@ TestWebView {
       frameSpy.clear();
       webView.shouldReject = false;
       webView.context.popupBlockerEnabled = true;
+      webView.clearLoadEventCounters();
     }
 
     function test_NavigationRequest1_from_user_gestures_data() {
@@ -117,6 +120,7 @@ TestWebView {
       compare(webView.lastRequestUrl, data.url);
       compare(webView.lastRequestDisposition, data.disposition);
       compare(webView.lastRequestUserGesture, true);
+      compare(webView.lastRequestLoadingState, data.disposition == NavigationRequest.DispositionCurrentTab ? true : false);
     }
 
     function test_NavigationRequest2_no_user_gesture_data() {
@@ -151,6 +155,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       compare(webView.lastRequestUrl, "http://testsuite/empty.html");
       compare(webView.lastRequestDisposition, data.current ? NavigationRequest.DispositionCurrentTab : NavigationRequest.DispositionNewPopup );
       compare(webView.lastRequestUserGesture, false);
+      compare(webView.lastRequestLoadingState, data.current ? true : false);
     }
 
     function test_NavigationRequest3_reject_data() {
@@ -178,10 +183,15 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       spy.wait();
       compare(spy.count, 1);
 
-      Utils.wait(100);
+      if (data.disposition == NavigationRequest.DispositionCurrentTab) {
+        verify(webView.waitForLoadStopped());
+      } else {
+        Utils.wait(100);
+      }
 
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
-      compare(webView.loadsStartedCount, 0, "Shouldn't have started a load for rejected navigation");
+      compare(webView.loadsStartedCount, data.disposition == NavigationRequest.DispositionCurrentTab ? 1 : 0);
+      compare(webView.loadsCommittedCount, 0, "Shouldn't have committed a load for rejected navigation");
     }
 
     function test_NavigationRequest4_subframe_data() {
@@ -212,6 +222,54 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
         newViewSpy.wait();
         compare(spy.count, 1, "Should get onNavigationRequested from non-CurrentTab subframe navigations");
       }
+    }
+
+    // Verify we don't get an onNavigationRequested signal for browser-
+    // initiated navigations via WebView.url
+    function test_NavigationRequest5_browser_initiated_url() {
+      webView.shouldReject = true;
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+      compare(spy.count, 0);
+    }
+
+    // Verify we don't get an onNavigationRequested signal for browser-
+    // initiated navigations via WebView.loadHtml()
+    function test_NavigationRequest6_browser_initiated_loadHtml() {
+      webView.shouldReject = true;
+      webView.loadHtml("<html><body><div>FOO</div></body></html>", "file:///");
+      verify(webView.waitForLoadSucceeded());
+      compare(spy.count, 0);
+    }
+
+    // Verify we don't get an onNavigationRequested signal for browser-
+    // initiated navigations via WebView.reload()
+    function test_NavigationRequest7_browser_initiated_reload() {
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.shouldReject = true;
+      webView.reload();
+      verify(webView.waitForLoadSucceeded());
+      compare(spy.count, 0);
+    }
+
+    // Verify we don't get an onNavigationRequested signal for browser-
+    // initiated navigations via WebView.goBack() and WebView.goForward()
+    function test_NavigationRequest8_browser_initiated_back_forward() {
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+      webView.url = "http://foo.testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.shouldReject = true;
+      webView.goBack();
+      verify(webView.waitForLoadSucceeded());
+      compare(spy.count, 0);
+
+      webView.goForward();
+      verify(webView.waitForLoadSucceeded());
+      compare(spy.count, 0);
     }
   }
 }

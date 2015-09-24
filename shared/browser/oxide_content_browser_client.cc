@@ -37,6 +37,7 @@
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_android_properties.h"
@@ -44,7 +45,6 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -105,9 +105,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
-    switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes,
     switches::kEnableMediaHubAudio,
+    switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),

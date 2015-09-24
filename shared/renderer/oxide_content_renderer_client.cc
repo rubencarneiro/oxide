@@ -35,6 +35,7 @@
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
+#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
 #include "oxide_renderer_user_agent_settings.h"
@@ -91,11 +92,8 @@ void ContentRendererClient::RenderViewCreated(
   blink::WebSettings* settings = render_view->GetWebView()->settings();
   settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
 
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorTablet ||
-      form_factor == switches::kFormFactorPhone) {
+  if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
+      GetFormFactorHint() == FORM_FACTOR_PHONE) {
     settings->setAllowCustomScrollbarInMainFrame(false);
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);

@@ -169,7 +169,7 @@ void CreateHelpers(content::WebContents* contents,
   FindController::CreateForWebContents(contents);
 }
 
-
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
@@ -515,6 +515,16 @@ content::WebContents* WebView::OpenURLFromTab(
     const content::OpenURLParams& params) {
   DCHECK_VALID_SOURCE_CONTENTS
 
+  // We get here from the following places:
+  //  1) RenderFrameHostManager::OnCrossSiteResponse. In this case, disposition
+  //     is always CURRENT_TAB and we always want to perform the navigation.
+  //     Asking the embedder whether to proceed is done via
+  //     NavigationInterceptResourceThrottle.
+  //  2) Non CURRENT_TAB navigations as a result of keyboard modifiers. In
+  //     this case, we want to ask the embedder whether to perform the
+  //     navigation unless we change it to CURRENT_TAB (in which case, we ask
+  //     the embedder via NavigationInterceptResourceThrottle)
+
   if (params.disposition != CURRENT_TAB &&
       params.disposition != NEW_FOREGROUND_TAB &&
       params.disposition != NEW_BACKGROUND_TAB &&
@@ -533,52 +543,44 @@ content::WebContents* WebView::OpenURLFromTab(
   }
 
   WindowOpenDisposition disposition = params.disposition;
-  content::OpenURLParams local_params(params);
-
-  // Coerce all non CURRENT_TAB navigations that don't come from a user
-  // gesture to NEW_POPUP
-  if (disposition != CURRENT_TAB && !local_params.user_gesture) {
-    disposition = NEW_POPUP;
-  }
 
   // If we can't create new windows, this should be a CURRENT_TAB navigation
   // in the top-level frame
   if (!CanCreateWindows() && disposition != CURRENT_TAB) {
     disposition = CURRENT_TAB;
-    local_params.frame_tree_node_id = -1;
   }
 
-  // Navigations in a new window are always in the root frame
-  if (disposition != CURRENT_TAB) {
-    local_params.frame_tree_node_id = -1;
-  }
-
-  // Determine if this is a top-level navigation
-  bool top_level = params.frame_tree_node_id == -1;
-  if (!top_level) {
-    WebFrame* frame = WebFrame::FromFrameTreeNodeID(params.frame_tree_node_id);
-    DCHECK(frame);
-    top_level = frame->parent() == nullptr;
-  }
-
-  // Give the application a chance to block the navigation if it is
-  // renderer initiated and it's a top-level navigation or requires a
-  // new webview
-  if (local_params.is_renderer_initiated &&
-      top_level &&
-      !client_->ShouldHandleNavigation(local_params.url,
-                                       disposition,
-                                       local_params.user_gesture)) {
-    return nullptr;
-  }
-
+  // Handle the CURRENT_TAB case now
   if (disposition == CURRENT_TAB) {
-    content::NavigationController::LoadURLParams load_params(local_params.url);
-    FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
+    // XXX: We have no way to propagate OpenURLParams::user_gesture here, so
+    // ResourceRequestInfo::HasUserGesture will always return false in
+    // NavigationInterceptResourceThrottle
+    // See https://launchpad.net/bugs/1499434
+    content::NavigationController::LoadURLParams load_params(params.url);
+    FillLoadURLParamsFromOpenURLParams(&load_params, params);
 
     web_contents_->GetController().LoadURLWithParams(load_params);
 
     return web_contents_.get();
+  }
+
+  // At this point, we expect all navigations to be for the main frame and
+  // to be renderer initiated
+  DCHECK_EQ(params.frame_tree_node_id, -1);
+  DCHECK(params.is_renderer_initiated);
+
+  // Coerce all non CURRENT_TAB navigations that don't come from a user
+  // gesture to NEW_POPUP
+  if (!params.user_gesture) {
+    disposition = NEW_POPUP;
+  }
+
+  // Give the application a chance to block the navigation if it is
+  // renderer initiated
+  if (!client_->ShouldHandleNavigation(params.url,
+                                       disposition,
+                                       params.user_gesture)) {
+    return nullptr;
   }
 
   // XXX(chrisccoulson): Is there a way to tell when the opener shouldn't
@@ -616,8 +618,8 @@ content::WebContents* WebView::OpenURLFromTab(
     return nullptr;
   }
 
-  content::NavigationController::LoadURLParams load_params(local_params.url);
-  FillLoadURLParamsFromOpenURLParams(&load_params, local_params);
+  content::NavigationController::LoadURLParams load_params(params.url);
+  FillLoadURLParamsFromOpenURLParams(&load_params, params);
 
   new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
 
@@ -1271,7 +1273,8 @@ void WebView::SetURL(const GURL& url) {
   }
 
   content::NavigationController::LoadURLParams params(url);
-  params.transition_type = ui::PAGE_TRANSITION_TYPED;
+  params.transition_type =
+      ui::PAGE_TRANSITION_TYPED | ui::PAGE_TRANSITION_FROM_API;
 
   web_contents_->GetController().LoadURLWithParams(params);
 }
@@ -1305,6 +1308,8 @@ void WebView::LoadData(const std::string& encoded_data,
   url.append(encoded_data);
 
   content::NavigationController::LoadURLParams params((GURL(url)));
+  params.transition_type =
+      ui::PAGE_TRANSITION_TYPED | ui::PAGE_TRANSITION_FROM_API;
   params.load_type = content::NavigationController::LOAD_TYPE_DATA;
   params.base_url_for_data_url = base_url;
   params.virtual_url_for_data_url =
@@ -1926,6 +1931,16 @@ JavaScriptDialog* WebView::CreateJavaScriptDialog(
 
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return client_->CreateBeforeUnloadDialog();
+}
+
+bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
+  if (web_contents_->GetController().IsInitialNavigation()) {
+    return true;
+  }
+
+  return client_->ShouldHandleNavigation(url,
+                                         CURRENT_TAB,
+                                         has_user_gesture);
 }
 
 bool WebView::CanCreateWindows() const {

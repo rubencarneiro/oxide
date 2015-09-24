@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
+#include "oxide_form_factor.h"
 #include "oxide_user_agent.h"
 
 namespace oxide {
@@ -55,7 +56,16 @@ base::StringPiece ContentClient::GetDataResource(
 
 base::RefCountedStaticMemory* ContentClient::GetDataResourceBytes(
     int resource_id) const {
-  return ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(resource_id);
+  return ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(
+      resource_id);
+}
+
+bool ContentClient::ShouldOptimizeForMemoryUsage() const {
+  if (GetFormFactorHint() == FORM_FACTOR_DESKTOP) {
+    return false;
+  }
+
+  return true;
 }
 
 // static
