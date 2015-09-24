@@ -367,6 +367,8 @@
         'browser/oxide_lifecycle_observer.h',
         'browser/oxide_message_pump.cc',
         'browser/oxide_message_pump.h',
+        'browser/oxide_navigation_intercept_resource_throttle.cc',
+        'browser/oxide_navigation_intercept_resource_throttle.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
         'browser/oxide_power_save_blocker.cc',
