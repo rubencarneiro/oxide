@@ -6,10 +6,10 @@ diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
 +++ b/tools/gritsettings/resource_ids
 @@ -280,9 +280,12 @@
    "chrome/browser/devtools/device/webrtc/resources.grd": {
-     "includes": [30800],
+     "includes": [30820],
    },
    "chrome/browser/resources/settings/settings_resources.grd": {
-     "structures": [30900],
+     "structures": [30920],
    },
  
    # Resource ids starting at 31000 are reserved for projects built on Chromium.
