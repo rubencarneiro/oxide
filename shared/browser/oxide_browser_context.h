@@ -52,6 +52,9 @@ class TransportSecurityState;
 
 namespace oxide {
 
+class BrowserContext;
+typedef BrowserContext* BrowserContextID;
+
 class BrowserContextDelegate;
 class BrowserContextImpl;
 class BrowserContextObserver;
@@ -180,6 +183,8 @@ class BrowserContext
 
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
+
+  BrowserContextID GetID() const;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,

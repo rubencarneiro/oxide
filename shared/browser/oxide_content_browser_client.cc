@@ -35,6 +35,7 @@
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 
@@ -52,7 +53,6 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
-#include "oxide_platform_notification_service.h"
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
@@ -194,6 +194,11 @@ content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
   return MediaCaptureDevicesDispatcher::GetInstance();
 }
 
+content::PlatformNotificationService*
+ContentBrowserClient::GetPlatformNotificationService() {
+  return PlatformNotificationService::GetInstance();
+}
+
 bool ContentBrowserClient::CanCreateWindow(
     const GURL& opener_url,
     const GURL& opener_top_level_frame_url,
@@ -298,14 +303,7 @@ ContentBrowserClient::ContentBrowserClient(
     const std::string& application_locale,
     BrowserPlatformIntegration* integration)
     : application_locale_(application_locale),
-      platform_integration_(integration) {
-  PlatformNotificationService::GetInstance()->Initialize(integration->GetApplicationName());
-}
-
-content::PlatformNotificationService*
-ContentBrowserClient::GetPlatformNotificationService() {
-  return PlatformNotificationService::GetInstance();
-}
+      platform_integration_(integration) {}
 
 ContentBrowserClient::~ContentBrowserClient() {}
 

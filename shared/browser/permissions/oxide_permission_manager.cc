@@ -21,8 +21,8 @@
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"
-#include "shared/browser/oxide_platform_notification_service.h"
 
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
 
 #include "oxide_permission_request_dispatcher.h"
@@ -138,7 +138,6 @@ const PermissionRequestCallback WrapCallback(
     case content::PermissionType::GEOLOCATION:
       return base::Bind(&RespondToGeolocationPermissionRequest,
                         wrapped_callback);
-    case content::PermissionType::NOTIFICATIONS:
     default:
       return wrapped_callback;
   }
@@ -170,6 +169,16 @@ void PermissionManager::RequestPermission(
   }
 
   GURL embedding_origin = web_contents->GetLastCommittedURL().GetOrigin();
+  if (permission == content::PermissionType::NOTIFICATIONS) {
+    // Use the requesting origin as the embedding origin for notifications,
+    // as we don't get an embedding origin in
+    // PlatformNotificationService::CheckPermissionOn{UI,IO}Thread
+    // XXX(chrisccoulson): I don't really like having PermissionType specific
+    //  code here in PermissionManager. PermissionManager should probably
+    //  delegate this to PermissionType specific classes (same for geolocation
+    //  response handling above)
+    embedding_origin = requesting_origin;
+  }
 
   TemporarySavedPermissionStatus status =
       context_->GetTemporarySavedPermissionContext()->GetPermissionStatus(
