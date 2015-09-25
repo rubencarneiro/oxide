@@ -189,7 +189,7 @@ void IOThread::Init() {
       net::HttpAuthHandlerFactory::CreateDefault(
         globals()->host_resolver_.get());
 
-  net::ProxyConfigService* proxy_config_service =
+  scoped_ptr<net::ProxyConfigService> proxy_config_service =
       net::ProxyService::CreateSystemProxyConfigService(
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::IO),
@@ -198,7 +198,7 @@ void IOThread::Init() {
 
   globals()->proxy_service_ =
       net::ProxyService::CreateUsingSystemProxyResolver(
-        proxy_config_service, 4, IOThread::instance()->net_log());
+        proxy_config_service.Pass(), 4, IOThread::instance()->net_log());
 
   globals()->throttler_manager_.reset(new net::URLRequestThrottlerManager());
 
