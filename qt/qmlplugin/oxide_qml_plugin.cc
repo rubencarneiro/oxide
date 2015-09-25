@@ -155,7 +155,6 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<OxideQFindController>(uri, 1, 8, "FindController",
         "FindInPage is accessed via WebView.findController");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
-    qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 8, "WebView");
 
     qmlRegisterType<OxideQQuickWebContext, 3>(uri, 1, 9, "WebContext");
     qmlRegisterUncreatableType<OxideQHttpAuthenticationRequest>(uri, 1, 9, "HttpAuthenticationRequest",

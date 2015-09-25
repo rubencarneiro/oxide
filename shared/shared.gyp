@@ -17,7 +17,6 @@
 {
   'variables': {
     'grit_out_dir': '<(SHARED_INTERMEDIATE_DIR)/oxide',
-    'pkg_config': 'pkg-config'
   },
   'conditions': [
     ['enable_mediahub==1', {
