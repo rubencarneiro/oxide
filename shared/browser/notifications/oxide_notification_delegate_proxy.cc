@@ -15,34 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
+#include "oxide_notification_delegate_proxy.h"
 
-#include "base/memory/scoped_ptr.h"
-
-namespace content {
-class WebContents;
-}
+#include "content/public/browser/desktop_notification_delegate.h"
 
 namespace oxide {
 
-class MediaAccessPermissionRequest;
-class SimplePermissionRequest;
+NotificationDelegateProxy::~NotificationDelegateProxy() {}
 
-class PermissionRequestDispatcherClient {
- public:
-  virtual ~PermissionRequestDispatcherClient() {}
+NotificationDelegateProxy::NotificationDelegateProxy(
+    scoped_ptr<content::DesktopNotificationDelegate> delegate)
+    : delegate_(delegate.Pass()) {}
 
-  virtual void RequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
+void NotificationDelegateProxy::NotificationDisplayed() {
+  delegate_->NotificationDisplayed();
+}
 
-  virtual void RequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request) {}
+void NotificationDelegateProxy::NotificationClosed() {
+  delegate_->NotificationClosed();
+}
 
-  virtual void RequestNotificationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
-};
+void NotificationDelegateProxy::NotificationClick() {
+  delegate_->NotificationClick();
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_

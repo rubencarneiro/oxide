@@ -1039,6 +1039,16 @@ void WebView::RequestGeolocationPermission(
   client_->RequestGeolocationPermission(req.release());
 }
 
+void WebView::RequestNotificationPermission(
+    scoped_ptr<oxide::SimplePermissionRequest> request) {
+  scoped_ptr<OxideQSimplePermissionRequest> req(
+      OxideQSimplePermissionRequestPrivate::Create(
+        request.Pass()));
+
+  // The embedder takes ownership of this
+  client_->RequestNotificationPermission(req.release());
+}
+
 void WebView::RequestMediaAccessPermission(
     scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
   scoped_ptr<OxideQMediaAccessPermissionRequest> req(

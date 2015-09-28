@@ -15,34 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_ID_H_
+#define _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_ID_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <string>
 
-namespace content {
-class WebContents;
-}
+#include "url/gurl.h"
+
+#include "shared/browser/oxide_browser_context.h"
 
 namespace oxide {
 
-class MediaAccessPermissionRequest;
-class SimplePermissionRequest;
+struct NotificationID {
+  NotificationID(BrowserContextID context_id,
+                 const GURL& origin,
+                 const std::string& tag)
+      : context_id(context_id),
+        origin(origin),
+        tag(tag) {}
 
-class PermissionRequestDispatcherClient {
- public:
-  virtual ~PermissionRequestDispatcherClient() {}
+  bool operator==(const NotificationID& other) const {
+    return context_id == other.context_id &&
+           origin == other.origin &&
+           tag == other.tag;
+  }
 
-  virtual void RequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
-
-  virtual void RequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request) {}
-
-  virtual void RequestNotificationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
+  BrowserContextID context_id;
+  GURL origin;
+  std::string tag;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_ID_H_

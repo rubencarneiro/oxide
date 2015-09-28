@@ -22,6 +22,7 @@
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"
 
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
 
 #include "oxide_permission_request_dispatcher.h"
@@ -57,6 +58,7 @@ content::PermissionStatus ToPermissionStatus(
 bool IsPermissionTypeSupported(content::PermissionType permission) {
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
+    case content::PermissionType::NOTIFICATIONS:
       return true;
     default:
       return false;
@@ -68,6 +70,8 @@ TemporarySavedPermissionType ToTemporarySavedPermissionType(
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
       return TEMPORARY_SAVED_PERMISSION_TYPE_GEOLOCATION;
+    case content::PermissionType::NOTIFICATIONS:
+      return TEMPORARY_SAVED_PERMISSION_TYPE_NOTIFICATIONS;
     default:
       NOTREACHED();
       // XXX(chrisccoulson): Perhaps we need __builtin_unreachable here?
@@ -165,6 +169,16 @@ void PermissionManager::RequestPermission(
   }
 
   GURL embedding_origin = web_contents->GetLastCommittedURL().GetOrigin();
+  if (permission == content::PermissionType::NOTIFICATIONS) {
+    // Use the requesting origin as the embedding origin for notifications,
+    // as we don't get an embedding origin in
+    // PlatformNotificationService::CheckPermissionOn{UI,IO}Thread
+    // XXX(chrisccoulson): I don't really like having PermissionType specific
+    //  code here in PermissionManager. PermissionManager should probably
+    //  delegate this to PermissionType specific classes (same for geolocation
+    //  response handling above)
+    embedding_origin = requesting_origin;
+  }
 
   TemporarySavedPermissionStatus status =
       context_->GetTemporarySavedPermissionContext()->GetPermissionStatus(

@@ -35,6 +35,7 @@
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
@@ -190,6 +191,11 @@ void ContentBrowserClient::AllowCertificateError(
 
 content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
   return MediaCaptureDevicesDispatcher::GetInstance();
+}
+
+content::PlatformNotificationService*
+ContentBrowserClient::GetPlatformNotificationService() {
+  return PlatformNotificationService::GetInstance();
 }
 
 bool ContentBrowserClient::CanCreateWindow(

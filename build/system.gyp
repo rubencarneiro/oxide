@@ -18,6 +18,42 @@
   'variables': {
     'pkg_config': 'pkg-config'
   },
+  'targets': [
+    {
+      'target_name': 'gdkpixbuf',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '<!@(<(pkg_config) --cflags gdk-pixbuf-2.0)'
+        ]
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(<(pkg_config) --libs-only-L --libs-only-other gdk-pixbuf-2.0)',
+        ],
+        'libraries': [
+          '<!@(<(pkg_config) --libs-only-l gdk-pixbuf-2.0)',
+        ],
+      },
+    },
+    {
+      'target_name': 'libnotify',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '<!@(<(pkg_config) --cflags libnotify)'
+        ]
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(<(pkg_config) --libs-only-L --libs-only-other libnotify)',
+        ],
+        'libraries': [
+          '<!@(<(pkg_config) --libs-only-l libnotify)',
+        ],
+      },
+    },
+  ],
   'conditions': [
     ['target_arch=="arm"', {
       'targets': [

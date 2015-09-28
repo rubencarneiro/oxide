@@ -127,6 +127,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       OxideQGeolocationPermissionRequest* request) override;
   void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) override;
+  void RequestNotificationPermission(
+      OxideQPermissionRequest* request) override;
+
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;

@@ -190,6 +190,8 @@ class WebView : public QObject,
   // oxide::PermissionRequestDispatcherClient implementation
   void RequestGeolocationPermission(
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void RequestNotificationPermission(
+      scoped_ptr<oxide::SimplePermissionRequest> request) override;
   void RequestMediaAccessPermission(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 

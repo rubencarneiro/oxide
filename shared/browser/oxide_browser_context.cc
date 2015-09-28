@@ -773,6 +773,10 @@ void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
 }
 
+BrowserContextID BrowserContext::GetID() const {
+  return static_cast<BrowserContextID>(const_cast<BrowserContext*>(this));
+}
+
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
     content::ProtocolHandlerMap* protocol_handlers,
     content::URLRequestInterceptorScopedVector request_interceptors) {
