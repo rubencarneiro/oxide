@@ -23,7 +23,7 @@ TestWebView {
     id: c
     Component.onCompleted: {
       addTestUserScript({
-          context: "oxide://testutils/",
+          context: "oxide://notifytest/",
           url: Qt.resolvedUrl("tst_NotificationPermissionRequest.js"),
           matchAllFrames: true
       });
@@ -41,7 +41,7 @@ TestWebView {
   messageHandlers: [
     ScriptMessageHandler {
       msgId: "TEST-RESPONSE"
-      contexts: [ "oxide://testutils/" ]
+      contexts: [ "oxide://notifytest/" ]
       callback: function(msg) {
         webView.lastStatus = msg.payload;
       }
