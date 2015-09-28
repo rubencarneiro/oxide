@@ -3,11 +3,9 @@
 </body>
 <script>
 
-var vgaConstraints = {video: true, audio: true};
-
-function invoke() {
-  Notification.requestPermission(function(permission){
-    if(permission == 'granted'){
+setTimeout(function() {
+  Notification.requestPermission(function(permission) {
+    if (permission == 'granted') {
       var e = new CustomEvent("result", { bubbles: true, detail: { status: 0 } });
       document.documentElement.dispatchEvent(e);
     } else {
@@ -15,7 +13,7 @@ function invoke() {
       document.documentElement.dispatchEvent(e);
     }
   });
-}
-setTimeout(invoke, 400);
+}, 0);
+
 </script>
 </html>
