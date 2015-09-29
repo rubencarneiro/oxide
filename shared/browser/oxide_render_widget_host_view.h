@@ -124,7 +124,7 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      content::ReadbackRequestCallback& callback,
+      const content::ReadbackRequestCallback& callback,
       const SkColorType color_type) final;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
@@ -135,7 +135,6 @@ class RenderWidgetHostView final :
   void GetScreenInfo(blink::WebScreenInfo* results) final;
   bool GetScreenColorProfile(std::vector<char>* color_profile) final;
   gfx::Rect GetBoundsInRootWindow() final;
-  gfx::GLSurfaceHandle GetCompositingSurface() final;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) final;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,

@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -477,20 +477,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -481,20 +481,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1552,17 +1550,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1559,17 +1557,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    frame_tree_node_->DidStopLoading();
    navigation_handle_.reset();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1575,17 +1572,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1582,17 +1579,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -2061,30 +2057,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -2065,30 +2061,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -139,7 +139,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -556,20 +553,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -555,20 +552,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnAccessibilitySnapshotResponse(
        int callback_id,
        const ui::AXTreeUpdate<AXContentNodeData>& snapshot);
@@ -199,7 +199,7 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
-@@ -385,17 +385,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
+@@ -386,17 +386,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
  
    // Text shadow (edge style) of the text track text.
    IPC_STRUCT_MEMBER(std::string, text_track_text_shadow)
@@ -217,7 +217,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  
    // The height of each item in the menu.
    IPC_STRUCT_MEMBER(int, item_height)
-@@ -410,17 +409,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
+@@ -411,17 +410,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
    IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
  
    // Whether items should be right-aligned.
@@ -235,7 +235,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
    IPC_STRUCT_TRAITS_MEMBER(document_url)
    IPC_STRUCT_TRAITS_MEMBER(plugin_url)
    IPC_STRUCT_TRAITS_MEMBER(is_potentially_secure_plugin_context)
-@@ -627,24 +625,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_DidUpdateOr
+@@ -628,24 +626,22 @@ IPC_MESSAGE_ROUTED1(FrameMsg_DidUpdateOr
  // Send to the RenderFrame to set text tracks state and style settings.
  // Sent for top-level frames.
  IPC_MESSAGE_ROUTED1(FrameMsg_SetTextTrackSettings,
@@ -261,14 +261,14 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -1162,21 +1158,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
-                     std::vector<GURL> /* savable resource links */,
-                     std::vector<content::Referrer> /* referrers */)
- 
- // Response to FrameMsg_GetSavableResourceLinks in case the frame contains
+@@ -1166,21 +1162,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
  // non-savable content (i.e. from a non-savable scheme) or if there were
  // errors gathering the links.
  IPC_MESSAGE_ROUTED0(FrameHostMsg_SavableResourceLinksError)
+ 
+ // Sent when the renderer updates hint for importance of a tab.
+ IPC_MESSAGE_ROUTED1(FrameHostMsg_UpdatePageImportanceSignals,
+                     content::PageImportanceSignals)
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
 -
@@ -348,8 +348,8 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 -#endif
  
    // blink::WebExternalPopupMenu implementation:
-   virtual void show(const blink::WebRect& bounds);
-   virtual void close();
+   void show(const blink::WebRect& bounds) override;
+   void close() override;
  
   private:
    RenderFrameImpl* render_frame_;
@@ -357,7 +357,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1014,23 +1014,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -1035,23 +1035,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -381,7 +381,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1102,19 +1100,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1123,19 +1121,18 @@ bool RenderFrameImpl::OnMessageReceived(
      IPC_MESSAGE_HANDLER(FrameMsg_CommitNavigation, OnCommitNavigation)
      IPC_MESSAGE_HANDLER(FrameMsg_DidUpdateSandboxFlags, OnDidUpdateSandboxFlags)
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
@@ -402,7 +402,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1743,31 +1740,29 @@ void RenderFrameImpl::OnPostMessageEvent
+@@ -1764,31 +1761,29 @@ void RenderFrameImpl::OnPostMessageEvent
    WebSecurityOrigin target_origin;
    if (!params.target_origin.empty()) {
      target_origin =
@@ -434,7 +434,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2119,17 +2114,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2140,17 +2135,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -476,7 +476,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -694,20 +692,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -699,20 +697,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnTextSurroundingSelectionRequest(size_t max_length);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
    void OnSnapshotAccessibilityTree(int callback_id);
@@ -498,7 +498,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -1033,20 +1030,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -1038,20 +1035,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    scoped_ptr<blink::WebUSBClient> usb_client_;
  
@@ -546,7 +546,7 @@ diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_th
 diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.cc
 --- a/content/renderer/render_widget.cc
 +++ b/content/renderer/render_widget.cc
-@@ -695,23 +695,21 @@ gfx::Rect RenderWidget::AdjustValidation
+@@ -693,23 +693,21 @@ gfx::Rect RenderWidget::AdjustValidation
  
  void RenderWidget::SetScreenMetricsEmulationParameters(
      bool enabled,
@@ -573,7 +573,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -407,20 +407,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -403,20 +403,18 @@ class CONTENT_EXPORT RenderWidget
                bool is_fullscreen_granted,
                blink::WebDisplayMode display_mode,
                ResizeAck resize_ack);

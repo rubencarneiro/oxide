@@ -186,7 +186,6 @@ class CompositorUtilsImpl : public CompositorUtils,
       uint32 sync_point,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
-  gfx::GLSurfaceHandle GetSharedSurfaceHandle() override;
   bool CanUseGpuCompositing() const override;
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
@@ -632,13 +631,6 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
   }
 
   incoming_texture_resource_fetches_.queue.push(info);
-}
-
-gfx::GLSurfaceHandle CompositorUtilsImpl::GetSharedSurfaceHandle() {
-  gfx::GLSurfaceHandle handle(gfx::kNullPluginWindow, gfx::NULL_TRANSPORT);
-  handle.parent_client_id = client_id_;
-
-  return handle;
 }
 
 bool CompositorUtilsImpl::CanUseGpuCompositing() const {

@@ -331,7 +331,7 @@ void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    content::ReadbackRequestCallback& callback,
+    const content::ReadbackRequestCallback& callback,
     const SkColorType color_type) {
   callback.Run(SkBitmap(), content::READBACK_FAILED);
 }
@@ -372,15 +372,6 @@ bool RenderWidgetHostView::GetScreenColorProfile(
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
   return GetViewBounds();
-}
-
-gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
-  if (shared_surface_handle_.is_null()) {
-    shared_surface_handle_ =
-        CompositorUtils::GetInstance()->GetSharedSurfaceHandle();
-  }
-
-  return shared_surface_handle_;
 }
 
 void RenderWidgetHostView::ShowDisambiguationPopup(
