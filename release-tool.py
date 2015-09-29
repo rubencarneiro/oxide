@@ -40,7 +40,6 @@ TAR_EXCLUDE_DIRS = [
   'third_party/chromium/src/breakpad/src/processor/testdata',
   'third_party/chromium/src/chrome/browser/resources/tracing/tests',
   'third_party/chromium/src/chrome/common/extensions/docs',
-  'third_party/chromium/src/chrome/test/data',
   'third_party/chromium/src/courgette/testdata',
   'third_party/chromium/src/native_client/src/trusted/service_runtime/testdata',
   'third_party/chromium/src/native_client/toolchain',
