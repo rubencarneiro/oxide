@@ -25,6 +25,9 @@
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
+#include "net/http/http_request_headers.h"
+
+#include "shared/common/oxide_constants.h"
 
 #include "oxide_web_contents_view.h"
 
@@ -98,7 +101,21 @@ void WebContextMenu::SaveMedia() const {
   } else {
     const GURL& url = params_.src_url;
     content::Referrer referrer = CreateSaveAsReferrer(url, params_);
-    web_contents()->SaveFrame(url, referrer);
+    if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
+      // XXX(oSoMoN): see comment in
+      // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
+      std::map<std::string, std::string>::const_iterator it;
+      it = params_.properties.find(oxide::kImageContextMenuPropertiesMimeType);
+      std::string headers;
+      if (it != params_.properties.cend()) {
+        headers.append(net::HttpRequestHeaders::kContentType);
+        headers.append(": ");
+        headers.append(it->second);
+      }
+      web_contents()->SaveFrameWithHeaders(url, referrer, headers);
+    } else {
+      web_contents()->SaveFrame(url, referrer);
+    }
   }
 }
 
