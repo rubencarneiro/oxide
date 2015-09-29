@@ -118,6 +118,8 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
 void ContentRendererClient::AddImageContextMenuProperties(
     const blink::WebURLResponse& response,
     std::map<std::string, std::string>* properties) {
+  // XXX(oSoMoN): see comment in
+  // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
   (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
       response.mimeType().utf8();
 }

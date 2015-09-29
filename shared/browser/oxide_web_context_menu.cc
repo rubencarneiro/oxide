@@ -102,6 +102,8 @@ void WebContextMenu::SaveMedia() const {
     const GURL& url = params_.src_url;
     content::Referrer referrer = CreateSaveAsReferrer(url, params_);
     if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
+      // XXX(oSoMoN): see comment in
+      // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
       std::map<std::string, std::string>::const_iterator it;
       it = params_.properties.find(oxide::kImageContextMenuPropertiesMimeType);
       std::string headers;

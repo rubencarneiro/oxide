@@ -143,6 +143,10 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.render_view_id = render_view_id;
 
   if (mime_type.empty()) {
+    // XXX(oSoMoN): hack to ensure that downloading an image from the context
+    // menu (via a call to saveMedia) results in a download request with a mime
+    // type. See https://launchpad.net/bugs/1500742. This should be removed,
+    // eventually.
     std::string content_type;
     if (url_request->extra_request_headers().GetHeader(
         net::HttpRequestHeaders::kContentType, &content_type)) {
