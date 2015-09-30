@@ -1,0 +1,19 @@
+<html>
+<body>
+</body>
+<script>
+
+setTimeout(function() {
+  Notification.requestPermission(function(permission) {
+    if (permission == 'granted') {
+      var e = new CustomEvent("result", { bubbles: true, detail: { status: 0 } });
+      document.documentElement.dispatchEvent(e);
+    } else {
+      var e = new CustomEvent("result", { bubbles: true, detail: { status: 1 } });
+      document.documentElement.dispatchEvent(e);
+    }
+  });
+}, 0);
+
+</script>
+</html>

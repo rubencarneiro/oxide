@@ -11,6 +11,7 @@ TestWebView {
 
   property var currentContextMenu: null
   property url downloadUrl
+  property string downloadMimeType
   property string downloadReferrer
 
   contextMenu: Item {
@@ -25,6 +26,7 @@ TestWebView {
 
   onDownloadRequested: {
     downloadUrl = request.url;
+    downloadMimeType = request.mimeType;
     downloadReferrer = request.referrer;
   }
 
@@ -106,10 +108,10 @@ TestWebView {
 
     function test_WebView_contextMenu_saveMedia_data() {
       return [
-        { id: "image", url: "http://testsuite/cof.svg", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
-        { id: "canvas", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAKElEQVQ4T2NkoDJgpLJ5DKMGUh6io2E4GoZkhMBosiEj0NC0jMAwBABIxgAVO+SUsAAAAABJRU5ErkJggg==", referrer: "" },
-        { id: "video", url: "http://testsuite/buddha.mp4", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
-        { id: "audio", url: "http://testsuite/fire.oga", referrer: "http://testsuite/tst_WebView_contextMenu.html" },
+        { id: "image", url: "http://testsuite/cof.svg", referrer: "http://testsuite/tst_WebView_contextMenu.html", mimeType: "image/svg+xml" },
+        { id: "canvas", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAKElEQVQ4T2NkoDJgpLJ5DKMGUh6io2E4GoZkhMBosiEj0NC0jMAwBABIxgAVO+SUsAAAAABJRU5ErkJggg==", referrer: "", mimeType: "" },
+        { id: "video", url: "http://testsuite/buddha.mp4", referrer: "http://testsuite/tst_WebView_contextMenu.html", mimeType: "" },
+        { id: "audio", url: "http://testsuite/fire.oga", referrer: "http://testsuite/tst_WebView_contextMenu.html", mimeType: "" },
       ];
     }
 
@@ -119,6 +121,7 @@ TestWebView {
       model.saveMedia();
       spy.wait();
       compare(webView.downloadUrl, data.url);
+      compare(webView.downloadMimeType, data.mimeType);
       compare(webView.downloadReferrer, data.referrer);
     }
 

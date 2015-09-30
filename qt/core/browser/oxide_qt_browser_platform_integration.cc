@@ -133,6 +133,10 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump());
 }
 
+ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
+  return ClipboardQt::DoCreate;
+}
+
 void BrowserPlatformIntegration::BrowserThreadInit(
     content::BrowserThread::ID id) {
   if (id != content::BrowserThread::IO) {
@@ -163,6 +167,10 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
+media::VideoCaptureDeviceFactory* BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
+  return new VideoCaptureDeviceFactory();
+}
+
 std::string BrowserPlatformIntegration::GetApplicationName() {
   return qApp->applicationName().toStdString();
 }
@@ -189,14 +197,6 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   QGuiApplication::instance()->removeEventFilter(this);
-}
-
-ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
-  return ClipboardQt::DoCreate;
-}
-
-media::VideoCaptureDeviceFactory* BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
-  return new VideoCaptureDeviceFactory();
 }
 
 QThread* GetIOQThread() {

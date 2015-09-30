@@ -15,34 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_DATA_H_
+#define _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_DATA_H_
 
-#include "base/memory/scoped_ptr.h"
-
-namespace content {
-class WebContents;
-}
+#include "base/strings/string16.h"
+#include "third_party/skia/include/core/SkBitmap.h"
+#include "url/gurl.h"
 
 namespace oxide {
 
-class MediaAccessPermissionRequest;
-class SimplePermissionRequest;
+struct NotificationData {
+  NotificationData(const base::string16& title,
+                   const base::string16& body,
+                   const SkBitmap& icon)
+      : title(title),
+        body(body),
+        icon(icon) {}
 
-class PermissionRequestDispatcherClient {
- public:
-  virtual ~PermissionRequestDispatcherClient() {}
-
-  virtual void RequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
-
-  virtual void RequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request) {}
-
-  virtual void RequestNotificationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
+  base::string16 title;
+  base::string16 body;
+  SkBitmap icon;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_DATA_H_
