@@ -23,7 +23,9 @@
 #include "base/macros.h"
 #include "content/public/browser/platform_notification_service.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace oxide {
 
@@ -35,7 +37,7 @@ class PlatformNotificationService: public content::PlatformNotificationService {
   static PlatformNotificationService* GetInstance();
 
  private:
-  friend struct DefaultSingletonTraits<PlatformNotificationService>;
+  friend struct base::DefaultSingletonTraits<PlatformNotificationService>;
 
   PlatformNotificationService();
 

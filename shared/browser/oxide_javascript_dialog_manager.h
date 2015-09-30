@@ -24,7 +24,9 @@
 #include "base/macros.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace oxide {
 
@@ -35,7 +37,7 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
   static JavaScriptDialogManager* GetInstance();
 
  private:
-  friend struct DefaultSingletonTraits<JavaScriptDialogManager>;
+  friend struct base::DefaultSingletonTraits<JavaScriptDialogManager>;
   friend class JavaScriptDialog;
 
   JavaScriptDialogManager();

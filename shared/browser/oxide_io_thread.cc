@@ -143,7 +143,8 @@ void IOThread::InitSystemRequestContextOnIOThread() {
       scoped_ptr<net::HttpServerProperties>(
         new net::HttpServerPropertiesImpl()));
   storage->set_cookie_store(new net::CookieMonster(nullptr, nullptr));
-  storage->set_transport_security_state(new net::TransportSecurityState());
+  storage->set_transport_security_state(
+      make_scoped_ptr(new net::TransportSecurityState()));
 
   net::HttpNetworkSession::Params session_params;
   session_params.host_resolver = context->host_resolver();
@@ -160,9 +161,11 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   session_params.net_log = context->net_log();
 
   storage->set_http_transaction_factory(
-      new net::HttpNetworkLayer(new net::HttpNetworkSession(session_params)));
+      make_scoped_ptr(new net::HttpNetworkLayer(
+        new net::HttpNetworkSession(session_params))));
 
-  storage->set_job_factory(new net::URLRequestJobFactoryImpl());
+  storage->set_job_factory(
+      make_scoped_ptr(new net::URLRequestJobFactoryImpl()));
 }
 
 void IOThread::Init() {
@@ -181,21 +184,21 @@ void IOThread::Init() {
   globals()->host_resolver_ =
       net::HostResolver::CreateDefaultResolver(
         IOThread::instance()->net_log());
-  globals()->cert_verifier_.reset(net::CertVerifier::CreateDefault());
-  globals()->http_auth_handler_factory_.reset(
+  globals()->cert_verifier_ = net::CertVerifier::CreateDefault();
+  globals()->http_auth_handler_factory_ =
       net::HttpAuthHandlerFactory::CreateDefault(
-        globals()->host_resolver_.get()));
+        globals()->host_resolver_.get());
 
-  net::ProxyConfigService* proxy_config_service =
+  scoped_ptr<net::ProxyConfigService> proxy_config_service =
       net::ProxyService::CreateSystemProxyConfigService(
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::IO),
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::FILE));
 
-  globals()->proxy_service_.reset(
+  globals()->proxy_service_ =
       net::ProxyService::CreateUsingSystemProxyResolver(
-        proxy_config_service, 4, IOThread::instance()->net_log()));
+        proxy_config_service.Pass(), 4, IOThread::instance()->net_log());
 
   globals()->throttler_manager_.reset(new net::URLRequestThrottlerManager());
 

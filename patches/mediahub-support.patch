@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -202,9 +202,17 @@ std::string ContentRendererClient::GetUs
+@@ -206,9 +206,17 @@ std::string ContentRendererClient::GetUs
    return std::string();
  }
  
@@ -59,15 +59,15 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -295,13 +298,20 @@ class CONTENT_EXPORT ContentRendererClie
-   // is called from the worker thread.
-   virtual void DidInitializeServiceWorkerContextOnWorkerThread(
+@@ -301,13 +304,20 @@ class CONTENT_EXPORT ContentRendererClie
        v8::Local<v8::Context> context,
        const GURL& url) {}
  
    // Notifies that a service worker context will be destroyed. This function
    // is called from the worker thread.
-   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
+   virtual void WillDestroyServiceWorkerContextOnWorkerThread(
+       v8::Local<v8::Context> context,
+       const GURL& url) {}
 +
 +  // Allow overriding default media player
 +  virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2070,16 +2070,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2080,16 +2080,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
  #else
    scoped_refptr<media::AudioRendererSink> audio_renderer_sink =
        render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_);

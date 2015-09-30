@@ -89,7 +89,7 @@ AndroidProperties::~AndroidProperties() {}
 
 // static
 AndroidProperties* AndroidProperties::GetInstance() {
-  return Singleton<AndroidProperties>::get();
+  return base::Singleton<AndroidProperties>::get();
 }
 
 bool AndroidProperties::Available() const {

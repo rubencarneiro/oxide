@@ -42,8 +42,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -309,13 +313,16 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
+@@ -311,13 +315,16 @@ class CONTENT_EXPORT ContentRendererClie
+       const GURL& url) {}
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -82,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -461,16 +463,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -455,16 +457,18 @@ void RenderWidgetCompositor::Initialize(
      settings.use_external_begin_frame_source = false;
    }
  
