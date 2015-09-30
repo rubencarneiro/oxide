@@ -68,6 +68,9 @@ class NetworkDelegate final : public net::NetworkDelegate {
   void OnNetworkBytesReceived(const net::URLRequest& request,
                               int64_t bytes_received) final;
 
+  void OnNetworkBytesSent(const net::URLRequest& request,
+                          int64_t bytes_sent) final;
+
   void OnCompleted(net::URLRequest* request, bool started) final;
 
   void OnURLRequestDestroyed(net::URLRequest* request) final;

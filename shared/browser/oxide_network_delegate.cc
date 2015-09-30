@@ -99,6 +99,9 @@ void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 void NetworkDelegate::OnNetworkBytesReceived(const net::URLRequest& request,
                                              int64_t bytes_received) {}
 
+void NetworkDelegate::OnNetworkBytesSent(const net::URLRequest& request,
+                                         int64_t bytes_sent) {}
+
 void NetworkDelegate::OnCompleted(net::URLRequest* request, bool started) {}
 
 void NetworkDelegate::OnURLRequestDestroyed(net::URLRequest* request) {}
