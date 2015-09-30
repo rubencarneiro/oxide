@@ -226,7 +226,7 @@ def cmd_tag(options, args):
 
   tree = WorkingTree.open(TOPSRCDIR)
   # XXX: Qt-specific
-  tree.commit(message="Automatically bump qt revision to %s" % str(v),
+  tree.commit(message="Bump qt revision to %s" % str(v),
               allow_pointless=False)
 
 def main(argv):
