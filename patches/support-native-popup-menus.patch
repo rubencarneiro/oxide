@@ -261,10 +261,10 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -1166,21 +1162,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
- // non-savable content (i.e. from a non-savable scheme) or if there were
- // errors gathering the links.
- IPC_MESSAGE_ROUTED0(FrameHostMsg_SavableResourceLinksError)
+@@ -1179,21 +1175,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Seriali
+                     GURL /* frame URL */,
+                     std::string /* data buffer */,
+                     int32 /* complete status */)
  
  // Sent when the renderer updates hint for importance of a tab.
  IPC_MESSAGE_ROUTED1(FrameHostMsg_UpdatePageImportanceSignals,
@@ -357,7 +357,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1035,23 +1035,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -1039,23 +1039,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -381,15 +381,15 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1123,19 +1121,18 @@ bool RenderFrameImpl::OnMessageReceived(
-     IPC_MESSAGE_HANDLER(FrameMsg_CommitNavigation, OnCommitNavigation)
-     IPC_MESSAGE_HANDLER(FrameMsg_DidUpdateSandboxFlags, OnDidUpdateSandboxFlags)
+@@ -1129,19 +1127,18 @@ bool RenderFrameImpl::OnMessageReceived(
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
                          OnTextTrackSettingsChanged)
      IPC_MESSAGE_HANDLER(FrameMsg_PostMessageEvent, OnPostMessageEvent)
      IPC_MESSAGE_HANDLER(FrameMsg_FailedNavigation, OnFailedNavigation)
      IPC_MESSAGE_HANDLER(FrameMsg_GetSavableResourceLinks,
                          OnGetSavableResourceLinks)
+     IPC_MESSAGE_HANDLER(FrameMsg_GetSerializedHtmlWithLocalLinks,
+                         OnGetSerializedHtmlWithLocalLinks)
 -#if defined(OS_ANDROID)
      IPC_MESSAGE_HANDLER(FrameMsg_SelectPopupMenuItems, OnSelectPopupMenuItems)
 -#elif defined(OS_MACOSX)
@@ -402,12 +402,12 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1764,31 +1761,29 @@ void RenderFrameImpl::OnPostMessageEvent
-   WebSecurityOrigin target_origin;
-   if (!params.target_origin.empty()) {
-     target_origin =
-         WebSecurityOrigin::createFromString(WebString(params.target_origin));
-   }
+@@ -1765,31 +1762,29 @@ void RenderFrameImpl::OnPostMessageEvent
+   WebDOMMessageEvent msg_event(serialized_script_value,
+                                params.source_origin,
+                                source_frame,
+                                frame_->document(),
+                                channels);
    frame_->dispatchMessageEventWithOriginCheck(target_origin, msg_event);
  }
  
@@ -434,7 +434,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2140,17 +2135,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2141,17 +2136,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -456,7 +456,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -313,19 +313,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -315,19 +315,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -476,7 +476,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -699,20 +697,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -708,20 +706,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnTextSurroundingSelectionRequest(size_t max_length);
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
    void OnSnapshotAccessibilityTree(int callback_id);
@@ -498,7 +498,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -1038,20 +1035,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -1051,20 +1048,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    scoped_ptr<blink::WebUSBClient> usb_client_;
  
