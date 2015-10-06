@@ -163,7 +163,7 @@ diff --git a/content/browser/gpu/gpu_data_manager_impl_private.h b/content/brows
 diff --git a/content/public/browser/content_browser_client.cc b/content/public/browser/content_browser_client.cc
 --- a/content/public/browser/content_browser_client.cc
 +++ b/content/public/browser/content_browser_client.cc
-@@ -383,9 +383,15 @@ base::string16 ContentBrowserClient::Get
+@@ -389,9 +389,15 @@ base::string16 ContentBrowserClient::Get
  ExternalVideoSurfaceContainer*
  ContentBrowserClient::OverrideCreateExternalVideoSurfaceContainer(
      WebContents* web_contents) {
@@ -182,10 +182,10 @@ diff --git a/content/public/browser/content_browser_client.cc b/content/public/b
 diff --git a/content/public/browser/content_browser_client.h b/content/public/browser/content_browser_client.h
 --- a/content/public/browser/content_browser_client.h
 +++ b/content/public/browser/content_browser_client.h
-@@ -16,16 +16,17 @@
- #include "base/memory/scoped_vector.h"
+@@ -17,16 +17,17 @@
  #include "base/values.h"
  #include "content/public/browser/certificate_request_result_type.h"
+ #include "content/public/browser/navigation_throttle.h"
  #include "content/public/common/content_client.h"
  #include "content/public/common/media_stream_request.h"
  #include "content/public/common/resource_type.h"
@@ -200,7 +200,7 @@ diff --git a/content/public/browser/content_browser_client.h b/content/public/br
  #include "third_party/WebKit/public/platform/WebPageVisibilityState.h"
  #include "ui/base/window_open_disposition.h"
  
-@@ -707,13 +708,16 @@ class CONTENT_EXPORT ContentBrowserClien
+@@ -717,13 +718,16 @@ class CONTENT_EXPORT ContentBrowserClien
  #endif
  
  #if defined(VIDEO_HOLE)

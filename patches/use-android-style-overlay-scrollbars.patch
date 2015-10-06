@@ -10,7 +10,7 @@ diff --git a/third_party/WebKit/Source/core/frame/VisualViewport.cpp b/third_par
  #include "core/inspector/InspectorInstrumentation.h"
  #include "core/layout/LayoutView.h"
  #include "core/layout/TextAutosizer.h"
- #include "core/layout/compositing/DeprecatedPaintLayerCompositor.h"
+ #include "core/layout/compositing/PaintLayerCompositor.h"
  #include "core/loader/FrameLoaderClient.h"
  #include "core/page/ChromeClient.h"
  #include "core/page/Page.h"
@@ -45,7 +45,7 @@ diff --git a/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp b/thir
  
  #if !OS(MACOSX)
  #include "public/platform/WebRect.h"
-@@ -321,16 +322,22 @@ void ScrollbarTheme::splitTrack(Scrollba
+@@ -320,16 +321,22 @@ void ScrollbarTheme::splitTrack(const Sc
          thumbRect = IntRect(trackRect.x(), trackRect.y() + thumbPos, scrollbar->width(), thumbLength(scrollbar));
          beforeThumbRect = IntRect(trackRect.x(), trackRect.y(), trackRect.width(), thumbPos + thumbRect.height() / 2);
          afterThumbRect = IntRect(trackRect.x(), trackRect.y() + beforeThumbRect.height(), trackRect.width(), trackRect.maxY() - beforeThumbRect.maxY());
