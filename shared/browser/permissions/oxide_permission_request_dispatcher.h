@@ -42,7 +42,6 @@ typedef base::Callback<void(PermissionRequestResponse)>
 
 class PermissionRequest;
 class PermissionRequestDispatcherClient;
-class PermissionRequestID;
 class WebFrame;
 
 // This class keeps track of pending permission requests for a WebContents
@@ -57,25 +56,24 @@ class PermissionRequestDispatcher
     client_ = client;
   }
 
+  // Whether we can dispatch a request to the client
+  bool CanDispatchRequest() const;
+
   // Request permission to use the resource identified by |permission|
-  void RequestPermission(content::PermissionType permission,
-                         content::RenderFrameHost* render_frame_host,
-                         int request_id,
-                         const GURL& requesting_origin,
-                         const PermissionRequestCallback& callback);
+  int RequestPermission(content::PermissionType permission,
+                        content::RenderFrameHost* render_frame_host,
+                        const GURL& requesting_origin,
+                        const PermissionRequestCallback& callback);
 
   // Cancel the pending permission request
-  void CancelPermissionRequest(content::PermissionType permission,
-                               content::RenderFrameHost* render_frame_host,
-                               int request_id,
-                               const GURL& requesting_origin);
+  void CancelPermissionRequest(int request_id);
 
   // Request permission to access media devices
-  void RequestMediaAccessPermission(content::RenderFrameHost* render_frame_host,
-                                    const GURL& requesting_origin,
-                                    bool audio,
-                                    bool video,
-                                    const PermissionRequestCallback& callback);
+  int RequestMediaAccessPermission(content::RenderFrameHost* render_frame_host,
+                                   const GURL& requesting_origin,
+                                   bool audio,
+                                   bool video,
+                                   const PermissionRequestCallback& callback);
 
   // Cancel any pending permission requests
   void CancelPendingRequests();
@@ -111,6 +109,8 @@ class PermissionRequestDispatcher
 
   // This list of PermissionRequests
   std::vector<PermissionRequest*> pending_requests_;
+
+  int next_request_id_;
 
   base::WeakPtrFactory<PermissionRequestDispatcher> weak_factory_;
 
