@@ -846,6 +846,22 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
+void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
+  // that we can get rid of this
+  certificate_error_manager_.FrameDetached(render_frame_host);
+}
+
+void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                                     content::RenderFrameHost* new_host) {
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
+  // that we can get rid of this
+  if (!old_host) {
+    return;
+  }
+  certificate_error_manager_.FrameDetached(old_host);
+}
+
 void WebView::RenderViewReady() {
   client_->CrashedStatusChanged();
 }
@@ -881,14 +897,10 @@ void WebView::DidStartProvisionalLoadForFrame(
     client_->LoadStarted(validated_url);
   }
 
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserverso
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
   // that we can get rid of this
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
-  certificate_error_manager_.DidStartProvisionalLoadForFrame(frame);
+  certificate_error_manager_.DidStartProvisionalLoadForFrame(
+      render_frame_host);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -923,12 +935,7 @@ void WebView::DidFailProvisionalLoad(
 
   // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserverso
   // that we can get rid of this
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
-  certificate_error_manager_.DidStopProvisionalLoadForFrame(frame);
+  certificate_error_manager_.DidStopProvisionalLoadForFrame(render_frame_host);
 }
 
 void WebView::DidNavigateMainFrame(
@@ -954,20 +961,21 @@ void WebView::DidNavigateAnyFrame(
     content::RenderFrameHost* render_frame_host,
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
+  // XXX(chrisccoulson): Make PermissionRequestDispatcher and
+  //  CertificateErrorManager a WebContentsObserver
+  if (details.is_in_page) {
+    return;
+  }
+
+  certificate_error_manager_.DidNavigateFrame(render_frame_host);
+
   WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
   if (!frame) {
     return;
   }
 
-  if (details.is_in_page) {
-    return;
-  }
-
-  // XXX(chrisccoulson): Make PermissionRequestDispatcher a
-  //  WebContentsObserver
   PermissionRequestDispatcher::FromWebContents(web_contents_.get())
       ->CancelPendingRequestsForFrame(frame);
-  certificate_error_manager_.DidNavigateFrame(frame);
 }
 
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -1664,14 +1672,6 @@ void WebView::AllowCertificateError(
     bool strict_enforcement,
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
-  if (!frame) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  DCHECK_EQ(frame->GetView(), this);
-
   // We can't safely allow the embedder to override errors for subresources or
   // subframes because they don't always result in the API indicating a
   // degraded security level. Mark these non-overridable for now and just
@@ -1684,7 +1684,7 @@ void WebView::AllowCertificateError(
 
   scoped_ptr<CertificateError> error(new CertificateError(
       &certificate_error_manager_,
-      frame,
+      rfh,
       cert_error,
       ssl_info,
       request_url,

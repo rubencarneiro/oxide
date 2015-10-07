@@ -328,10 +328,6 @@ class WebView : public ScriptMessageTarget,
   base::string16 GetSelectedText() const;
   const base::string16& GetSelectionText() const;
 
-  CertificateErrorManager* certificate_error_manager() {
-    return &certificate_error_manager_;
-  }
-
  private:
   WebView(WebViewClient* client);
 
@@ -455,6 +451,9 @@ class WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) final;
 
   // content::WebContentsObserver implementation
+  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) final;
   void RenderViewReady() final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,

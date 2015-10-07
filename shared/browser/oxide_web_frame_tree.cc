@@ -24,7 +24,6 @@
 // Remove this
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 
-#include "oxide_certificate_error.h" // Remove this
 #include "oxide_web_frame.h"
 #include "oxide_web_frame_tree_observer.h"
 #include "oxide_web_view.h" // Remove this
@@ -43,9 +42,6 @@ void WebFrameTree::WebFrameRemoved(WebFrame* frame) {
   // XXX(chrisccoulson): This doesn't belong here
   PermissionRequestDispatcher::FromWebContents(
       web_contents())->CancelPendingRequestsForFrame(frame);
-  if (frame->GetView()) {
-    frame->GetView()->certificate_error_manager()->FrameDetached(frame);
-  }
 }
 
 void WebFrameTree::AddObserver(WebFrameTreeObserver* observer) {
