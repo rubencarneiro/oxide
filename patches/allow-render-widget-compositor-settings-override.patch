@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -214,13 +214,16 @@ ContentRendererClient::CreateAppBannerCl
+@@ -228,13 +228,16 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -25,7 +25,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -49,16 +49,20 @@ class WebSpeechSynthesizerClient;
+@@ -51,16 +51,20 @@ class WebSpeechSynthesizerClient;
  class WebThemeEngine;
  class WebURLResponse;
  class WebURLRequest;
@@ -46,7 +46,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -313,13 +317,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -332,13 +336,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual bool ShouldEnforceWebRTCRoutingPreferences();
  
    // Allow overriding default media player
@@ -80,20 +80,20 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
 +#include "content/public/renderer/content_renderer_client.h"
  #include "content/renderer/input/input_handler_manager.h"
  #include "gpu/command_buffer/client/gles2_interface.h"
+ #include "gpu/command_buffer/service/gpu_switches.h"
  #include "third_party/WebKit/public/platform/WebCompositeAndReadbackAsyncCallback.h"
  #include "third_party/WebKit/public/platform/WebLayoutAndPaintAsyncCallback.h"
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
- #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -453,16 +455,18 @@ void RenderWidgetCompositor::Initialize(
-     settings.use_external_begin_frame_source = false;
-   }
- 
+@@ -457,16 +459,18 @@ void RenderWidgetCompositor::Initialize(
    settings.max_staging_buffer_usage_in_bytes = 32 * 1024 * 1024;  // 32MB
    // Use 1/4th of staging buffers on low-end devices.
    if (base::SysInfo::IsLowEndDevice())
      settings.max_staging_buffer_usage_in_bytes /= 4;
+ 
+   cc::ManagedMemoryPolicy current = settings.memory_policy_;
+   settings.memory_policy_ = GetGpuMemoryPolicy(current);
  
 +  GetContentClient()->renderer()->OverrideCompositorSettings(&settings);
 +
