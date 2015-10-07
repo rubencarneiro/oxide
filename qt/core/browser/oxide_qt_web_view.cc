@@ -1074,8 +1074,8 @@ void WebView::RequestMediaAccessPermission(
 }
 
 void WebView::FrameCreated(oxide::WebFrame* frame) {
-  CHECK(!WebFrame::FromSharedWebFrame(frame));
-  CHECK(frame->parent());
+  DCHECK(!WebFrame::FromSharedWebFrame(frame));
+  DCHECK(frame->parent());
 
   WebFrame* f = new WebFrame(frame);
   frame->set_script_message_target_delegate(f);
@@ -1087,7 +1087,7 @@ void WebView::FrameCreated(oxide::WebFrame* frame) {
 
 void WebView::FrameDeleted(oxide::WebFrame* frame) {
   WebFrame* f = WebFrame::FromSharedWebFrame(frame);
-  CHECK(f);
+  DCHECK(f);
 
   client_->FrameRemoved(f->handle());
   frame->set_script_message_target_delegate(nullptr);

@@ -44,13 +44,14 @@ base::LazyInstance<WebFrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
 void AddMappingForRenderFrameHost(content::RenderFrameHost* host,
                                   WebFrame* frame) {
   RenderFrameHostID id = RenderFrameHostID::FromHost(host);
-  CHECK(g_frame_map.Get().find(id) == g_frame_map.Get().end());
+  DCHECK(g_frame_map.Get().find(id) == g_frame_map.Get().end());
   auto rv = g_frame_map.Get().insert(std::make_pair(id, frame));
   DCHECK(rv.second);
 }
 
 void RemoveMappingForRenderFrameHost(content::RenderFrameHost* host) {
-  CHECK_EQ(g_frame_map.Get().erase(RenderFrameHostID::FromHost(host)), 1U);
+  size_t removed = g_frame_map.Get().erase(RenderFrameHostID::FromHost(host));
+  DCHECK_EQ(removed, 1U);
 }
 
 }
@@ -135,16 +136,16 @@ GURL WebFrame::GetURL() const {
 }
 
 void WebFrame::AddChild(scoped_ptr<WebFrame> child) {
-  CHECK(!child->parent_);
+  DCHECK(!child->parent_);
   child->parent_ = this;
   child_frames_.push_back(child.release());
 }
 
 void WebFrame::RemoveChild(WebFrame* child) {
-  CHECK_EQ(child->parent_, this);
+  DCHECK_EQ(child->parent_, this);
 
   auto it = std::find(child_frames_.begin(), child_frames_.end(), child);
-  CHECK(it != child_frames_.end());
+  DCHECK(it != child_frames_.end());
 
   // Remove |child| from our list of children before deleting it, as deleting
   // it causes WebFrameTreeObserver::FrameDeleted to fire. This can result in

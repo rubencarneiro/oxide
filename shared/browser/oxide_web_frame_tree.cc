@@ -59,7 +59,7 @@ void WebFrameTree::RenderFrameCreated(
     return;
   }
 
-  CHECK(!WebFrame::FromRenderFrameHost(render_frame_host));
+  DCHECK(!WebFrame::FromRenderFrameHost(render_frame_host));
 
   if (render_frame_host->IsCrossProcessSubframe()) {
     // We should already have a WebFrame for this node
@@ -68,7 +68,7 @@ void WebFrameTree::RenderFrameCreated(
 
   WebFrame* parent =
       WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
-  CHECK(parent);
+  DCHECK(parent);
 
   WebFrame* frame = new WebFrame(this, render_frame_host);
   parent->AddChild(make_scoped_ptr(frame));
@@ -79,10 +79,10 @@ void WebFrameTree::RenderFrameCreated(
 void WebFrameTree::RenderFrameHostChanged(
     content::RenderFrameHost* old_host,
     content::RenderFrameHost* new_host) {
-  CHECK(!WebFrame::FromRenderFrameHost(new_host));
+  DCHECK(!WebFrame::FromRenderFrameHost(new_host));
 
   if (!old_host) {
-    CHECK(!new_host->IsCrossProcessSubframe());
+    DCHECK(!new_host->IsCrossProcessSubframe());
     // This is a new subframe. We delay creating the WebFrame and notifying the
     // client until the corresponding FrameTreeNode has a parent set. We know
     // that Chromium will call in to RenderFrameCreated after this
@@ -90,7 +90,7 @@ void WebFrameTree::RenderFrameHostChanged(
   }
 
   WebFrame* frame = WebFrame::FromRenderFrameHost(old_host);
-  CHECK(frame);
+  DCHECK(frame);
 
   frame->RenderFrameHostChanged(new_host);
 }
@@ -106,10 +106,10 @@ void WebFrameTree::FrameDeleted(content::RenderFrameHost* render_frame_host) {
   }
 
   if (!frame->parent()) {
-    CHECK_EQ(frame, root_frame_.get());
+    DCHECK_EQ(frame, root_frame_.get());
     root_frame_.reset();
   } else {
-    CHECK_NE(frame, root_frame_.get());
+    DCHECK_NE(frame, root_frame_.get());
     frame->parent()->RemoveChild(frame);
   }
 }
