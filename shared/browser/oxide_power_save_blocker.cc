@@ -29,11 +29,11 @@
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
 
+#include "shared/common/oxide_form_factor.h"
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_platform_integration_observer.h"
-#include "oxide_form_factor.h"
 
 namespace oxide {
 

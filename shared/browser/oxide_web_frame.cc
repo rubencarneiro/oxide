@@ -124,11 +124,14 @@ WebFrame::~WebFrame() {
 WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
                    WebView* view)
     : parent_(nullptr),
-      view_(view->AsWeakPtr()),
       render_frame_host_(render_frame_host),
       next_message_serial_(0),
       destroyed_(false),
       weak_factory_(this) {
+  if (view) {
+    view_ = view->AsWeakPtr();
+  }
+
   int id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
       ->frame_tree_node()
       ->frame_tree_node_id();
@@ -171,6 +174,10 @@ void WebFrame::InitParent(WebFrame* parent) {
   DCHECK_EQ(parent->view(), view());
   parent_ = parent;
   parent_->AddChild(this);
+}
+
+void WebFrame::SetView(WebView* view) {
+  view_ = view->AsWeakPtr();
 }
 
 void WebFrame::SetRenderFrameHost(

@@ -65,10 +65,11 @@
 #include "shared/app/oxide_platform_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 
 #include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
-#include "oxide_form_factor.h"
+#include "oxide_form_factor_detection.h"
 #include "oxide_message_pump.h"
 #include "oxide_web_contents_unloader.h"
 
@@ -254,10 +255,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 
-  if (AndroidProperties::GetInstance()->Available()) {
-    command_line->AppendSwitch(switches::kDisableOneCopy);
-  }
-
   base::StringPiece renderer_cmd_prefix =
       GetEnvironmentOption("RENDERER_CMD_PREFIX");
   if (!renderer_cmd_prefix.empty()) {
@@ -329,36 +326,17 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 }
 
 void AddFormFactorSpecificCommandLineArguments() {
+  if (GetFormFactorHint() == FORM_FACTOR_DESKTOP) {
+    return;
+  }
+
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-
-  FormFactor form_factor = GetFormFactorHint();
-
-  if (form_factor != FORM_FACTOR_DESKTOP) {
-    command_line->AppendSwitch(switches::kEnableViewport);
-    command_line->AppendSwitch(switches::kEnableViewportMeta);
-    command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
-    command_line->AppendSwitch(switches::kEnablePinch);
-    // Note, overlay scrollbars do not work properly on desktop yet
-    // see https://launchpad.net/bugs/1426567
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-    command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
-  }
-
-  const char* form_factor_string = nullptr;
-  switch (form_factor) {
-    case FORM_FACTOR_DESKTOP:
-      form_factor_string = switches::kFormFactorDesktop;
-      break;
-    case FORM_FACTOR_TABLET:
-      form_factor_string = switches::kFormFactorTablet;
-      break;
-    case FORM_FACTOR_PHONE:
-      form_factor_string = switches::kFormFactorPhone;
-      break;
-    default:
-      NOTREACHED();
-  }
-  command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+  command_line->AppendSwitch(switches::kEnableViewport);
+  command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
+  command_line->AppendSwitch(switches::kEnablePinch);
+  // Note, overlay scrollbars do not work properly on desktop yet
+  // see https://launchpad.net/bugs/1426567
+  command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 }
 
 bool IsUnsupportedProcessModel(ProcessModel process_model) {
@@ -371,6 +349,20 @@ bool IsUnsupportedProcessModel(ProcessModel process_model) {
     default:
       return false;
   }
+}
+
+const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
+  switch (form_factor) {
+    case FORM_FACTOR_DESKTOP:
+      return switches::kFormFactorDesktop;
+    case FORM_FACTOR_TABLET:
+      return switches::kFormFactorTablet;
+    case FORM_FACTOR_PHONE:
+      return switches::kFormFactorPhone;
+  }
+
+  NOTREACHED();
+  return nullptr;
 }
 
 }
@@ -431,6 +423,19 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       main_delegate_.get(),
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
+
+  // Ideally we'd do this before calling
+  // ContentMainDelegate::BasicStartupComplete, and then ContentMainDelegate
+  // would call InitFormFactorHint for all process types. However,
+  // DetectFormFactorHint depends on BrowserPlatformIntegration, which is
+  // initialized when ContentBrowserClient is created. Perhaps we could create
+  // BPI earlier?
+  FormFactor form_factor = DetectFormFactorHint();
+  base::CommandLine::ForCurrentProcess()
+      ->AppendSwitchASCII(switches::kFormFactor,
+                          GetFormFactorHintCommandLine(form_factor));
+
+  InitFormFactorHint(form_factor);
 
   AddFormFactorSpecificCommandLineArguments();
 

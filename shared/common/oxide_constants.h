@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,8 +33,11 @@ extern const char kMediaHubFixedSessionDomains[];
 } // namespace switches
 
 namespace oxide {
+
 extern const int kMainWorldId;
 extern const char kMainWorldContextUrl[];
-}
+extern const char kImageContextMenuPropertiesMimeType[];
+
+} // namespace oxide
 
 #endif // _OXIDE_SHARED_COMMON_CONSTANTS_H_

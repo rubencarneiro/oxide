@@ -78,6 +78,8 @@ class WebFrame : public ScriptMessageTarget {
   // Return the WebView that this frame is in
   WebView* view() const { return view_.get(); }
 
+  void SetView(WebView* view);
+
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
   }

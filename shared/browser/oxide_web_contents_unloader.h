@@ -24,7 +24,9 @@
 #include "base/memory/scoped_vector.h"
 #include "content/public/browser/web_contents_delegate.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace content {
 class WebContents;
@@ -51,7 +53,7 @@ class WebContentsUnloader : public content::WebContentsDelegate {
   void WaitForPendingUnloadsToFinish();
 
  private:
-  friend class DefaultSingletonTraits<WebContentsUnloader>;
+  friend class base::DefaultSingletonTraits<WebContentsUnloader>;
 
   WebContentsUnloader();
 

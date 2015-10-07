@@ -32,12 +32,14 @@
 #include "net/http/http_content_disposition.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_response_headers.h"
+#include "net/http/http_util.h"
 #include "net/url_request/url_request_context.h"
 #include "url/gurl.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_platform_integration.h"
+#include "oxide_navigation_intercept_resource_throttle.h"
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_resource_dispatcher_host_login_delegate.h"
 #include "oxide_user_agent_settings.h"
@@ -141,7 +143,21 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.render_process_id = render_process_id;
   params.render_view_id = render_view_id;
 
-  net::HttpRequestHeaders headers;
+  if (mime_type.empty()) {
+    // XXX(oSoMoN): hack to ensure that downloading an image from the context
+    // menu (via a call to saveMedia) results in a download request with a mime
+    // type. See https://launchpad.net/bugs/1500742. This should be removed,
+    // eventually.
+    std::string content_type;
+    if (url_request->extra_request_headers().GetHeader(
+        net::HttpRequestHeaders::kContentType, &content_type)) {
+      std::string charset;
+      bool had_charset;
+      net::HttpUtil::ParseContentType(
+          content_type, &params.mime_type, &charset, &had_charset, nullptr);
+    }
+  }
+
   std::string user_agent;
   if (url_request->is_pending()) {
     url_request->extra_request_headers().GetHeader(
@@ -231,6 +247,11 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
     ScopedVector<content::ResourceThrottle>* throttles) {
   throttles->push_back(
       new RedirectionInterceptThrottle(request, resource_context));
+
+  if (resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
+    throttles->push_back(
+        new NavigationInterceptResourceThrottle(request));
+  }
 }
 
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(

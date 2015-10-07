@@ -28,11 +28,12 @@
 class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
+class OxideQHttpAuthenticationRequest;
 class OxideQLoadEvent;
 class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
-class OxideQHttpAuthenticationRequest;
+class OxideQPermissionRequest;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -69,8 +70,6 @@ OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
-
-  virtual void Initialized() = 0;
 
   virtual QObject* GetApiHandle() = 0;
 
@@ -129,6 +128,8 @@ class WebViewProxyClient {
       OxideQGeolocationPermissionRequest* request) = 0;
   virtual void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) = 0;
+  virtual void RequestNotificationPermission(
+      OxideQPermissionRequest* request) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

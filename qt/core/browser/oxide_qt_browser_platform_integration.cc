@@ -35,6 +35,7 @@
 
 #include "qt/core/glue/oxide_qt_init.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
+#include "qt/core/browser/media/oxide_qt_video_capture_device_factory.h"
 
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
@@ -132,6 +133,10 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump());
 }
 
+ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
+  return ClipboardQt::DoCreate;
+}
+
 void BrowserPlatformIntegration::BrowserThreadInit(
     content::BrowserThread::ID id) {
   if (id != content::BrowserThread::IO) {
@@ -162,6 +167,10 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
+media::VideoCaptureDeviceFactory* BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
+  return new VideoCaptureDeviceFactory();
+}
+
 std::string BrowserPlatformIntegration::GetApplicationName() {
   return qApp->applicationName().toStdString();
 }
@@ -188,10 +197,6 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   QGuiApplication::instance()->removeEventFilter(this);
-}
-
-ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
-  return ClipboardQt::DoCreate;
 }
 
 QThread* GetIOQThread() {

@@ -108,6 +108,7 @@ class RenderWidgetHostView final :
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
+  void ClearCompositorFrame() final;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
@@ -123,7 +124,7 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      content::ReadbackRequestCallback& callback,
+      const content::ReadbackRequestCallback& callback,
       const SkColorType color_type) final;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
@@ -132,8 +133,8 @@ class RenderWidgetHostView final :
   bool CanCopyToVideoFrame() const final;
   bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
   void GetScreenInfo(blink::WebScreenInfo* results) final;
+  bool GetScreenColorProfile(std::vector<char>* color_profile) final;
   gfx::Rect GetBoundsInRootWindow() final;
-  gfx::GLSurfaceHandle GetCompositingSurface() final;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) final;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,

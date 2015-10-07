@@ -151,7 +151,7 @@ TestWebView {
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
         { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 0, loading: true }
+        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200, loading: true }
       ];
 
       webView.url = url;
@@ -173,7 +173,7 @@ TestWebView {
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: url, loading: true },
         { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 0, loading: true }
+        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200, loading: true }
       ];
       webView.reload();
 

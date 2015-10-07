@@ -129,6 +129,12 @@ mediahub_is_player_ready(MediaHubClientHandle);
 void
 mediahub_set_volume(MediaHubClientHandle, double volume);
 
+
+/**
+  *
+  */
+void mediahub_set_rate(MediaHubClientHandle, double rate);
+
 /**
  * Set lifetime of player session.
  */

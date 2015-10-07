@@ -18,12 +18,13 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_
 
-#include <QByteArray>
 #include <QPointer>
 #include <QScopedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqfindcontroller.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
@@ -32,7 +33,6 @@
 class OxideQNewViewRequest;
 class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
-class OxideQQuickWebContext;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
@@ -82,7 +82,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   // oxide::qt::WebViewProxyClient implementation
-  void Initialized() override;
   QObject* GetApiHandle() override;
   oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
       oxide::qt::WebContextMenuProxyClient* client) override;
@@ -128,6 +127,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       OxideQGeolocationPermissionRequest* request) override;
   void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) override;
+  void RequestNotificationPermission(
+      OxideQPermissionRequest* request) override;
+
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;
@@ -160,6 +162,10 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
+  QList<oxide::qt::ScriptMessageHandlerProxyHandle*>& messageHandlers();
+
+  oxide::qt::WebContextProxyHandle* context() const;
+
   void contextConstructed();
   void contextDestroyed();
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
@@ -180,7 +186,11 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   bool constructed_;
   int load_progress_;
   QUrl icon_;
+
   OxideQQuickNavigationHistory navigation_history_;
+  QScopedPointer<OxideQSecurityStatus> security_status_;
+  QScopedPointer<OxideQFindController> find_controller_;
+
   QQmlComponent* context_menu_;
   QQmlComponent* popup_menu_;
   QQmlComponent* alert_dialog_;
@@ -197,18 +207,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
 
   bool handling_unhandled_key_event_;
 
-  struct ConstructProps {
-    ConstructProps()
-        : incognito(false)
-        , restore_type(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY) {}
-
-    bool incognito;
-    QPointer<OxideQQuickWebContext> context;
-    QPointer<OxideQNewViewRequest> new_view_request;
-    QByteArray restore_state;
-    oxide::qt::RestoreType restore_type;
-  };
-
+  struct ConstructProps;
   QScopedPointer<ConstructProps> construct_props_;
 
   QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;

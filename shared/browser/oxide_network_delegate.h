@@ -65,11 +65,17 @@ class NetworkDelegate final : public net::NetworkDelegate {
 
   void OnResponseStarted(net::URLRequest* request) final;
 
-  void OnRawBytesRead(const net::URLRequest& request, int bytes_read) final;
+  void OnNetworkBytesReceived(const net::URLRequest& request,
+                              int64_t bytes_received) final;
+
+  void OnNetworkBytesSent(const net::URLRequest& request,
+                          int64_t bytes_sent) final;
 
   void OnCompleted(net::URLRequest* request, bool started) final;
 
   void OnURLRequestDestroyed(net::URLRequest* request) final;
+
+  void OnURLRequestJobOrphaned(net::URLRequest* request) final;
 
   void OnPACScriptError(int line_number, const base::string16& error) final;
 

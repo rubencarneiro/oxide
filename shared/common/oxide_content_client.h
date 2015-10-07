@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -47,6 +47,7 @@ class ContentClient final : public content::ContentClient {
                                     ui::ScaleFactor scale_factor) const final;
   base::RefCountedStaticMemory* GetDataResourceBytes(
       int resource_id) const final;
+  bool ShouldOptimizeForMemoryUsage() const final;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };

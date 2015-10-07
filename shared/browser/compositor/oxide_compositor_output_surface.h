@@ -58,10 +58,11 @@ class CompositorOutputSurface : public cc::OutputSurface,
 
   void DoSwapBuffers(CompositorFrameData* frame);
 
- private:
   // cc::OutputSurface implementation
   bool BindToClient(cc::OutputSurfaceClient* client) override;
+  void DetachFromClient() override;
 
+ private:
   uint32_t surface_id_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurface);

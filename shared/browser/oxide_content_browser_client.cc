@@ -35,8 +35,10 @@
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_android_properties.h"
@@ -44,7 +46,6 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -106,9 +107,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
     switches::kEnablePepperFlashPlugin,
-    switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes,
     switches::kEnableMediaHubAudio,
+    switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
@@ -194,6 +194,11 @@ content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
   return MediaCaptureDevicesDispatcher::GetInstance();
 }
 
+content::PlatformNotificationService*
+ContentBrowserClient::GetPlatformNotificationService() {
+  return PlatformNotificationService::GetInstance();
+}
+
 bool ContentBrowserClient::CanCreateWindow(
     const GURL& opener_url,
     const GURL& opener_top_level_frame_url,
@@ -255,6 +260,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->shrinks_standalone_images_to_fit = false;
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
+    prefs->viewport_meta_enabled = true;
   }
 
   prefs->supports_multiple_windows = false;

@@ -66,7 +66,7 @@ class UserScriptMasterFactory : public BrowserContextKeyedServiceFactory {
   static UserScriptMaster* GetForContext(content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<UserScriptMasterFactory>;
+  friend struct base::DefaultSingletonTraits<UserScriptMasterFactory>;
 
   UserScriptMasterFactory();
   ~UserScriptMasterFactory() override;
@@ -99,7 +99,7 @@ content::BrowserContext* UserScriptMasterFactory::GetBrowserContextToUse(
 
 // static
 UserScriptMasterFactory* UserScriptMasterFactory::GetInstance() {
-  return Singleton<UserScriptMasterFactory>::get();
+  return base::Singleton<UserScriptMasterFactory>::get();
 }
 
 // static

@@ -22,7 +22,11 @@
 #include <QQmlEngine>
 #include <QtQml/private/qqmldata_p.h>
 #include <QtQml/private/qv4engine_p.h>
+#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
+#include <QtQml/private/qv4value_p.h>
+#else
 #include <QtQml/private/qv4persistent_p.h>
+#endif
 #include <QtQml/private/qv8engine_p.h>
 
 namespace oxide {

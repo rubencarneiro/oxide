@@ -6,7 +6,7 @@
 diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_channel_manager.cc
 --- a/content/common/gpu/gpu_channel_manager.cc
 +++ b/content/common/gpu/gpu_channel_manager.cc
-@@ -20,16 +20,18 @@
+@@ -23,16 +23,18 @@
  #include "gpu/command_buffer/service/mailbox_manager.h"
  #include "gpu/command_buffer/service/memory_program_cache.h"
  #include "gpu/command_buffer/service/shader_translator_cache.h"
@@ -19,34 +19,46 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 +
  namespace content {
  
- GpuChannelManager::GpuChannelManager(
-     MessageRouter* router,
-     GpuWatchdog* watchdog,
-     base::SingleThreadTaskRunner* io_task_runner,
+ namespace {
+ #if defined(OS_ANDROID)
+ // Amount of time we expect the GPU to stay powered up without being used.
+ const int kMaxGpuIdleTimeMs = 40;
+ // Maximum amount of time we keep pinging the GPU waiting for the client to
+ // draw.
+@@ -49,30 +51,32 @@ GpuChannelManager::GpuChannelManager(
      base::WaitableEvent* shutdown_event,
-     IPC::SyncChannel* channel,
-@@ -128,17 +130,20 @@ void GpuChannelManager::OnEstablishChann
-                                            bool share_context,
-                                            bool allow_future_sync_points) {
-   IPC::ChannelHandle channel_handle;
+     gpu::SyncPointManager* sync_point_manager,
+     GpuMemoryBufferFactory* gpu_memory_buffer_factory)
+     : task_runner_(task_runner),
+       io_task_runner_(io_task_runner),
+       channel_(channel),
+       watchdog_(watchdog),
+       shutdown_event_(shutdown_event),
+-      share_group_(new gfx::GLShareGroup),
++      share_group_(oxide_gpu_shim::GetGLShareGroup()),
+       mailbox_manager_(gpu::gles2::MailboxManager::Create()),
+       gpu_memory_manager_(
+           this,
+           GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
+       sync_point_manager_(sync_point_manager),
+       gpu_memory_buffer_factory_(gpu_memory_buffer_factory),
+       weak_factory_(this) {
+   DCHECK(task_runner);
+   DCHECK(io_task_runner);
+   const base::CommandLine* command_line =
+       base::CommandLine::ForCurrentProcess();
+   if (command_line->HasSwitch(switches::kUIPrioritizeInGpuProcess))
+     preemption_flag_ = new gpu::PreemptionFlag;
++  if (!share_group_.get())
++    share_group_ = new gfx::GLShareGroup;
+ }
  
-   gfx::GLShareGroup* share_group = NULL;
-   gpu::gles2::MailboxManager* mailbox_manager = NULL;
-   if (share_context) {
-     if (!share_group_.get()) {
--      share_group_ = new gfx::GLShareGroup;
-+      share_group_ = oxide_gpu_shim::GetGLShareGroup();
-+      if (!share_group_.get()) {
-+        share_group_ = new gfx::GLShareGroup;
-+      }
-       DCHECK(!mailbox_manager_.get());
-       mailbox_manager_ = gpu::gles2::MailboxManager::Create();
-     }
-     share_group = share_group_.get();
-     mailbox_manager = mailbox_manager_.get();
-   }
- 
-   scoped_ptr<GpuChannel> channel(new GpuChannel(this,
+ GpuChannelManager::~GpuChannelManager() {
+   // Destroy channels before anything else because of dependencies.
+   gpu_channels_.clear();
+   if (default_offscreen_surface_.get()) {
+     default_offscreen_surface_->Destroy();
+     default_offscreen_surface_ = NULL;
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi
@@ -68,7 +80,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -558,16 +559,20 @@
+@@ -561,16 +562,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',

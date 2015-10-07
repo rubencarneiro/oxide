@@ -4,13 +4,13 @@
 diff --git a/tools/gritsettings/resource_ids b/tools/gritsettings/resource_ids
 --- a/tools/gritsettings/resource_ids
 +++ b/tools/gritsettings/resource_ids
-@@ -235,9 +235,12 @@
-   # translation scripts know of their existence.
-   "android_webview/java/strings/android_webview_strings.grd": {},
-   "chrome/android/java/strings/android_chrome_strings.grd": {},
-   "content/public/android/java/strings/android_content_strings.grd": {},
-   "ui/accessibility/extensions/strings/accessibility_extensions_strings.grd": {},
-   "ui/android/java/strings/android_ui_strings.grd": {},
+@@ -280,9 +280,12 @@
+   "chrome/browser/devtools/device/webrtc/resources.grd": {
+     "includes": [30820],
+   },
+   "chrome/browser/resources/settings/settings_resources.grd": {
+     "structures": [30920],
+   },
  
    # Resource ids starting at 31000 are reserved for projects built on Chromium.
 +  "oxide_resources.grd": {

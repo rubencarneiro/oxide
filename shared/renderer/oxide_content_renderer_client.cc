@@ -28,6 +28,7 @@
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
 #include "net/base/net_module.h"
+#include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
@@ -35,6 +36,7 @@
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
+#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
 #include "oxide_renderer_user_agent_settings.h"
@@ -64,9 +66,15 @@ void ContentRendererClient::RenderThreadStarted() {
   new UserScriptSlave();
 
   net::NetModule::SetResourceProvider(NetResourceProvider);
+
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
   blink::WebRuntimeFeatures::enableOrientationEvent(true);
+  // Oxide has no mechanism to display page popups
+  blink::WebRuntimeFeatures::enablePagePopup(false);
+  // Oxide does not support NavigatorContentUtils.
+  // See https://launchpad.net/bugs/1214046
+  blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
 }
 
 void ContentRendererClient::RenderFrameCreated(
@@ -92,11 +100,8 @@ void ContentRendererClient::RenderViewCreated(
   blink::WebSettings* settings = render_view->GetWebView()->settings();
   settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
 
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorTablet ||
-      form_factor == switches::kFormFactorPhone) {
+  if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
+      GetFormFactorHint() == FORM_FACTOR_PHONE) {
     settings->setAllowCustomScrollbarInMainFrame(false);
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
@@ -119,6 +124,15 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
   }
 
   return user_agent_settings_->GetUserAgentOverrideForURL(url);
+}
+
+void ContentRendererClient::AddImageContextMenuProperties(
+    const blink::WebURLResponse& response,
+    std::map<std::string, std::string>* properties) {
+  // XXX(oSoMoN): see comment in
+  // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
+  (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
+      response.mimeType().utf8();
 }
 
 #if defined(ENABLE_MEDIAHUB)

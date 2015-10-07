@@ -112,11 +112,12 @@ function(add_qml_test)
   set(TEST_COMMAND
       ${BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
-      --server-dir ${_ARGS_SERVER_DIR} --server-config 8080)
+      --server-dir ${_ARGS_SERVER_DIR}
+      --server-config 8080
+      --server-config "4443:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTest")
 
   if(_ARGS_SSL_TESTS)
     list(APPEND TEST_COMMAND
-         --server-config "4443:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTest"
          --server-config "4444:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestExpired"
          --server-config "4445:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestSelfSigned"
          --server-config "4446:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestBadIdentity")
@@ -125,10 +126,8 @@ function(add_qml_test)
   list(APPEND TEST_COMMAND --
        $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
-       -add-library-path ${QTPLUGIN_OUTPUT_DIR})
-  if (_ARGS_SSL_TESTS)
-    list(APPEND TEST_COMMAND -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
-  endif()
+       -add-library-path ${QTPLUGIN_OUTPUT_DIR}
+       -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
 
   add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
 endfunction()

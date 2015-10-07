@@ -452,7 +452,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     // Calls QuickStreamFactory constructor which uses base::CPU
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
-        new net::HttpCache(session_params, cache_backend));
+        make_scoped_ptr(new net::HttpCache(session_params, cache_backend)));
   }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
@@ -462,25 +462,28 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   for (content::ProtocolHandlerMap::iterator it = protocol_handlers.begin();
        it != protocol_handlers.end();
        ++it) {
-    set_protocol = job_factory->SetProtocolHandler(it->first,
-                                                   it->second.release());
+    set_protocol =
+        job_factory->SetProtocolHandler(it->first,
+                                        make_scoped_ptr(it->second.release()));
     DCHECK(set_protocol);
   }
   protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
-      new net::FileProtocolHandler(
+      make_scoped_ptr(new net::FileProtocolHandler(
         content::BrowserThread::GetMessageLoopProxyForThread(
-          content::BrowserThread::FILE)));
+          content::BrowserThread::FILE))));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
-      oxide::kDataScheme, new net::DataProtocolHandler());
+      oxide::kDataScheme,
+      make_scoped_ptr(new net::DataProtocolHandler()));
   DCHECK(set_protocol);
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFtpScheme,
-      new net::FtpProtocolHandler(ftp_transaction_factory_.get()));
+      make_scoped_ptr(new net::FtpProtocolHandler(
+        ftp_transaction_factory_.get())));
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
@@ -496,7 +499,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   }
   request_interceptors.weak_clear();
 
-  storage->set_job_factory(top_job_factory.release());
+  storage->set_job_factory(top_job_factory.Pass());
 
   resource_context_->request_context_ = context;
   return main_request_context_.get();
@@ -768,6 +771,10 @@ void BrowserContext::ForEach(const BrowserContextCallback& callback) {
 // static
 void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
+}
+
+BrowserContextID BrowserContext::GetID() const {
+  return static_cast<BrowserContextID>(const_cast<BrowserContext*>(this));
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(

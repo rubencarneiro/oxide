@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
-#define _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
+#ifndef _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_
 
 namespace oxide {
 
-enum FormFactor {
-  FORM_FACTOR_DESKTOP,
-  FORM_FACTOR_TABLET,
-  FORM_FACTOR_PHONE
+class FindControllerClient {
+ public:
+  virtual ~FindControllerClient() {}
+
+  enum UpdateTypes {
+    UPDATE_TYPE_NONE = 0,
+
+    UPDATE_TYPE_NUMBER_OF_MATCHES = 1 << 0,
+    UPDATE_TYPE_ACTIVE_MATCH_ORDINAL = 1 << 1
+  };
+
+  virtual void ResultUpdated(UpdateTypes flags) = 0;
 };
 
-FormFactor GetFormFactorHint();
+} // namespace oxide
 
-}
-
-#endif // _OXIDE_SHARED_BROWSER_FORM_FACTOR_H_
+#endif // _OXIDE_SHARED_BROWSER_FIND_CONTROLLER_CLIENT_H_

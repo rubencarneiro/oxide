@@ -82,7 +82,7 @@ class DevToolsManagerFactory : public BrowserContextKeyedServiceFactory {
   static DevToolsManager* GetForContext(content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<DevToolsManagerFactory>;
+  friend struct base::DefaultSingletonTraits<DevToolsManagerFactory>;
 
   DevToolsManagerFactory();
   ~DevToolsManagerFactory() override;
@@ -117,7 +117,7 @@ content::BrowserContext* DevToolsManagerFactory::GetBrowserContextToUse(
 
 // static
 DevToolsManagerFactory* DevToolsManagerFactory::GetInstance() {
-  return Singleton<DevToolsManagerFactory>::get();
+  return base::Singleton<DevToolsManagerFactory>::get();
 }
 
 // static
