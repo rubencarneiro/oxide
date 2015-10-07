@@ -111,11 +111,6 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebViewClient::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  return nullptr;
-}
-
 WebContextMenu* WebViewClient::CreateContextMenu(
     content::RenderFrameHost* rfh,
     const content::ContextMenuParams& params) {

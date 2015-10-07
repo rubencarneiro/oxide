@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 
+#include <memory>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_web_frame_proxy.h"
@@ -60,7 +61,7 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
       int index);
 
   // oxide::qt::WebFrameProxyClient implementation
-  void URLCommitted() override;
+  void LoadCommitted() override;
   void ChildFramesChanged() override;
   void DestroyFrame() override;
 

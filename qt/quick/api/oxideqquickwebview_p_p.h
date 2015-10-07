@@ -105,8 +105,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
-  oxide::qt::WebFrameProxyHandle* CreateWebFrame(
-      oxide::qt::WebFrameProxy* proxy) override;
+  void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
   QScreen* GetScreen() const override;
   QRect GetViewBoundsPix() const override;
   bool IsVisible() const override;
@@ -117,7 +116,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
                            const QString& source_id) override;
   void ToggleFullscreenMode(bool enter) override;
   void WebPreferencesReplaced() override;
-  void FrameAdded(oxide::qt::WebFrameProxyHandle* frame) override;
   void FrameRemoved(oxide::qt::WebFrameProxyHandle* frame) override;
   bool CanCreateWindows() const override;
   void UpdateCursor(const QCursor& cursor) override;

@@ -15,10 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-// TODO: Remove the use of FrameTreeNode / RenderFrameHostImpl if we get
-// another way to map a RenderFrameHost to an individual node in the frame tree
-// (which is what WebFrame represents)
-
 #include "oxide_web_frame.h"
 
 #include <map>
@@ -26,9 +22,6 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "content/browser/frame_host/frame_tree.h"
-#include "content/browser/frame_host/frame_tree_node.h"
-#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 
@@ -36,39 +29,82 @@
 #include "shared/common/oxide_script_message_params.h"
 
 #include "oxide_script_message_request_impl_browser.h"
+#include "oxide_web_frame_tree.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
 
 namespace {
 
-typedef std::map<int, WebFrame*> FrameMap;
-typedef FrameMap::iterator FrameMapIterator;
+typedef std::pair<int, int> RenderFrameHostID;
+typedef std::map<RenderFrameHostID, WebFrame*> WebFrameMap;
 
-base::LazyInstance<FrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<WebFrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+
+RenderFrameHostID GetRenderFrameHostID(
+    content::RenderFrameHost* render_frame_host) {
+  return std::make_pair(render_frame_host->GetProcess()->GetID(),
+                        render_frame_host->GetRoutingID());
+}
+
+void AddMappingForRenderFrameHost(content::RenderFrameHost* host,
+                                  WebFrame* frame) {
+  RenderFrameHostID id = GetRenderFrameHostID(host);
+  CHECK(g_frame_map.Get().find(id) == g_frame_map.Get().end());
+  auto rv = g_frame_map.Get().insert(std::make_pair(id, frame));
+  DCHECK(rv.second);
+}
+
+void RemoveMappingForRenderFrameHost(content::RenderFrameHost* host) {
+  CHECK_EQ(g_frame_map.Get().erase(GetRenderFrameHostID(host)), 1U);
+}
 
 }
 
-void WebFrame::WillDestroy() {
-  DCHECK(!destroyed_);
+size_t WebFrame::GetScriptMessageHandlerCount() const {
+  if (!script_message_target_delegate_) {
+    return 0;
+  }
 
-  while (GetChildCount() > 0) {
-    WebFrame* child = GetChildAt(0);
-    child->WillDestroy();
+  return script_message_target_delegate_->GetScriptMessageHandlerCount();
+}
+
+const ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
+    size_t index) const {
+  if (!script_message_target_delegate_) {
+    return nullptr;
+  }
+
+  return script_message_target_delegate_->GetScriptMessageHandlerAt(index);
+}
+
+WebFrame::WebFrame(WebFrameTree* tree,
+                   content::RenderFrameHost* render_frame_host)
+    : frame_tree_(tree),
+      render_frame_host_(render_frame_host),
+      parent_(nullptr),
+      next_message_serial_(0),
+      destroying_(false),
+      script_message_target_delegate_(nullptr),
+      weak_factory_(this) {
+  AddMappingForRenderFrameHost(render_frame_host, this);
+}
+
+WebFrame::~WebFrame() {
+  destroying_ = true;
+
+  while (child_frames_.size() > 0) {
+    WebFrame* child = child_frames_.back();
+    // Remove |child| from our list of children before deleting it, as deleting
+    // it causes WebFrameTreeObserver::FrameDeleted to fire. This can result in
+    // re-entry via GetChildFrames which would otherwise return an
+    // invalid pointer
+    child_frames_.pop_back();
     delete child;
   }
 
-  if (parent_) {
-    parent_->RemoveChild(this);
-  }
-
-  int id = static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
-      ->frame_tree_node()
-      ->frame_tree_node_id();
-  size_t erased = g_frame_map.Get().erase(id);
-  DCHECK_GT(erased, 0U);
-
-  destroyed_ = true;
+  RemoveMappingForRenderFrameHost(render_frame_host_);
+  frame_tree_->WebFrameRemoved(this);
 
   for (auto it = current_script_message_requests_.begin();
        it != current_script_message_requests_.end(); ++it) {
@@ -88,64 +124,6 @@ void WebFrame::WillDestroy() {
   }
 }
 
-void WebFrame::Delete() {
-  delete this;
-}
-
-void WebFrame::AddChild(WebFrame* child) {
-  child_frames_.push_back(child);
-  OnChildAdded(child);
-}
-
-void WebFrame::RemoveChild(WebFrame* child) {
-  ChildVector::iterator it =
-      std::find(child_frames_.begin(), child_frames_.end(), child);
-  DCHECK(it != child_frames_.end());
-  child_frames_.erase(it);
-  OnChildRemoved(child);
-}
-
-size_t WebFrame::GetScriptMessageHandlerCount() const {
-  return 0;
-}
-
-const ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
-    size_t index) const {
-  return nullptr;
-}
-
-void WebFrame::OnChildAdded(WebFrame* child) {}
-void WebFrame::OnChildRemoved(WebFrame* child) {}
-
-WebFrame::~WebFrame() {
-  CHECK(destroyed_) << "WebFrame deleted without calling WillDestroy()";
-}
-
-WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
-                   WebView* view)
-    : parent_(nullptr),
-      render_frame_host_(render_frame_host),
-      next_message_serial_(0),
-      destroyed_(false),
-      weak_factory_(this) {
-  if (view) {
-    view_ = view->AsWeakPtr();
-  }
-
-  int id = static_cast<content::RenderFrameHostImpl*>(render_frame_host)
-      ->frame_tree_node()
-      ->frame_tree_node_id();
-  std::pair<FrameMapIterator, bool> rv =
-      g_frame_map.Get().insert(std::make_pair(id, this));
-  DCHECK(rv.second);
-}
-
-// static
-WebFrame* WebFrame::FromFrameTreeNodeID(int frame_tree_node_id) {
-  FrameMapIterator it = g_frame_map.Get().find(frame_tree_node_id);
-  return it == g_frame_map.Get().end() ? nullptr : it->second;
-}
-
 // static
 WebFrame* WebFrame::FromRenderFrameHost(
     content::RenderFrameHost* render_frame_host) {
@@ -153,59 +131,54 @@ WebFrame* WebFrame::FromRenderFrameHost(
     return nullptr;
   }
 
-  return FromFrameTreeNodeID(
-      static_cast<content::RenderFrameHostImpl*>(render_frame_host)
-        ->frame_tree_node()
-        ->frame_tree_node_id());
-}
-
-// static
-void WebFrame::Destroy(WebFrame* frame) {
-  frame->WillDestroy();
-  frame->Delete();
+  auto it = g_frame_map.Get().find(GetRenderFrameHostID(render_frame_host));
+  return it == g_frame_map.Get().end() ? nullptr : it->second;
 }
 
 GURL WebFrame::GetURL() const {
   return render_frame_host_->GetLastCommittedURL();
 }
 
-void WebFrame::InitParent(WebFrame* parent) {
-  DCHECK(!parent_);
-  DCHECK_EQ(parent->view(), view());
-  parent_ = parent;
-  parent_->AddChild(this);
+void WebFrame::AddChild(scoped_ptr<WebFrame> child) {
+  CHECK(!child->parent_);
+  child->parent_ = this;
+  child_frames_.push_back(child.release());
 }
 
-void WebFrame::SetView(WebView* view) {
-  view_ = view->AsWeakPtr();
+void WebFrame::RemoveChild(WebFrame* child) {
+  CHECK_EQ(child->parent_, this);
+
+  auto it = std::find(child_frames_.begin(), child_frames_.end(), child);
+  CHECK(it != child_frames_.end());
+
+  // Remove |child| from our list of children before deleting it, as deleting
+  // it causes WebFrameTreeObserver::FrameDeleted to fire. This can result in
+  // re-entry via GetChildFrames which would otherwise return an
+  // invalid pointer
+  child_frames_.erase(it);
+  delete child;
 }
 
-void WebFrame::SetRenderFrameHost(
+WebView* WebFrame::GetView() const {
+  return WebView::FromRenderFrameHost(render_frame_host_);
+}
+
+void WebFrame::RenderFrameHostChanged(
     content::RenderFrameHost* render_frame_host) {
-  DCHECK_EQ(static_cast<content::RenderFrameHostImpl*>(render_frame_host)
-                ->frame_tree_node()->frame_tree_node_id(),
-            static_cast<content::RenderFrameHostImpl*>(render_frame_host_)
-                ->frame_tree_node()->frame_tree_node_id());
+  RemoveMappingForRenderFrameHost(render_frame_host_);
   render_frame_host_ = render_frame_host;
+  AddMappingForRenderFrameHost(render_frame_host_, this);
 }
 
-size_t WebFrame::GetChildCount() const {
-  return child_frames_.size();
-}
-
-WebFrame* WebFrame::GetChildAt(size_t index) const {
-  if (index >= child_frames_.size()) {
-    return nullptr;
-  }
-
-  return child_frames_.at(index);
+const std::vector<WebFrame*>& WebFrame::GetChildFrames() const {
+  return child_frames_;
 }
 
 scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
     const GURL& context,
     const std::string& msg_id,
     scoped_ptr<base::Value> payload) {
-  if (destroyed_) {
+  if (destroying_) {
     return nullptr;
   }
 
@@ -233,7 +206,7 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
 bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
                                   scoped_ptr<base::Value> payload) {
-  if (destroyed_) {
+  if (destroying_) {
     return false;
   }
 
@@ -256,14 +229,12 @@ void WebFrame::RemoveScriptMessageRequest(
                 req);
   DCHECK(it != current_script_message_requests_.end());
 
-  if (!destroyed_) {
+  if (!destroying_) {
     current_script_message_requests_.erase(it);
   } else {
     // Don't mutate the vector if we're in the destructor
     *it = nullptr;
   }
 }
-
-void WebFrame::DidCommitNewURL() {}
 
 } // namespace oxide

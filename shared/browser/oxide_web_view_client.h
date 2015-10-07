@@ -52,7 +52,6 @@ class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
 class WebContextMenu;
-class WebFrame;
 class WebPopupMenu;
 class WebView;
 
@@ -153,9 +152,6 @@ class WebViewClient : public ScriptMessageTarget {
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
-
-  virtual WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host);
 
   virtual WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,

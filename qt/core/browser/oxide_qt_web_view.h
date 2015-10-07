@@ -32,6 +32,7 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
+#include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
 
 QT_BEGIN_NAMESPACE
@@ -58,6 +59,7 @@ class WebViewProxyClient;
 class WebView : public QObject,
                 public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
+                public oxide::WebFrameTreeObserver,
                 public WebViewProxy {
   Q_OBJECT
 
@@ -81,9 +83,6 @@ class WebView : public QObject,
 
   WebContext* GetContext() const;
 
-  void FrameAdded(oxide::WebFrame* frame);
-  void FrameRemoved(oxide::WebFrame* frame);
-
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
  private Q_SLOTS:
@@ -98,6 +97,8 @@ class WebView : public QObject,
   bool ShouldShowInputPanel() const;
   bool ShouldHideInputPanel() const;
   void SetInputPanelVisibility(bool visible);
+
+  void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
 
@@ -157,8 +158,6 @@ class WebView : public QObject,
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
-  oxide::WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host) override;
   oxide::WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params) override;
@@ -194,6 +193,11 @@ class WebView : public QObject,
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
   void RequestMediaAccessPermission(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
+
+  // oxide::WebFrameTreeObserver implementation
+  void FrameCreated(oxide::WebFrame* frame) override;
+  void FrameDeleted(oxide::WebFrame* frame) override;
+  void LoadCommittedInFrame(oxide::WebFrame* frame) override;
 
   // WebViewProxy implementation
   QUrl url() const override;

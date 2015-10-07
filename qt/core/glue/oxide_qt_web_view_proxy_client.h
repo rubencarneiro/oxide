@@ -98,7 +98,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual WebFrameProxyHandle* CreateWebFrame(WebFrameProxy* proxy) = 0;
+  virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 
   virtual QScreen* GetScreen() const = 0;
   virtual QRect GetViewBoundsPix() const = 0;
@@ -114,7 +114,6 @@ class WebViewProxyClient {
 
   virtual void WebPreferencesReplaced() = 0;
 
-  virtual void FrameAdded(WebFrameProxyHandle* frame) = 0;
   virtual void FrameRemoved(WebFrameProxyHandle* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;
