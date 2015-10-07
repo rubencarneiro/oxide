@@ -24,12 +24,18 @@ class RenderFrameHost;
 
 namespace oxide {
 
+// Helper class that allows a reference to a RenderFrameHost to be stored
+// safely without having to implement WebContentsObserver (if you don't need
+// notification of the RFH being deleted) or without risking a dangling
+// pointer
 class RenderFrameHostID {
  public:
   RenderFrameHostID();
 
   static RenderFrameHostID FromHost(content::RenderFrameHost* host);
 
+  // Return the RenderFrameHost for this ID. Will return nullptr if the RFH
+  // no longer exists
   content::RenderFrameHost* ToHost() const;
 
   bool IsValid() const;
@@ -37,6 +43,7 @@ class RenderFrameHostID {
   bool operator==(const RenderFrameHostID& other) const;
   bool operator!=(const RenderFrameHostID& other) const;
 
+  // Allows this to be used as a key in std::map
   bool operator<(const RenderFrameHostID& other) const;
 
  private:
