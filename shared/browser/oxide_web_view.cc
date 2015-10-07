@@ -942,11 +942,6 @@ void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    // XXX(chrisccoulson): Make PermissionRequestDispatcher a
-    //  WebContentsObserver
-    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-        ->CancelPendingRequests();
-
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
 
@@ -961,21 +956,12 @@ void WebView::DidNavigateAnyFrame(
     content::RenderFrameHost* render_frame_host,
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
-  // XXX(chrisccoulson): Make PermissionRequestDispatcher and
-  //  CertificateErrorManager a WebContentsObserver
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver
   if (details.is_in_page) {
     return;
   }
 
   certificate_error_manager_.DidNavigateFrame(render_frame_host);
-
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
-  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-      ->CancelPendingRequestsForFrame(frame);
 }
 
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,

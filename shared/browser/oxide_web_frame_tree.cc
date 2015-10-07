@@ -21,12 +21,8 @@
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 
-// Remove this
-#include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
-
 #include "oxide_web_frame.h"
 #include "oxide_web_frame_tree_observer.h"
-#include "oxide_web_view.h" // Remove this
 
 namespace oxide {
 
@@ -38,10 +34,6 @@ WebFrameTree::WebFrameTree(content::WebContents* contents)
 
 void WebFrameTree::WebFrameRemoved(WebFrame* frame) {
   FOR_EACH_OBSERVER(WebFrameTreeObserver, observers_, FrameDeleted(frame));
-
-  // XXX(chrisccoulson): This doesn't belong here
-  PermissionRequestDispatcher::FromWebContents(
-      web_contents())->CancelPendingRequestsForFrame(frame);
 }
 
 void WebFrameTree::AddObserver(WebFrameTreeObserver* observer) {

@@ -24,6 +24,7 @@
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/permission_type.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 
 #include "shared/browser/permissions/oxide_permission_request_response.h"
@@ -42,13 +43,13 @@ typedef base::Callback<void(PermissionRequestResponse)>
 
 class PermissionRequest;
 class PermissionRequestDispatcherClient;
-class WebFrame;
 
 // This class keeps track of pending permission requests for a WebContents
 // instance
 // TODO: Coalesce requests with the same embedder/request origin and type
 class PermissionRequestDispatcher
-    : public content::WebContentsUserData<PermissionRequestDispatcher> {
+    : public content::WebContentsUserData<PermissionRequestDispatcher>,
+      public content::WebContentsObserver {
  public:
   ~PermissionRequestDispatcher();
 
@@ -75,12 +76,6 @@ class PermissionRequestDispatcher
                                    bool video,
                                    const PermissionRequestCallback& callback);
 
-  // Cancel any pending permission requests
-  void CancelPendingRequests();
-
-  // Cancel any pending permission requests for |frame|
-  void CancelPendingRequestsForFrame(WebFrame* frame);
-
  private:
   friend class content::WebContentsUserData<PermissionRequestDispatcher>;
   friend class PermissionRequest;
@@ -97,7 +92,22 @@ class PermissionRequestDispatcher
   // Remove empty slots from pending_requests_
   void Compact();
 
-  content::WebContents* contents_;
+  // Cancel any pending permission requests
+  void CancelPendingRequests();
+
+  // Cancel any pending permission requests for |frame|
+  void CancelPendingRequestsForFrame(
+      content::RenderFrameHost* render_frame_host);
+
+  // content::WebContentsObserver implementation
+  void RenderFrameDeleted(
+      content::RenderFrameHost* render_frame_host) override;
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) override;
+  void DidNavigateAnyFrame(
+      content::RenderFrameHost* render_frame_host,
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) override;
 
   PermissionRequestDispatcherClient* client_;
 
