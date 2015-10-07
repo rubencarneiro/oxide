@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -214,9 +214,12 @@ ContentRendererClient::CreateAppBannerCl
+@@ -214,13 +214,16 @@ ContentRendererClient::CreateAppBannerCl
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -17,6 +17,10 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 +void ContentRendererClient::OverrideCompositorSettings(
 +    cc::LayerTreeSettings* settings) {}
 +
+ bool ContentRendererClient::ShouldEnforceWebRTCRoutingPreferences() {
+   return true;
+ }
+ 
  }  // namespace content
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
@@ -42,8 +46,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -309,13 +313,16 @@ class CONTENT_EXPORT ContentRendererClie
-   virtual void WillDestroyServiceWorkerContextOnWorkerThread(const GURL& url) {}
+@@ -313,13 +317,16 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual bool ShouldEnforceWebRTCRoutingPreferences();
  
    // Allow overriding default media player
    virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
@@ -62,7 +66,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer/gpu/render_widget_compositor.cc
 --- a/content/renderer/gpu/render_widget_compositor.cc
 +++ b/content/renderer/gpu/render_widget_compositor.cc
-@@ -34,17 +34,19 @@
+@@ -33,17 +33,19 @@
  #include "cc/output/swap_promise.h"
  #include "cc/resources/single_release_callback.h"
  #include "cc/scheduler/begin_frame_source.h"
@@ -82,7 +86,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
  #include "third_party/WebKit/public/web/WebSelection.h"
-@@ -461,16 +463,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -453,16 +455,18 @@ void RenderWidgetCompositor::Initialize(
      settings.use_external_begin_frame_source = false;
    }
  

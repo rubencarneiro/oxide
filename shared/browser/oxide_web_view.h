@@ -28,7 +28,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "components/sessions/serialized_navigation_entry.h"
+#include "components/sessions/core/serialized_navigation_entry.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/notification_observer.h"

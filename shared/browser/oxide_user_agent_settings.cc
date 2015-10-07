@@ -47,7 +47,7 @@ class UserAgentSettingsFactory : public BrowserContextKeyedServiceFactory {
   static UserAgentSettings* GetForContext(content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<UserAgentSettingsFactory>;
+  friend struct base::DefaultSingletonTraits<UserAgentSettingsFactory>;
 
   UserAgentSettingsFactory();
   ~UserAgentSettingsFactory() override;
@@ -80,7 +80,7 @@ content::BrowserContext* UserAgentSettingsFactory::GetBrowserContextToUse(
 
 // static
 UserAgentSettingsFactory* UserAgentSettingsFactory::GetInstance() {
-  return Singleton<UserAgentSettingsFactory>::get();
+  return base::Singleton<UserAgentSettingsFactory>::get();
 }
 
 // static

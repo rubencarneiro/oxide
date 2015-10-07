@@ -36,7 +36,7 @@ class MediaCaptureDevicesContextFactory
       content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<MediaCaptureDevicesContextFactory>;
+  friend struct base::DefaultSingletonTraits<MediaCaptureDevicesContextFactory>;
 
   MediaCaptureDevicesContextFactory();
   ~MediaCaptureDevicesContextFactory() override;
@@ -71,7 +71,7 @@ MediaCaptureDevicesContextFactory::GetBrowserContextToUse(
 // static
 MediaCaptureDevicesContextFactory*
 MediaCaptureDevicesContextFactory::GetInstance() {
-  return Singleton<MediaCaptureDevicesContextFactory>::get();
+  return base::Singleton<MediaCaptureDevicesContextFactory>::get();
 }
 
 // static

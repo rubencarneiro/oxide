@@ -26,14 +26,14 @@ diff --git a/content/public/common/content_client.cc b/content/public/common/con
 diff --git a/content/public/common/content_client.h b/content/public/common/content_client.h
 --- a/content/public/common/content_client.h
 +++ b/content/public/common/content_client.h
-@@ -142,16 +142,20 @@ class CONTENT_EXPORT ContentClient {
-   virtual void AddSecureSchemesAndOrigins(std::set<std::string>* schemes,
-                                           std::set<GURL>* origins) {}
- 
-   // Gives the embedder a chance to register additional schemes that
+@@ -146,16 +146,20 @@ class CONTENT_EXPORT ContentClient {
    // should be allowed to register service workers. Only secure and
    // trustworthy schemes should be added.
    virtual void AddServiceWorkerSchemes(std::set<std::string>* schemes) {}
+ 
+   // Gives the embedder a chance to register schemes for which site isolation
+   // should be enabled.
+   virtual void AddIsolatedSchemes(std::set<std::string>* schemes) {}
  
 +  // Let the embedder control whether content should optimize for memory
 +  // consumption (eg, limiting decoded image size)

@@ -229,8 +229,9 @@ void MediaCaptureDevicesDispatcher::OnCreatingAudioStream(
 MediaCaptureDevicesDispatcher* MediaCaptureDevicesDispatcher::GetInstance() {
   // We use LeakySingletonTraits here so that observers can be created
   // before Oxide has started up
-  return Singleton<MediaCaptureDevicesDispatcher,
-                   LeakySingletonTraits<MediaCaptureDevicesDispatcher>>::get();
+  return base::Singleton<
+      MediaCaptureDevicesDispatcher,
+      base::LeakySingletonTraits<MediaCaptureDevicesDispatcher>>::get();
 }
 
 const content::MediaStreamDevices&

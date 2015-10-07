@@ -92,7 +92,7 @@ diff --git a/ui/gl/gl_context_egl.h b/ui/gl/gl_context_egl.h
 diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
 --- a/ui/gl/gl_context_glx.cc
 +++ b/ui/gl/gl_context_glx.cc
-@@ -16,35 +16,39 @@ extern "C" {
+@@ -17,35 +17,39 @@ extern "C" {
  #include "ui/gl/gl_implementation.h"
  #include "ui/gl/gl_surface_glx.h"
  
@@ -134,9 +134,9 @@ diff --git a/ui/gl/gl_context_glx.cc b/ui/gl/gl_context_glx.cc
          display_,
          static_cast<GLXFBConfig>(compatible_surface->GetConfig()),
          share_handle,
-@@ -200,16 +204,16 @@ bool GLContextGLX::GetTotalGpuMemory(siz
-     glGetIntegerv(GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, &kbytes);
-     *bytes = 1024*kbytes;
+@@ -202,16 +206,16 @@ bool GLContextGLX::GetTotalGpuMemory(siz
+     *bytes =
+         base::saturated_cast<size_t>(1024u * static_cast<uint64_t>(kbytes));
      return true;
    }
    return false;

@@ -452,7 +452,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     // Calls QuickStreamFactory constructor which uses base::CPU
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
-        new net::HttpCache(session_params, cache_backend));
+        make_scoped_ptr(new net::HttpCache(session_params, cache_backend)));
   }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
@@ -499,7 +499,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   }
   request_interceptors.weak_clear();
 
-  storage->set_job_factory(top_job_factory.release());
+  storage->set_job_factory(top_job_factory.Pass());
 
   resource_context_->request_context_ = context;
   return main_request_context_.get();

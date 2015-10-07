@@ -33,6 +33,19 @@
 
 namespace oxide {
 
+void CompositorOutputSurfaceGL::DetachFromClient() {
+  DCHECK(CalledOnValidThread());
+
+  DiscardBackbuffer();
+  while (!pending_buffers_.empty()) {
+    BufferData& buffer = pending_buffers_.front();
+    DiscardBuffer(&buffer);
+    pending_buffers_.pop_front();
+  }
+
+  CompositorOutputSurface::DetachFromClient();
+}
+
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {
   DCHECK(CalledOnValidThread());
   is_backbuffer_discarded_ = false;
@@ -203,13 +216,6 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
   capabilities_.uses_default_gl_framebuffer = false;
 }
 
-CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
-  DiscardBackbuffer();
-  while (!pending_buffers_.empty()) {
-    BufferData& buffer = pending_buffers_.front();
-    DiscardBuffer(&buffer);
-    pending_buffers_.pop_front();
-  }
-}
+CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {}
 
 } // namespace oxide

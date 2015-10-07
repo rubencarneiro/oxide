@@ -28,6 +28,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_script_message_params.h"
 
+#include "oxide_render_frame_host_id.h"
 #include "oxide_script_message_request_impl_browser.h"
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_view.h"
@@ -36,27 +37,20 @@ namespace oxide {
 
 namespace {
 
-typedef std::pair<int, int> RenderFrameHostID;
 typedef std::map<RenderFrameHostID, WebFrame*> WebFrameMap;
 
 base::LazyInstance<WebFrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
 
-RenderFrameHostID GetRenderFrameHostID(
-    content::RenderFrameHost* render_frame_host) {
-  return std::make_pair(render_frame_host->GetProcess()->GetID(),
-                        render_frame_host->GetRoutingID());
-}
-
 void AddMappingForRenderFrameHost(content::RenderFrameHost* host,
                                   WebFrame* frame) {
-  RenderFrameHostID id = GetRenderFrameHostID(host);
+  RenderFrameHostID id = RenderFrameHostID::FromHost(host);
   CHECK(g_frame_map.Get().find(id) == g_frame_map.Get().end());
   auto rv = g_frame_map.Get().insert(std::make_pair(id, frame));
   DCHECK(rv.second);
 }
 
 void RemoveMappingForRenderFrameHost(content::RenderFrameHost* host) {
-  CHECK_EQ(g_frame_map.Get().erase(GetRenderFrameHostID(host)), 1U);
+  CHECK_EQ(g_frame_map.Get().erase(RenderFrameHostID::FromHost(host)), 1U);
 }
 
 }
@@ -131,7 +125,8 @@ WebFrame* WebFrame::FromRenderFrameHost(
     return nullptr;
   }
 
-  auto it = g_frame_map.Get().find(GetRenderFrameHostID(render_frame_host));
+  auto it = g_frame_map.Get().find(
+      RenderFrameHostID::FromHost(render_frame_host));
   return it == g_frame_map.Get().end() ? nullptr : it->second;
 }
 

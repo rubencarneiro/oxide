@@ -25,7 +25,6 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "ui/gfx/native_widget_types.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
@@ -95,8 +94,6 @@ class CompositorUtils {
       uint32 sync_point,
       const CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
-
-  virtual gfx::GLSurfaceHandle GetSharedSurfaceHandle() = 0;
 
   virtual bool CanUseGpuCompositing() const = 0;
 

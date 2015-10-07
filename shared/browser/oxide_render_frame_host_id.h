@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,40 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_ID_H_
-#define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_ID_H_
+#ifndef _OXIDE_SHARED_BROWSER_RENDER_FRAME_HOST_ID_H_
+#define _OXIDE_SHARED_BROWSER_RENDER_FRAME_HOST_ID_H_
 
-#include "url/gurl.h"
+namespace content {
+class RenderFrameHost;
+}
 
 namespace oxide {
 
-class PermissionRequestID {
+class RenderFrameHostID {
  public:
-  PermissionRequestID(int render_process_id,
-                      int render_frame_id,
-                      int request_id,
-                      const GURL& origin);
+  RenderFrameHostID();
 
-  // Constructs an invalid ID
-  PermissionRequestID();
+  static RenderFrameHostID FromHost(content::RenderFrameHost* host);
 
-  ~PermissionRequestID();
+  content::RenderFrameHost* ToHost() const;
 
-  // Whether this is a valid ID
   bool IsValid() const;
 
-  bool operator==(const PermissionRequestID& other) const;
-  bool operator!=(const PermissionRequestID& other) const {
-    return !(*this == other);
-  }
+  bool operator==(const RenderFrameHostID& other) const;
+  bool operator!=(const RenderFrameHostID& other) const;
+
+  bool operator<(const RenderFrameHostID& other) const;
 
  private:
   int render_process_id_;
   int render_frame_id_;
-  int request_id_;
-  GURL origin_;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_ID_H_
+#endif // _OXIDE_SHARED_BROWSER_RENDER_FRAME_HOST_ID_H_

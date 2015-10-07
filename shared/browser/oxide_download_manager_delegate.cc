@@ -39,7 +39,7 @@ class DownloadManagerDelegateFactory
       content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<DownloadManagerDelegateFactory>;
+  friend struct base::DefaultSingletonTraits<DownloadManagerDelegateFactory>;
 
   DownloadManagerDelegateFactory();
   ~DownloadManagerDelegateFactory() override;
@@ -73,7 +73,7 @@ DownloadManagerDelegateFactory::GetBrowserContextToUse(
 
 // static
 DownloadManagerDelegateFactory* DownloadManagerDelegateFactory::GetInstance() {
-  return Singleton<DownloadManagerDelegateFactory>::get();
+  return base::Singleton<DownloadManagerDelegateFactory>::get();
 }
 
 // static

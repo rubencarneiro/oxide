@@ -152,7 +152,7 @@ bool PlatformNotificationService::GetDisplayedPersistentNotifications(
 }
 
 PlatformNotificationService* PlatformNotificationService::GetInstance() {
-  return Singleton<PlatformNotificationService>::get();
+  return base::Singleton<PlatformNotificationService>::get();
 }
 
 }

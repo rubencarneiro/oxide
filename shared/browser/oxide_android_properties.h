@@ -22,7 +22,9 @@
 
 #include "base/macros.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace oxide {
 
@@ -61,7 +63,7 @@ class AndroidProperties {
   std::string GetOSVersion() const;
 
  private:
-  friend struct DefaultSingletonTraits<AndroidProperties>;
+  friend struct base::DefaultSingletonTraits<AndroidProperties>;
 
   AndroidProperties();
 

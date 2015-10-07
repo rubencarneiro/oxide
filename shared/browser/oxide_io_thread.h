@@ -25,7 +25,9 @@
 #include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_thread_delegate.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace net {
 
