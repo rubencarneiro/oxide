@@ -715,13 +715,12 @@ void WebView::UnhandledKeyboardEvent(
     return;
   }
 
-  DCHECK(event.os_event);
-  DCHECK(!event.os_event->isAccepted());
-
   if (!event.os_event) {
     return;
   }
   
+  DCHECK(!event.os_event->isAccepted());
+
   client_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
