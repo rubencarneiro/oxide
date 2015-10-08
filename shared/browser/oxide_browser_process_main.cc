@@ -303,6 +303,10 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
 
+  if (IsEnvironmentOptionEnabled("ENABLE_PEPPER_FLASH_PLUGIN")) {
+    command_line->AppendSwitch(switches::kEnablePepperFlashPlugin);
+  }
+
   if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);
   }

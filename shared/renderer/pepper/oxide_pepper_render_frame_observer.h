@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_CONSTANTS_H_
-#define _OXIDE_SHARED_COMMON_CONSTANTS_H_
+#ifndef _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
+#define _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
 
-namespace switches {
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "content/public/renderer/render_frame_observer.h"
 
-extern const char kEnableGoogleTalkPlugin[];
-extern const char kEnablePepperFlashPlugin[];
-extern const char kFormFactor[];
-extern const char kFormFactorDesktop[];
-extern const char kFormFactorTablet[];
-extern const char kFormFactorPhone[];
-extern const char kIncognito[];
-extern const char kEnableMediaHubAudio[];
-extern const char kMediaHubFixedSessionDomains[];
 
-} // namespace switches
+namespace content {
+class RenderFrame;
+}
 
 namespace oxide {
 
-extern const int kMainWorldId;
-extern const char kMainWorldContextUrl[];
-extern const char kImageContextMenuPropertiesMimeType[];
+class PepperRenderFrameObserver final : public content::RenderFrameObserver {
+ public:
+  explicit PepperRenderFrameObserver(content::RenderFrame* render_frame);
+  ~PepperRenderFrameObserver();
+
+  void DidCreatePepperPlugin(content::RendererPpapiHost* host) override;
+
+ private:
+  DISALLOW_COPY_AND_ASSIGN(PepperRenderFrameObserver);
+};
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_CONSTANTS_H_
+#endif // _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
+
