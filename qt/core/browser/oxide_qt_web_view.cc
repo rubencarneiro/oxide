@@ -594,8 +594,8 @@ void WebView::TitleChanged() {
   client_->TitleChanged();
 }
 
-void WebView::IconChanged(const GURL& icon) {
-  client_->IconChanged(QUrl(QString::fromStdString(icon.spec())));
+void WebView::FaviconChanged() {
+  client_->FaviconChanged();
 }
 
 void WebView::CommandsUpdated() {
@@ -1117,6 +1117,10 @@ void WebView::setUrl(const QUrl& url) {
 
 QString WebView::title() const {
   return QString::fromStdString(view_->GetTitle());
+}
+
+QUrl WebView::favIconUrl() const {
+  return QUrl(QString::fromStdString(view_->GetFaviconURL().spec()));
 }
 
 bool WebView::canGoBack() const {

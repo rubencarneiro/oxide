@@ -178,6 +178,8 @@ class WebView : public ScriptMessageTarget,
 
   std::string GetTitle() const;
 
+  const GURL& GetFaviconURL() const;
+
   bool CanGoBack() const;
   bool CanGoForward() const;
 
@@ -495,8 +497,6 @@ class WebView : public ScriptMessageTarget,
   void DidStartLoading() final;
   void DidStopLoading() final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
-  void DidUpdateFaviconURL(
-      const std::vector<content::FaviconURL>& candidates) final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
 

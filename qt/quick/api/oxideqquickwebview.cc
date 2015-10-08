@@ -232,13 +232,10 @@ void OxideQQuickWebViewPrivate::TitleChanged() {
   emit q->titleChanged();
 }
 
-void OxideQQuickWebViewPrivate::IconChanged(QUrl icon) {
+void OxideQQuickWebViewPrivate::FaviconChanged() {
   Q_Q(OxideQQuickWebView);
 
-  if (icon != icon_) {
-    icon_ = icon;
-    emit q->iconChanged();
-  }
+  emit q->iconChanged();
 }
 
 void OxideQQuickWebViewPrivate::CommandsUpdated() {
@@ -1482,7 +1479,11 @@ QString OxideQQuickWebView::title() const {
 QUrl OxideQQuickWebView::icon() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->icon_;
+  if (!d->proxy()) {
+    return QUrl();
+  }
+
+  return d->proxy()->favIconUrl();
 }
 
 bool OxideQQuickWebView::canGoBack() const {

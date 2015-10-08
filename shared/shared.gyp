@@ -355,6 +355,8 @@
         'browser/oxide_download_manager_delegate.h',
         'browser/oxide_event_utils.cc',
         'browser/oxide_event_utils.h',
+        'browser/oxide_favicon_helper.cc',
+        'browser/oxide_favicon_helper.h',
         'browser/oxide_file_picker.cc',
         'browser/oxide_file_picker.h',
         'browser/oxide_find_controller.cc',

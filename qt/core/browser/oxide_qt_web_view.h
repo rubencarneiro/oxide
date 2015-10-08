@@ -115,7 +115,7 @@ class WebView : public QObject,
   void CrashedStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
-  void IconChanged(const GURL& icon) override;
+  void FaviconChanged() override;
   void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
@@ -204,6 +204,8 @@ class WebView : public QObject,
   void setUrl(const QUrl& url) override;
 
   QString title() const override;
+
+  QUrl favIconUrl() const override;
 
   bool canGoBack() const override;
   bool canGoForward() const override;

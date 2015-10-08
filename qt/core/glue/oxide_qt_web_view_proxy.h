@@ -151,6 +151,8 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual QString title() const = 0;
 
+  virtual QUrl favIconUrl() const = 0;
+
   virtual bool canGoBack() const = 0;
   virtual bool canGoForward() const = 0;
 

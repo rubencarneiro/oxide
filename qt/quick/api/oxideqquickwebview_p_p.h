@@ -97,7 +97,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
-  void IconChanged(QUrl icon) override;
+  void FaviconChanged() override;
   void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
@@ -183,7 +183,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
 
   bool constructed_;
   int load_progress_;
-  QUrl icon_;
 
   OxideQQuickNavigationHistory navigation_history_;
   QScopedPointer<OxideQSecurityStatus> security_status_;

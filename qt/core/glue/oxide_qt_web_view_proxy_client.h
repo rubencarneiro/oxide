@@ -88,7 +88,7 @@ class WebViewProxyClient {
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
-  virtual void IconChanged(QUrl icon) = 0; // XXX(chrisccoulson): Move paramter to a member on WebView
+  virtual void FaviconChanged() = 0;
   virtual void CommandsUpdated() = 0;
   virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;

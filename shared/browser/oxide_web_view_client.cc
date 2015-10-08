@@ -46,7 +46,7 @@ void WebViewClient::URLChanged() {}
 
 void WebViewClient::TitleChanged() {}
 
-void WebViewClient::IconChanged(const GURL& icon) {}
+void WebViewClient::FaviconChanged() {}
 
 void WebViewClient::CommandsUpdated() {}
 

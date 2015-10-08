@@ -48,7 +48,6 @@
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
 #include "content/public/browser/web_contents.h"
-#include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
@@ -81,6 +80,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_event_utils.h"
+#include "oxide_favicon_helper.h"
 #include "oxide_file_picker.h"
 #include "oxide_find_controller.h"
 #include "oxide_javascript_dialog_manager.h"
@@ -169,6 +169,7 @@ void CreateHelpers(content::WebContents* contents,
 #endif
   FindController::CreateForWebContents(contents);
   WebFrameTree::CreateForWebContents(contents);
+  FaviconHelper::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
@@ -1030,17 +1031,6 @@ void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   }
 }
 
-void WebView::DidUpdateFaviconURL(
-    const std::vector<content::FaviconURL>& candidates) {
-  std::vector<content::FaviconURL>::const_iterator it;
-  for (it = candidates.begin(); it != candidates.end(); ++it) {
-    if (it->icon_type == content::FaviconURL::FAVICON) {
-      client_->IconChanged(it->icon_url);
-      return;
-    }
-  }
-}
-
 bool WebView::OnMessageReceived(const IPC::Message& msg,
                                 content::RenderFrameHost* render_frame_host) {
   bool handled = true;
@@ -1225,6 +1215,10 @@ void WebView::LoadData(const std::string& encoded_data,
 
 std::string WebView::GetTitle() const {
   return base::UTF16ToUTF8(web_contents_->GetTitle());
+}
+
+const GURL& WebView::GetFaviconURL() const {
+  return FaviconHelper::FromWebContents(web_contents_.get())->GetFaviconURL();
 }
 
 bool WebView::CanGoBack() const {

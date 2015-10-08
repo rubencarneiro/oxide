@@ -87,8 +87,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void TitleChanged();
 
-  // TODO(chrisccoulson): Track |icon| as a property in WebView
-  virtual void IconChanged(const GURL& icon);
+  virtual void FaviconChanged();
 
   virtual void CommandsUpdated();
 
