@@ -713,6 +713,11 @@ content::PermissionManager* BrowserContext::GetPermissionManager() {
   return permission_manager_.get();
 }
 
+content::BackgroundSyncController*
+BrowserContext::GetBackgroundSyncController() {
+  return nullptr;
+}
+
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {
   DCHECK(CalledOnValidThread());
   observers_.AddObserver(observer);
