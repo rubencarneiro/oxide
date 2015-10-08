@@ -51,10 +51,7 @@ int32_t GetRestrictions(int render_process_id,
   // TODO(chrisccoulson): Implement PP_FLASHLSORESTRICTIONS_IN_MEMORY when
   // we have content settings
 
-  if (io_data->CanAccessCookies(
-      document_url,
-      plugin_url,
-      false) != STORAGE_PERMISSION_ALLOW) {
+  if (!io_data->CanAccessCookies(document_url, plugin_url, false)) {
       restrictions = PP_FLASHLSORESTRICTIONS_BLOCK;
   }
 
