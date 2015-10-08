@@ -53,7 +53,7 @@ class TransportSecurityState;
 namespace oxide {
 
 class BrowserContext;
-typedef BrowserContext* BrowserContextID;
+typedef uintptr_t BrowserContextID;
 
 class BrowserContextDelegate;
 class BrowserContextImpl;

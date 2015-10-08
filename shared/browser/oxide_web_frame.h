@@ -39,46 +39,39 @@ class RenderFrameHost;
 namespace oxide {
 
 class ScriptMessageRequestImplBrowser;
+class WebFrameTree;
 class WebView;
 
-// Represents a document frame in the renderer (a top-level frame or iframe).
-// This is designed to be subclassed by each implementation. Each instance
-// of this will typically own a publicly exposed WebFrame
+// Represents a document frame (either the top level frame or an iframe). This
+// tries to provide a representation of a view's frame tree whilst hiding
+// the concept of RenderFrameHost, to make it suitable for a public API
 class WebFrame : public ScriptMessageTarget {
  public:
+  typedef std::vector<WebFrame*> ChildVector;
   typedef std::vector<ScriptMessageRequestImplBrowser*>
       ScriptMessageRequestVector;
 
-  WebFrame(content::RenderFrameHost* render_frame_host,
-           WebView* view);
+  WebFrame(WebFrameTree* tree, content::RenderFrameHost* render_frame_host);
 
-  // Find the WebFrame for |frame_tree_node_id|. Currently only used in
-  // WebView::OpenURLFromTab - please don't add new code which uses this
-  static WebFrame* FromFrameTreeNodeID(int frame_tree_node_id);
+  ~WebFrame() override;
 
   // Find the WebFrame for |render_frame_host|
   static WebFrame* FromRenderFrameHost(
       content::RenderFrameHost* render_frame_host);
 
-  // Correctly destroy |frame|. Once this function returns, |frame| will
-  // be invalid
-  static void Destroy(WebFrame* frame);
-
   // Return the last committed URL for this frame
   GURL GetURL() const;
 
-  // Initialize the parent of this frame to |parent|. This is not a constructor
-  // parameter because it calls in to the parents subclass, which may require
-  // the child frame to be fully constructed
-  void InitParent(WebFrame* parent);
+  void AddChild(scoped_ptr<WebFrame> child);
+
+  void RemoveChild(WebFrame* child);
 
   // Return the parent frame
   WebFrame* parent() const { return parent_; }
 
-  // Return the WebView that this frame is in
-  WebView* view() const { return view_.get(); }
-
-  void SetView(WebView* view);
+  // Return the WebView that this frame is in. This can be null if the
+  // corresponding WebContents hasn't been adopted by a WebView yet
+  WebView* GetView() const;
 
   base::WeakPtr<WebFrame> GetWeakPtr() {
     return weak_factory_.GetWeakPtr();
@@ -89,14 +82,11 @@ class WebFrame : public ScriptMessageTarget {
     return render_frame_host_;
   }
 
-  // Set the active RenderFrameHost for this WebFrame
-  void SetRenderFrameHost(content::RenderFrameHost* render_frame_host);
+  // Notify this WebFrame that it's now being displayed by a new RFH
+  void RenderFrameHostChanged(content::RenderFrameHost* render_frame_host);
 
-  // Return the number of immediate children of this frame
-  size_t GetChildCount() const;
-
-  // Return the frame at |index|
-  WebFrame* GetChildAt(size_t index) const;
+  // Return the immediate children of this frame
+  const ChildVector& GetChildFrames() const;
 
   // Send a message with |msg_id| and |payload| to the isolated world
   // addressed by |context|. Returns a request object on success with which you
@@ -121,53 +111,37 @@ class WebFrame : public ScriptMessageTarget {
   // Remove |req| from the list of pending ScriptMessageRequests for this frame
   void RemoveScriptMessageRequest(ScriptMessageRequestImplBrowser* req);
 
-  // Notify this frame that a new URL was committed
-  virtual void DidCommitNewURL();
-
- protected:
-  virtual ~WebFrame();
+  // XXX(chrisccoulson): We need to refactor ScriptMessageTarget so that
+  //  this can die
+  void set_script_message_target_delegate(ScriptMessageTarget* delegate) {
+    script_message_target_delegate_ = delegate;
+  }
 
  private:
-  typedef std::vector<WebFrame *> ChildVector;
-
-  // Notify this WebFrame that it's about to be deleted. This allows
-  // it to destroy its children before the destructor in the derived class
-  // is called, which will typically then destroy its publicly exposed
-  // WebFrame
-  void WillDestroy();
-
-  // Delete this WebFrame. Called after WillDestroyFrame and can be overridden
-  // by the implementation
-  virtual void Delete();
-
-  // Add |child| to this frame, calling OnChildAdded
-  void AddChild(WebFrame* child);
-
-  // Remove |child| from this frame, calling OnChildRemoved
-  void RemoveChild(WebFrame* child);
-
-  // ScriptMessageTarget implementatin
+  // ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
   const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
-  // Notify the subclass that |child| was added to this frame
-  virtual void OnChildAdded(WebFrame* child);
+  // The WebFrameTree that created us
+  WebFrameTree* frame_tree_;
 
-  // Notify the subclass that |child| has been removed from this frame
-  virtual void OnChildRemoved(WebFrame* child);
+  // The current RenderFrameHost for this WebFrame
+  content::RenderFrameHost* render_frame_host_;
 
   WebFrame* parent_;
-  base::WeakPtr<WebView> view_;
-  content::RenderFrameHost* render_frame_host_;
   ChildVector child_frames_;
+
+  // XXX(chrisccoulson): This should be on another object keyed off RFH
   ScriptMessageRequestVector current_script_message_requests_;
 
   // The message serial that will be used for the next outgoing script message
   int next_message_serial_;
 
-  // Whether WillDestroy() has been called on this frame
-  bool destroyed_;
+  // The destructor for this WebFrame is running
+  bool destroying_;
+
+  ScriptMessageTarget* script_message_target_delegate_; // XXX: DIE
 
   base::WeakPtrFactory<WebFrame> weak_factory_;
 

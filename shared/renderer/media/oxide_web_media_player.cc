@@ -325,7 +325,8 @@ WebTimeRanges WebMediaPlayer::buffered() const {
 }
 
 WebTimeRanges WebMediaPlayer::seekable() const {
-  return buffered_;
+  const blink::WebTimeRange seekable_range(0.0, duration());
+  return blink::WebTimeRanges(&seekable_range, 1);
 }
 
 double WebMediaPlayer::maxTimeSeekable() const {

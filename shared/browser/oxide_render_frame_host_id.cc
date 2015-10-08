@@ -54,4 +54,20 @@ bool RenderFrameHostID::operator!=(const RenderFrameHostID& other) const {
   return !(*this == other);
 }
 
+bool RenderFrameHostID::operator<(const RenderFrameHostID& other) const {
+  if (render_process_id_ < other.render_process_id_) {
+    return true;
+  }
+
+  if (render_process_id_ != other.render_process_id_) {
+    return false;
+  }
+
+  if (render_frame_id_ < other.render_frame_id_) {
+    return true;
+  }
+
+  return false;
+}
+
 } // namespace oxide

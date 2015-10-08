@@ -774,7 +774,7 @@ void BrowserContext::AssertNoContextsExist() {
 }
 
 BrowserContextID BrowserContext::GetID() const {
-  return static_cast<BrowserContextID>(const_cast<BrowserContext*>(this));
+  return reinterpret_cast<BrowserContextID>(this);
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(

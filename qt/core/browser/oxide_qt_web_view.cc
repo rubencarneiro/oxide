@@ -18,6 +18,7 @@
 #include "oxide_qt_web_view.h"
 
 #include <limits>
+#include <memory>
 #include <vector>
 
 #include <QCursor>
@@ -72,12 +73,15 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
+#include "shared/browser/oxide_web_frame.h"
+#include "shared/browser/oxide_web_frame_tree.h"
 #include "shared/browser/oxide_web_view.h"
 #include "shared/browser/permissions/oxide_permission_request.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
@@ -485,6 +489,23 @@ void WebView::SetInputPanelVisibility(bool visible) {
   QGuiApplication::inputMethod()->setVisible(visible);
 }
 
+void WebView::CommonInit(OxideQFindController* find_controller) {
+  content::WebContents* contents = view_->GetWebContents();
+
+  oxide::PermissionRequestDispatcher::FromWebContents(
+      contents)->set_client(this);
+  OxideQSecurityStatusPrivate::get(security_status_)->view = this;
+  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
+      contents);
+  oxide::WebFrameTreeObserver::Observe(
+      oxide::WebFrameTree::FromWebContents(contents));
+
+  CHECK_EQ(view_->GetRootFrame()->GetChildFrames().size(), 0U);
+  WebFrame* root_frame = new WebFrame(view_->GetRootFrame());
+  view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
+  client_->CreateWebFrame(root_frame);
+}
+
 void WebView::EnsurePreferences() {
   if (view_->GetWebPreferences()) {
     return;
@@ -694,13 +715,12 @@ void WebView::UnhandledKeyboardEvent(
     return;
   }
 
-  DCHECK(event.os_event);
-  DCHECK(!event.os_event->isAccepted());
-
   if (!event.os_event) {
     return;
   }
   
+  DCHECK(!event.os_event->isAccepted());
+
   client_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
@@ -806,13 +826,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   client_->NavigationRequested(&request);
 
   return request.action() == OxideQNavigationRequest::ActionAccept;
-}
-
-oxide::WebFrame* WebView::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  WebFrame* frame = new WebFrame(render_frame_host, view_.get());
-  WebFrameProxyHandle* handle = client_->CreateWebFrame(frame);
-  return WebFrame::FromProxyHandle(handle);
 }
 
 oxide::WebContextMenu* WebView::CreateContextMenu(
@@ -1059,6 +1072,41 @@ void WebView::RequestMediaAccessPermission(
   client_->RequestMediaAccessPermission(req.release());
 }
 
+void WebView::FrameCreated(oxide::WebFrame* frame) {
+  DCHECK(!WebFrame::FromSharedWebFrame(frame));
+  DCHECK(frame->parent());
+
+  WebFrame* f = new WebFrame(frame);
+  frame->set_script_message_target_delegate(f);
+  client_->CreateWebFrame(f);
+
+  WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
+  parent->client()->ChildFramesChanged();
+}
+
+void WebView::FrameDeleted(oxide::WebFrame* frame) {
+  WebFrame* f = WebFrame::FromSharedWebFrame(frame);
+  DCHECK(f);
+
+  client_->FrameRemoved(f->handle());
+  frame->set_script_message_target_delegate(nullptr);
+
+  f->client()->DestroyFrame();
+  // |f| has been deleted
+
+  WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
+  if (!parent) {
+    return;
+  }
+
+  parent->client()->ChildFramesChanged();
+}
+
+void WebView::LoadCommittedInFrame(oxide::WebFrame* frame) {
+  WebFrame* f = WebFrame::FromSharedWebFrame(frame);
+  f->client()->LoadCommitted();
+}
+
 QUrl WebView::url() const {
   return QUrl(QString::fromStdString(view_->GetURL().spec()));
 }
@@ -1096,7 +1144,7 @@ void WebView::setFullscreen(bool fullscreen) {
 }
 
 WebFrameProxyHandle* WebView::rootFrame() const {
-  WebFrame* f = static_cast<WebFrame*>(view_->GetRootFrame());
+  WebFrame* f = WebFrame::FromSharedWebFrame(view_->GetRootFrame());
   if (!f) {
     return nullptr;
   }
@@ -1572,11 +1620,8 @@ WebView::WebView(WebViewProxyClient* client,
 
   view_.reset(new oxide::WebView(params));
 
-  oxide::PermissionRequestDispatcher::FromWebContents(
-      view_->GetWebContents())->set_client(this);
-  OxideQSecurityStatusPrivate::get(security_status_)->view = this;
-  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
-      view_->GetWebContents());
+  CommonInit(find_controller);
+
   EnsurePreferences();
 }
 
@@ -1596,12 +1641,8 @@ WebView* WebView::CreateFromNewViewRequest(
   new_view->view_.reset(new oxide::WebView(rd->contents.Pass(), new_view));
   rd->view = new_view->view_->AsWeakPtr();
 
-  oxide::PermissionRequestDispatcher::FromWebContents(
-      new_view->view_->GetWebContents())->set_client(new_view);
-  OxideQSecurityStatusPrivate::get(new_view->security_status_)->view =
-      new_view;
-  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
-      new_view->view_->GetWebContents());
+  new_view->CommonInit(find_controller);
+
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
         new_view->view_->GetWebPreferences())->api_handle();
@@ -1634,14 +1675,6 @@ WebView* WebView::FromView(oxide::WebView* view) {
 
 WebContext* WebView::GetContext() const {
   return WebContext::FromBrowserContext(view_->GetBrowserContext());
-}
-
-void WebView::FrameAdded(oxide::WebFrame* frame) {
-  client_->FrameAdded(static_cast<WebFrame*>(frame)->handle());
-}
-
-void WebView::FrameRemoved(oxide::WebFrame* frame) {
-  client_->FrameRemoved(static_cast<WebFrame*>(frame)->handle());
 }
 
 const oxide::SecurityStatus& WebView::GetSecurityStatus() const {

@@ -27,7 +27,12 @@
 #include "content/public/common/resource_type.h"
 #include "url/gurl.h"
 
+#include "shared/browser/oxide_render_frame_host_id.h"
 #include "shared/browser/oxide_security_types.h"
+
+namespace content {
+class RenderFrameHost;
+}
 
 namespace net {
 class SSLInfo;
@@ -37,7 +42,6 @@ class X509Certificate;
 namespace oxide {
 
 class CertificateError;
-class WebFrame;
 
 // This class tracks CertificateErrors
 class CertificateErrorManager {
@@ -46,17 +50,17 @@ class CertificateErrorManager {
   ~CertificateErrorManager();
 
   // Cancels any pending frame errors for |frame|
-  void DidStartProvisionalLoadForFrame(WebFrame* frame);
+  void DidStartProvisionalLoadForFrame(content::RenderFrameHost* frame);
 
   // Cancels any errors for |frame| with the exception of
   // non-overridable frame errors if this is the corresponding error page
-  void DidNavigateFrame(WebFrame* frame);
+  void DidNavigateFrame(content::RenderFrameHost* frame);
 
   // Cancels any pending frame errors for |frame|
-  void DidStopProvisionalLoadForFrame(WebFrame* frame);
+  void DidStopProvisionalLoadForFrame(content::RenderFrameHost* frame);
 
   // Cancels all errors for frame
-  void FrameDetached(WebFrame* frame);
+  void FrameDetached(content::RenderFrameHost* frame);
 
  private:
   friend class CertificateError;
@@ -72,7 +76,7 @@ class CertificateErrorManager {
   // Remove empty slots from errors_
   void Compact();
 
-  void CancelPendingFrameErrorsForFrame(WebFrame* frame);
+  void CancelPendingFrameErrorsForFrame(content::RenderFrameHost* frame);
 
   typedef std::vector<CertificateError*> CertErrorVector;
 
@@ -94,7 +98,7 @@ class CertificateError {
  public:
   CertificateError(
       CertificateErrorManager* manager,
-      WebFrame* frame,
+      content::RenderFrameHost* frame,
       int cert_error,
       const net::SSLInfo& ssl_info,
       const GURL& url,
@@ -147,8 +151,8 @@ class CertificateError {
 
   CertificateErrorManager* manager_;
 
-  // The frame the generated this error
-  WebFrame* frame_;
+  // The ID of the frame the generated this error
+  RenderFrameHostID frame_id_;
 
   bool is_main_frame_;
   bool is_subresource_;
