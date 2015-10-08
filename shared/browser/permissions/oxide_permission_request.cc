@@ -51,12 +51,12 @@ void PermissionRequest::Respond(PermissionRequestResponse response) {
 
 PermissionRequest::PermissionRequest(
     int request_id,
-    WebFrame* frame,
+    const RenderFrameHostID& frame_id,
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(PermissionRequestResponse)>& callback)
     : request_id_(request_id),
-      frame_(frame),
+      frame_id_(frame_id),
       dispatcher_(nullptr),
       origin_(origin),
       embedder_(embedder),
@@ -90,20 +90,24 @@ SimplePermissionRequest::SimplePermissionRequest(
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(PermissionRequestResponse)>& callback)
-    : PermissionRequest(request_id, nullptr, origin, embedder, callback) {}
+    : PermissionRequest(request_id,
+                        RenderFrameHostID(),
+                        origin,
+                        embedder,
+                        callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {}
 
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     int request_id,
-    WebFrame* frame,
+    const RenderFrameHostID& frame_id,
     const GURL& origin,
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
     const base::Callback<void(PermissionRequestResponse)>& callback)
     : PermissionRequest(request_id,
-                        frame,
+                        frame_id,
                         origin,
                         embedder,
                         callback),

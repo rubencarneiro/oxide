@@ -20,11 +20,13 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/navigation_details.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
+#include "shared/browser/oxide_render_frame_host_id.h"
 #include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request.h"
@@ -66,7 +68,7 @@ PermissionRequestDispatcher::IteratorGuard::~IteratorGuard() {
 
 PermissionRequestDispatcher::PermissionRequestDispatcher(
     content::WebContents* contents)
-    : contents_(contents),
+    : content::WebContentsObserver(contents),
       client_(nullptr),
       iterating_(false),
       next_request_id_(0),
@@ -107,6 +109,61 @@ void PermissionRequestDispatcher::Compact() {
       pending_requests_.end());
 }
 
+void PermissionRequestDispatcher::CancelPendingRequests() {
+  IteratorGuard guard(this);
+  for (auto request : pending_requests_) {
+    if (!request) {
+      continue;
+    }
+    request->Cancel(true);
+  }
+}
+
+void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
+    content::RenderFrameHost* frame) {
+  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
+
+  IteratorGuard guard(this);
+  for (auto request : pending_requests_) {
+    if (!request) {
+      continue;
+    }
+    if (!request->frame_id_.IsValid()) {
+      continue;
+    }
+    if (request->frame_id_ != frame_id) {
+      continue;
+    }
+    request->Cancel(true);
+  }
+}
+
+void PermissionRequestDispatcher::RenderFrameDeleted(
+    content::RenderFrameHost* render_frame_host) {
+  CancelPendingRequestsForFrame(render_frame_host);
+}
+
+void PermissionRequestDispatcher::RenderFrameHostChanged(
+    content::RenderFrameHost* old_host,
+    content::RenderFrameHost* new_host) {
+  if (!old_host) {
+    return;
+  }
+
+  CancelPendingRequestsForFrame(old_host);
+}
+
+void PermissionRequestDispatcher::DidNavigateAnyFrame(
+    content::RenderFrameHost* render_frame_host,
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  if (details.is_in_page) {
+    return;
+  }
+
+  CancelPendingRequestsForFrame(render_frame_host);
+}
+
 PermissionRequestDispatcher::~PermissionRequestDispatcher() {
   CancelPendingRequests();
 }
@@ -131,7 +188,7 @@ int PermissionRequestDispatcher::RequestPermission(
       new SimplePermissionRequest(
         request_id,
         requesting_origin,
-        contents_->GetLastCommittedURL().GetOrigin(),
+        web_contents()->GetLastCommittedURL().GetOrigin(),
         callback));
   AddPendingRequest(request.get());
 
@@ -174,20 +231,14 @@ int PermissionRequestDispatcher::RequestMediaAccessPermission(
     return -1;
   }
 
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
-    return -1;
-  }
-
   int request_id = next_request_id_++;
 
   scoped_ptr<MediaAccessPermissionRequest> req(
       new MediaAccessPermissionRequest(
         request_id,
-        frame,
+        RenderFrameHostID::FromHost(render_frame_host),
         requesting_origin,
-        contents_->GetLastCommittedURL().GetOrigin(),
+        web_contents()->GetLastCommittedURL().GetOrigin(),
         audio, video,
         callback));
   AddPendingRequest(req.get());
@@ -195,32 +246,6 @@ int PermissionRequestDispatcher::RequestMediaAccessPermission(
   client_->RequestMediaAccessPermission(req.Pass());
 
   return request_id;
-}
-
-void PermissionRequestDispatcher::CancelPendingRequests() {
-  IteratorGuard guard(this);
-  for (auto request : pending_requests_) {
-    if (!request) {
-      continue;
-    }
-    request->Cancel(true);
-  }
-}
-
-void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
-    WebFrame* frame) {
-  DCHECK(frame);
-
-  IteratorGuard guard(this);
-  for (auto request : pending_requests_) {
-    if (!request) {
-      continue;
-    }
-    if (request->frame_ != frame) {
-      continue;
-    }
-    request->Cancel(true);
-  }
 }
 
 } // namespace oxide

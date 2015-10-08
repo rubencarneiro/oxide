@@ -21,12 +21,11 @@
 #include "base/macros.h"
 #include "url/gurl.h"
 
+#include "shared/browser/oxide_render_frame_host_id.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 
 namespace oxide {
-
-class WebFrame;
 
 // Base class of all PermissionRequests. It contains functionality that is
 // common to all requests (url, embedder, allow, deny). If your request
@@ -34,7 +33,7 @@ class WebFrame;
 class PermissionRequest {
  public:
   PermissionRequest(int request_id,
-                    WebFrame* frame,
+                    const RenderFrameHostID& frame_id,
                     const GURL& origin,
                     const GURL& embedder,
                     const PermissionRequestCallback& callback);
@@ -75,8 +74,8 @@ class PermissionRequest {
   // PermissionManager
   int request_id_;
 
-  // The frame that initiated this request
-  WebFrame* frame_;
+  // The ID of the RenderFrameHost that initiated this request
+  RenderFrameHostID frame_id_;
 
   PermissionRequestDispatcher* dispatcher_;
 
@@ -107,7 +106,7 @@ class SimplePermissionRequest : public PermissionRequest {
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
   MediaAccessPermissionRequest(int request_id,
-                               WebFrame* frame,
+                               const RenderFrameHostID& frame_id,
                                const GURL& origin,
                                const GURL& embedder,
                                bool audio_requested,

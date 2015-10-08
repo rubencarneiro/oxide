@@ -120,10 +120,10 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
                                      params.msg_id,
                                      &params.wrapped_payload));
     WebFrame* target = frame;
-    WebView* view = frame->view();
+    WebView* view = frame->GetView();
 
     while (target) {
-      DCHECK_EQ(target->view(), view);
+      DCHECK_EQ(target->GetView(), view);
       if (TryDispatchMessageToTarget(target, message.get())) {
         break;
       }

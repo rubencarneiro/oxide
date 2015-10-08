@@ -48,7 +48,6 @@
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
 #include "content/public/browser/web_contents.h"
-#include "content/public/common/favicon_url.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
@@ -81,6 +80,7 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
 #include "oxide_event_utils.h"
+#include "oxide_favicon_helper.h"
 #include "oxide_file_picker.h"
 #include "oxide_find_controller.h"
 #include "oxide_javascript_dialog_manager.h"
@@ -89,6 +89,7 @@
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_context_menu.h"
+#include "oxide_web_frame_tree.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
@@ -167,6 +168,8 @@ void CreateHelpers(content::WebContents* contents,
   new MediaWebContentsObserver(contents);
 #endif
   FindController::CreateForWebContents(contents);
+  WebFrameTree::CreateForWebContents(contents);
+  FaviconHelper::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
@@ -174,10 +177,6 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
-}
-
-void WebView::WebFrameDeleter::operator()(WebFrame* frame) {
-  WebFrame::Destroy(frame);
 }
 
 void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
@@ -262,10 +261,6 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
                  content::NotificationService::AllBrowserContextsAndSources());
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
-
-  root_frame_.reset(CreateWebFrame(web_contents_->GetMainFrame()));
-  DCHECK(root_frame_.get());
-  root_frame_->SetView(this);
 
   DCHECK(std::find(g_all_web_views.Get().begin(),
                    g_all_web_views.Get().end(),
@@ -378,16 +373,6 @@ void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                           location_bar_constraints_,
                                           current,
                                           false));
-}
-
-WebFrame* WebView::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  WebFrame* frame = client_->CreateWebFrame(render_frame_host);
-  if (frame) {
-    return frame;
-  }
-
-  return new WebFrame(render_frame_host, this);
 }
 
 void WebView::DispatchPrepareToCloseResponse(bool proceed) {
@@ -862,27 +847,20 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
-void WebView::RenderFrameCreated(content::RenderFrameHost* render_frame_host) {
-  // We get a RenderFrameHostChanged notification when any FrameTreeNode is
-  // added to the FrameTree, which is when we want a notification. However,
-  // we get that before the FrameTreeNode has its parent set, so we still
-  // have to use RenderFrameCreated to add new nodes correctly
+void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
+  // that we can get rid of this
+  certificate_error_manager_.FrameDetached(render_frame_host);
+}
 
-  if (WebFrame::FromRenderFrameHost(render_frame_host)) {
-    // We already have a WebFrame for this host. This could be because the new
-    // host is for the root frame, or it is a cross-process subframe
-    DCHECK(!render_frame_host->GetParent() ||
-           render_frame_host->IsCrossProcessSubframe());
+void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                                     content::RenderFrameHost* new_host) {
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
+  // that we can get rid of this
+  if (!old_host) {
     return;
   }
-
-  WebFrame* parent =
-      WebFrame::FromRenderFrameHost(render_frame_host->GetParent());
-  DCHECK(parent);
-
-  WebFrame* frame = CreateWebFrame(render_frame_host);
-  DCHECK(frame);
-  frame->InitParent(parent);
+  certificate_error_manager_.FrameDetached(old_host);
 }
 
 void WebView::RenderViewReady() {
@@ -907,57 +885,30 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   }
 }
 
-void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
-                                     content::RenderFrameHost* new_host) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(new_host);
-
-  if (frame) {
-    frame->SetRenderFrameHost(new_host);
-    return;
-  }
-
-#if 0
-  WebFrame* parent =
-      WebFrame::FromRenderFrameHost(new_host->GetParent());
-  DCHECK(parent);
-
-  frame = CreateWebFrame(new_host);
-  DCHECK(frame);
-  frame->InitParent(parent);
-#endif
-}
-
 void WebView::DidStartProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
     bool is_error_frame,
     bool is_iframe_srcdoc) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
   if (is_error_frame) {
     return;
   }
 
-  if (!frame->parent()) {
+  if (!render_frame_host->GetParent()) {
     client_->LoadStarted(validated_url);
   }
 
-  certificate_error_manager_.DidStartProvisionalLoadForFrame(frame);
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
+  // that we can get rid of this
+  certificate_error_manager_.DidStartProvisionalLoadForFrame(
+      render_frame_host);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& url,
     ui::PageTransition transition_type) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (frame) {
-    frame->DidCommitNewURL();
-  }
-
-  if (frame->parent()) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
@@ -974,12 +925,7 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description,
     bool was_ignored_by_handler) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
-  if (!frame->parent() &&
+  if (!render_frame_host->GetParent() &&
       validated_url.spec() != content::kUnreachableWebDataURL) {
     DispatchLoadFailed(validated_url, error_code, error_description, true);
   }
@@ -988,18 +934,15 @@ void WebView::DidFailProvisionalLoad(
     return;
   }
 
-  certificate_error_manager_.DidStopProvisionalLoadForFrame(frame);
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserverso
+  // that we can get rid of this
+  certificate_error_manager_.DidStopProvisionalLoadForFrame(render_frame_host);
 }
 
 void WebView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
   if (details.is_navigation_to_different_page()) {
-    // XXX(chrisccoulson): Make PermissionRequestDispatcher a
-    //  WebContentsObserver
-    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-        ->CancelPendingRequests();
-
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
 
@@ -1014,20 +957,12 @@ void WebView::DidNavigateAnyFrame(
     content::RenderFrameHost* render_frame_host,
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    return;
-  }
-
+  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver
   if (details.is_in_page) {
     return;
   }
 
-  // XXX(chrisccoulson): Make PermissionRequestDispatcher a
-  //  WebContentsObserver
-  PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-      ->CancelPendingRequestsForFrame(frame);
-  certificate_error_manager_.DidNavigateFrame(frame);
+  certificate_error_manager_.DidNavigateFrame(render_frame_host);
 }
 
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -1085,53 +1020,12 @@ void WebView::DidStopLoading() {
   client_->LoadingChanged();
 }
 
-void WebView::FrameDeleted(content::RenderFrameHost* render_frame_host) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    // When a frame is detached, we get notified before any of its children
-    // are detached. If we hit this case, it means that this is a child of a
-    // frame that's being detached, and we've already deleted the corresponding
-    // WebFrame
-    return;
-  }
-
-  // This is a bit of a hack, but we need to process children now - see the
-  // comment above
-  std::queue<WebFrame*> frames;
-  frames.push(frame);
-  while (!frames.empty()) {
-    WebFrame* f = frames.front();
-    for (size_t i = 0; i < f->GetChildCount(); ++i) {
-      frames.push(f->GetChildAt(i));
-    }
-    certificate_error_manager_.FrameDetached(f);
-    // XXX(chrisccoulson): Move frame tree management in to its own class
-    //  and have PermissionRequestDispatcher be an observer of that
-    PermissionRequestDispatcher::FromWebContents(web_contents_.get())
-        ->CancelPendingRequestsForFrame(f);
-    frames.pop();
-  }
-
-  WebFrame::Destroy(frame);
-}
-
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
   const content::NavigationController& controller = web_contents_->GetController();
   int count = controller.GetEntryCount();
   for (int i = 0; i < count; ++i) {
     if (controller.GetEntryAtIndex(i) == entry) {
       client_->NavigationEntryChanged(i);
-      return;
-    }
-  }
-}
-
-void WebView::DidUpdateFaviconURL(
-    const std::vector<content::FaviconURL>& candidates) {
-  std::vector<content::FaviconURL>::const_iterator it;
-  for (it = candidates.begin(); it != candidates.end(); ++it) {
-    if (it->icon_type == content::FaviconURL::FAVICON) {
-      client_->IconChanged(it->icon_url);
       return;
     }
   }
@@ -1323,6 +1217,10 @@ std::string WebView::GetTitle() const {
   return base::UTF16ToUTF8(web_contents_->GetTitle());
 }
 
+const GURL& WebView::GetFaviconURL() const {
+  return FaviconHelper::FromWebContents(web_contents_.get())->GetFaviconURL();
+}
+
 bool WebView::CanGoBack() const {
   return web_contents_->GetController().CanGoBack();
 }
@@ -1489,7 +1387,7 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 }
 
 WebFrame* WebView::GetRootFrame() const {
-  return root_frame_.get();
+  return WebFrameTree::FromWebContents(web_contents_.get())->root_frame();
 }
 
 WebPreferences* WebView::GetWebPreferences() {
@@ -1754,14 +1652,6 @@ void WebView::AllowCertificateError(
     bool strict_enforcement,
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
-  WebFrame* frame = WebFrame::FromRenderFrameHost(rfh);
-  if (!frame) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  DCHECK_EQ(frame->view(), this);
-
   // We can't safely allow the embedder to override errors for subresources or
   // subframes because they don't always result in the API indicating a
   // degraded security level. Mark these non-overridable for now and just
@@ -1774,7 +1664,7 @@ void WebView::AllowCertificateError(
 
   scoped_ptr<CertificateError> error(new CertificateError(
       &certificate_error_manager_,
-      frame,
+      rfh,
       cert_error,
       ssl_info,
       request_url,

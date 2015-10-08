@@ -46,7 +46,7 @@ void WebViewClient::URLChanged() {}
 
 void WebViewClient::TitleChanged() {}
 
-void WebViewClient::IconChanged(const GURL& icon) {}
+void WebViewClient::FaviconChanged() {}
 
 void WebViewClient::CommandsUpdated() {}
 
@@ -109,11 +109,6 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
                                            WindowOpenDisposition disposition,
                                            bool user_gesture) {
   return true;
-}
-
-WebFrame* WebViewClient::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  return nullptr;
 }
 
 WebContextMenu* WebViewClient::CreateContextMenu(

@@ -21,6 +21,7 @@
 namespace switches {
 
 extern const char kEnableGoogleTalkPlugin[];
+extern const char kEnablePepperFlashPlugin[];
 extern const char kFormFactor[];
 extern const char kFormFactorDesktop[];
 extern const char kFormFactorTablet[];

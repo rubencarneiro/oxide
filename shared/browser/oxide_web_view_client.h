@@ -52,7 +52,6 @@ class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
 class WebContextMenu;
-class WebFrame;
 class WebPopupMenu;
 class WebView;
 
@@ -88,8 +87,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void TitleChanged();
 
-  // TODO(chrisccoulson): Track |icon| as a property in WebView
-  virtual void IconChanged(const GURL& icon);
+  virtual void FaviconChanged();
 
   virtual void CommandsUpdated();
 
@@ -153,9 +151,6 @@ class WebViewClient : public ScriptMessageTarget {
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
-
-  virtual WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host);
 
   virtual WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,

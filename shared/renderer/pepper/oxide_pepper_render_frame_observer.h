@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
+#ifndef _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
+#define _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
+
+#include "base/basictypes.h"
+#include "base/compiler_specific.h"
+#include "content/public/renderer/render_frame_observer.h"
+
+
+namespace content {
+class RenderFrame;
+}
 
 namespace oxide {
-namespace qt {
 
-class WebFrameProxyClient {
+class PepperRenderFrameObserver final : public content::RenderFrameObserver {
  public:
-  virtual ~WebFrameProxyClient() {}
+  explicit PepperRenderFrameObserver(content::RenderFrame* render_frame);
+  ~PepperRenderFrameObserver();
 
-  virtual void LoadCommitted() = 0;
+  void DidCreatePepperPlugin(content::RendererPpapiHost* host) override;
 
-  virtual void ChildFramesChanged() = 0;
-
-  virtual void DestroyFrame() = 0;
+ private:
+  DISALLOW_COPY_AND_ASSIGN(PepperRenderFrameObserver);
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
+#endif // _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
+

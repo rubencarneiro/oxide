@@ -232,13 +232,10 @@ void OxideQQuickWebViewPrivate::TitleChanged() {
   emit q->titleChanged();
 }
 
-void OxideQQuickWebViewPrivate::IconChanged(QUrl icon) {
+void OxideQQuickWebViewPrivate::FaviconChanged() {
   Q_Q(OxideQQuickWebView);
 
-  if (icon != icon_) {
-    icon_ = icon;
-    emit q->iconChanged();
-  }
+  emit q->iconChanged();
 }
 
 void OxideQQuickWebViewPrivate::CommandsUpdated() {
@@ -287,11 +284,14 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-oxide::qt::WebFrameProxyHandle* OxideQQuickWebViewPrivate::CreateWebFrame(
+void OxideQQuickWebViewPrivate::CreateWebFrame(
     oxide::qt::WebFrameProxy* proxy) {
+  Q_Q(OxideQQuickWebView);
+
   OxideQQuickWebFrame* frame = OxideQQuickWebFramePrivate::create(proxy);
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
-  return OxideQQuickWebFramePrivate::get(frame);
+
+  emit q->frameAdded(frame);
 }
 
 QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
@@ -358,13 +358,6 @@ void OxideQQuickWebViewPrivate::WebPreferencesReplaced() {
   Q_Q(OxideQQuickWebView);
 
   emit q->preferencesChanged();
-}
-
-void OxideQQuickWebViewPrivate::FrameAdded(
-    oxide::qt::WebFrameProxyHandle* frame) {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->frameAdded(OxideQQuickWebFramePrivate::fromProxyHandle(frame));
 }
 
 void OxideQQuickWebViewPrivate::FrameRemoved(
@@ -1486,7 +1479,11 @@ QString OxideQQuickWebView::title() const {
 QUrl OxideQQuickWebView::icon() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->icon_;
+  if (!d->proxy()) {
+    return QUrl();
+  }
+
+  return d->proxy()->favIconUrl();
 }
 
 bool OxideQQuickWebView::canGoBack() const {

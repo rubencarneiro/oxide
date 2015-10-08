@@ -25,6 +25,8 @@
 #include "ppapi/proxy/ppapi_messages.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
+#include "oxide_pepper_flash_browser_host.h"
+
 namespace oxide {
 
 PepperHostFactoryBrowser::PepperHostFactoryBrowser(
@@ -34,10 +36,12 @@ PepperHostFactoryBrowser::PepperHostFactoryBrowser(
 PepperHostFactoryBrowser::~PepperHostFactoryBrowser() {}
 
 scoped_ptr<ppapi::host::ResourceHost>
-PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
-                                             PP_Resource resource,
-                                             PP_Instance instance,
-                                             const IPC::Message& message) {
+PepperHostFactoryBrowser::CreateResourceHost(
+    ppapi::host::PpapiHost* host,
+    PP_Resource resource,
+    PP_Instance instance,
+    const IPC::Message& message
+) {
   DCHECK(host == host_->GetPpapiHost());
 
   if (!host_->IsValidInstance(instance)) {
@@ -54,9 +58,18 @@ PepperHostFactoryBrowser::CreateResourceHost(ppapi::host::PpapiHost* host,
 
   // Flash interfaces:
   // TODO:
-  //  PpapiHostMsg_Flash_Create
   //  PpapiHostMsg_FlashClipboard_Create
   //  PpapiHostMsg_FlashDRM_Create
+  if (host_->GetPpapiHost()->permissions().HasPermission(
+          ppapi::PERMISSION_FLASH)) {
+      switch (message.type()) {
+        case PpapiHostMsg_Flash_Create::ID:
+          return scoped_ptr<ppapi::host::ResourceHost>(
+            new PepperFlashBrowserHost(host_, instance, resource));
+        default:
+          ;
+      }
+  }
 
   return nullptr;
 }

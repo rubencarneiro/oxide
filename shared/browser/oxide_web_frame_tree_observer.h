@@ -15,24 +15,42 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_OBSERVER_H_
 
 namespace oxide {
-namespace qt {
 
-class WebFrameProxyClient {
+class WebFrame;
+class WebFrameTree;
+
+class WebFrameTreeObserver {
  public:
-  virtual ~WebFrameProxyClient() {}
+  virtual ~WebFrameTreeObserver();
 
-  virtual void LoadCommitted() = 0;
+  virtual void FrameCreated(WebFrame* frame) {}
 
-  virtual void ChildFramesChanged() = 0;
+  virtual void FrameDeleted(WebFrame* frame) {}
 
-  virtual void DestroyFrame() = 0;
+  virtual void LoadCommittedInFrame(WebFrame* frame) {}
+
+  virtual void FrameTreeDestroyed() {}
+
+ protected:
+  WebFrameTreeObserver();
+  WebFrameTreeObserver(WebFrameTree* tree);
+
+  void Observe(WebFrameTree* tree);
+
+  WebFrameTree* frame_tree() const { return frame_tree_; }
+
+ private:
+  friend class WebFrameTree;
+
+  void OnFrameTreeDestruction();
+
+  WebFrameTree* frame_tree_;
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_FRAME_PROXY_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_OBSERVER_H_

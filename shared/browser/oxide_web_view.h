@@ -178,6 +178,8 @@ class WebView : public ScriptMessageTarget,
 
   std::string GetTitle() const;
 
+  const GURL& GetFaviconURL() const;
+
   bool CanGoBack() const;
   bool CanGoForward() const;
 
@@ -353,8 +355,6 @@ class WebView : public ScriptMessageTarget,
   void InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                     bool initial_host);
 
-  WebFrame* CreateWebFrame(content::RenderFrameHost* render_frame_host);
-
   void DispatchPrepareToCloseResponse(bool proceed);
 
   void RestartFindInPage();
@@ -453,13 +453,13 @@ class WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) final;
 
   // content::WebContentsObserver implementation
-  void RenderFrameCreated(content::RenderFrameHost* render_frame_host) final;
+  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) final;
   void RenderViewReady() final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
-  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
-                              content::RenderFrameHost* new_host) final;
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
@@ -496,10 +496,7 @@ class WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& load_details) final;
   void DidStartLoading() final;
   void DidStopLoading() final;
-  void FrameDeleted(content::RenderFrameHost* render_frame_host) final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
-  void DidUpdateFaviconURL(
-      const std::vector<content::FaviconURL>& candidates) final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
 
@@ -532,13 +529,6 @@ class WebView : public ScriptMessageTarget,
   TouchEventState touch_state_;
 
   content::NotificationRegistrar registrar_;
-
-  struct WebFrameDeleter {
-    void operator()(WebFrame* frame);
-  };
-  typedef scoped_ptr<WebFrame, WebFrameDeleter> WebFrameScopedPtr;
-
-  WebFrameScopedPtr root_frame_;
 
   bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;

@@ -58,7 +58,7 @@
 #include "content/public/browser/browser_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 
-#include "oxide_pepper_host_factory_browser.h"
+#include "pepper/oxide_pepper_host_factory_browser.h"
 #endif
 
 namespace oxide {
@@ -106,6 +106,7 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableGoogleTalkPlugin,
+    switches::kEnablePepperFlashPlugin,
     switches::kEnableMediaHubAudio,
     switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains
