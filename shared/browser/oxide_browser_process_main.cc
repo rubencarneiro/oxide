@@ -240,9 +240,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
-  // Remove this when we implement a selection API (see bug #1324292)
-  command_line->AppendSwitch(switches::kDisableTouchEditing);
-
   if (gl_impl == gfx::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
     command_line->AppendSwitch(switches::kDisableGpu);

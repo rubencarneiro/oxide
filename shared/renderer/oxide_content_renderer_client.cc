@@ -100,6 +100,9 @@ void ContentRendererClient::RenderViewCreated(
   blink::WebSettings* settings = render_view->GetWebView()->settings();
   settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
 
+  // Remove this when we implement a selection API (see bug #1324292)
+  settings->setTouchEditingEnabled(false);
+
   if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
       GetFormFactorHint() == FORM_FACTOR_PHONE) {
     settings->setAllowCustomScrollbarInMainFrame(false);

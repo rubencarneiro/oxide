@@ -80,7 +80,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -561,16 +562,20 @@
+@@ -559,16 +560,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',
@@ -126,7 +126,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -151,27 +156,44 @@ GpuChildThread::GpuChildThread(
+@@ -153,26 +158,43 @@ GpuChildThread::GpuChildThread(
    DCHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
               switches::kSingleProcess) ||
           base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -148,7 +148,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    }
  }
  
- // static
++// static
 +scoped_refptr<base::SingleThreadTaskRunner> GpuChildThread::GetTaskRunner() {
 +  return g_thread_safe_task_runner.Get();
 +}
@@ -162,15 +162,14 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 +  return inst->gpu_channel_manager_.get();
 +}
 +
-+// static
- gfx::GpuMemoryBufferType GpuChildThread::GetGpuMemoryBufferFactoryType() {
-   std::vector<gfx::GpuMemoryBufferType> supported_types;
-   GpuMemoryBufferFactory::GetSupportedTypes(&supported_types);
-   DCHECK(!supported_types.empty());
-   // Note: We always use the preferred type.
-   return supported_types[0];
+ void GpuChildThread::Shutdown() {
+   ChildThreadImpl::Shutdown();
+   logging::SetLogMessageHandler(NULL);
  }
  
+ void GpuChildThread::Init(const base::Time& process_start_time) {
+   process_start_time_ = process_start_time;
+ }
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
@@ -207,11 +206,11 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 +  CONTENT_EXPORT static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 +  CONTENT_EXPORT static GpuChannelManager* GetChannelManager();
 +
-   static gfx::GpuMemoryBufferType GetGpuMemoryBufferFactoryType();
- 
    void Shutdown() override;
  
    void Init(const base::Time& process_start_time);
    void StopWatchdog();
  
    // ChildThread overrides.
+   bool Send(IPC::Message* msg) override;
+   bool OnControlMessageReceived(const IPC::Message& msg) override;
