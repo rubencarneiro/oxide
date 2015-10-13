@@ -59,6 +59,41 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
    if (default_offscreen_surface_.get()) {
      default_offscreen_surface_->Destroy();
      default_offscreen_surface_ = NULL;
+diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
+--- a/content/common/gpu/gpu_channel_manager.h
++++ b/content/common/gpu/gpu_channel_manager.h
+@@ -108,27 +108,27 @@ class CONTENT_EXPORT GpuChannelManager :
+   // Returns the maximum order number for processed IPC messages across all
+   // channels.
+   uint32_t GetProcessedOrderNum() const;
+ 
+ #if defined(OS_ANDROID)
+   void DidAccessGpu();
+ #endif
+ 
++  gpu::SyncPointManager* sync_point_manager() const {
++    return sync_point_manager_;
++  }
++
+  protected:
+   virtual scoped_ptr<GpuChannel> CreateGpuChannel(int client_id,
+                                                   uint64_t client_tracing_id,
+                                                   bool preempts,
+                                                   bool allow_future_sync_points,
+                                                   bool allow_real_time_streams);
+ 
+-  gpu::SyncPointManager* sync_point_manager() const {
+-    return sync_point_manager_;
+-  }
+-
+   gfx::GLShareGroup* share_group() const { return share_group_.get(); }
+   gpu::gles2::MailboxManager* mailbox_manager() const {
+     return mailbox_manager_.get();
+   }
+   gpu::PreemptionFlag* preemption_flag() const {
+     return preemption_flag_.get();
+   }
+ 
 diff --git a/content/content_common.gypi b/content/content_common.gypi
 --- a/content/content_common.gypi
 +++ b/content/content_common.gypi
@@ -104,7 +139,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
 diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
 --- a/content/gpu/gpu_child_thread.cc
 +++ b/content/gpu/gpu_child_thread.cc
-@@ -27,16 +27,21 @@
+@@ -28,16 +28,21 @@
  #endif
  
  namespace content {
@@ -126,7 +161,7 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
    std::string message = str.substr(message_start);
  
    g_thread_safe_sender.Get()->Send(new GpuHostMsg_OnLogMessage(
-@@ -153,26 +158,43 @@ GpuChildThread::GpuChildThread(
+@@ -168,26 +173,43 @@ GpuChildThread::GpuChildThread(
    DCHECK(base::CommandLine::ForCurrentProcess()->HasSwitch(
               switches::kSingleProcess) ||
           base::CommandLine::ForCurrentProcess()->HasSwitch(
@@ -169,17 +204,17 @@ diff --git a/content/gpu/gpu_child_thread.cc b/content/gpu/gpu_child_thread.cc
  
  void GpuChildThread::Init(const base::Time& process_start_time) {
    process_start_time_ = process_start_time;
- }
+ 
 diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
 --- a/content/gpu/gpu_child_thread.h
 +++ b/content/gpu/gpu_child_thread.h
-@@ -17,16 +17,20 @@
- #include "content/child/child_thread_impl.h"
- #include "content/common/gpu/gpu_channel.h"
+@@ -19,16 +19,20 @@
  #include "content/common/gpu/gpu_channel_manager.h"
  #include "content/common/gpu/gpu_config.h"
  #include "content/common/gpu/x_util.h"
  #include "gpu/config/gpu_info.h"
+ #include "mojo/common/weak_binding_set.h"
+ #include "third_party/mojo/src/mojo/public/cpp/bindings/interface_request.h"
  #include "ui/gfx/native_widget_types.h"
  
 +namespace base {
@@ -194,7 +229,7 @@ diff --git a/content/gpu/gpu_child_thread.h b/content/gpu/gpu_child_thread.h
  class TargetServices;
  }
  
-@@ -50,16 +54,19 @@ class GpuChildThread : public ChildThrea
+@@ -54,16 +58,19 @@ class GpuChildThread : public ChildThrea
                   gpu::SyncPointManager* sync_point_manager);
  
    GpuChildThread(const InProcessChildThreadParams& params,

@@ -110,12 +110,6 @@ void ContentRendererClient::RenderViewCreated(
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
     settings->setUseMobileViewportStyle(true);
-
-    // XXX(chrisccoulson): This should be set when the layout viewport provides
-    // scrollbars (desktop), but basing this on the form-factor may not be the
-    // right way. It looks like blink hides the layout scrollbars when viewport
-    // meta is enabled
-    settings->setHidePinchScrollbarsNearMinScale(false);
   }
 }
 

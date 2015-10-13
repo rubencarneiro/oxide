@@ -5,7 +5,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -228,13 +228,16 @@ ContentRendererClient::CreateAppBannerCl
+@@ -228,9 +228,12 @@ bool ContentRendererClient::ShouldEnforc
  blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
      blink::WebFrame* frame,
      blink::WebMediaPlayerClient* client,
@@ -17,10 +17,6 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 +void ContentRendererClient::OverrideCompositorSettings(
 +    cc::LayerTreeSettings* settings) {}
 +
- bool ContentRendererClient::ShouldEnforceWebRTCRoutingPreferences() {
-   return true;
- }
- 
  }  // namespace content
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
@@ -46,7 +42,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  struct KeySystemInfo;
  }
  
-@@ -332,13 +336,16 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -328,13 +332,16 @@ class CONTENT_EXPORT ContentRendererClie
    virtual bool ShouldEnforceWebRTCRoutingPreferences();
  
    // Allow overriding default media player
@@ -86,7 +82,7 @@ diff --git a/content/renderer/gpu/render_widget_compositor.cc b/content/renderer
  #include "third_party/WebKit/public/platform/WebSize.h"
  #include "third_party/WebKit/public/web/WebKit.h"
  #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-@@ -457,16 +459,18 @@ void RenderWidgetCompositor::Initialize(
+@@ -458,16 +460,18 @@ void RenderWidgetCompositor::Initialize(
    settings.max_staging_buffer_usage_in_bytes = 32 * 1024 * 1024;  // 32MB
    // Use 1/4th of staging buffers on low-end devices.
    if (base::SysInfo::IsLowEndDevice())
