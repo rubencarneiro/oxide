@@ -53,6 +53,11 @@ void WebFrameTree::RenderFrameCreated(
 
   DCHECK(!WebFrame::FromRenderFrameHost(render_frame_host));
 
+  if (!content::WebContents::FromRenderFrameHost(render_frame_host)) {
+    // This is from an interstitial
+    return;
+  }
+
   if (render_frame_host->IsCrossProcessSubframe()) {
     // We should already have a WebFrame for this node
     return;
@@ -78,6 +83,11 @@ void WebFrameTree::RenderFrameHostChanged(
     // This is a new subframe. We delay creating the WebFrame and notifying the
     // client until the corresponding FrameTreeNode has a parent set. We know
     // that Chromium will call in to RenderFrameCreated after this
+    return;
+  }
+
+  if (!content::WebContents::FromRenderFrameHost(old_host)) {
+    // This is from an interstitial
     return;
   }
 

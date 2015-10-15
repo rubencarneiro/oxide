@@ -151,8 +151,6 @@ void WebViewClient::UpdateCursor(const content::WebCursor& cursor) {}
 
 void WebViewClient::SecurityStatusChanged(const SecurityStatus& old) {}
 
-void WebViewClient::OnCertificateError(scoped_ptr<CertificateError> error) {}
-
 void WebViewClient::ContentBlocked() {}
 
 void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}

@@ -29,14 +29,12 @@
 #include "base/strings/string16.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/core/serialized_navigation_entry.h"
-#include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
-#include "content/public/common/resource_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebCompositionUnderline.h"
@@ -46,7 +44,6 @@
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
-#include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_widget_host_view_delegate.h"
 #include "shared/browser/oxide_script_message_target.h"
@@ -82,10 +79,6 @@ class WebCursor;
 namespace gfx {
 class Range;
 class Size;
-}
-
-namespace net {
-class SSLInfo;
 }
 
 namespace ui {
@@ -268,16 +261,6 @@ class WebView : public ScriptMessageTarget,
                      bool allow_multiple_selection);
   void HidePopupMenu();
 
-  void AllowCertificateError(content::RenderFrameHost* rfh,
-                             int cert_error,
-                             const net::SSLInfo& ssl_info,
-                             const GURL& request_url,
-                             content::ResourceType resource_type,
-                             bool overridable,
-                             bool strict_enforcement,
-                             const base::Callback<void(bool)>& callback,
-                             content::CertificateRequestResultType* result);
-
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
@@ -453,9 +436,6 @@ class WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) final;
 
   // content::WebContentsObserver implementation
-  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) final;
-  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
-                              content::RenderFrameHost* new_host) final;
   void RenderViewReady() final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -476,10 +456,6 @@ class WebView : public ScriptMessageTarget,
       const base::string16& error_description,
       bool was_ignored_by_handler) final;
   void DidNavigateMainFrame(
-      const content::LoadCommittedDetails& details,
-      const content::FrameNavigateParams& params) final;
-  void DidNavigateAnyFrame(
-      content::RenderFrameHost* render_frame_host,
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -533,8 +509,6 @@ class WebView : public ScriptMessageTarget,
   bool is_fullscreen_;
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
-
-  CertificateErrorManager certificate_error_manager_;
 
   ContentType blocked_content_;
 

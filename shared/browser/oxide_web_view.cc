@@ -72,6 +72,7 @@
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
+#include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -162,6 +163,7 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
 void CreateHelpers(content::WebContents* contents,
                    content::WebContents* opener = nullptr) {
   new WebViewContentsHelper(contents, opener);
+  CertificateErrorDispatcher::CreateForWebContents(contents);
   PermissionRequestDispatcher::CreateForWebContents(contents);
   ScriptMessageContentsHelper::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
@@ -847,22 +849,6 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
-void WebView::RenderFrameDeleted(content::RenderFrameHost* render_frame_host) {
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
-  // that we can get rid of this
-  certificate_error_manager_.FrameDetached(render_frame_host);
-}
-
-void WebView::RenderFrameHostChanged(content::RenderFrameHost* old_host,
-                                     content::RenderFrameHost* new_host) {
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
-  // that we can get rid of this
-  if (!old_host) {
-    return;
-  }
-  certificate_error_manager_.FrameDetached(old_host);
-}
-
 void WebView::RenderViewReady() {
   client_->CrashedStatusChanged();
 }
@@ -894,14 +880,11 @@ void WebView::DidStartProvisionalLoadForFrame(
     return;
   }
 
-  if (!render_frame_host->GetParent()) {
-    client_->LoadStarted(validated_url);
+  if (render_frame_host->GetParent()) {
+    return;
   }
 
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver so
-  // that we can get rid of this
-  certificate_error_manager_.DidStartProvisionalLoadForFrame(
-      render_frame_host);
+  client_->LoadStarted(validated_url);
 }
 
 void WebView::DidCommitProvisionalLoadForFrame(
@@ -925,18 +908,15 @@ void WebView::DidFailProvisionalLoad(
     int error_code,
     const base::string16& error_description,
     bool was_ignored_by_handler) {
-  if (!render_frame_host->GetParent() &&
-      validated_url.spec() != content::kUnreachableWebDataURL) {
-    DispatchLoadFailed(validated_url, error_code, error_description, true);
-  }
-
-  if (error_code != net::ERR_ABORTED) {
+  if (render_frame_host->GetParent()) {
     return;
   }
 
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserverso
-  // that we can get rid of this
-  certificate_error_manager_.DidStopProvisionalLoadForFrame(render_frame_host);
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description, true);
 }
 
 void WebView::DidNavigateMainFrame(
@@ -951,18 +931,6 @@ void WebView::DidNavigateMainFrame(
       rwhv->ResetGestureDetection();
     }
   }
-}
-
-void WebView::DidNavigateAnyFrame(
-    content::RenderFrameHost* render_frame_host,
-    const content::LoadCommittedDetails& details,
-    const content::FrameNavigateParams& params) {
-  // XXX(chrisccoulson): Make CertificateErrorManager a WebContentsObserver
-  if (details.is_in_page) {
-    return;
-  }
-
-  certificate_error_manager_.DidNavigateFrame(render_frame_host);
 }
 
 void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -1149,12 +1117,24 @@ WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
 
 // static
 WebView* WebView::FromRenderViewHost(content::RenderViewHost* rvh) {
-  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+  content::WebContents* contents =
+      content::WebContents::FromRenderViewHost(rvh);
+  if (!contents) {
+    return nullptr;
+  }
+
+  return FromWebContents(contents);
 }
 
 // static
 WebView* WebView::FromRenderFrameHost(content::RenderFrameHost* rfh) {
-  return FromWebContents(content::WebContents::FromRenderFrameHost(rfh));
+  content::WebContents* contents =
+      content::WebContents::FromRenderFrameHost(rfh);
+  if (!contents) {
+    return nullptr;
+  }
+
+  return FromWebContents(contents);
 }
 
 const GURL& WebView::GetURL() const {
@@ -1640,38 +1620,6 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
-}
-
-void WebView::AllowCertificateError(
-    content::RenderFrameHost* rfh,
-    int cert_error,
-    const net::SSLInfo& ssl_info,
-    const GURL& request_url,
-    content::ResourceType resource_type,
-    bool overridable,
-    bool strict_enforcement,
-    const base::Callback<void(bool)>& callback,
-    content::CertificateRequestResultType* result) {
-  // We can't safely allow the embedder to override errors for subresources or
-  // subframes because they don't always result in the API indicating a
-  // degraded security level. Mark these non-overridable for now and just
-  // deny them outright
-  // See https://launchpad.net/bugs/1368385
-  if (!overridable || resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
-    overridable = false;
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
-  }
-
-  scoped_ptr<CertificateError> error(new CertificateError(
-      &certificate_error_manager_,
-      rfh,
-      cert_error,
-      ssl_info,
-      request_url,
-      resource_type,
-      strict_enforcement,
-      overridable ? callback : base::Callback<void(bool)>()));
-  client_->OnCertificateError(error.Pass());
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {

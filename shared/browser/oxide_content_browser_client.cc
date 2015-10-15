@@ -36,6 +36,7 @@
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
+#include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
@@ -169,25 +170,16 @@ void ContentBrowserClient::AllowCertificateError(
     bool expired_previous_decision,
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(
-      render_process_id, render_frame_id);
-  if (!rfh) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderFrameHost(rfh);
-  if (!webview) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  webview->AllowCertificateError(rfh, cert_error, ssl_info, request_url,
-                                 resource_type, overridable,
-                                 strict_enforcement, callback,
-                                 result);
+  CertificateErrorDispatcher::AllowCertificateError(render_process_id,
+                                                    render_frame_id,
+                                                    cert_error,
+                                                    ssl_info,
+                                                    request_url,
+                                                    resource_type,
+                                                    overridable,
+                                                    strict_enforcement,
+                                                    callback,
+                                                    result);
 }
 
 content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
@@ -241,7 +233,13 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   WebViewContentsHelper* contents_helper =
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
-  WebPreferences* web_prefs = contents_helper->GetWebPreferences();
+  WebPreferences* web_prefs = nullptr;
+  if (contents_helper) {
+    // If RVH is for an InterstitialPage, we can't map to WebContents
+    // XXX: If we ever expose transient pages in the public API, we should find
+    //  a way around this, so that transient pages get the same preferences
+    web_prefs = contents_helper->GetWebPreferences();
+  }
   if (!web_prefs) {
     web_prefs = WebPreferences::GetFallback();
   }
@@ -253,7 +251,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
-      !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
+      !BrowserContext::FromContent(
+        render_view_host->GetProcess()->GetBrowserContext())
+        ->IsPopupBlockerEnabled();
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
