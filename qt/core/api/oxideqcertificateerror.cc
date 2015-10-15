@@ -42,7 +42,6 @@ OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
 void OxideQCertificateErrorPrivate::OnCancel() {
   Q_Q(OxideQCertificateError);
 
-  printf("CANCELLED\n");
   DCHECK(!did_respond_);
 
   Q_EMIT q->cancelled();
