@@ -53,7 +53,7 @@ class MotionEvent;
 
 namespace oxide {
 
-class RenderWidgetHostViewDelegate;
+class RenderWidgetHostViewContainer;
 class WebView;
 
 class RenderWidgetHostView final :
@@ -69,7 +69,7 @@ class RenderWidgetHostView final :
   content::RenderWidgetHostImpl* host() const { return host_; }
 
   void CompositorDidCommit();
-  void SetDelegate(RenderWidgetHostViewDelegate* delegate);
+  void SetContainer(RenderWidgetHostViewContainer* container);
 
   const base::string16& selection_text() const {
     return selection_text_;
@@ -180,7 +180,7 @@ class RenderWidgetHostView final :
 
   content::RenderWidgetHostImpl* host_;
 
-  RenderWidgetHostViewDelegate* delegate_;
+  RenderWidgetHostViewContainer* container_;
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 

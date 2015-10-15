@@ -48,7 +48,7 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_render_widget_host_view_delegate.h"
+#include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
@@ -132,7 +132,7 @@ class WebView : public ScriptMessageTarget,
                 private CompositorClient,
                 private WebPreferencesObserver,
                 private content::NotificationObserver,
-                private RenderWidgetHostViewDelegate,
+                private RenderWidgetHostViewContainer,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
@@ -376,7 +376,7 @@ class WebView : public ScriptMessageTarget,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) final;
 
-  // RenderWidgetHostViewDelegate implementation
+  // RenderWidgetHostViewContainer implementation
   void EvictCurrentFrame() final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,

@@ -401,7 +401,7 @@
         'browser/oxide_render_process_initializer.h',
         'browser/oxide_render_widget_host_view.cc',
         'browser/oxide_render_widget_host_view.h',
-        'browser/oxide_render_widget_host_view_delegate.h',
+        'browser/oxide_render_widget_host_view_container.h',
         'browser/oxide_resource_dispatcher_host_delegate.cc',
         'browser/oxide_resource_dispatcher_host_delegate.h',
         'browser/oxide_resource_dispatcher_host_login_delegate.cc',

@@ -874,11 +874,11 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
+    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetContainer(nullptr);
   }
   if (new_host) {
     if (new_host->GetView()) {
-      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetContainer(this);
     }
 
     InitializeTopControlsForHost(new_host, !old_host);
@@ -1095,7 +1095,7 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetDelegate(this);
+    rwhv->SetContainer(this);
   }
 
   content::RenderViewHost* rvh = GetRenderViewHost();
@@ -1127,7 +1127,7 @@ WebView::~WebView() {
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetDelegate(nullptr);
+    rwhv->SetContainer(nullptr);
   }
 
   // Stop WebContents from calling back in to us
