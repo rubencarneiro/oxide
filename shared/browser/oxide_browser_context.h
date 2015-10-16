@@ -42,6 +42,7 @@ namespace net {
 class CookieMonster;
 class FtpNetworkLayer;
 class HostMappingRules;
+class HttpNetworkSession;
 class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
@@ -128,6 +129,8 @@ class BrowserContextIOData {
 
   scoped_ptr<net::TransportSecurityState> transport_security_state_;
   scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
+
+  scoped_ptr<net::HttpNetworkSession> http_network_session_;
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;

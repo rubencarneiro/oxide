@@ -448,11 +448,16 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.net_log = context->net_log();
   session_params.host_mapping_rules = host_mapping_rules_.get();
 
+  http_network_session_ =
+      make_scoped_ptr(new net::HttpNetworkSession(session_params));
+
   {
     // Calls QuickStreamFactory constructor which uses base::CPU
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
-        make_scoped_ptr(new net::HttpCache(session_params, cache_backend)));
+        make_scoped_ptr(new net::HttpCache(http_network_session_.get(),
+                                           cache_backend,
+                                           true)));
   }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
