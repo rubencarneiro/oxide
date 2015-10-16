@@ -39,6 +39,7 @@ void CompositorOutputSurface::DetachFromClient() {
   DCHECK(CalledOnValidThread());
   proxy_->SetOutputSurface(nullptr);
   cc::OutputSurface::DetachFromClient();
+  DetachFromThread();
 }
 
 CompositorOutputSurface::CompositorOutputSurface(
