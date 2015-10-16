@@ -18,10 +18,15 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 
+#include "base/memory/ref_counted.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
+
+namespace cc {
+class Layer;
+}
 
 namespace content {
 class WebCursor;
@@ -42,6 +47,12 @@ class RenderWidgetHostViewContainer {
 
   virtual void EvictCurrentFrame() = 0;
 
+  virtual Compositor* GetCompositor() const = 0;
+
+  virtual void AttachLayer(scoped_refptr<cc::Layer> layer) = 0;
+
+  virtual void DetachLayer(scoped_refptr<cc::Layer> layer) = 0;
+
   virtual void UpdateCursor(const content::WebCursor& cursor) = 0;
 
   virtual void TextInputStateChanged(ui::TextInputType type,
@@ -56,8 +67,6 @@ class RenderWidgetHostViewContainer {
                                       size_t selection_anchor_position) = 0;
 
   virtual void SelectionChanged() = 0;
-
-  virtual Compositor* GetCompositor() const = 0;
 
   virtual gfx::Size GetViewSizePix() const = 0;
 

@@ -231,6 +231,10 @@ void Compositor::SetVisibility(bool visible) {
 
 void Compositor::SetDeviceScaleFactor(float scale) {
   DCHECK(CalledOnValidThread());
+  if (scale == device_scale_factor_) {
+    return;
+  }
+
   device_scale_factor_ = scale;
 
   if (layer_tree_host_) {
@@ -254,6 +258,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(CalledOnValidThread());
+
   root_layer_->RemoveAllChildren();
   if (layer.get()) {
     root_layer_->AddChild(layer);

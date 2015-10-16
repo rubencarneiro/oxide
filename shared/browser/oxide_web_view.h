@@ -63,6 +63,10 @@ class WebMouseEvent;
 class WebMouseWheelEvent;
 } // namespace blink
 
+namespace cc {
+class SolidColorLayer;
+}
+
 namespace content {
 
 struct ContextMenuParams;
@@ -378,6 +382,9 @@ class WebView : public ScriptMessageTarget,
 
   // RenderWidgetHostViewContainer implementation
   void EvictCurrentFrame() final;
+  Compositor* GetCompositor() const final;
+  void AttachLayer(scoped_refptr<cc::Layer> layer) final;
+  void DetachLayer(scoped_refptr<cc::Layer> layer) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void TextInputStateChanged(ui::TextInputType type,
                              bool show_ime_if_needed) final;
@@ -387,7 +394,6 @@ class WebView : public ScriptMessageTarget,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
-  Compositor* GetCompositor() const final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
@@ -520,6 +526,7 @@ class WebView : public ScriptMessageTarget,
   WebViewContentsHelper* web_contents_helper_;
 
   scoped_ptr<Compositor> compositor_;
+  scoped_refptr<cc::SolidColorLayer> root_layer_;
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;

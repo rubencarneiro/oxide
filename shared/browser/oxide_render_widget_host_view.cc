@@ -40,7 +40,6 @@
 #include "ui/gfx/geometry/size_conversions.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
-#include "shared/browser/compositor/oxide_compositor_utils.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -186,8 +185,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  Compositor* compositor = container_ ? container_->GetCompositor() : nullptr;
-
   if (output_surface_id != last_output_surface_id_) {
     resource_collection_->SetClient(nullptr);
     if (resource_collection_->LoseAllResources()) {
@@ -266,6 +263,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
+  Compositor* compositor = container_->GetCompositor();
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
@@ -588,7 +586,7 @@ void RenderWidgetHostView::AttachLayer() {
     return;
   }
 
-  container_->GetCompositor()->SetRootLayer(layer_.get());
+  container_->AttachLayer(layer_);
 }
 
 void RenderWidgetHostView::DetachLayer() {
@@ -599,7 +597,7 @@ void RenderWidgetHostView::DetachLayer() {
     return;
   }
 
-  container_->GetCompositor()->SetRootLayer(scoped_refptr<cc::Layer>());
+  container_->DetachLayer(layer_);
 }
 
 RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :

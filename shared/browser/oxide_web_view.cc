@@ -25,6 +25,9 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
+#include "cc/layers/layer.h"
+#include "cc/layers/solid_color_layer.h"
+#include "cc/trees/layer_tree_settings.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
@@ -232,6 +235,7 @@ WebView::WebView(WebViewClient* client)
       selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
+      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
@@ -239,6 +243,11 @@ WebView::WebView(WebViewClient* client)
       location_bar_animated_(true),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
+
+  root_layer_->SetIsDrawable(true);
+  root_layer_->SetBackgroundColor(SK_ColorWHITE);
+
+  compositor_->SetRootLayer(root_layer_);
 }
 
 void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
@@ -443,6 +452,25 @@ void WebView::EvictCurrentFrame() {
   client_->EvictCurrentFrame();
 }
 
+Compositor* WebView::GetCompositor() const {
+  return compositor_.get();
+}
+
+void WebView::AttachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  root_layer_->InsertChild(layer, 0);
+  root_layer_->SetIsDrawable(false);
+}
+
+void WebView::DetachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  DCHECK_EQ(layer->parent(), root_layer_.get());
+  layer->RemoveFromParent();
+  if (root_layer_->children().size() == 0) {
+    root_layer_->SetIsDrawable(true);
+  }
+}
+
 void WebView::UpdateCursor(const content::WebCursor& cursor) {
   client_->UpdateCursor(cursor);
 }
@@ -489,10 +517,6 @@ void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
 
 void WebView::SelectionChanged() {
   client_->SelectionChanged();
-}
-
-Compositor* WebView::GetCompositor() const {
-  return compositor_.get();
 }
 
 content::WebContents* WebView::OpenURLFromTab(
@@ -1067,6 +1091,7 @@ WebView::WebView(const Params& params)
   compositor_->SetViewportSize(GetViewSizePix());
   compositor_->SetVisibility(IsVisible());
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  root_layer_->SetBounds(GetViewSizeDip());
 
   if (params.restore_entries.size() > 0) {
     ScopedVector<content::NavigationEntry> entries =
@@ -1277,6 +1302,7 @@ void WebView::SetIsFullscreen(bool fullscreen) {
 void WebView::WasResized() {
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
   compositor_->SetViewportSize(GetViewSizePix());
+  root_layer_->SetBounds(GetViewSizeDip());
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
