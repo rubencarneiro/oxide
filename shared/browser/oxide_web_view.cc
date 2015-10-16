@@ -150,7 +150,7 @@ void FillLoadURLParamsFromOpenURLParams(
 // This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
 // and GtkIMContextWrapper::HandleCommit(…)
 // (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
-void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
+void SendFakeCompositionKeyEvent(content::RenderWidgetHost* host,
                                  blink::WebInputEvent::Type type) {
   content::NativeWebKeyboardEvent fake_event;
   fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
@@ -278,9 +278,12 @@ content::RenderViewHost* WebView::GetRenderViewHost() const {
   return web_contents_->GetRenderViewHost();
 }
 
-content::RenderWidgetHostImpl* WebView::GetRenderWidgetHostImpl() const {
-  return content::RenderWidgetHostImpl::From(
-      web_contents_->GetRenderViewHost());
+content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
+  content::RenderViewHost* rvh = GetRenderViewHost();
+  if (!rvh) {
+    return nullptr;
+  }
+  return rvh->GetWidget();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -345,12 +348,13 @@ void WebView::MaybeScrollFocusedEditableNodeIntoView() {
     return;
   }
 
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
 
-  host->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
+  content::RenderWidgetHostImpl::From(host)
+      ->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
 float WebView::GetFrameMetadataScaleToPix() {
@@ -873,12 +877,14 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
-  if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
+  if (old_host && old_host->GetWidget()->GetView()) {
+    static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView())
+        ->SetDelegate(nullptr);
   }
   if (new_host) {
-    if (new_host->GetView()) {
-      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+    if (new_host->GetWidget()->GetView()) {
+      static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView())
+          ->SetDelegate(this);
     }
 
     InitializeTopControlsForHost(new_host, !old_host);
@@ -1271,7 +1277,11 @@ void WebView::SetIsFullscreen(bool fullscreen) {
   }
 
   is_fullscreen_ = fullscreen;
-  web_contents_->GetRenderViewHost()->WasResized();
+
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (host) {
+    host->WasResized();
+  }
 }
 
 void WebView::WasResized() {
@@ -1284,7 +1294,8 @@ void WebView::WasResized() {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
     rwhv->SetSize(GetViewSizeDip());
-    GetRenderWidgetHostImpl()->SendScreenRects();
+    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
+        ->SendScreenRects();
     rwhv->GetRenderWidgetHost()->WasResized();
   }
 
@@ -1292,12 +1303,12 @@ void WebView::WasResized() {
 }
 
 void WebView::ScreenUpdated() {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
 
-  host->NotifyScreenInfoChanged();
+  content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
 }
 
 void WebView::VisibilityChanged() {
@@ -1334,7 +1345,7 @@ void WebView::InputPanelVisibilityChanged() {
 }
 
 void WebView::UpdateWebPreferences() {
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  content::RenderViewHost* rvh = GetRenderViewHost();
   if (!rvh) {
     return;
   }
@@ -1496,7 +1507,7 @@ void WebView::SetLocationBarHeightPix(int height) {
 
   location_bar_height_pix_ = height;
 
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
@@ -1675,12 +1686,12 @@ void WebView::AllowCertificateError(
 }
 
 void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
     return;
   }
 
-  rvh->ForwardKeyboardEvent(event);
+  host->ForwardKeyboardEvent(event);
 }
 
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
@@ -1697,12 +1708,12 @@ void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
 
   global_mouse_position_.SetPoint(e.globalX, e.globalY);
 
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
     return;
   }
 
-  rvh->ForwardMouseEvent(e);
+  host->ForwardMouseEvent(e);
 }
 
 void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
@@ -1719,23 +1730,24 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
     return;
   }
 
-  rvh->ForwardWheelEvent(event);
+  host->ForwardWheelEvent(event);
 }
 
 void WebView::ImeCommitText(const base::string16& text,
                             const gfx::Range& replacement_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
 
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeConfirmComposition(text, replacement_range, false);
+  content::RenderWidgetHostImpl::From(host)->ImeConfirmComposition(
+      text, replacement_range, false);
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
 
@@ -1743,15 +1755,14 @@ void WebView::ImeSetComposingText(
     const base::string16& text,
     const std::vector<blink::WebCompositionUnderline>& underlines,
     const gfx::Range& selection_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
 
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeSetComposition(text, underlines,
-                          selection_range.start(),
-                          selection_range.end());
+  content::RenderWidgetHostImpl::From(host)->ImeSetComposition(
+      text, underlines, selection_range.start(), selection_range.end());
   SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
 }
 

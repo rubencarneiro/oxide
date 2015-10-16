@@ -5,7 +5,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1284,17 +1284,17 @@
+@@ -1286,17 +1286,17 @@
        'browser/renderer_host/media/video_capture_gpu_jpeg_decoder.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
@@ -24,7 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-@@ -1782,16 +1782,28 @@
+@@ -1784,16 +1784,28 @@
        'public/browser/plugin_service.h',
      ],
    },
@@ -59,10 +59,10 @@ diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public
 @@ -8,16 +8,24 @@
  #include "base/basictypes.h"
  #include "base/compiler_specific.h"
+ #include "base/strings/string16.h"
  #include "build/build_config.h"
  #include "content/common/content_export.h"
  #include "third_party/WebKit/public/web/WebInputEvent.h"
- #include "ui/events/event_constants.h"
  #include "ui/gfx/native_widget_types.h"
  
 +#if defined(OXIDE_BUILD_QT)
@@ -81,7 +81,7 @@ diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public
  
  // Owns a platform specific event; used to pass own and pass event through
  // platform independent code.
-@@ -54,17 +62,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
+@@ -51,17 +59,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
  #endif
  #endif
  
