@@ -71,9 +71,7 @@ void CompositorOutputSurface::DoSwapBuffers(CompositorFrameData* frame) {
   client_->DidSwapBuffers();
 }
 
-CompositorOutputSurface::~CompositorOutputSurface() {
-  proxy_->SetOutputSurface(nullptr);
-}
+CompositorOutputSurface::~CompositorOutputSurface() {}
 
 void CompositorOutputSurface::DidSwapBuffers() {
   DCHECK(CalledOnValidThread());
