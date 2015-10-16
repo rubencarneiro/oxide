@@ -1275,11 +1275,8 @@ void WebView::SetIsFullscreen(bool fullscreen) {
 }
 
 void WebView::WasResized() {
-  {
-    CompositorLock lock(compositor_.get());
-    compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-    compositor_->SetViewportSize(GetViewSizePix());
-  }
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetViewportSize(GetViewSizePix());
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {

@@ -187,7 +187,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   Compositor* compositor = container_ ? container_->GetCompositor() : nullptr;
-  CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
     resource_collection_->SetClient(nullptr);

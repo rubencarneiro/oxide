@@ -87,7 +87,6 @@ Compositor::Compositor(CompositorClient* client)
       root_layer_(cc::Layer::Create(cc::LayerSettings())),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
-      lock_count_(0),
       weak_factory_(this) {
   DCHECK(CalledOnValidThread());
 }
@@ -101,29 +100,6 @@ void Compositor::SendSwapCompositorFrameToClient(
   scoped_refptr<CompositorFrameHandle> handle =
       new CompositorFrameHandle(proxy_, frame.Pass());
   client_->CompositorSwapFrame(handle.get());
-}
-
-void Compositor::LockCompositor() {
-  DCHECK(CalledOnValidThread());
-  if (lock_count_++ > 0) {
-    return;
-  }
-
-  if (layer_tree_host_) {
-    layer_tree_host_->SetDeferCommits(true);
-  }
-}
-
-void Compositor::UnlockCompositor() {
-  DCHECK(CalledOnValidThread());
-  DCHECK(lock_count_ > 0);
-  if (--lock_count_ > 0) {
-    return;
-  }
-
-  if (layer_tree_host_) {
-    layer_tree_host_->SetDeferCommits(false);
-  }
 }
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
@@ -214,7 +190,6 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 }
 
 Compositor::~Compositor() {
-  CHECK_EQ(lock_count_, 0U);
   proxy_->CompositorDestroyed();
 }
 
@@ -249,10 +224,6 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_->SetVisible(true);
     layer_tree_host_->SetViewportSize(size_);
     layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
-
-    if (lock_count_ > 0) {
-      layer_tree_host_->SetDeferCommits(true);
-    }
 
     layer_tree_host_->SetLayerTreeHostClientReady();
   }

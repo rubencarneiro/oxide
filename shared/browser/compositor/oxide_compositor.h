@@ -41,7 +41,6 @@ namespace oxide {
 class CompositorClient;
 class CompositorFrameData;
 class CompositorFrameHandle;
-class CompositorLock;
 class CompositorThreadProxy;
 
 class Compositor final : public cc::LayerTreeHostClient,
@@ -63,15 +62,11 @@ class Compositor final : public cc::LayerTreeHostClient,
                               FrameHandleVector returned_frames);
 
  private:
-  friend class CompositorLock;
   friend class CompositorThreadProxy;
 
   Compositor(CompositorClient* client);
 
   void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
-
-  void LockCompositor();
-  void UnlockCompositor();
 
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
@@ -112,32 +107,9 @@ class Compositor final : public cc::LayerTreeHostClient,
 
   uint32 next_output_surface_id_;
 
-  uint32 lock_count_;
-
   base::WeakPtrFactory<Compositor> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(Compositor);
-};
-
-class CompositorLock final {
- public:
-  CompositorLock(Compositor* compositor)
-      : compositor_(compositor) {
-    if (compositor_) {
-      compositor_->LockCompositor();
-    }
-  }
-
-  ~CompositorLock() {
-    if (compositor_) {
-      compositor_->UnlockCompositor();
-    }
-  }
-
- private:
-  Compositor* compositor_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositorLock);
 };
 
 } // namespace oxide
