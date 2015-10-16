@@ -17,6 +17,7 @@
 
 #include "oxide_qt_web_view.h"
 
+#include <deque>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -358,6 +359,12 @@ content::NavigationController::RestoreType ToNavigationControllerRestoreType(
   return static_cast<content::NavigationController::RestoreType>(type);
 }
 
+bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
+                                    oxide::WebFrame* frame) {
+  d->push_back(frame);
+  return true;
+}
+
 }
 
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
@@ -430,7 +437,8 @@ WebView::WebView(WebViewProxyClient* client,
                  OxideQSecurityStatus* security_status)
     : client_(client),
       has_input_method_state_(false),
-      security_status_(security_status) {
+      security_status_(security_status),
+      frame_tree_torn_down_(false) {
   QInputMethod* im = QGuiApplication::inputMethod();
   if (im) {
     connect(im, SIGNAL(visibleChanged()),
@@ -1073,6 +1081,7 @@ void WebView::RequestMediaAccessPermission(
 }
 
 void WebView::FrameCreated(oxide::WebFrame* frame) {
+  DCHECK(!frame_tree_torn_down_);
   DCHECK(!WebFrame::FromSharedWebFrame(frame));
   DCHECK(frame->parent());
 
@@ -1094,10 +1103,12 @@ void WebView::FrameDeleted(oxide::WebFrame* frame) {
   f->client()->DestroyFrame();
   // |f| has been deleted
 
-  WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
-  if (!parent) {
+  if (!frame->parent()) {
     return;
   }
+
+  WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
+  DCHECK(parent);
 
   parent->client()->ChildFramesChanged();
 }
@@ -1596,6 +1607,24 @@ void WebView::executeEditingCommand(EditingCommands command) const {
   }
 }
 
+void WebView::teardownFrameTree() {
+  DCHECK(!frame_tree_torn_down_);
+
+  oxide::WebFrameTreeObserver::Observe(nullptr);
+
+  std::deque<oxide::WebFrame*> frames;
+  oxide::WebFrameTree::FromWebContents(view_->GetWebContents())->ForEachFrame(
+      base::Bind(&TeardownFrameTreeForEachHelper, &frames));
+  while (frames.size() > 0) {
+    oxide::WebFrame* frame = frames.back();
+    frames.pop_back();
+
+    FrameDeleted(frame);
+  }
+
+  frame_tree_torn_down_ = true;
+}
+
 WebView::WebView(WebViewProxyClient* client,
                  OxideQFindController* find_controller,
                  OxideQSecurityStatus* security_status,
@@ -1658,6 +1687,8 @@ WebView* WebView::CreateFromNewViewRequest(
 }
 
 WebView::~WebView() {
+  DCHECK(frame_tree_torn_down_);
+
   oxide::PermissionRequestDispatcher::FromWebContents(
       view_->GetWebContents())->set_client(nullptr);
 
