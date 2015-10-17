@@ -1403,6 +1403,8 @@ OxideQQuickWebView::~OxideQQuickWebView() {
     delete OxideQQuickScriptMessageHandlerPrivate::fromProxyHandle(
         d->messageHandlers().at(0));
   }
+
+  d->proxy()->teardownFrameTree();
 }
 
 void OxideQQuickWebView::componentComplete() {

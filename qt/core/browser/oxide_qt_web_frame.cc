@@ -147,6 +147,7 @@ WebFrame* WebFrame::FromProxyHandle(WebFrameProxyHandle* handle) {
 
 // static
 WebFrame* WebFrame::FromSharedWebFrame(oxide::WebFrame* frame) {
+  DCHECK(frame);
   auto it = g_frame_map.Get().find(reinterpret_cast<uintptr_t>(frame));
   return it == g_frame_map.Get().end() ? nullptr : it->second;
 }
