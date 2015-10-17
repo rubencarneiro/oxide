@@ -422,15 +422,18 @@ bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
 
 void RenderWidgetHostView::Show() {
   if (is_showing_) {
-    DCHECK(container_);
     return;
   }
+
+  is_showing_ = true;
 
   if (!container_) {
     return;
   }
 
-  is_showing_ = true;
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(false);
+  }
 
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
@@ -446,6 +449,10 @@ void RenderWidgetHostView::Hide() {
 
   is_showing_ = false;
 
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(true);
+  }
+
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->UnlockFrame(this);
   }
@@ -456,7 +463,6 @@ void RenderWidgetHostView::Hide() {
 }
 
 bool RenderWidgetHostView::IsShowing() {
-  DCHECK(!is_showing_ || container_);
   return is_showing_;
 }
 
