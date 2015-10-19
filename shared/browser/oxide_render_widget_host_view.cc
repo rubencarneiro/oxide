@@ -416,7 +416,7 @@ bool RenderWidgetHostView::HasFocus() const {
     return false;
   }
 
-  return container_->HasFocus();
+  return container_->HasFocus(this);
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {

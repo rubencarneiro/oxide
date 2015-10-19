@@ -382,6 +382,7 @@ class WebView : public ScriptMessageTarget,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
+  bool HasFocus(const RenderWidgetHostView* view) const final;
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
                        const content::ContextMenuParams& params) final;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,

@@ -44,6 +44,7 @@ class Rect;
 namespace oxide {
 
 class Compositor;
+class RenderWidgetHostView;
 
 class RenderWidgetHostViewContainer {
  public:
@@ -76,7 +77,7 @@ class RenderWidgetHostViewContainer {
 
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
-  virtual bool HasFocus() const = 0;
+  virtual bool HasFocus(const RenderWidgetHostView* view) const = 0;
 
   virtual bool IsVisible() const = 0;
 

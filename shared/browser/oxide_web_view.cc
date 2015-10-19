@@ -505,6 +505,14 @@ void WebView::SelectionChanged() {
   client_->SelectionChanged();
 }
 
+bool WebView::HasFocus(const RenderWidgetHostView* view) const {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  return view == GetRenderWidgetHostView();
+}
+
 void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
                               const content::ContextMenuParams& params) {
   WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
