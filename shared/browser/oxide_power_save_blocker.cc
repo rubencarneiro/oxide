@@ -77,7 +77,6 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
 
   oxide::FormFactor form_factor_;
   scoped_refptr<dbus::Bus> bus_;
-  bool applying_;
   union {
     int32_t unity_cookie_;
     uint32_t freedesktop_cookie_;
@@ -105,19 +104,12 @@ void PowerSaveBlocker::CleanUp() {
 void PowerSaveBlocker::ApplyBlock() {
   DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
 
-  if (applying_) {
-    return;
-  }
-  applying_ = true;
-
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
     ApplyBlockUnityScreenService();
   } else {
     ApplyBlockFreedesktop();
   }
-
-  applying_ = false;
 }
 
 void PowerSaveBlocker::RemoveBlock() {
@@ -265,7 +257,6 @@ void PowerSaveBlocker::ApplicationStateChanged() {
 
 PowerSaveBlocker::PowerSaveBlocker(const std::string& description)
     : form_factor_(oxide::GetFormFactorHint())
-    , applying_(false)
     , unity_cookie_(kInvalidCookie)
     , description_(description)
 {}
