@@ -246,12 +246,10 @@ void PowerSaveBlocker::RemoveBlockFreedesktop() {
 void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
-  if (state != BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-      unity_cookie_ == kInvalidCookie) {
-    Init();
-  } else if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-             unity_cookie_ != kInvalidCookie) {
+  if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
     CleanUp();
+  } else {
+    Init();
   }
 }
 
