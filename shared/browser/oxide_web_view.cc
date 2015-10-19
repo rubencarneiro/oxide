@@ -78,6 +78,7 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -109,20 +110,7 @@ namespace oxide {
 
 namespace {
 
-const char kWebViewKey[] = "oxide_web_view_data";
-
-// SupportsUserData implementations own their data. This class exists
-// because we don't want WebContents to own WebView (it's the other way
-// around)
-class WebViewUserData : public base::SupportsUserData::Data {
- public:
-  WebViewUserData(WebView* view) : view_(view) {}
-
-  WebView* get() const { return view_; }
-
- private:
-  WebView* view_;
-};
+int kUserDataKey;
 
 void FillLoadURLParamsFromOpenURLParams(
     content::NavigationController::LoadURLParams* load_params,
@@ -255,7 +243,8 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
 
   // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
-  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
+  web_contents_->SetUserData(&kUserDataKey,
+                             new UnownedUserData<WebView>(this));
 
   content::WebContentsObserver::Observe(web_contents_.get());
 
@@ -270,6 +259,8 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
                  content::NotificationService::AllBrowserContextsAndSources());
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
+
+  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(this);
 
   DCHECK(std::find(g_all_web_views.Get().begin(),
                    g_all_web_views.Get().end(),
@@ -512,6 +503,43 @@ void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
 
 void WebView::SelectionChanged() {
   client_->SelectionChanged();
+}
+
+void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                              const content::ContextMenuParams& params) {
+  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  menu->Show();
+}
+
+void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                            const gfx::Rect& bounds,
+                            int selected_item,
+                            const std::vector<content::MenuItem>& items,
+                            bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_);
+
+  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
+  if (!menu) {
+    static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_ = menu->GetWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebView::HidePopupMenu() {
+  if (!active_popup_menu_) {
+    return;
+  }
+
+  active_popup_menu_->Close();
 }
 
 content::WebContents* WebView::OpenURLFromTab(
@@ -893,15 +921,22 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetContainer(nullptr);
+    static_cast<RenderWidgetHostView *>(old_host->GetView())
+        ->SetContainer(nullptr);
   }
   if (new_host) {
     if (new_host->GetView()) {
-      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetContainer(this);
+      static_cast<RenderWidgetHostView *>(new_host->GetView())
+          ->SetContainer(this);
     }
 
     InitializeTopControlsForHost(new_host, !old_host);
   }
+
+  // XXX: Evaluate whether these are needed, or whether we should be
+  //  syncing more stuff with the new view
+  VisibilityChanged();
+  FocusChanged();
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -1113,11 +1148,6 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
 
   CommonInit(contents.Pass());
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetContainer(this);
-  }
-
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
     InitializeTopControlsForHost(rvh, true);
@@ -1145,21 +1175,19 @@ WebView::~WebView() {
                   this),
       g_all_web_views.Get().end());
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetContainer(nullptr);
-  }
+  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
 
-  web_contents_->RemoveUserData(kWebViewKey);
+  web_contents_->RemoveUserData(&kUserDataKey);
 }
 
 // static
 WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
-  WebViewUserData* data = static_cast<WebViewUserData *>(
-      web_contents->GetUserData(kWebViewKey));
+  UnownedUserData<WebView>* data =
+      static_cast<UnownedUserData<WebView>*>(
+        web_contents->GetUserData(&kUserDataKey));
   if (!data) {
     return nullptr;
   }
@@ -1629,43 +1657,6 @@ void WebView::PrepareToClose() {
   // This is ok to call multiple times - RFHI tracks whether a response
   // is pending and won't dispatch another event if it is
   web_contents_->DispatchBeforeUnload(false);
-}
-
-void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                              const content::ContextMenuParams& params) {
-  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
-  if (!menu) {
-    return;
-  }
-
-  menu->Show();
-}
-
-void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                            const gfx::Rect& bounds,
-                            int selected_item,
-                            const std::vector<content::MenuItem>& items,
-                            bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_);
-
-  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
-  if (!menu) {
-    static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->DidCancelPopupMenu();
-    return;
-  }
-
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show(bounds, items, selected_item, allow_multiple_selection);
-}
-
-void WebView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
-  }
-
-  active_popup_menu_->Close();
 }
 
 void WebView::AllowCertificateError(

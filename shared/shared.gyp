@@ -498,6 +498,7 @@
         'common/oxide_script_message_params.h',
         'common/oxide_script_message_request.cc',
         'common/oxide_script_message_request.h',
+        'common/oxide_unowned_user_data.h',
         'common/oxide_user_agent.cc',
         'common/oxide_user_agent.h',
         'common/oxide_user_agent_override_set.cc',

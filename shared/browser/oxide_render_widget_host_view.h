@@ -63,7 +63,8 @@ class RenderWidgetHostView final :
     public cc::DelegatedFrameResourceCollectionClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host,
+                       RenderWidgetHostViewContainer* container);
   ~RenderWidgetHostView();
 
   content::RenderWidgetHostImpl* host() const { return host_; }

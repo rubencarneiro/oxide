@@ -602,21 +602,23 @@ void RenderWidgetHostView::DetachLayer() {
   container_->DetachLayer(layer_);
 }
 
-RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
-    host_(content::RenderWidgetHostImpl::From(host)),
-    container_(nullptr),
-    resource_collection_(new cc::DelegatedFrameResourceCollection()),
-    last_output_surface_id_(0),
-    frame_is_evicted_(true),
-    selection_cursor_position_(0),
-    selection_anchor_position_(0),
-    current_text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-    show_ime_if_needed_(false),
-    focused_node_is_editable_(false),
-    is_loading_(false),
-    is_showing_(false),
-    top_controls_shrink_blink_size_(false),
-    gesture_provider_(GestureProvider::Create(this)) {
+RenderWidgetHostView::RenderWidgetHostView(
+    content::RenderWidgetHost* host,
+    RenderWidgetHostViewContainer* container)
+    : host_(content::RenderWidgetHostImpl::From(host)),
+      container_(container),
+      resource_collection_(new cc::DelegatedFrameResourceCollection()),
+      last_output_surface_id_(0),
+      frame_is_evicted_(true),
+      selection_cursor_position_(0),
+      selection_anchor_position_(0),
+      current_text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
+      show_ime_if_needed_(false),
+      focused_node_is_editable_(false),
+      is_loading_(false),
+      is_showing_(false),
+      top_controls_shrink_blink_size_(false),
+      gesture_provider_(GestureProvider::Create(this)) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);

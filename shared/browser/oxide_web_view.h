@@ -69,8 +69,6 @@ class SolidColorLayer;
 
 namespace content {
 
-struct ContextMenuParams;
-struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
@@ -263,15 +261,6 @@ class WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
-  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params);
-  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                     const gfx::Rect& bounds,
-                     int selected_item,
-                     const std::vector<content::MenuItem>& items,
-                     bool allow_multiple_selection);
-  void HidePopupMenu();
-
   void AllowCertificateError(content::RenderFrameHost* rfh,
                              int cert_error,
                              const net::SSLInfo& ssl_info,
@@ -393,6 +382,14 @@ class WebView : public ScriptMessageTarget,
                               size_t selection_cursor_position,
                               size_t selection_anchor_position) final;
   void SelectionChanged() final;
+  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                       const content::ContextMenuParams& params) final;
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection) final;
+  void HidePopupMenu() final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,

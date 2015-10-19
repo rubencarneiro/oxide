@@ -18,7 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 
+#include <vector>
+
 #include "base/memory/ref_counted.h"
+#include "content/public/common/menu_item.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect.h"
@@ -29,6 +32,8 @@ class Layer;
 }
 
 namespace content {
+struct ContextMenuParams;
+class RenderFrameHost;
 class WebCursor;
 }
 
@@ -39,7 +44,6 @@ class Rect;
 namespace oxide {
 
 class Compositor;
-class WebView;
 
 class RenderWidgetHostViewContainer {
  public:
@@ -77,6 +81,16 @@ class RenderWidgetHostViewContainer {
   virtual bool IsVisible() const = 0;
 
   virtual float GetLocationBarHeightDip() const = 0;
+
+  virtual void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                               const content::ContextMenuParams& params) = 0;
+
+  virtual void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                             const gfx::Rect& bounds,
+                             int selected_item,
+                             const std::vector<content::MenuItem>& items,
+                             bool allow_multiple_selection) = 0;
+  virtual void HidePopupMenu() = 0;
 };
 
 } // namespace oxide
