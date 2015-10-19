@@ -224,10 +224,16 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
         frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
       DetachLayer();
+
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
       layer_ = cc::DelegatedRendererLayer::Create(cc::LayerSettings(),
                                                   frame_provider_);
+      layer_->SetIsDrawable(true);
+      layer_->SetContentsOpaque(true);
+      layer_->SetBounds(frame_size_dip);
+      layer_->SetHideLayerAndSubtree(!is_showing_);
+
       AttachLayer();
     } else {
       frame_provider_->SetFrameData(frame_data.Pass());
@@ -237,15 +243,12 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   last_frame_size_dip_ = frame_size_dip;
 
   if (layer_.get()) {
-    layer_->SetIsDrawable(true);
-    layer_->SetContentsOpaque(true);
-    layer_->SetBounds(frame_size_dip);
     layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
   if (frame_is_evicted_) {
     frame_is_evicted_ = false;
-    RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
+    RendererFrameEvictor::GetInstance()->AddFrame(this, is_showing_);
   }
 
   compositor_frame_metadata_ = frame->metadata;
@@ -424,12 +427,7 @@ void RenderWidgetHostView::Show() {
   if (is_showing_) {
     return;
   }
-
   is_showing_ = true;
-
-  if (!container_) {
-    return;
-  }
 
   if (layer_.get()) {
     layer_->SetHideLayerAndSubtree(false);
@@ -439,6 +437,10 @@ void RenderWidgetHostView::Show() {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
   }
 
+  if (!host_ || !host_->is_hidden()) {
+    return;
+  }
+
   host_->WasShown(ui::LatencyInfo());
 }
 
@@ -446,7 +448,6 @@ void RenderWidgetHostView::Hide() {
   if (!is_showing_) {
     return;
   }
-
   is_showing_ = false;
 
   if (layer_.get()) {
@@ -457,13 +458,17 @@ void RenderWidgetHostView::Hide() {
     RendererFrameEvictor::GetInstance()->UnlockFrame(this);
   }
 
-  host_->WasHidden();
-
   RunAckCallbacks();
+
+  if (!host_ || host_->is_hidden()) {
+    return;
+  }
+
+  host_->WasHidden();
 }
 
 bool RenderWidgetHostView::IsShowing() {
-  return is_showing_;
+  return is_showing_ && container_ && container_->IsVisible();
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {

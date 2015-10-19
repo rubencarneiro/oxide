@@ -54,7 +54,6 @@ class MotionEvent;
 namespace oxide {
 
 class RenderWidgetHostViewContainer;
-class WebView;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
