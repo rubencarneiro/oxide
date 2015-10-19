@@ -1,6 +1,19 @@
-# HG changeset patch
-# Parent 2c5d88a887b01a629bb39c8cc2ba32fd6b2e8aa7
-# User oxide
+# Description: Add back per-URL user agent string overrides. Google removed
+#  this functionality from Chrome / Blink with
+#  https://chromium.googlesource.com/chromium/src/+/34958ad6de9e644bf5b75328d9e9fcc0ad140961.
+#  This patch partially reverts that, but rather than passing a URL to
+#  every call to FrameLoader::userAgent(), we instead look up the document
+#  URL on the content side. I don't know whether this would be more
+#  compatible with whatever caching they have planned. For setting the user
+#  agent string on network requests, we do pass the request URL up to
+#  content. An alternative to this would be to set the override for network
+#  requests on the browser side, but this would be difficult to make compatible
+#  with RendererPreferences::user_agent_override if we wanted to use that, as
+#  we would have to fallback to the renderer-provided user agent string if we
+#  don't find an override on the browser side, and the renderer-provided string
+#  could be wrong (eg, if http://foo.com/ navigates to http://bar.com/, the
+#  request would have the override for foo.com)
+# Author: Chris Coulson <chris.coulson@canonical.com>
 
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
@@ -45,18 +58,22 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -3691,16 +3691,22 @@ bool RenderFrameImpl::willCheckAndDispat
+@@ -3689,18 +3689,25 @@ bool RenderFrameImpl::willCheckAndDispat
+     return false;
+ 
    render_frame_proxy_->postMessageEvent(
        source_frame, render_frame_proxy_->web_frame(), target_origin, event);
    return true;
  }
  
  blink::WebString RenderFrameImpl::userAgentOverride(
-     blink::WebLocalFrame* frame) {
+-    blink::WebLocalFrame* frame) {
++    blink::WebLocalFrame* frame,
++    const WebURL& url) {
    DCHECK(!frame_ || frame_ == frame);
 +  std::string user_agent_override_for_url =
 +      GetContentClient()->renderer()->GetUserAgentOverrideForURL(
-+        GURL(frame_->document().url()));
++        url.isEmpty() ? GURL(frame_->document().url()) : GURL(url));
 +  if (!user_agent_override_for_url.empty())
 +    return WebString::fromUTF8(user_agent_override_for_url);
 +
@@ -68,3 +85,183 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    // TODO(nasko): When the top-level frame is remote, there is no WebDataSource
    // associated with it, so the checks below are not valid. Temporarily
    // return early and fix properly as part of https://crbug.com/426555.
+diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
+--- a/content/renderer/render_frame_impl.h
++++ b/content/renderer/render_frame_impl.h
+@@ -527,17 +527,18 @@ class CONTENT_EXPORT RenderFrameImpl
+   blink::WebUserMediaClient* userMediaClient() override;
+   blink::WebEncryptedMediaClient* encryptedMediaClient() override;
+   blink::WebMIDIClient* webMIDIClient() override;
+   bool willCheckAndDispatchMessageEvent(
+       blink::WebLocalFrame* source_frame,
+       blink::WebFrame* target_frame,
+       blink::WebSecurityOrigin target_origin,
+       blink::WebDOMMessageEvent event) override;
+-  blink::WebString userAgentOverride(blink::WebLocalFrame* frame) override;
++  blink::WebString userAgentOverride(blink::WebLocalFrame* frame,
++                                     const WebURL& url) override;
+   blink::WebString doNotTrackValue(blink::WebLocalFrame* frame) override;
+   bool allowWebGL(blink::WebLocalFrame* frame, bool default_value) override;
+   void didLoseWebGLContext(blink::WebLocalFrame* frame,
+                            int arb_robustness_status_code) override;
+   blink::WebScreenOrientationClient* webScreenOrientationClient() override;
+   bool isControlledByServiceWorker(blink::WebDataSource& data_source) override;
+   int64_t serviceWorkerID(blink::WebDataSource& data_source) override;
+   void postAccessibilityEvent(const blink::WebAXObject& obj,
+diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.cpp b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
+--- a/third_party/WebKit/Source/core/loader/FrameLoader.cpp
++++ b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
+@@ -1167,19 +1167,19 @@ void FrameLoader::restoreScrollPositionA
+ 
+         if (ScrollingCoordinator* scrollingCoordinator = m_frame->page()->scrollingCoordinator())
+             scrollingCoordinator->frameViewRootLayerDidChange(view);
+     }
+ 
+     documentLoader()->initialScrollState().didRestoreFromHistory = true;
+ }
+ 
+-String FrameLoader::userAgent() const
++String FrameLoader::userAgent(const KURL& url) const
+ {
+-    String userAgent = client()->userAgent();
++    String userAgent = client()->userAgent(url);
+     InspectorInstrumentation::applyUserAgentOverride(m_frame, &userAgent);
+     return userAgent;
+ }
+ 
+ void FrameLoader::detach()
+ {
+ #if !ENABLE(OILPAN)
+     // The caller must protect a reference to m_frame.
+@@ -1367,17 +1367,17 @@ void FrameLoader::startLoad(FrameLoadReq
+     double triggeringEventTime = frameLoadRequest.triggeringEvent() ? frameLoadRequest.triggeringEvent()->platformTimeStamp() : 0;
+     client()->dispatchDidStartProvisionalLoad(triggeringEventTime);
+     ASSERT(m_provisionalDocumentLoader);
+     m_provisionalDocumentLoader->startLoadingMainResource();
+ }
+ 
+ void FrameLoader::applyUserAgent(ResourceRequest& request)
+ {
+-    String userAgent = this->userAgent();
++    String userAgent = this->userAgent(request.url());
+     ASSERT(!userAgent.isNull());
+     request.setHTTPUserAgent(AtomicString(userAgent));
+ }
+ 
+ bool FrameLoader::shouldInterruptLoadForXFrameOptions(const String& content, const KURL& url, unsigned long requestIdentifier)
+ {
+     UseCounter::count(m_frame->domWindow()->document(), UseCounter::XFrameOptions);
+ 
+diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.h b/third_party/WebKit/Source/core/loader/FrameLoader.h
+--- a/third_party/WebKit/Source/core/loader/FrameLoader.h
++++ b/third_party/WebKit/Source/core/loader/FrameLoader.h
+@@ -127,17 +127,17 @@ public:
+ 
+     void didExplicitOpen();
+ 
+     // Callbacks from DocumentWriter
+     void didBeginDocument(bool dispatchWindowObjectAvailable);
+ 
+     void receivedFirstData();
+ 
+-    String userAgent() const;
++    String userAgent(const KURL& url = KURL()) const;
+ 
+     void dispatchDidClearWindowObjectInMainWorld();
+     void dispatchDidClearDocumentOfWindowObject();
+     void dispatchDocumentElementAvailable();
+ 
+     // The following sandbox flags will be forced, regardless of changes to
+     // the sandbox attribute of any parent frames.
+     void forceSandboxFlags(SandboxFlags flags) { m_forcedSandboxFlags |= flags; }
+diff --git a/third_party/WebKit/Source/core/loader/FrameLoaderClient.h b/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
+--- a/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
++++ b/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
+@@ -131,17 +131,17 @@ public:
+     virtual void didChangePerformanceTiming() { }
+ 
+     // Transmits the change in the set of watched CSS selectors property
+     // that match any element on the frame.
+     virtual void selectorMatchChanged(const Vector<String>& addedSelectors, const Vector<String>& removedSelectors) = 0;
+ 
+     virtual PassRefPtrWillBeRawPtr<DocumentLoader> createDocumentLoader(LocalFrame*, const ResourceRequest&, const SubstituteData&) = 0;
+ 
+-    virtual String userAgent() = 0;
++    virtual String userAgent(const KURL&) = 0;
+ 
+     virtual String doNotTrackValue() = 0;
+ 
+     virtual void transitionToCommittedForNewPage() = 0;
+ 
+     virtual PassRefPtrWillBeRawPtr<LocalFrame> createFrame(const FrameLoadRequest&, const AtomicString& name, HTMLFrameOwnerElement*) = 0;
+     // Whether or not plugin creation should fail if the HTMLPlugInElement isn't in the DOM after plugin initialization.
+     enum DetachedPluginPolicy {
+diff --git a/third_party/WebKit/Source/web/FrameLoaderClientImpl.cpp b/third_party/WebKit/Source/web/FrameLoaderClientImpl.cpp
+--- a/third_party/WebKit/Source/web/FrameLoaderClientImpl.cpp
++++ b/third_party/WebKit/Source/web/FrameLoaderClientImpl.cpp
+@@ -675,19 +675,19 @@ void FrameLoaderClientImpl::selectorMatc
+ PassRefPtrWillBeRawPtr<DocumentLoader> FrameLoaderClientImpl::createDocumentLoader(LocalFrame* frame, const ResourceRequest& request, const SubstituteData& data)
+ {
+     RefPtrWillBeRawPtr<WebDataSourceImpl> ds = WebDataSourceImpl::create(frame, request, data);
+     if (m_webFrame->client())
+         m_webFrame->client()->didCreateDataSource(m_webFrame, ds.get());
+     return ds.release();
+ }
+ 
+-String FrameLoaderClientImpl::userAgent()
++String FrameLoaderClientImpl::userAgent(const KURL& url)
+ {
+-    WebString override = m_webFrame->client()->userAgentOverride(m_webFrame);
++    WebString override = m_webFrame->client()->userAgentOverride(m_webFrame, WebURL(url));
+     if (!override.isEmpty())
+         return override;
+ 
+     return Platform::current()->userAgent();
+ }
+ 
+ String FrameLoaderClientImpl::doNotTrackValue()
+ {
+diff --git a/third_party/WebKit/Source/web/FrameLoaderClientImpl.h b/third_party/WebKit/Source/web/FrameLoaderClientImpl.h
+--- a/third_party/WebKit/Source/web/FrameLoaderClientImpl.h
++++ b/third_party/WebKit/Source/web/FrameLoaderClientImpl.h
+@@ -112,17 +112,17 @@ public:
+     void didAccessInitialDocument() override;
+     void didDisplayInsecureContent() override;
+     void didRunInsecureContent(SecurityOrigin*, const KURL& insecureURL) override;
+     void didDetectXSS(const KURL&, bool didBlockEntirePage) override;
+     void didDispatchPingLoader(const KURL&) override;
+     void didChangePerformanceTiming() override;
+     void selectorMatchChanged(const Vector<String>& addedSelectors, const Vector<String>& removedSelectors) override;
+     PassRefPtrWillBeRawPtr<DocumentLoader> createDocumentLoader(LocalFrame*, const ResourceRequest&, const SubstituteData&) override;
+-    WTF::String userAgent() override;
++    WTF::String userAgent(const KURL&) override;
+     WTF::String doNotTrackValue() override;
+     void transitionToCommittedForNewPage() override;
+     PassRefPtrWillBeRawPtr<LocalFrame> createFrame(const FrameLoadRequest&, const WTF::AtomicString& name, HTMLFrameOwnerElement*) override;
+     virtual bool canCreatePluginWithoutRenderer(const String& mimeType) const;
+     PassRefPtrWillBeRawPtr<Widget> createPlugin(
+         HTMLPlugInElement*, const KURL&,
+         const Vector<WTF::String>&, const Vector<WTF::String>&,
+         const WTF::String&, bool loadManually, DetachedPluginPolicy) override;
+diff --git a/third_party/WebKit/public/web/WebFrameClient.h b/third_party/WebKit/public/web/WebFrameClient.h
+--- a/third_party/WebKit/public/web/WebFrameClient.h
++++ b/third_party/WebKit/public/web/WebFrameClient.h
+@@ -553,17 +553,17 @@ public:
+         WebLocalFrame* sourceFrame,
+         WebFrame* targetFrame,
+         WebSecurityOrigin target,
+         WebDOMMessageEvent event) { return false; }
+ 
+     // Asks the embedder if a specific user agent should be used. Non-empty
+     // strings indicate an override should be used. Otherwise,
+     // Platform::current()->userAgent() will be called to provide one.
+-    virtual WebString userAgentOverride(WebLocalFrame*) { return WebString(); }
++    virtual WebString userAgentOverride(WebLocalFrame*, const WebURL&) { return WebString(); }
+ 
+     // Asks the embedder what value the network stack will send for the DNT
+     // header. An empty string indicates that no DNT header will be send.
+     virtual WebString doNotTrackValue(WebLocalFrame*) { return WebString(); }
+ 
+ 
+     // WebGL ------------------------------------------------------
+ 

@@ -1,5 +1,5 @@
 # HG changeset patch
-# Parent 97d9a4f6092ed234f0b3a529769b8855424ac9a0
+# Parent b20dc123607beb5afe049e91fd961ebed264640f
 # User oxide
 
 diff --git a/third_party/WebKit/Source/core/editing/SelectionController.cpp b/third_party/WebKit/Source/core/editing/SelectionController.cpp
@@ -54,7 +54,7 @@ diff --git a/third_party/WebKit/Source/web/WebSettingsImpl.cpp b/third_party/Web
 diff --git a/third_party/WebKit/Source/web/WebSettingsImpl.h b/third_party/WebKit/Source/web/WebSettingsImpl.h
 --- a/third_party/WebKit/Source/web/WebSettingsImpl.h
 +++ b/third_party/WebKit/Source/web/WebSettingsImpl.h
-@@ -166,16 +166,17 @@ public:
+@@ -165,16 +165,17 @@ public:
      void setTextTrackFontFamily(const WebString&) override;
      void setTextTrackFontStyle(const WebString&) override;
      void setTextTrackFontVariant(const WebString&) override;
@@ -75,7 +75,7 @@ diff --git a/third_party/WebKit/Source/web/WebSettingsImpl.h b/third_party/WebKi
 diff --git a/third_party/WebKit/public/web/WebSettings.h b/third_party/WebKit/public/web/WebSettings.h
 --- a/third_party/WebKit/public/web/WebSettings.h
 +++ b/third_party/WebKit/public/web/WebSettings.h
-@@ -249,16 +249,17 @@ public:
+@@ -248,16 +248,17 @@ public:
      virtual void setTextTrackFontFamily(const WebString&) = 0;
      virtual void setTextTrackFontStyle(const WebString&) = 0;
      virtual void setTextTrackFontVariant(const WebString&) = 0;
