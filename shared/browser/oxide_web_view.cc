@@ -447,11 +447,6 @@ void WebView::Observe(int type,
   }
 }
 
-void WebView::EvictCurrentFrame() {
-  current_compositor_frame_ = nullptr;
-  client_->EvictCurrentFrame();
-}
-
 Compositor* WebView::GetCompositor() const {
   return compositor_.get();
 }
@@ -1332,6 +1327,14 @@ void WebView::VisibilityChanged() {
     web_contents_->WasShown();
   } else {
     web_contents_->WasHidden();
+    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
+    //  trigger eviction of the frontbuffer from a CompositorClient callback.
+    // XXX: Also this isn't really necessary for eviction - after all, the LTH
+    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
+    //  This callback is really to notify the toolkit layer that the
+    //  frontbuffer is being dropped
+    current_compositor_frame_ = nullptr;
+    client_->EvictCurrentFrame();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();

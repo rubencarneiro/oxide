@@ -45,8 +45,6 @@ class RenderWidgetHostViewContainer {
  public:
   virtual ~RenderWidgetHostViewContainer() {}
 
-  virtual void EvictCurrentFrame() = 0;
-
   virtual Compositor* GetCompositor() const = 0;
 
   virtual void AttachLayer(scoped_refptr<cc::Layer> layer) = 0;

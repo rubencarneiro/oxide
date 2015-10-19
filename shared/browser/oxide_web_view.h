@@ -381,7 +381,6 @@ class WebView : public ScriptMessageTarget,
                const content::NotificationDetails& details) final;
 
   // RenderWidgetHostViewContainer implementation
-  void EvictCurrentFrame() final;
   Compositor* GetCompositor() const final;
   void AttachLayer(scoped_refptr<cc::Layer> layer) final;
   void DetachLayer(scoped_refptr<cc::Layer> layer) final;

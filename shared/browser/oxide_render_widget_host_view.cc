@@ -520,10 +520,6 @@ void RenderWidgetHostView::OnGestureEvent(
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
-
-  if (container_) {
-    container_->EvictCurrentFrame();
-  }
 }
 
 void RenderWidgetHostView::UnusedResourcesAreAvailable() {
