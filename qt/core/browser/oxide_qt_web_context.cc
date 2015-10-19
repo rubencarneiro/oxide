@@ -859,6 +859,7 @@ int WebContext::setCookies(const QUrl& url,
         cookie.isSecure(),
         cookie.isHttpOnly(),
         false,
+        false,
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback,
                    weak_factory_.GetWeakPtr(), ctxt, cookie));
