@@ -21,6 +21,7 @@
     'print_ld_stats%': 0,
     'enable_tcmalloc%': 0,
     'disable_nacl': 1,
+    'ffmpeg_component': 'shared_library',
     'linux_use_bundled_gold': 0,
     'linux_use_bundled_binutils': 0,
     'linux_use_gold_flags': 1,
@@ -61,6 +62,14 @@
     'cflags!': [
       # Should remove this
       '-Werror',
+    ],
+    'ldflags': [
+      # Always link with --gc-sections, as translation units in qt/core/api
+      # may fail to link.
+      # XXX: Either we should re-architect qt/core/api to go through a proxy
+      #  layer (like qt/quick/api does), or re-visit whether we need RTTI for
+      #  public facing classes
+      '-Wl,--gc-sections',
     ],
     'ldflags!': [
       # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold

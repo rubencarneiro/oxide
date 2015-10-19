@@ -72,20 +72,20 @@ TestWebView {
     function test_customDialogComponent(data) {
       webView.beforeUnloadDialog = customDialogComponent;
       webView.url = "http://testsuite/tst_WebView_beforeUnloadDialog.html";
-      verify(webView.waitFor(webView.dialogShown),
+      verify(TestUtils.waitFor(webView.dialogShown),
              "Before unload dialog not shown");
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
       compare(dialog.message, "Confirm navigation");
       mouseClick(dialog, dialog.width / 2, dialog.height / 2, data.button);
-      verify(webView.waitFor(webView.dialogDismissed),
+      verify(TestUtils.waitFor(webView.dialogDismissed),
              "Before unload dialog not dismissed");
       if (data.leave) {
         tryCompare(webView, "url",
                    "http://testsuite/tst_WebView_beforeUnloadDialog2.html");
       } else {
-        verify(webView.waitFor(webView.checkContents));
+        verify(TestUtils.waitFor(webView.checkContents));
       }
     }
   }

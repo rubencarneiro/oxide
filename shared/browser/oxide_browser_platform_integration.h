@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <string>
+
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
@@ -31,6 +33,9 @@ class GURL;
 
 namespace content {
 class LocationProvider;
+}
+namespace media {
+class VideoCaptureDeviceFactory;
 }
 
 namespace oxide {
@@ -95,6 +100,11 @@ class BrowserPlatformIntegration {
 
   // Get the current application state
   virtual ApplicationState GetApplicationState();
+
+  virtual media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() = 0;
+
+  // Get the application name
+  virtual std::string GetApplicationName();
 
  protected:
   BrowserPlatformIntegration();

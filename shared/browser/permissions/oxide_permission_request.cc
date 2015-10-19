@@ -50,13 +50,13 @@ void PermissionRequest::Respond(PermissionRequestResponse response) {
 }
 
 PermissionRequest::PermissionRequest(
-    const PermissionRequestID& request_id,
-    WebFrame* frame,
+    int request_id,
+    const RenderFrameHostID& frame_id,
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(PermissionRequestResponse)>& callback)
     : request_id_(request_id),
-      frame_(frame),
+      frame_id_(frame_id),
       dispatcher_(nullptr),
       origin_(origin),
       embedder_(embedder),
@@ -86,23 +86,28 @@ void PermissionRequest::Deny() {
 }
 
 SimplePermissionRequest::SimplePermissionRequest(
-    const PermissionRequestID& request_id,
+    int request_id,
     const GURL& origin,
     const GURL& embedder,
     const base::Callback<void(PermissionRequestResponse)>& callback)
-    : PermissionRequest(request_id, nullptr, origin, embedder, callback) {}
+    : PermissionRequest(request_id,
+                        RenderFrameHostID(),
+                        origin,
+                        embedder,
+                        callback) {}
 
 SimplePermissionRequest::~SimplePermissionRequest() {}
 
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
-    WebFrame* frame,
+    int request_id,
+    const RenderFrameHostID& frame_id,
     const GURL& origin,
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
     const base::Callback<void(PermissionRequestResponse)>& callback)
-    : PermissionRequest(PermissionRequestID(),
-                        frame,
+    : PermissionRequest(request_id,
+                        frame_id,
                         origin,
                         embedder,
                         callback),

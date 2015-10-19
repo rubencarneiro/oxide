@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@ class OxideQQuickUserScriptPrivate
                                       oxide::qt::UserScriptProxyHandle);
 
  public:
-  OxideQQuickUserScriptPrivate(OxideQQuickUserScript* q);
+  ~OxideQQuickUserScriptPrivate() override;
 
   static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
 
@@ -44,13 +44,16 @@ class OxideQQuickUserScriptPrivate
   void willBeDeleted();
 
  private:
+  OxideQQuickUserScriptPrivate(OxideQQuickUserScript* q);
+
   // oxide::qt::UserScriptProxyClient implementation
   void ScriptLoadFailed() override;
   void ScriptLoaded() override;
 
-  bool constructed_;
-
   QUrl url_;
+
+  struct ConstructProps;
+  QScopedPointer<ConstructProps> construct_props_;
 
   Q_DISABLE_COPY(OxideQQuickUserScriptPrivate);
 };

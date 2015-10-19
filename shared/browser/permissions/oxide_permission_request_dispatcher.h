@@ -24,6 +24,7 @@
 #include "base/macros.h"
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/permission_type.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 
 #include "shared/browser/permissions/oxide_permission_request_response.h"
@@ -42,14 +43,13 @@ typedef base::Callback<void(PermissionRequestResponse)>
 
 class PermissionRequest;
 class PermissionRequestDispatcherClient;
-class PermissionRequestID;
-class WebFrame;
 
 // This class keeps track of pending permission requests for a WebContents
 // instance
 // TODO: Coalesce requests with the same embedder/request origin and type
 class PermissionRequestDispatcher
-    : public content::WebContentsUserData<PermissionRequestDispatcher> {
+    : public content::WebContentsUserData<PermissionRequestDispatcher>,
+      public content::WebContentsObserver {
  public:
   ~PermissionRequestDispatcher();
 
@@ -57,31 +57,24 @@ class PermissionRequestDispatcher
     client_ = client;
   }
 
+  // Whether we can dispatch a request to the client
+  bool CanDispatchRequest() const;
+
   // Request permission to use the resource identified by |permission|
-  void RequestPermission(content::PermissionType permission,
-                         content::RenderFrameHost* render_frame_host,
-                         int request_id,
-                         const GURL& requesting_origin,
-                         const PermissionRequestCallback& callback);
+  int RequestPermission(content::PermissionType permission,
+                        content::RenderFrameHost* render_frame_host,
+                        const GURL& requesting_origin,
+                        const PermissionRequestCallback& callback);
 
   // Cancel the pending permission request
-  void CancelPermissionRequest(content::PermissionType permission,
-                               content::RenderFrameHost* render_frame_host,
-                               int request_id,
-                               const GURL& requesting_origin);
+  void CancelPermissionRequest(int request_id);
 
   // Request permission to access media devices
-  void RequestMediaAccessPermission(content::RenderFrameHost* render_frame_host,
-                                    const GURL& requesting_origin,
-                                    bool audio,
-                                    bool video,
-                                    const PermissionRequestCallback& callback);
-
-  // Cancel any pending permission requests
-  void CancelPendingRequests();
-
-  // Cancel any pending permission requests for |frame|
-  void CancelPendingRequestsForFrame(WebFrame* frame);
+  int RequestMediaAccessPermission(content::RenderFrameHost* render_frame_host,
+                                   const GURL& requesting_origin,
+                                   bool audio,
+                                   bool video,
+                                   const PermissionRequestCallback& callback);
 
  private:
   friend class content::WebContentsUserData<PermissionRequestDispatcher>;
@@ -99,7 +92,22 @@ class PermissionRequestDispatcher
   // Remove empty slots from pending_requests_
   void Compact();
 
-  content::WebContents* contents_;
+  // Cancel any pending permission requests
+  void CancelPendingRequests();
+
+  // Cancel any pending permission requests for |frame|
+  void CancelPendingRequestsForFrame(
+      content::RenderFrameHost* render_frame_host);
+
+  // content::WebContentsObserver implementation
+  void RenderFrameDeleted(
+      content::RenderFrameHost* render_frame_host) override;
+  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
+                              content::RenderFrameHost* new_host) override;
+  void DidNavigateAnyFrame(
+      content::RenderFrameHost* render_frame_host,
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) override;
 
   PermissionRequestDispatcherClient* client_;
 
@@ -111,6 +119,8 @@ class PermissionRequestDispatcher
 
   // This list of PermissionRequests
   std::vector<PermissionRequest*> pending_requests_;
+
+  int next_request_id_;
 
   base::WeakPtrFactory<PermissionRequestDispatcher> weak_factory_;
 

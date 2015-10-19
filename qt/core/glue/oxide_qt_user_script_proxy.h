@@ -32,7 +32,8 @@ class Q_DECL_EXPORT UserScriptProxy {
   OXIDE_Q_DECL_PROXY_FOR(UserScript);
 
  public:
-  static UserScriptProxy* create(UserScriptProxyClient* client);
+  static UserScriptProxy* create(UserScriptProxyClient* client,
+                                 const QUrl& url);
   virtual ~UserScriptProxy();
 
   virtual bool emulateGreasemonkey() const = 0;
@@ -46,8 +47,6 @@ class Q_DECL_EXPORT UserScriptProxy {
 
   virtual QUrl context() const = 0;
   virtual void setContext(const QUrl& context) = 0;
-
-  virtual void init(const QUrl& url) = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(UserScriptProxy);

@@ -79,6 +79,19 @@ TestWebView {
         webView.goForward();
       }
 
+      if (data.expected == 0) {
+        verify(!webView.canGoBack, "Shouldn't be able to go back");
+        verify(spy.count > 0);
+      } else {
+        verify(webView.canGoBack, "Should be able to go back");
+      }
+      if (data.expected == initData.length - 1) {
+        verify(!webView.canGoForward, "Shouldn't be able to go forward");
+        verify(spy.count > 0);
+      } else {
+        verify(webView.canGoForward, "Should be able to go forward");
+      }
+
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
 
@@ -87,17 +100,6 @@ TestWebView {
               "Unexpected WebView.url after page navigation");
       compare(webView.getTestApi().documentURI, url,
               "Unexpected document.documentURI after page navigation");
-
-      if (data.expected == 0) {
-        verify(!webView.canGoBack, "Shouldn't be able to go back");
-      } else {
-        verify(webView.canGoBack, "Should be able to go back");
-      }
-      if (data.expected == initData.length - 1) {
-        verify(!webView.canGoForward, "Shouldn't be able to go forward");
-      } else {
-        verify(webView.canGoForward, "Should be able to go forward");
-      }
     }
 
     function test_WebView_navigation3() {

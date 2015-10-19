@@ -1,13 +1,17 @@
-#include "oxide_media_player.h"
-#include "oxide_player_media_hub.h"
 #include "oxide_browser_media_player_manager.h"
-#include "shared/common/oxide_content_client.h"
-#include "shared/browser/oxide_web_view.h"
-#include "shared/browser/oxide_browser_context.h"
-#include "shared/common/oxide_messages.h"
+
 #include "content/public/browser/render_frame_host.h"
 #include "net/base/net_errors.h"
 #include "net/cookies/cookie_store.h"
+
+#include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_user_agent_settings.h"
+#include "shared/browser/oxide_web_view.h"
+#include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_messages.h"
+
+#include "oxide_media_player.h"
+#include "oxide_player_media_hub.h"
 
 namespace oxide {
 
@@ -65,6 +69,14 @@ void BrowserMediaPlayerManager::OnSetVolume(int player_id, double volume) {
 
   if (player) {
     player->SetVolume(volume);
+  }
+}
+
+void BrowserMediaPlayerManager::OnSetRate(int player_id, double rate) {
+  MediaPlayer* player = GetPlayer(player_id);
+
+  if (player) {
+    player->SetRate(rate);
   }
 }
 
@@ -145,7 +157,9 @@ MediaPlayer* BrowserMediaPlayerManager::CreateMediaPlayer(
 
   switch (params.type) {
     case MEDIA_PLAYER_TYPE_URL: {
-      const std::string user_agent = web_view->GetBrowserContext()->GetUserAgent();
+      std::string user_agent =
+          UserAgentSettings::Get(web_view->GetBrowserContext())
+            ->GetUserAgentForURL(params.url);
 
       MediaPlayerMediaHub* media_player_bridge =
         new MediaPlayerMediaHub(

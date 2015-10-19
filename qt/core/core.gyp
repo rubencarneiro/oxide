@@ -30,10 +30,12 @@
         '../build/system.gyp:Qt5Gui-private',
         '../build/system.gyp:Qt5Positioning',
         '../build/system.gyp:Qt5Network',
+        '../build/system.gyp:Qt5Multimedia',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/media/media.gyp:media',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
@@ -53,6 +55,9 @@
         '../..',
         '<(INTERMEDIATE_DIR)',
         '<(DEPTH)'
+      ],
+      'ldflags': [
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
@@ -75,6 +80,8 @@
         'browser/oxide_qt_event_utils.h',
         'browser/oxide_qt_file_picker.cc',
         'browser/oxide_qt_file_picker.h',
+        'browser/oxide_qt_find_controller.cc',
+        'browser/oxide_qt_find_controller.h',
         'browser/oxide_qt_javascript_dialog.cc',
         'browser/oxide_qt_javascript_dialog.h',
         'browser/oxide_qt_location_provider.cc',
@@ -109,6 +116,10 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
+        'browser/media/oxide_qt_video_capture_device.cc',
+        'browser/media/oxide_qt_video_capture_device.h',
+        'browser/media/oxide_qt_video_capture_device_factory.cc',
+        'browser/media/oxide_qt_video_capture_device_factory.h',
         'glue/oxide_qt_file_picker_proxy.h',
         'glue/oxide_qt_file_picker_proxy_client.h',
         'glue/oxide_qt_init.cc',
@@ -155,6 +166,11 @@
         {
           'action_name': 'oxide_qt_url_request_delegated_job.moc',
           'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_video_capture_device.moc',
+          'moc_input': 'browser/media/oxide_qt_video_capture_device.cc',
           'includes': [ 'moc.gypi' ]
         },
         {
@@ -210,6 +226,7 @@
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
@@ -226,9 +243,11 @@
         'api/oxideqcertificateerror_p.h',
         'api/oxideqdownloadrequest.cc',
         'api/oxideqdownloadrequest.h',
-        'api/oxideqdownloadrequest_p.h',
         'api/oxideqglobal.cc',
         'api/oxideqglobal.h',
+        'api/oxideqhttpauthenticationrequest.cc',
+        'api/oxideqhttpauthenticationrequest.h',
+        'api/oxideqhttpauthenticationrequest_p.h',
         'api/oxideqloadevent.cc',
         'api/oxideqloadevent.h',
         'api/oxideqloadevent_p.h',
@@ -271,6 +290,11 @@
         {
           'action_name': 'moc_oxideqdownloadrequest.cc',
           'moc_input': 'api/oxideqdownloadrequest.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxideqhttpauthenticationrequest.cc',
+          'moc_input': 'api/oxideqhttpauthenticationrequest.h',
           'includes': [ 'moc.gypi' ]
         },
         {

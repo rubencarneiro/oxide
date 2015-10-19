@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,25 @@
 
 #include "oxideqquickwebcontext_p_p.h"
 
+struct OxideQQuickUserScriptPrivate::ConstructProps {
+  ConstructProps()
+      : emulate_greasemonkey(false),
+        match_all_frames(false),
+        incognito_enabled(false) {}
+
+  bool emulate_greasemonkey;
+  bool match_all_frames;
+  bool incognito_enabled;
+  QUrl context;
+};
+
 OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickUserScript,
                                     oxide::qt::UserScriptProxyHandle);
+
+OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
+    OxideQQuickUserScript* q)
+    : oxide::qt::UserScriptProxyHandle(q),
+      construct_props_(new ConstructProps()) {}
 
 void OxideQQuickUserScriptPrivate::ScriptLoadFailed() {
   Q_Q(OxideQQuickUserScript);
@@ -37,11 +54,7 @@ void OxideQQuickUserScriptPrivate::ScriptLoaded() {
   emit q->scriptLoaded();
 }
 
-OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
-    OxideQQuickUserScript* q)
-    : oxide::qt::UserScriptProxyHandle(
-        oxide::qt::UserScriptProxy::create(this), q),
-      constructed_(false) {}
+OxideQQuickUserScriptPrivate::~OxideQQuickUserScriptPrivate() {}
 
 // static
 OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
@@ -52,8 +65,6 @@ OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
 OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickUserScriptPrivate(this)) {
-  // Script loading uses Chromium's file thread
-  oxide::qquick::EnsureChromiumStarted();
 }
 
 OxideQQuickUserScript::~OxideQQuickUserScript() {
@@ -66,8 +77,6 @@ void OxideQQuickUserScript::classBegin() {}
 
 void OxideQQuickUserScript::componentComplete() {
   Q_D(OxideQQuickUserScript);
-
-  d->constructed_ = true;
 
   if (!d->url_.isValid()) {
     qWarning() <<
@@ -85,7 +94,18 @@ void OxideQQuickUserScript::componentComplete() {
     return;
   }
 
-  d->proxy()->init(d->url_);
+  // Script loading uses Chromium's file thread
+  oxide::qquick::EnsureChromiumStarted();
+
+  d->set_proxy(oxide::qt::UserScriptProxy::create(d, d->url_));
+
+  d->proxy()->setEmulateGreasemonkey(
+      d->construct_props_->emulate_greasemonkey);
+  d->proxy()->setMatchAllFrames(d->construct_props_->match_all_frames);
+  d->proxy()->setIncognitoEnabled(d->construct_props_->incognito_enabled);
+  d->proxy()->setContext(d->construct_props_->context);
+
+  d->construct_props_.reset();
 }
 
 QUrl OxideQQuickUserScript::url() const {
@@ -97,7 +117,7 @@ QUrl OxideQQuickUserScript::url() const {
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
 
-  if (d->constructed_) {
+  if (d->proxy()) {
     qWarning() << "OxideQQuickUserScript: url is a construct-only parameter";
     return;
   }
@@ -113,6 +133,10 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
 
+  if (!d->proxy()) {
+    return d->construct_props_->emulate_greasemonkey;
+  }
+
   return d->proxy()->emulateGreasemonkey();
 }
 
@@ -123,12 +147,21 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
     return;
   }
 
-  d->proxy()->setEmulateGreasemonkey(emulate_greasemonkey);
+  if (!d->proxy()) {
+    d->construct_props_->emulate_greasemonkey = emulate_greasemonkey;
+  } else {
+    d->proxy()->setEmulateGreasemonkey(emulate_greasemonkey);
+  }
+
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::matchAllFrames() const {
   Q_D(const OxideQQuickUserScript);
+
+  if (!d->proxy()) {
+    return d->construct_props_->match_all_frames;
+  }
 
   return d->proxy()->matchAllFrames();
 }
@@ -140,12 +173,21 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
     return;
   }
 
-  d->proxy()->setMatchAllFrames(match_all_frames);
+  if (!d->proxy()) {
+    d->construct_props_->match_all_frames = match_all_frames;
+  } else {
+    d->proxy()->setMatchAllFrames(match_all_frames);
+  }
+
   emit scriptPropertyChanged();
 }
 
 bool OxideQQuickUserScript::incognitoEnabled() const {
   Q_D(const OxideQQuickUserScript);
+
+  if (!d->proxy()) {
+    return d->construct_props_->incognito_enabled;
+  }
 
   return d->proxy()->incognitoEnabled();
 }
@@ -157,12 +199,21 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
     return;
   }
 
-  d->proxy()->setIncognitoEnabled(incognito_enabled);
+  if (!d->proxy()) {
+    d->construct_props_->incognito_enabled = incognito_enabled;
+  } else {
+    d->proxy()->setIncognitoEnabled(incognito_enabled);
+  }
+
   emit scriptPropertyChanged();
 }
 
 QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);
+
+  if (!d->proxy()) {
+    return d->construct_props_->context;
+  }
 
   return d->proxy()->context();
 }
@@ -179,6 +230,11 @@ void OxideQQuickUserScript::setContext(const QUrl& context) {
     return;
   }
 
-  d->proxy()->setContext(context);
+  if (!d->proxy()) {
+    d->construct_props_->context = context;
+  } else {
+    d->proxy()->setContext(context);
+  }
+
   emit scriptPropertyChanged();
 }

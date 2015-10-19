@@ -7,21 +7,15 @@ Item {
   width: 200
   height: 200
 
-  Component {
-    id: userScriptFactory
-    UserScript {}
-  }
-
   TestWebContext {
     id: c
     Component.onCompleted: {
-      var script = userScriptFactory.createObject(null, {
-          context: "oxide://testutils/",
+      addTestUserScript({
+          context: "oxide://mediatest/",
           url: Qt.resolvedUrl("tst_MediaAccessPermissionRequest_session_persist.js"),
           incognitoEnabled: true,
           matchAllFrames: true
       });
-      addUserScript(script);
     }
   }
 
@@ -49,7 +43,7 @@ Item {
       messageHandlers: [
         ScriptMessageHandler {
           msgId: "GUM-RESPONSE"
-          contexts: [ "oxide://testutils/" ]
+          contexts: [ "oxide://mediatest/" ]
           callback: function(msg) {
             _internal.lastError = msg.payload;
           }
@@ -101,17 +95,17 @@ Item {
       var webView = webViewFactory.createObject(null, {});
       spy.target = webView;
 
-      webView.url = "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
+      webView.url = "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
       verify(webView.waitForLoadSucceeded());
 
       spy.wait();
 
-      compare(webView.lastRequest.origin, "http://testsuite/");
-      compare(webView.lastRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastRequest.origin, "https://testsuite/");
+      compare(webView.lastRequest.embedder, "https://foo.testsuite/");
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       spy.clear();
@@ -121,12 +115,12 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastError != ""; }));
+        verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
         compare(webView.lastError, data.expected);
       } else {
         spy.wait();
-        compare(webView.lastRequest.origin, "http://testsuite/");
-        compare(webView.lastRequest.embedder, "http://foo.testsuite/");
+        compare(webView.lastRequest.origin, "https://testsuite/");
+        compare(webView.lastRequest.embedder, "https://foo.testsuite/");
       }
     }
 
@@ -141,17 +135,17 @@ Item {
       var webView = webViewFactory.createObject(null, {});
       spy.target = webView;
 
-      webView.url = "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
+      webView.url = "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
       verify(webView.waitForLoadSucceeded());
 
       spy.wait();
 
-      compare(webView.lastRequest.origin, "http://testsuite/");
-      compare(webView.lastRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastRequest.origin, "https://testsuite/");
+      compare(webView.lastRequest.embedder, "https://foo.testsuite/");
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       webView = webViewFactory.createObject(null, {});
@@ -159,37 +153,37 @@ Item {
 
       spy.clear();
 
-      webView.url = "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
+      webView.url = "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?" + data.params;
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
-        verify(webView.waitFor(function() { return webView.lastError != ""; }));
+        verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
         compare(webView.lastError, data.expected);
       } else {
         spy.wait();
-        compare(webView.lastRequest.origin, "http://testsuite/");
-        compare(webView.lastRequest.embedder, "http://foo.testsuite/");
+        compare(webView.lastRequest.origin, "https://testsuite/");
+        compare(webView.lastRequest.embedder, "https://foo.testsuite/");
       }
     }
 
     function test_MediaAccessPermissionRequest_session_persist3_data() {
       return [
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
-          url2: "http://bar.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
-          url2: "http://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?audio=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1&audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1",
-          url2: "http://bar.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+          url2: "https://bar.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+          url2: "https://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?audio=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1&audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1" },
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1",
+          url2: "https://bar.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1" },
       ];
     }
 
@@ -205,7 +199,7 @@ Item {
 
       webView.lastRequest.allow();
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, "OK");
 
       spy.clear();
@@ -219,29 +213,29 @@ Item {
 
     function test_MediaAccessPermissionRequest_session_persist4_data() {
       return [
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
           function: _test_accept, expected: "OK" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
           function: _test_accept, expected: "OK" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
           function: _test_deny, expected: "PermissionDeniedError" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1&audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
           function: _test_deny, expected: "PermissionDeniedError" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1",
           function: _test_deny, expected: "PermissionDeniedError" },
-        { url1: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
-          url2: "http://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1",
+        { url1: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+          url2: "https://foo.testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1&video=1",
           function: _test_deny, expected: "PermissionDeniedError" },
-        { url1: "http://testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
-          url2: "http://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1",
+        { url1: "https://testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?video=1",
+          url2: "https://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?video=1",
           function: _test_accept, expected: "OK" },
-        { url1: "http://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?audio=1",
-          url2: "http://testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
+        { url1: "https://testsuite/tst_MediaAccessPermissionRequest_session_persist.html?audio=1",
+          url2: "https://testsuite/tst_MediaAccessPermissionRequest_session_persist_embedder.html?audio=1",
           function: _test_accept, expected: "OK" },
       ];
     }
@@ -258,7 +252,7 @@ Item {
 
       data.function(webView.lastRequest);
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
 
       spy.clear();
@@ -267,7 +261,7 @@ Item {
       webView.url = data.url2;
       verify(webView.waitForLoadSucceeded());
 
-      verify(webView.waitFor(function() { return webView.lastError != ""; }));
+      verify(TestUtils.waitFor(function() { return webView.lastError != ""; }));
       compare(webView.lastError, data.expected);
     }
   }

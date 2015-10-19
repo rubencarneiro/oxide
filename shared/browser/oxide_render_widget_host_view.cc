@@ -218,7 +218,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       std::lround(frame_size.height() / device_scale_factor));
 
   gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
-      gfx::ScaleRect(root_pass->damage_rect, 1.0f / device_scale_factor));
+      gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
+                     1.0f / device_scale_factor));
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -271,6 +272,10 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 }
 
+void RenderWidgetHostView::ClearCompositorFrame() {
+  DestroyDelegatedContent();
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
@@ -303,11 +308,6 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   UpdateCursorOnWebView();
 }
 
-void RenderWidgetHostView::TextInputTypeChanged(ui::TextInputType type,
-                                                ui::TextInputMode mode,
-                                                bool can_compose_inline,
-                                                int flags) {}
-
 void RenderWidgetHostView::ImeCancelComposition() {
   if (!delegate_) {
     return;
@@ -331,7 +331,7 @@ void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 void RenderWidgetHostView::CopyFromCompositingSurface(
     const gfx::Rect& src_subrect,
     const gfx::Size& dst_size,
-    content::ReadbackRequestCallback& callback,
+    const content::ReadbackRequestCallback& callback,
     const SkColorType color_type) {
   callback.Run(SkBitmap(), content::READBACK_FAILED);
 }
@@ -363,17 +363,15 @@ void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   *result = delegate_->GetScreenInfo();
 }
 
-gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
-  return GetViewBounds();
+bool RenderWidgetHostView::GetScreenColorProfile(
+    std::vector<char>* color_profile) {
+  DCHECK(color_profile->empty());
+  NOTREACHED();
+  return false;
 }
 
-gfx::GLSurfaceHandle RenderWidgetHostView::GetCompositingSurface() {
-  if (shared_surface_handle_.is_null()) {
-    shared_surface_handle_ =
-        CompositorUtils::GetInstance()->GetSharedSurfaceHandle();
-  }
-
-  return shared_surface_handle_;
+gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
+  return GetViewBounds();
 }
 
 void RenderWidgetHostView::ShowDisambiguationPopup(
@@ -673,8 +671,6 @@ void RenderWidgetHostView::SetDelegate(
 }
 
 void RenderWidgetHostView::Blur() {
-  host_->SetInputMethodActive(false);
-
   host_->SetActive(false);
   host_->Blur();
 }
@@ -721,9 +717,6 @@ void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
 void RenderWidgetHostView::Focus() {
   host_->Focus();
   host_->SetActive(true);
-
-  // XXX: Should we have a run-time check to see if this is required?
-  host_->SetInputMethodActive(true);
 }
 
 } // namespace oxide

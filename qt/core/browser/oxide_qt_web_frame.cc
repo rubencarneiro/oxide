@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,25 +17,38 @@
 
 #include "oxide_qt_web_frame.h"
 
+#include <map>
+
 #include <QObject>
 #include <QString>
 #include <QVariant>
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "url/gurl.h"
 
-#include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "shared/browser/oxide_script_message_request_impl_browser.h"
+#include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_script_message_request.h"
 #include "oxide_qt_variant_value_converter.h"
-#include "oxide_qt_web_view.h"
 
 namespace oxide {
 namespace qt {
 
-WebFrame::~WebFrame() {}
+namespace {
+
+base::LazyInstance<std::map<uintptr_t, WebFrame*>> g_frame_map =
+    LAZY_INSTANCE_INITIALIZER;
+
+}
+
+WebFrame::~WebFrame() {
+  auto it = g_frame_map.Get().find(reinterpret_cast<uintptr_t>(frame_));
+  CHECK(it != g_frame_map.Get().end());
+  g_frame_map.Get().erase(it);
+}
 
 const oxide::ScriptMessageHandler* WebFrame::GetScriptMessageHandlerAt(
     size_t index) const {
@@ -47,49 +60,17 @@ size_t WebFrame::GetScriptMessageHandlerCount() const {
   return message_handlers_.size();
 }
 
-void WebFrame::DidCommitNewURL() {
-  client_->URLCommitted();
-}
-
-void WebFrame::Delete() {
-  client_->DestroyFrame();
-  // |this| has been destroyed
-}
-
-void WebFrame::OnChildAdded(oxide::WebFrame* child) {
-  client_->ChildFramesChanged();
-
-  WebView* v = WebView::FromView(view());
-  if (v) {
-    v->FrameAdded(child);
-  }
-}
-
-void WebFrame::OnChildRemoved(oxide::WebFrame* child) {
-  client_->ChildFramesChanged();
-
-  if (!view()) {
-    // Can be null when the view is being deleted
-    return;
-  }
-
-  WebView* v = WebView::FromView(view());
-  if (v) {
-    v->FrameRemoved(child);
-  }
-}
-
 void WebFrame::setClient(WebFrameProxyClient* client) {
   DCHECK(!client_ && client);
   client_ = client;
 }
 
 QUrl WebFrame::url() const {
-  return QUrl(QString::fromStdString(GetURL().spec()));
+  return QUrl(QString::fromStdString(frame_->GetURL().spec()));
 }
 
 WebFrameProxyHandle* WebFrame::parent() const {
-  WebFrame* parent = static_cast<WebFrame*>(oxide::WebFrame::parent());
+  WebFrame* parent = WebFrame::FromSharedWebFrame(frame_->parent());
   if (!parent) {
     return nullptr;
   }
@@ -97,16 +78,22 @@ WebFrameProxyHandle* WebFrame::parent() const {
   return parent->handle();
 }
 
-int WebFrame::childFrameCount() const {
-  return static_cast<int>(
-      std::min(GetChildCount(),
-               static_cast<size_t>(std::numeric_limits<int>::max())));
-}
+QList<WebFrameProxyHandle*> WebFrame::childFrames() const {
+  QList<WebFrameProxyHandle*> rv;
 
-WebFrameProxyHandle* WebFrame::childFrameAt(int index) const {
-  DCHECK_GE(index, 0);
-  DCHECK_LT(static_cast<size_t>(index), GetChildCount());
-  return static_cast<WebFrame*>(GetChildAt(index))->handle();
+  const std::vector<oxide::WebFrame*>& children = frame_->GetChildFrames();
+  for (auto c : children) {
+    WebFrame* child = WebFrame::FromSharedWebFrame(c);
+    if (!child) {
+      // This can happen in WebView::FromDeleted, when we call
+      // WebFrameProxyClient::ChildFramesChanged. The application might refresh
+      // the list of children here, when oxide::WebFrame still exists
+      continue;
+    }
+    rv.push_back(child->handle());
+  }
+
+  return rv;
 }
 
 bool WebFrame::sendMessage(const QUrl& context,
@@ -117,9 +104,9 @@ bool WebFrame::sendMessage(const QUrl& context,
       VariantValueConverter::FromVariantValue(payload));
 
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
-      SendMessage(GURL(context.toString().toStdString()),
-                  msg_id.toStdString(),
-                  payload_value.Pass());
+      frame_->SendMessage(GURL(context.toString().toStdString()),
+                          msg_id.toStdString(),
+                          payload_value.Pass());
   if (!smr) {
     return false;
   }
@@ -132,7 +119,7 @@ bool WebFrame::sendMessage(const QUrl& context,
 void WebFrame::sendMessageNoReply(const QUrl& context,
                                   const QString& msg_id,
                                   const QVariant& payload) {
-  SendMessageNoReply(
+  frame_->SendMessageNoReply(
       GURL(context.toString().toStdString()),
       msg_id.toStdString(),
       VariantValueConverter::FromVariantValue(payload));
@@ -142,14 +129,32 @@ QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
   return message_handlers_;
 }
 
-WebFrame::WebFrame(content::RenderFrameHost* render_frame_host,
-                   oxide::WebView* view)
-    : oxide::WebFrame(render_frame_host, view),
-      client_(nullptr) {}
+WebFrame::WebFrame(oxide::WebFrame* frame)
+    : frame_(frame),
+      client_(nullptr) {
+  CHECK(g_frame_map.Get().find(reinterpret_cast<uintptr_t>(frame)) ==
+        g_frame_map.Get().end());
+  auto rv = g_frame_map.Get().insert(
+      std::make_pair(reinterpret_cast<uintptr_t>(frame),
+                     this));
+  DCHECK(rv.second);
+}
 
 // static
 WebFrame* WebFrame::FromProxyHandle(WebFrameProxyHandle* handle) {
   return static_cast<WebFrame*>(handle->proxy_.data());
+}
+
+// static
+WebFrame* WebFrame::FromSharedWebFrame(oxide::WebFrame* frame) {
+  DCHECK(frame);
+  auto it = g_frame_map.Get().find(reinterpret_cast<uintptr_t>(frame));
+  return it == g_frame_map.Get().end() ? nullptr : it->second;
+}
+
+// static
+WebFrame* WebFrame::FromRenderFrameHost(content::RenderFrameHost* host) {
+  return FromSharedWebFrame(oxide::WebFrame::FromRenderFrameHost(host));
 }
 
 } // namespace qt

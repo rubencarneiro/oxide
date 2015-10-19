@@ -20,16 +20,17 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/navigation_details.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
+#include "shared/browser/oxide_render_frame_host_id.h"
 #include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request.h"
 #include "oxide_permission_request_dispatcher_client.h"
-#include "oxide_permission_request_id.h"
 
 namespace oxide {
 
@@ -67,9 +68,10 @@ PermissionRequestDispatcher::IteratorGuard::~IteratorGuard() {
 
 PermissionRequestDispatcher::PermissionRequestDispatcher(
     content::WebContents* contents)
-    : contents_(contents),
+    : content::WebContentsObserver(contents),
       client_(nullptr),
       iterating_(false),
+      next_request_id_(0),
       weak_factory_(this) {}
 
 void PermissionRequestDispatcher::AddPendingRequest(PermissionRequest* request) {
@@ -107,97 +109,6 @@ void PermissionRequestDispatcher::Compact() {
       pending_requests_.end());
 }
 
-PermissionRequestDispatcher::~PermissionRequestDispatcher() {
-  CancelPendingRequests();
-}
-
-void PermissionRequestDispatcher::RequestPermission(
-    content::PermissionType permission,
-    content::RenderFrameHost* render_frame_host,
-    int request_id,
-    const GURL& requesting_origin,
-    const PermissionRequestCallback& callback) {
-  if (!client_) {
-    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
-    return;
-  }
-
-  PermissionRequestID id(
-      render_frame_host->GetProcess()->GetID(),
-      render_frame_host->GetRoutingID(),
-      request_id,
-      requesting_origin);
-
-  scoped_ptr<SimplePermissionRequest> request(
-      new SimplePermissionRequest(
-        id,
-        requesting_origin,
-        contents_->GetLastCommittedURL().GetOrigin(),
-        callback));
-  AddPendingRequest(request.get());
-
-  switch (permission) {
-    case content::PermissionType::GEOLOCATION:
-      client_->RequestGeolocationPermission(request.Pass());
-      break;
-    default:
-      NOTIMPLEMENTED();
-      break;
-  }
-}
-
-void PermissionRequestDispatcher::CancelPermissionRequest(
-    content::PermissionType permission,
-    content::RenderFrameHost* render_frame_host,
-    int request_id,
-    const GURL& requesting_origin) {
-  PermissionRequestID id(
-      render_frame_host->GetProcess()->GetID(),
-      render_frame_host->GetRoutingID(),
-      request_id,
-      requesting_origin);
-
-  IteratorGuard guard(this);
-  for (auto request : pending_requests_) {
-    if (!request) {
-      continue;
-    }
-    if (request->request_id_ != id) {
-      continue;
-    }
-    request->Cancel(true);
-  }
-}
-
-void PermissionRequestDispatcher::RequestMediaAccessPermission(
-    content::RenderFrameHost* render_frame_host,
-    const GURL& requesting_origin,
-    bool audio,
-    bool video,
-    const PermissionRequestCallback& callback) {
-  if (!client_) {
-    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
-    return;
-  }
-
-  WebFrame* frame = WebFrame::FromRenderFrameHost(render_frame_host);
-  if (!frame) {
-    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
-    return;
-  }
-
-  scoped_ptr<MediaAccessPermissionRequest> req(
-      new MediaAccessPermissionRequest(
-        frame,
-        requesting_origin,
-        contents_->GetLastCommittedURL().GetOrigin(),
-        audio, video,
-        callback));
-  AddPendingRequest(req.get());
-
-  client_->RequestMediaAccessPermission(req.Pass());
-}
-
 void PermissionRequestDispatcher::CancelPendingRequests() {
   IteratorGuard guard(this);
   for (auto request : pending_requests_) {
@@ -209,19 +120,132 @@ void PermissionRequestDispatcher::CancelPendingRequests() {
 }
 
 void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
-    WebFrame* frame) {
-  DCHECK(frame);
+    content::RenderFrameHost* frame) {
+  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
 
   IteratorGuard guard(this);
   for (auto request : pending_requests_) {
     if (!request) {
       continue;
     }
-    if (request->frame_ != frame) {
+    if (!request->frame_id_.IsValid()) {
+      continue;
+    }
+    if (request->frame_id_ != frame_id) {
       continue;
     }
     request->Cancel(true);
   }
+}
+
+void PermissionRequestDispatcher::RenderFrameDeleted(
+    content::RenderFrameHost* render_frame_host) {
+  CancelPendingRequestsForFrame(render_frame_host);
+}
+
+void PermissionRequestDispatcher::RenderFrameHostChanged(
+    content::RenderFrameHost* old_host,
+    content::RenderFrameHost* new_host) {
+  if (!old_host) {
+    return;
+  }
+
+  CancelPendingRequestsForFrame(old_host);
+}
+
+void PermissionRequestDispatcher::DidNavigateAnyFrame(
+    content::RenderFrameHost* render_frame_host,
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  if (details.is_in_page) {
+    return;
+  }
+
+  CancelPendingRequestsForFrame(render_frame_host);
+}
+
+PermissionRequestDispatcher::~PermissionRequestDispatcher() {
+  CancelPendingRequests();
+}
+
+bool PermissionRequestDispatcher::CanDispatchRequest() const {
+  return !!client_;
+}
+
+int PermissionRequestDispatcher::RequestPermission(
+    content::PermissionType permission,
+    content::RenderFrameHost* render_frame_host,
+    const GURL& requesting_origin,
+    const PermissionRequestCallback& callback) {
+  if (!client_) {
+    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
+    return -1;
+  }
+
+  int request_id = next_request_id_++;
+
+  scoped_ptr<SimplePermissionRequest> request(
+      new SimplePermissionRequest(
+        request_id,
+        requesting_origin,
+        web_contents()->GetLastCommittedURL().GetOrigin(),
+        callback));
+  AddPendingRequest(request.get());
+
+  switch (permission) {
+    case content::PermissionType::GEOLOCATION:
+      client_->RequestGeolocationPermission(request.Pass());
+      break;
+    case content::PermissionType::NOTIFICATIONS:
+      client_->RequestNotificationPermission(request.Pass());
+      break;
+    default:
+      NOTIMPLEMENTED();
+      break;
+  }
+
+  return request_id;
+}
+
+void PermissionRequestDispatcher::CancelPermissionRequest(int request_id) {
+  IteratorGuard guard(this);
+  for (auto request : pending_requests_) {
+    if (!request) {
+      continue;
+    }
+    if (request->request_id_ != request_id) {
+      continue;
+    }
+    request->Cancel(true);
+  }
+}
+
+int PermissionRequestDispatcher::RequestMediaAccessPermission(
+    content::RenderFrameHost* render_frame_host,
+    const GURL& requesting_origin,
+    bool audio,
+    bool video,
+    const PermissionRequestCallback& callback) {
+  if (!client_) {
+    callback.Run(PERMISSION_REQUEST_RESPONSE_CANCEL);
+    return -1;
+  }
+
+  int request_id = next_request_id_++;
+
+  scoped_ptr<MediaAccessPermissionRequest> req(
+      new MediaAccessPermissionRequest(
+        request_id,
+        RenderFrameHostID::FromHost(render_frame_host),
+        requesting_origin,
+        web_contents()->GetLastCommittedURL().GetOrigin(),
+        audio, video,
+        callback));
+  AddPendingRequest(req.get());
+
+  client_->RequestMediaAccessPermission(req.Pass());
+
+  return request_id;
 }
 
 } // namespace oxide

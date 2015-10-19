@@ -18,25 +18,31 @@
 #include "oxide_resource_dispatcher_host_delegate.h"
 
 #include "base/bind.h"
-#include "base/callback.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
+#include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/browser/resource_context.h"
+#include "content/public/browser/resource_request_info.h"
 #include "content/public/common/referrer.h"
 #include "net/base/mime_util.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/http/http_content_disposition.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_response_headers.h"
+#include "net/http/http_util.h"
 #include "net/url_request/url_request_context.h"
 #include "url/gurl.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_platform_integration.h"
+#include "oxide_navigation_intercept_resource_throttle.h"
 #include "oxide_redirection_intercept_throttle.h"
+#include "oxide_resource_dispatcher_host_login_delegate.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -137,20 +143,34 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.render_process_id = render_process_id;
   params.render_view_id = render_view_id;
 
-  net::HttpRequestHeaders headers;
+  if (mime_type.empty()) {
+    // XXX(oSoMoN): hack to ensure that downloading an image from the context
+    // menu (via a call to saveMedia) results in a download request with a mime
+    // type. See https://launchpad.net/bugs/1500742. This should be removed,
+    // eventually.
+    std::string content_type;
+    if (url_request->extra_request_headers().GetHeader(
+        net::HttpRequestHeaders::kContentType, &content_type)) {
+      std::string charset;
+      bool had_charset;
+      net::HttpUtil::ParseContentType(
+          content_type, &params.mime_type, &charset, &had_charset, nullptr);
+    }
+  }
+
   std::string user_agent;
   if (url_request->is_pending()) {
     url_request->extra_request_headers().GetHeader(
         net::HttpRequestHeaders::kUserAgent, &params.user_agent);
-  } else if (io_data->GetDelegate().get()) {
-    scoped_refptr<BrowserContextDelegate> delegate(
-        BrowserContextIOData::FromResourceContext(resource_context)->GetDelegate());
+  } else {
+    scoped_refptr<BrowserContextDelegate> delegate(io_data->GetDelegate());
     if (delegate.get()) {
       params.user_agent = delegate->GetUserAgentOverride(url);
     }
-  }
-  if (params.user_agent.empty()) {
-    params.user_agent = io_data->GetUserAgent();
+    if (params.user_agent.empty()) {
+      params.user_agent =
+          io_data->GetUserAgentSettings()->GetUserAgentForURL(url);
+    }
   }
 
   if (url_request->is_pending()) {
@@ -193,8 +213,8 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
           params.render_process_id, params.render_view_id);
   if (!rvh) {
     LOG(ERROR) << "Invalid or non-existent render_process_id & render_view_id:"
-	       << params.render_process_id << ", " << params.render_view_id
-	       << "during download url delegate dispatch";
+               << params.render_process_id << ", " << params.render_view_id
+               << "during download url delegate dispatch";
     return;
   }
 
@@ -227,6 +247,11 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
     ScopedVector<content::ResourceThrottle>* throttles) {
   throttles->push_back(
       new RedirectionInterceptThrottle(request, resource_context));
+
+  if (resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
+    throttles->push_back(
+        new NavigationInterceptResourceThrottle(request));
+  }
 }
 
 bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
@@ -237,6 +262,14 @@ bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     ui::PageTransition page_transition,
     bool has_user_gesture) {
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
+}
+
+content::ResourceDispatcherHostLoginDelegate*
+    ResourceDispatcherHostDelegate::CreateLoginDelegate(
+    net::AuthChallengeInfo* auth_info,
+    net::URLRequest* request) {
+  // Chromium will own the delegate
+  return new ResourceDispatcherHostLoginDelegate(auth_info, request);
 }
 
 ResourceDispatcherHostDelegate::ResourceDispatcherHostDelegate() {}

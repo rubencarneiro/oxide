@@ -19,7 +19,6 @@
 
 #include "base/logging.h"
 #include "content/common/view_messages.h"
-#include "ipc/ipc_message_macros.h"
 
 namespace content {
 
@@ -33,7 +32,7 @@ void RenderWidgetHostViewBase::GetDefaultScreenInfo(
   *results = g_default_screen_info_getter();
 }
 
-void RenderWidgetHostViewOxide::OnTextInputStateChangedThunk(
+void RenderWidgetHostViewOxide::TextInputStateChanged(
     const ViewHostMsg_TextInputState_Params& params) {
   OnTextInputStateChanged(params.type, params.show_ime_if_needed);
 }
@@ -43,16 +42,6 @@ void RenderWidgetHostViewOxide::SelectionBoundsChanged(
   OnSelectionBoundsChanged(params.anchor_rect,
                            params.focus_rect,
                            params.is_anchor_first);
-}
-
-bool RenderWidgetHostViewOxide::OnMessageReceived(const IPC::Message& msg) {
-  bool handled = true;
-  IPC_BEGIN_MESSAGE_MAP(RenderWidgetHostViewOxide, msg)
-    IPC_MESSAGE_HANDLER(ViewHostMsg_TextInputStateChanged,
-                        OnTextInputStateChangedThunk)
-    IPC_MESSAGE_UNHANDLED(handled = false)
-  IPC_END_MESSAGE_MAP()
-  return handled;
 }
 
 RenderWidgetHostViewOxide::~RenderWidgetHostViewOxide() {}

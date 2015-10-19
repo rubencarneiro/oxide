@@ -24,7 +24,9 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 
+namespace base {
 template <typename T> struct DefaultSingletonTraits;
+}
 
 namespace oxide {
 
@@ -41,7 +43,7 @@ class RendererFrameEvictor final {
   void UnlockFrame(RendererFrameEvictorClient* frame);
 
  private:
-  friend struct DefaultSingletonTraits<RendererFrameEvictor>;
+  friend struct base::DefaultSingletonTraits<RendererFrameEvictor>;
   RendererFrameEvictor();
 
   void CullUnlockedFrames();

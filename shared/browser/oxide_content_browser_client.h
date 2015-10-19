@@ -94,6 +94,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       const base::Callback<void(bool)>& callback,
       content::CertificateRequestResultType* result) final;
   content::MediaObserver* GetMediaObserver() final;
+  content::PlatformNotificationService* GetPlatformNotificationService() final;
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,

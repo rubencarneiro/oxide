@@ -27,6 +27,7 @@
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_param_traits.h"
 #include "shared/common/oxide_script_message_params.h"
+#include "shared/common/oxide_user_agent_override_set.h"
 
 IPC_ENUM_TRAITS(blink::WebTopControlsState)
 IPC_ENUM_TRAITS(oxide::ScriptMessageParams::Error)
@@ -39,9 +40,6 @@ IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserScripts,
 
 IPC_MESSAGE_CONTROL1(OxideMsg_SetUserAgent,
                      std::string)
-
-IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
-                    oxide::ScriptMessageParams)
 
 IPC_MESSAGE_ROUTED1(OxideMsg_SendMessage,
                     oxide::ScriptMessageParams)
@@ -56,6 +54,15 @@ IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
                     blink::WebTopControlsState,
                     blink::WebTopControlsState,
                     bool)
+
+IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserAgentOverrides,
+                     std::vector<oxide::UserAgentOverrideSet::Entry>)
+
+IPC_MESSAGE_CONTROL1(OxideMsg_SetLegacyUserAgentOverrideEnabled,
+                     bool)
+
+IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
+                    oxide::ScriptMessageParams)
 
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockRunningInsecureContent)
@@ -177,6 +184,11 @@ IPC_MESSAGE_ROUTED1(OxideHostMsg_MediaPlayer_Start, int /* player_id */)
 IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetVolume,
                     int /* player_id */,
                     double /* volume */)
+
+// Set the rate.
+IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetRate,
+                    int /* player_id */,
+                    double /* rate */)
 
 // Set the poster image.
 IPC_MESSAGE_ROUTED2(OxideHostMsg_MediaPlayer_SetPoster,

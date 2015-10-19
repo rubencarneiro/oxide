@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@ namespace oxide {
 class RendererMediaPlayerManager;
 #endif
 
+class RendererUserAgentSettings;
 
 class ContentRendererClient final : public content::ContentRendererClient {
  public:
@@ -41,6 +42,9 @@ class ContentRendererClient final : public content::ContentRendererClient {
   void RenderFrameCreated(content::RenderFrame* render_frame) final;
   void RenderViewCreated(content::RenderView* render_view) final;
   std::string GetUserAgentOverrideForURL(const GURL& url) final;
+  void AddImageContextMenuProperties(
+      const blink::WebURLResponse& response,
+      std::map<std::string, std::string>* properties) final;
 #if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(
       blink::WebFrame* frame,
@@ -49,6 +53,8 @@ class ContentRendererClient final : public content::ContentRendererClient {
       media::MediaLog* media_log) final;
 #endif
   void OverrideCompositorSettings(cc::LayerTreeSettings* settings) final;
+
+  scoped_ptr<RendererUserAgentSettings> user_agent_settings_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

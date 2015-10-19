@@ -27,9 +27,24 @@
 #include "cc/resources/resource_provider.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 
+#include "oxide_compositor_frame_ack.h"
+#include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
+
+void CompositorOutputSurfaceGL::DetachFromClient() {
+  DCHECK(CalledOnValidThread());
+
+  DiscardBackbuffer();
+  while (!pending_buffers_.empty()) {
+    BufferData& buffer = pending_buffers_.front();
+    DiscardBuffer(&buffer);
+    pending_buffers_.pop_front();
+  }
+
+  CompositorOutputSurface::DetachFromClient();
+}
 
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {
   DCHECK(CalledOnValidThread());
@@ -143,30 +158,30 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
   gl->Flush();
 
-  frame->gl_frame_data->mailbox = back_buffer_.mailbox;
-  frame->gl_frame_data->sync_point = gl->InsertSyncPointCHROMIUM();
+  CompositorFrameData data;
+  data.size_in_pixels = back_buffer_.size;
+  data.device_scale = frame->metadata.device_scale_factor;
+  data.gl_frame_data = make_scoped_ptr(new GLFrameData());
+  data.gl_frame_data->mailbox = back_buffer_.mailbox;
 
-  CompositorOutputSurface::SwapBuffers(frame);
+  DoSwapBuffers(&data);
 
   pending_buffers_.push_back(back_buffer_);
   back_buffer_ = BufferData();
 }
 
 void CompositorOutputSurfaceGL::ReclaimResources(
-    const cc::CompositorFrameAck& ack) {
+    const CompositorFrameAck& ack) {
   DCHECK(CalledOnValidThread());
-  DCHECK(ack.gl_frame_data);
-  DCHECK_EQ(ack.last_software_frame_id, 0U);
-  DCHECK(!ack.gl_frame_data->mailbox.IsZero());
-  DCHECK(!ack.gl_frame_data->size.IsEmpty());
+  DCHECK_EQ(ack.software_frame_id, 0U);
+  DCHECK(!ack.gl_frame_mailbox.IsZero());
 
   std::deque<BufferData>::iterator it;
   for (it = pending_buffers_.begin(); it != pending_buffers_.end(); ++it) {
     DCHECK(!it->mailbox.IsZero());
     if (memcmp(it->mailbox.name,
-               ack.gl_frame_data->mailbox.name,
+               ack.gl_frame_mailbox.name,
                sizeof(it->mailbox.name)) == 0) {
-      DCHECK(it->size == ack.gl_frame_data->size);
       break;
     }
   }
@@ -201,13 +216,6 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
   capabilities_.uses_default_gl_framebuffer = false;
 }
 
-CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
-  DiscardBackbuffer();
-  while (!pending_buffers_.empty()) {
-    BufferData& buffer = pending_buffers_.front();
-    DiscardBuffer(&buffer);
-    pending_buffers_.pop_front();
-  }
-}
+CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {}
 
 } // namespace oxide

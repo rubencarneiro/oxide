@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import Ubuntu.Components 0.1
-import com.canonical.Oxide 0.1
+import com.canonical.Oxide 1.7
 
 MainView {
     objectName: "mainView"

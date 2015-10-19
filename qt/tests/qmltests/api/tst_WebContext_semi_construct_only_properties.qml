@@ -57,7 +57,7 @@ TestCase {
     compare(spy.count, 1, "Shouldn't have had a signal");
     compare(c[data.prop], data.val, "Should have read old value back");
 
-    OxideTestingUtils.destroyQObjectNow(v);
-    OxideTestingUtils.destroyQObjectNow(c);
+    Utils.destroyQObjectNow(v);
+    Utils.destroyQObjectNow(c);
   }
 }

@@ -30,7 +30,6 @@ QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
 
-QT_USE_NAMESPACE
 
 class OxideQFindController;
 class OxideQLoadEvent;
@@ -214,7 +213,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     EditingCommandSelectAll
   };
 
-  void componentComplete();
+  void componentComplete() Q_DECL_OVERRIDE;
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -319,7 +318,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void navigationHistoryChanged();
   void incognitoChanged();
   Q_REVISION(1) void loadingStateChanged();
-  Q_REVISION(1) void loadEvent(OxideQLoadEvent* event);
+  Q_REVISION(1) void loadEvent(const OxideQLoadEvent& event);
   void fullscreenChanged();
   void loadProgressChanged();
   void rootFrameChanged();
@@ -346,19 +345,21 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void newViewRequested(OxideQNewViewRequest* request);
   void geolocationPermissionRequested(const QJSValue& request);
   Q_REVISION(4) void mediaAccessPermissionRequested(const QJSValue& request);
+  Q_REVISION(6) void notificationPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,
                                 const QString& sourceId);
-  void downloadRequested(OxideQDownloadRequest* request);
+  void downloadRequested(const OxideQDownloadRequest& request);
   void certificateError(const QJSValue& error);
   void blockedContentChanged();
   Q_REVISION(2) void prepareToCloseResponse(bool proceed);
   Q_REVISION(2) void closeRequested();
   Q_REVISION(4) void webProcessStatusChanged();
+  Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
 
   // Deprecated since 1.3
-  void loadingChanged(OxideQLoadEvent* loadEvent);
+  void loadingChanged(const OxideQLoadEvent& loadEvent);
 
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
@@ -373,6 +374,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   // QObject implementation
   void connectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
+  bool event(QEvent* event) Q_DECL_OVERRIDE;
 
   // QQuickItem implementation
   void itemChange(QQuickItem::ItemChange change,

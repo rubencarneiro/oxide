@@ -18,8 +18,9 @@
 #ifndef _OXIDE_BROWSER_MEDIA_PLAYER_MANAGER_H
 #define _OXIDE_BROWSER_MEDIA_PLAYER_MANAGER_H
 
+#include "base/callback.h"
 #include "base/memory/scoped_vector.h"
-
+#include "url/gurl.h"
 
 namespace base {
 class TimeDelta;
@@ -51,6 +52,7 @@ class BrowserMediaPlayerManager {
   void OnSeek(int player_id, const base::TimeDelta& pos);
   void OnPause(int player_id, bool is_media_related_action);
   void OnSetVolume(int player_id, double volume);
+  void OnSetRate(int player_id, double rate);
   void OnSetPoster(int player_id, const GURL& poster);
   void OnReleaseResources(int player_id);
   void OnDestroyPlayer(int player_id);

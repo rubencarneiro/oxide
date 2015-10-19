@@ -52,6 +52,9 @@ class TransportSecurityState;
 
 namespace oxide {
 
+class BrowserContext;
+typedef uintptr_t BrowserContextID;
+
 class BrowserContextDelegate;
 class BrowserContextImpl;
 class BrowserContextObserver;
@@ -64,6 +67,7 @@ class SSLHostStateDelegate;
 class TemporarySavedPermissionContext;
 class URLRequestContext;
 class URLRequestContextGetter;
+class UserAgentSettingsIOData;
 
 class BrowserContextIOData {
  public:
@@ -83,8 +87,7 @@ class BrowserContextIOData {
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
 
-  std::string GetAcceptLangs() const;
-  std::string GetUserAgent() const;
+  bool GetDoNotTrack() const;
 
   virtual bool IsOffTheRecord() const = 0;
 
@@ -101,6 +104,8 @@ class BrowserContextIOData {
   // XXX: This will be going away
   // (see the comment in oxide_temporary_saved_permission_context.h)
   TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
+  UserAgentSettingsIOData* GetUserAgentSettings() const;
 
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
@@ -153,25 +158,16 @@ class BrowserContext
     Params(const base::FilePath& path,
            const base::FilePath& cache_path,
            int max_cache_size_hint,
-           content::CookieStoreConfig::SessionCookieMode session_cookie_mode,
-           bool devtools_enabled,
-           int devtools_port,
-           const std::string& devtools_ip)
-        : path(path),
-          cache_path(cache_path),
-          max_cache_size_hint(max_cache_size_hint),
-          session_cookie_mode(session_cookie_mode),
-          devtools_enabled(devtools_enabled),
-          devtools_port(devtools_port),
-          devtools_ip(devtools_ip) {}
+           content::CookieStoreConfig::SessionCookieMode session_cookie_mode)
+           : path(path),
+             cache_path(cache_path),
+             max_cache_size_hint(max_cache_size_hint),
+             session_cookie_mode(session_cookie_mode) {}
 
     base::FilePath path;
     base::FilePath cache_path;
     int max_cache_size_hint;
     content::CookieStoreConfig::SessionCookieMode session_cookie_mode;
-    bool devtools_enabled;
-    int devtools_port;
-    std::string devtools_ip;
     std::vector<std::string> host_mapping_rules;
   };
 
@@ -187,6 +183,8 @@ class BrowserContext
 
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
+
+  BrowserContextID GetID() const;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,
@@ -207,15 +205,6 @@ class BrowserContext
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
 
-  std::string GetAcceptLangs() const;
-  void SetAcceptLangs(const std::string& langs);
-
-  std::string GetProduct() const;
-  void SetProduct(const std::string& product);
-
-  std::string GetUserAgent() const;
-  void SetUserAgent(const std::string& user_agent);
-
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   void SetCookiePolicy(net::StaticCookiePolicy::Type policy);
 
@@ -224,11 +213,10 @@ class BrowserContext
   bool IsPopupBlockerEnabled() const;
   void SetIsPopupBlockerEnabled(bool enabled);
 
-  bool GetDevtoolsEnabled() const;
-  int GetDevtoolsPort() const;
-  std::string GetDevtoolsBindIp() const;
-
   const std::vector<std::string>& GetHostMappingRules() const;
+
+  bool GetDoNotTrack() const;
+  void SetDoNotTrack(bool dnt);
 
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
@@ -246,9 +234,6 @@ class BrowserContext
   virtual ~BrowserContext();
 
   BrowserContextIOData* io_data() const { return io_data_; }
-
-  virtual BrowserContextSharedData& GetSharedData() = 0;
-  virtual const BrowserContextSharedData& GetSharedData() const = 0;
 
  private:
   friend class BrowserContextObserver; // for {Add,Remove}Observer

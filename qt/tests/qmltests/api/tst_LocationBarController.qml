@@ -61,15 +61,15 @@ Item {
     }
 
     function waitUntilShown() {
-      return qtest_waitUntil(function() { return qtest_shown; });
+      return TestUtils.waitFor(function() { return qtest_shown; });
     }
 
     function waitUntilHidden() {
-      return qtest_waitUntil(function() { return qtest_hidden; });
+      return TestUtils.waitFor(function() { return qtest_hidden; });
     }
 
     function waitForUpdate() {
-      return qtest_waitUntil(function() { return qtest_hadGoodUpdate; });
+      return TestUtils.waitFor(function() { return qtest_hadGoodUpdate; });
     }
 
     property bool qtest_waitingForNewContentOffset: false
@@ -149,18 +149,6 @@ Item {
         qtest_animationStartTime = Date.now();
       }
     }
-
-    function qtest_waitUntil(predicate) {
-      var end = Date.now() + 5000;
-      var i = Date.now();
-      while (i < end && !predicate()) {
-        qtest_testResult.wait(50);
-        i = Date.now();
-      }
-      return predicate();
-    }
-
-    TestResult { id: qtest_testResult }
   }
 
   TestCase {
@@ -171,7 +159,7 @@ Item {
     TestResult { id: testResult }
 
     function deleteWebView(webview) {
-      var obs = OxideTestingUtils.createDestructionObserver(webview);
+      var obs = Utils.createDestructionObserver(webview);
       webview.destroy();
       var end = Date.now() + 5000;
       var i = Date.now();
@@ -259,7 +247,7 @@ Item {
       compare(spy.count, 1);
       compare(webView.locationBarController.mode, LocationBarController.ModeShown);
 
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -272,7 +260,7 @@ Item {
       compare(spy.count, 2);
       compare(webView.locationBarController.mode, LocationBarController.ModeHidden);
 
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -287,7 +275,7 @@ Item {
 
       webView.locationBarController.show(true);
 
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -298,7 +286,7 @@ Item {
 
       webView.locationBarController.hide(true);
 
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -407,7 +395,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.show(data.animated);
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -417,7 +405,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -469,7 +457,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.hide(data.animated);
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -479,7 +467,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
-      webView.wait(500);
+      Utils.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);

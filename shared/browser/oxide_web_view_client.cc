@@ -23,8 +23,6 @@ namespace oxide {
 
 WebViewClient::~WebViewClient() {}
 
-void WebViewClient::Initialized() {}
-
 bool WebViewClient::IsInputPanelVisible() const {
   return false;
 }
@@ -48,7 +46,7 @@ void WebViewClient::URLChanged() {}
 
 void WebViewClient::TitleChanged() {}
 
-void WebViewClient::IconChanged(const GURL& icon) {}
+void WebViewClient::FaviconChanged() {}
 
 void WebViewClient::CommandsUpdated() {}
 
@@ -113,11 +111,6 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebFrame* WebViewClient::CreateWebFrame(
-    content::RenderFrameHost* render_frame_host) {
-  return nullptr;
-}
-
 WebContextMenu* WebViewClient::CreateContextMenu(
     content::RenderFrameHost* rfh,
     const content::ContextMenuParams& params) {
@@ -129,8 +122,10 @@ WebPopupMenu* WebViewClient::CreatePopupMenu(
   return nullptr;
 }
 
-WebView* WebViewClient::CreateNewWebView(const gfx::Rect& initial_pos,
-                                         WindowOpenDisposition disposition) {
+WebView* WebViewClient::CreateNewWebView(
+    const gfx::Rect& initial_pos,
+    WindowOpenDisposition disposition,
+    scoped_ptr<content::WebContents> contents) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
   return nullptr;
@@ -164,8 +159,7 @@ void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}
 
 void WebViewClient::CloseRequested() {}
 
-void WebViewClient::FindInPageCurrentChanged() {}
-
-void WebViewClient::FindInPageCountChanged() {}
+void WebViewClient::HttpAuthenticationRequested(
+    ResourceDispatcherHostLoginDelegate* login_delegate) {}
 
 } // namespace oxide

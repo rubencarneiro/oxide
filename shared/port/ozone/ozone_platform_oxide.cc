@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "base/memory/scoped_ptr.h"
 #include "ui/display/types/native_display_delegate.h"
+#include "ui/ozone/common/stub_client_native_pixmap_factory.h"
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/gpu_platform_support_host.h"
 #include "ui/ozone/public/ozone_platform.h"
@@ -76,6 +77,10 @@ class OzonePlatformOxide : public OzonePlatform {
     return scoped_ptr<NativeDisplayDelegate>();
   }
 
+  base::ScopedFD OpenClientNativePixmapDevice() const final {
+    return base::ScopedFD();
+  }
+
  private:
   void InitializeUI() final {}
   void InitializeGPU() final {}
@@ -87,6 +92,10 @@ class OzonePlatformOxide : public OzonePlatform {
 
 OzonePlatform* CreateOzonePlatformOxide() {
   return new OzonePlatformOxide();
+}
+
+ClientNativePixmapFactory* CreateClientNativePixmapFactoryOxide() {
+  return CreateStubClientNativePixmapFactory();
 }
 
 } // namespace ui

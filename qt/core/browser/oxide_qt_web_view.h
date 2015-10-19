@@ -21,6 +21,7 @@
 #include <QKeyEvent>
 #include <QList>
 #include <QObject>
+#include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 
@@ -31,6 +32,7 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
+#include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
 
 QT_BEGIN_NAMESPACE
@@ -57,11 +59,23 @@ class WebViewProxyClient;
 class WebView : public QObject,
                 public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
+                public oxide::WebFrameTreeObserver,
                 public WebViewProxy {
   Q_OBJECT
 
  public:
-  WebView(WebViewProxyClient* client);
+  WebView(WebViewProxyClient* client,
+          OxideQFindController* find_controller,
+          OxideQSecurityStatus* security_status,
+          WebContext* context,
+          bool incognito,
+          const QByteArray& restore_state,
+          RestoreType restore_type);
+  static WebView* CreateFromNewViewRequest(
+      WebViewProxyClient* client,
+      OxideQFindController* find_controller,
+      OxideQSecurityStatus* security_status,
+      OxideQNewViewRequest* new_view_request);
   ~WebView();
 
   static WebView* FromProxyHandle(WebViewProxyHandle* handle);
@@ -69,29 +83,26 @@ class WebView : public QObject,
 
   WebContext* GetContext() const;
 
-  void FrameAdded(oxide::WebFrame* frame);
-  void FrameRemoved(oxide::WebFrame* frame);
-
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
  private Q_SLOTS:
   void OnInputPanelVisibilityChanged();
 
  private:
+  WebView(WebViewProxyClient* client,
+          OxideQSecurityStatus* security_status);
+
   float GetDeviceScaleFactor() const;
 
   bool ShouldShowInputPanel() const;
   bool ShouldHideInputPanel() const;
   void SetInputPanelVisibility(bool visible);
 
-  // XXX(chrisccoulson): Move this in to oxide::WebView and the actual
-  // unpickling to Init
-  void RestoreState(qt::RestoreType type, const QByteArray& state);
+  void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
 
   // oxide::WebViewClient implementation
-  void Initialized() override;
   blink::WebScreenInfo GetScreenInfo() const override;
   gfx::Rect GetViewBoundsPix() const override;
   bool IsVisible() const override;
@@ -104,7 +115,7 @@ class WebView : public QObject,
   void CrashedStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
-  void IconChanged(const GURL& icon) override;
+  void FaviconChanged() override;
   void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
@@ -141,17 +152,20 @@ class WebView : public QObject,
       const std::string& cookies,
       const std::string& referrer,
       const std::string& user_agent) override;
+  void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate) override;
+
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
-  oxide::WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host) override;
   oxide::WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params) override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
-  oxide::WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                   WindowOpenDisposition disposition) override;
+  oxide::WebView* CreateNewWebView(
+      const gfx::Rect& initial_pos,
+      WindowOpenDisposition disposition,
+      scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
@@ -166,8 +180,6 @@ class WebView : public QObject,
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
-  void FindInPageCountChanged() override;
-  void FindInPageCurrentChanged() override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -177,20 +189,23 @@ class WebView : public QObject,
   // oxide::PermissionRequestDispatcherClient implementation
   void RequestGeolocationPermission(
       scoped_ptr<oxide::SimplePermissionRequest> request) override;
+  void RequestNotificationPermission(
+      scoped_ptr<oxide::SimplePermissionRequest> request) override;
   void RequestMediaAccessPermission(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
-  // WebViewProxy implementation
-  void init(bool incognito,
-            WebContextProxyHandle* context,
-            OxideQNewViewRequest* new_view_request,
-            const QByteArray& restore_state,
-            qt::RestoreType restore_type) override;
+  // oxide::WebFrameTreeObserver implementation
+  void FrameCreated(oxide::WebFrame* frame) override;
+  void FrameDeleted(oxide::WebFrame* frame) override;
+  void LoadCommittedInFrame(oxide::WebFrame* frame) override;
 
+  // WebViewProxy implementation
   QUrl url() const override;
   void setUrl(const QUrl& url) override;
 
   QString title() const override;
+
+  QUrl favIconUrl() const override;
 
   bool canGoBack() const override;
   bool canGoForward() const override;
@@ -228,13 +243,9 @@ class WebView : public QObject,
   void stop() override;
   void reload() override;
 
-  OxideQFindController* findInPage() override;
-
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
   QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
-
-  bool isInitialized() const override;
 
   int getNavigationEntryCount() const override;
   int getNavigationCurrentEntryIndex() const override;
@@ -261,8 +272,6 @@ class WebView : public QObject,
   void setCanTemporarilyDisplayInsecureContent(bool allow) override;
   void setCanTemporarilyRunInsecureContent(bool allow) override;;
 
-  OxideQSecurityStatus* securityStatus() override;
-
   ContentTypeFlags blockedContent() const override;
 
   void prepareToClose() override;
@@ -282,21 +291,24 @@ class WebView : public QObject,
 
   void executeEditingCommand(EditingCommands command) const override;
 
+  void teardownFrameTree() override;
+
   scoped_ptr<oxide::WebView> view_;
 
   WebViewProxyClient* client_;
 
   bool has_input_method_state_;
 
-  scoped_ptr<OxideQSecurityStatus> qsecurity_status_;
+  QPointer<OxideQSecurityStatus> security_status_;
   QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
 
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
-  scoped_ptr<OxideQFindController> find_in_page_controller_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebView);
+  bool frame_tree_torn_down_;
+
+  DISALLOW_COPY_AND_ASSIGN(WebView);
 };
 
 } // namespace qt

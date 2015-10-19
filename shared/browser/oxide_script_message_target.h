@@ -24,6 +24,8 @@ class ScriptMessageHandler;
 
 class ScriptMessageTarget {
  public:
+  virtual ~ScriptMessageTarget() {}
+
   virtual size_t GetScriptMessageHandlerCount() const = 0;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const = 0;

@@ -16,14 +16,32 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 .pragma library
+// JS resources can't import the module it belongs too, apparently. So we
+// ship the plugin in another module to work around it
+.import com.canonical.Oxide.Testing.hack 1.0 as OxideTesting
+
+function waitFor(predicate, timeout, gcDuringWait) {
+  timeout = timeout || 5000;
+  var end = Date.now() + timeout;
+  var i = Date.now();
+  while (i < end && !predicate()) {
+    OxideTesting.Utils.wait(50);
+    if (gcDuringWait) gc();
+    i = Date.now();
+  }
+  return predicate();
+}
+
+function waitForSignalSpyCount(spy, count, timeout) {
+  return waitFor(function() { return spy.count >= count; }, timeout);
+}
 
 function MessageError(error, desc) {
   this.error = error;
   this.message = desc;
 }
 
-function TestApiHost(webview, frame) {
-  this._webview = webview;
+function TestApiHost(frame) {
   this._frame = frame;
 }
 
@@ -41,8 +59,7 @@ TestApiHost.prototype = {
       error = error_code;
     };
 
-    this._webview.waitFor(function() { return error !== undefined; },
-                          timeout, gcDuringWait);
+    waitFor(function() { return error !== undefined; }, timeout, gcDuringWait);
 
     if (error > 0) {
       throw new MessageError(error, result);
@@ -73,19 +90,5 @@ TestApiHost.prototype = {
         this._frame.sendMessage("oxide://testutils/",
                                 "GET-BOUNDING-CLIENT-RECT",
                                 selector));
-  },
-
-  sendMessageToSelf: function(id, payload, gcDuringWait) {
-    var r = this.waitForResult(
-        this._frame.sendMessage("oxide://testutils/",
-                                "SEND-MESSAGE-TO-SELF",
-                                { id: id,
-                                  payload: payload === undefined ? null : payload } ),
-        null, gcDuringWait);
-    if (r.error > 0) {
-      throw new MessageError(r.error, r.response);
-    } else {
-      return r.response;
-    }
   }
 };

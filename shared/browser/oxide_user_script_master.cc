@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,8 +27,6 @@
 #include "base/strings/string_util.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
-#include "content/public/browser/notification_service.h"
-#include "content/public/browser/notification_types.h"
 #include "content/public/browser/render_process_host.h"
 #include "extensions/common/url_pattern.h"
 
@@ -52,7 +50,7 @@ bool GetValue(const base::StringPiece& line,
   std::string temp(line.data() + index + prefix.length(),
                    line.length() - index - prefix.length());
 
-  if (temp.empty() || !IsWhitespace(temp[0])) {
+  if (temp.empty() || !base::IsUnicodeWhitespace(temp[0])) {
     return false;
   }
 
@@ -68,7 +66,7 @@ class UserScriptMasterFactory : public BrowserContextKeyedServiceFactory {
   static UserScriptMaster* GetForContext(content::BrowserContext* context);
 
  private:
-  friend struct DefaultSingletonTraits<UserScriptMasterFactory>;
+  friend struct base::DefaultSingletonTraits<UserScriptMasterFactory>;
 
   UserScriptMasterFactory();
   ~UserScriptMasterFactory() override;
@@ -101,7 +99,7 @@ content::BrowserContext* UserScriptMasterFactory::GetBrowserContextToUse(
 
 // static
 UserScriptMasterFactory* UserScriptMasterFactory::GetInstance() {
-  return Singleton<UserScriptMasterFactory>::get();
+  return base::Singleton<UserScriptMasterFactory>::get();
 }
 
 // static
@@ -113,12 +111,27 @@ UserScriptMaster* UserScriptMasterFactory::GetForContext(
 
 
 UserScriptMaster::UserScriptMaster(BrowserContext* context) :
-    context_(context) {
-  registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
-                 content::NotificationService::AllBrowserContextsAndSources());
-}
+    context_(context) {}
 
 UserScriptMaster::~UserScriptMaster() {}
+
+UserScriptMaster::HostSet UserScriptMaster::GetHostSet() const {
+  HostSet hosts;
+
+  for (content::RenderProcessHost::iterator it =
+          content::RenderProcessHost::AllHostsIterator();
+       !it.IsAtEnd(); it.Advance()) {
+    content::RenderProcessHost* host = it.GetCurrentValue();
+    BrowserContext* other =
+        BrowserContext::FromContent(host->GetBrowserContext());
+    if (context_->IsSameContext(other)) {
+      hosts.insert(host);
+    }
+  }
+
+  return hosts;
+
+}
 
 void UserScriptMaster::SendUpdate(content::RenderProcessHost* process) {
   if (!shmem_) {
@@ -138,24 +151,6 @@ void UserScriptMaster::SendUpdate(content::RenderProcessHost* process) {
   if (base::SharedMemory::IsHandleValid(handle_for_process)) {
     process->Send(new OxideMsg_UpdateUserScripts(handle_for_process));
   }
-}
-
-void UserScriptMaster::Observe(
-    int type,
-    const content::NotificationSource& source,
-    const content::NotificationDetails& details) {
-  if (type != content::NOTIFICATION_RENDERER_PROCESS_CREATED) {
-    return;
-  }
-
-  content::RenderProcessHost* process =
-      content::Source<content::RenderProcessHost>(source).ptr();
-  if (!context_->IsSameContext(
-      BrowserContext::FromContent(process->GetBrowserContext()))) {
-    return;
-  }
-
-  SendUpdate(process);
 }
 
 // static
@@ -181,17 +176,9 @@ void UserScriptMaster::SerializeUserScriptsAndSendUpdates(
 
   memcpy(shmem_->memory(), pickle.data(), pickle.size());
 
-  for (content::RenderProcessHost::iterator it =
-           content::RenderProcessHost::AllHostsIterator();
-       !it.IsAtEnd(); it.Advance()) {
-    content::RenderProcessHost* process = it.GetCurrentValue();
-
-    if (!context_->IsSameContext(
-        BrowserContext::FromContent(process->GetBrowserContext()))) {
-      continue;
-    }
-
-    SendUpdate(process);
+  HostSet hosts = GetHostSet();
+  for (auto host : hosts) {
+    SendUpdate(host);
   }
 }
 
@@ -229,12 +216,12 @@ void UserScriptMaster::ParseMetadata(UserScript* script) {
 
       std::string value;
       if (GetValue(line, kIncludeDeclaration, &value)) {
-        ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
-        ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
         script->add_include_glob(value);
       } else if (GetValue(line, kExcludeDeclaration, &value)) {
-        ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
-        ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "\\", "\\\\");
+        base::ReplaceSubstringsAfterOffset(&value, 0, "?", "\\?");
         script->add_exclude_glob(value);
       } else if (GetValue(line, kMatchDeclaration, &value)) {
         URLPattern pattern(URLPattern::SCHEME_HTTP | URLPattern::SCHEME_HTTPS);
@@ -259,6 +246,11 @@ void UserScriptMaster::ParseMetadata(UserScript* script) {
 
     line_start = line_end + 1;
   }
+}
+
+void UserScriptMaster::RenderProcessCreated(
+    content::RenderProcessHost* process) {
+  SendUpdate(process);
 }
 
 } // namespace oxide

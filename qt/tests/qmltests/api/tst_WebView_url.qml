@@ -15,6 +15,13 @@ TestWebView {
     signalName: "urlChanged"
   }
 
+  Component {
+    id: webViewComponent
+    TestWebView {
+      context: TestWebContext { persistent: false }
+    }
+  }
+
   TestCase {
     id: test
     name: "WebView_url"
@@ -25,7 +32,15 @@ TestWebView {
       spy.clear();
     }
 
-    function test_WebView_url1_browser_initiated_data() {
+    // Verify that setting WebView.url during construction works
+    function test_WebView_url1_construction() {
+      var view = webViewComponent.createObject(null, { url: "http://foo.testsuite/empty.html" });
+      compare(view.url, "http://foo.testsuite/empty.html");
+      verify(view.waitForLoadSucceeded());
+      compare(view.getTestApi().documentURI, "http://foo.testsuite/empty.html");
+    }
+
+    function test_WebView_url2_browser_initiated_data() {
       return [
         { url: "http://testsuite/empty.html", count: 1 },
         { url: Qt.resolvedUrl("./empty.html"), count: 1 },
@@ -36,7 +51,7 @@ TestWebView {
       ];
     }
 
-    function test_WebView_url1_browser_initiated(data) {
+    function test_WebView_url2_browser_initiated(data) {
       var origUrl = webView.url;
 
       webView.url = data.url;
@@ -71,13 +86,13 @@ TestWebView {
               "document.documentURI is incorrect");
     }
 
-    function test_WebView_url2_ignore_invalid_data() {
+    function test_WebView_url3_ignore_invalid_data() {
       return [
         { url: "" }
       ];
     }
 
-    function test_WebView_url2_ignore_invalid(data) {
+    function test_WebView_url3_ignore_invalid(data) {
       var url = "http://testsuite/empty.html";
 
       webView.url = url;
@@ -106,7 +121,7 @@ TestWebView {
 
     // Verify that WebView.url does not indicate the pending URL for
     // content initiated navigations, to prevent URL spoofing
-    function test_WebView_url3_content_initiated() {
+    function test_WebView_url4_content_initiated() {
       var origUrl = "http://testsuite/empty.html";
       var newUrl = "http://foo.testsuite/empty.html";
 

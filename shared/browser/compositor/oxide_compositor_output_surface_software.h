@@ -27,17 +27,20 @@
 
 namespace oxide {
 
-class CompositorOutputSurfaceSoftware final : public CompositorOutputSurface {
+class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
  public:
   CompositorOutputSurfaceSoftware(
-      uint32 surface_id,
+      uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
       scoped_refptr<CompositorThreadProxy> proxy);
   ~CompositorOutputSurfaceSoftware();
 
  private:
   // cc::OutputSurface implementation
-  void SwapBuffers(cc::CompositorFrame* frame) final;
+  void SwapBuffers(cc::CompositorFrame* frame) override;
+
+  // CompositorOutputSurface implementation
+  void ReclaimResources(const CompositorFrameAck& ack) override;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurfaceSoftware);
 };

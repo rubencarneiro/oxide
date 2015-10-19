@@ -45,19 +45,3 @@ oxide.addMessageHandler("GET-BOUNDING-CLIENT-RECT", function(msg) {
   var r = e.getBoundingClientRect();
   msg.reply({x: r.left, y: r.top, width: r.width, height: r.height});
 });
-
-oxide.addMessageHandler("SEND-MESSAGE-TO-SELF", function(msg) {
-  var r = oxide.sendMessage(msg.payload.id, msg.payload.payload);
-  r.onreply = function(response) {
-    msg.reply({error: 0, response: response});
-  };
-  r.onerror = function(error, desc) {
-    msg.reply({error: error, response: desc});
-  };
-});
-
-oxide.addMessageHandler("GENERATE-JS-EXCEPTION", function(msg) {
-  throw Exception("This is an error");
-});
-
-oxide.addMessageHandler("DONT-RESPOND", function(msg) {});

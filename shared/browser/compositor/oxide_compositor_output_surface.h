@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,12 +25,13 @@
 #include "cc/output/output_surface.h"
 
 namespace cc {
-class CompositorFrameAck;
 class ContextProvider;
 }
 
 namespace oxide {
 
+class CompositorFrameAck;
+class CompositorFrameData;
 class CompositorThreadProxy;
 
 class CompositorOutputSurface : public cc::OutputSurface,
@@ -38,31 +39,31 @@ class CompositorOutputSurface : public cc::OutputSurface,
  public:
   virtual ~CompositorOutputSurface();
 
-  uint32 surface_id() const { return surface_id_; }
+  uint32_t surface_id() const { return surface_id_; }
 
   void DidSwapBuffers();
-  virtual void ReclaimResources(const cc::CompositorFrameAck& ack);
+  virtual void ReclaimResources(const CompositorFrameAck& ack);
 
  protected:
   CompositorOutputSurface(
-      uint32 surface_id,
+      uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
       scoped_refptr<CompositorThreadProxy> proxy);
   CompositorOutputSurface(
-      uint32 surface_id,
+      uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
       scoped_refptr<CompositorThreadProxy> proxy);
 
   scoped_refptr<CompositorThreadProxy> proxy_;
 
+  void DoSwapBuffers(CompositorFrameData* frame);
+
   // cc::OutputSurface implementation
-  void SwapBuffers(cc::CompositorFrame* frame) override;
+  bool BindToClient(cc::OutputSurfaceClient* client) override;
+  void DetachFromClient() override;
 
  private:
-  // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client) final;
-
-  uint32 surface_id_;
+  uint32_t surface_id_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurface);
 };

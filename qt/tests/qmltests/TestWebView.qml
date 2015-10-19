@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide 1.8
+import com.canonical.Oxide 1.11
 import com.canonical.Oxide.Testing 1.0 as Testing
 import "TestUtils.js" as TestUtils
 
@@ -27,63 +27,57 @@ WebView {
     qtest_expectedLoadsCommittedCount = 0;
   }
 
+  property var qtest_testApiHosts: new Object()
+
   function getTestApi() {
-    return new TestUtils.TestApiHost(this, rootFrame);
+    if (!(rootFrame in qtest_testApiHosts)) {
+      qtest_testApiHosts[rootFrame] = new TestUtils.TestApiHost(rootFrame);
+    }
+
+    return qtest_testApiHosts[rootFrame];
   }
 
   function getTestApiForFrame(frame) {
-    return new TestUtils.TestApiHost(this, frame);
+    if (!(frame in qtest_testApiHosts)) {
+      qtest_testApiHosts[frame] = new TestUtils.TestApiHost(frame);
+    }
+
+    return qtest_testApiHosts[frame];
   }
 
   function waitForLoadStarted(timeout) {
     var expected = ++qtest_expectedLoadsStartedCount;
-    return waitFor(
+    return TestUtils.waitFor(
         function() { return expected == qtest_loadsStartedCount; },
         timeout);
   }
 
   function waitForLoadSucceeded(timeout) {
     var expected = ++qtest_expectedLoadsSucceededCount;
-    return waitFor(
+    return TestUtils.waitFor(
         function() { return expected == qtest_loadsSucceededCount; },
         timeout);
   }
 
   function waitForLoadStopped(timeout, gcDuringWait) {
     var expected = ++qtest_expectedLoadsStoppedCount;
-    return waitFor(
+    return TestUtils.waitFor(
         function() { return expected == qtest_loadsStoppedCount; },
         timeout, gcDuringWait);
   }
 
   function waitForLoadFailed(timeout) {
     var expected = ++qtest_expectedLoadsFailedCount;
-    return waitFor(
+    return TestUtils.waitFor(
         function() { return expected == qtest_loadsFailedCount; },
         timeout);
   }
 
   function waitForLoadCommitted(timeout) {
     var expected = ++qtest_expectedLoadsCommittedCount;
-    return waitFor(
+    return TestUtils.waitFor(
         function() { return expected == qtest_loadsCommittedCount; },
         timeout);
-  }
-
-  function waitFor(predicate, timeout, gcDuringWait) {
-    timeout = timeout || 5000;
-    var end = Date.now() + timeout;
-    var i = Date.now();
-    while (i < end && !predicate()) {
-      qtest_testResult.wait(50);
-      if (gcDuringWait) gc();
-      i = Date.now();
-    }
-    return predicate();
-  }
-
-  function wait(timeout) {
-    qtest_testResult.wait(timeout);
   }
 
   property int qtest_loadsStartedCount: 0
@@ -101,6 +95,10 @@ WebView {
   context: TestWebContext {}
 
   Connections {
+    onFrameRemoved: {
+      delete webView.qtest_testApiHosts[frame];
+    }
+
     onLoadEvent: {
       if (event.type == LoadEvent.TypeStarted) {
         webView.qtest_loadsStartedCount++;
@@ -115,6 +113,4 @@ WebView {
       }
     }
   }
-
-  TestResult { id: qtest_testResult }
 }

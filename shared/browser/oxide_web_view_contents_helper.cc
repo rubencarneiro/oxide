@@ -59,6 +59,19 @@ void WebViewContentsHelper::WebPreferencesValueChanged() {
   UpdateWebPreferences();
 }
 
+void WebViewContentsHelper::NotifyDoNotTrackChanged() {
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->enable_do_not_track = context_->GetDoNotTrack();
+
+  // Send the new override string to the renderer.
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+  rvh->SyncRendererPrefs();
+}
+
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
                                              content::WebContents* opener)
     : BrowserContextObserver(
@@ -72,7 +85,7 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
+  renderer_prefs->enable_do_not_track = context_->GetDoNotTrack();
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (rvh) {

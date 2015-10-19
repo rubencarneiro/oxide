@@ -26,6 +26,10 @@
 
 namespace oxide {
 
+namespace {
+const char kDoNotTrackHeaderName[] = "DNT";
+}
+
 int NetworkDelegate::OnBeforeURLRequest(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
@@ -33,6 +37,12 @@ int NetworkDelegate::OnBeforeURLRequest(
   scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
   if (!delegate.get()) {
     return net::OK;
+  }
+
+  bool do_not_track = context_->GetDoNotTrack();
+  if (do_not_track) {
+    request->SetExtraRequestHeaderByName(
+        kDoNotTrackHeaderName, "1", true);
   }
 
   return delegate->OnBeforeURLRequest(request, callback, new_url);
@@ -86,12 +96,17 @@ void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
 
 void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 
-void NetworkDelegate::OnRawBytesRead(const net::URLRequest& request,
-                                     int bytes_read) {}
+void NetworkDelegate::OnNetworkBytesReceived(const net::URLRequest& request,
+                                             int64_t bytes_received) {}
+
+void NetworkDelegate::OnNetworkBytesSent(const net::URLRequest& request,
+                                         int64_t bytes_sent) {}
 
 void NetworkDelegate::OnCompleted(net::URLRequest* request, bool started) {}
 
 void NetworkDelegate::OnURLRequestDestroyed(net::URLRequest* request) {}
+
+void NetworkDelegate::OnURLRequestJobOrphaned(net::URLRequest* request) {}
 
 void NetworkDelegate::OnPACScriptError(int line_number,
                                        const base::string16& error) {}
@@ -122,11 +137,6 @@ bool NetworkDelegate::OnCanSetCookie(const net::URLRequest& request,
 bool NetworkDelegate::OnCanAccessFile(const net::URLRequest& request,
                                       const base::FilePath& path) const {
   return true;
-}
-
-bool NetworkDelegate::OnCanThrottleRequest(
-    const net::URLRequest& request) const {
-  return false;
 }
 
 bool NetworkDelegate::OnCanEnablePrivacyMode(

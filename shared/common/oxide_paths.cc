@@ -17,14 +17,44 @@
 
 #include "oxide_paths.h"
 
+#include "base/files/file_path.h"
+#include "base/files/file_util.h"
 #include "base/path_service.h"
 
 namespace oxide {
 
 namespace {
 
+const base::FilePath::CharType* kPepperFlashPluginDirs[] = {
+  FILE_PATH_LITERAL("/usr/lib/adobe-flashplugin"),
+  FILE_PATH_LITERAL("/opt/google/chrome/PepperFlash"),
+};
+const base::FilePath::CharType kPepperFlashPluginFilename[] =
+  FILE_PATH_LITERAL("libpepflashplayer.so");
+
+
 bool PathProvider(int key, base::FilePath* result) {
   switch (key) {
+    case DIR_PEPPER_FLASH_PLUGIN: {
+      for (size_t i = 0; i < arraysize(kPepperFlashPluginDirs); ++i) {
+        base::FilePath path(kPepperFlashPluginDirs[i]);
+        if (base::PathExists(path.Append(kPepperFlashPluginFilename))) {
+          *result = path;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    case FILE_PEPPER_FLASH_PLUGIN: {
+      base::FilePath path;
+      if (!PathService::Get(DIR_PEPPER_FLASH_PLUGIN, &path)) {
+        return false;
+      }
+      *result = path.Append(kPepperFlashPluginFilename);
+      return true;
+    }
+
     default:
       return false;
   }

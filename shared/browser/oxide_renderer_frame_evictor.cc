@@ -23,7 +23,8 @@
 #include "base/sys_info.h"
 #include "content/common/host_shared_bitmap_manager.h"
 
-#include "oxide_form_factor.h"
+#include "shared/common/oxide_form_factor.h"
+
 #include "oxide_renderer_frame_evictor_client.h"
 
 namespace oxide {
@@ -60,7 +61,7 @@ void RendererFrameEvictor::CullUnlockedFrames() {
 
 // static
 RendererFrameEvictor* RendererFrameEvictor::GetInstance() {
-  return Singleton<RendererFrameEvictor>::get();
+  return base::Singleton<RendererFrameEvictor>::get();
 }
 
 RendererFrameEvictor::~RendererFrameEvictor() {}

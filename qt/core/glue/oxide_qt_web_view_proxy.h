@@ -128,20 +128,30 @@ OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
  public:
-  static WebViewProxy* create(WebViewProxyClient* client);
+  static WebViewProxy* create(WebViewProxyClient* client,
+                              OxideQFindController* find_controller,
+                              OxideQSecurityStatus* security_status,
+                              WebContextProxyHandle* context,
+                              bool incognito,
+                              const QByteArray& restore_state,
+                              RestoreType restore_type);
+  static WebViewProxy* create(WebViewProxyClient* client,
+                              OxideQFindController* find_controller,
+                              OxideQSecurityStatus* security_status,
+                              OxideQNewViewRequest* new_view_request);
 
   virtual ~WebViewProxy();
 
-  virtual void init(bool incognito,
-                    WebContextProxyHandle* context,
-                    OxideQNewViewRequest* new_view_request,
-                    const QByteArray& restore_state,
-                    RestoreType restore_type) = 0;
+  static void createHelpers(
+      QScopedPointer<OxideQFindController>* find_controller,
+      QScopedPointer<OxideQSecurityStatus>* security_status);
 
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;
 
   virtual QString title() const = 0;
+
+  virtual QUrl favIconUrl() const = 0;
 
   virtual bool canGoBack() const = 0;
   virtual bool canGoForward() const = 0;
@@ -179,13 +189,9 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void stop() = 0;
   virtual void reload() = 0;
 
-  virtual OxideQFindController* findInPage() = 0;
-
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
   virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
-
-  virtual bool isInitialized() const = 0;
 
   virtual int getNavigationEntryCount() const = 0;
   virtual int getNavigationCurrentEntryIndex() const = 0;
@@ -212,8 +218,6 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void setCanTemporarilyDisplayInsecureContent(bool allow) = 0;
   virtual void setCanTemporarilyRunInsecureContent(bool allow) = 0;;
 
-  virtual OxideQSecurityStatus* securityStatus() = 0;
-
   virtual ContentTypeFlags blockedContent() const = 0;
 
   virtual void prepareToClose() = 0;
@@ -232,6 +236,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual WebProcessStatus webProcessStatus() const = 0;
 
   virtual void executeEditingCommand(EditingCommands command) const = 0;
+
+  virtual void teardownFrameTree() = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,27 +22,35 @@
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_web_frame_proxy.h"
-#include "shared/browser/oxide_web_frame.h"
+#include "shared/browser/oxide_script_message_target.h"
+
+namespace content {
+class RenderFrameHost;
+}
 
 namespace oxide {
 
-class WebView;
+class WebFrame;
 
 namespace qt {
 
 class ScriptMessageRequest;
 class WebFrameProxyClient;
 
-class WebFrame : public oxide::WebFrame,
-                 public WebFrameProxy {
+class WebFrame : public WebFrameProxy,
+                 public oxide::ScriptMessageTarget {
  public:
-  WebFrame(content::RenderFrameHost* render_frame_host,
-           oxide::WebView* view);
+  WebFrame(oxide::WebFrame* frame);
 
   static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
+
+  static WebFrame* FromSharedWebFrame(oxide::WebFrame* frame);
+
+  static WebFrame* FromRenderFrameHost(content::RenderFrameHost* host);
+
+  WebFrameProxyClient* client() const { return client_; }
 
  private:
   ~WebFrame() override;
@@ -52,18 +60,11 @@ class WebFrame : public oxide::WebFrame,
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
-  // oxide::WebFrame implementation
-  void DidCommitNewURL() override;
-  void Delete() override;
-  void OnChildAdded(oxide::WebFrame* child) override;
-  void OnChildRemoved(oxide::WebFrame* child) override;
-
   // WebFrameProxy implementation
   void setClient(WebFrameProxyClient* client) override;
   QUrl url() const override;
   WebFrameProxyHandle* parent() const override;
-  int childFrameCount() const override;
-  WebFrameProxyHandle* childFrameAt(int index) const override;
+  QList<WebFrameProxyHandle*> childFrames() const override;
   bool sendMessage(const QUrl& context,
                    const QString& msg_id,
                    const QVariant& payload,
@@ -72,6 +73,8 @@ class WebFrame : public oxide::WebFrame,
                           const QString& msg_id,
                           const QVariant& payload) override;
   QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
+
+  oxide::WebFrame* frame_; // This is owned in shared/
 
   WebFrameProxyClient* client_;
 

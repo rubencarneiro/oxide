@@ -21,21 +21,19 @@
 #include "base/macros.h"
 #include "url/gurl.h"
 
+#include "shared/browser/oxide_render_frame_host_id.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
-#include "shared/browser/permissions/oxide_permission_request_id.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 
 namespace oxide {
-
-class WebFrame;
 
 // Base class of all PermissionRequests. It contains functionality that is
 // common to all requests (url, embedder, allow, deny). If your request
 // requires more information to be exposed, feel free to subclass from this 
 class PermissionRequest {
  public:
-  PermissionRequest(const PermissionRequestID& request_id,
-                    WebFrame* frame,
+  PermissionRequest(int request_id,
+                    const RenderFrameHostID& frame_id,
                     const GURL& origin,
                     const GURL& embedder,
                     const PermissionRequestCallback& callback);
@@ -72,11 +70,12 @@ class PermissionRequest {
 
   void Respond(PermissionRequestResponse response);
 
-  // The unique ID of this request - used for cancellation from Chromium
-  PermissionRequestID request_id_;
+  // The unique ID of this request - used for cancellation from Chromium via
+  // PermissionManager
+  int request_id_;
 
-  // The frame that initiated this request
-  WebFrame* frame_;
+  // The ID of the RenderFrameHost that initiated this request
+  RenderFrameHostID frame_id_;
 
   PermissionRequestDispatcher* dispatcher_;
 
@@ -95,7 +94,7 @@ class PermissionRequest {
 // XXX(chrisccoulson): This class is going to be deleted
 class SimplePermissionRequest : public PermissionRequest {
  public:
-  SimplePermissionRequest(const PermissionRequestID& request_id,
+  SimplePermissionRequest(int request_id,
                           const GURL& origin,
                           const GURL& embedder,
                           const PermissionRequestCallback& callback);
@@ -106,7 +105,8 @@ class SimplePermissionRequest : public PermissionRequest {
 
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
-  MediaAccessPermissionRequest(WebFrame* frame,
+  MediaAccessPermissionRequest(int request_id,
+                               const RenderFrameHostID& frame_id,
                                const GURL& origin,
                                const GURL& embedder,
                                bool audio_requested,

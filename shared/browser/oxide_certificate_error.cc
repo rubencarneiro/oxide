@@ -20,11 +20,10 @@
 #include <algorithm>
 
 #include "base/logging.h"
+#include "content/public/browser/render_frame_host.h"
 #include "net/base/net_errors.h"
 #include "net/cert/x509_certificate.h"
 #include "net/ssl/ssl_info.h"
-
-#include "oxide_web_frame.h"
 
 namespace oxide {
 
@@ -111,7 +110,6 @@ void CertificateErrorManager::RemoveError(CertificateError* error) {
   }
 
   error->manager_ = nullptr;
-  error->frame_ = nullptr;
 }
 
 void CertificateErrorManager::Compact() {
@@ -123,7 +121,9 @@ void CertificateErrorManager::Compact() {
 }
 
 void CertificateErrorManager::CancelPendingFrameErrorsForFrame(
-    WebFrame* frame) {
+    content::RenderFrameHost* frame) {
+  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
+
   IteratorGuard guard(this);
 
   for (auto it = errors_.begin(); it != errors_.end(); ++it) {
@@ -132,7 +132,7 @@ void CertificateErrorManager::CancelPendingFrameErrorsForFrame(
       continue;
     }
 
-    if (error->frame_ != frame) {
+    if (error->frame_id_ != frame_id) {
       continue;
     }
 
@@ -167,13 +167,16 @@ CertificateErrorManager::~CertificateErrorManager() {
 }
 
 void CertificateErrorManager::DidStartProvisionalLoadForFrame(
-    WebFrame* frame) {
+    content::RenderFrameHost* frame) {
   DCHECK(frame);
   CancelPendingFrameErrorsForFrame(frame);
 }
 
-void CertificateErrorManager::DidNavigateFrame(WebFrame* frame) {
+void CertificateErrorManager::DidNavigateFrame(
+    content::RenderFrameHost* frame) {
   DCHECK(frame);
+
+  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
 
   IteratorGuard guard(this);
 
@@ -183,7 +186,7 @@ void CertificateErrorManager::DidNavigateFrame(WebFrame* frame) {
       continue;
     }
 
-    if (error->frame_ != frame) {
+    if (error->frame_id_ != frame_id) {
       continue;
     }
 
@@ -198,13 +201,16 @@ void CertificateErrorManager::DidNavigateFrame(WebFrame* frame) {
   }
 }
 
-void CertificateErrorManager::DidStopProvisionalLoadForFrame(WebFrame* frame) {
+void CertificateErrorManager::DidStopProvisionalLoadForFrame(
+    content::RenderFrameHost* frame) {
   DCHECK(frame);
   CancelPendingFrameErrorsForFrame(frame);
 }
 
-void CertificateErrorManager::FrameDetached(WebFrame* frame) {
+void CertificateErrorManager::FrameDetached(content::RenderFrameHost* frame) {
   DCHECK(frame);
+
+  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
 
   IteratorGuard guard(this);
 
@@ -214,7 +220,7 @@ void CertificateErrorManager::FrameDetached(WebFrame* frame) {
       continue;
     }
 
-    if (error->frame_ != frame) {
+    if (error->frame_id_ != frame_id) {
       continue;
     }
 
@@ -242,7 +248,7 @@ void CertificateError::Cancel() {
 
 CertificateError::CertificateError(
     CertificateErrorManager* manager,
-    WebFrame* frame,
+    content::RenderFrameHost* frame,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& url,
@@ -250,8 +256,8 @@ CertificateError::CertificateError(
     bool strict_enforcement,
     const base::Callback<void(bool)>& callback)
     : manager_(manager),
-      frame_(frame),
-      is_main_frame_(!frame->parent()),
+      frame_id_(RenderFrameHostID::FromHost(frame)),
+      is_main_frame_(!frame->GetParent()),
       is_subresource_(!content::IsResourceTypeFrame(resource_type)),
       cert_error_(ToCertError(cert_error, ssl_info.cert.get())),
       cert_(ssl_info.cert),
@@ -262,7 +268,7 @@ CertificateError::CertificateError(
       is_cancelled_(false),
       non_overridable_frame_error_committed_(false) {
   DCHECK(manager_);
-  DCHECK(frame_);
+  DCHECK(frame);
   CHECK(!overridable_ || !strict_enforcement_) <<
       "overridable and strict_enforcement are expected to be mutually exclusive";
 
