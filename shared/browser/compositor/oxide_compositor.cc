@@ -253,8 +253,6 @@ void Compositor::SetVisibility(bool visible) {
     if (lock_count_ > 0) {
       layer_tree_host_->SetDeferCommits(true);
     }
-
-    layer_tree_host_->SetLayerTreeHostClientReady();
   }
 }
 

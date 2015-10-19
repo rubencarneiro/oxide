@@ -1,0 +1,70 @@
+# HG changeset patch
+# Parent 2c5d88a887b01a629bb39c8cc2ba32fd6b2e8aa7
+# User oxide
+
+diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
+--- a/content/public/renderer/content_renderer_client.cc
++++ b/content/public/renderer/content_renderer_client.cc
+@@ -231,9 +231,14 @@ blink::WebMediaPlayer* ContentRendererCl
+     base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+     media::MediaLog* media_log) {
+   return nullptr;
+ }
+ 
+ void ContentRendererClient::OverrideCompositorSettings(
+     cc::LayerTreeSettings* settings) {}
+ 
++std::string ContentRendererClient::GetUserAgentOverrideForURL(const GURL& url)
++{
++  return std::string();
++}
++
+ }  // namespace content
+diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
+--- a/content/public/renderer/content_renderer_client.h
++++ b/content/public/renderer/content_renderer_client.h
+@@ -335,13 +335,18 @@ class CONTENT_EXPORT ContentRendererClie
+   virtual blink::WebMediaPlayer* OverrideWebMediaPlayer(
+       blink::WebFrame* frame,
+       blink::WebMediaPlayerClient* client,
+       base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
+       media::MediaLog* media_log);
+ 
+   // Allow overriding the renderer compositor settings
+   virtual void OverrideCompositorSettings(cc::LayerTreeSettings* settings);
++
++  // Returns a user agent override specific for |url|, or empty string if
++  // default user agent should be used.
++  virtual std::string GetUserAgentOverrideForURL(const GURL& url);
++
+ };
+ 
+ }  // namespace content
+ 
+ #endif  // CONTENT_PUBLIC_RENDERER_CONTENT_RENDERER_CLIENT_H_
+diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
+--- a/content/renderer/render_frame_impl.cc
++++ b/content/renderer/render_frame_impl.cc
+@@ -3691,16 +3691,22 @@ bool RenderFrameImpl::willCheckAndDispat
+   render_frame_proxy_->postMessageEvent(
+       source_frame, render_frame_proxy_->web_frame(), target_origin, event);
+   return true;
+ }
+ 
+ blink::WebString RenderFrameImpl::userAgentOverride(
+     blink::WebLocalFrame* frame) {
+   DCHECK(!frame_ || frame_ == frame);
++  std::string user_agent_override_for_url =
++      GetContentClient()->renderer()->GetUserAgentOverrideForURL(
++        GURL(frame_->document().url()));
++  if (!user_agent_override_for_url.empty())
++    return WebString::fromUTF8(user_agent_override_for_url);
++
+   if (!render_view_->webview() || !render_view_->webview()->mainFrame() ||
+       render_view_->renderer_preferences_.user_agent_override.empty()) {
+     return blink::WebString();
+   }
+ 
+   // TODO(nasko): When the top-level frame is remote, there is no WebDataSource
+   // associated with it, so the checks below are not valid. Temporarily
+   // return early and fix properly as part of https://crbug.com/426555.

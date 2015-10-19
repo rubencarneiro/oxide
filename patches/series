@@ -39,3 +39,5 @@ port/video_capture_device_factory.patch
 always-define-angle-commit-hash.patch
 pa-context-application-name.patch
 lower-limit-for-discardable-memory-on-mobile.patch
+partially-revert-d48315dd.patch
+allow-per-url-user-agent-overrides.patch
