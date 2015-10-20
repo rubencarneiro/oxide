@@ -63,7 +63,8 @@ foreach(comp MAJOR MINOR PATCH)
   execute_process(
       COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
       OUTPUT_VARIABLE _OUTPUT
-      RESULT_VARIABLE _RESULT)
+      RESULT_VARIABLE _RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT _RESULT EQUAL 0)
     message(FATAL_ERROR "Failed to get version number")
   endif()
@@ -190,7 +191,7 @@ if(CMAKE_VERBOSE_MAKEFILE)
 endif()
 list(APPEND _NINJA_BUILD_COMMAND all)
 add_custom_target(
-    gyp_all COMMAND ${_NINJA_BUILD_COMMAND} 
+    gyp_all COMMAND ${_NINJA_BUILD_COMMAND}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building the GYP \"all\" target")
 
