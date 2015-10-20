@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -481,20 +481,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -482,20 +482,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1561,17 +1559,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1566,17 +1564,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    frame_tree_node_->DidStopLoading();
    navigation_handle_.reset();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1584,17 +1581,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1589,17 +1586,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -2071,30 +2067,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -2077,30 +2073,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -117,7 +117,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
  
  namespace content {
  
-@@ -429,20 +427,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -430,20 +428,19 @@ class CONTENT_EXPORT RenderFrameHostImpl
  #if defined(OS_WIN)
    void SetParentNativeViewAccessible(
        gfx::NativeViewAccessible accessible_parent);
@@ -139,7 +139,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -558,20 +555,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -559,20 +556,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnAccessibilitySnapshotResponse(
        int callback_id,
        const ui::AXTreeUpdate<AXContentNodeData>& snapshot);
@@ -199,7 +199,7 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
-@@ -386,17 +386,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
+@@ -389,17 +389,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
  
    // Text shadow (edge style) of the text track text.
    IPC_STRUCT_MEMBER(std::string, text_track_text_shadow)
@@ -217,7 +217,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  
    // The height of each item in the menu.
    IPC_STRUCT_MEMBER(int, item_height)
-@@ -411,17 +410,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
+@@ -414,17 +413,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
    IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
  
    // Whether items should be right-aligned.
@@ -235,7 +235,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
    IPC_STRUCT_TRAITS_MEMBER(document_url)
    IPC_STRUCT_TRAITS_MEMBER(plugin_url)
    IPC_STRUCT_TRAITS_MEMBER(is_potentially_secure_plugin_context)
-@@ -631,24 +629,22 @@ IPC_MESSAGE_ROUTED0(FrameMsg_ClearFocus)
+@@ -634,24 +632,22 @@ IPC_MESSAGE_ROUTED0(FrameMsg_ClearFocus)
  // Send to the RenderFrame to set text tracks state and style settings.
  // Sent for top-level frames.
  IPC_MESSAGE_ROUTED1(FrameMsg_SetTextTrackSettings,
@@ -261,7 +261,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -1182,21 +1178,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Seriali
+@@ -1185,21 +1181,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Seriali
                      GURL /* frame URL */,
                      std::string /* data buffer */,
                      int32 /* complete status */)
@@ -357,7 +357,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1039,23 +1039,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -1036,23 +1036,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -381,7 +381,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1130,19 +1128,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1127,19 +1125,18 @@ bool RenderFrameImpl::OnMessageReceived(
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
                          OnTextTrackSettingsChanged)
      IPC_MESSAGE_HANDLER(FrameMsg_PostMessageEvent, OnPostMessageEvent)
@@ -402,7 +402,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1770,31 +1767,29 @@ void RenderFrameImpl::OnPostMessageEvent
+@@ -1767,31 +1764,29 @@ void RenderFrameImpl::OnPostMessageEvent
    WebDOMMessageEvent msg_event(serialized_script_value,
                                 params.source_origin,
                                 source_frame,
@@ -434,7 +434,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2146,17 +2141,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2149,17 +2144,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -456,7 +456,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
 diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_frame_impl.h
 --- a/content/renderer/render_frame_impl.h
 +++ b/content/renderer/render_frame_impl.h
-@@ -315,19 +315,17 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -319,19 +319,17 @@ class CONTENT_EXPORT RenderFrameImpl
                                 const gfx::Range& replacement_range,
                                 bool keep_selection);
  #endif  // defined(ENABLE_PLUGINS)
@@ -476,7 +476,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -709,20 +707,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -712,20 +710,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnSetAccessibilityMode(AccessibilityMode new_mode);
    void OnSnapshotAccessibilityTree(int callback_id);
    void OnUpdateOpener(int opener_routing_id);
@@ -498,7 +498,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -1052,20 +1049,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -1055,20 +1052,18 @@ class CONTENT_EXPORT RenderFrameImpl
  
    scoped_ptr<blink::WebUSBClient> usb_client_;
  
@@ -522,10 +522,10 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -548,20 +548,18 @@ RenderThreadImpl::RenderThreadImpl(
+@@ -554,20 +554,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
-   TRACE_EVENT_BEGIN_ETW("RenderThreadImpl::Init", 0, "");
+   TRACE_EVENT0("startup", "RenderThreadImpl::Init");
  
    base::trace_event::TraceLog::GetInstance()->SetThreadSortIndex(
        base::PlatformThread::CurrentId(),
@@ -573,7 +573,7 @@ diff --git a/content/renderer/render_widget.cc b/content/renderer/render_widget.
 diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
 --- a/content/renderer/render_widget.h
 +++ b/content/renderer/render_widget.h
-@@ -399,20 +399,18 @@ class CONTENT_EXPORT RenderWidget
+@@ -398,20 +398,18 @@ class CONTENT_EXPORT RenderWidget
                bool is_fullscreen_granted,
                blink::WebDisplayMode display_mode,
                ResizeAck resize_ack);

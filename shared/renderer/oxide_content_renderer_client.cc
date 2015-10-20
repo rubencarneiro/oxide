@@ -100,6 +100,9 @@ void ContentRendererClient::RenderViewCreated(
   blink::WebSettings* settings = render_view->GetWebView()->settings();
   settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
 
+  // Remove this when we implement a selection API (see bug #1324292)
+  settings->setTouchEditingEnabled(false);
+
   if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
       GetFormFactorHint() == FORM_FACTOR_PHONE) {
     settings->setAllowCustomScrollbarInMainFrame(false);
@@ -107,12 +110,6 @@ void ContentRendererClient::RenderViewCreated(
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
     settings->setUseMobileViewportStyle(true);
-
-    // XXX(chrisccoulson): This should be set when the layout viewport provides
-    // scrollbars (desktop), but basing this on the form-factor may not be the
-    // right way. It looks like blink hides the layout scrollbars when viewport
-    // meta is enabled
-    settings->setHidePinchScrollbarsNearMinScale(false);
   }
 }
 

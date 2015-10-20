@@ -47,7 +47,7 @@ diff --git a/ui/gfx/gfx.gyp b/ui/gfx/gfx.gyp
      {
        'target_name': 'gfx',
        'type': '<(component)',
-@@ -404,17 +406,17 @@
+@@ -425,17 +427,17 @@
              'render_text.cc',
              'render_text.h',
              'render_text_harfbuzz.cc',
@@ -141,7 +141,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
          'gl_switches.h',
          'gl_version_info.cc',
          'gl_version_info.h',
-@@ -118,16 +119,19 @@
+@@ -120,16 +121,19 @@
          'scoped_binders.cc',
          'scoped_binders.h',
          'scoped_make_current.cc',
@@ -161,7 +161,7 @@ diff --git a/ui/gl/gl.gyp b/ui/gl/gl.gyp
              'egl_util.h',
              'gl_bindings_autogen_egl.cc',
              'gl_bindings_autogen_egl.h',
-@@ -147,28 +151,28 @@
+@@ -149,28 +153,28 @@
          ],
          }],
          ['OS in ("android", "linux")', {
@@ -255,7 +255,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  #undef Bool
  #undef None
  #undef Status
-@@ -336,16 +336,19 @@ typedef uint64 EGLuint64CHROMIUM;
+@@ -333,16 +333,19 @@ typedef uint64 EGLuint64CHROMIUM;
  #if defined(OS_WIN)
  #include "gl_bindings_autogen_egl.h"
  #include "gl_bindings_autogen_wgl.h"
@@ -275,7 +275,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
  struct GL_EXPORT DriverGL {
    void InitializeStaticBindings();
-@@ -408,17 +411,17 @@ struct GL_EXPORT DriverEGL {
+@@ -405,17 +408,17 @@ struct GL_EXPORT DriverEGL {
    ProcsEGL debug_fn;
    ExtensionsEGL ext;
  
@@ -294,7 +294,7 @@ diff --git a/ui/gl/gl_bindings.h b/ui/gl/gl_bindings.h
  
    ProcsGLX fn;
    ProcsGLX debug_fn;
-@@ -451,16 +454,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
+@@ -448,16 +451,23 @@ GL_EXPORT extern GLXApi* g_current_glx_c
  GL_EXPORT extern DriverEGL g_driver_egl;
  GL_EXPORT extern DriverGLX g_driver_glx;
  
@@ -360,10 +360,10 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  namespace {
  
  Display* g_display = nullptr;
- const char* g_glx_extensions = nullptr;
  bool g_glx_context_create = false;
  bool g_glx_create_context_robustness_supported = false;
-@@ -326,17 +328,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
+ bool g_glx_texture_from_pixmap_supported = false;
+@@ -325,17 +327,17 @@ bool GLSurfaceGLX::InitializeOneOff() {
      return true;
  
    // http://crbug.com/245466
@@ -382,7 +382,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
  
    int major, minor;
    if (!glXQueryVersion(g_display, &major, &minor)) {
-@@ -454,16 +456,17 @@ void* GLSurfaceGLX::GetConfig(gfx::Accel
+@@ -452,16 +454,17 @@ void* GLSurfaceGLX::GetConfig(gfx::Accel
      }
    }
    if (found) {
@@ -400,7 +400,7 @@ diff --git a/ui/gl/gl_surface_glx.cc b/ui/gl/gl_surface_glx.cc
    return window_;
  }
  
-@@ -578,16 +581,17 @@ gfx::SwapResult NativeViewGLSurfaceGLX::
+@@ -576,16 +579,17 @@ gfx::SwapResult NativeViewGLSurfaceGLX::
  
  VSyncProvider* NativeViewGLSurfaceGLX::GetVSyncProvider() {
    return vsync_provider_.get();

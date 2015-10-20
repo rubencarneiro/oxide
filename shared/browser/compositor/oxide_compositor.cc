@@ -224,8 +224,6 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_->SetVisible(true);
     layer_tree_host_->SetViewportSize(size_);
     layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
-
-    layer_tree_host_->SetLayerTreeHostClientReady();
   }
 }
 

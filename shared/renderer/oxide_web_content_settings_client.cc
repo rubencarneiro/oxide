@@ -115,7 +115,7 @@ WebContentSettingsClient::WebContentSettingsClient(
   // XXX: This probably doesn't work for out of process frames
   content::RenderFrame* main_frame =
       render_frame->GetRenderView()->GetMainRenderFrame();
-  if (main_frame != render_frame) {
+  if (main_frame && main_frame != render_frame) {
     WebContentSettingsClient* main_client =
         WebContentSettingsClient::Get(main_frame);
     can_display_insecure_content_ = main_client->can_display_insecure_content_;

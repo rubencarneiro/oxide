@@ -149,7 +149,7 @@ bool NetworkDelegate::OnCanEnablePrivacyMode(
   return !(cookie_read_allowed && cookie_write_allowed);
 }
 
-bool NetworkDelegate::OnFirstPartyOnlyCookieExperimentEnabled() const {
+bool NetworkDelegate::OnAreExperimentalCookieFeaturesEnabled() const {
   return false;
 }
 

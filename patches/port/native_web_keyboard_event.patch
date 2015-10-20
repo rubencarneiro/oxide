@@ -5,7 +5,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1248,17 +1248,17 @@
+@@ -1284,17 +1284,17 @@
        'browser/renderer_host/media/video_capture_gpu_jpeg_decoder.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
@@ -24,7 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-@@ -1728,16 +1728,28 @@
+@@ -1782,16 +1782,28 @@
        'public/browser/plugin_service.h',
      ],
    },
@@ -45,14 +45,14 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 +        '<(DEPTH)/../../../qt/build/system.gyp:Qt5Core',
 +      ],
 +    }],
-     ['OS == "win"', {
-       'dependencies': [
-         '../third_party/power_gadget/power_gadget.gyp:power_gadget',
-       ],
+     ['OS != "win"', {
        'sources': [
-         'browser/power_profiler/power_data_provider_ia_win.cc',
-         'browser/power_profiler/power_data_provider_ia_win.h',
+         'browser/file_descriptor_info_impl.cc',
+         'browser/file_descriptor_info_impl.h',
        ]
+     }],
+     ['OS!="win" and OS!="mac" and OS!="android" and (OS!="linux" or use_udev==0)', {
+       'sources': [
 diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public/browser/native_web_keyboard_event.h
 --- a/content/public/browser/native_web_keyboard_event.h
 +++ b/content/public/browser/native_web_keyboard_event.h
@@ -81,7 +81,7 @@ diff --git a/content/public/browser/native_web_keyboard_event.h b/content/public
  
  // Owns a platform specific event; used to pass own and pass event through
  // platform independent code.
-@@ -52,17 +60,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
+@@ -54,17 +62,21 @@ struct CONTENT_EXPORT NativeWebKeyboardE
  #endif
  #endif
  
