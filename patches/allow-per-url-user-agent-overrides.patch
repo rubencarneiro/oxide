@@ -69,7 +69,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
  blink::WebString RenderFrameImpl::userAgentOverride(
 -    blink::WebLocalFrame* frame) {
 +    blink::WebLocalFrame* frame,
-+    const WebURL& url) {
++    const blink::WebURL& url) {
    DCHECK(!frame_ || frame_ == frame);
 +  std::string user_agent_override_for_url =
 +      GetContentClient()->renderer()->GetUserAgentOverrideForURL(
@@ -99,7 +99,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
        blink::WebDOMMessageEvent event) override;
 -  blink::WebString userAgentOverride(blink::WebLocalFrame* frame) override;
 +  blink::WebString userAgentOverride(blink::WebLocalFrame* frame,
-+                                     const WebURL& url) override;
++                                     const blink::WebURL& url) override;
    blink::WebString doNotTrackValue(blink::WebLocalFrame* frame) override;
    bool allowWebGL(blink::WebLocalFrame* frame, bool default_value) override;
    void didLoseWebGLContext(blink::WebLocalFrame* frame,
@@ -108,6 +108,28 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool isControlledByServiceWorker(blink::WebDataSource& data_source) override;
    int64_t serviceWorkerID(blink::WebDataSource& data_source) override;
    void postAccessibilityEvent(const blink::WebAXObject& obj,
+diff --git a/third_party/WebKit/Source/core/loader/EmptyClients.h b/third_party/WebKit/Source/core/loader/EmptyClients.h
+--- a/third_party/WebKit/Source/core/loader/EmptyClients.h
++++ b/third_party/WebKit/Source/core/loader/EmptyClients.h
+@@ -215,17 +215,17 @@ public:
+     void didStartLoading(LoadStartType) override {}
+     void progressEstimateChanged(double) override {}
+     void didStopLoading() override {}
+ 
+     void loadURLExternally(const ResourceRequest&, NavigationPolicy, const String& = String()) override {}
+ 
+     PassRefPtrWillBeRawPtr<DocumentLoader> createDocumentLoader(LocalFrame*, const ResourceRequest&, const SubstituteData&) override;
+ 
+-    String userAgent() override { return ""; }
++    String userAgent(const KURL&) override { return ""; }
+ 
+     String doNotTrackValue() override { return String(); }
+ 
+     void transitionToCommittedForNewPage() override {}
+ 
+     bool navigateBackForward(int offset) const override { return false; }
+     void didDisplayInsecureContent() override {}
+     void didRunInsecureContent(SecurityOrigin*, const KURL&) override {}
 diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.cpp b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
 --- a/third_party/WebKit/Source/core/loader/FrameLoader.cpp
 +++ b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
