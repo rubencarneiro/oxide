@@ -17,6 +17,8 @@
 
 #include "oxide_web_frame_tree.h"
 
+#include <queue>
+
 #include "base/logging.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
@@ -132,6 +134,28 @@ void WebFrameTree::DidCommitProvisionalLoadForFrame(
 WebFrameTree::~WebFrameTree() {
   FOR_EACH_OBSERVER(
       WebFrameTreeObserver, observers_, OnFrameTreeDestruction());
+}
+
+void WebFrameTree::ForEachFrame(const ForEachFrameCallback& callback) {
+  if (!root_frame_.get()) {
+    return;
+  }
+
+  std::queue<WebFrame*> queue;
+  queue.push(root_frame_.get());
+
+  while (!queue.empty()) {
+    WebFrame* frame = queue.front();
+    queue.pop();
+
+    if (!callback.Run(frame)) {
+      return;
+    }
+
+    for (auto child : frame->GetChildFrames()) {
+      queue.push(child);
+    }
+  }
 }
 
 } // namespace oxide

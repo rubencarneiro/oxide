@@ -1,0 +1,95 @@
+# HG changeset patch
+# Parent b20dc123607beb5afe049e91fd961ebed264640f
+# User oxide
+
+diff --git a/third_party/WebKit/Source/core/editing/SelectionController.cpp b/third_party/WebKit/Source/core/editing/SelectionController.cpp
+--- a/third_party/WebKit/Source/core/editing/SelectionController.cpp
++++ b/third_party/WebKit/Source/core/editing/SelectionController.cpp
+@@ -565,16 +565,20 @@ bool SelectionController::handlePasteGlo
+ }
+ 
+ template <typename Strategy>
+ bool SelectionController::handleGestureLongPressAlgorithm(const PlatformGestureEvent& gestureEvent, const HitTestResult& hitTestResult)
+ {
+     if (hitTestResult.isLiveLink())
+         return false;
+ 
++    bool shouldLongPressSelectWord = m_frame->settings() && m_frame->settings()->touchEditingEnabled();
++    if (!shouldLongPressSelectWord)
++        return false;
++
+     Node* innerNode = hitTestResult.innerNode();
+ #if OS(ANDROID)
+     bool innerNodeIsSelectable = innerNode && (innerNode->isContentEditable() || innerNode->isTextNode() || innerNode->canStartSelection());
+ #else
+     bool innerNodeIsSelectable = innerNode && (innerNode->isContentEditable() || innerNode->isTextNode());
+ #endif
+     if (!innerNodeIsSelectable)
+         return false;
+diff --git a/third_party/WebKit/Source/web/WebSettingsImpl.cpp b/third_party/WebKit/Source/web/WebSettingsImpl.cpp
+--- a/third_party/WebKit/Source/web/WebSettingsImpl.cpp
++++ b/third_party/WebKit/Source/web/WebSettingsImpl.cpp
+@@ -469,16 +469,21 @@ void WebSettingsImpl::setThreadedScrolli
+     m_settings->setThreadedScrollingEnabled(enabled);
+ }
+ 
+ void WebSettingsImpl::setTouchDragDropEnabled(bool enabled)
+ {
+     m_settings->setTouchDragDropEnabled(enabled);
+ }
+ 
++void WebSettingsImpl::setTouchEditingEnabled(bool enabled)
++{
++    m_settings->setTouchEditingEnabled(enabled);
++}
++
+ void WebSettingsImpl::setOfflineWebApplicationCacheEnabled(bool enabled)
+ {
+     m_settings->setOfflineWebApplicationCacheEnabled(enabled);
+ }
+ 
+ void WebSettingsImpl::setWebAudioEnabled(bool enabled)
+ {
+     m_settings->setWebAudioEnabled(enabled);
+diff --git a/third_party/WebKit/Source/web/WebSettingsImpl.h b/third_party/WebKit/Source/web/WebSettingsImpl.h
+--- a/third_party/WebKit/Source/web/WebSettingsImpl.h
++++ b/third_party/WebKit/Source/web/WebSettingsImpl.h
+@@ -165,16 +165,17 @@ public:
+     void setTextTrackFontFamily(const WebString&) override;
+     void setTextTrackFontStyle(const WebString&) override;
+     void setTextTrackFontVariant(const WebString&) override;
+     void setTextTrackTextColor(const WebString&) override;
+     void setTextTrackTextShadow(const WebString&) override;
+     void setTextTrackTextSize(const WebString&) override;
+     void setThreadedScrollingEnabled(bool) override;
+     void setTouchDragDropEnabled(bool) override;
++    void setTouchEditingEnabled(bool) override;
+     void setUnifiedTextCheckerEnabled(bool) override;
+     void setUnsafePluginPastingEnabled(bool) override;
+     void setUsesEncodingDetector(bool) override;
+     void setUseLegacyBackgroundSizeShorthandBehavior(bool) override;
+     void setUseMobileViewportStyle(bool) override;
+     void setUseSolidColorScrollbars(bool) override;
+     void setUseWideViewport(bool) override;
+     void setV8CacheOptions(V8CacheOptions) override;
+diff --git a/third_party/WebKit/public/web/WebSettings.h b/third_party/WebKit/public/web/WebSettings.h
+--- a/third_party/WebKit/public/web/WebSettings.h
++++ b/third_party/WebKit/public/web/WebSettings.h
+@@ -248,16 +248,17 @@ public:
+     virtual void setTextTrackFontFamily(const WebString&) = 0;
+     virtual void setTextTrackFontStyle(const WebString&) = 0;
+     virtual void setTextTrackFontVariant(const WebString&) = 0;
+     virtual void setTextTrackTextColor(const WebString&) = 0;
+     virtual void setTextTrackTextShadow(const WebString&) = 0;
+     virtual void setTextTrackTextSize(const WebString&) = 0;
+     virtual void setThreadedScrollingEnabled(bool) = 0;
+     virtual void setTouchDragDropEnabled(bool) = 0;
++    virtual void setTouchEditingEnabled(bool) = 0;
+     virtual void setUnifiedTextCheckerEnabled(bool) = 0;
+     virtual void setUnsafePluginPastingEnabled(bool) = 0;
+     virtual void setUseLegacyBackgroundSizeShorthandBehavior(bool) = 0;
+     virtual void setUseMobileViewportStyle(bool) = 0;
+     virtual void setUseSolidColorScrollbars(bool) = 0;
+     virtual void setUseWideViewport(bool) = 0;
+     virtual void setUsesEncodingDetector(bool) = 0;
+     virtual void setV8CacheOptions(V8CacheOptions) = 0;

@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_H_
 #define _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_H_
 
+#include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
@@ -36,6 +37,9 @@ class WebFrameTree : public content::WebContentsUserData<WebFrameTree>,
   ~WebFrameTree() override;
 
   WebFrame* root_frame() const { return root_frame_.get(); }
+
+  typedef base::Callback<bool(WebFrame*)> ForEachFrameCallback;
+  void ForEachFrame(const ForEachFrameCallback& callback);
 
  private:
   friend class content::WebContentsUserData<WebFrameTree>;

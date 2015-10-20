@@ -236,6 +236,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual WebProcessStatus webProcessStatus() const = 0;
 
   virtual void executeEditingCommand(EditingCommands command) const = 0;
+
+  virtual void teardownFrameTree() = 0;
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);

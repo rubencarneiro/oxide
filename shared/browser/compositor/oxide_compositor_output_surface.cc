@@ -39,6 +39,7 @@ void CompositorOutputSurface::DetachFromClient() {
   DCHECK(CalledOnValidThread());
   proxy_->SetOutputSurface(nullptr);
   cc::OutputSurface::DetachFromClient();
+  DetachFromThread();
 }
 
 CompositorOutputSurface::CompositorOutputSurface(
@@ -71,9 +72,7 @@ void CompositorOutputSurface::DoSwapBuffers(CompositorFrameData* frame) {
   client_->DidSwapBuffers();
 }
 
-CompositorOutputSurface::~CompositorOutputSurface() {
-  proxy_->SetOutputSurface(nullptr);
-}
+CompositorOutputSurface::~CompositorOutputSurface() {}
 
 void CompositorOutputSurface::DidSwapBuffers() {
   DCHECK(CalledOnValidThread());

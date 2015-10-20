@@ -1,13 +1,13 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -206,13 +206,21 @@ std::string ContentRendererClient::GetUs
-   return std::string();
- }
- 
- scoped_ptr<blink::WebAppBannerClient>
+@@ -220,9 +220,17 @@ scoped_ptr<blink::WebAppBannerClient>
  ContentRendererClient::CreateAppBannerClient(RenderFrame* render_frame) {
    return nullptr;
+ }
+ 
+ bool ContentRendererClient::ShouldEnforceWebRTCRoutingPreferences() {
+   return true;
  }
  
 +blink::WebMediaPlayer* ContentRendererClient::OverrideWebMediaPlayer(
@@ -18,15 +18,11 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 +  return nullptr;
 +}
 +
- bool ContentRendererClient::ShouldEnforceWebRTCRoutingPreferences() {
-   return true;
- }
- 
  }  // namespace content
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -30,16 +30,18 @@ class SingleThreadTaskRunner;
+@@ -32,16 +32,18 @@ class SingleThreadTaskRunner;
  namespace blink {
  class WebAppBannerClient;
  class WebAudioDevice;
@@ -45,7 +41,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
  class WebSpeechSynthesizer;
-@@ -51,16 +53,17 @@ class WebWorkerContentSettingsClientProx
+@@ -53,16 +55,17 @@ class WebWorkerContentSettingsClientProx
  struct WebPluginParams;
  struct WebURLError;
  }
@@ -63,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -303,13 +306,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -318,13 +321,20 @@ class CONTENT_EXPORT ContentRendererClie
    // is called from the worker thread.
    virtual void WillDestroyServiceWorkerContextOnWorkerThread(
        v8::Local<v8::Context> context,
@@ -87,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2079,16 +2079,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2087,16 +2087,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
  #else
    scoped_refptr<media::AudioRendererSink> audio_renderer_sink =
        render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_);

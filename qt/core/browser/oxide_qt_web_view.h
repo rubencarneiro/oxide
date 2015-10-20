@@ -295,6 +295,8 @@ class WebView : public QObject,
 
   void executeEditingCommand(EditingCommands command) const override;
 
+  void teardownFrameTree() override;
+
   scoped_ptr<oxide::WebView> view_;
 
   WebViewProxyClient* client_;
@@ -307,6 +309,8 @@ class WebView : public QObject,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
+
+  bool frame_tree_torn_down_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };
