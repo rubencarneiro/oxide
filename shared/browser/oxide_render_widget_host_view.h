@@ -80,6 +80,8 @@ class RenderWidgetHostView final :
     return compositor_frame_metadata_;
   }
 
+  const content::WebCursor& current_cursor() const { return current_cursor_; }
+
   void HandleTouchEvent(const ui::MotionEvent& event);
   void ResetGestureDetection();
 
@@ -170,7 +172,7 @@ class RenderWidgetHostView final :
 
   // ===================
 
-  void UpdateCursorOnWebView();
+  void UpdateCurrentCursor();
 
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32 surface_id);
@@ -201,6 +203,7 @@ class RenderWidgetHostView final :
   ImeBridgeImpl ime_bridge_;
 
   bool is_loading_;
+  content::WebCursor web_cursor_;
   content::WebCursor current_cursor_;
 
   bool is_showing_;

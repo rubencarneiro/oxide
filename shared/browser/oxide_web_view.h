@@ -76,7 +76,6 @@ class RenderViewHost;
 class RenderWidgetHostImpl;
 class WebContents;
 class WebContentsImpl;
-class WebCursor;
 
 } // namespace content
 
@@ -356,7 +355,7 @@ class WebView : public ScriptMessageTarget,
   Compositor* GetCompositor() const final;
   void AttachLayer(scoped_refptr<cc::Layer> layer) final;
   void DetachLayer(scoped_refptr<cc::Layer> layer) final;
-  void UpdateCursor(const content::WebCursor& cursor) final;
+  void CursorChanged() final;
   bool HasFocus(const RenderWidgetHostView* view) const final;
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
                        const content::ContextMenuParams& params) final;

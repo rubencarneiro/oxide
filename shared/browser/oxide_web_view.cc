@@ -441,8 +441,13 @@ void WebView::DetachLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  client_->UpdateCursor(cursor);
+void WebView::CursorChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  client_->UpdateCursor(rwhv->current_cursor());
 }
 
 bool WebView::HasFocus(const RenderWidgetHostView* view) const {

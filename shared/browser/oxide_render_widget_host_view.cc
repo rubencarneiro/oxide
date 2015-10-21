@@ -281,12 +281,17 @@ void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
-  if (cursor.IsEqual(current_cursor_)) {
+  if (cursor.IsEqual(web_cursor_)) {
     return;
   }
 
-  current_cursor_ = cursor;
-  UpdateCursorOnWebView();
+  web_cursor_ = cursor;
+
+  if (is_loading_) {
+    return;
+  }
+
+  UpdateCurrentCursor();
 }
 
 void RenderWidgetHostView::SetIsLoading(bool is_loading) {
@@ -295,7 +300,7 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   }
 
   is_loading_ = is_loading;
-  UpdateCursorOnWebView();
+  UpdateCurrentCursor();
 }
 
 void RenderWidgetHostView::ImeCancelComposition() {
@@ -523,19 +528,20 @@ void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   }
 }
 
-void RenderWidgetHostView::UpdateCursorOnWebView() {
+void RenderWidgetHostView::UpdateCurrentCursor() {
+  if (is_loading_) {
+    content::WebCursor::CursorInfo busy_cursor_info(
+        blink::WebCursorInfo::TypeWait);
+    current_cursor_ = content::WebCursor(busy_cursor_info);
+  } else {
+    current_cursor_ = web_cursor_;
+  }
+
   if (!container_) {
     return;
   }
 
-  if (is_loading_) {
-    content::WebCursor::CursorInfo busy_cursor_info(
-        blink::WebCursorInfo::TypeWait);
-    content::WebCursor busy_cursor(busy_cursor_info);
-    container_->UpdateCursor(busy_cursor);
-  } else {
-    container_->UpdateCursor(current_cursor_);
-  }
+  container_->CursorChanged();
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
@@ -648,8 +654,6 @@ void RenderWidgetHostView::SetContainer(
     } else {
       Hide();
     }
-
-    UpdateCursorOnWebView();
   } else if (host_) {
     Hide();
   }

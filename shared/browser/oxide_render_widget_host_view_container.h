@@ -33,7 +33,6 @@ class Layer;
 namespace content {
 struct ContextMenuParams;
 class RenderFrameHost;
-class WebCursor;
 }
 
 namespace gfx {
@@ -55,7 +54,7 @@ class RenderWidgetHostViewContainer {
 
   virtual void DetachLayer(scoped_refptr<cc::Layer> layer) = 0;
 
-  virtual void UpdateCursor(const content::WebCursor& cursor) = 0;
+  virtual void CursorChanged() = 0;
 
   virtual gfx::Size GetViewSizePix() const = 0;
 
