@@ -173,8 +173,6 @@ class WebViewClient : public ScriptMessageTarget {
   // TODO(chrisccoulson): Get rid of |old| and add |changed_flags|
   virtual void SecurityStatusChanged(const SecurityStatus& old);
 
-  virtual void OnCertificateError(scoped_ptr<CertificateError> error);
-
   // TODO(chrisccoulson): Rename to BlockedContentChanged or something
   // TODO(chrisccoulson): Move content tracking to a separate class with its
   //    own delegate, as this is going to be expanded with content settings

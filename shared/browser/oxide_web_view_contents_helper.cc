@@ -111,7 +111,13 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 // static
 WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
-  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+  content::WebContents* contents =
+      content::WebContents::FromRenderViewHost(rvh);
+  if (!contents) {
+    return nullptr;
+  }
+
+  return FromWebContents(contents);
 }
 
 content::WebContents* WebViewContentsHelper::GetWebContents() const {

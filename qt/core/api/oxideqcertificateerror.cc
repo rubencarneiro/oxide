@@ -27,8 +27,8 @@
 #include "base/macros.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_security_types.h"
+#include "shared/browser/ssl/oxide_certificate_error.h"
 
 #include "oxideqsslcertificate_p.h"
 
@@ -58,7 +58,7 @@ void OxideQCertificateErrorPrivate::respond(bool accept) {
     return;
   }
 
-  if (error_->is_cancelled()) {
+  if (error_->IsCancelled()) {
     qWarning() << "Cannot respond to a CertificateError that has been cancelled";
     return;
   }
@@ -138,7 +138,7 @@ QUrl OxideQCertificateError::url() const {
 bool OxideQCertificateError::isCancelled() const {
   Q_D(const OxideQCertificateError);
 
-  return d->error_->is_cancelled();
+  return d->error_->IsCancelled();
 }
 
 bool OxideQCertificateError::isMainFrame() const {

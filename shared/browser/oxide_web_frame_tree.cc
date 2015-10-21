@@ -83,6 +83,12 @@ void WebFrameTree::RenderFrameHostChanged(
     return;
   }
 
+  if (!content::WebContents::FromRenderFrameHost(old_host)) {
+    // This is from an interstitial
+    // XXX(chrisccoulson): Is there a better way to detect this?
+    return;
+  }
+
   WebFrame* frame = WebFrame::FromRenderFrameHost(old_host);
   DCHECK(frame);
 

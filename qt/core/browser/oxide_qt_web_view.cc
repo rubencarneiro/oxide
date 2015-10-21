@@ -81,6 +81,8 @@
 #include "shared/browser/oxide_web_view.h"
 #include "shared/browser/permissions/oxide_permission_request.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
+#include "shared/browser/ssl/oxide_certificate_error.h"
+#include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_file_picker.h"
@@ -408,6 +410,8 @@ float WebView::GetDeviceScaleFactor() const {
 void WebView::CommonInit(OxideQFindController* find_controller) {
   content::WebContents* contents = view_->GetWebContents();
 
+  oxide::CertificateErrorDispatcher::FromWebContents(
+      contents)->set_client(this);
   oxide::PermissionRequestDispatcher::FromWebContents(
       contents)->set_client(this);
   OxideQSecurityStatusPrivate::get(security_status_)->view = this;
@@ -854,14 +858,6 @@ void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
   OxideQSecurityStatusPrivate::get(security_status_)->Update(old);
 }
 
-void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
-  scoped_ptr<OxideQCertificateError> qerror(
-      OxideQCertificateErrorPrivate::Create(error.Pass()));
-
-  // Embedder takes ownership of qerror
-  client_->CertificateError(qerror.release());
-}
-
 void WebView::ContentBlocked() {
   client_->ContentBlocked();
 }
@@ -950,6 +946,14 @@ void WebView::FrameDeleted(oxide::WebFrame* frame) {
 void WebView::LoadCommittedInFrame(oxide::WebFrame* frame) {
   WebFrame* f = WebFrame::FromSharedWebFrame(frame);
   f->client()->LoadCommitted();
+}
+
+void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
+  scoped_ptr<OxideQCertificateError> qerror(
+      OxideQCertificateErrorPrivate::Create(error.Pass()));
+
+  // Embedder takes ownership of qerror
+  client_->CertificateError(qerror.release());
 }
 
 QUrl WebView::url() const {
@@ -1428,12 +1432,15 @@ WebView* WebView::CreateFromNewViewRequest(
 }
 
 WebView::~WebView() {
+  content::WebContents* contents = view_->GetWebContents();
+  oxide::CertificateErrorDispatcher::FromWebContents(
+      contents)->set_client(nullptr);
   DCHECK(frame_tree_torn_down_);
 
   input_method_context_->DetachClient();
 
   oxide::PermissionRequestDispatcher::FromWebContents(
-      view_->GetWebContents())->set_client(nullptr);
+      contents)->set_client(nullptr);
 }
 
 // static
