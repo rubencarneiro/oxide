@@ -1106,6 +1106,11 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
     InitializeTopControlsForHost(rvh, true);
   }
 
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+  }
+
   // Sync WebContents with the state of the WebView
   WasResized();
   ScreenUpdated();
