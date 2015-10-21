@@ -608,10 +608,9 @@ void RenderWidgetHostView::DetachLayer() {
 }
 
 RenderWidgetHostView::RenderWidgetHostView(
-    content::RenderWidgetHost* host,
-    RenderWidgetHostViewContainer* container)
+    content::RenderWidgetHost* host)
     : host_(content::RenderWidgetHostImpl::From(host)),
-      container_(container),
+      container_(nullptr),
       resource_collection_(new cc::DelegatedFrameResourceCollection()),
       last_output_surface_id_(0),
       frame_is_evicted_(true),
@@ -626,10 +625,6 @@ RenderWidgetHostView::RenderWidgetHostView(
   host_->SetView(this);
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
-
-  if (container) {
-    CompositorObserver::Observe(container->GetCompositor());
-  }
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {

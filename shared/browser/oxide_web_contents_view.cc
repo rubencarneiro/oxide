@@ -64,12 +64,6 @@ WebContentsView* WebContentsView::FromWebContents(
 
 void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
   container_ = container;
-  RenderWidgetHostView* rwhv =
-      static_cast<RenderWidgetHostView*>(
-        web_contents_->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->SetContainer(container);
-  }
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -138,7 +132,7 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host,
     bool is_guest_view_hack) {
-  return new RenderWidgetHostView(render_widget_host, container_);
+  return new RenderWidgetHostView(render_widget_host);
 }
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(

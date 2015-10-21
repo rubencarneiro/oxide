@@ -1118,6 +1118,7 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
+    rwhv->SetContainer(this);
     rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
   }
 
@@ -1146,6 +1147,7 @@ WebView::~WebView() {
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
+    rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
