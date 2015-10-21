@@ -110,9 +110,6 @@ void CertificateErrorDispatcher::AllowCertificateError(
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  DCHECK_IMPLIES(overridable,
-                 resource_type == content::RESOURCE_TYPE_MAIN_FRAME) <<
-      "Only errors for the main frame can be overridable";
   DCHECK_IMPLIES(strict_enforcement, !overridable);
 
   // Note, CANCEL will stop the resource load associated with the error, and
