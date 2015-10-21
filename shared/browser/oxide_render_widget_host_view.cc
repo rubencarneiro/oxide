@@ -650,20 +650,12 @@ void RenderWidgetHostView::SetContainer(
   CompositorObserver::Observe(
       container_ ? container_->GetCompositor() : nullptr);
 
-  if (container_) {
-    DCHECK(host_) <<
-        "Shouldn't be attaching to a delegate when we're already destroyed";
-    host_->SendScreenRects();
-    host_->WasResized();
-
-    if (container_->IsVisible()) {
-      Show();
-    } else {
-      Hide();
-    }
-  } else if (host_) {
-    Hide();
+  if (!host_) {
+    return;
   }
+
+  host_->SendScreenRects();
+  host_->WasResized();
 }
 
 void RenderWidgetHostView::Blur() {
