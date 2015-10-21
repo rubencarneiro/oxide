@@ -66,7 +66,6 @@ class SolidColorLayer;
 
 namespace content {
 
-class InterstitialPage;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
@@ -498,7 +497,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 
-  content::InterstitialPage* interstitial_page_;
+  RenderWidgetHostView* interstitial_rwhv_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

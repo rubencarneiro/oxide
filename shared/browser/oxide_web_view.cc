@@ -210,7 +210,7 @@ WebView::WebView(WebViewClient* client)
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
-      interstitial_page_(nullptr),
+      interstitial_rwhv_(nullptr),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
@@ -1008,25 +1008,25 @@ void WebView::NavigationEntryCommitted(
 }
 
 void WebView::DidAttachInterstitialPage() {
-  CHECK(!interstitial_page_);
-  interstitial_page_ = web_contents_->GetInterstitialPage();
-  DCHECK(interstitial_page_);
+  CHECK(!interstitial_rwhv_);
+  interstitial_rwhv_ = static_cast<RenderWidgetHostView*>(
+      web_contents_
+      ->GetInterstitialPage()
+      ->GetMainFrame()
+      ->GetRenderViewHost()
+      ->GetView());
+  DCHECK(interstitial_rwhv_);
 
-  static_cast<RenderWidgetHostView*>(
-      interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
-      ->SetContainer(this);
+  interstitial_rwhv_->SetContainer(this);
 }
 
 void WebView::DidDetachInterstitialPage() {
-  if (!interstitial_page_) {
+  if (!interstitial_rwhv_) {
     return;
   }
 
-  static_cast<RenderWidgetHostView*>(
-      interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
-      ->SetContainer(nullptr);
-
-  interstitial_page_ = nullptr;
+  interstitial_rwhv_->SetContainer(nullptr);
+  interstitial_rwhv_ = nullptr;
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1143,11 +1143,9 @@ WebView::~WebView() {
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (interstitial_page_) {
-    static_cast<RenderWidgetHostView*>(
-        interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
-        ->SetContainer(nullptr);
-    interstitial_page_ = nullptr;
+  if (interstitial_rwhv_) {
+    interstitial_rwhv_->SetContainer(nullptr);
+    interstitial_rwhv_ = nullptr;
   }
 
   // Stop WebContents from calling back in to us
