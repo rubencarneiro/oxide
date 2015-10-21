@@ -69,6 +69,7 @@ class SolidColorLayer;
 
 namespace content {
 
+class InterstitialPage;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
@@ -441,6 +442,15 @@ class WebView : public ScriptMessageTarget,
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) final;
+  void DidStartLoading() final;
+  void DidStopLoading() final;
+  void DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                     const GURL& validated_url) final;
+  void DidFailLoad(content::RenderFrameHost* render_frame_host,
+                   const GURL& validated_url,
+                   int error_code,
+                   const base::string16& error_description,
+                   bool was_ignored_by_handler) final;
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
@@ -463,21 +473,14 @@ class WebView : public ScriptMessageTarget,
       content::RenderFrameHost* render_frame_host,
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) final;
-  void DidFinishLoad(content::RenderFrameHost* render_frame_host,
-                     const GURL& validated_url) final;
-  void DidFailLoad(content::RenderFrameHost* render_frame_host,
-                   const GURL& validated_url,
-                   int error_code,
-                   const base::string16& error_description,
-                   bool was_ignored_by_handler) final;
   void DidGetRedirectForResourceRequest(
       content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) final;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
-  void DidStartLoading() final;
-  void DidStopLoading() final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
+  void DidAttachInterstitialPage() final;
+  void DidDetachInterstitialPage() final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
 
@@ -520,6 +523,8 @@ class WebView : public ScriptMessageTarget,
   int location_bar_height_pix_;
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
+
+  content::InterstitialPage* interstitial_page_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 
