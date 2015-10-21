@@ -23,10 +23,6 @@ namespace oxide {
 
 WebViewClient::~WebViewClient() {}
 
-bool WebViewClient::IsInputPanelVisible() const {
-  return false;
-}
-
 JavaScriptDialog* WebViewClient::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type) {
   return nullptr;

@@ -70,9 +70,6 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual bool HasFocus() const = 0;
 
-  // XXX(chrisccoulson): This is global state, so it doesn't belong here
-  virtual bool IsInputPanelVisible() const;
-
   // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
   virtual JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type);
