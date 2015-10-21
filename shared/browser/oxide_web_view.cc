@@ -214,6 +214,8 @@ WebView::WebView(WebViewClient* client)
   root_layer_->SetBackgroundColor(SK_ColorWHITE);
 
   compositor_->SetRootLayer(root_layer_);
+
+  InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
 void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
