@@ -33,12 +33,10 @@
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
-#include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
@@ -63,7 +61,6 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
-#include "ui/gfx/range/range.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
 #include "url/gurl.h"
@@ -72,6 +69,8 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/input/oxide_ime_bridge.h"
+#include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
@@ -132,22 +131,6 @@ void FillLoadURLParamsFromOpenURLParams(
     load_params->browser_initiated_post_data =
         params.browser_initiated_post_data;
   }
-}
-
-// Qt input methods don’t generate key events, but a lot of web pages out there
-// rely on keydown and keyup events to e.g. perform search-as-you-type or
-// enable/disable a submit button based on the contents of a text input field,
-// so we send a fake pair of keydown/keyup events.
-// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
-// and GtkIMContextWrapper::HandleCommit(…)
-// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
-void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
-                                 blink::WebInputEvent::Type type) {
-  content::NativeWebKeyboardEvent fake_event;
-  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
-  fake_event.skip_in_browser = true;
-  fake_event.type = type;
-  host->ForwardKeyboardEvent(fake_event);
 }
 
 void CreateHelpers(content::WebContents* contents,
@@ -216,11 +199,6 @@ WebViewIterator WebView::GetAllWebViews() {
 
 WebView::WebView(WebViewClient* client)
     : client_(client),
-      text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-      show_ime_if_needed_(false),
-      focused_node_is_editable_(false),
-      selection_cursor_position_(0),
-      selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
@@ -329,11 +307,13 @@ bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
     return false;
   }
 
-  if (!IsInputPanelVisible()) {
+  if (!client_->GetInputMethodContext() ||
+      !client_->GetInputMethodContext()->IsInputPanelVisible()) {
     return false;
   }
 
-  if (!focused_node_is_editable_) {
+  if (!GetRenderWidgetHostView() ||
+      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
     return false;
   }
 
@@ -386,6 +366,10 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
   return client_->GetScriptMessageHandlerAt(index);
+}
+
+void WebView::InputPanelVisibilityChanged() {
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::CompositorDidCommit() {
@@ -459,50 +443,6 @@ void WebView::DetachLayer(scoped_refptr<cc::Layer> layer) {
 
 void WebView::UpdateCursor(const content::WebCursor& cursor) {
   client_->UpdateCursor(cursor);
-}
-
-void WebView::TextInputStateChanged(ui::TextInputType type,
-                                    bool show_ime_if_needed) {
-  if (type == text_input_type_ &&
-      show_ime_if_needed == show_ime_if_needed_) {
-    return;
-  }
-
-  text_input_type_ = type;
-  show_ime_if_needed_ = show_ime_if_needed;
-
-  client_->TextInputStateChanged();
-}
-
-void WebView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-  client_->FocusedNodeChanged();
-
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::ImeCancelComposition() {
-  client_->ImeCancelComposition();
-}
-
-void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                                     size_t selection_cursor_position,
-                                     size_t selection_anchor_position) {
-  if (caret_rect == caret_rect_ &&
-      selection_cursor_position == selection_cursor_position_ &&
-      selection_anchor_position == selection_anchor_position_) {
-    return;
-  }
-
-  caret_rect_ = caret_rect;
-  selection_cursor_position_ = selection_cursor_position;
-  selection_anchor_position_ = selection_anchor_position;
-
-  client_->SelectionBoundsChanged();
-}
-
-void WebView::SelectionChanged() {
-  client_->SelectionChanged();
 }
 
 bool WebView::HasFocus(const RenderWidgetHostView* view) const {
@@ -929,13 +869,18 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())
-        ->SetContainer(nullptr);
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(old_host->GetView());
+    rwhv->SetContainer(nullptr);
+    rwhv->ime_bridge()->SetContext(nullptr);
   }
+
   if (new_host) {
     if (new_host->GetView()) {
-      static_cast<RenderWidgetHostView *>(new_host->GetView())
-          ->SetContainer(this);
+      RenderWidgetHostView* rwhv =
+          static_cast<RenderWidgetHostView*>(new_host->GetView());
+      rwhv->SetContainer(this);
+      rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
     }
 
     InitializeTopControlsForHost(new_host, !old_host);
@@ -1166,7 +1111,6 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   ScreenUpdated();
   VisibilityChanged();
   FocusChanged();
-  InputPanelVisibilityChanged();
 
   // Update SSL Status
   content::NavigationEntry* entry =
@@ -1184,6 +1128,11 @@ WebView::~WebView() {
       g_all_web_views.Get().end());
 
   WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->ime_bridge()->SetContext(nullptr);
+  }
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
@@ -1388,10 +1337,6 @@ void WebView::FocusChanged() {
     rwhv->Blur();
   }
 
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::InputPanelVisibilityChanged() {
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
@@ -1752,34 +1697,6 @@ void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
   rvh->ForwardWheelEvent(event);
 }
 
-void WebView::ImeCommitText(const base::string16& text,
-                            const gfx::Range& replacement_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeConfirmComposition(text, replacement_range, false);
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
-}
-
-void WebView::ImeSetComposingText(
-    const base::string16& text,
-    const std::vector<blink::WebCompositionUnderline>& underlines,
-    const gfx::Range& selection_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeSetComposition(text, underlines,
-                          selection_range.start(),
-                          selection_range.end());
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
-}
-
 void WebView::DownloadRequested(
     const GURL& url,
     const std::string& mime_type,
@@ -1835,10 +1752,6 @@ bool WebView::HasFocus() const {
   return client_->HasFocus();
 }
 
-bool WebView::IsInputPanelVisible() const {
-  return client_->IsInputPanelVisible();
-}
-
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type) {
   return client_->CreateJavaScriptDialog(javascript_message_type);
@@ -1860,24 +1773,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
-}
-
-base::string16 WebView::GetSelectedText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::string16();
-  }
-
-  return rwhv->GetSelectedText();
-}
-
-const base::string16& WebView::GetSelectionText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::EmptyString16();
-  }
-
-  return rwhv->selection_text();
 }
 
 } // namespace oxide

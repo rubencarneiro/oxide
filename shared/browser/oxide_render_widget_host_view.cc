@@ -40,6 +40,7 @@
 #include "ui/gfx/geometry/size_conversions.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/input/oxide_input_method_context.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -80,43 +81,35 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
 void RenderWidgetHostView::OnTextInputStateChanged(
     ui::TextInputType type,
     bool show_ime_if_needed) {
-  if (type != current_text_input_type_ ||
-      show_ime_if_needed != show_ime_if_needed_) {
-    current_text_input_type_ = type;
-    show_ime_if_needed_ = show_ime_if_needed;
-
-    if (container_) {
-      container_->TextInputStateChanged(current_text_input_type_,
-                                        show_ime_if_needed_);
-    }
-  }
+  ime_bridge_.TextInputStateChanged(type, show_ime_if_needed);
 }
 
 void RenderWidgetHostView::OnSelectionBoundsChanged(
     const gfx::Rect& anchor_rect,
     const gfx::Rect& focus_rect,
     bool is_anchor_first) {
-  caret_rect_ = gfx::UnionRects(anchor_rect, focus_rect);
+  gfx::Rect caret_rect = gfx::UnionRects(anchor_rect, focus_rect);
+
+  size_t selection_cursor_position = 0;
+  size_t selection_anchor_position = 0;
 
   if (selection_range_.IsValid()) {
     if (is_anchor_first) {
-      selection_cursor_position_ =
+      selection_cursor_position =
           selection_range_.GetMax() - selection_text_offset_;
-      selection_anchor_position_ =
+      selection_anchor_position =
           selection_range_.GetMin() - selection_text_offset_;
     } else {
-      selection_cursor_position_ =
+      selection_cursor_position =
           selection_range_.GetMin() - selection_text_offset_;
-      selection_anchor_position_ =
+      selection_anchor_position =
           selection_range_.GetMax() - selection_text_offset_;
     }
   }
 
-  if (container_) {
-    container_->SelectionBoundsChanged(caret_rect_,
-                                       selection_cursor_position_,
-                                       selection_anchor_position_);
-  }
+  ime_bridge_.SelectionBoundsChanged(caret_rect,
+                                     selection_cursor_position,
+                                     selection_anchor_position);
 }
 
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,
@@ -135,8 +128,8 @@ void RenderWidgetHostView::SelectionChanged(const base::string16& text,
 
   content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
 
-  if (container_) {
-    container_->SelectionChanged();
+  if (ime_bridge_.context()) {
+    ime_bridge_.context()->SelectionChanged();
   }
 }
 
@@ -161,10 +154,7 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-  if (container_) {
-    container_->FocusedNodeChanged(is_editable_node);
-  }
+  ime_bridge_.FocusedNodeChanged(is_editable_node);
 }
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
@@ -309,11 +299,11 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
 }
 
 void RenderWidgetHostView::ImeCancelComposition() {
-  if (!container_) {
+  if (!ime_bridge_.context()) {
     return;
   }
 
-  container_->ImeCancelComposition();
+  ime_bridge_.context()->CancelComposition();
 }
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
@@ -615,11 +605,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       resource_collection_(new cc::DelegatedFrameResourceCollection()),
       last_output_surface_id_(0),
       frame_is_evicted_(true),
-      selection_cursor_position_(0),
-      selection_anchor_position_(0),
-      current_text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-      show_ime_if_needed_(false),
-      focused_node_is_editable_(false),
+      ime_bridge_(this),
       is_loading_(false),
       is_showing_(false),
       top_controls_shrink_blink_size_(false),
@@ -664,13 +650,6 @@ void RenderWidgetHostView::SetContainer(
     }
 
     UpdateCursorOnWebView();
-    container_->TextInputStateChanged(current_text_input_type_,
-                                      show_ime_if_needed_);
-    container_->FocusedNodeChanged(focused_node_is_editable_);
-    container_->SelectionBoundsChanged(caret_rect_,
-                                       selection_cursor_position_,
-                                       selection_anchor_position_);
-    container_->SelectionChanged();
   } else if (host_) {
     Hide();
   }

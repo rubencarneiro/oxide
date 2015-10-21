@@ -23,7 +23,6 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/common/menu_item.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
-#include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -57,19 +56,6 @@ class RenderWidgetHostViewContainer {
   virtual void DetachLayer(scoped_refptr<cc::Layer> layer) = 0;
 
   virtual void UpdateCursor(const content::WebCursor& cursor) = 0;
-
-  virtual void TextInputStateChanged(ui::TextInputType type,
-                                     bool show_ime_if_needed) = 0;
-
-  virtual void FocusedNodeChanged(bool is_editable_node) = 0;
-
-  virtual void ImeCancelComposition() = 0;
-
-  virtual void SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                                      size_t selection_cursor_position,
-                                      size_t selection_anchor_position) = 0;
-
-  virtual void SelectionChanged() = 0;
 
   virtual gfx::Size GetViewSizePix() const = 0;
 

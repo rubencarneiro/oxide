@@ -137,15 +137,9 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
 
 void WebViewClient::EvictCurrentFrame() {}
 
-void WebViewClient::TextInputStateChanged() {}
-
-void WebViewClient::FocusedNodeChanged() {}
-
-void WebViewClient::SelectionBoundsChanged() {}
-
-void WebViewClient::ImeCancelComposition() {}
-
-void WebViewClient::SelectionChanged() {}
+InputMethodContext* WebViewClient::GetInputMethodContext() const {
+  return nullptr;
+}
 
 void WebViewClient::UpdateCursor(const content::WebCursor& cursor) {}
 

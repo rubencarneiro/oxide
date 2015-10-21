@@ -48,6 +48,7 @@ namespace oxide {
 
 class CertificateError;
 class FilePicker;
+class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
@@ -168,20 +169,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void EvictCurrentFrame();
 
-  // XXX(chrisccoulson): Rethink all of these IME related bits:
-  //    - Move some logic down from qt/ to shared/
-  //    - The implementations of some of these only touch process-global
-  //      stuff - should we have an InputMethod singleton in shared/
-  //      rather than dumping it all in WebView?
-  virtual void TextInputStateChanged();
-
-  virtual void FocusedNodeChanged();
-
-  virtual void SelectionBoundsChanged();
-
-  virtual void ImeCancelComposition();
-
-  virtual void SelectionChanged();
+  virtual InputMethodContext* GetInputMethodContext() const;
 
   virtual void UpdateCursor(const content::WebCursor& cursor);
 
