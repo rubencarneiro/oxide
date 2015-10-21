@@ -391,8 +391,8 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
 WebView::WebView(WebViewProxyClient* client,
                  OxideQSecurityStatus* security_status)
-    : client_(client),
-      input_method_context_(new InputMethodContext(this)),
+    : input_method_context_(new InputMethodContext(this)),
+      client_(client),
       security_status_(security_status),
       frame_tree_torn_down_(false) {}
 
