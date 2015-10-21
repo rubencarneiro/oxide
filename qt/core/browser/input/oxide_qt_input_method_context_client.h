@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-
-#include "base/memory/scoped_ptr.h"
+#ifndef _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_
+#define _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_
 
 namespace oxide {
+namespace qt {
 
-class CompositorFrameHandle;
-
-class CompositorClient {
+class InputMethodContextClient {
  public:
-  virtual ~CompositorClient() {}
+  virtual ~InputMethodContextClient() {}
 
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
+  virtual bool HasFocus() const = 0;
+
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
 };
 
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#endif // _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_

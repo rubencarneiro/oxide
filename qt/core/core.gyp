@@ -61,13 +61,16 @@
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxide_qt_web_view.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
         'api/internal/oxideqmediacapturedevices_p.cc',
         'api/internal/oxideqwebpreferences_p.cc',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
         'app/oxide_qt_platform_delegate.cc',
         'app/oxide_qt_platform_delegate.h',
+        'browser/input/oxide_qt_input_method_context.cc',
+        'browser/input/oxide_qt_input_method_context.h',
+        'browser/input/oxide_qt_input_method_context_client.h',
         'browser/oxide_qt_browser_platform_integration.cc',
         'browser/oxide_qt_browser_platform_integration.h',
         'browser/oxide_qt_browser_startup.cc',
@@ -179,8 +182,8 @@
           'includes': [ 'moc.gypi' ]
         },
         {
-          'action_name': 'moc_oxide_qt_web_view.cc',
-          'moc_input': 'browser/oxide_qt_web_view.h',
+          'action_name': 'moc_oxide_qt_input_method_context.cc',
+          'moc_input': 'browser/input/oxide_qt_input_method_context.h',
           'includes': [ 'moc.gypi' ]
         },
       ],

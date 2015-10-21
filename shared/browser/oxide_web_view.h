@@ -37,15 +37,15 @@
 #include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
-#include "third_party/WebKit/public/web/WebCompositionUnderline.h"
-#include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_render_widget_host_view_delegate.h"
+#include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
@@ -60,10 +60,12 @@ class WebMouseEvent;
 class WebMouseWheelEvent;
 } // namespace blink
 
+namespace cc {
+class SolidColorLayer;
+}
+
 namespace content {
 
-struct ContextMenuParams;
-struct MenuItem;
 class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
@@ -72,7 +74,6 @@ class RenderViewHost;
 class RenderWidgetHostImpl;
 class WebContents;
 class WebContentsImpl;
-class WebCursor;
 
 } // namespace content
 
@@ -122,10 +123,12 @@ class WebViewIterator final {
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
 class WebView : public ScriptMessageTarget,
+                private InputMethodContextObserver,
+                private CompositorObserver,
                 private CompositorClient,
                 private WebPreferencesObserver,
                 private content::NotificationObserver,
-                private RenderWidgetHostViewDelegate,
+                private RenderWidgetHostViewContainer,
                 private content::WebContentsDelegate,
                 private content::WebContentsObserver {
  public:
@@ -192,7 +195,6 @@ class WebView : public ScriptMessageTarget,
   void ScreenUpdated();
   void VisibilityChanged();
   void FocusChanged();
-  void InputPanelVisibilityChanged();
   void UpdateWebPreferences();
 
   BrowserContext* GetBrowserContext() const;
@@ -252,26 +254,10 @@ class WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
-  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params);
-  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                     const gfx::Rect& bounds,
-                     int selected_item,
-                     const std::vector<content::MenuItem>& items,
-                     bool allow_multiple_selection);
-  void HidePopupMenu();
-
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
   void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
-
-  void ImeCommitText(const base::string16& text,
-                     const gfx::Range& replacement_range);
-  void ImeSetComposingText(
-      const base::string16& text,
-      const std::vector<blink::WebCompositionUnderline>& underlines,
-      const gfx::Range& selection_range);
 
   void DownloadRequested(
       const GURL& url,
@@ -292,7 +278,6 @@ class WebView : public ScriptMessageTarget,
   gfx::Rect GetViewBoundsPix() const;
   bool IsVisible() const;
   bool HasFocus() const;
-  bool IsInputPanelVisible() const;
 
   JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type);
@@ -301,17 +286,6 @@ class WebView : public ScriptMessageTarget,
   bool ShouldHandleNavigation(const GURL& url, bool has_user_gesture);
 
   bool CanCreateWindows() const;
-
-  ui::TextInputType text_input_type() const { return text_input_type_; }
-  bool show_ime_if_needed() const { return show_ime_if_needed_; }
-  bool focused_node_is_editable() const { return focused_node_is_editable_; }
-
-  gfx::Rect caret_rect() const { return caret_rect_; }
-  size_t selection_cursor_position() const { return selection_cursor_position_; }
-  size_t selection_anchor_position() const { return selection_anchor_position_; }
-
-  base::string16 GetSelectedText() const;
-  const base::string16& GetSelectionText() const;
 
  private:
   WebView(WebViewClient* client);
@@ -347,8 +321,13 @@ class WebView : public ScriptMessageTarget,
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
-  // CompositorClient implementation
+  // InputMethodContextObserver implementation
+  void InputPanelVisibilityChanged() override;
+
+  // CompositorObserver implementation
   void CompositorDidCommit() final;
+
+  // CompositorClient implementation
   void CompositorSwapFrame(CompositorFrameHandle* handle) final;
 
   // WebPreferencesObserver implementation
@@ -359,18 +338,20 @@ class WebView : public ScriptMessageTarget,
                const content::NotificationSource& source,
                const content::NotificationDetails& details) final;
 
-  // RenderWidgetHostViewDelegate implementation
-  void EvictCurrentFrame() final;
-  void UpdateCursor(const content::WebCursor& cursor) final;
-  void TextInputStateChanged(ui::TextInputType type,
-                             bool show_ime_if_needed) final;
-  void FocusedNodeChanged(bool is_editable_node) final;
-  void ImeCancelComposition() final;
-  void SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                              size_t selection_cursor_position,
-                              size_t selection_anchor_position) final;
-  void SelectionChanged() final;
+  // RenderWidgetHostViewContainer implementation
   Compositor* GetCompositor() const final;
+  void AttachLayer(scoped_refptr<cc::Layer> layer) final;
+  void DetachLayer(scoped_refptr<cc::Layer> layer) final;
+  void CursorChanged() final;
+  bool HasFocus(const RenderWidgetHostView* view) const final;
+  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                       const content::ContextMenuParams& params) final;
+  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                     const gfx::Rect& bounds,
+                     int selected_item,
+                     const std::vector<content::MenuItem>& items,
+                     bool allow_multiple_selection) final;
+  void HidePopupMenu() final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
@@ -478,14 +459,6 @@ class WebView : public ScriptMessageTarget,
 
   WebViewClient* client_;
 
-  ui::TextInputType text_input_type_;
-  bool show_ime_if_needed_;
-  bool focused_node_is_editable_;
-
-  gfx::Rect caret_rect_;
-  size_t selection_cursor_position_;
-  size_t selection_anchor_position_;
-
   struct WebContentsDeleter {
     void operator()(content::WebContents* contents);
   };
@@ -496,6 +469,7 @@ class WebView : public ScriptMessageTarget,
   WebViewContentsHelper* web_contents_helper_;
 
   scoped_ptr<Compositor> compositor_;
+  scoped_refptr<cc::SolidColorLayer> root_layer_;
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;

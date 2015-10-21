@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-
-#include "base/memory/scoped_ptr.h"
+#ifndef _OXIDE_SHARED_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OBSERVER_H_
 
 namespace oxide {
 
-class CompositorFrameHandle;
+class InputMethodContext;
 
-class CompositorClient {
+class InputMethodContextObserver {
  public:
-  virtual ~CompositorClient() {}
+  virtual ~InputMethodContextObserver();
 
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
+  virtual void InputPanelVisibilityChanged();
+
+ protected:
+  InputMethodContextObserver();
+  InputMethodContextObserver(InputMethodContext* context);
+
+  void Observe(InputMethodContext* context);
+
+  InputMethodContext* im_context() const { return im_context_; }
+
+ private:
+  friend class InputMethodContext;
+
+  void OnInputMethodContextDestruction();
+
+  InputMethodContext* im_context_;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OBSERVER_H_
