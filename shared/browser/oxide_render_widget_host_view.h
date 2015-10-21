@@ -32,6 +32,7 @@
 #include "content/common/cursors/webcursor.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_ime_bridge_impl.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
@@ -56,6 +57,7 @@ class RenderWidgetHostViewContainer;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
+    public CompositorObserver,
     public GestureProviderClient,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
@@ -67,7 +69,6 @@ class RenderWidgetHostView final :
 
   content::RenderWidgetHostImpl* host() const { return host_; }
 
-  void CompositorDidCommit();
   void SetContainer(RenderWidgetHostViewContainer* container);
 
   ImeBridgeImpl* ime_bridge() { return &ime_bridge_; }
@@ -160,6 +161,9 @@ class RenderWidgetHostView final :
   gfx::Rect GetViewBounds() const final;
   bool LockMouse() final;
   void UnlockMouse() final;
+
+  // CompositorObserver implementation
+  void CompositorDidCommit() final;
 
   // GestureProviderClient implementation
   void OnGestureEvent(const blink::WebGestureEvent& event) final;

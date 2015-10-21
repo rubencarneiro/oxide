@@ -23,6 +23,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
+#include "base/observer_list.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "ui/gfx/geometry/size.h"
@@ -41,6 +42,7 @@ namespace oxide {
 class CompositorClient;
 class CompositorFrameData;
 class CompositorFrameHandle;
+class CompositorObserver;
 class CompositorThreadProxy;
 
 class Compositor final : public cc::LayerTreeHostClient,
@@ -62,6 +64,7 @@ class Compositor final : public cc::LayerTreeHostClient,
                               FrameHandleVector returned_frames);
 
  private:
+  friend class CompositorObserver;
   friend class CompositorThreadProxy;
 
   Compositor(CompositorClient* client);
@@ -69,6 +72,9 @@ class Compositor final : public cc::LayerTreeHostClient,
   void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
 
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
+
+  void AddObserver(CompositorObserver* observer);
+  void RemoveObserver(CompositorObserver* observer);
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame() final;
@@ -106,6 +112,8 @@ class Compositor final : public cc::LayerTreeHostClient,
   scoped_refptr<CompositorThreadProxy> proxy_;
 
   uint32 next_output_surface_id_;
+
+  base::ObserverList<CompositorObserver> observers_;
 
   base::WeakPtrFactory<Compositor> weak_factory_;
 

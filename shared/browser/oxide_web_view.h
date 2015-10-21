@@ -44,6 +44,7 @@
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_content_types.h"
@@ -130,6 +131,7 @@ class WebViewIterator final {
 // providing an implementation of WebViewClient
 class WebView : public ScriptMessageTarget,
                 private InputMethodContextObserver,
+                private CompositorObserver,
                 private CompositorClient,
                 private WebPreferencesObserver,
                 private content::NotificationObserver,
@@ -339,8 +341,10 @@ class WebView : public ScriptMessageTarget,
   // InputMethodContextObserver implementation
   void InputPanelVisibilityChanged() override;
 
-  // CompositorClient implementation
+  // CompositorObserver implementation
   void CompositorDidCommit() final;
+
+  // CompositorClient implementation
   void CompositorSwapFrame(CompositorFrameHandle* handle) final;
 
   // WebPreferencesObserver implementation

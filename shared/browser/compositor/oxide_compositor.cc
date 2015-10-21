@@ -40,6 +40,7 @@
 #include "oxide_compositor_client.h"
 #include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_frame_handle.h"
+#include "oxide_compositor_observer.h"
 #include "oxide_compositor_output_surface_gl.h"
 #include "oxide_compositor_output_surface_software.h"
 #include "oxide_compositor_software_output_device.h"
@@ -131,6 +132,14 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   return output.Pass();
 }
 
+void Compositor::AddObserver(CompositorObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void Compositor::RemoveObserver(CompositorObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
 void Compositor::WillBeginMainFrame() {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::BeginMainFrameNotExpectedSoon() {}
@@ -170,7 +179,7 @@ void Compositor::DidFailToInitializeOutputSurface() {
 void Compositor::WillCommit() {}
 
 void Compositor::DidCommit() {
-  client_->CompositorDidCommit();
+  FOR_EACH_OBSERVER(CompositorObserver, observers_, CompositorDidCommit());
 }
 
 void Compositor::DidCommitAndDrawFrame() {}
@@ -190,6 +199,7 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 }
 
 Compositor::~Compositor() {
+  FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
   proxy_->CompositorDestroyed();
 }
 

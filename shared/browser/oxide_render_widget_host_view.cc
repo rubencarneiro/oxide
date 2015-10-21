@@ -488,6 +488,10 @@ bool RenderWidgetHostView::LockMouse() {
 
 void RenderWidgetHostView::UnlockMouse() {}
 
+void RenderWidgetHostView::CompositorDidCommit() {
+  RunAckCallbacks();
+}
+
 void RenderWidgetHostView::OnGestureEvent(
     const blink::WebGestureEvent& event) {
   if (!host_) {
@@ -622,15 +626,15 @@ RenderWidgetHostView::RenderWidgetHostView(
   host_->SetView(this);
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
+
+  if (container) {
+    CompositorObserver::Observe(container->GetCompositor());
+  }
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
   resource_collection_->SetClient(nullptr);
   SetContainer(nullptr);
-}
-
-void RenderWidgetHostView::CompositorDidCommit() {
-  RunAckCallbacks();
 }
 
 void RenderWidgetHostView::SetContainer(
@@ -642,6 +646,9 @@ void RenderWidgetHostView::SetContainer(
   DetachLayer();
   container_ = container;
   AttachLayer();
+
+  CompositorObserver::Observe(
+      container_ ? container_->GetCompositor() : nullptr);
 
   if (container_) {
     DCHECK(host_) <<

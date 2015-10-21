@@ -215,6 +215,7 @@ WebView::WebView(WebViewClient* client)
 
   compositor_->SetRootLayer(root_layer_);
 
+  CompositorObserver::Observe(compositor_.get());
   InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
@@ -381,8 +382,6 @@ void WebView::CompositorDidCommit() {
   }
 
   pending_compositor_frame_metadata_ = rwhv->compositor_frame_metadata();
-
-  rwhv->CompositorDidCommit();
 }
 
 void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
