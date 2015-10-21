@@ -93,12 +93,12 @@ ImeBridgeImpl::~ImeBridgeImpl() {
 
 void ImeBridgeImpl::SetContext(InputMethodContext* context) {
   if (context_) {
-    CHECK_EQ(context_->ime_bridge(), this);
+    DCHECK_EQ(context_->ime_bridge(), this);
     context_->SetImeBridge(nullptr);
   }
   context_ = context;
   if (context_) {
-    CHECK(!context_->ime_bridge());
+    DCHECK(!context_->ime_bridge());
     context_->SetImeBridge(this);
   }
 }
