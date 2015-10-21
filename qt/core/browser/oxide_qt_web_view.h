@@ -283,11 +283,12 @@ class WebView : public InputMethodContextClient,
 
   void teardownFrameTree() override;
 
+  // This must outlive |view_|
+  scoped_ptr<InputMethodContext> input_method_context_;
+
   scoped_ptr<oxide::WebView> view_;
 
   WebViewProxyClient* client_;
-
-  scoped_ptr<InputMethodContext> input_method_context_;
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<ScriptMessageHandlerProxyHandle*> message_handlers_;

@@ -141,6 +141,10 @@ bool InputMethodContext::IsInputPanelVisible() const {
 }
 
 void InputMethodContext::TextInputStateChanged() {
+  if (!client_) {
+    return;
+  }
+
   if (!client_->HasFocus()) {
     return;
   }
@@ -160,6 +164,10 @@ void InputMethodContext::TextInputStateChanged() {
 }
 
 void InputMethodContext::SelectionBoundsChanged() {
+  if (!client_) {
+    return;
+  }
+
   if (!client_->HasFocus()) {
     return;
   }
@@ -181,6 +189,10 @@ void InputMethodContext::SelectionBoundsChanged() {
 }
 
 void InputMethodContext::SelectionChanged() {
+  if (!client_) {
+    return;
+  }
+
   if (!client_->HasFocus()) {
     return;
   }
@@ -214,6 +226,10 @@ void InputMethodContext::CancelComposition() {
 }
 
 void InputMethodContext::FocusedNodeChanged() {
+  if (!client_) {
+    return;
+  }
+
   // Work around for https://launchpad.net/bugs/1323743
   if (QGuiApplication::focusWindow() &&
       QGuiApplication::focusWindow()->focusObject()) {
@@ -249,6 +265,10 @@ InputMethodContext::~InputMethodContext() {
   if (im) {
     im->disconnect(this);
   }
+}
+
+void InputMethodContext::DetachClient() {
+  client_ = nullptr;
 }
 
 QVariant InputMethodContext::Query(Qt::InputMethodQuery query) const {

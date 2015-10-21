@@ -46,6 +46,9 @@ class InputMethodContext : public QObject,
 
   QVariant Query(Qt::InputMethodQuery query) const;
 
+  // Null out |client_| to prevent calls back in to it during its destructor
+  void DetachClient();
+
   void FocusChanged(QFocusEvent* event);
   void HandleEvent(QInputMethodEvent* event);
 

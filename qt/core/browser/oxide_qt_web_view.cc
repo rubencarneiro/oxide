@@ -1430,6 +1430,8 @@ WebView* WebView::CreateFromNewViewRequest(
 WebView::~WebView() {
   DCHECK(frame_tree_torn_down_);
 
+  input_method_context_->DetachClient();
+
   oxide::PermissionRequestDispatcher::FromWebContents(
       view_->GetWebContents())->set_client(nullptr);
 }
