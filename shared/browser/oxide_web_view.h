@@ -417,6 +417,8 @@ class WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) final;
 
   // content::WebContentsObserver implementation
+  void RenderFrameForInterstitialPageCreated(
+      content::RenderFrameHost* render_frame_host) final;
   void RenderViewReady() final;
   void RenderProcessGone(base::TerminationStatus status) final;
   void RenderViewHostChanged(content::RenderViewHost* old_host,

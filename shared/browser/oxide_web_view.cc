@@ -852,6 +852,15 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
+void WebView::RenderFrameForInterstitialPageCreated(
+    content::RenderFrameHost* render_frame_host) {
+  if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  InitializeTopControlsForHost(render_frame_host->GetRenderViewHost(), false);
+}
+
 void WebView::RenderViewReady() {
   client_->CrashedStatusChanged();
 }
