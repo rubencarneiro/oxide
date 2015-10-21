@@ -69,12 +69,17 @@ void CertificateErrorProxy::Deny() {
 
 void CertificateErrorProxy::Cancel() {
   DCHECK(!is_cancelled_);
-  DCHECK(placeholder_page_);
 
   if (did_respond_) {
-    // Calling Deny() ends up here via InterstitialPageDelegate::OnDontProceed
+    // Calling Deny() ends up re-entering here via
+    // InterstitialPageDelegate::OnDontProceed
     return;
   }
+
+  // Chromium can call in to us after we've responded, if we responded
+  // before the interstitial navigation was committed. This is why this check
+  // is here, and not higher up
+  DCHECK(placeholder_page_);
 
   is_cancelled_ = true;
   placeholder_page_ = nullptr;
