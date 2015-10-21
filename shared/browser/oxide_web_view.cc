@@ -892,8 +892,12 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
     InitializeTopControlsForHost(new_host, !old_host);
   }
 
-  // XXX: Evaluate whether these are needed, or whether we should be
-  //  syncing more stuff with the new view
+  if (old_host) {
+    return;
+  }
+
+  // For the initial view, we need to sync its visibility and focus state
+  // with us. For subsequent views, RFHM does this for us
   VisibilityChanged();
   FocusChanged();
 }
