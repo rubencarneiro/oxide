@@ -1185,6 +1185,11 @@ WebView::~WebView() {
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
 
+  // It's time we split the WebContentsDelegate implementation from WebView,
+  // given that a lot of functionality that is interested in it lives outside
+  // now
+  web_contents_->SetDelegate(nullptr);
+
   web_contents_->RemoveUserData(&kUserDataKey);
 }
 
