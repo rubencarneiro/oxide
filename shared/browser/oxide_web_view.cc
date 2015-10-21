@@ -29,14 +29,14 @@
 #include "cc/layers/solid_color_layer.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
-#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/web_contents/web_contents_view.h"
-#include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/interstitial_page.h"
+#include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
@@ -45,6 +45,7 @@
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/page_navigator.h"
+#include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
@@ -209,6 +210,7 @@ WebView::WebView(WebViewClient* client)
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
+      interstitial_page_(nullptr),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
@@ -888,6 +890,44 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   FocusChanged();
 }
 
+void WebView::DidStartLoading() {
+  client_->LoadingChanged();
+}
+
+void WebView::DidStopLoading() {
+  client_->LoadingChanged();
+}
+
+void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
+                            const GURL& validated_url) {
+  if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  if (validated_url.spec() == content::kUnreachableWebDataURL) {
+    return;
+  }
+
+  content::NavigationEntry* entry =
+      web_contents_->GetController().GetLastCommittedEntry();
+  // Some transient about:blank navigations dont have navigation entries.
+  client_->LoadSucceeded(
+      validated_url,
+      entry ? entry->GetHttpStatusCode() : 0);
+}
+
+void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
+                          const GURL& validated_url,
+                          int error_code,
+                          const base::string16& error_description,
+                          bool was_ignored_by_handler) {
+  if (render_frame_host->GetParent()) {
+    return;
+  }
+
+  DispatchLoadFailed(validated_url, error_code, error_description);
+}
+
 void WebView::DidStartProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
@@ -950,36 +990,6 @@ void WebView::DidNavigateMainFrame(
   }
 }
 
-void WebView::DidFinishLoad(content::RenderFrameHost* render_frame_host,
-                            const GURL& validated_url) {
-  if (render_frame_host->GetParent()) {
-    return;
-  }
-
-  if (validated_url.spec() == content::kUnreachableWebDataURL) {
-    return;
-  }
-
-  content::NavigationEntry* entry =
-      web_contents_->GetController().GetLastCommittedEntry();
-  // Some transient about:blank navigations dont have navigation entries.
-  client_->LoadSucceeded(
-      validated_url,
-      entry ? entry->GetHttpStatusCode() : 0);
-}
-
-void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
-                          const GURL& validated_url,
-                          int error_code,
-                          const base::string16& error_description,
-                          bool was_ignored_by_handler) {
-  if (render_frame_host->GetParent()) {
-    return;
-  }
-
-  DispatchLoadFailed(validated_url, error_code, error_description);
-}
-
 void WebView::DidGetRedirectForResourceRequest(
       content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) {
@@ -997,12 +1007,26 @@ void WebView::NavigationEntryCommitted(
   client_->NavigationEntryCommitted();
 }
 
-void WebView::DidStartLoading() {
-  client_->LoadingChanged();
+void WebView::DidAttachInterstitialPage() {
+  CHECK(!interstitial_page_);
+  interstitial_page_ = web_contents_->GetInterstitialPage();
+  DCHECK(interstitial_page_);
+
+  static_cast<RenderWidgetHostView*>(
+      interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
+      ->SetContainer(this);
 }
 
-void WebView::DidStopLoading() {
-  client_->LoadingChanged();
+void WebView::DidDetachInterstitialPage() {
+  if (!interstitial_page_) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(
+      interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
+      ->SetContainer(nullptr);
+
+  interstitial_page_ = nullptr;
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1119,8 +1143,20 @@ WebView::~WebView() {
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
+  if (interstitial_page_) {
+    static_cast<RenderWidgetHostView*>(
+        interstitial_page_->GetMainFrame()->GetRenderViewHost()->GetView())
+        ->SetContainer(nullptr);
+    interstitial_page_ = nullptr;
+  }
+
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
+
+  // It's time we split the WebContentsDelegate implementation from WebView,
+  // given that a lot of functionality that is interested in it lives outside
+  // now
+  web_contents_->SetDelegate(nullptr);
 
   web_contents_->RemoveUserData(&kUserDataKey);
 }
