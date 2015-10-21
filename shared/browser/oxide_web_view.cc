@@ -25,17 +25,18 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
+#include "cc/layers/layer.h"
+#include "cc/layers/solid_color_layer.h"
+#include "cc/trees/layer_tree_settings.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/browser/renderer_host/event_with_latency_info.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/browser/renderer_host/ui_events_helper.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/invalidate_type.h"
 #include "content/public/browser/browser_context.h"
-#include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_details.h"
 #include "content/public/browser/navigation_entry.h"
@@ -60,7 +61,6 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
-#include "ui/gfx/range/range.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
 #include "url/gurl.h"
@@ -69,12 +69,15 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/input/oxide_ime_bridge.h"
+#include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
+#include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -106,20 +109,7 @@ namespace oxide {
 
 namespace {
 
-const char kWebViewKey[] = "oxide_web_view_data";
-
-// SupportsUserData implementations own their data. This class exists
-// because we don't want WebContents to own WebView (it's the other way
-// around)
-class WebViewUserData : public base::SupportsUserData::Data {
- public:
-  WebViewUserData(WebView* view) : view_(view) {}
-
-  WebView* get() const { return view_; }
-
- private:
-  WebView* view_;
-};
+int kUserDataKey;
 
 void FillLoadURLParamsFromOpenURLParams(
     content::NavigationController::LoadURLParams* load_params,
@@ -141,22 +131,6 @@ void FillLoadURLParamsFromOpenURLParams(
     load_params->browser_initiated_post_data =
         params.browser_initiated_post_data;
   }
-}
-
-// Qt input methods don’t generate key events, but a lot of web pages out there
-// rely on keydown and keyup events to e.g. perform search-as-you-type or
-// enable/disable a submit button based on the contents of a text input field,
-// so we send a fake pair of keydown/keyup events.
-// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
-// and GtkIMContextWrapper::HandleCommit(…)
-// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
-void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
-                                 blink::WebInputEvent::Type type) {
-  content::NativeWebKeyboardEvent fake_event;
-  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
-  fake_event.skip_in_browser = true;
-  fake_event.type = type;
-  host->ForwardKeyboardEvent(fake_event);
 }
 
 void CreateHelpers(content::WebContents* contents,
@@ -225,13 +199,9 @@ WebViewIterator WebView::GetAllWebViews() {
 
 WebView::WebView(WebViewClient* client)
     : client_(client),
-      text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-      show_ime_if_needed_(false),
-      focused_node_is_editable_(false),
-      selection_cursor_position_(0),
-      selection_anchor_position_(0),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
+      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
       is_fullscreen_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
@@ -239,6 +209,14 @@ WebView::WebView(WebViewClient* client)
       location_bar_animated_(true),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
+
+  root_layer_->SetIsDrawable(true);
+  root_layer_->SetBackgroundColor(SK_ColorWHITE);
+
+  compositor_->SetRootLayer(root_layer_);
+
+  CompositorObserver::Observe(compositor_.get());
+  InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
 void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
@@ -246,7 +224,8 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
 
   // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
-  web_contents_->SetUserData(kWebViewKey, new WebViewUserData(this));
+  web_contents_->SetUserData(&kUserDataKey,
+                             new UnownedUserData<WebView>(this));
 
   content::WebContentsObserver::Observe(web_contents_.get());
 
@@ -261,6 +240,8 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
                  content::NotificationService::AllBrowserContextsAndSources());
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
+
+  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(this);
 
   DCHECK(std::find(g_all_web_views.Get().begin(),
                    g_all_web_views.Get().end(),
@@ -329,11 +310,13 @@ bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
     return false;
   }
 
-  if (!IsInputPanelVisible()) {
+  if (!client_->GetInputMethodContext() ||
+      !client_->GetInputMethodContext()->IsInputPanelVisible()) {
     return false;
   }
 
-  if (!focused_node_is_editable_) {
+  if (!GetRenderWidgetHostView() ||
+      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
     return false;
   }
 
@@ -388,6 +371,10 @@ const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
   return client_->GetScriptMessageHandlerAt(index);
 }
 
+void WebView::InputPanelVisibilityChanged() {
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
 void WebView::CompositorDidCommit() {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
@@ -395,8 +382,6 @@ void WebView::CompositorDidCommit() {
   }
 
   pending_compositor_frame_metadata_ = rwhv->compositor_frame_metadata();
-
-  rwhv->CompositorDidCommit();
 }
 
 void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
@@ -438,61 +423,77 @@ void WebView::Observe(int type,
   }
 }
 
-void WebView::EvictCurrentFrame() {
-  current_compositor_frame_ = nullptr;
-  client_->EvictCurrentFrame();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  client_->UpdateCursor(cursor);
-}
-
-void WebView::TextInputStateChanged(ui::TextInputType type,
-                                    bool show_ime_if_needed) {
-  if (type == text_input_type_ &&
-      show_ime_if_needed == show_ime_if_needed_) {
-    return;
-  }
-
-  text_input_type_ = type;
-  show_ime_if_needed_ = show_ime_if_needed;
-
-  client_->TextInputStateChanged();
-}
-
-void WebView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-  client_->FocusedNodeChanged();
-
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::ImeCancelComposition() {
-  client_->ImeCancelComposition();
-}
-
-void WebView::SelectionBoundsChanged(const gfx::Rect& caret_rect,
-                                     size_t selection_cursor_position,
-                                     size_t selection_anchor_position) {
-  if (caret_rect == caret_rect_ &&
-      selection_cursor_position == selection_cursor_position_ &&
-      selection_anchor_position == selection_anchor_position_) {
-    return;
-  }
-
-  caret_rect_ = caret_rect;
-  selection_cursor_position_ = selection_cursor_position;
-  selection_anchor_position_ = selection_anchor_position;
-
-  client_->SelectionBoundsChanged();
-}
-
-void WebView::SelectionChanged() {
-  client_->SelectionChanged();
-}
-
 Compositor* WebView::GetCompositor() const {
   return compositor_.get();
+}
+
+void WebView::AttachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  root_layer_->InsertChild(layer, 0);
+  root_layer_->SetIsDrawable(false);
+}
+
+void WebView::DetachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  DCHECK_EQ(layer->parent(), root_layer_.get());
+  layer->RemoveFromParent();
+  if (root_layer_->children().size() == 0) {
+    root_layer_->SetIsDrawable(true);
+  }
+}
+
+void WebView::CursorChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  client_->UpdateCursor(rwhv->current_cursor());
+}
+
+bool WebView::HasFocus(const RenderWidgetHostView* view) const {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  return view == GetRenderWidgetHostView();
+}
+
+void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
+                              const content::ContextMenuParams& params) {
+  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  menu->Show();
+}
+
+void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
+                            const gfx::Rect& bounds,
+                            int selected_item,
+                            const std::vector<content::MenuItem>& items,
+                            bool allow_multiple_selection) {
+  DCHECK(!active_popup_menu_);
+
+  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
+  if (!menu) {
+    static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_ = menu->GetWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
+}
+
+void WebView::HidePopupMenu() {
+  if (!active_popup_menu_) {
+    return;
+  }
+
+  active_popup_menu_->Close();
 }
 
 content::WebContents* WebView::OpenURLFromTab(
@@ -874,15 +875,31 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
   if (old_host && old_host->GetView()) {
-    static_cast<RenderWidgetHostView *>(old_host->GetView())->SetDelegate(nullptr);
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(old_host->GetView());
+    rwhv->SetContainer(nullptr);
+    rwhv->ime_bridge()->SetContext(nullptr);
   }
+
   if (new_host) {
     if (new_host->GetView()) {
-      static_cast<RenderWidgetHostView *>(new_host->GetView())->SetDelegate(this);
+      RenderWidgetHostView* rwhv =
+          static_cast<RenderWidgetHostView*>(new_host->GetView());
+      rwhv->SetContainer(this);
+      rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
     }
 
     InitializeTopControlsForHost(new_host, !old_host);
   }
+
+  if (old_host) {
+    return;
+  }
+
+  // For the initial view, we need to sync its visibility and focus state
+  // with us. For subsequent views, RFHM does this for us
+  VisibilityChanged();
+  FocusChanged();
 }
 
 void WebView::DidStartProvisionalLoadForFrame(
@@ -1067,6 +1084,7 @@ WebView::WebView(const Params& params)
   compositor_->SetViewportSize(GetViewSizePix());
   compositor_->SetVisibility(IsVisible());
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  root_layer_->SetBounds(GetViewSizeDip());
 
   if (params.restore_entries.size() > 0) {
     ScopedVector<content::NavigationEntry> entries =
@@ -1093,14 +1111,14 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
 
   CommonInit(contents.Pass());
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetDelegate(this);
-  }
-
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
     InitializeTopControlsForHost(rvh, true);
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
   }
 
   // Sync WebContents with the state of the WebView
@@ -1108,7 +1126,6 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   ScreenUpdated();
   VisibilityChanged();
   FocusChanged();
-  InputPanelVisibilityChanged();
 
   // Update SSL Status
   content::NavigationEntry* entry =
@@ -1125,21 +1142,24 @@ WebView::~WebView() {
                   this),
       g_all_web_views.Get().end());
 
+  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
+
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetDelegate(nullptr);
+    rwhv->ime_bridge()->SetContext(nullptr);
   }
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
 
-  web_contents_->RemoveUserData(kWebViewKey);
+  web_contents_->RemoveUserData(&kUserDataKey);
 }
 
 // static
 WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
-  WebViewUserData* data = static_cast<WebViewUserData *>(
-      web_contents->GetUserData(kWebViewKey));
+  UnownedUserData<WebView>* data =
+      static_cast<UnownedUserData<WebView>*>(
+        web_contents->GetUserData(&kUserDataKey));
   if (!data) {
     return nullptr;
   }
@@ -1275,11 +1295,9 @@ void WebView::SetIsFullscreen(bool fullscreen) {
 }
 
 void WebView::WasResized() {
-  {
-    CompositorLock lock(compositor_.get());
-    compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-    compositor_->SetViewportSize(GetViewSizePix());
-  }
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetViewportSize(GetViewSizePix());
+  root_layer_->SetBounds(GetViewSizeDip());
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
@@ -1309,6 +1327,14 @@ void WebView::VisibilityChanged() {
     web_contents_->WasShown();
   } else {
     web_contents_->WasHidden();
+    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
+    //  trigger eviction of the frontbuffer from a CompositorClient callback.
+    // XXX: Also this isn't really necessary for eviction - after all, the LTH
+    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
+    //  This callback is really to notify the toolkit layer that the
+    //  frontbuffer is being dropped
+    current_compositor_frame_ = nullptr;
+    client_->EvictCurrentFrame();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
@@ -1326,10 +1352,6 @@ void WebView::FocusChanged() {
     rwhv->Blur();
   }
 
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::InputPanelVisibilityChanged() {
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
@@ -1605,43 +1627,6 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload(false);
 }
 
-void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                              const content::ContextMenuParams& params) {
-  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
-  if (!menu) {
-    return;
-  }
-
-  menu->Show();
-}
-
-void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                            const gfx::Rect& bounds,
-                            int selected_item,
-                            const std::vector<content::MenuItem>& items,
-                            bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_);
-
-  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
-  if (!menu) {
-    static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->DidCancelPopupMenu();
-    return;
-  }
-
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show(bounds, items, selected_item, allow_multiple_selection);
-}
-
-void WebView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
-  }
-
-  active_popup_menu_->Close();
-}
-
 void WebView::AllowCertificateError(
     content::RenderFrameHost* rfh,
     int cert_error,
@@ -1727,34 +1712,6 @@ void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
   rvh->ForwardWheelEvent(event);
 }
 
-void WebView::ImeCommitText(const base::string16& text,
-                            const gfx::Range& replacement_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeConfirmComposition(text, replacement_range, false);
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
-}
-
-void WebView::ImeSetComposingText(
-    const base::string16& text,
-    const std::vector<blink::WebCompositionUnderline>& underlines,
-    const gfx::Range& selection_range) {
-  content::RenderWidgetHostImpl* host = GetRenderWidgetHostImpl();
-  if (!host) {
-    return;
-  }
-
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::RawKeyDown);
-  host->ImeSetComposition(text, underlines,
-                          selection_range.start(),
-                          selection_range.end());
-  SendFakeCompositionKeyEvent(host, blink::WebInputEvent::KeyUp);
-}
-
 void WebView::DownloadRequested(
     const GURL& url,
     const std::string& mime_type,
@@ -1810,10 +1767,6 @@ bool WebView::HasFocus() const {
   return client_->HasFocus();
 }
 
-bool WebView::IsInputPanelVisible() const {
-  return client_->IsInputPanelVisible();
-}
-
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type) {
   return client_->CreateJavaScriptDialog(javascript_message_type);
@@ -1835,24 +1788,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
-}
-
-base::string16 WebView::GetSelectedText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::string16();
-  }
-
-  return rwhv->GetSelectedText();
-}
-
-const base::string16& WebView::GetSelectionText() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return base::EmptyString16();
-  }
-
-  return rwhv->selection_text();
 }
 
 } // namespace oxide

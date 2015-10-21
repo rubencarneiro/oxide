@@ -20,7 +20,6 @@
 
 #include <QKeyEvent>
 #include <QList>
-#include <QObject>
 #include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
@@ -28,6 +27,7 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -53,16 +53,15 @@ class WebView;
 namespace qt {
 
 class CompositorFrameHandle;
+class InputMethodContext;
 class WebContext;
 class WebViewProxyClient;
 
-class WebView : public QObject,
+class WebView : public InputMethodContextClient,
                 public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public WebViewProxy {
-  Q_OBJECT
-
  public:
   WebView(WebViewProxyClient* client,
           OxideQFindController* find_controller,
@@ -85,29 +84,24 @@ class WebView : public QObject,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
- private Q_SLOTS:
-  void OnInputPanelVisibilityChanged();
-
  private:
   WebView(WebViewProxyClient* client,
           OxideQSecurityStatus* security_status);
 
   float GetDeviceScaleFactor() const;
 
-  bool ShouldShowInputPanel() const;
-  bool ShouldHideInputPanel() const;
-  void SetInputPanelVisibility(bool visible);
-
   void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
+
+  // InputMethodContextClient implementation
+  void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebViewClient implementation
   blink::WebScreenInfo GetScreenInfo() const override;
   gfx::Rect GetViewBoundsPix() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
-  bool IsInputPanelVisible() const override;
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type) override;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
@@ -169,11 +163,7 @@ class WebView : public QObject,
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
-  void TextInputStateChanged() override;
-  void FocusedNodeChanged() override;
-  void SelectionBoundsChanged() override;
-  void ImeCancelComposition() override;
-  void SelectionChanged() override;
+  oxide::InputMethodContext* GetInputMethodContext() const override;
   void UpdateCursor(const content::WebCursor& cursor) override;
   void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void OnCertificateError(scoped_ptr<oxide::CertificateError> error) override;
@@ -293,11 +283,12 @@ class WebView : public QObject,
 
   void teardownFrameTree() override;
 
+  // This must outlive |view_|
+  scoped_ptr<InputMethodContext> input_method_context_;
+
   scoped_ptr<oxide::WebView> view_;
 
   WebViewProxyClient* client_;
-
-  bool has_input_method_state_;
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<ScriptMessageHandlerProxyHandle*> message_handlers_;

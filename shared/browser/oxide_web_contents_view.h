@@ -27,7 +27,7 @@ class WebContents;
 
 namespace oxide {
 
-class WebView;
+class RenderWidgetHostViewContainer;
 
 class WebContentsView final : public content::WebContentsViewOxide {
  public:
@@ -35,7 +35,9 @@ class WebContentsView final : public content::WebContentsViewOxide {
   static content::WebContentsViewOxide* Create(
       content::WebContents* web_contents);
 
-  WebView* GetWebView() const;
+  static WebContentsView* FromWebContents(content::WebContents* contents);
+
+  void SetContainer(RenderWidgetHostViewContainer* container);
 
   // content::WebContentsView
   gfx::NativeView GetNativeView() const final;
@@ -92,6 +94,8 @@ class WebContentsView final : public content::WebContentsViewOxide {
   WebContentsView(content::WebContents* web_contents);
 
   content::WebContents* web_contents_;
+
+  RenderWidgetHostViewContainer* container_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
 };

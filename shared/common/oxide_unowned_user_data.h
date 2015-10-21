@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,27 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#ifndef _OXIDE_SHARED_COMMON_UNOWNED_USER_DATA_H_
+#define _OXIDE_SHARED_COMMON_UNOWNED_USER_DATA_H_
 
-#include "base/memory/scoped_ptr.h"
+#include "base/macros.h"
+#include "base/supports_user_data.h"
 
-namespace oxide {
+namespace {
 
-class CompositorFrameHandle;
-
-class CompositorClient {
+template <class T>
+class UnownedUserData : public base::SupportsUserData::Data {
  public:
-  virtual ~CompositorClient() {}
+  UnownedUserData(T* ptr) : ptr_(ptr) {}
 
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
+  T* get() const { return ptr_; }
+
+ private:
+  T* ptr_;
+
+  DISALLOW_COPY_AND_ASSIGN(UnownedUserData);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#endif // _OXIDE_SHARED_COMMON_UNOWNED_USER_DATA_H_

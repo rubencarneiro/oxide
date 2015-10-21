@@ -25,14 +25,12 @@
 #include <QCursor>
 #include <QGuiApplication>
 #include <QInputEvent>
-#include <QInputMethod>
 #include <QKeyEvent>
+#include <QPixmap>
 #include <QScreen>
 #include <QString>
 #include <QtDebug>
-#include <QTextCharFormat>
 #include <QUrl>
-#include <QWindow>
 
 #include "base/logging.h"
 #include "base/macros.h"
@@ -46,16 +44,12 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
-#include "third_party/skia/include/core/SkColor.h"
-#include "third_party/WebKit/public/platform/WebColor.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
-#include "ui/base/ime/text_input_type.h"
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
-#include "ui/gfx/range/range.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -74,6 +68,7 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
@@ -236,41 +231,6 @@ inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
   return QCursor(cs);
 }
 
-Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
-  switch (type) {
-    case ui::TEXT_INPUT_TYPE_TEXT:
-    case ui::TEXT_INPUT_TYPE_TEXT_AREA:
-    case ui::TEXT_INPUT_TYPE_CONTENT_EDITABLE:
-      return Qt::ImhPreferLowercase;
-    case ui::TEXT_INPUT_TYPE_PASSWORD:
-      return Qt::ImhHiddenText | Qt::ImhSensitiveData |
-          Qt::ImhNoAutoUppercase | Qt::ImhPreferLowercase |
-          Qt::ImhNoPredictiveText;
-    case ui::TEXT_INPUT_TYPE_SEARCH:
-      return Qt::ImhNoAutoUppercase | Qt::ImhPreferLowercase;
-    case ui::TEXT_INPUT_TYPE_EMAIL:
-      return Qt::ImhEmailCharactersOnly;
-    case ui::TEXT_INPUT_TYPE_NUMBER:
-      return Qt::ImhFormattedNumbersOnly;
-    case ui::TEXT_INPUT_TYPE_TELEPHONE:
-      return Qt::ImhDialableCharactersOnly;
-    case ui::TEXT_INPUT_TYPE_URL:
-      return Qt::ImhUrlCharactersOnly;
-    case ui::TEXT_INPUT_TYPE_DATE:
-    case ui::TEXT_INPUT_TYPE_MONTH:
-    case ui::TEXT_INPUT_TYPE_WEEK:
-      return Qt::ImhDate;
-    case ui::TEXT_INPUT_TYPE_DATE_TIME:
-    case ui::TEXT_INPUT_TYPE_DATE_TIME_LOCAL:
-    case ui::TEXT_INPUT_TYPE_DATE_TIME_FIELD:
-      return Qt::ImhDate | Qt::ImhTime;
-    case ui::TEXT_INPUT_TYPE_TIME:
-      return Qt::ImhTime;
-    default:
-      return Qt::ImhNone;
-  }
-}
-
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
 
@@ -429,22 +389,12 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QRect rect_;
 };
 
-void WebView::OnInputPanelVisibilityChanged() {
-  view_->InputPanelVisibilityChanged();
-}
-
 WebView::WebView(WebViewProxyClient* client,
                  OxideQSecurityStatus* security_status)
-    : client_(client),
-      has_input_method_state_(false),
+    : input_method_context_(new InputMethodContext(this)),
+      client_(client),
       security_status_(security_status),
-      frame_tree_torn_down_(false) {
-  QInputMethod* im = QGuiApplication::inputMethod();
-  if (im) {
-    connect(im, SIGNAL(visibleChanged()),
-            SLOT(OnInputPanelVisibilityChanged()));
-  }
-}
+      frame_tree_torn_down_(false) {}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = client_->GetScreen();
@@ -453,48 +403,6 @@ float WebView::GetDeviceScaleFactor() const {
   }
 
   return GetDeviceScaleFactorFromQScreen(screen);
-}
-
-bool WebView::ShouldShowInputPanel() const {
-  if (!view_) {
-    // Can be called during WebView construction when |view_| is still null.
-    return false;
-  }
-
-  if (view_->text_input_type() != ui::TEXT_INPUT_TYPE_NONE &&
-      view_->show_ime_if_needed() && view_->focused_node_is_editable()) {
-    return true;
-  }
-
-  return false;
-}
-
-bool WebView::ShouldHideInputPanel() const {
-  if (!view_) {
-    // Can be called during WebView construction when |view_| is still null.
-    return true;
-  }
-
-  if (view_->text_input_type() == ui::TEXT_INPUT_TYPE_NONE &&
-      !view_->focused_node_is_editable()) {
-    return true;
-  }
-
-  return false;
-}
-
-void WebView::SetInputPanelVisibility(bool visible) {
-  client_->SetInputMethodEnabled(visible);
-
-  if (!visible) {
-    has_input_method_state_ = false;
-  }
-
-  // Do not check whether the input method is currently visible here, to avoid
-  // a possible race condition: if hide() and show() are called very quickly
-  // in a row, when show() is called the hide() request might not have
-  // completed yet, and isVisible() could return true.
-  QGuiApplication::inputMethod()->setVisible(visible);
 }
 
 void WebView::CommonInit(OxideQFindController* find_controller) {
@@ -524,6 +432,10 @@ void WebView::EnsurePreferences() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
+void WebView::SetInputMethodEnabled(bool enabled) {
+  client_->SetInputMethodEnabled(enabled);
+}
+
 blink::WebScreenInfo WebView::GetScreenInfo() const {
   QScreen* screen = client_->GetScreen();
   if (!screen) {
@@ -547,15 +459,6 @@ bool WebView::IsVisible() const {
 
 bool WebView::HasFocus() const {
   return client_->HasFocus();
-}
-
-bool WebView::IsInputPanelVisible() const {
-  QInputMethod* im = QGuiApplication::inputMethod();
-  if (!im) {
-    return false;
-  }
-
-  return im->isVisible();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -918,77 +821,8 @@ void WebView::EvictCurrentFrame() {
   client_->EvictCurrentFrame();
 }
 
-void WebView::TextInputStateChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  if (view_->text_input_type() != ui::TEXT_INPUT_TYPE_NONE) {
-    QGuiApplication::inputMethod()->update(
-        static_cast<Qt::InputMethodQueries>(Qt::ImQueryInput | Qt::ImHints));
-  }
-
-  if (ShouldShowInputPanel()) {
-    SetInputPanelVisibility(true);
-  } else if (ShouldHideInputPanel()) {
-    SetInputPanelVisibility(false);
-  }
-}
-
-void WebView::FocusedNodeChanged() {
-  // Work around for https://launchpad.net/bugs/1323743
-  if (QGuiApplication::focusWindow() &&
-      QGuiApplication::focusWindow()->focusObject()) {
-    QGuiApplication::focusWindow()->focusObjectChanged(
-        QGuiApplication::focusWindow()->focusObject());
-  }
-
-  if (ShouldHideInputPanel() && HasFocus()) {
-    SetInputPanelVisibility(false);
-  } else if (!has_input_method_state_ && ShouldShowInputPanel()) {
-    SetInputPanelVisibility(true);
-  } else if (has_input_method_state_ && view_->focused_node_is_editable()) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::SelectionBoundsChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(
-        Qt::ImCursorRectangle
-        | Qt::ImCursorPosition
-        | Qt::ImAnchorPosition
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-        | Qt::ImTextBeforeCursor
-        | Qt::ImTextAfterCursor
-#endif
-      ));
-}
-
-void WebView::ImeCancelComposition() {
-  if (has_input_method_state_) {
-    QGuiApplication::inputMethod()->reset();
-  }
-}
-
-void WebView::SelectionChanged() {
-  if (!HasFocus()) {
-    return;
-  }
-
-  QGuiApplication::inputMethod()->update(
-      static_cast<Qt::InputMethodQueries>(
-        Qt::ImSurroundingText
-        | Qt::ImCurrentSelection
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-        | Qt::ImTextBeforeCursor
-        | Qt::ImTextAfterCursor
-#endif
-      ));
+oxide::InputMethodContext* WebView::GetInputMethodContext() const {
+  return input_method_context_.get();
 }
 
 void WebView::UpdateCursor(const content::WebCursor& cursor) {
@@ -1189,10 +1023,7 @@ void WebView::visibilityChanged() {
 }
 
 void WebView::handleFocusEvent(QFocusEvent* event) {
-  if (event->gotFocus() && ShouldShowInputPanel()) {
-    SetInputPanelVisibility(true);
-  }
-
+  input_method_context_->FocusChanged(event);
   view_->FocusChanged();
 }
 
@@ -1208,62 +1039,7 @@ void WebView::handleHoverEvent(QHoverEvent* event,
 }
 
 void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
-  QString commit_string = event->commitString();
-
-  if (!commit_string.isEmpty()) {
-    gfx::Range replacement_range = gfx::Range::InvalidRange();
-    if (event->replacementLength() > 0) {
-      replacement_range.set_start(event->replacementStart());
-      replacement_range.set_end(event->replacementStart() +
-                                event->replacementLength());
-    }
-    view_->ImeCommitText(base::UTF8ToUTF16(commit_string.toStdString()),
-                         replacement_range);
-  }
-
-  QString preedit_string = event->preeditString();
-
-  std::vector<blink::WebCompositionUnderline> underlines;
-  int cursor_position = -1;
-  gfx::Range selection_range = gfx::Range::InvalidRange();
-
-  Q_FOREACH (const QInputMethodEvent::Attribute& attribute, event->attributes()) {
-    switch (attribute.type) {
-    case QInputMethodEvent::Cursor:
-      if (attribute.length > 0) {
-        cursor_position = attribute.start;
-      }
-      break;
-    case QInputMethodEvent::Selection:
-      selection_range.set_start(
-          qMin(attribute.start, (attribute.start + attribute.length)));
-      selection_range.set_end(
-          qMax(attribute.start, (attribute.start + attribute.length)));
-      break;
-    case QInputMethodEvent::TextFormat: {
-      QTextCharFormat format =
-          attribute.value.value<QTextFormat>().toCharFormat();
-      blink::WebColor color = format.underlineColor().rgba();
-      int start = qMin(attribute.start, (attribute.start + attribute.length));
-      int end = qMax(attribute.start, (attribute.start + attribute.length));
-      blink::WebCompositionUnderline underline(
-          start, end, color, false, SK_ColorTRANSPARENT);
-      underlines.push_back(underline);
-      break;
-    }
-    default:
-      break;
-    }
-  }
-
-  if (!selection_range.IsValid()) {
-    selection_range = gfx::Range(
-        cursor_position > 0 ? cursor_position : preedit_string.length());
-  }
-  view_->ImeSetComposingText(base::UTF8ToUTF16(preedit_string.toStdString()),
-                             underlines, selection_range);
-
-  has_input_method_state_ = !preedit_string.isEmpty();
+  input_method_context_->HandleEvent(event);
 }
 
 void WebView::handleKeyEvent(QKeyEvent* event) {
@@ -1313,42 +1089,7 @@ void WebView::handleWheelEvent(QWheelEvent* event,
 }
 
 QVariant WebView::inputMethodQuery(Qt::InputMethodQuery query) const {
-  switch (query) {
-    case Qt::ImHints:
-      return QVariant(QImHintsFromInputType(view_->text_input_type()));
-    case Qt::ImCursorRectangle: {
-      // XXX: Is this in the right coordinate space?
-      return QRect(view_->caret_rect().x(), view_->caret_rect().y(),
-                   view_->caret_rect().width(), view_->caret_rect().height());
-    }
-    case Qt::ImCursorPosition:
-      return static_cast<int>(view_->selection_cursor_position() & INT_MAX);
-    case Qt::ImSurroundingText:
-      return QString::fromStdString(base::UTF16ToUTF8(view_->GetSelectionText()));
-    case Qt::ImCurrentSelection:
-      return QString::fromStdString(base::UTF16ToUTF8(view_->GetSelectedText()));
-    case Qt::ImAnchorPosition:
-      return static_cast<int>(view_->selection_anchor_position() & INT_MAX);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-    case Qt::ImTextBeforeCursor: {
-      std::string text = base::UTF16ToUTF8(view_->GetSelectionText());
-      return QString::fromStdString(
-          text.substr(0, view_->selection_cursor_position()));
-    }
-    case Qt::ImTextAfterCursor: {
-      std::string text = base::UTF16ToUTF8(view_->GetSelectionText());
-      if (view_->selection_cursor_position() > text.length()) {
-        return QString();
-      }
-      return QString::fromStdString(
-          text.substr(view_->selection_cursor_position(), std::string::npos));
-    }
-#endif
-    default:
-      break;
-  }
-
-  return QVariant();
+  return input_method_context_->Query(query);
 }
 
 void WebView::goBack() {
@@ -1689,13 +1430,10 @@ WebView* WebView::CreateFromNewViewRequest(
 WebView::~WebView() {
   DCHECK(frame_tree_torn_down_);
 
+  input_method_context_->DetachClient();
+
   oxide::PermissionRequestDispatcher::FromWebContents(
       view_->GetWebContents())->set_client(nullptr);
-
-  QInputMethod* im = QGuiApplication::inputMethod();
-  if (im) {
-    im->disconnect(this);
-  }
 }
 
 // static
