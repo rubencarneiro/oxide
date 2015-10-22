@@ -84,6 +84,7 @@ Qt::InputMethodHints QImHintsFromInputType(ui::TextInputType type) {
 }
 
 void InputMethodContext::OnInputPanelVisibilityChanged() {
+  NotifyInputPanelVisibilityChanged();
 }
 
 bool InputMethodContext::ShouldShowInputPanel() const {
