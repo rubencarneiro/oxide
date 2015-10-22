@@ -1027,6 +1027,7 @@ void WebView::DidAttachInterstitialPage() {
       ->GetInterstitialPage()
       ->GetMainFrame()
       ->GetRenderViewHost()
+      ->GetWidget()
       ->GetView());
   DCHECK(interstitial_rwhv_);
 
