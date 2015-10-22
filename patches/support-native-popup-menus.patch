@@ -286,7 +286,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
-@@ -162,16 +162,18 @@
+@@ -167,16 +167,18 @@
        'renderer/dom_storage/dom_storage_dispatcher.h',
        'renderer/dom_storage/dom_storage_proxy.h',
        'renderer/dom_storage/webstoragearea_impl.cc',
@@ -522,7 +522,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
 diff --git a/content/renderer/render_thread_impl.cc b/content/renderer/render_thread_impl.cc
 --- a/content/renderer/render_thread_impl.cc
 +++ b/content/renderer/render_thread_impl.cc
-@@ -554,20 +554,18 @@ RenderThreadImpl::RenderThreadImpl(
+@@ -549,20 +549,18 @@ RenderThreadImpl::RenderThreadImpl(
  
  void RenderThreadImpl::Init() {
    TRACE_EVENT0("startup", "RenderThreadImpl::Init");
@@ -589,8 +589,8 @@ diff --git a/content/renderer/render_widget.h b/content/renderer/render_widget.h
  
    // RenderWidget IPC message handlers
    void OnHandleInputEvent(const blink::WebInputEvent* event,
-                           const ui::LatencyInfo& latency_info,
-                           bool keyboard_shortcut);
+                           const ui::LatencyInfo& latency_info);
    void OnCursorVisibilityChange(bool is_visible);
    void OnMouseCaptureLost();
    virtual void OnSetFocus(bool enable);
+   void OnClose();

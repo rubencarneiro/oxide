@@ -41,21 +41,18 @@ NativeWebKeyboardEvent::NativeWebKeyboardEvent()
       match_edit_command(false) {}
 
 NativeWebKeyboardEvent::NativeWebKeyboardEvent(gfx::NativeEvent native_event)
-    : os_event(nullptr),
-      skip_in_browser(false),
-      match_edit_command(false) {
+    : NativeWebKeyboardEvent() {
   NOTREACHED();
 }
 
-NativeWebKeyboardEvent::NativeWebKeyboardEvent(
-    ui::EventType key_event_type,
-    bool is_char,
-    wchar_t character,
-    int state,
-    double time_stamp_seconds)
-    : os_event(nullptr),
-      skip_in_browser(false),
-      match_edit_command(false) {
+NativeWebKeyboardEvent::NativeWebKeyboardEvent(const ui::KeyEvent& key_event)
+    : NativeWebKeyboardEvent() {
+  NOTREACHED();
+}
+
+NativeWebKeyboardEvent::NativeWebKeyboardEvent(const ui::KeyEvent& key_event,
+                                               base::char16 character)
+    : NativeWebKeyboardEvent() {
   NOTREACHED();
 }
 
@@ -64,8 +61,7 @@ NativeWebKeyboardEvent::NativeWebKeyboardEvent(
     : WebKeyboardEvent(other),
       os_event(CopyEvent(other.os_event)),
       skip_in_browser(other.skip_in_browser),
-      match_edit_command(false) {
-}
+      match_edit_command(false) {}
 
 NativeWebKeyboardEvent::~NativeWebKeyboardEvent() {
   delete os_event;

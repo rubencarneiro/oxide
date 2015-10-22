@@ -5,14 +5,14 @@
 diff --git a/content/public/common/content_client.cc b/content/public/common/content_client.cc
 --- a/content/public/common/content_client.cc
 +++ b/content/public/common/content_client.cc
-@@ -107,9 +107,17 @@ std::string ContentClient::GetProcessTyp
- #if defined(OS_MACOSX) && !defined(OS_IOS)
- bool ContentClient::GetSandboxProfileForSandboxType(
-     int sandbox_type,
-     int* sandbox_profile_resource_id) const {
+@@ -111,9 +111,17 @@ bool ContentClient::GetSandboxProfileFor
    return false;
  }
  #endif
+ 
+ bool ContentClient::IsSupplementarySiteIsolationModeEnabled() {
+   return false;
+ }
  
 +bool ContentClient::ShouldOptimizeForMemoryUsage() const {
 +#if defined(OS_ANDROID)
@@ -26,14 +26,14 @@ diff --git a/content/public/common/content_client.cc b/content/public/common/con
 diff --git a/content/public/common/content_client.h b/content/public/common/content_client.h
 --- a/content/public/common/content_client.h
 +++ b/content/public/common/content_client.h
-@@ -146,16 +146,20 @@ class CONTENT_EXPORT ContentClient {
-   // should be allowed to register service workers. Only secure and
-   // trustworthy schemes should be added.
-   virtual void AddServiceWorkerSchemes(std::set<std::string>* schemes) {}
+@@ -149,16 +149,20 @@ class CONTENT_EXPORT ContentClient {
  
-   // Gives the embedder a chance to register schemes for which site isolation
-   // should be enabled.
-   virtual void AddIsolatedSchemes(std::set<std::string>* schemes) {}
+   // Returns true if the embedder wishes to supplement the site isolation policy
+   // used by the content layer. Returning true enables the infrastructure for
+   // out-of-process iframes, and causes the content layer to consult
+   // ContentBrowserClient::DoesSiteRequireDedicatedProcess() when making process
+   // model decisions.
+   virtual bool IsSupplementarySiteIsolationModeEnabled();
  
 +  // Let the embedder control whether content should optimize for memory
 +  // consumption (eg, limiting decoded image size)

@@ -71,7 +71,7 @@ class NotificationRegistrar;
 struct OpenURLParams;
 class RenderFrameHost;
 class RenderViewHost;
-class RenderWidgetHostImpl;
+class RenderWidgetHost;
 class WebContents;
 class WebContentsImpl;
 
@@ -294,7 +294,7 @@ class WebView : public ScriptMessageTarget,
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
   content::RenderViewHost* GetRenderViewHost() const;
-  content::RenderWidgetHostImpl* GetRenderWidgetHostImpl() const;
+  content::RenderWidgetHost* GetRenderWidgetHost() const;
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
