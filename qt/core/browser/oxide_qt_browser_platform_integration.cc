@@ -134,7 +134,7 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
 }
 
 ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
-  return new ClipboardQt();
+  return new Clipboard();
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(
