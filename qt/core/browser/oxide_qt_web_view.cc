@@ -305,18 +305,21 @@ void CreateRestoreEntriesFromRestoreState(
 
 content::NavigationController::RestoreType ToNavigationControllerRestoreType(
     RestoreType type) {
-  COMPILE_ASSERT(
+  static_assert(
       RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
           content::NavigationController::RESTORE_CURRENT_SESSION),
-      restore_type_enums_current_doesnt_match);
-  COMPILE_ASSERT(
+      "RestoreType and content::NavigationController::RestoreType don't "
+      "match: RESTORE_CURRENT_SESSION");
+  static_assert(
       RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
           content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      restore_type_enums_exited_cleanly_doesnt_match);
-  COMPILE_ASSERT(
+      "RestoreType and content::NavigationController::RestoreType don't "
+      "match: RESTORE_LAST_SESSION_EXITED_CLEANLY");
+  static_assert(
       RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
           content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
-      restore_type_enums_crashed_doesnt_match);
+      "RestoreType and content::NavigationController::RestoreType don't "
+      "match: RESTORE_LAST_SESSION_CRASHED");
 
   return static_cast<content::NavigationController::RestoreType>(type);
 }
@@ -1245,18 +1248,21 @@ void WebView::setCanTemporarilyRunInsecureContent(bool allow) {
 }
 
 ContentTypeFlags WebView::blockedContent() const {
-  COMPILE_ASSERT(
+  static_assert(
       CONTENT_TYPE_NONE ==
         static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_NONE),
-      content_type_flags_none_doesnt_match);
-  COMPILE_ASSERT(
+      "ContentTypeFlags and oxide::ContentType enums don't match: "
+      "CONTENT_TYPE_NONE");
+  static_assert(
       CONTENT_TYPE_MIXED_DISPLAY ==
         static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_MIXED_DISPLAY),
-      content_type_flags_mixed_display_doesnt_match);
-  COMPILE_ASSERT(
+      "ContentTypeFlags and oxide::ContentType enums don't match: "
+      "CONTENT_TYPE_MIXED_DISPLAY");
+  static_assert(
       CONTENT_TYPE_MIXED_SCRIPT ==
         static_cast<ContentTypeFlags>(oxide::CONTENT_TYPE_MIXED_SCRIPT),
-      content_type_flags_mixed_script_doesnt_match);
+      "ContentTypeFlags and oxide::ContentType enums don't match: "
+      "CONTENT_TYPE_MIXED_SCRIPT");
 
   return static_cast<ContentTypeFlags>(view_->blocked_content());
 }

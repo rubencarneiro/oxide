@@ -97,34 +97,34 @@ OxideQCertificateError::OxideQCertificateError(
                  // excusively owns |error_|
                  base::Unretained(d)));
   
-  COMPILE_ASSERT(
+  static_assert(
       OK == static_cast<Error>(oxide::CERT_OK),
-      error_enums_ok_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: OK");
+  static_assert(
       ErrorBadIdentity == static_cast<Error>(oxide::CERT_ERROR_BAD_IDENTITY),
-      error_enums_bad_identity_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorBadIdentity");
+  static_assert(
       ErrorExpired == static_cast<Error>(oxide::CERT_ERROR_EXPIRED),
-      error_enums_expired_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorExpired");
+  static_assert(
       ErrorDateInvalid == static_cast<Error>(oxide::CERT_ERROR_DATE_INVALID),
-      error_enums_date_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorDateInvalid");
+  static_assert(
       ErrorAuthorityInvalid ==
         static_cast<Error>(oxide::CERT_ERROR_AUTHORITY_INVALID),
-      error_enums_authority_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorAuthorityInvalid");
+  static_assert(
       ErrorRevoked == static_cast<Error>(oxide::CERT_ERROR_REVOKED),
-      error_enums_revoked_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorRevoked");
+  static_assert(
       ErrorInvalid == static_cast<Error>(oxide::CERT_ERROR_INVALID),
-      error_enums_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorInvalid");
+  static_assert(
       ErrorInsecure == static_cast<Error>(oxide::CERT_ERROR_INSECURE),
-      error_enums_insecure_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorInsecure");
+  static_assert(
       ErrorGeneric == static_cast<Error>(oxide::CERT_ERROR_GENERIC),
-      error_enums_generic_doesnt_match);
+      "Error and oxide::CertError enums dont match: ErrorGeneric");
 }
 
 OxideQCertificateError::~OxideQCertificateError() {}
