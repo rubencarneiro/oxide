@@ -569,6 +569,8 @@
       'conditions': [
         ['enable_plugins==1', {
           'sources': [
+            'browser/pepper/oxide_pepper_flash_plugin_detection.cc',
+            'browser/pepper/oxide_pepper_flash_plugin_detection.h',
             'browser/pepper/oxide_pepper_host_factory_browser.cc',
             'browser/pepper/oxide_pepper_host_factory_browser.h',
             'browser/pepper/oxide_pepper_flash_browser_host.cc',

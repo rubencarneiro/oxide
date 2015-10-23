@@ -63,6 +63,9 @@
 
 #include "shared/app/oxide_content_main_delegate.h"
 #include "shared/app/oxide_platform_delegate.h"
+#if defined(ENABLE_PLUGINS)
+#include "shared/browser/pepper/oxide_pepper_flash_plugin_detection.h"
+#endif
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
@@ -300,9 +303,15 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
 
+#if defined(ENABLE_PLUGINS)
   if (IsEnvironmentOptionEnabled("ENABLE_PEPPER_FLASH_PLUGIN")) {
-    command_line->AppendSwitch(switches::kEnablePepperFlashPlugin);
+    base::FilePath pepper_path(GetPepperFlashPluginPath());
+    if (!pepper_path.empty()) {
+      command_line->AppendSwitchPath(switches::kPepperFlashPluginPath,
+                                     pepper_path);
+    }
   }
+#endif
 
   if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);

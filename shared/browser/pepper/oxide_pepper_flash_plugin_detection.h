@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,21 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_COMMON_PATHS_H_
-#define _OXIDE_SHARED_COMMON_PATHS_H_
+#ifndef _OXIDE_SHARED_BROWSER_PEPPER_PEPPER_FLASH_PLUGIN_DETECTION_H_
+#define _OXIDE_SHARED_BROWSER_PEPPER_PEPPER_FLASH_PLUGIN_DETECTION_H_
+
+#include "base/files/file_path.h"
 
 namespace oxide {
 
-enum {
-  PATH_START = 1000, // Same as Chrome
-
-  FILE_PEPPER_FLASH_PLUGIN,
-
-  PATH_END
-};
-
-void RegisterPathProvider();
+base::FilePath GetPepperFlashPluginPath();
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_COMMON_PATHS_H_
+#endif // _OXIDE_SHARED_BROWSER_PEPPER_PEPPER_FLASH_PLUGIN_DETECTION_H_
