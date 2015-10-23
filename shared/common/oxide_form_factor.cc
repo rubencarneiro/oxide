@@ -17,23 +17,25 @@
 
 #include "oxide_form_factor.h"
 
-#include "base/logging.h"
+#include "base/command_line.h"
+
+#include "oxide_constants.h"
 
 namespace oxide {
 
-namespace {
-bool g_initialized = false;
-FormFactor g_form_factor = FORM_FACTOR_DESKTOP;
-}
-
-void InitFormFactorHint(FormFactor form_factor) {
-  DCHECK(!g_initialized);
-  g_initialized = true;
-  g_form_factor = form_factor;
-}
-
 FormFactor GetFormFactorHint() {
-  return g_form_factor;
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  std::string form_factor =
+      command_line->GetSwitchValueASCII(switches::kFormFactor);
+  if (form_factor == switches::kFormFactorDesktop) {
+    return FORM_FACTOR_DESKTOP;
+  } else if (form_factor == switches::kFormFactorTablet) {
+    return FORM_FACTOR_TABLET;
+  } else if (form_factor == switches::kFormFactorPhone) {
+    return FORM_FACTOR_PHONE;
+  }
+
+  return FORM_FACTOR_DESKTOP;
 }
 
 } // namespace oxide

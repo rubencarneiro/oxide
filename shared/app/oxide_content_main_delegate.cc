@@ -37,32 +37,12 @@
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_paths.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 #include "oxide_platform_delegate.h"
 
 namespace oxide {
-
-namespace {
-
-FormFactor FormFactorHintFromCommandLine(base::CommandLine* command_line) {
-  std::string form_factor =
-      command_line->GetSwitchValueASCII(switches::kFormFactor);
-  if (form_factor == switches::kFormFactorDesktop) {
-    return FORM_FACTOR_DESKTOP;
-  } else if (form_factor == switches::kFormFactorTablet) {
-    return FORM_FACTOR_TABLET;
-  } else if (form_factor == switches::kFormFactorPhone) {
-    return FORM_FACTOR_PHONE;
-  }
-
-  NOTREACHED();
-  return FORM_FACTOR_DESKTOP;
-}
-
-}
 
 ContentMainDelegate::ContentMainDelegate(PlatformDelegate* delegate)
     : delegate_(delegate) {
@@ -76,10 +56,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(content_client_.get());
   RegisterPathProvider();
 
-  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kProcessType)) {
-    InitFormFactorHint(FormFactorHintFromCommandLine(command_line));
-  }
   return false;
 }
 
