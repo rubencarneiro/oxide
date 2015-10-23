@@ -72,7 +72,8 @@ class PepperFlashRendererHost : public ppapi::host::ResourceHost {
   int32_t OnInvokePrinting(ppapi::host::HostMessageContext* host_context);
 
   // ppapi::host::ResourceMessageHandler implementation
-  int32_t OnResourceMessageReceived(const IPC::Message& msg,
+  int32_t OnResourceMessageReceived(
+      const IPC::Message& msg,
       ppapi::host::HostMessageContext* context) override;
 
   // A stack of ReplyMessageContexts to track Navigate() calls which have not

@@ -4,8 +4,6 @@
 // found in the LICENSE file.
 
 #include "oxide_pepper_renderer_host_factory.h"
-#include "oxide_pepper_flash_renderer_host.h"
-#include "oxide_pepper_flash_menu_host.h"
 
 #include "content/public/renderer/renderer_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
@@ -14,21 +12,24 @@
 #include "ppapi/proxy/ppapi_message_utils.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
+#include "oxide_pepper_flash_font_file_host.h"
+#include "oxide_pepper_flash_renderer_host.h"
+#include "oxide_pepper_flash_menu_host.h"
 
 namespace oxide {
 
-PepperRendererHostFactory::PepperRendererHostFactory(content::RendererPpapiHost* host)
+PepperRendererHostFactory::PepperRendererHostFactory(
+    content::RendererPpapiHost* host)
     : host_(host) {}
 
-PepperRendererHostFactory::~PepperRendererHostFactory()
-{}
+PepperRendererHostFactory::~PepperRendererHostFactory() {}
 
-scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceHost(
+scoped_ptr<ppapi::host::ResourceHost>
+PepperRendererHostFactory::CreateResourceHost(
     ppapi::host::PpapiHost* host,
     PP_Resource resource,
     PP_Instance instance,
-    const IPC::Message& message
-) {
+    const IPC::Message& message) {
   DCHECK_EQ(host_->GetPpapiHost(), host);
 
   if (!host_->IsValidInstance(instance)) {
@@ -41,6 +42,17 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
       case PpapiHostMsg_Flash_Create::ID: {
         return make_scoped_ptr(
             new PepperFlashRendererHost(host_, instance, resource));
+      }
+      case PpapiHostMsg_FlashFontFile_Create::ID: {
+        ppapi::proxy::SerializedFontDescription description;
+        PP_PrivateFontCharset charset;
+        if (ppapi::UnpackMessage<PpapiHostMsg_FlashFontFile_Create>(
+                message, &description, &charset)) {
+          return make_scoped_ptr(
+              new PepperFlashFontFileHost(
+                host_, instance, resource, description, charset));
+        }
+        break;
       }
 //      case PpapiHostMsg_FlashFullscreen_Create::ID: {
 //       return scoped_ptr<ppapi::host::ResourceHost>(new PepperFlashFullscreenHost(
@@ -60,7 +72,7 @@ scoped_ptr<ppapi::host::ResourceHost> PepperRendererHostFactory::CreateResourceH
     }
   }
 
-  return scoped_ptr<ppapi::host::ResourceHost>();
+  return nullptr;
 }
 
 } // oxide
