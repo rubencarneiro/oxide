@@ -110,20 +110,6 @@ const char kMimeTypeWebkitSmartPaste[] = "chromium/x-webkit-paste";
 ///////////////////////////////////////////////////////////////////////////////
 // ClipboardAuraX11
 
-ClipboardQt::ClipboardQt()
-  : clipboard_changed_listener_(new ClipboardChangedListener()),
-    write_mime_data_acc_(new QMimeData()) {
-  DCHECK(CalledOnValidThread());
-}
-
-ui::Clipboard* ClipboardQt::DoCreate() {
-  return new ClipboardQt();
-}
-
-ClipboardQt::~ClipboardQt() {
-  DCHECK(CalledOnValidThread());
-}
-
 uint64 ClipboardQt::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   return type == ui::CLIPBOARD_TYPE_COPY_PASTE
@@ -400,6 +386,16 @@ void ClipboardQt::WriteData(const FormatType& format,
   write_mime_data_acc_->setData(
       QString::fromStdString(format.ToString()),
       QByteArray(data_data, data_len));
+}
+
+ClipboardQt::ClipboardQt()
+  : clipboard_changed_listener_(new ClipboardChangedListener()),
+    write_mime_data_acc_(new QMimeData()) {
+  DCHECK(CalledOnValidThread());
+}
+
+ClipboardQt::~ClipboardQt() {
+  DCHECK(CalledOnValidThread());
 }
 
 } // namespace qt

@@ -66,9 +66,13 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
   return BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
 }
 
+ui::Clipboard* CreateClipboard() {
+  return BrowserPlatformIntegration::GetInstance()->CreateClipboard();
+}
+
 media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() {
   return BrowserPlatformIntegration::GetInstance()
-      ->CreateVideoCaptureDeviceFactory();
+      ->CreateVideoCaptureDeviceFactory().release();
 }
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
@@ -205,9 +209,7 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
   media::SetVideoCaptureDeviceFactoryFactory(CreateVideoCaptureDeviceFactory);
-
-  ui::SetClipboardOxideFactory(
-      BrowserPlatformIntegration::GetInstance()->GetClipboardOxideFactory());
+  ui::SetClipboardOxideFactory(CreateClipboard);
 
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());

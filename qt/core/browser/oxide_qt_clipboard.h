@@ -30,16 +30,11 @@ namespace qt {
 
 class ClipboardQt : public ui::Clipboard {
  public:
-
-  static Clipboard* DoCreate();
-  
- private:
-
   ClipboardQt();
   ~ClipboardQt() override;
 
-  // Clipboard overrides
-
+ private:
+  // ui::Clipboard overrides
   uint64 GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;
@@ -79,7 +74,6 @@ class ClipboardQt : public ui::Clipboard {
                  size_t data_len) override;
 
  private:
-
   scoped_ptr<ClipboardChangedListener> clipboard_changed_listener_;
   
   // Used for accumulated mimedata

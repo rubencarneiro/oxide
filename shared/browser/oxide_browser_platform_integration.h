@@ -26,16 +26,18 @@
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
-#include "shared/port/ui_base/clipboard_oxide.h"
-
-
 class GURL;
 
 namespace content {
 class LocationProvider;
 }
+
 namespace media {
 class VideoCaptureDeviceFactory;
+}
+
+namespace ui {
+class Clipboard;
 }
 
 namespace oxide {
@@ -70,40 +72,45 @@ class BrowserPlatformIntegration {
   // Launch |url| in an external application. Can be called on any thread
   virtual bool LaunchURLExternally(const GURL& url);
 
-  // Determine if there are any touch devices connected
+  // Determine if there are any touch devices connected. Called on the UI
+  // thread
   virtual bool IsTouchSupported();
 
-  // Return a native display handle that can be used to create GL contexts
+  // Return a native display handle that can be used to create GL contexts.
+  // Called on the UI thread
   virtual intptr_t GetNativeDisplay() = 0;
 
-  // Return information about the default screen
+  // Return information about the default screen. Called on the UI thread
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
   // Return the shared GL context provided by the application, if one exists.
   // This will be used for sharing resources between the webview and UI
-  // compositors
+  // compositors. Called on the UI thread
   virtual GLContextDependent* GetGLShareContext();
 
   // Create a MessagePump that allows Chromium events to be pumped from
   // the applications UI event loop
   virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
 
-  virtual ui::ClipboardOxideFactory GetClipboardOxideFactory();
+  // Create a ui::Clipboard implementation. Can return nullptr
+  virtual ui::Clipboard* CreateClipboard();
 
   // Called on the specified browser thread
   virtual void BrowserThreadInit(content::BrowserThread::ID id);
   virtual void BrowserThreadCleanUp(content::BrowserThread::ID id);
 
   // Create a LocationProvider for determining location information from
-  // the toolkit. Called on the geolocation thread
-  virtual content::LocationProvider* CreateLocationProvider();
+  // the toolkit. Can return nullptr. Called on the geolocation thread
+  virtual scoped_ptr<content::LocationProvider> CreateLocationProvider();
 
-  // Get the current application state
+  // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();
 
-  virtual media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() = 0;
+  // Create a VideoCaptureDeviceFactory
+  virtual scoped_ptr<media::VideoCaptureDeviceFactory>
+      CreateVideoCaptureDeviceFactory() = 0;
 
-  // Get the application name
+  // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
 
  protected:
