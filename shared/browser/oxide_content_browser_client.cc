@@ -107,7 +107,6 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     int child_process_id) {
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
-    switches::kEnableGoogleTalkPlugin,
     switches::kEnableMediaHubAudio,
     switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains,

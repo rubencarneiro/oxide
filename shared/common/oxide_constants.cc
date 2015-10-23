@@ -19,7 +19,6 @@
 
 namespace switches {
 
-const char kEnableGoogleTalkPlugin[] = "enable-google-talk-plugin";
 const char kPepperFlashPluginPath[] = "pepper-flash-plugin-path";
 const char kFormFactor[] = "form-factor";
 const char kFormFactorDesktop[] = "desktop";
