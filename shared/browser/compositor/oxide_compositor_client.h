@@ -28,8 +28,6 @@ class CompositorClient {
  public:
   virtual ~CompositorClient() {}
 
-  virtual void CompositorDidCommit() = 0;
-
   virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
 };
 

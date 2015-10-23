@@ -65,82 +65,95 @@ void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
 
 OxideQSecurityStatus::OxideQSecurityStatus()
     : d_ptr(new OxideQSecurityStatusPrivate(this)) {
-  COMPILE_ASSERT(
+  static_assert(
       SecurityLevelNone ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_NONE),
-      security_level_enums_none_doesnt_match);
-  COMPILE_ASSERT(
+      "SecurityLevel and oxide::SecurityLevel enums don't match: "
+      "SecurityLevelNone");
+  static_assert(
       SecurityLevelSecure ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_SECURE),
-      security_level_enums_secure_doesnt_match);
-  COMPILE_ASSERT(
+      "SecurityLevel and oxide::SecurityLevel enums don't match: "
+      "SecurityLevelSecure");
+  static_assert(
       SecurityLevelSecureEV ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_SECURE_EV),
-      security_level_enums_secure_ev_doesnt_match);
-  COMPILE_ASSERT(
+      "SecurityLevel and oxide::SecurityLevel enums don't match: "
+      "SecurityLevelSecureEV");
+  static_assert(
       SecurityLevelWarning ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_WARNING),
-      security_level_enums_warning_doesnt_match);
-  COMPILE_ASSERT(
+      "SecurityLevel and oxide::SecurityLevel enums don't match: "
+      "SecurityLevelWarning");
+  static_assert(
       SecurityLevelError ==
         static_cast<SecurityLevel>(oxide::SECURITY_LEVEL_ERROR),
-      security_level_enums_error_doesnt_match);
+      "SecurityLevel and oxide::SecurityLevel enums don't match: "
+      "SecurityLevelError");
 
-  COMPILE_ASSERT(
+  static_assert(
       ContentStatusNormal ==
         static_cast<ContentStatusFlags>(content::SSLStatus::NORMAL_CONTENT),
-      content_status_enums_normal_doesnt_match);
-  COMPILE_ASSERT(
+      "ContentStatus and content::SSLStatus::ContentStatusFlags enums don't "
+      "match: ContentStatusNormal");
+  static_assert(
       ContentStatusDisplayedInsecure ==
         static_cast<ContentStatusFlags>(
           content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
-      content_status_enums_displayed_insecure_doesnt_match);
-  COMPILE_ASSERT(
+      "ContentStatus and content::SSLStatus::ContentStatusFlags enums don't "
+      "match: ContentStatusDisplayedInsecure");
+  static_assert(
       ContentStatusRanInsecure ==
         static_cast<ContentStatusFlags>(
           content::SSLStatus::RAN_INSECURE_CONTENT),
-      content_status_enums_ran_insecure_doesnt_match);
+      "ContentStatus and content::SSLStatus::ContentStatusFlags enums don't "
+      "match: ContentStatusRanInsecure");
 
-  COMPILE_ASSERT(
+  static_assert(
       CertStatusOk == static_cast<CertStatusFlags>(oxide::CERT_STATUS_OK),
-      cert_status_enums_ok_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: CertStatusOk");
+  static_assert(
       CertStatusBadIdentity ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_BAD_IDENTITY),
-      cert_status_enums_bad_identity_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: "
+      "CertStatusBadIdentity");
+  static_assert(
       CertStatusExpired ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_EXPIRED),
-      cert_status_enums_expired_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: CertStatusExpired");
+  static_assert(
       CertStatusDateInvalid ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_DATE_INVALID),
-      cert_status_enums_date_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: "
+      "CertStatusDateInvalid");
+  static_assert(
       CertStatusAuthorityInvalid ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_AUTHORITY_INVALID),
-      cert_status_enums_authority_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: "
+      "CertStatusAuthorityInvalid");
+  static_assert(
       CertStatusRevocationCheckFailed ==
         static_cast<CertStatusFlags>(
           oxide::CERT_STATUS_REVOCATION_CHECK_FAILED),
-      cert_status_enums_revocation_check_failed_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: "
+      "CertStatusRevocationCheckFailed");
+  static_assert(
       CertStatusRevoked ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_REVOKED),
-      cert_status_enums_revoked_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: CertStatusRevoked");
+  static_assert(
       CertStatusInvalid ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_INVALID),
-      cert_status_enums_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: CertStatusInvalid");
+  static_assert(
       CertStatusInsecure ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_INSECURE),
-      cert_status_enums_insecure_doesnt_match);
-  COMPILE_ASSERT(
+      "CertStatus and oxide::CertStatus enums don't match: CertStatusInsecure");
+  static_assert(
       CertStatusGenericError ==
         static_cast<CertStatusFlags>(oxide::CERT_STATUS_GENERIC_ERROR),
-      cert_status_enums_generic_error_doesnt_match);
+      "CertStatus and oxide::CertStatus enums don't match: "
+      "CertStatusGenericError");
 }
 
 OxideQSecurityStatus::~OxideQSecurityStatus() {}

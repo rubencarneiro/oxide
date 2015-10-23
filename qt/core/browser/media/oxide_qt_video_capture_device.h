@@ -19,7 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_H_
 
 #include <QCamera>
-#include <QThread>
+#include <QScopedPointer>
 
 #include "media/capture/video/video_capture_device.h"
 
@@ -31,6 +31,7 @@ class VideoCaptureDevice : public media::VideoCaptureDevice {
  public:
   explicit VideoCaptureDevice(
       const media::VideoCaptureDevice::Name& device_name);
+  explicit VideoCaptureDevice(QCamera::Position position);
   ~VideoCaptureDevice() override;
 
  private:
@@ -41,6 +42,7 @@ class VideoCaptureDevice : public media::VideoCaptureDevice {
   void StopAndDeAllocate() override;
 
   media::VideoCaptureDevice::Name device_name_;
+  QCamera::Position position_;
 
   // These both live on the UI thread
   QScopedPointer<CameraFrameGrabber, QScopedPointerDeleteLater> view_finder_;

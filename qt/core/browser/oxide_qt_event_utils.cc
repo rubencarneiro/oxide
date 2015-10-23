@@ -542,8 +542,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   const unsigned short* text = event->text().utf16();
   memcpy(result.unmodifiedText, text, qMin(sizeof(result.unmodifiedText), sizeof(*text)));
 
-  COMPILE_ASSERT(sizeof(result.unmodifiedText) == sizeof(result.text),
-                 text_member_sizes_dont_match);
+  static_assert(sizeof(result.unmodifiedText) == sizeof(result.text),
+                "blink::WebKeyboardEvent::text and "
+                "blink::WebKeyboardEvent::unmodifiedText sizes don't match");
 
   if (result.modifiers & blink::WebInputEvent::ControlKey) {
     result.text[0] = GetControlCharacter(

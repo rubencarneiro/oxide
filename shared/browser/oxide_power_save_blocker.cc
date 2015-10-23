@@ -124,6 +124,10 @@ void PowerSaveBlocker::RemoveBlock() {
 }
 
 void PowerSaveBlocker::ApplyBlockUnityScreenService() {
+  if (unity_cookie_ != kInvalidCookie) {
+    return;
+  }
+
   DCHECK(!bus_.get());
   dbus::Bus::Options options;
   options.bus_type = dbus::Bus::SYSTEM;
@@ -175,6 +179,10 @@ void PowerSaveBlocker::RemoveBlockUnityScreenService() {
 }
 
 void PowerSaveBlocker::ApplyBlockFreedesktop() {
+  if (freedesktop_cookie_ != uint32_t(kInvalidCookie)) {
+    return;
+  }
+
   std::string application_name =
       BrowserPlatformIntegration::GetInstance()->GetApplicationName();
   std::string description{kDefaultInhibitReason};
@@ -238,12 +246,10 @@ void PowerSaveBlocker::RemoveBlockFreedesktop() {
 void PowerSaveBlocker::ApplicationStateChanged() {
   BrowserPlatformIntegration::ApplicationState state =
       BrowserPlatformIntegration::GetInstance()->GetApplicationState();
-  if (state != BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-      unity_cookie_ == kInvalidCookie) {
-    Init();
-  } else if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED &&
-             unity_cookie_ != kInvalidCookie) {
+  if (state == BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
     CleanUp();
+  } else {
+    Init();
   }
 }
 

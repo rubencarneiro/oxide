@@ -46,24 +46,24 @@ OxideQStoragePermissionRequest::OxideQStoragePermissionRequest(
     Type type) :
     d_ptr(new OxideQStoragePermissionRequestPrivate(url, first_party_url,
                                                     write, type)) {
-  COMPILE_ASSERT(
+  static_assert(
       TypeCookies == static_cast<Type>(oxide::STORAGE_TYPE_COOKIES),
-      type_enums_cookies_doesnt_match);
-  COMPILE_ASSERT(
+      "Type and oxide::StorageType enums don't match: TypeCookies");
+  static_assert(
       TypeAppCache == static_cast<Type>(oxide::STORAGE_TYPE_APPCACHE),
-      type_enums_appcache_doesnt_match);
-  COMPILE_ASSERT(
+      "Type and oxide::StorageType enums don't match: TypeAppCache");
+  static_assert(
       TypeLocalStorage == static_cast<Type>(oxide::STORAGE_TYPE_LOCAL_STORAGE),
-      type_enums_localstorage_doesnt_match);
-  COMPILE_ASSERT(
+      "Type and oxide::StorageType enums don't match: TypeLocalStorage");
+  static_assert(
       TypeSessionStorage == static_cast<Type>(oxide::STORAGE_TYPE_SESSION_STORAGE),
-      type_enums_sessionstorage_doesnt_match);
-  COMPILE_ASSERT(
+      "Type and oxide::StorageType enums don't match: TypeSessionStorage");
+  static_assert(
       TypeIndexedDB == static_cast<Type>(oxide::STORAGE_TYPE_INDEXEDDB),
-      type_enums_indexeddb_doesnt_match);
-  COMPILE_ASSERT(
+      "Type and oxide::StorageType enums don't match: TypeIndexedDB");
+  static_assert(
       TypeWebDB == static_cast<Type>(oxide::STORAGE_TYPE_WEBDB),
-      type_enums_webdb_doesnt_match);
+      "Type and oxide::StorageType enums don't match: TypeWebDB");
 }
 
 OxideQStoragePermissionRequest::~OxideQStoragePermissionRequest() {}

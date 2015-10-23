@@ -162,14 +162,22 @@ void CameraFrameGrabber::cameraError(QCamera::Error error) {
 
 VideoCaptureDevice::VideoCaptureDevice(
     const media::VideoCaptureDevice::Name& device_name)
-    : device_name_(device_name) {}
+    : device_name_(device_name),
+      position_(QCamera::UnspecifiedPosition) {}
+
+VideoCaptureDevice::VideoCaptureDevice(QCamera::Position position)
+    : position_(position) {}
 
 VideoCaptureDevice::~VideoCaptureDevice() {}
 
 void VideoCaptureDevice::AllocateAndStart(
     const media::VideoCaptureParams& params,
     scoped_ptr<media::VideoCaptureDevice::Client> client) {
-  camera_.reset(new QCamera(QByteArray(device_name_.name().c_str())));
+  if (device_name_.id().empty()) {
+    camera_.reset(new QCamera(position_));
+  } else {
+    camera_.reset(new QCamera(QByteArray(device_name_.id().c_str())));
+  }
   camera_->moveToThread(QCoreApplication::instance()->thread());
   camera_->setCaptureMode(QCamera::CaptureVideo);
 

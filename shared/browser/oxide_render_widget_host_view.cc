@@ -40,13 +40,13 @@
 #include "ui/gfx/geometry/size_conversions.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
-#include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/input/oxide_input_method_context.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_event_utils.h"
 #include "oxide_renderer_frame_evictor.h"
-#include "oxide_render_widget_host_view_delegate.h"
+#include "oxide_render_widget_host_view_container.h"
 
 namespace oxide {
 
@@ -81,43 +81,35 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
 void RenderWidgetHostView::OnTextInputStateChanged(
     ui::TextInputType type,
     bool show_ime_if_needed) {
-  if (type != current_text_input_type_ ||
-      show_ime_if_needed != show_ime_if_needed_) {
-    current_text_input_type_ = type;
-    show_ime_if_needed_ = show_ime_if_needed;
-
-    if (delegate_) {
-      delegate_->TextInputStateChanged(current_text_input_type_,
-                                       show_ime_if_needed_);
-    }
-  }
+  ime_bridge_.TextInputStateChanged(type, show_ime_if_needed);
 }
 
 void RenderWidgetHostView::OnSelectionBoundsChanged(
     const gfx::Rect& anchor_rect,
     const gfx::Rect& focus_rect,
     bool is_anchor_first) {
-  caret_rect_ = gfx::UnionRects(anchor_rect, focus_rect);
+  gfx::Rect caret_rect = gfx::UnionRects(anchor_rect, focus_rect);
+
+  size_t selection_cursor_position = 0;
+  size_t selection_anchor_position = 0;
 
   if (selection_range_.IsValid()) {
     if (is_anchor_first) {
-      selection_cursor_position_ =
+      selection_cursor_position =
           selection_range_.GetMax() - selection_text_offset_;
-      selection_anchor_position_ =
+      selection_anchor_position =
           selection_range_.GetMin() - selection_text_offset_;
     } else {
-      selection_cursor_position_ =
+      selection_cursor_position =
           selection_range_.GetMin() - selection_text_offset_;
-      selection_anchor_position_ =
+      selection_anchor_position =
           selection_range_.GetMax() - selection_text_offset_;
     }
   }
 
-  if (delegate_) {
-    delegate_->SelectionBoundsChanged(caret_rect_,
-                                      selection_cursor_position_,
-                                      selection_anchor_position_);
-  }
+  ime_bridge_.SelectionBoundsChanged(caret_rect,
+                                     selection_cursor_position,
+                                     selection_anchor_position);
 }
 
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,
@@ -136,17 +128,17 @@ void RenderWidgetHostView::SelectionChanged(const base::string16& text,
 
   content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
 
-  if (delegate_) {
-    delegate_->SelectionChanged();
+  if (ime_bridge_.context()) {
+    ime_bridge_.context()->SelectionChanged();
   }
 }
 
 gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
-  if (!delegate_) {
+  if (!container_) {
     return gfx::Size();
   }
 
-  return delegate_->GetViewSizePix();
+  return container_->GetViewSizePix();
 }
 
 bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
@@ -154,18 +146,15 @@ bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
 }
 
 float RenderWidgetHostView::GetTopControlsHeight() const {
-  if (!delegate_) {
+  if (!container_) {
     return 0.0f;
   }
 
-  return delegate_->GetLocationBarHeightDip();
+  return container_->GetLocationBarHeightDip();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
-  focused_node_is_editable_ = is_editable_node;
-  if (delegate_) {
-    delegate_->FocusedNodeChanged(is_editable_node);
-  }
+  ime_bridge_.FocusedNodeChanged(is_editable_node);
 }
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
@@ -185,9 +174,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     host_->GetProcess()->ShutdownForBadMessage();
     return;
   }
-
-  Compositor* compositor = delegate_ ? delegate_->GetCompositor() : nullptr;
-  CompositorLock lock(compositor);
 
   if (output_surface_id != last_output_surface_id_) {
     resource_collection_->SetClient(nullptr);
@@ -228,10 +214,16 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
         frame_size != frame_provider_->frame_size() ||
         frame_size_dip != last_frame_size_dip_) {
       DetachLayer();
+
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
                                                        frame_data.Pass());
       layer_ = cc::DelegatedRendererLayer::Create(cc::LayerSettings(),
                                                   frame_provider_);
+      layer_->SetIsDrawable(true);
+      layer_->SetContentsOpaque(true);
+      layer_->SetBounds(frame_size_dip);
+      layer_->SetHideLayerAndSubtree(!is_showing_);
+
       AttachLayer();
     } else {
       frame_provider_->SetFrameData(frame_data.Pass());
@@ -241,15 +233,12 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   last_frame_size_dip_ = frame_size_dip;
 
   if (layer_.get()) {
-    layer_->SetIsDrawable(true);
-    layer_->SetContentsOpaque(true);
-    layer_->SetBounds(frame_size_dip);
     layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
   if (frame_is_evicted_) {
     frame_is_evicted_ = false;
-    RendererFrameEvictor::GetInstance()->AddFrame(this, IsShowing());
+    RendererFrameEvictor::GetInstance()->AddFrame(this, is_showing_);
   }
 
   compositor_frame_metadata_ = frame->metadata;
@@ -267,6 +256,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
+  Compositor* compositor = container_ ? container_->GetCompositor() : nullptr;
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
@@ -291,12 +281,17 @@ void RenderWidgetHostView::MovePluginWindows(
     const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
-  if (cursor.IsEqual(current_cursor_)) {
+  if (cursor.IsEqual(web_cursor_)) {
     return;
   }
 
-  current_cursor_ = cursor;
-  UpdateCursorOnWebView();
+  web_cursor_ = cursor;
+
+  if (is_loading_) {
+    return;
+  }
+
+  UpdateCurrentCursor();
 }
 
 void RenderWidgetHostView::SetIsLoading(bool is_loading) {
@@ -305,15 +300,15 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
   }
 
   is_loading_ = is_loading;
-  UpdateCursorOnWebView();
+  UpdateCurrentCursor();
 }
 
 void RenderWidgetHostView::ImeCancelComposition() {
-  if (!delegate_) {
+  if (!ime_bridge_.context()) {
     return;
   }
 
-  delegate_->ImeCancelComposition();
+  ime_bridge_.context()->CancelComposition();
 }
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
@@ -354,13 +349,13 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 }
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
-  if (!delegate_) {
+  if (!container_) {
     *result =
         BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
     return;
   }
 
-  *result = delegate_->GetScreenInfo();
+  *result = container_->GetScreenInfo();
 }
 
 bool RenderWidgetHostView::GetScreenColorProfile(
@@ -412,11 +407,11 @@ gfx::NativeViewAccessible RenderWidgetHostView::GetNativeViewAccessible() {
 }
 
 bool RenderWidgetHostView::HasFocus() const {
-  if (!delegate_) {
+  if (!container_) {
     return false;
   }
 
-  return delegate_->HasFocus();
+  return container_->HasFocus(this);
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
@@ -425,18 +420,20 @@ bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
 
 void RenderWidgetHostView::Show() {
   if (is_showing_) {
-    DCHECK(delegate_);
     return;
   }
-
-  if (!delegate_) {
-    return;
-  }
-
   is_showing_ = true;
+
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(false);
+  }
 
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+
+  if (!host_ || !host_->is_hidden()) {
+    return;
   }
 
   host_->WasShown(ui::LatencyInfo());
@@ -446,30 +443,36 @@ void RenderWidgetHostView::Hide() {
   if (!is_showing_) {
     return;
   }
-
   is_showing_ = false;
+
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(true);
+  }
 
   if (!frame_is_evicted_) {
     RendererFrameEvictor::GetInstance()->UnlockFrame(this);
   }
 
-  host_->WasHidden();
-
   RunAckCallbacks();
+
+  if (!host_ || host_->is_hidden()) {
+    return;
+  }
+
+  host_->WasHidden();
 }
 
 bool RenderWidgetHostView::IsShowing() {
-  DCHECK(!is_showing_ || delegate_);
-  return is_showing_;
+  return is_showing_ && container_ && container_->IsVisible();
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   gfx::Rect bounds;
 
-  if (!delegate_) {
+  if (!container_) {
     bounds = gfx::Rect(last_size_);
   } else {
-    bounds = delegate_->GetViewBoundsDip();
+    bounds = container_->GetViewBoundsDip();
   }
 
   if (DoTopControlsShrinkBlinkSize()) {
@@ -484,6 +487,10 @@ bool RenderWidgetHostView::LockMouse() {
 }
 
 void RenderWidgetHostView::UnlockMouse() {}
+
+void RenderWidgetHostView::CompositorDidCommit() {
+  RunAckCallbacks();
+}
 
 void RenderWidgetHostView::OnGestureEvent(
     const blink::WebGestureEvent& event) {
@@ -517,10 +524,6 @@ void RenderWidgetHostView::OnGestureEvent(
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
-
-  if (delegate_) {
-    delegate_->EvictCurrentFrame();
-  }
 }
 
 void RenderWidgetHostView::UnusedResourcesAreAvailable() {
@@ -529,19 +532,20 @@ void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   }
 }
 
-void RenderWidgetHostView::UpdateCursorOnWebView() {
-  if (!delegate_) {
-    return;
-  }
-
+void RenderWidgetHostView::UpdateCurrentCursor() {
   if (is_loading_) {
     content::WebCursor::CursorInfo busy_cursor_info(
         blink::WebCursorInfo::TypeWait);
-    content::WebCursor busy_cursor(busy_cursor_info);
-    delegate_->UpdateCursor(busy_cursor);
+    current_cursor_ = content::WebCursor(busy_cursor_info);
   } else {
-    delegate_->UpdateCursor(current_cursor_);
+    current_cursor_ = web_cursor_;
   }
+
+  if (!container_) {
+    return;
+  }
+
+  container_->CursorChanged();
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
@@ -582,42 +586,39 @@ void RenderWidgetHostView::RunAckCallbacks() {
 }
 
 void RenderWidgetHostView::AttachLayer() {
-  if (!delegate_) {
+  if (!container_) {
     return;
   }
   if (!layer_.get()) {
     return;
   }
 
-  delegate_->GetCompositor()->SetRootLayer(layer_.get());
+  container_->AttachLayer(layer_);
 }
 
 void RenderWidgetHostView::DetachLayer() {
-  if (!delegate_) {
+  if (!container_) {
     return;
   }
   if (!layer_.get()) {
     return;
   }
 
-  delegate_->GetCompositor()->SetRootLayer(scoped_refptr<cc::Layer>());
+  container_->DetachLayer(layer_);
 }
 
-RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
-    host_(content::RenderWidgetHostImpl::From(host)),
-    delegate_(nullptr),
-    resource_collection_(new cc::DelegatedFrameResourceCollection()),
-    last_output_surface_id_(0),
-    frame_is_evicted_(true),
-    selection_cursor_position_(0),
-    selection_anchor_position_(0),
-    current_text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-    show_ime_if_needed_(false),
-    focused_node_is_editable_(false),
-    is_loading_(false),
-    is_showing_(false),
-    top_controls_shrink_blink_size_(false),
-    gesture_provider_(GestureProvider::Create(this)) {
+RenderWidgetHostView::RenderWidgetHostView(
+    content::RenderWidgetHost* host)
+    : host_(content::RenderWidgetHostImpl::From(host)),
+      container_(nullptr),
+      resource_collection_(new cc::DelegatedFrameResourceCollection()),
+      last_output_surface_id_(0),
+      frame_is_evicted_(true),
+      ime_bridge_(this),
+      is_loading_(false),
+      is_showing_(false),
+      top_controls_shrink_blink_size_(false),
+      gesture_provider_(GestureProvider::Create(this)) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
   resource_collection_->SetClient(this);
@@ -628,46 +629,28 @@ RenderWidgetHostView::RenderWidgetHostView(content::RenderWidgetHost* host) :
 
 RenderWidgetHostView::~RenderWidgetHostView() {
   resource_collection_->SetClient(nullptr);
-  SetDelegate(nullptr);
+  SetContainer(nullptr);
 }
 
-void RenderWidgetHostView::CompositorDidCommit() {
-  RunAckCallbacks();
-}
-
-void RenderWidgetHostView::SetDelegate(
-    RenderWidgetHostViewDelegate* delegate) {
-  if (delegate == delegate_) {
+void RenderWidgetHostView::SetContainer(
+    RenderWidgetHostViewContainer* container) {
+  if (container == container_) {
     return;
   }
 
   DetachLayer();
-  delegate_ = delegate;
+  container_ = container;
   AttachLayer();
 
-  if (delegate_) {
-    DCHECK(host_) <<
-        "Shouldn't be attaching to a delegate when we're already destroyed";
-    host_->SendScreenRects();
-    host_->WasResized();
+  CompositorObserver::Observe(
+      container_ ? container_->GetCompositor() : nullptr);
 
-    if (delegate_->IsVisible()) {
-      Show();
-    } else {
-      Hide();
-    }
-
-    UpdateCursorOnWebView();
-    delegate_->TextInputStateChanged(current_text_input_type_,
-                                     show_ime_if_needed_);
-    delegate_->FocusedNodeChanged(focused_node_is_editable_);
-    delegate_->SelectionBoundsChanged(caret_rect_,
-                                      selection_cursor_position_,
-                                      selection_anchor_position_);
-    delegate_->SelectionChanged();
-  } else if (host_) {
-    Hide();
+  if (!host_) {
+    return;
   }
+
+  host_->SendScreenRects();
+  host_->WasResized();
 }
 
 void RenderWidgetHostView::Blur() {

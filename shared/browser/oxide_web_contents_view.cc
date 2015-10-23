@@ -21,15 +21,27 @@
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/web_contents.h"
 
+#include "shared/common/oxide_unowned_user_data.h"
+
 #include "oxide_render_widget_host_view.h"
-#include "oxide_web_view.h"
+#include "oxide_render_widget_host_view_container.h"
 
 namespace oxide {
 
-WebContentsView::WebContentsView(content::WebContents* web_contents) :
-    web_contents_(web_contents) {}
+namespace {
+int kUserDataKey;
+}
 
-WebContentsView::~WebContentsView() {}
+WebContentsView::WebContentsView(content::WebContents* web_contents)
+    : web_contents_(web_contents),
+      container_(nullptr) {
+  web_contents_->SetUserData(&kUserDataKey,
+                             new UnownedUserData<WebContentsView>(this));
+}
+
+WebContentsView::~WebContentsView() {
+  web_contents_->RemoveUserData(&kUserDataKey);
+}
 
 // static
 content::WebContentsViewOxide* WebContentsView::Create(
@@ -37,8 +49,21 @@ content::WebContentsViewOxide* WebContentsView::Create(
   return new WebContentsView(web_contents);
 }
 
-WebView* WebContentsView::GetWebView() const {
-  return WebView::FromWebContents(web_contents_);
+// static
+WebContentsView* WebContentsView::FromWebContents(
+    content::WebContents* contents) {
+  UnownedUserData<WebContentsView>* data =
+      static_cast<UnownedUserData<WebContentsView>*>(
+        contents->GetUserData(&kUserDataKey));
+  if (!data) {
+    return nullptr;
+  }
+
+  return data->get();
+}
+
+void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
+  container_ = container;
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -54,7 +79,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetWebView()->GetViewBoundsDip();
+  *out = container_->GetViewBoundsDip();
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
@@ -107,21 +132,7 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host,
     bool is_guest_view_hack) {
-  RenderWidgetHostView* rwhv = new RenderWidgetHostView(render_widget_host);
-
-  WebView* view = GetWebView();
-  if (view) {
-    // As RWHV contains the plumbing from WebView::VisibilityChanged to
-    // RenderWidgetHostImpl::Was{Shown,Hidden}, RWHI::is_hidden could be
-    // out of date. This ensures that we sync RWHI::is_hidden with the
-    // real visibility of the webview - see https://launchpad.net/bugs/1322622
-    view->VisibilityChanged();
-
-    // Also sync focus state
-    view->FocusChanged();
-  }
-
-  return rwhv;
+  return new RenderWidgetHostView(render_widget_host);
 }
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
@@ -140,7 +151,7 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
-  GetWebView()->ShowContextMenu(render_frame_host, params);
+  container_->ShowContextMenu(render_frame_host, params);
 }
 
 void WebContentsView::StartDragging(
@@ -163,13 +174,13 @@ void WebContentsView::ShowPopupMenu(
     const std::vector<content::MenuItem>& items,
     bool right_aligned,
     bool allow_multiple_selection) {
-  GetWebView()->ShowPopupMenu(render_frame_host,
-                              bounds, selected_item, items,
-                              allow_multiple_selection);
+  container_->ShowPopupMenu(render_frame_host,
+                            bounds, selected_item, items,
+                            allow_multiple_selection);
 }
 
 void WebContentsView::HidePopupMenu() {
-  GetWebView()->HidePopupMenu();
+  container_->HidePopupMenu();
 }
 
 } // namespace oxide
