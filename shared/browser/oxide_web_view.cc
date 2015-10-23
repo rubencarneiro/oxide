@@ -210,7 +210,6 @@ WebView::WebView(WebViewClient* client)
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
-      interstitial_rwhv_(nullptr),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
@@ -1021,26 +1020,30 @@ void WebView::NavigationEntryCommitted(
 }
 
 void WebView::DidAttachInterstitialPage() {
-  CHECK(!interstitial_rwhv_);
-  interstitial_rwhv_ = static_cast<RenderWidgetHostView*>(
-      web_contents_
-      ->GetInterstitialPage()
-      ->GetMainFrame()
-      ->GetRenderViewHost()
-      ->GetWidget()
-      ->GetView());
-  DCHECK(interstitial_rwhv_);
+  DCHECK(!interstitial_rwh_id_.IsValid());
 
-  interstitial_rwhv_->SetContainer(this);
+  content::RenderWidgetHost* rwh =
+      web_contents_->GetInterstitialPage()
+        ->GetMainFrame()
+        ->GetRenderViewHost()
+        ->GetWidget();
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  interstitial_rwh_id_ = RenderWidgetHostID(rwh);
 }
 
 void WebView::DidDetachInterstitialPage() {
-  if (!interstitial_rwhv_) {
+  if (!interstitial_rwh_id_.IsValid()) {
     return;
   }
 
-  interstitial_rwhv_->SetContainer(nullptr);
-  interstitial_rwhv_ = nullptr;
+  content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+  interstitial_rwh_id_ = RenderWidgetHostID();
+  if (!rwh) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1157,9 +1160,13 @@ WebView::~WebView() {
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (interstitial_rwhv_) {
-    interstitial_rwhv_->SetContainer(nullptr);
-    interstitial_rwhv_ = nullptr;
+  if (interstitial_rwh_id_.IsValid()) {
+    content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+    if (rwh) {
+      static_cast<RenderWidgetHostView*>(
+          rwh->GetView())->SetContainer(nullptr);
+    }
+    interstitial_rwh_id_ = RenderWidgetHostID();
   }
 
   // Stop WebContents from calling back in to us

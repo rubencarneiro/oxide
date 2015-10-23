@@ -45,6 +45,7 @@
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
@@ -499,7 +500,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 
-  RenderWidgetHostView* interstitial_rwhv_;
+  RenderWidgetHostID interstitial_rwh_id_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

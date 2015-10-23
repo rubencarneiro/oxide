@@ -24,7 +24,7 @@
 
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_render_frame_host_id.h"
+#include "shared/browser/oxide_render_object_id.h"
 
 #include "oxide_permission_request_dispatcher.h"
 #include "oxide_temporary_saved_permission_context.h"
@@ -96,7 +96,7 @@ struct PermissionManager::Subscription {
 struct PermissionManager::RequestData {
   RequestData(content::RenderFrameHost* render_frame_host)
       : request_id(-1),
-        render_frame_host_id(RenderFrameHostID::FromHost(render_frame_host)) {}
+        render_frame_host_id(render_frame_host) {}
 
   int request_id;
   RenderFrameHostID render_frame_host_id;
@@ -209,7 +209,8 @@ void PermissionManager::CancelPermissionRequest(int request_id) {
 
   requests_.Remove(request_id);
 
-  content::RenderFrameHost* render_frame_host = render_frame_host_id.ToHost();
+  content::RenderFrameHost* render_frame_host =
+      render_frame_host_id.ToInstance();
   if (!render_frame_host) {
     return;
   }
