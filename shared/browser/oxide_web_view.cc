@@ -254,8 +254,13 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
-  return static_cast<RenderWidgetHostView *>(
-      web_contents_->GetRenderWidgetHostView());
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetFullscreenRenderWidgetHostView();
+  if (!rwhv) {
+    rwhv = web_contents_->GetRenderWidgetHostView();
+  }
+
+  return static_cast<RenderWidgetHostView *>(rwhv);
 }
 
 content::RenderViewHost* WebView::GetRenderViewHost() const {
@@ -263,11 +268,12 @@ content::RenderViewHost* WebView::GetRenderViewHost() const {
 }
 
 content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return nullptr;
   }
-  return rvh->GetWidget();
+
+  return rwhv->GetRenderWidgetHost();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -792,6 +798,10 @@ void WebView::RunFileChooser(content::WebContents* source,
   file_picker->Run(params);
 }
 
+bool WebView::EmbedsFullscreenWidget() const {
+  return true;
+}
+
 void WebView::EnterFullscreenModeForTab(content::WebContents* source,
                                         const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
@@ -1019,6 +1029,32 @@ void WebView::NavigationEntryCommitted(
   client_->NavigationEntryCommitted();
 }
 
+void WebView::DidShowFullscreenWidget(int routing_id) {
+  content::RenderWidgetHost* rwh =
+      content::RenderWidgetHost::FromID(
+          web_contents_->GetRenderProcessHost()->GetID(),
+          routing_id);
+  DCHECK(rwh);
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  fullscreen_rwh_id_ = RenderWidgetHostID(rwh);
+}
+
+void WebView::DidDestroyFullscreenWidget(int routing_id) {
+  if (!fullscreen_rwh_id_.IsValid()) {
+    return;
+  }
+
+  content::RenderWidgetHost* rwh = fullscreen_rwh_id_.ToInstance();
+  fullscreen_rwh_id_ = RenderWidgetHostID();
+  if (!rwh) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+}
+
 void WebView::DidAttachInterstitialPage() {
   DCHECK(!interstitial_rwh_id_.IsValid());
 
@@ -1158,6 +1194,15 @@ WebView::~WebView() {
   if (rwhv) {
     rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
+  }
+
+  if (fullscreen_rwh_id_.IsValid()) {
+    content::RenderWidgetHost* rwh = fullscreen_rwh_id_.ToInstance();
+    if (rwh) {
+      static_cast<RenderWidgetHostView*>(
+          rwh->GetView())->SetContainer(nullptr);
+    }
+    fullscreen_rwh_id_ = RenderWidgetHostID();
   }
 
   if (interstitial_rwh_id_.IsValid()) {

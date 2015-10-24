@@ -398,6 +398,7 @@ class WebView : public ScriptMessageTarget,
       content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
+  bool EmbedsFullscreenWidget() const final;
   void EnterFullscreenModeForTab(content::WebContents* source,
                                  const GURL& origin) final;
   void ExitFullscreenModeForTab(content::WebContents* source) final;
@@ -457,6 +458,8 @@ class WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
+  void DidShowFullscreenWidget(int routing_id) final;
+  void DidDestroyFullscreenWidget(int routing_id) final;
   void DidAttachInterstitialPage() final;
   void DidDetachInterstitialPage() final;
   bool OnMessageReceived(const IPC::Message& msg,
@@ -500,6 +503,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 
+  RenderWidgetHostID fullscreen_rwh_id_;
   RenderWidgetHostID interstitial_rwh_id_;
 
   base::WeakPtrFactory<WebView> weak_factory_;

@@ -580,6 +580,8 @@
             'renderer/pepper/oxide_pepper_render_frame_observer.h',
             'renderer/pepper/oxide_pepper_flash_font_file_host.cc',
             'renderer/pepper/oxide_pepper_flash_font_file_host.h',
+            'renderer/pepper/oxide_pepper_flash_fullscreen_host.cc',
+            'renderer/pepper/oxide_pepper_flash_fullscreen_host.h',
             'renderer/pepper/oxide_pepper_flash_renderer_host.cc',
             'renderer/pepper/oxide_pepper_flash_renderer_host.h',
             'renderer/pepper/oxide_pepper_flash_menu_host.cc',

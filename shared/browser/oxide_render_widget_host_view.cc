@@ -385,9 +385,7 @@ void RenderWidgetHostView::ImeCompositionRangeChanged(
     const gfx::Range& range,
     const std::vector<gfx::Rect>& character_bounds) {}
 
-void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {
-  NOTREACHED() << "InitAsChild() isn't used. Please use Init() instead";
-}
+void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {}
 
 gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
   NOTREACHED();
@@ -608,15 +606,15 @@ void RenderWidgetHostView::DetachLayer() {
 }
 
 RenderWidgetHostView::RenderWidgetHostView(
-    content::RenderWidgetHost* host)
-    : host_(content::RenderWidgetHostImpl::From(host)),
+    content::RenderWidgetHostImpl* host)
+    : host_(host),
       container_(nullptr),
       resource_collection_(new cc::DelegatedFrameResourceCollection()),
       last_output_surface_id_(0),
       frame_is_evicted_(true),
       ime_bridge_(this),
       is_loading_(false),
-      is_showing_(false),
+      is_showing_(!host->is_hidden()),
       top_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
