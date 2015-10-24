@@ -19,7 +19,7 @@
 
 namespace switches {
 
-const char kPepperFlashPluginPath[] = "pepper-flash-plugin-path";
+const char kEnablePepperFlashPlugin[] = "enable-pepper-flash-plugin";
 const char kFormFactor[] = "form-factor";
 const char kFormFactorDesktop[] = "desktop";
 const char kFormFactorTablet[] = "tablet";

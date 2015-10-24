@@ -108,9 +108,9 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableMediaHubAudio,
+    switches::kEnablePepperFlashPlugin,
     switches::kFormFactor,
-    switches::kMediaHubFixedSessionDomains,
-    switches::kPepperFlashPluginPath
+    switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));
