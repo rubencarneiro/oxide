@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,40 +18,26 @@
 #include "oxide_paths.h"
 
 #include "base/files/file_path.h"
-#include "base/files/file_util.h"
 #include "base/path_service.h"
 
 namespace oxide {
 
 namespace {
 
-const base::FilePath::CharType* kPepperFlashPluginDirs[] = {
-  FILE_PATH_LITERAL("/usr/lib/adobe-flashplugin"),
-  FILE_PATH_LITERAL("/opt/google/chrome/PepperFlash"),
-};
 const base::FilePath::CharType kPepperFlashPluginFilename[] =
   FILE_PATH_LITERAL("libpepflashplayer.so");
 
-
 bool PathProvider(int key, base::FilePath* result) {
   switch (key) {
-    case DIR_PEPPER_FLASH_PLUGIN: {
-      for (size_t i = 0; i < arraysize(kPepperFlashPluginDirs); ++i) {
-        base::FilePath path(kPepperFlashPluginDirs[i]);
-        if (base::PathExists(path.Append(kPepperFlashPluginFilename))) {
-          *result = path;
-          return true;
-        }
-      }
-      return false;
+    case FILE_SYSTEM_PEPPER_FLASH_PLUGIN: {
+      base::FilePath dir(FILE_PATH_LITERAL("/usr/lib/adobe-flashplugin"));
+      *result = dir.Append(kPepperFlashPluginFilename);
+      return true;
     }
 
-    case FILE_PEPPER_FLASH_PLUGIN: {
-      base::FilePath path;
-      if (!PathService::Get(DIR_PEPPER_FLASH_PLUGIN, &path)) {
-        return false;
-      }
-      *result = path.Append(kPepperFlashPluginFilename);
+    case FILE_CHROME_PEPPER_FLASH_PLUGIN: {
+      base::FilePath dir(FILE_PATH_LITERAL("/opt/google/chrome/PepperFlash/"));
+      *result = dir.Append(kPepperFlashPluginFilename);
       return true;
     }
 
