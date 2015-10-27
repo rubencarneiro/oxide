@@ -420,50 +420,6 @@ bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
   return true;
 }
 
-void RenderWidgetHostView::Show() {
-  if (is_showing_) {
-    return;
-  }
-  is_showing_ = true;
-
-  if (layer_.get()) {
-    layer_->SetHideLayerAndSubtree(false);
-  }
-
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-
-  if (!host_ || !host_->is_hidden()) {
-    return;
-  }
-
-  host_->WasShown(ui::LatencyInfo());
-}
-
-void RenderWidgetHostView::Hide() {
-  if (!is_showing_) {
-    return;
-  }
-  is_showing_ = false;
-
-  if (layer_.get()) {
-    layer_->SetHideLayerAndSubtree(true);
-  }
-
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
-  }
-
-  RunAckCallbacks();
-
-  if (!host_ || host_->is_hidden()) {
-    return;
-  }
-
-  host_->WasHidden();
-}
-
 bool RenderWidgetHostView::IsShowing() {
   return is_showing_ && container_ && container_->IsVisible();
 }
@@ -702,6 +658,50 @@ void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
 void RenderWidgetHostView::Focus() {
   host_->Focus();
   host_->SetActive(true);
+}
+
+void RenderWidgetHostView::Show() {
+  if (is_showing_) {
+    return;
+  }
+  is_showing_ = true;
+
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(false);
+  }
+
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->LockFrame(this);
+  }
+
+  if (!host_ || !host_->is_hidden()) {
+    return;
+  }
+
+  host_->WasShown(ui::LatencyInfo());
+}
+
+void RenderWidgetHostView::Hide() {
+  if (!is_showing_) {
+    return;
+  }
+  is_showing_ = false;
+
+  if (layer_.get()) {
+    layer_->SetHideLayerAndSubtree(true);
+  }
+
+  if (!frame_is_evicted_) {
+    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
+  }
+
+  RunAckCallbacks();
+
+  if (!host_ || host_->is_hidden()) {
+    return;
+  }
+
+  host_->WasHidden();
 }
 
 } // namespace oxide

@@ -216,8 +216,12 @@ WebView::WebView(WebViewClient* client)
 
   root_layer_->SetIsDrawable(true);
   root_layer_->SetBackgroundColor(SK_ColorWHITE);
+  root_layer_->SetBounds(GetViewSizeDip());
 
   compositor_->SetRootLayer(root_layer_);
+  compositor_->SetViewportSize(GetViewSizePix());
+  compositor_->SetVisibility(IsVisible());
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
 
   CompositorObserver::Observe(compositor_.get());
   InputMethodContextObserver::Observe(client_->GetInputMethodContext());
@@ -920,25 +924,34 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (new_host) {
-    if (new_host->GetWidget()->GetView()) {
-      RenderWidgetHostView* rwhv =
-          static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
-      rwhv->SetContainer(this);
-      rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
-    }
-
-    InitializeTopControlsForHost(new_host, !old_host);
-  }
-
-  if (old_host) {
+  if (!new_host) {
     return;
   }
 
-  // For the initial view, we need to sync its visibility and focus state
-  // with us. For subsequent views, RFHM does this for us
-  VisibilityChanged();
-  FocusChanged();
+  if (new_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
+    rwhv->SetContainer(this);
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+
+    // For the initial view, we need to sync its visibility and focus state
+    // with us. For subsequent views, RFHM does this for us
+    if (!old_host) {
+      if (IsVisible()) {
+        rwhv->Show();
+      } else {
+        rwhv->Hide();
+      }
+
+      if (HasFocus()) {
+        rwhv->Focus();
+      } else {
+        rwhv->Blur();
+      }
+    }
+  }
+
+  InitializeTopControlsForHost(new_host, !old_host);
 }
 
 void WebView::DidStartLoading() {
@@ -1179,11 +1192,6 @@ WebView::WebView(const Params& params)
   CreateHelpers(contents.get());
   CommonInit(contents.Pass());
 
-  compositor_->SetViewportSize(GetViewSizePix());
-  compositor_->SetVisibility(IsVisible());
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-  root_layer_->SetBounds(GetViewSizeDip());
-
   if (params.restore_entries.size() > 0) {
     ScopedVector<content::NavigationEntry> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
@@ -1218,13 +1226,24 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   if (rwhv) {
     rwhv->SetContainer(this);
     rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+
+    rwhv->SetSize(GetViewSizeDip());
+    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
+        ->SendScreenRects();
+    GetRenderWidgetHost()->WasResized();
+
+    if (HasFocus()) {
+      rwhv->Focus();
+    } else {
+      rwhv->Blur();
+    }
   }
 
-  // Sync WebContents with the state of the WebView
-  WasResized();
-  ScreenUpdated();
-  VisibilityChanged();
-  FocusChanged();
+  if (IsVisible()) {
+    web_contents_->WasShown();
+  } else {
+    web_contents_->WasHidden();
+  }
 
   // Update SSL Status
   content::NavigationEntry* entry =
