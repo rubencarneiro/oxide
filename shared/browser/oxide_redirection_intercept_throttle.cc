@@ -19,13 +19,10 @@
 
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/resource_controller.h"
-#include "net/http/http_request_headers.h"
 #include "net/url_request/redirect_info.h"
-#include "net/url_request/url_request.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
-#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
@@ -43,13 +40,6 @@ void RedirectionInterceptThrottle::WillRedirectRequest(
     return;
   }
 
-  std::string user_agent =
-      context->GetUserAgentSettings()
-        ->GetUserAgentOverrideForURL(redirect_info.new_url);
-  if (!user_agent.empty()) {
-    request_->SetExtraRequestHeaderByName(net::HttpRequestHeaders::kUserAgent,
-                                          user_agent, true);
-  }
   int rv = delegate->OnBeforeRedirect(request_, redirect_info.new_url);
   if (rv == net::ERR_ABORTED) {
     controller()->CancelAndIgnore();
