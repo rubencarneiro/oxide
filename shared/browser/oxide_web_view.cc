@@ -1067,6 +1067,12 @@ void WebView::DidShowFullscreenWidget(int routing_id) {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
 
+  rwh->WasResized();
+  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
+  rwh->GetView()->Show();
+
+  web_contents_->GetRenderWidgetHostView()->Hide();
+
   fullscreen_rwh_id_ = RenderWidgetHostID(rwh);
 }
 
@@ -1077,11 +1083,29 @@ void WebView::DidDestroyFullscreenWidget(int routing_id) {
 
   content::RenderWidgetHost* rwh = fullscreen_rwh_id_.ToInstance();
   fullscreen_rwh_id_ = RenderWidgetHostID();
-  if (!rwh) {
+  if (rwh) {
+    static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+  }
+
+  content::RenderWidgetHostView* orig_rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (!orig_rwhv) {
     return;
   }
 
-  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+  content::RenderWidgetHost* orig_rwh = orig_rwhv->GetRenderWidgetHost();
+  orig_rwh->WasResized();
+  content::RenderWidgetHostImpl::From(orig_rwh)->SendScreenRects();
+
+  if (IsVisible()) {
+    orig_rwhv->Show();
+  }
+
+  if (HasFocus()) {
+    orig_rwhv->Focus();
+  } else {
+    static_cast<RenderWidgetHostView*>(orig_rwhv)->Blur();
+  }
 }
 
 void WebView::DidAttachInterstitialPage() {
@@ -1419,7 +1443,7 @@ void WebView::WasResized() {
     rwhv->SetSize(GetViewSizeDip());
     content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
         ->SendScreenRects();
-    rwhv->GetRenderWidgetHost()->WasResized();
+    GetRenderWidgetHost()->WasResized();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
