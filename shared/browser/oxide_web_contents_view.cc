@@ -104,13 +104,9 @@ void WebContentsView::SetInitialFocus() {
   NOTIMPLEMENTED();
 }
 
-void WebContentsView::StoreFocus() {
-  NOTIMPLEMENTED();
-}
+void WebContentsView::StoreFocus() {}
 
-void WebContentsView::RestoreFocus() {
-  NOTIMPLEMENTED();
-}
+void WebContentsView::RestoreFocus() {}
 
 content::DropData* WebContentsView::GetDropData() const {
   return nullptr;
