@@ -45,9 +45,11 @@ void RedirectionInterceptThrottle::WillRedirectRequest(
 
   std::string user_agent =
       context->GetUserAgentSettings()
-        ->GetUserAgentForURL(redirect_info.new_url);
-  request_->SetExtraRequestHeaderByName(net::HttpRequestHeaders::kUserAgent,
-                                        user_agent, true);
+        ->GetUserAgentOverrideForURL(redirect_info.new_url);
+  if (!user_agent.empty()) {
+    request_->SetExtraRequestHeaderByName(net::HttpRequestHeaders::kUserAgent,
+                                          user_agent, true);
+  }
   int rv = delegate->OnBeforeRedirect(request_, redirect_info.new_url);
   if (rv == net::ERR_ABORTED) {
     controller()->CancelAndIgnore();
