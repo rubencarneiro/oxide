@@ -409,6 +409,16 @@ void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = pending_compositor_frame_metadata_;
 
+  if (IsFullscreen()) {
+    // Ensure that the location bar is always hidden in fullscreen. This
+    // is required because fullscreen RenderWidgets don't have a mechanism
+    // to control the location bar height
+    compositor_frame_metadata_.location_bar_content_translation =
+        gfx::Vector2dF();
+    compositor_frame_metadata_.location_bar_offset =
+        gfx::Vector2dF(0.0f, -GetLocationBarHeightDip());
+  }
+
   // TODO(chrisccoulson): Merge these
   client_->FrameMetadataUpdated(old);
   client_->SwapCompositorFrame();
@@ -471,6 +481,10 @@ bool WebView::HasFocus(const RenderWidgetHostView* view) const {
   }
 
   return view == GetRenderWidgetHostView();
+}
+
+bool WebView::IsFullscreen() const {
+  return fullscreen_granted_ && fullscreen_requested_;
 }
 
 void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
@@ -834,7 +848,7 @@ bool WebView::IsFullscreenForTabOrPending(
     const content::WebContents* source) const {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  return fullscreen_granted_ && fullscreen_requested_;
+  return IsFullscreen();
 }
 
 void WebView::FindReply(content::WebContents* source,

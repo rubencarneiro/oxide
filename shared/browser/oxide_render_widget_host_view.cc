@@ -150,6 +150,10 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
     return 0.0f;
   }
 
+  if (container_->IsFullscreen()) {
+    return 0.0f;
+  }
+
   return container_->GetLocationBarHeightDip();
 }
 

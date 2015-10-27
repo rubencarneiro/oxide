@@ -486,5 +486,62 @@ Item {
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
     }
+
+    function test_LocationBarController7_fullscreen_data() {
+      return [
+        { initial: LocationBarController.ModeShown },
+        { initial: LocationBarController.ModeAuto }
+      ];
+    }
+
+    function test_LocationBarController7_fullscreen(data) {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": true,
+          "locationBarController.mode": data.initial
+      });
+
+      locationBarSpy.target = webView;
+      spy.target = webView;
+      spy.signalName = "fullscreenRequested";
+
+      webView.url = "http://testsuite/tst_LocationBarController_fullscreen.html";
+      verify(webView.waitForLoadSucceeded());
+
+      verify(locationBarSpy.waitForUpdate());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
+      mouseClick(webView, r.x + r.width / 2, r.y + 60 + r.height / 2, Qt.LeftButton);
+      spy.wait();
+
+      webView.fullscreen = true;
+
+      verify(locationBarSpy.waitUntilHidden());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+
+      webView.fullscreen = false;
+
+      verify(locationBarSpy.waitUntilShown());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+    }
   }
 }
