@@ -28,6 +28,7 @@ oxide.addMessageHandler("EVALUATE-CODE", function(msg) {
   if (msg.payload.wrap) {
     code = "(function() {" + code + "})()";
   }
+  console.log("EVALUATE-CODE: " + code);
   try {
     msg.reply({result: eval(code)});
   } catch(e) {

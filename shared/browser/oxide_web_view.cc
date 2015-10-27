@@ -205,7 +205,8 @@ WebView::WebView(WebViewClient* client)
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
-      is_fullscreen_(false),
+      fullscreen_granted_(false),
+      fullscreen_requested_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
@@ -806,11 +807,25 @@ void WebView::EnterFullscreenModeForTab(content::WebContents* source,
                                         const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
 
+  fullscreen_requested_ = true;
+
+  if (fullscreen_granted_) {
+    // Nothing to do here. Note, RenderFrameHostImpl::OnToggleFullscreen will
+    // send the resize message
+    return;
+  }
+
   client_->ToggleFullscreenMode(true);
 }
 
 void WebView::ExitFullscreenModeForTab(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
+
+  fullscreen_requested_ = false;
+
+  if (!fullscreen_granted_) {
+    return;
+  }
 
   client_->ToggleFullscreenMode(false);
 }
@@ -819,7 +834,7 @@ bool WebView::IsFullscreenForTabOrPending(
     const content::WebContents* source) const {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  return IsFullscreen();
+  return fullscreen_granted_ && fullscreen_requested_;
 }
 
 void WebView::FindReply(content::WebContents* source,
@@ -1363,16 +1378,16 @@ bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
 }
 
-bool WebView::IsFullscreen() const {
-  return is_fullscreen_;
+bool WebView::FullscreenGranted() const {
+  return fullscreen_granted_;
 }
 
-void WebView::SetIsFullscreen(bool fullscreen) {
-  if (fullscreen == is_fullscreen_) {
+void WebView::SetFullscreenGranted(bool fullscreen) {
+  if (fullscreen == fullscreen_granted_) {
     return;
   }
 
-  is_fullscreen_ = fullscreen;
+  fullscreen_granted_ = fullscreen;
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (host) {

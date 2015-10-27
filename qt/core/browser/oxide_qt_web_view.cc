@@ -992,11 +992,11 @@ bool WebView::loading() const {
 }
 
 bool WebView::fullscreen() const {
-  return view_->IsFullscreen();
+  return view_->FullscreenGranted();
 }
 
 void WebView::setFullscreen(bool fullscreen) {
-  view_->SetIsFullscreen(fullscreen);
+  view_->SetFullscreenGranted(fullscreen);
 }
 
 WebFrameProxyHandle* WebView::rootFrame() const {

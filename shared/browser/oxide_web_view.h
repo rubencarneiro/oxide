@@ -189,8 +189,8 @@ class WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
-  bool IsFullscreen() const;
-  void SetIsFullscreen(bool fullscreen);
+  bool FullscreenGranted() const;
+  void SetFullscreenGranted(bool fullscreen);
 
   void WasResized();
   void ScreenUpdated();
@@ -488,7 +488,9 @@ class WebView : public ScriptMessageTarget,
 
   content::NotificationRegistrar registrar_;
 
-  bool is_fullscreen_;
+  bool fullscreen_granted_;
+  bool fullscreen_requested_;
+
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
