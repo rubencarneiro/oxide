@@ -1085,20 +1085,10 @@ void WebView::DidShowFullscreenWidget(int routing_id) {
   rwh->GetView()->Show();
 
   web_contents_->GetRenderWidgetHostView()->Hide();
-
-  fullscreen_rwh_id_ = RenderWidgetHostID(rwh);
 }
 
 void WebView::DidDestroyFullscreenWidget(int routing_id) {
-  if (!fullscreen_rwh_id_.IsValid()) {
-    return;
-  }
-
-  content::RenderWidgetHost* rwh = fullscreen_rwh_id_.ToInstance();
-  fullscreen_rwh_id_ = RenderWidgetHostID();
-  if (rwh) {
-    static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
-  }
+  DCHECK(!web_contents_->GetFullscreenRenderWidgetHostView());
 
   content::RenderWidgetHostView* orig_rwhv =
       web_contents_->GetRenderWidgetHostView();
@@ -1262,19 +1252,19 @@ WebView::~WebView() {
 
   WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  RenderWidgetHostView* rwhv =
+      static_cast<RenderWidgetHostView*>(
+        web_contents_->GetRenderWidgetHostView());
   if (rwhv) {
     rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (fullscreen_rwh_id_.IsValid()) {
-    content::RenderWidgetHost* rwh = fullscreen_rwh_id_.ToInstance();
-    if (rwh) {
+  RenderWidgetHostView* fullscreen_rwhv =
       static_cast<RenderWidgetHostView*>(
-          rwh->GetView())->SetContainer(nullptr);
-    }
-    fullscreen_rwh_id_ = RenderWidgetHostID();
+        web_contents_->GetFullscreenRenderWidgetHostView());
+  if (fullscreen_rwhv) {
+    fullscreen_rwhv->SetContainer(nullptr);
   }
 
   if (interstitial_rwh_id_.IsValid()) {

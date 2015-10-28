@@ -506,7 +506,6 @@ class WebView : public ScriptMessageTarget,
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 
-  RenderWidgetHostID fullscreen_rwh_id_;
   RenderWidgetHostID interstitial_rwh_id_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
