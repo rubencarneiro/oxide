@@ -1444,11 +1444,21 @@ void WebView::SetFullscreenGranted(bool fullscreen) {
     return;
   }
 
+  bool was_fullscreen = IsFullscreen();
   fullscreen_granted_ = fullscreen;
+  bool is_fullscreen = IsFullscreen();
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (host) {
-    host->WasResized();
+  if (is_fullscreen == was_fullscreen) {
+    return;
+  }
+
+  if (is_fullscreen) {
+    content::RenderWidgetHost* host = GetRenderWidgetHost();
+    if (host) {
+      host->WasResized();
+    }
+  } else {
+    web_contents_->ExitFullscreen();
   }
 }
 
