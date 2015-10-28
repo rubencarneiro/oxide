@@ -112,6 +112,8 @@ class RenderWidgetHostView final :
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
   void ClearCompositorFrame() final;
+  void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
+                              content::InputEventAckState ack_result) final;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
@@ -140,8 +142,8 @@ class RenderWidgetHostView final :
   gfx::Rect GetBoundsInRootWindow() final;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) final;
-  void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
-                              content::InputEventAckState ack_result) final;
+  void LockCompositingSurface() final;
+  void UnlockCompositingSurface() final;
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) final;

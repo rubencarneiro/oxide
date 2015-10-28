@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -318,13 +321,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -317,13 +320,20 @@ class CONTENT_EXPORT ContentRendererClie
    // is called from the worker thread.
    virtual void WillDestroyServiceWorkerContextOnWorkerThread(
        v8::Local<v8::Context> context,
@@ -83,10 +83,10 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2087,16 +2087,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
- #else
+@@ -2151,16 +2151,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
    scoped_refptr<media::AudioRendererSink> audio_renderer_sink =
-       render_thread->GetAudioRendererMixerManager()->CreateInput(routing_id_);
+       render_thread->GetAudioRendererMixerManager()->CreateInput(
+           routing_id_, sink_id.utf8(), frame->securityOrigin());
    media::WebMediaPlayerParams::Context3DCB context_3d_cb =
        base::Bind(&GetSharedMainThreadContext3D);
  #endif  // defined(OS_ANDROID) && !defined(ENABLE_MEDIA_PIPELINE_ON_ANDROID)

@@ -6,7 +6,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1214,18 +1214,18 @@
+@@ -1207,18 +1207,18 @@
        'browser/renderer_host/input/timeout_monitor.h',
        'browser/renderer_host/input/touch_action_filter.cc',
        'browser/renderer_host/input/touch_action_filter.h',
@@ -27,13 +27,13 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/input/ui_touch_selection_helper.h',
        'browser/renderer_host/input/web_input_event_builders_android.cc',
        'browser/renderer_host/input/web_input_event_builders_android.h',
-@@ -1303,18 +1303,18 @@
-       'browser/renderer_host/render_widget_host_delegate.cc',
+@@ -1297,18 +1297,18 @@
        'browser/renderer_host/render_widget_host_delegate.h',
        'browser/renderer_host/render_widget_host_impl.cc',
        'browser/renderer_host/render_widget_host_impl.h',
        'browser/renderer_host/render_widget_host_input_event_router.cc',
        'browser/renderer_host/render_widget_host_input_event_router.h',
+       'browser/renderer_host/render_widget_host_owner_delegate.h',
        'browser/renderer_host/render_widget_host_view_android.cc',
        'browser/renderer_host/render_widget_host_view_android.h',
 -      'browser/renderer_host/render_widget_host_view_aura.cc',
