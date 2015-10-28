@@ -58,29 +58,33 @@ base::string16 ImeBridgeImpl::GetSelectedText() const {
 
 void ImeBridgeImpl::CommitText(const base::string16& text,
                                const gfx::Range& replacement_range) {
-  if (!rwhv_->host()) {
+  if (!rwhv_->GetRenderWidgetHost()) {
     return;
   }
 
-  SendFakeCompositionKeyEvent(rwhv_->host(), blink::WebInputEvent::RawKeyDown);
-  rwhv_->host()->ImeConfirmComposition(text, replacement_range, false);
-  SendFakeCompositionKeyEvent(rwhv_->host(), blink::WebInputEvent::KeyUp);
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());
+  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
+  rwhi->ImeConfirmComposition(text, replacement_range, false);
+  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
 }
 
 void ImeBridgeImpl::SetComposingText(
     const base::string16& text,
     const std::vector<blink::WebCompositionUnderline>& underlines,
     const gfx::Range& selection_range) {
-  if (!rwhv_->host()) {
+  if (!rwhv_->GetRenderWidgetHost()) {
     return;
   }
 
-  SendFakeCompositionKeyEvent(rwhv_->host(), blink::WebInputEvent::RawKeyDown);
-  rwhv_->host()->ImeSetComposition(text,
-                                   underlines,
-                                   selection_range.start(),
-                                   selection_range.end());
-  SendFakeCompositionKeyEvent(rwhv_->host(), blink::WebInputEvent::KeyUp);
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());
+  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
+  rwhi->ImeSetComposition(text,
+                          underlines,
+                          selection_range.start(),
+                          selection_range.end());
+  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
 }
 
 ImeBridgeImpl::ImeBridgeImpl(RenderWidgetHostView* rwhv)

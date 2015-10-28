@@ -66,8 +66,6 @@ class RenderWidgetHostView final :
   RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
   ~RenderWidgetHostView();
 
-  content::RenderWidgetHostImpl* host() const { return host_; }
-
   void SetContainer(RenderWidgetHostViewContainer* container);
 
   ImeBridgeImpl* ime_bridge() { return &ime_bridge_; }
