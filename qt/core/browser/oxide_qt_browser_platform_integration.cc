@@ -133,8 +133,8 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump());
 }
 
-ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
-  return ClipboardQt::DoCreate;
+ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+  return new Clipboard();
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(
@@ -149,7 +149,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
   g_io_thread.Get() = thread;
 }
 
-content::LocationProvider*
+scoped_ptr<content::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   // Give the geolocation thread a Qt event dispatcher, so that we can use
   // Queued signals / slots between it and the IO thread
@@ -159,7 +159,7 @@ BrowserPlatformIntegration::CreateLocationProvider() {
       new BrowserThreadQEventDispatcher(base::ThreadTaskRunnerHandle::Get()));
   }
 
-  return new LocationProvider();
+  return make_scoped_ptr(new LocationProvider());
 }
 
 oxide::BrowserPlatformIntegration::ApplicationState
@@ -167,8 +167,9 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
-media::VideoCaptureDeviceFactory* BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
-  return new VideoCaptureDeviceFactory();
+scoped_ptr<media::VideoCaptureDeviceFactory>
+BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
+  return make_scoped_ptr(new VideoCaptureDeviceFactory());
 }
 
 std::string BrowserPlatformIntegration::GetApplicationName() {

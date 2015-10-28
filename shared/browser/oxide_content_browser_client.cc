@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
+#include "content/public/browser/location_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -106,9 +107,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     int child_process_id) {
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
-    switches::kEnableGoogleTalkPlugin,
-    switches::kEnablePepperFlashPlugin,
     switches::kEnableMediaHubAudio,
+    switches::kEnablePepperFlashPlugin,
     switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains
   };
@@ -272,7 +272,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
-  return platform_integration_->CreateLocationProvider();
+  return platform_integration_->CreateLocationProvider().release();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

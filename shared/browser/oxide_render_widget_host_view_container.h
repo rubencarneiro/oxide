@@ -66,6 +66,8 @@ class RenderWidgetHostViewContainer {
 
   virtual bool IsVisible() const = 0;
 
+  virtual bool IsFullscreen() const = 0;
+
   virtual float GetLocationBarHeightDip() const = 0;
 
   virtual void ShowContextMenu(content::RenderFrameHost* render_frame_host,

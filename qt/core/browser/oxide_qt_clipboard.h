@@ -28,18 +28,13 @@ class ClipboardChangedListener;
 namespace oxide {
 namespace qt {
 
-class ClipboardQt : public ui::Clipboard {
+class Clipboard : public ui::Clipboard {
  public:
+  Clipboard();
+  ~Clipboard() override;
 
-  static Clipboard* DoCreate();
-  
  private:
-
-  ClipboardQt();
-  ~ClipboardQt() override;
-
-  // Clipboard overrides
-
+  // ui::Clipboard overrides
   uint64 GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;
@@ -79,13 +74,12 @@ class ClipboardQt : public ui::Clipboard {
                  size_t data_len) override;
 
  private:
-
   scoped_ptr<ClipboardChangedListener> clipboard_changed_listener_;
   
   // Used for accumulated mimedata
   scoped_ptr<QMimeData> write_mime_data_acc_;
   
-  DISALLOW_COPY_AND_ASSIGN(ClipboardQt);
+  DISALLOW_COPY_AND_ASSIGN(Clipboard);
 };
 
 }  // namespace qt

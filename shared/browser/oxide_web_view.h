@@ -45,6 +45,7 @@
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
@@ -188,8 +189,8 @@ class WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
-  bool IsFullscreen() const;
-  void SetIsFullscreen(bool fullscreen);
+  bool FullscreenGranted() const;
+  void SetFullscreenGranted(bool fullscreen);
 
   void WasResized();
   void ScreenUpdated();
@@ -344,6 +345,7 @@ class WebView : public ScriptMessageTarget,
   void DetachLayer(scoped_refptr<cc::Layer> layer) final;
   void CursorChanged() final;
   bool HasFocus(const RenderWidgetHostView* view) const final;
+  bool IsFullscreen() const final;
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
                        const content::ContextMenuParams& params) final;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
@@ -398,6 +400,7 @@ class WebView : public ScriptMessageTarget,
       content::WebContents* source) final;
   void RunFileChooser(content::WebContents* web_contents,
                       const content::FileChooserParams& params) final;
+  bool EmbedsFullscreenWidget() const final;
   void EnterFullscreenModeForTab(content::WebContents* source,
                                  const GURL& origin) final;
   void ExitFullscreenModeForTab(content::WebContents* source) final;
@@ -457,6 +460,8 @@ class WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) final;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
+  void DidShowFullscreenWidget(int routing_id) final;
+  void DidDestroyFullscreenWidget(int routing_id) final;
   void DidAttachInterstitialPage() final;
   void DidDetachInterstitialPage() final;
   bool OnMessageReceived(const IPC::Message& msg,
@@ -485,7 +490,9 @@ class WebView : public ScriptMessageTarget,
 
   content::NotificationRegistrar registrar_;
 
-  bool is_fullscreen_;
+  bool fullscreen_granted_;
+  bool fullscreen_requested_;
+
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
@@ -500,7 +507,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 
-  RenderWidgetHostView* interstitial_rwhv_;
+  RenderWidgetHostID interstitial_rwh_id_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

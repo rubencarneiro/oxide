@@ -83,6 +83,7 @@ TestWebView {
         { url : "http://15.testsuite/get-headers.py", expected: "Override 15" },
         { url : "http://foo.15.testsuite/get-headers.py", expected: "Default user agent" },
         { url : "http://16.testsuite/get-headers.py", expected: "Default user agent" },
+        { url : "http://1.testsuite/tst_WebContext_userAgentOverrides_redirect.py", expected: "Override 2" },
       ];
     }
 

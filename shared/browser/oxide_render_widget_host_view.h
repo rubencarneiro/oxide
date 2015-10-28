@@ -63,10 +63,8 @@ class RenderWidgetHostView final :
     public cc::DelegatedFrameResourceCollectionClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+  RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
   ~RenderWidgetHostView();
-
-  content::RenderWidgetHostImpl* host() const { return host_; }
 
   void SetContainer(RenderWidgetHostViewContainer* container);
 
@@ -92,6 +90,8 @@ class RenderWidgetHostView final :
   void SetSize(const gfx::Size& size) final;
   void SetBounds(const gfx::Rect& rect) final;
   void Focus() final;
+  void Show() final;
+  void Hide() final;
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -156,8 +156,6 @@ class RenderWidgetHostView final :
   gfx::NativeViewAccessible GetNativeViewAccessible() final;
   bool HasFocus() const final;
   bool IsSurfaceAvailableForCopy() const final;
-  void Show() final;
-  void Hide() final;
   bool IsShowing() final;
   gfx::Rect GetViewBounds() const final;
   bool LockMouse() final;

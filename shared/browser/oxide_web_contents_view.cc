@@ -104,13 +104,9 @@ void WebContentsView::SetInitialFocus() {
   NOTIMPLEMENTED();
 }
 
-void WebContentsView::StoreFocus() {
-  NOTIMPLEMENTED();
-}
+void WebContentsView::StoreFocus() {}
 
-void WebContentsView::RestoreFocus() {
-  NOTIMPLEMENTED();
-}
+void WebContentsView::RestoreFocus() {}
 
 content::DropData* WebContentsView::GetDropData() const {
   return nullptr;
@@ -132,12 +128,14 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host,
     bool is_guest_view_hack) {
-  return new RenderWidgetHostView(render_widget_host);
+  return new RenderWidgetHostView(
+      content::RenderWidgetHostImpl::From(render_widget_host));
 }
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
     content::RenderWidgetHost* render_widget_host) {
-  return nullptr;
+  return new RenderWidgetHostView(
+      content::RenderWidgetHostImpl::From(render_widget_host));
 }
 
 void WebContentsView::SetPageTitle(const base::string16& title) {}

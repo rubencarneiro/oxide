@@ -432,8 +432,6 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       ->AppendSwitchASCII(switches::kFormFactor,
                           GetFormFactorHintCommandLine(form_factor));
 
-  InitFormFactorHint(form_factor);
-
   AddFormFactorSpecificCommandLineArguments();
 
 #if defined(USE_NSS_CERTS)

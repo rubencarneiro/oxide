@@ -26,7 +26,7 @@
 #include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_render_frame_host_id.h"
+#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_web_frame.h"
 
 #include "oxide_permission_request.h"
@@ -121,7 +121,7 @@ void PermissionRequestDispatcher::CancelPendingRequests() {
 
 void PermissionRequestDispatcher::CancelPendingRequestsForFrame(
     content::RenderFrameHost* frame) {
-  RenderFrameHostID frame_id = RenderFrameHostID::FromHost(frame);
+  RenderFrameHostID frame_id = RenderFrameHostID(frame);
 
   IteratorGuard guard(this);
   for (auto request : pending_requests_) {
@@ -236,7 +236,7 @@ int PermissionRequestDispatcher::RequestMediaAccessPermission(
   scoped_ptr<MediaAccessPermissionRequest> req(
       new MediaAccessPermissionRequest(
         request_id,
-        RenderFrameHostID::FromHost(render_frame_host),
+        RenderFrameHostID(render_frame_host),
         requesting_origin,
         web_contents()->GetLastCommittedURL().GetOrigin(),
         audio, video,

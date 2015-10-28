@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,8 @@ namespace oxide {
 enum {
   PATH_START = 1000, // Same as Chrome
 
-  DIR_PEPPER_FLASH_PLUGIN,
-  FILE_PEPPER_FLASH_PLUGIN,
+  FILE_SYSTEM_PEPPER_FLASH_PLUGIN,
+  FILE_CHROME_PEPPER_FLASH_PLUGIN,
 
   PATH_END
 };

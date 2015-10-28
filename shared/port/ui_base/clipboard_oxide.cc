@@ -41,10 +41,16 @@ void SetClipboardOxideFactory(ClipboardOxideFactory factory) {
 
 // Clipboard factory method.
 Clipboard* Clipboard::Create() {
-  if (g_clipboard_factory) {
-    return g_clipboard_factory();
+  if (!g_clipboard_factory) {
+    return new ClipboardOxide();
   }
-  return new ClipboardOxide;
+
+  Clipboard* clipboard = g_clipboard_factory();
+  if (!clipboard) {
+    return new ClipboardOxide();
+  }
+
+  return clipboard;
 }
 
   

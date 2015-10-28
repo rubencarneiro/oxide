@@ -26,8 +26,6 @@ enum FormFactor {
   FORM_FACTOR_PHONE
 };
 
-void InitFormFactorHint(FormFactor form_factor);
-
 FormFactor GetFormFactorHint();
 
 }

@@ -54,11 +54,12 @@ class BrowserPlatformIntegration : public QObject,
   blink::WebScreenInfo GetDefaultScreenInfo() override;
   oxide::GLContextDependent* GetGLShareContext() override;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() override;
-  ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
+  ui::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
-  content::LocationProvider* CreateLocationProvider() override;
+  scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
-  media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() override;
+  scoped_ptr<media::VideoCaptureDeviceFactory>
+      CreateVideoCaptureDeviceFactory() override;
   std::string GetApplicationName() override;
 
   // QObject implementation

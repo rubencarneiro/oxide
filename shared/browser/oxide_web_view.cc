@@ -205,19 +205,23 @@ WebView::WebView(WebViewClient* client)
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
-      is_fullscreen_(false),
+      fullscreen_granted_(false),
+      fullscreen_requested_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
-      interstitial_rwhv_(nullptr),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
   root_layer_->SetIsDrawable(true);
   root_layer_->SetBackgroundColor(SK_ColorWHITE);
+  root_layer_->SetBounds(GetViewSizeDip());
 
   compositor_->SetRootLayer(root_layer_);
+  compositor_->SetViewportSize(GetViewSizePix());
+  compositor_->SetVisibility(IsVisible());
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
 
   CompositorObserver::Observe(compositor_.get());
   InputMethodContextObserver::Observe(client_->GetInputMethodContext());
@@ -255,8 +259,13 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
-  return static_cast<RenderWidgetHostView *>(
-      web_contents_->GetRenderWidgetHostView());
+  content::RenderWidgetHostView* rwhv =
+      web_contents_->GetFullscreenRenderWidgetHostView();
+  if (!rwhv) {
+    rwhv = web_contents_->GetRenderWidgetHostView();
+  }
+
+  return static_cast<RenderWidgetHostView *>(rwhv);
 }
 
 content::RenderViewHost* WebView::GetRenderViewHost() const {
@@ -264,11 +273,12 @@ content::RenderViewHost* WebView::GetRenderViewHost() const {
 }
 
 content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return nullptr;
   }
-  return rvh->GetWidget();
+
+  return rwhv->GetRenderWidgetHost();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -403,6 +413,16 @@ void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
   cc::CompositorFrameMetadata old = compositor_frame_metadata_;
   compositor_frame_metadata_ = pending_compositor_frame_metadata_;
 
+  if (IsFullscreen()) {
+    // Ensure that the location bar is always hidden in fullscreen. This
+    // is required because fullscreen RenderWidgets don't have a mechanism
+    // to control the location bar height
+    compositor_frame_metadata_.location_bar_content_translation =
+        gfx::Vector2dF();
+    compositor_frame_metadata_.location_bar_offset =
+        gfx::Vector2dF(0.0f, -GetLocationBarHeightDip());
+  }
+
   // TODO(chrisccoulson): Merge these
   client_->FrameMetadataUpdated(old);
   client_->SwapCompositorFrame();
@@ -465,6 +485,10 @@ bool WebView::HasFocus(const RenderWidgetHostView* view) const {
   }
 
   return view == GetRenderWidgetHostView();
+}
+
+bool WebView::IsFullscreen() const {
+  return fullscreen_granted_ && fullscreen_requested_;
 }
 
 void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
@@ -794,15 +818,33 @@ void WebView::RunFileChooser(content::WebContents* source,
   file_picker->Run(params);
 }
 
+bool WebView::EmbedsFullscreenWidget() const {
+  return true;
+}
+
 void WebView::EnterFullscreenModeForTab(content::WebContents* source,
                                         const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
+
+  fullscreen_requested_ = true;
+
+  if (fullscreen_granted_) {
+    // Nothing to do here. Note, RenderFrameHostImpl::OnToggleFullscreen will
+    // send the resize message
+    return;
+  }
 
   client_->ToggleFullscreenMode(true);
 }
 
 void WebView::ExitFullscreenModeForTab(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
+
+  fullscreen_requested_ = false;
+
+  if (!fullscreen_granted_) {
+    return;
+  }
 
   client_->ToggleFullscreenMode(false);
 }
@@ -883,25 +925,34 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (new_host) {
-    if (new_host->GetWidget()->GetView()) {
-      RenderWidgetHostView* rwhv =
-          static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
-      rwhv->SetContainer(this);
-      rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
-    }
-
-    InitializeTopControlsForHost(new_host, !old_host);
-  }
-
-  if (old_host) {
+  if (!new_host) {
     return;
   }
 
-  // For the initial view, we need to sync its visibility and focus state
-  // with us. For subsequent views, RFHM does this for us
-  VisibilityChanged();
-  FocusChanged();
+  if (new_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
+    rwhv->SetContainer(this);
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+
+    // For the initial view, we need to sync its visibility and focus state
+    // with us. For subsequent views, RFHM does this for us
+    if (!old_host) {
+      if (IsVisible()) {
+        rwhv->Show();
+      } else {
+        rwhv->Hide();
+      }
+
+      if (HasFocus()) {
+        rwhv->Focus();
+      } else {
+        rwhv->Blur();
+      }
+    }
+  }
+
+  InitializeTopControlsForHost(new_host, !old_host);
 }
 
 void WebView::DidStartLoading() {
@@ -1021,27 +1072,71 @@ void WebView::NavigationEntryCommitted(
   client_->NavigationEntryCommitted();
 }
 
-void WebView::DidAttachInterstitialPage() {
-  CHECK(!interstitial_rwhv_);
-  interstitial_rwhv_ = static_cast<RenderWidgetHostView*>(
-      web_contents_
-      ->GetInterstitialPage()
-      ->GetMainFrame()
-      ->GetRenderViewHost()
-      ->GetWidget()
-      ->GetView());
-  DCHECK(interstitial_rwhv_);
+void WebView::DidShowFullscreenWidget(int routing_id) {
+  content::RenderWidgetHost* rwh =
+      content::RenderWidgetHost::FromID(
+          web_contents_->GetRenderProcessHost()->GetID(),
+          routing_id);
+  DCHECK(rwh);
 
-  interstitial_rwhv_->SetContainer(this);
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  rwh->WasResized();
+  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
+  rwh->GetView()->Show();
+
+  web_contents_->GetRenderWidgetHostView()->Hide();
 }
 
-void WebView::DidDetachInterstitialPage() {
-  if (!interstitial_rwhv_) {
+void WebView::DidDestroyFullscreenWidget(int routing_id) {
+  DCHECK(!web_contents_->GetFullscreenRenderWidgetHostView());
+
+  content::RenderWidgetHostView* orig_rwhv =
+      web_contents_->GetRenderWidgetHostView();
+  if (!orig_rwhv) {
     return;
   }
 
-  interstitial_rwhv_->SetContainer(nullptr);
-  interstitial_rwhv_ = nullptr;
+  content::RenderWidgetHost* orig_rwh = orig_rwhv->GetRenderWidgetHost();
+  orig_rwh->WasResized();
+  content::RenderWidgetHostImpl::From(orig_rwh)->SendScreenRects();
+
+  if (IsVisible()) {
+    orig_rwhv->Show();
+  }
+
+  if (HasFocus()) {
+    orig_rwhv->Focus();
+  } else {
+    static_cast<RenderWidgetHostView*>(orig_rwhv)->Blur();
+  }
+}
+
+void WebView::DidAttachInterstitialPage() {
+  DCHECK(!interstitial_rwh_id_.IsValid());
+
+  content::RenderWidgetHost* rwh =
+      web_contents_->GetInterstitialPage()
+        ->GetMainFrame()
+        ->GetRenderViewHost()
+        ->GetWidget();
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  interstitial_rwh_id_ = RenderWidgetHostID(rwh);
+}
+
+void WebView::DidDetachInterstitialPage() {
+  if (!interstitial_rwh_id_.IsValid()) {
+    return;
+  }
+
+  content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+  interstitial_rwh_id_ = RenderWidgetHostID();
+  if (!rwh) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1088,11 +1183,6 @@ WebView::WebView(const Params& params)
   CreateHelpers(contents.get());
   CommonInit(contents.Pass());
 
-  compositor_->SetViewportSize(GetViewSizePix());
-  compositor_->SetVisibility(IsVisible());
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-  root_layer_->SetBounds(GetViewSizeDip());
-
   if (params.restore_entries.size() > 0) {
     ScopedVector<content::NavigationEntry> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
@@ -1127,13 +1217,24 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   if (rwhv) {
     rwhv->SetContainer(this);
     rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+
+    rwhv->SetSize(GetViewSizeDip());
+    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
+        ->SendScreenRects();
+    GetRenderWidgetHost()->WasResized();
+
+    if (HasFocus()) {
+      rwhv->Focus();
+    } else {
+      rwhv->Blur();
+    }
   }
 
-  // Sync WebContents with the state of the WebView
-  WasResized();
-  ScreenUpdated();
-  VisibilityChanged();
-  FocusChanged();
+  if (IsVisible()) {
+    web_contents_->WasShown();
+  } else {
+    web_contents_->WasHidden();
+  }
 
   // Update SSL Status
   content::NavigationEntry* entry =
@@ -1152,15 +1253,28 @@ WebView::~WebView() {
 
   WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  RenderWidgetHostView* rwhv =
+      static_cast<RenderWidgetHostView*>(
+        web_contents_->GetRenderWidgetHostView());
   if (rwhv) {
     rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  if (interstitial_rwhv_) {
-    interstitial_rwhv_->SetContainer(nullptr);
-    interstitial_rwhv_ = nullptr;
+  RenderWidgetHostView* fullscreen_rwhv =
+      static_cast<RenderWidgetHostView*>(
+        web_contents_->GetFullscreenRenderWidgetHostView());
+  if (fullscreen_rwhv) {
+    fullscreen_rwhv->SetContainer(nullptr);
+  }
+
+  if (interstitial_rwh_id_.IsValid()) {
+    content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+    if (rwh) {
+      static_cast<RenderWidgetHostView*>(
+          rwh->GetView())->SetContainer(nullptr);
+    }
+    interstitial_rwh_id_ = RenderWidgetHostID();
   }
 
   // Stop WebContents from calling back in to us
@@ -1312,20 +1426,30 @@ bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
 }
 
-bool WebView::IsFullscreen() const {
-  return is_fullscreen_;
+bool WebView::FullscreenGranted() const {
+  return fullscreen_granted_;
 }
 
-void WebView::SetIsFullscreen(bool fullscreen) {
-  if (fullscreen == is_fullscreen_) {
+void WebView::SetFullscreenGranted(bool fullscreen) {
+  if (fullscreen == fullscreen_granted_) {
     return;
   }
 
-  is_fullscreen_ = fullscreen;
+  bool was_fullscreen = IsFullscreen();
+  fullscreen_granted_ = fullscreen;
+  bool is_fullscreen = IsFullscreen();
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (host) {
-    host->WasResized();
+  if (is_fullscreen == was_fullscreen) {
+    return;
+  }
+
+  if (is_fullscreen) {
+    content::RenderWidgetHost* host = GetRenderWidgetHost();
+    if (host) {
+      host->WasResized();
+    }
+  } else {
+    web_contents_->ExitFullscreen();
   }
 }
 
@@ -1339,7 +1463,7 @@ void WebView::WasResized() {
     rwhv->SetSize(GetViewSizeDip());
     content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
         ->SendScreenRects();
-    rwhv->GetRenderWidgetHost()->WasResized();
+    GetRenderWidgetHost()->WasResized();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();

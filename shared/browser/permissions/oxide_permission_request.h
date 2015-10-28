@@ -21,7 +21,7 @@
 #include "base/macros.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_render_frame_host_id.h"
+#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 

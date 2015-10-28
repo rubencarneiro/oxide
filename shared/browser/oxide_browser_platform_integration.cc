@@ -18,6 +18,7 @@
 #include "oxide_browser_platform_integration.h"
 
 #include "base/logging.h"
+#include "content/public/browser/location_provider.h"
 
 #include "oxide_browser_platform_integration_observer.h"
 
@@ -60,13 +61,17 @@ GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return nullptr;
 }
 
+ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+  return nullptr;
+}
+
 void BrowserPlatformIntegration::BrowserThreadInit(
     content::BrowserThread::ID id) {}
 
 void BrowserPlatformIntegration::BrowserThreadCleanUp(
     content::BrowserThread::ID id) {}
 
-content::LocationProvider*
+scoped_ptr<content::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   return nullptr;
 }
@@ -94,11 +99,6 @@ void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
   FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
                     observers_,
                     ApplicationStateChanged());
-}
-
-ui::ClipboardOxideFactory
-BrowserPlatformIntegration::GetClipboardOxideFactory() {
-  return nullptr;
 }
 
 } // namespace oxide

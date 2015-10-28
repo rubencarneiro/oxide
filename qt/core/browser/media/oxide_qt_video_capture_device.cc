@@ -154,10 +154,10 @@ QList<QVideoFrame::PixelFormat> CameraFrameGrabber::supportedPixelFormats(
 
 void CameraFrameGrabber::cameraError(QCamera::Error error) {
   LOG(WARNING) << "Camera error " << error << ": " <<
-               qUtf8Printable(camera_->errorString());
+               qPrintable(camera_->errorString());
   client_->OnError(base::StringPrintf(
       "Received error code %d from camera: %s",
-      error, qUtf8Printable(camera_->errorString())));
+      error, qPrintable(camera_->errorString())));
 }
 
 VideoCaptureDevice::VideoCaptureDevice(

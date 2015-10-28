@@ -25,10 +25,12 @@
 #include "base/i18n/rtl.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "base/sys_info.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "content/public/utility/content_utility_client.h"
+#include "third_party/skia/include/core/SkGraphics.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/base/ui_base_switches.h"
@@ -45,25 +47,6 @@
 
 namespace oxide {
 
-namespace {
-
-FormFactor FormFactorHintFromCommandLine(base::CommandLine* command_line) {
-  std::string form_factor =
-      command_line->GetSwitchValueASCII(switches::kFormFactor);
-  if (form_factor == switches::kFormFactorDesktop) {
-    return FORM_FACTOR_DESKTOP;
-  } else if (form_factor == switches::kFormFactorTablet) {
-    return FORM_FACTOR_TABLET;
-  } else if (form_factor == switches::kFormFactorPhone) {
-    return FORM_FACTOR_PHONE;
-  }
-
-  NOTREACHED();
-  return FORM_FACTOR_DESKTOP;
-}
-
-}
-
 ContentMainDelegate::ContentMainDelegate(PlatformDelegate* delegate)
     : delegate_(delegate) {
   CHECK(delegate_);
@@ -76,10 +59,6 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content::SetContentClient(content_client_.get());
   RegisterPathProvider();
 
-  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kProcessType)) {
-    InitFormFactorHint(FormFactorHintFromCommandLine(command_line));
-  }
   return false;
 }
 
@@ -109,6 +88,14 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       dir_exe.Append(FILE_PATH_LITERAL("oxide_200_percent.pak")),
       ui::SCALE_FACTOR_200P);
+
+  if (GetFormFactorHint() != FORM_FACTOR_DESKTOP) {
+    // Limit the Skia font cache on mobile
+    const int kMB = 1024 * 1024;
+    size_t font_cache_limit =
+        base::SysInfo::IsLowEndDevice() ? kMB : 8 * kMB;
+    SkGraphics::SetFontCacheLimit(font_cache_limit);
+  }
 }
 
 int ContentMainDelegate::RunProcess(
