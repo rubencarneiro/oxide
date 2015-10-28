@@ -32,10 +32,6 @@ namespace content {
 class LocationProvider;
 }
 
-namespace media {
-class VideoCaptureDeviceFactory;
-}
-
 namespace ui {
 class Clipboard;
 }
@@ -105,10 +101,6 @@ class BrowserPlatformIntegration {
 
   // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();
-
-  // Create a VideoCaptureDeviceFactory
-  virtual scoped_ptr<media::VideoCaptureDeviceFactory>
-      CreateVideoCaptureDeviceFactory() = 0;
 
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();

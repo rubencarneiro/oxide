@@ -58,8 +58,6 @@ class BrowserPlatformIntegration : public QObject,
   void BrowserThreadInit(content::BrowserThread::ID id) override;
   scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
-  scoped_ptr<media::VideoCaptureDeviceFactory>
-      CreateVideoCaptureDeviceFactory() override;
   std::string GetApplicationName() override;
 
   // QObject implementation

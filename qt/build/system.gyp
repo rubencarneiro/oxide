@@ -91,23 +91,6 @@
       },
     },
     {
-      'target_name': 'Qt5Multimedia',
-      'type': 'none',
-      'direct_dependent_settings': {
-        'cflags_cc': [
-          '<!@(<(pkg_config) --cflags Qt5Multimedia)'
-        ]
-      },
-      'link_settings': {
-        'ldflags': [
-          '<!@(<(pkg_config) --libs-only-L --libs-only-other Qt5Multimedia)',
-        ],
-        'libraries': [
-          '<!@(<(pkg_config) --libs-only-l Qt5Multimedia)',
-        ],
-      },
-    },
-    {
       'target_name': 'Qt5Positioning',
       'type': 'none',
       'direct_dependent_settings': {

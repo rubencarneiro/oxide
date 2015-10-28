@@ -30,12 +30,10 @@
         '../build/system.gyp:Qt5Gui-private',
         '../build/system.gyp:Qt5Positioning',
         '../build/system.gyp:Qt5Network',
-        '../build/system.gyp:Qt5Multimedia',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
-        '<(DEPTH)/media/media.gyp:media',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
@@ -119,10 +117,6 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
-        'browser/media/oxide_qt_video_capture_device.cc',
-        'browser/media/oxide_qt_video_capture_device.h',
-        'browser/media/oxide_qt_video_capture_device_factory.cc',
-        'browser/media/oxide_qt_video_capture_device_factory.h',
         'glue/oxide_qt_file_picker_proxy.h',
         'glue/oxide_qt_file_picker_proxy_client.h',
         'glue/oxide_qt_init.cc',
@@ -169,11 +163,6 @@
         {
           'action_name': 'oxide_qt_url_request_delegated_job.moc',
           'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qt_video_capture_device.moc',
-          'moc_input': 'browser/media/oxide_qt_video_capture_device.cc',
           'includes': [ 'moc.gypi' ]
         },
         {
