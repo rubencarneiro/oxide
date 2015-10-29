@@ -104,8 +104,8 @@ return style.getPropertyValue(\"color\");", true) == "rgb(255, 0, 0)";
 
     function test_WebPreferences_mixedContent3_block_sub_frame_data() {
       return [
-        { display: true, run: false, blockedCount: 2 },
-        { display: false, run: false, blockedCount: 3 },
+        { display: true, run: false, blockedCount: 1 },
+        { display: false, run: false, blockedCount: 2 },
         { display: false, run: true, blockedCount: 2 },
         { display: true, run: true, blockedCount: 1 }
       ];
@@ -138,7 +138,8 @@ return style.getPropertyValue(\"color\");", true) == "rgb(255, 0, 0)";
       compare(_can_run_css(), data.run);
 
       compare(!(webView.blockedContent & WebView.ContentTypeMixedDisplay), data.display);
-      compare(!(webView.blockedContent & WebView.ContentTypeMixedScript), data.run);
+      compare(!(webView.blockedContent & WebView.ContentTypeMixedScript), true,
+              "We don't get notified of blocked mixed script in subframes");
       compare(blockedSpy.count, data.blockedCount);
     }
   }
