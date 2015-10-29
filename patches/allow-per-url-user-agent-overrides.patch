@@ -58,7 +58,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -3689,18 +3689,25 @@ bool RenderFrameImpl::willCheckAndDispat
+@@ -3701,18 +3701,25 @@ bool RenderFrameImpl::willCheckAndDispat
      return false;
  
    render_frame_proxy_->postMessageEvent(
@@ -116,7 +116,7 @@ diff --git a/third_party/WebKit/Source/core/loader/EmptyClients.h b/third_party/
      void progressEstimateChanged(double) override {}
      void didStopLoading() override {}
  
-     void loadURLExternally(const ResourceRequest&, NavigationPolicy, const String& = String()) override {}
+     void loadURLExternally(const ResourceRequest&, NavigationPolicy, const String&, bool) override {}
  
      PassRefPtrWillBeRawPtr<DocumentLoader> createDocumentLoader(LocalFrame*, const ResourceRequest&, const SubstituteData&) override;
  
@@ -133,7 +133,7 @@ diff --git a/third_party/WebKit/Source/core/loader/EmptyClients.h b/third_party/
 diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.cpp b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
 --- a/third_party/WebKit/Source/core/loader/FrameLoader.cpp
 +++ b/third_party/WebKit/Source/core/loader/FrameLoader.cpp
-@@ -1167,19 +1167,19 @@ void FrameLoader::restoreScrollPositionA
+@@ -1163,19 +1163,19 @@ void FrameLoader::restoreScrollPositionA
  
          if (ScrollingCoordinator* scrollingCoordinator = m_frame->page()->scrollingCoordinator())
              scrollingCoordinator->frameViewRootLayerDidChange(view);
@@ -155,7 +155,7 @@ diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.cpp b/third_party
  {
  #if !ENABLE(OILPAN)
      // The caller must protect a reference to m_frame.
-@@ -1367,17 +1367,17 @@ void FrameLoader::startLoad(FrameLoadReq
+@@ -1395,17 +1395,17 @@ void FrameLoader::startLoad(FrameLoadReq
      double triggeringEventTime = frameLoadRequest.triggeringEvent() ? frameLoadRequest.triggeringEvent()->platformTimeStamp() : 0;
      client()->dispatchDidStartProvisionalLoad(triggeringEventTime);
      ASSERT(m_provisionalDocumentLoader);
@@ -177,7 +177,7 @@ diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.cpp b/third_party
 diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.h b/third_party/WebKit/Source/core/loader/FrameLoader.h
 --- a/third_party/WebKit/Source/core/loader/FrameLoader.h
 +++ b/third_party/WebKit/Source/core/loader/FrameLoader.h
-@@ -127,17 +127,17 @@ public:
+@@ -126,17 +126,17 @@ public:
  
      void didExplicitOpen();
  
@@ -199,7 +199,7 @@ diff --git a/third_party/WebKit/Source/core/loader/FrameLoader.h b/third_party/W
 diff --git a/third_party/WebKit/Source/core/loader/FrameLoaderClient.h b/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
 --- a/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
 +++ b/third_party/WebKit/Source/core/loader/FrameLoaderClient.h
-@@ -131,17 +131,17 @@ public:
+@@ -132,17 +132,17 @@ public:
      virtual void didChangePerformanceTiming() { }
  
      // Transmits the change in the set of watched CSS selectors property
@@ -268,7 +268,7 @@ diff --git a/third_party/WebKit/Source/web/FrameLoaderClientImpl.h b/third_party
 diff --git a/third_party/WebKit/public/web/WebFrameClient.h b/third_party/WebKit/public/web/WebFrameClient.h
 --- a/third_party/WebKit/public/web/WebFrameClient.h
 +++ b/third_party/WebKit/public/web/WebFrameClient.h
-@@ -553,17 +553,17 @@ public:
+@@ -556,17 +556,17 @@ public:
          WebLocalFrame* sourceFrame,
          WebFrame* targetFrame,
          WebSecurityOrigin target,

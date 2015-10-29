@@ -1,23 +1,22 @@
 # HG changeset patch
-# Parent a43e2531a59b74ae44e8d23907b3a5a4e14dfb37
+# Parent 08ea0f91e5df58c192c56c205a5f7ea62b483fbb
 # User oxide
 
 diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
 --- a/content/browser/web_contents/web_contents_impl.cc
 +++ b/content/browser/web_contents/web_contents_impl.cc
-@@ -1664,17 +1664,19 @@ void WebContentsImpl::CreateNewWindow(
+@@ -1739,17 +1739,18 @@ void WebContentsImpl::CreateNewWindow(
+   SessionStorageNamespaceImpl* session_storage_namespace_impl =
+       static_cast<SessionStorageNamespaceImpl*>(session_storage_namespace);
+   CHECK(session_storage_namespace_impl->IsFromContext(dom_storage_context));
+ 
    if (delegate_ &&
-       !delegate_->ShouldCreateWebContents(this,
-                                           route_id,
-                                           main_frame_route_id,
-                                           params.window_container_type,
-                                           params.frame_name,
-                                           params.target_url,
-                                           partition_id,
--                                          session_storage_namespace)) {
-+                                          session_storage_namespace,
-+                                          params.disposition,
-+                                          params.user_gesture)) {
+       !delegate_->ShouldCreateWebContents(
+           this, route_id, main_frame_route_id, main_frame_widget_route_id,
+           params.window_container_type, params.frame_name, params.target_url,
+-          partition_id, session_storage_namespace)) {
++          partition_id, session_storage_namespace, params.disposition,
++          params.user_gesture)) {
      if (route_id != MSG_ROUTING_NONE &&
          !RenderViewHost::FromID(render_process_id, route_id)) {
        // If the embedder didn't create a WebContents for this route, we need to
@@ -29,11 +28,11 @@ diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser
 diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/browser/web_contents_delegate.cc
 --- a/content/public/browser/web_contents_delegate.cc
 +++ b/content/public/browser/web_contents_delegate.cc
-@@ -133,17 +133,19 @@ bool WebContentsDelegate::OnGoToEntryOff
- bool WebContentsDelegate::ShouldCreateWebContents(
+@@ -134,17 +134,19 @@ bool WebContentsDelegate::ShouldCreateWe
      WebContents* web_contents,
-     int route_id,
-     int main_frame_route_id,
+     int32_t route_id,
+     int32_t main_frame_route_id,
+     int32_t main_frame_widget_route_id,
      WindowContainerType window_container_type,
      const std::string& frame_name,
      const GURL& target_url,
@@ -53,11 +52,11 @@ diff --git a/content/public/browser/web_contents_delegate.cc b/content/public/br
 diff --git a/content/public/browser/web_contents_delegate.h b/content/public/browser/web_contents_delegate.h
 --- a/content/public/browser/web_contents_delegate.h
 +++ b/content/public/browser/web_contents_delegate.h
-@@ -293,17 +293,19 @@ class CONTENT_EXPORT WebContentsDelegate
-   virtual bool ShouldCreateWebContents(
+@@ -291,17 +291,19 @@ class CONTENT_EXPORT WebContentsDelegate
        WebContents* web_contents,
-       int route_id,
-       int main_frame_route_id,
+       int32_t route_id,
+       int32_t main_frame_route_id,
+       int32_t main_frame_widget_route_id,
        WindowContainerType window_container_type,
        const std::string& frame_name,
        const GURL& target_url,
