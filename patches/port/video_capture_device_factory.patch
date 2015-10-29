@@ -1,0 +1,116 @@
+# Description: Allow Oxide to supplement the existing VideoCaptureDeviceFactory
+# Author: Chris Coulson <chris.coulson@canonical.com>
+
+diff --git a/media/capture/video/video_capture_device.cc b/media/capture/video/video_capture_device.cc
+--- a/media/capture/video/video_capture_device.cc
++++ b/media/capture/video/video_capture_device.cc
+@@ -83,17 +83,17 @@ VideoCaptureDevice::Name::~Name() {
+ #if defined(OS_LINUX)
+ const char* VideoCaptureDevice::Name::GetCaptureApiTypeString() const {
+   switch (capture_api_type()) {
+     case V4L2_SINGLE_PLANE:
+       return "V4L2 SPLANE";
+     case V4L2_MULTI_PLANE:
+       return "V4L2 MPLANE";
+     default:
+-      NOTREACHED() << "Unknown Video Capture API type!";
++      //NOTREACHED() << "Unknown Video Capture API type!";
+       return "Unknown API";
+   }
+ }
+ #elif defined(OS_WIN)
+ const char* VideoCaptureDevice::Name::GetCaptureApiTypeString() const {
+   switch (capture_api_type()) {
+     case MEDIA_FOUNDATION:
+       return "Media Foundation";
+diff --git a/media/capture/video/video_capture_device.h b/media/capture/video/video_capture_device.h
+--- a/media/capture/video/video_capture_device.h
++++ b/media/capture/video/video_capture_device.h
+@@ -140,17 +140,17 @@ class MEDIA_EXPORT VideoCaptureDevice {
+     // This class wraps the CaptureApiType to give it a by default value if not
+     // initialized.
+     class CaptureApiClass {
+      public:
+       CaptureApiClass() : capture_api_type_(API_TYPE_UNKNOWN) {}
+       CaptureApiClass(const CaptureApiType api_type)
+           : capture_api_type_(api_type) {}
+       CaptureApiType capture_api_type() const {
+-        DCHECK_NE(capture_api_type_, API_TYPE_UNKNOWN);
++        //DCHECK_NE(capture_api_type_, API_TYPE_UNKNOWN);
+         return capture_api_type_;
+       }
+ 
+      private:
+       CaptureApiType capture_api_type_;
+     };
+ 
+     CaptureApiClass capture_api_class_;
+diff --git a/media/capture/video/video_capture_device_factory.cc b/media/capture/video/video_capture_device_factory.cc
+--- a/media/capture/video/video_capture_device_factory.cc
++++ b/media/capture/video/video_capture_device_factory.cc
+@@ -6,16 +6,19 @@
+ 
+ #include "base/command_line.h"
+ #include "media/base/media_switches.h"
+ #include "media/capture/video/fake_video_capture_device_factory.h"
+ #include "media/capture/video/file_video_capture_device_factory.h"
+ 
+ namespace media {
+ 
++scoped_ptr<VideoCaptureDeviceFactory> CreateOverrideVideoCaptureDeviceFactory(
++    scoped_ptr<VideoCaptureDeviceFactory> factory);
++
+ // static
+ scoped_ptr<VideoCaptureDeviceFactory> VideoCaptureDeviceFactory::CreateFactory(
+     scoped_refptr<base::SingleThreadTaskRunner> ui_task_runner) {
+   const base::CommandLine* command_line =
+       base::CommandLine::ForCurrentProcess();
+   // Use a Fake or File Video Device Factory if the command line flags are
+   // present, otherwise use the normal, platform-dependent, device factory.
+   if (command_line->HasSwitch(switches::kUseFakeDeviceForMediaStream)) {
+@@ -24,18 +27,19 @@ scoped_ptr<VideoCaptureDeviceFactory> Vi
+           new media::FileVideoCaptureDeviceFactory());
+     } else {
+       return scoped_ptr<VideoCaptureDeviceFactory>(
+           new media::FakeVideoCaptureDeviceFactory());
+     }
+   } else {
+     // |ui_task_runner| is needed for the Linux ChromeOS factory to retrieve
+     // screen rotations and for the Mac factory to run QTKit device enumeration.
+-    return scoped_ptr<VideoCaptureDeviceFactory>(
+-        CreateVideoCaptureDeviceFactory(ui_task_runner));
++    return CreateOverrideVideoCaptureDeviceFactory(
++        scoped_ptr<VideoCaptureDeviceFactory>(
++          CreateVideoCaptureDeviceFactory(ui_task_runner)).Pass());
+   }
+ }
+ 
+ VideoCaptureDeviceFactory::VideoCaptureDeviceFactory() {
+   thread_checker_.DetachFromThread();
+ }
+ 
+ VideoCaptureDeviceFactory::~VideoCaptureDeviceFactory() {
+diff --git a/media/media.gyp b/media/media.gyp
+--- a/media/media.gyp
++++ b/media/media.gyp
+@@ -622,17 +622,19 @@
+         'video/jpeg_decode_accelerator.cc',
+         'video/jpeg_decode_accelerator.h',
+         'video/picture.cc',
+         'video/picture.h',
+         'video/video_decode_accelerator.cc',
+         'video/video_decode_accelerator.h',
+         'video/video_encode_accelerator.cc',
+         'video/video_encode_accelerator.h',
+-        'formats/webm/webm_webvtt_parser.h'
++        'formats/webm/webm_webvtt_parser.h',
++        '<(DEPTH)/../../../shared/port/media/video_capture_device_factory_override.cc',
++        '<(DEPTH)/../../../shared/port/media/video_capture_device_factory_override.h',
+       ],
+       'direct_dependent_settings': {
+         'include_dirs': [
+           '..',
+         ],
+       },
+       'conditions': [
+         ['arm_neon==1', {

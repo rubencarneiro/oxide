@@ -40,3 +40,4 @@ pa-context-application-name.patch
 lower-limit-for-discardable-memory-on-mobile.patch
 partially-revert-d48315dd.patch
 allow-per-url-user-agent-overrides.patch
+port/video_capture_device_factory.patch
