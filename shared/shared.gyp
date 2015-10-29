@@ -324,6 +324,8 @@
         'browser/media/oxide_media_capture_devices_dispatcher.h',
         'browser/media/oxide_media_capture_devices_dispatcher_observer.cc',
         'browser/media/oxide_media_capture_devices_dispatcher_observer.h',
+        'browser/media/oxide_video_capture_device_factory_linux.cc',
+        'browser/media/oxide_video_capture_device_factory_linux.h',
         'browser/notifications/oxide_notification_data.h',
         'browser/notifications/oxide_notification_delegate_proxy.cc',
         'browser/notifications/oxide_notification_delegate_proxy.h',

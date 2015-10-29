@@ -35,6 +35,7 @@
 #include "ui/gl/gl_surface.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gpu/oxide_gl_context_dependent.h"
@@ -44,6 +45,7 @@
 #include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
+#include "shared/port/media/video_capture_device_factory_override.h"
 #include "shared/port/ui_base/clipboard_oxide.h"
 
 #include "oxide_browser_context.h"
@@ -63,6 +65,11 @@ namespace {
 
 blink::WebScreenInfo DefaultScreenInfoGetter() {
   return BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+}
+
+scoped_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
+    scoped_ptr<media::VideoCaptureDeviceFactory> delegate) {
+  return make_scoped_ptr(new VideoCaptureDeviceFactoryLinux(delegate.Pass()));
 }
 
 ui::Clipboard* CreateClipboard() {
@@ -202,6 +209,8 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
+  media::SetVideoCaptureDeviceFactoryOverrideFactory(
+      CreateVideoCaptureDeviceFactory);
   ui::SetClipboardOxideFactory(CreateClipboard);
 
   gfx::InitializeOxideNativeDisplay(
