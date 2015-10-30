@@ -44,7 +44,6 @@
 #include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
-#include "shared/port/media/video_capture_device_factory_oxide.h"
 #include "shared/port/ui_base/clipboard_oxide.h"
 
 #include "oxide_browser_context.h"
@@ -68,11 +67,6 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
 
 ui::Clipboard* CreateClipboard() {
   return BrowserPlatformIntegration::GetInstance()->CreateClipboard();
-}
-
-media::VideoCaptureDeviceFactory* CreateVideoCaptureDeviceFactory() {
-  return BrowserPlatformIntegration::GetInstance()
-      ->CreateVideoCaptureDeviceFactory().release();
 }
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
@@ -208,7 +202,6 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
-  media::SetVideoCaptureDeviceFactoryFactory(CreateVideoCaptureDeviceFactory);
   ui::SetClipboardOxideFactory(CreateClipboard);
 
   gfx::InitializeOxideNativeDisplay(
