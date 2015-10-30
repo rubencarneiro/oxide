@@ -85,6 +85,7 @@ scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
     }
 
     android_camera_disconnect(control);
+    android_camera_delete(control);
 
     names->push_back(
         media::VideoCaptureDevice::Name(
