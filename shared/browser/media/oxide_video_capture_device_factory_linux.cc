@@ -109,7 +109,10 @@ void RespondToEnumerateDeviceNames(
         return hybris_name.id() == name.id();
       }) != names->end();
       if (duplicate) {
-        LOG(WARNING) << "Not adding duplicate capture device";
+        LOG(ERROR) <<
+            "A capture device with the ID \"" << hybris_name.id() <<
+            "\" was produced by both the default backend and from Hybris. "
+            "This is not supported";
         continue;
       }
 
