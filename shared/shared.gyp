@@ -627,6 +627,7 @@
           ],
           'dependencies': [
             '../build/system.gyp:android-properties',
+            '../build/system.gyp:hybris-camera',
           ],
         }],
       ],

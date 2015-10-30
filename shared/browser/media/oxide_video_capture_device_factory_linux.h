@@ -25,6 +25,9 @@
 
 namespace oxide {
 
+typedef base::Callback<void(scoped_ptr<media::VideoCaptureDevice::Names>)>
+    EnumerateDevicesCallback;
+
 class VideoCaptureDeviceFactoryLinux
     : public media::VideoCaptureDeviceFactory {
  public:
@@ -36,8 +39,7 @@ class VideoCaptureDeviceFactoryLinux
   // media::VideoCaptureDeviceFactory implementation
   scoped_ptr<media::VideoCaptureDevice> Create(
       const media::VideoCaptureDevice::Name& device_name) override;
-  void EnumerateDeviceNames(const base::Callback<
-      void(scoped_ptr<media::VideoCaptureDevice::Names>)>& callback) override;
+  void EnumerateDeviceNames(const EnumerateDevicesCallback& callback) override;
   void GetDeviceSupportedFormats(
       const media::VideoCaptureDevice::Name& device,
       media::VideoCaptureFormats* supported_formats) override;

@@ -18,7 +18,111 @@
 
 #include "oxide_video_capture_device_factory_linux.h"
 
+#include <algorithm>
+
+#include "base/bind.h"
+#include "base/callback.h"
+#include "base/logging.h"
+#include "media/capture/video/video_capture_device.h"
+
+#if defined(ENABLE_HYBRIS)
+#include "hybris/camera/camera_compatibility_layer.h"
+#include "hybris/camera/camera_compatibility_layer_capabilities.h"
+#endif
+
 namespace oxide {
+
+namespace {
+
+#if defined(ENABLE_HYBRIS)
+
+const char* GetDeviceNameForCameraType(CameraType type) {
+  switch (type) {
+    case BACK_FACING_CAMERA_TYPE:
+      return "Rear camera";
+    case FRONT_FACING_CAMERA_TYPE:
+      return "Front camera";
+  }
+
+  NOTREACHED();
+  return "";
+}
+
+const char* GetDeviceIdForCameraType(CameraType type) {
+  switch (type) {
+    case BACK_FACING_CAMERA_TYPE:
+      return "HybrisRear";
+    case FRONT_FACING_CAMERA_TYPE:
+      return "HybrisFront";
+  }
+
+  NOTREACHED();
+  return "";
+}
+
+scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
+  // Although hybris provides a way to detect the number of cameras attached,
+  // it provides no way to enumerate these. So we just check for a front or
+  // rear camera
+
+  if (android_camera_get_number_of_devices() == 0) {
+    return nullptr;
+  }
+
+  scoped_ptr<media::VideoCaptureDevice::Names> names(
+      new media::VideoCaptureDevice::Names());
+
+  static const CameraType types[] = {
+    BACK_FACING_CAMERA_TYPE,
+    FRONT_FACING_CAMERA_TYPE
+  };
+
+  for (size_t i = 0; i < arraysize(types); ++i) {
+    CameraType type = types[i];
+    CameraControl* control = android_camera_connect_to(type, nullptr);
+    if (!control) {
+      continue;
+    }
+
+    android_camera_disconnect(control);
+
+    names->push_back(
+        media::VideoCaptureDevice::Name(
+          GetDeviceNameForCameraType(type),
+          GetDeviceIdForCameraType(type),
+          media::VideoCaptureDevice::Name::API_TYPE_UNKNOWN));
+  }
+
+  return names;
+}
+
+void RespondToEnumerateDeviceNames(
+    const EnumerateDevicesCallback& callback,
+    media::VideoCaptureDevice::Names* hybris_names,
+    scoped_ptr<media::VideoCaptureDevice::Names> names) {
+  if (hybris_names) {
+    for (const auto& hybris_name : *hybris_names) {
+      bool duplicate = std::find_if(
+          names->begin(),
+          names->end(),
+          [hybris_name](const media::VideoCaptureDevice::Name& name) {
+        return hybris_name.id() == name.id();
+      }) != names->end();
+      if (duplicate) {
+        LOG(WARNING) << "Not adding duplicate capture device";
+        continue;
+      }
+
+      names->push_back(hybris_name);
+    }
+  }
+
+  callback.Run(names.Pass());
+}
+
+#endif
+
+}
 
 scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
@@ -26,9 +130,16 @@ scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
 }
 
 void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
-    const base::Callback<
-      void(scoped_ptr<media::VideoCaptureDevice::Names>)>& callback) {
-  delegate_->EnumerateDeviceNames(callback);
+    const EnumerateDevicesCallback& callback) {
+  EnumerateDevicesCallback local_callback = callback;
+#if defined(ENABLE_HYBRIS)
+  scoped_ptr<media::VideoCaptureDevice::Names> names =
+      GetDeviceNamesFromHybris();
+  local_callback = base::Bind(RespondToEnumerateDeviceNames,
+                              local_callback,
+                              base::Owned(names.release()));
+#endif
+  delegate_->EnumerateDeviceNames(local_callback);
 }
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
@@ -38,7 +149,9 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
 }
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
-    media::VideoCaptureDevice::Names* device_names) {}
+    media::VideoCaptureDevice::Names* device_names) {
+  NOTREACHED();
+}
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate)
