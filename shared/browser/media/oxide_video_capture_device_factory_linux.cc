@@ -18,14 +18,14 @@
 
 #include "oxide_video_capture_device_factory_linux.h"
 
-#include <algorithm>
-
-#include "base/bind.h"
-#include "base/callback.h"
 #include "base/logging.h"
 #include "media/capture/video/video_capture_device.h"
 
 #if defined(ENABLE_HYBRIS)
+#include <algorithm>
+
+#include "base/bind.h"
+#include "base/callback.h"
 #include "hybris/camera/camera_compatibility_layer.h"
 #include "hybris/camera/camera_compatibility_layer_capabilities.h"
 #endif
