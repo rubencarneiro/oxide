@@ -283,35 +283,6 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  // independent FrameMsg, then ifdefs for platform specific FrameMsg, then
  // platform independent FrameHostMsg, then ifdefs for platform specific
  // FrameHostMsg.
-diff --git a/content/common/frame_messages.h.rej b/content/common/frame_messages.h.rej
-deleted file mode 100644
---- a/content/common/frame_messages.h.rej
-+++ /dev/null
-@@ -1,24 +0,0 @@
----- frame_messages.h
--+++ frame_messages.h
--@@ -1166,21 +1162,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
-- // non-savable content (i.e. from a non-savable scheme) or if there were
-- // errors gathering the links.
-- IPC_MESSAGE_ROUTED0(FrameHostMsg_SavableResourceLinksError)
-- 
-- // Sent when the renderer updates hint for importance of a tab.
-- IPC_MESSAGE_ROUTED1(FrameHostMsg_UpdatePageImportanceSignals,
--                     content::PageImportanceSignals)
-- 
---#if defined(OS_MACOSX) || defined(OS_ANDROID)
---
-- // Message to show/hide a popup menu using native controls.
-- IPC_MESSAGE_ROUTED1(FrameHostMsg_ShowPopup,
--                     FrameHostMsg_ShowPopup_Params)
-- IPC_MESSAGE_ROUTED0(FrameHostMsg_HidePopup)
-- 
---#endif
---
-- // Adding a new message? Stick to the sort order above: first platform
-- // independent FrameMsg, then ifdefs for platform specific FrameMsg, then
-- // platform independent FrameHostMsg, then ifdefs for platform specific
-- // FrameHostMsg.
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
