@@ -55,7 +55,7 @@
     },
   ],
   'conditions': [
-    ['target_arch=="arm"', {
+    ['enable_hybris==1', {
       'targets': [
         {
           'target_name': 'android-properties',
