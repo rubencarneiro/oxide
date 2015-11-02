@@ -27,10 +27,10 @@ diff --git a/third_party/WebKit/Source/core/frame/VisualViewport.cpp b/third_par
 diff --git a/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp b/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp
 --- a/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp
 +++ b/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp
-@@ -30,16 +30,17 @@
- #include "platform/RuntimeEnabledFeatures.h"
+@@ -31,16 +31,17 @@
  #include "platform/graphics/Color.h"
  #include "platform/graphics/GraphicsContext.h"
+ #include "platform/graphics/paint/CullRect.h"
  #include "platform/graphics/paint/DrawingDisplayItem.h"
  #include "platform/graphics/paint/DrawingRecorder.h"
  #include "platform/graphics/paint/PaintController.h"
@@ -45,7 +45,7 @@ diff --git a/third_party/WebKit/Source/platform/scroll/ScrollbarTheme.cpp b/thir
  
  #if !OS(MACOSX)
  #include "public/platform/WebRect.h"
-@@ -320,16 +321,22 @@ void ScrollbarTheme::splitTrack(const Sc
+@@ -321,16 +322,22 @@ void ScrollbarTheme::splitTrack(const Sc
          thumbRect = IntRect(trackRect.x(), trackRect.y() + thumbPos, scrollbar->width(), thumbLength(scrollbar));
          beforeThumbRect = IntRect(trackRect.x(), trackRect.y(), trackRect.width(), thumbPos + thumbRect.height() / 2);
          afterThumbRect = IntRect(trackRect.x(), trackRect.y() + beforeThumbRect.height(), trackRect.width(), trackRect.maxY() - beforeThumbRect.maxY());

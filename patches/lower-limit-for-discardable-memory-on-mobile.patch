@@ -70,7 +70,7 @@ diff --git a/content/common/host_discardable_shared_memory_manager.cc b/content/
        memory_pressure_listener_(new base::MemoryPressureListener(
            base::Bind(&HostDiscardableSharedMemoryManager::OnMemoryPressure,
                       base::Unretained(this)))),
-       enforce_memory_policy_pending_(false),
-       weak_ptr_factory_(this) {
-   DCHECK_NE(memory_limit_, 0u);
-   base::trace_event::MemoryDumpManager::GetInstance()->RegisterDumpProvider(
+       // Current thread might not have a task runner in tests.
+       enforce_memory_policy_task_runner_(
+           base::ThreadTaskRunnerHandle::IsSet()
+               ? base::ThreadTaskRunnerHandle::Get()
