@@ -24,11 +24,14 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/single_thread_task_runner.h"
 #include "media/base/video_capture_types.h"
 #include "media/capture/video/video_capture_device.h"
 
 typedef unsigned int GLuint;
+
+namespace base {
+class SingleThreadTaskRunner;
+}
 
 namespace gfx {
 class GLContext;

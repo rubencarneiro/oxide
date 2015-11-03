@@ -21,6 +21,7 @@
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
 
 #include "base/logging.h"
+#include "base/single_thread_task_runner.h"
 #include "base/thread_task_runner_handle.h"
 #include "media/base/video_types.h"
 #include "ui/gl/gl_bindings.h"
