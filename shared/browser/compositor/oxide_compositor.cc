@@ -144,7 +144,7 @@ void Compositor::WillBeginMainFrame() {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::BeginMainFrameNotExpectedSoon() {}
 void Compositor::DidBeginMainFrame() {}
-void Compositor::Layout() {}
+void Compositor::UpdateLayerTreeHost() {}
 void Compositor::ApplyViewportDeltas(
     const gfx::Vector2dF& inner_delta,
     const gfx::Vector2dF& outer_delta,
