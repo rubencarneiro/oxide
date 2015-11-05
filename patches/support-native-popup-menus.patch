@@ -5,7 +5,7 @@
 diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/browser/frame_host/render_frame_host_impl.cc
 --- a/content/browser/frame_host/render_frame_host_impl.cc
 +++ b/content/browser/frame_host/render_frame_host_impl.cc
-@@ -499,20 +499,18 @@ bool RenderFrameHostImpl::OnMessageRecei
+@@ -500,20 +500,18 @@ bool RenderFrameHostImpl::OnMessageRecei
      IPC_MESSAGE_HANDLER(FrameHostMsg_ToggleFullscreen, OnToggleFullscreen)
      // The following message is synthetic and doesn't come from RenderFrame, but
      // from RenderProcessHost.
@@ -26,7 +26,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
  
  void RenderFrameHostImpl::AccessibilitySetFocus(int object_id) {
    Send(new AccessibilityMsg_SetFocus(routing_id_, object_id));
-@@ -1619,17 +1617,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
+@@ -1635,17 +1633,16 @@ void RenderFrameHostImpl::OnDidStopLoadi
    frame_tree_node_->DidStopLoading();
    navigation_handle_.reset();
  }
@@ -44,7 +44,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      view->ShowPopupMenu(this,
                          params.bounds,
                          params.item_height,
-@@ -1642,17 +1639,16 @@ void RenderFrameHostImpl::OnShowPopup(
+@@ -1658,17 +1655,16 @@ void RenderFrameHostImpl::OnShowPopup(
  }
  
  void RenderFrameHostImpl::OnHidePopup() {
@@ -62,7 +62,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.cc b/content/brow
      // TODO(creis): Bind process ID here so that GeolocationServiceImpl
      // can perform permissions checks once site isolation is complete.
      // crbug.com/426384
-@@ -2143,30 +2139,28 @@ RenderFrameHostImpl::GetParentNativeView
+@@ -2159,30 +2155,28 @@ RenderFrameHostImpl::GetParentNativeView
  void RenderFrameHostImpl::DidSelectPopupMenuItem(int selected_index) {
    Send(new FrameMsg_SelectPopupMenuItem(routing_id_, selected_index));
  }
@@ -139,7 +139,7 @@ diff --git a/content/browser/frame_host/render_frame_host_impl.h b/content/brows
                          const CommonNavigationParams& common_params,
                          const RequestNavigationParams& request_params);
  
-@@ -575,20 +572,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
+@@ -576,20 +573,18 @@ class CONTENT_EXPORT RenderFrameHostImpl
    void OnAccessibilitySnapshotResponse(
        int callback_id,
        const AXContentTreeUpdate& snapshot);
@@ -199,14 +199,14 @@ diff --git a/content/browser/renderer_host/render_view_host_delegate_view.h b/co
 diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
 --- a/content/common/frame_messages.h
 +++ b/content/common/frame_messages.h
-@@ -409,17 +409,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
- 
-   // Text shadow (edge style) of the text track text.
-   IPC_STRUCT_MEMBER(std::string, text_track_text_shadow)
- 
-   // Size of the text track text.
+@@ -415,17 +415,16 @@ IPC_STRUCT_BEGIN(FrameMsg_TextTrackSetti
    IPC_STRUCT_MEMBER(std::string, text_track_text_size)
  IPC_STRUCT_END()
+ 
+ IPC_STRUCT_TRAITS_BEGIN(content::SavableSubframe)
+   IPC_STRUCT_TRAITS_MEMBER(original_url)
+   IPC_STRUCT_TRAITS_MEMBER(routing_id)
+ IPC_STRUCT_TRAITS_END()
  
 -#if defined(OS_MACOSX) || defined(OS_ANDROID)
  // This message is used for supporting popup menus on Mac OS X and Android using
@@ -217,7 +217,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  
    // The height of each item in the menu.
    IPC_STRUCT_MEMBER(int, item_height)
-@@ -434,17 +433,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
+@@ -440,17 +439,16 @@ IPC_STRUCT_BEGIN(FrameHostMsg_ShowPopup_
    IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
  
    // Whether items should be right-aligned.
@@ -235,7 +235,7 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
    IPC_STRUCT_TRAITS_MEMBER(document_url)
    IPC_STRUCT_TRAITS_MEMBER(plugin_url)
    IPC_STRUCT_TRAITS_MEMBER(is_potentially_secure_plugin_context)
-@@ -654,24 +652,22 @@ IPC_MESSAGE_ROUTED0(FrameMsg_ClearFocus)
+@@ -660,24 +658,22 @@ IPC_MESSAGE_ROUTED0(FrameMsg_ClearFocus)
  // Send to the RenderFrame to set text tracks state and style settings.
  // Sent for top-level frames.
  IPC_MESSAGE_ROUTED1(FrameMsg_SetTextTrackSettings,
@@ -261,8 +261,8 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  #endif
  
  // PlzNavigate
-@@ -1216,21 +1212,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Seriali
-                     GURL /* frame URL */,
+@@ -1224,21 +1220,17 @@ IPC_MESSAGE_ROUTED0(FrameHostMsg_Savable
+ IPC_MESSAGE_ROUTED2(FrameHostMsg_SerializedHtmlWithLocalLinksResponse,
                      std::string /* data buffer */,
                      bool /* end of data? */)
  
@@ -283,6 +283,35 @@ diff --git a/content/common/frame_messages.h b/content/common/frame_messages.h
  // independent FrameMsg, then ifdefs for platform specific FrameMsg, then
  // platform independent FrameHostMsg, then ifdefs for platform specific
  // FrameHostMsg.
+diff --git a/content/common/frame_messages.h.rej b/content/common/frame_messages.h.rej
+deleted file mode 100644
+--- a/content/common/frame_messages.h.rej
++++ /dev/null
+@@ -1,24 +0,0 @@
+---- frame_messages.h
+-+++ frame_messages.h
+-@@ -1166,21 +1162,17 @@ IPC_MESSAGE_ROUTED3(FrameHostMsg_Savable
+- // non-savable content (i.e. from a non-savable scheme) or if there were
+- // errors gathering the links.
+- IPC_MESSAGE_ROUTED0(FrameHostMsg_SavableResourceLinksError)
+- 
+- // Sent when the renderer updates hint for importance of a tab.
+- IPC_MESSAGE_ROUTED1(FrameHostMsg_UpdatePageImportanceSignals,
+-                     content::PageImportanceSignals)
+- 
+--#if defined(OS_MACOSX) || defined(OS_ANDROID)
+--
+- // Message to show/hide a popup menu using native controls.
+- IPC_MESSAGE_ROUTED1(FrameHostMsg_ShowPopup,
+-                     FrameHostMsg_ShowPopup_Params)
+- IPC_MESSAGE_ROUTED0(FrameHostMsg_HidePopup)
+- 
+--#endif
+--
+- // Adding a new message? Stick to the sort order above: first platform
+- // independent FrameMsg, then ifdefs for platform specific FrameMsg, then
+- // platform independent FrameHostMsg, then ifdefs for platform specific
+- // FrameHostMsg.
 diff --git a/content/content_renderer.gypi b/content/content_renderer.gypi
 --- a/content/content_renderer.gypi
 +++ b/content/content_renderer.gypi
@@ -357,7 +386,7 @@ diff --git a/content/renderer/external_popup_menu.h b/content/renderer/external_
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -1087,23 +1087,21 @@ bool RenderFrameImpl::Send(IPC::Message*
+@@ -1076,23 +1076,21 @@ bool RenderFrameImpl::Send(IPC::Message*
        delete message;
        return false;
      }
@@ -381,7 +410,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
      return false;
  
    // TODO(kenrb): document() should not be null, but as a transitional step
-@@ -1180,19 +1178,18 @@ bool RenderFrameImpl::OnMessageReceived(
+@@ -1169,19 +1167,18 @@ bool RenderFrameImpl::OnMessageReceived(
      IPC_MESSAGE_HANDLER(FrameMsg_SetTextTrackSettings,
                          OnTextTrackSettingsChanged)
      IPC_MESSAGE_HANDLER(FrameMsg_PostMessageEvent, OnPostMessageEvent)
@@ -402,7 +431,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    return handled;
  }
  
-@@ -1825,31 +1822,29 @@ void RenderFrameImpl::OnPostMessageEvent
+@@ -1817,31 +1814,29 @@ void RenderFrameImpl::OnPostMessageEvent
    WebDOMMessageEvent msg_event(serialized_script_value,
                                 params.source_origin,
                                 source_frame,
@@ -434,7 +463,7 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    external_popup_menu_->DidSelectItem(selected_index);
    external_popup_menu_.reset();
  }
-@@ -2240,17 +2235,17 @@ RenderFrameImpl::createWorkerContentSett
+@@ -2232,17 +2227,17 @@ RenderFrameImpl::createWorkerContentSett
    DCHECK(!frame_ || frame_ == frame);
    return GetContentClient()->renderer()->CreateWorkerContentSettingsClientProxy(
        this, frame);
@@ -476,7 +505,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
    bool OnMessageReceived(const IPC::Message& msg) override;
  
    // RenderFrame implementation:
-@@ -735,20 +733,19 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -734,20 +732,19 @@ class CONTENT_EXPORT RenderFrameImpl
    void OnUpdateOpener(int opener_routing_id);
    void OnDidUpdateSandboxFlags(blink::WebSandboxFlags flags);
    void OnSetFrameOwnerProperties(
@@ -498,7 +527,7 @@ diff --git a/content/renderer/render_frame_impl.h b/content/renderer/render_fram
                            const GURL& stream_url,
                            const CommonNavigationParams& common_params,
                            const RequestNavigationParams& request_params);
-@@ -1081,20 +1078,18 @@ class CONTENT_EXPORT RenderFrameImpl
+@@ -1087,20 +1084,18 @@ class CONTENT_EXPORT RenderFrameImpl
    // Whether or not this RenderFrame is using Lo-Fi mode.
    bool is_using_lofi_;
  
