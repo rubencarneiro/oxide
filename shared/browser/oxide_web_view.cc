@@ -1081,10 +1081,6 @@ void WebView::DidShowFullscreenWidget(int routing_id) {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
 
-  rwh->WasResized();
-  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
-  rwh->GetView()->Show();
-
   web_contents_->GetRenderWidgetHostView()->Hide();
 }
 
