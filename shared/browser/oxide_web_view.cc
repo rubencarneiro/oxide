@@ -1880,6 +1880,17 @@ blink::WebScreenInfo WebView::GetScreenInfo() const {
 }
 
 gfx::Rect WebView::GetViewBoundsPix() const {
+  if (IsFullscreen()) {
+    // If we're in fullscreen mode, return the screen size rather than the
+    // view bounds. This works around an issue where buggy Flash content
+    // expects the view to resize synchronously when it goes fullscreen, but it
+    // happens asynchronously instead.
+    // See https://launchpad.net/bugs/1510508
+    // XXX: Obviously, this means we assume that we do occupy the full screen
+    //  when the browser grants us fullscreen. If that's not the case, then
+    //  this is going to break
+    return GetScreenInfo().rect;
+  }
   return client_->GetViewBoundsPix();
 }
 
