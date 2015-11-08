@@ -380,6 +380,15 @@ void WebView::DispatchPrepareToCloseResponse(bool proceed) {
   client_->PrepareToCloseResponseReceived(proceed);
 }
 
+void WebView::MaybeCancelFullscreenMode() {
+  if (IsFullscreen()) {
+    // The application might have granted fullscreen by now
+    return;
+  }
+
+  web_contents_->ExitFullscreen();
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return client_->GetScriptMessageHandlerCount();
 }
@@ -1082,6 +1091,18 @@ void WebView::DidShowFullscreenWidget(int routing_id) {
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
 
   web_contents_->GetRenderWidgetHostView()->Hide();
+
+  if (!IsFullscreen()) {
+    // If the application didn't grant us fullscreen, schedule a task to cancel
+    // the fullscreen. We do this as we'll have a fullscreen view that the
+    // application can't get rid of.
+    // We do this asynchronously to avoid a UAF in
+    // WebContentsImpl::ShowCreatedWidget
+    // See https://launchpad.net/bugs/1510973
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
+  }
 }
 
 void WebView::DidDestroyFullscreenWidget(int routing_id) {
@@ -1432,6 +1453,9 @@ void WebView::SetFullscreenGranted(bool fullscreen) {
   }
 
   bool was_fullscreen = IsFullscreen();
+  // It's important to do this before calling WebContents::ExitFullscreen,
+  // as this calls back in to ExitFullscreenModeForTab. If the application
+  // calls us synchronously, then we'll run out of stack
   fullscreen_granted_ = fullscreen;
   bool is_fullscreen = IsFullscreen();
 
