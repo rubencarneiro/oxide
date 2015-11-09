@@ -213,8 +213,9 @@ void WebMediaPlayer::setRate(double rate) {
 }
 
 void WebMediaPlayer::setSinkId(
-      const blink::WebString& deviceId,
-      blink::WebCallbacks<void, blink::WebSetSinkIdError*>*) {
+      const blink::WebString& sinkId,
+      const blink::WebSecurityOrigin& origin,
+      blink::WebSetSinkIdCallbacks* callbacks) {
   NOTIMPLEMENTED();
 }
 

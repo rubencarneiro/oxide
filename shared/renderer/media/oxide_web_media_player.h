@@ -67,8 +67,9 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   void exitFullscreen();
   bool canEnterFullscreen() const;
   void setSinkId(
-      const blink::WebString& deviceId,
-      blink::WebCallbacks<void, blink::WebSetSinkIdError*>*);
+      const blink::WebString& sinkId,
+      const blink::WebSecurityOrigin& origin,
+      blink::WebSetSinkIdCallbacks* callbacks);
 
   // Resource loading.
   void load(LoadType load_type,
