@@ -39,6 +39,7 @@ class OxideQWebPreferences;
 class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
+class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -130,6 +131,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQQuickLocationBarController* locationBarController READ locationBarController CONSTANT REVISION 3)
 
   Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
+
+  Q_PROPERTY(OxideQQuickTouchSelectionController* touchSelectionController READ touchSelectionController CONSTANT REVISION 6)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -298,6 +301,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   OxideQFindController* findController() const;
 
   Q_REVISION(4) Q_INVOKABLE void executeEditingCommand(EditingCommands command) const;
+
+  OxideQQuickTouchSelectionController* touchSelectionController();
 
  public Q_SLOTS:
   void goBack();

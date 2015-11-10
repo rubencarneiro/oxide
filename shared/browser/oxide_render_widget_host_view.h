@@ -49,11 +49,13 @@ class RenderWidgetHostImpl;
 
 namespace ui {
 class MotionEvent;
+class TouchSelectionController;
 }
 
 namespace oxide {
 
 class RenderWidgetHostViewContainer;
+class TouchSelectionControllerClient;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
@@ -74,6 +76,10 @@ class RenderWidgetHostView final :
     return selection_text_;
   }
 
+  const gfx::Range& selection_range() const {
+    return selection_range_;
+  }
+
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
@@ -92,6 +98,10 @@ class RenderWidgetHostView final :
   void Focus() final;
   void Show() final;
   void Hide() final;
+
+  ui::TouchSelectionController* selection_controller() const {
+    return selection_controller_.get();
+  }
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -182,6 +192,8 @@ class RenderWidgetHostView final :
   void AttachLayer();
   void DetachLayer();
 
+  bool HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
+
   content::RenderWidgetHostImpl* host_;
 
   RenderWidgetHostViewContainer* container_;
@@ -215,6 +227,9 @@ class RenderWidgetHostView final :
   bool top_controls_shrink_blink_size_;
 
   scoped_ptr<GestureProvider> gesture_provider_;
+
+  scoped_ptr<TouchSelectionControllerClient> selection_controller_client_;
+  scoped_ptr<ui::TouchSelectionController> selection_controller_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

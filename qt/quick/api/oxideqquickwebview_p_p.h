@@ -33,6 +33,7 @@
 class OxideQNewViewRequest;
 class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
+class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
@@ -76,6 +77,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  QQmlComponent* touchSelectionControllerHandle() const;
+  void setTouchSelectionControllerHandle(QQmlComponent* handle);
+
  private:
   friend class UpdatePaintNodeScope;
 
@@ -94,6 +98,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
+  oxide::qt::TouchHandleDrawableDelegateProxy*
+      CreateTouchHandleDrawableDelegate() override;
   void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
@@ -105,6 +111,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
+  void TouchSelectionChanged(bool active,
+                             oxide::qt::EditCapabilityFlags edit_flags,
+                             const QString& selection_text) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
   QScreen* GetScreen() const override;
   QRect GetViewBoundsPix() const override;
@@ -195,6 +204,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
+  QQmlComponent* touch_selection_handle_;
 
   bool received_new_compositor_frame_;
   bool frame_evicted_;
@@ -208,6 +218,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QScopedPointer<ConstructProps> construct_props_;
 
   QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
+
+  QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

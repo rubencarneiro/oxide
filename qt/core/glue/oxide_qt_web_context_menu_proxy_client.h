@@ -26,17 +26,6 @@
 namespace oxide {
 namespace qt {
 
-enum EditCapabilityFlags {
-  NO_CAPABILITY = 0,
-  UNDO_CAPABILITY = 1 << 0,
-  REDO_CAPABILITY = 1 << 1,
-  CUT_CAPABILITY = 1 << 2,
-  COPY_CAPABILITY = 1 << 3,
-  PASTE_CAPABILITY = 1 << 4,
-  ERASE_CAPABILITY = 1 << 5,
-  SELECT_ALL_CAPABILITY = 1 << 6
-};
-
 enum MediaType {
   MEDIA_TYPE_NONE,
   MEDIA_TYPE_IMAGE,

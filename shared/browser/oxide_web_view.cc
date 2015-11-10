@@ -60,10 +60,12 @@
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/clipboard/clipboard.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
@@ -1947,6 +1949,48 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
+}
+
+TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate() const {
+  return client_->CreateTouchHandleDrawableDelegate();
+}
+
+void WebView::TouchSelectionChanged() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  bool active =
+      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+  bool has_selection = !rwhv->selection_range().is_empty();
+  base::string16 clipboard;
+  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
+                                                 &clipboard);
+  int flags = blink::WebContextMenuData::CanDoNone;
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable && !clipboard.empty()) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+
+  // FIXME: rwhv->selection_text() doesn’t report the correct selection
+  //   when in an editable text box
+  client_->TouchSelectionChanged(active, flags, rwhv->selection_text());
 }
 
 } // namespace oxide

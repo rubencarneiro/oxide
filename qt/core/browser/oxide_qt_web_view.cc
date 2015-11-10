@@ -50,6 +50,7 @@
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -91,6 +92,7 @@
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_skutils.h"
+#include "oxide_qt_touch_handle_drawable_delegate.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
@@ -816,6 +818,46 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   FilePicker* picker = new FilePicker(rvh);
   picker->SetProxy(client_->CreateFilePicker(picker));
   return picker;
+}
+
+oxide::TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate() const {
+  TouchHandleDrawableDelegate* delegate = new TouchHandleDrawableDelegate(this);
+  delegate->SetProxy(client_->CreateTouchHandleDrawableDelegate());
+  return delegate;
+}
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
+
+void WebView::TouchSelectionChanged(
+    bool active,
+    int edit_flags,
+    const base::string16& selection_text) const {
+  EditCapabilityFlags flags = NO_CAPABILITY;
+  if (edit_flags & blink::WebContextMenuData::CanUndo) {
+    flags |= UNDO_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanRedo) {
+    flags |= REDO_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanCut) {
+    flags |= CUT_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanCopy) {
+    flags |= COPY_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanPaste) {
+    flags |= PASTE_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanDelete) {
+    flags |= ERASE_CAPABILITY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanSelectAll) {
+    flags |= SELECT_ALL_CAPABILITY;
+  }
+  client_->TouchSelectionChanged(
+      active,
+      flags,
+      QString::fromStdString(base::UTF16ToUTF8(selection_text)));
 }
 
 void WebView::SwapCompositorFrame() {

@@ -28,6 +28,7 @@
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
 #include "cc/trees/layer_tree_settings.h"
+#include "content/browser/renderer_host/input/ui_touch_selection_helper.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -38,6 +39,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/input/oxide_input_method_context.h"
@@ -47,6 +49,7 @@
 #include "oxide_event_utils.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_container.h"
+#include "oxide_touch_selection_controller_client.h"
 
 namespace oxide {
 
@@ -264,6 +267,13 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
+
+  const cc::ViewportSelection& selection = compositor_frame_metadata_.selection;
+  selection_controller_->OnSelectionEditable(selection.is_editable);
+  selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
+  selection_controller_->OnSelectionBoundsChanged(
+      content::ConvertSelectionBound(selection.start),
+      content::ConvertSelectionBound(selection.end));
 }
 
 void RenderWidgetHostView::ClearCompositorFrame() {
@@ -463,6 +473,10 @@ void RenderWidgetHostView::OnGestureEvent(
     return;
   }
 
+  if (HandleGestureForTouchSelection(event)) {
+    return;
+  }
+
   if (event.type == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
     // event to stop any in-progress flings.
@@ -477,6 +491,39 @@ void RenderWidgetHostView::OnGestureEvent(
   }
 
   host_->ForwardGestureEvent(event);
+}
+
+bool RenderWidgetHostView::HandleGestureForTouchSelection(
+    const blink::WebGestureEvent& event) const {
+  switch (event.type) {
+    case blink::WebInputEvent::GestureLongPress: {
+      base::TimeTicks event_time = base::TimeTicks() +
+          base::TimeDelta::FromSecondsD(event.timeStampSeconds);
+      gfx::PointF location(event.x, event.y);
+      if (selection_controller_->WillHandleLongPressEvent(
+              event_time, location)) {
+        return true;
+      }
+      break;
+    }
+    case blink::WebInputEvent::GestureTap: {
+      gfx::PointF location(event.x, event.y);
+      if (selection_controller_->WillHandleTapEvent(
+              location, event.data.tap.tapCount)) {
+        return true;
+      }
+      break;
+    }
+    case blink::WebInputEvent::GestureScrollBegin:
+      selection_controller_client_->OnScrollStarted();
+      break;
+    case blink::WebInputEvent::GestureScrollEnd:
+      selection_controller_client_->OnScrollCompleted();
+      break;
+    default:
+      break;
+  }
+  return false;
 }
 
 void RenderWidgetHostView::EvictCurrentFrame() {
@@ -583,9 +630,21 @@ RenderWidgetHostView::RenderWidgetHostView(
   host_->SetView(this);
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
+
+  selection_controller_client_.reset(new TouchSelectionControllerClient(this));
+  ui::TouchSelectionController::Config tsc_config;
+  // default values from ui/events/gesture_detection/gesture_configuration.cc
+  tsc_config.max_tap_duration = base::TimeDelta::FromMilliseconds(150);
+  tsc_config.tap_slop = 15;
+  tsc_config.show_on_tap_for_empty_editable = true;
+  tsc_config.enable_longpress_drag_selection = false;
+  selection_controller_.reset(new ui::TouchSelectionController(
+      selection_controller_client_.get(), tsc_config));
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
+  selection_controller_.reset();
+  selection_controller_client_.reset();
   resource_collection_->SetClient(nullptr);
   SetContainer(nullptr);
 }
@@ -614,9 +673,15 @@ void RenderWidgetHostView::SetContainer(
 void RenderWidgetHostView::Blur() {
   host_->SetActive(false);
   host_->Blur();
+
+  selection_controller_->HideAndDisallowShowingAutomatically();
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
+  if (selection_controller_->WillHandleTouchEvent(event)) {
+    return;
+  }
+
   auto rv = gesture_provider_->OnTouchEvent(event);
   if (!rv.succeeded) {
     return;

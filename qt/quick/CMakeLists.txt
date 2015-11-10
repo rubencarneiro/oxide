@@ -34,6 +34,7 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc
+    api/oxideqquicktouchselectioncontroller.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
     api/oxideqquickwebcontextdelegateworker.cc
@@ -50,6 +51,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_javascript_dialog.cc
     oxide_qquick_prompt_dialog.cc
     oxide_qquick_software_frame_node.cc
+    oxide_qquick_touch_handle_drawable_delegate.cc
     oxide_qquick_web_context_menu.cc
     oxide_qquick_web_popup_menu.cc
     ${MOC_EXTRA})

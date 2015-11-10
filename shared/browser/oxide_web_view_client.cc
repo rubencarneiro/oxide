@@ -131,6 +131,15 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
   return nullptr;
 }
 
+TouchHandleDrawableDelegate* WebViewClient::CreateTouchHandleDrawableDelegate() const {
+  return nullptr;
+}
+
+void WebViewClient::TouchSelectionChanged(
+    bool active,
+    int edit_flags,
+    const base::string16& selection_text) const {}
+
 void WebViewClient::EvictCurrentFrame() {}
 
 InputMethodContext* WebViewClient::GetInputMethodContext() const {

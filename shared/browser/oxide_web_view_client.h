@@ -52,6 +52,7 @@ class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
+class TouchHandleDrawableDelegate;
 class WebContextMenu;
 class WebPopupMenu;
 class WebView;
@@ -161,6 +162,12 @@ class WebViewClient : public ScriptMessageTarget {
                                     scoped_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
+
+  virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
+  virtual void TouchSelectionChanged(
+      bool active,
+      int edit_flags,
+      const base::string16& selection_text) const;
 
   virtual void SwapCompositorFrame() = 0;
 

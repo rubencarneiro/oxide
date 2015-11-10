@@ -40,6 +40,7 @@
 #include "qt/quick/api/oxideqquickscriptmessage_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler_p.h"
 #include "qt/quick/api/oxideqquickscriptmessagerequest_p.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller_p.h"
 #include "qt/quick/api/oxideqquickuserscript_p.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
 #include "qt/quick/api/oxideqquickwebcontextdelegateworker_p.h"
@@ -161,7 +162,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "HttpAuthenticationRequest is delivered by WebView.httpAuthenticationRequested");
     qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
 
-    qmlRegisterType<OxideQQuickWebView, 6>(uri, 1, 11, "WebView");
+    qmlRegisterUncreatableType<OxideQQuickTouchSelectionController>(uri, 1, 12, "TouchSelectionController",
+        "TouchSelectionController is accessed via WebView.touchSelectionController");
+    qmlRegisterType<OxideQQuickWebView, 6>(uri, 1, 12, "WebView");
   }
 };
 

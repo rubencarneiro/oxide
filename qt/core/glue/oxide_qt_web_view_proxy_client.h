@@ -49,6 +49,7 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
+class TouchHandleDrawableDelegateProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
 class WebFrameProxy;
@@ -63,6 +64,17 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2,
   FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
   FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
+};
+
+enum EditCapabilityFlags {
+  NO_CAPABILITY = 0,
+  UNDO_CAPABILITY = 1 << 0,
+  REDO_CAPABILITY = 1 << 1,
+  CUT_CAPABILITY = 1 << 2,
+  COPY_CAPABILITY = 1 << 3,
+  PASTE_CAPABILITY = 1 << 4,
+  ERASE_CAPABILITY = 1 << 5,
+  SELECT_ALL_CAPABILITY = 1 << 6
 };
 
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
@@ -83,6 +95,8 @@ class WebViewProxyClient {
   virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
+  virtual TouchHandleDrawableDelegateProxy*
+      CreateTouchHandleDrawableDelegate() = 0;
 
   virtual void WebProcessStatusChanged() = 0;
 
@@ -97,6 +111,10 @@ class WebViewProxyClient {
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
+
+  virtual void TouchSelectionChanged(bool active,
+                                     EditCapabilityFlags edit_flags,
+                                     const QString& selection_text) = 0;
 
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 

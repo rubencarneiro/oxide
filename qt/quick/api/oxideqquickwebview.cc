@@ -57,12 +57,14 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_touch_handle_drawable_delegate.h"
 #include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickscriptmessagehandler_p_p.h"
+#include "oxideqquicktouchselectioncontroller_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -152,6 +154,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     prompt_dialog_(nullptr),
     before_unload_dialog_(nullptr),
     file_picker_(nullptr),
+    touch_selection_handle_(nullptr),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
@@ -212,6 +215,13 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   Q_Q(OxideQQuickWebView);
 
   return new oxide::qquick::FilePicker(q, client);
+}
+
+oxide::qt::TouchHandleDrawableDelegateProxy*
+OxideQQuickWebViewPrivate::CreateTouchHandleDrawableDelegate() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::TouchHandleDrawableDelegate(q);
 }
 
 void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {
@@ -282,6 +292,20 @@ void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count)
 
 void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
+}
+
+void OxideQQuickWebViewPrivate::TouchSelectionChanged(
+    bool active,
+    oxide::qt::EditCapabilityFlags edit_flags,
+    const QString& selection_text) {
+  Q_Q(OxideQQuickWebView);
+
+  OxideQQuickTouchSelectionController* controller =
+      q->touchSelectionController();
+  controller->setActive(active);
+  controller->setEditFlags(
+      static_cast<OxideQQuickWebView::EditCapabilities>(edit_flags));
+  controller->setSelectionText(selection_text);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(
@@ -1032,6 +1056,22 @@ QString OxideQQuickWebViewPrivate::getNavigationEntryTitle(int index) const {
 QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
     int index) const {
   return proxy()->getNavigationEntryTimestamp(index);
+}
+
+QQmlComponent* OxideQQuickWebViewPrivate::touchSelectionControllerHandle() const {
+  return touch_selection_handle_;
+}
+
+void OxideQQuickWebViewPrivate::setTouchSelectionControllerHandle(
+    QQmlComponent* handle) {
+  if (touch_selection_handle_ == handle) {
+    return;
+  }
+
+  touch_selection_handle_ = handle;
+  // XXX(osomon): if there were handles already instantiated,
+  //   should they be destroyed and re-instantiated?
+  //   or should it be considered invalid to set the handle after construction?
 }
 
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
@@ -2196,6 +2236,17 @@ OxideQFindController* OxideQQuickWebView::findController() const {
   Q_D(const OxideQQuickWebView);
 
   return d->find_controller_.data();
+}
+
+OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->touch_selection_controller_) {
+    d->touch_selection_controller_.reset(
+        new OxideQQuickTouchSelectionController(this));
+  }
+
+  return d->touch_selection_controller_.data();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

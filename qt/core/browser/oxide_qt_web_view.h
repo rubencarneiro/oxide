@@ -86,11 +86,11 @@ class WebView : public InputMethodContextClient,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
+  float GetDeviceScaleFactor() const;
+
  private:
   WebView(WebViewProxyClient* client,
           OxideQSecurityStatus* security_status);
-
-  float GetDeviceScaleFactor() const;
 
   void CommonInit(OxideQFindController* find_controller);
 
@@ -163,6 +163,11 @@ class WebView : public InputMethodContextClient,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
+  oxide::TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const override;
+  void TouchSelectionChanged(
+      bool active,
+      int edit_flags,
+      const base::string16& selection_text) const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;

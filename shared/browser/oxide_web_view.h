@@ -96,6 +96,7 @@ class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
+class TouchHandleDrawableDelegate;
 class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
@@ -287,6 +288,9 @@ class WebView : public ScriptMessageTarget,
   bool ShouldHandleNavigation(const GURL& url, bool has_user_gesture);
 
   bool CanCreateWindows() const;
+
+  TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
+  void TouchSelectionChanged() const;
 
  private:
   WebView(WebViewClient* client);
