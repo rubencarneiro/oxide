@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,14 +32,13 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
 from oxide_utils import CheckCall, CheckOutput, GetChecksum, GetFileChecksum, CHROMIUMSRCDIR, TOPSRCDIR
-from patch_utils import SyncablePatchSet, SyncError
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_GIT_REV = "c1ae89ecd635abfea2d94e5b49c7d92f49f28f22"
 DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
-CHROMIUM_GIT_URL = "https://chromium.googlesource.com/chromium/src.git"
+CHROMIUM_GIT_URL = "https://git.launchpad.net/~oxide-developers/oxide/+git/chromium"
 CHROMIUM_GCLIENT_SPEC = (
   "solutions = ["
     "{ \"name\": \"src\", "
@@ -158,25 +157,6 @@ def PrepareDepotTools():
   sys.path.insert(0, DEPOT_TOOLS_PATH)
   os.environ["PATH"] = DEPOT_TOOLS_PATH + ":" + os.getenv("PATH")
 
-def EnsurePatchConsistency():
-  patchset = SyncablePatchSet()
-  for patch in patchset.hg_patches:
-    if (patch in patchset.old_patches and
-        patch.checksum == patchset.old_patches[patch.filename].checksum):
-      continue
-
-    # For pre-r238 checkouts
-    if (patch in patchset.src_patches and
-        patch.checksum == patchset.src_patches[patch.filename].checksum):
-      continue
-
-    print("Patch %s in your Chromium source checkout has been "
-          "modified. Please resolve this manually. Note, you may "
-          "see this error if your Chromium checkout was created "
-          "using a revision of Oxide before r238" % patch.filename,
-          file=sys.stderr)
-    sys.exit(1)
-
 def NeedsChromiumSync(config):
   # Check that CHROMIUMSRCDIR is a git repo
   if not IsGitRepo(CHROMIUMSRCDIR):
@@ -184,10 +164,6 @@ def NeedsChromiumSync(config):
 
   if not GitRepoHeadMatchesId(CHROMIUMSRCDIR,
                               GetDesiredChromiumVersion()):
-    return True
-
-  # Need a sync if there is no .hg folder
-  if not os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
     return True
 
   # Sync if there is no .gclient file
@@ -203,7 +179,6 @@ def NeedsChromiumSync(config):
 
 def SyncChromium(config):
   if os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
-    SyncablePatchSet().hg_patches.unapply_all()
     shutil.rmtree(os.path.join(CHROMIUMSRCDIR, ".hg"))
     os.remove(os.path.join(CHROMIUMSRCDIR, ".hgignore"))
 
@@ -216,7 +191,7 @@ def SyncChromium(config):
   with open(os.path.join(chromium_dir, ".gclient"), "w") as f:
     f.write(GetChromiumGclientSpec(config.cachedir))
 
-  refs = [ "refs/tags/*", "refs/branch-heads/*" ]
+  refs = [ "refs/tags/*" ]
 
   if not IsGitRepo(CHROMIUMSRCDIR):
     InitGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR, config.cachedir, refs)
@@ -230,39 +205,6 @@ def SyncChromium(config):
 
   CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
              "sync", "-D", "--with_branch_heads"], chromium_dir)
-
-  with open(os.path.join(CHROMIUMSRCDIR, ".hgignore"), "w") as f:
-    f.write("~$\n")
-    f.write("\.svn/\n")
-    f.write("\.git/\n")
-    f.write("^out/\n")
-    f.write("\.host\.(.*\.|)mk$\n")
-    f.write("\.target\.(.*\.|)mk$\n")
-    f.write("Makefile(\.*|)$\n")
-    f.write("^\.hgignore$\n")
-    f.write("\.pyc$\n")
-    f.write("\.tmp$\n")
-  CheckCall(["hg", "init"], CHROMIUMSRCDIR)
-  hgrc = os.path.join(CHROMIUMSRCDIR, ".hg", "hgrc")
-  if not os.path.isfile(hgrc):
-    with open(hgrc, "w") as f:
-      f.write("[ui]\n")
-      f.write("username = oxide\n\n")
-      f.write("[extensions]\n")
-      f.write("mq =\n")
-  CheckCall(["hg", "addremove"], CHROMIUMSRCDIR)
-  CheckCall(["hg", "ci", "-m", "Base checkout with client.py"], CHROMIUMSRCDIR)
-  CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
-
-def SyncChromiumPatches():
-  patchset = SyncablePatchSet()
-  try:
-    patchset.calculate_sync()
-    patchset.do_sync()
-    patchset.hg_patches.apply_all()
-  except SyncError as e:
-    print(e, file=sys.stderr)
-    sys.exit(1)
 
 class Options(OptionParser):
   def __init__(self):
@@ -309,8 +251,6 @@ def main():
 
   PrepareDepotTools()
 
-  EnsurePatchConsistency()
-
   old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
   if os.path.isdir(old_chromium_dir):
     shutil.rmtree(old_chromium_dir)
@@ -320,8 +260,6 @@ def main():
 
   if NeedsChromiumSync(c):
     SyncChromium(c)
-
-  SyncChromiumPatches()
 
 if __name__ == "__main__":
   main()
