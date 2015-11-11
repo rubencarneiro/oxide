@@ -1988,9 +1988,7 @@ void WebView::TouchSelectionChanged() const {
   }
   flags |= blink::WebContextMenuData::CanSelectAll;
 
-  // FIXME: rwhv->selection_text() doesn’t report the correct selection
-  //   when in an editable text box
-  client_->TouchSelectionChanged(active, flags, rwhv->selection_text());
+  client_->TouchSelectionChanged(active, flags, rwhv->GetSelectedText());
 }
 
 } // namespace oxide
