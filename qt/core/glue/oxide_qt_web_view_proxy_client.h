@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
+#include <QRectF>
 #include <QUrl>
 #include <QtGlobal>
 
@@ -113,6 +114,7 @@ class WebViewProxyClient {
   virtual void NavigationEntryChanged(int index) = 0;
 
   virtual void TouchSelectionChanged(bool active,
+                                     QRectF bounds,
                                      EditCapabilityFlags edit_flags,
                                      const QString& selected_text) = 0;
 

@@ -28,6 +28,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
 
   OxideQQuickWebView* view;
   bool active;
+  QRectF bounds;
   OxideQQuickWebView::EditCapabilities edit_flags;
   QString selected_text;
 };
@@ -72,6 +73,21 @@ void OxideQQuickTouchSelectionController::setHandle(QQmlComponent* handle) {
 
   OxideQQuickWebViewPrivate::get(d->view)->setTouchSelectionControllerHandle(handle);
   Q_EMIT handleChanged();
+}
+
+const QRectF& OxideQQuickTouchSelectionController::bounds() const {
+  Q_D(const OxideQQuickTouchSelectionController);
+
+  return d->bounds;
+}
+
+void OxideQQuickTouchSelectionController::setBounds(const QRectF& bounds) {
+  Q_D(OxideQQuickTouchSelectionController);
+
+  if (bounds != d->bounds) {
+    d->bounds = bounds;
+    Q_EMIT boundsChanged();
+  }
 }
 
 OxideQQuickWebView::EditCapabilities

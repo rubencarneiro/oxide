@@ -1951,7 +1951,8 @@ bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
 }
 
-TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate() const {
+TouchHandleDrawableDelegate*
+WebView::CreateTouchHandleDrawableDelegate() const {
   return client_->CreateTouchHandleDrawableDelegate();
 }
 
@@ -1964,6 +1965,8 @@ void WebView::TouchSelectionChanged() const {
   ui::TouchSelectionController* controller = rwhv->selection_controller();
   bool active =
       (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  gfx::RectF bounds = controller->GetRectBetweenBounds();
 
   ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
   bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
@@ -1988,7 +1991,8 @@ void WebView::TouchSelectionChanged() const {
   }
   flags |= blink::WebContextMenuData::CanSelectAll;
 
-  client_->TouchSelectionChanged(active, flags, rwhv->GetSelectedText());
+  client_->TouchSelectionChanged(active, bounds, flags,
+                                 rwhv->GetSelectedText());
 }
 
 } // namespace oxide

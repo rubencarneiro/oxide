@@ -112,6 +112,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
   void TouchSelectionChanged(bool active,
+                             QRectF bounds,
                              oxide::qt::EditCapabilityFlags edit_flags,
                              const QString& selected_text) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_H_
 
 #include <QObject>
+#include <QRectF>
 #include <QString>
 #include <QtGlobal>
 
@@ -35,6 +36,7 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
 
   Q_PROPERTY(bool active READ active NOTIFY activeChanged)
   Q_PROPERTY(QQmlComponent* handle READ handle WRITE setHandle NOTIFY handleChanged)
+  Q_PROPERTY(QRectF bounds READ bounds NOTIFY boundsChanged)
   Q_PROPERTY(OxideQQuickWebView::EditCapabilities editFlags READ editFlags NOTIFY editFlagsChanged)
   Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
 
@@ -58,6 +60,9 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   QQmlComponent* handle() const;
   void setHandle(QQmlComponent* handle);
 
+  const QRectF& bounds() const;
+  void setBounds(const QRectF& bounds);
+
   OxideQQuickWebView::EditCapabilities editFlags() const;
   void setEditFlags(OxideQQuickWebView::EditCapabilities flags);
 
@@ -67,6 +72,7 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
  Q_SIGNALS:
   void activeChanged();
   void handleChanged();
+  void boundsChanged();
   void editFlagsChanged();
   void selectedTextChanged();
 

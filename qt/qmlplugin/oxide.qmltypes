@@ -306,6 +306,7 @@ Module {
         }
         Property { name: "active"; type: "bool"; isReadonly: true }
         Property { name: "handle"; type: "QQmlComponent"; isPointer: true }
+        Property { name: "bounds"; type: "QRectF"; isReadonly: true }
         Property { name: "editFlags"; type: "OxideQQuickWebView::EditCapabilities"; isReadonly: true }
         Property { name: "selectedText"; type: "string"; isReadonly: true }
     }

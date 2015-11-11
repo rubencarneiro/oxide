@@ -26,6 +26,7 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/rect_f.h"
 
 #include "shared/browser/oxide_script_message_target.h"
 
@@ -166,6 +167,7 @@ class WebViewClient : public ScriptMessageTarget {
   virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
   virtual void TouchSelectionChanged(
       bool active,
+      gfx::RectF bounds,
       int edit_flags,
       const base::string16& selected_text) const;
 
