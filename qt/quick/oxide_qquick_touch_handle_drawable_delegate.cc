@@ -135,10 +135,8 @@ float TouchHandleDrawableDelegate::GetDrawableHorizontalPaddingRatio() const {
   return 0.0f;
 }
 
-TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
-    OxideQQuickWebView* view)
-    : view_(view) {
-  if (!view) {
+void TouchHandleDrawableDelegate::instantiateComponent() {
+  if (view_.isNull()) {
     qWarning() <<
         "TouchHandleDrawableDelegate: "
         "Can't instantiate after the view has gone";
@@ -147,8 +145,7 @@ TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
 
   TouchHandleDrawableDelegateContext* contextObject =
       new TouchHandleDrawableDelegateContext();
-  QQmlComponent* component =
-      OxideQQuickWebViewPrivate::get(view)->touchSelectionControllerHandle();
+  QQmlComponent* component = view_->touchSelectionController()->handle();
   if (!component) {
     qWarning() <<
         "TouchHandleDrawableDelegate: Content requested a touch handle "
@@ -159,14 +156,15 @@ TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
 
   QQmlContext* baseContext = component->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(view);
+    baseContext = QQmlEngine::contextForObject(view_.data());
   }
   context_.reset(new QQmlContext(baseContext));
 
   context_->setContextObject(contextObject);
   contextObject->setParent(context_.data());
 
-  item_.reset(qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
+  item_.reset(
+      qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
   if (!item_) {
     qWarning() <<
         "TouchHandleDrawableDelegate: Failed to create instance of "
@@ -175,9 +173,47 @@ TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(view)->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(view);
+  OxideQQuickWebViewPrivate::get(
+      view_.data())->addAttachedPropertyTo(item_.data());
+  item_->setParentItem(view_.data());
   component->completeCreate();
+}
+
+TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
+    OxideQQuickWebView* view)
+    : view_(view) {
+  instantiateComponent();
+
+  if (view) {
+    connect(view->touchSelectionController(), SIGNAL(handleChanged()),
+            SLOT(handleComponentChanged()));
+  }
+}
+
+void TouchHandleDrawableDelegate::handleComponentChanged() {
+  bool visible = item_.isNull() ? false : item_->isVisible();
+  OxideQQuickTouchSelectionController::Orientation orientation =
+      OxideQQuickTouchSelectionController::OrientationUndefined;
+  if (!context_.isNull()) {
+    orientation =
+        qobject_cast<TouchHandleDrawableDelegateContext*>(
+          context_->contextObject())->orientation();
+  }
+  QPointF position(item_.isNull() ? 0.0 : item_->x(),
+                   item_.isNull() ? 0.0 : item_->y());
+  qreal opacity = item_.isNull() ? 0.0 : item_->opacity();
+
+  item_.reset();
+  context_.reset();
+  instantiateComponent();
+
+  if (!item_.isNull()) {
+    SetEnabled(visible);
+    qobject_cast<TouchHandleDrawableDelegateContext*>(
+        context_->contextObject())->setOrientation(orientation, false, false);
+    SetOrigin(position);
+    SetAlpha(opacity);
+  }
 }
 
 } // namespace qquick

@@ -1069,9 +1069,6 @@ void OxideQQuickWebViewPrivate::setTouchSelectionControllerHandle(
   }
 
   touch_selection_handle_ = handle;
-  // XXX(osomon): if there were handles already instantiated,
-  //   should they be destroyed and re-instantiated?
-  //   or should it be considered invalid to set the handle after construction?
 }
 
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {

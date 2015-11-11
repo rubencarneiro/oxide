@@ -35,12 +35,19 @@ namespace oxide {
 namespace qquick {
 
 class TouchHandleDrawableDelegate :
-    public oxide::qt::TouchHandleDrawableDelegateProxy {
+    public QObject, public oxide::qt::TouchHandleDrawableDelegateProxy {
+  Q_OBJECT
+
  public:
   TouchHandleDrawableDelegate(OxideQQuickWebView* view);
 
+ private Q_SLOTS:
+  void handleComponentChanged();
+
  private:
   ~TouchHandleDrawableDelegate() override;
+
+  void instantiateComponent();
 
   // oxide::qt::TouchHandleDrawableDelegateProxy implementation
   void SetEnabled(bool enabled);
