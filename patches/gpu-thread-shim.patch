@@ -25,7 +25,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
  const int kMaxGpuIdleTimeMs = 40;
  // Maximum amount of time we keep pinging the GPU waiting for the client to
  // draw.
-@@ -49,30 +51,32 @@ GpuChannelManager::GpuChannelManager(
+@@ -49,31 +51,33 @@ GpuChannelManager::GpuChannelManager(
      base::WaitableEvent* shutdown_event,
      gpu::SyncPointManager* sync_point_manager,
      GpuMemoryBufferFactory* gpu_memory_buffer_factory)
@@ -41,6 +41,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
            this,
            GpuMemoryManager::kDefaultMaxSurfacesWithFrontbufferSoftLimit),
        sync_point_manager_(sync_point_manager),
+       sync_point_client_waiter_(new gpu::SyncPointClientWaiter),
        gpu_memory_buffer_factory_(gpu_memory_buffer_factory),
        weak_factory_(this) {
    DCHECK(task_runner);
@@ -62,7 +63,7 @@ diff --git a/content/common/gpu/gpu_channel_manager.cc b/content/common/gpu/gpu_
 diff --git a/content/common/gpu/gpu_channel_manager.h b/content/common/gpu/gpu_channel_manager.h
 --- a/content/common/gpu/gpu_channel_manager.h
 +++ b/content/common/gpu/gpu_channel_manager.h
-@@ -108,27 +108,27 @@ class CONTENT_EXPORT GpuChannelManager :
+@@ -110,27 +110,27 @@ class CONTENT_EXPORT GpuChannelManager :
    // Returns the maximum order number for processed IPC messages across all
    // channels.
    uint32_t GetProcessedOrderNum() const;
@@ -115,7 +116,7 @@ diff --git a/content/content_common.gypi b/content/content_common.gypi
      # headers resolve correctly.
      '../third_party/WebKit/public/blink_headers.gyp:blink_headers',
      '../ui/accessibility/accessibility.gyp:ax_gen',
-@@ -559,16 +560,20 @@
+@@ -554,16 +555,20 @@
        'common/view_messages.h',
        'common/webplugin_geometry.cc',
        'common/webplugin_geometry.h',

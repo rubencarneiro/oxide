@@ -354,21 +354,16 @@ void URLRequestDelegatedJob::OnDidReceiveResponse(
 }
 
 void URLRequestDelegatedJob::OnDestroyed() {
-  if (is_done()) {
-    return;
-  }
-
-  NotifyDone(net::URLRequestStatus(net::URLRequestStatus::FAILED,
-                                   net::ERR_ABORTED));
+  NotifyCanceled();
 }
 
 void URLRequestDelegatedJob::OnError(QNetworkReply::NetworkError code) {
-  if (is_done()) {
-    return;
+  if (has_response_started()) {
+    ReadRawDataComplete(CalculateNetworkError(code));
+  } else {
+    NotifyStartError(net::URLRequestStatus(net::URLRequestStatus::FAILED,
+                                           CalculateNetworkError(code)));
   }
-
-  NotifyDone(net::URLRequestStatus(net::URLRequestStatus::FAILED,
-                                   CalculateNetworkError(code)));
 }
 
 void URLRequestDelegatedJob::OnSslErrors(const QList<QSslError>& errors) {
@@ -379,8 +374,8 @@ void URLRequestDelegatedJob::OnSslErrors(const QList<QSslError>& errors) {
   // TODO: Use NotifySSLCertificateError here, although this doesn't matter
   //  too much. As we're not able to allow this error asynchronously with
   //  Qt, all errors are fatal. Therefore, the effect is the same anyway
-  NotifyDone(net::URLRequestStatus(net::URLRequestStatus::FAILED,
-                                   net::ERR_FAILED));
+  NotifyStartError(net::URLRequestStatus(net::URLRequestStatus::FAILED,
+                                         net::ERR_FAILED));
 }
 
 void URLRequestDelegatedJob::OnDataAvailable() {
@@ -394,12 +389,10 @@ void URLRequestDelegatedJob::OnDataAvailable() {
   int rv = stream_->Read(read_buf_.get(), read_buf_size_);
   DCHECK_GT(rv, 0);
 
-  SetStatus(net::URLRequestStatus());
-
   read_buf_= nullptr;
   read_buf_size_ = 0;
 
-  NotifyReadComplete(rv);
+  ReadRawDataComplete(rv);
 }
 
 void URLRequestDelegatedJob::Kill() {
@@ -407,30 +400,24 @@ void URLRequestDelegatedJob::Kill() {
   net::URLRequestJob::Kill();
 }
 
-bool URLRequestDelegatedJob::ReadRawData(net::IOBuffer* buf,
-                                         int buf_size,
-                                         int* bytes_read) {
-  DCHECK(bytes_read);
+int URLRequestDelegatedJob::ReadRawData(net::IOBuffer* buf,
+                                        int buf_size) {
   DCHECK_GE(buf_size, 0);
   DCHECK(GetStatus().is_success());
 
-  *bytes_read = 0;
-
   if (stream_->IsEOF()) {
-    return true;
+    return 0;
   }
 
   int rv = stream_->Read(buf, buf_size);
   if (rv > 0) {
-    *bytes_read = rv;
-    return true;
+    return rv;
   }
 
   read_buf_ = buf;
   read_buf_size_ = buf_size;
-  SetStatus(net::URLRequestStatus(net::URLRequestStatus::IO_PENDING, 0));
 
-  return false;
+  return net::ERR_IO_PENDING;
 }
 
 void URLRequestDelegatedJob::OnStart() {

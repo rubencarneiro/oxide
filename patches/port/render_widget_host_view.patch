@@ -6,7 +6,7 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1207,18 +1207,18 @@
+@@ -1164,18 +1164,18 @@
        'browser/renderer_host/input/timeout_monitor.h',
        'browser/renderer_host/input/touch_action_filter.cc',
        'browser/renderer_host/input/touch_action_filter.h',
@@ -27,15 +27,15 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/input/ui_touch_selection_helper.h',
        'browser/renderer_host/input/web_input_event_builders_android.cc',
        'browser/renderer_host/input/web_input_event_builders_android.h',
-@@ -1297,18 +1297,18 @@
+@@ -1251,18 +1251,18 @@
+       'browser/renderer_host/render_widget_helper.h',
+       'browser/renderer_host/render_widget_host_delegate.cc',
        'browser/renderer_host/render_widget_host_delegate.h',
        'browser/renderer_host/render_widget_host_impl.cc',
        'browser/renderer_host/render_widget_host_impl.h',
        'browser/renderer_host/render_widget_host_input_event_router.cc',
        'browser/renderer_host/render_widget_host_input_event_router.h',
        'browser/renderer_host/render_widget_host_owner_delegate.h',
-       'browser/renderer_host/render_widget_host_view_android.cc',
-       'browser/renderer_host/render_widget_host_view_android.h',
 -      'browser/renderer_host/render_widget_host_view_aura.cc',
 -      'browser/renderer_host/render_widget_host_view_aura.h',
 +      #'browser/renderer_host/render_widget_host_view_aura.cc',
@@ -48,7 +48,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_widget_host_view_mac_dictionary_helper.mm',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.h',
        'browser/renderer_host/render_widget_host_view_mac_editcommand_helper.mm',
-@@ -1585,16 +1585,18 @@
+@@ -1535,16 +1535,18 @@
        'browser/webui/web_ui_message_handler.cc',
        'browser/zygote_host/zygote_host_impl_linux.cc',
        'browser/zygote_host/zygote_host_impl_linux.h',

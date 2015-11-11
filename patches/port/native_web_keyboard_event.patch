@@ -5,7 +5,8 @@
 diff --git a/content/content_browser.gypi b/content/content_browser.gypi
 --- a/content/content_browser.gypi
 +++ b/content/content_browser.gypi
-@@ -1286,17 +1286,17 @@
+@@ -1222,17 +1222,17 @@
+       'browser/renderer_host/media/video_capture_gpu_jpeg_decoder.cc',
        'browser/renderer_host/media/video_capture_gpu_jpeg_decoder.h',
        'browser/renderer_host/media/video_capture_host.cc',
        'browser/renderer_host/media/video_capture_host.h',
@@ -13,7 +14,6 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/media/video_capture_manager.h',
        'browser/renderer_host/memory_benchmark_message_filter.cc',
        'browser/renderer_host/memory_benchmark_message_filter.h',
-       'browser/renderer_host/native_web_keyboard_event_android.cc',
 -      'browser/renderer_host/native_web_keyboard_event_aura.cc',
 +      #'browser/renderer_host/native_web_keyboard_event_aura.cc',
        'browser/renderer_host/native_web_keyboard_event_mac.mm',
@@ -24,7 +24,7 @@ diff --git a/content/content_browser.gypi b/content/content_browser.gypi
        'browser/renderer_host/render_message_filter.cc',
        'browser/renderer_host/render_message_filter.h',
        'browser/renderer_host/render_process_host_impl.cc',
-@@ -1784,16 +1784,28 @@
+@@ -1788,16 +1788,28 @@
        'public/browser/plugin_service.h',
      ],
    },
