@@ -35,7 +35,6 @@
 
 #include "qt/core/glue/oxide_qt_init.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
-#include "qt/core/browser/media/oxide_qt_video_capture_device_factory.h"
 
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
@@ -165,11 +164,6 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
   return state_;
-}
-
-scoped_ptr<media::VideoCaptureDeviceFactory>
-BrowserPlatformIntegration::CreateVideoCaptureDeviceFactory() {
-  return make_scoped_ptr(new VideoCaptureDeviceFactory());
 }
 
 std::string BrowserPlatformIntegration::GetApplicationName() {

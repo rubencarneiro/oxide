@@ -317,6 +317,8 @@ class WebView : public ScriptMessageTarget,
 
   void RestartFindInPage();
 
+  void MaybeCancelFullscreenMode();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
