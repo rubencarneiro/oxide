@@ -29,7 +29,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
   OxideQQuickWebView* view;
   bool active;
   OxideQQuickWebView::EditCapabilities edit_flags;
-  QString selection_text;
+  QString selected_text;
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
@@ -91,18 +91,18 @@ void OxideQQuickTouchSelectionController::setEditFlags(
   }
 }
 
-const QString& OxideQQuickTouchSelectionController::selectionText() const {
+const QString& OxideQQuickTouchSelectionController::selectedText() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->selection_text;
+  return d->selected_text;
 }
 
-void OxideQQuickTouchSelectionController::setSelectionText(
-    const QString& selectionText) {
+void OxideQQuickTouchSelectionController::setSelectedText(
+    const QString& selectedText) {
   Q_D(OxideQQuickTouchSelectionController);
 
-  if (selectionText != d->selection_text) {
-    d->selection_text = selectionText;
-    Q_EMIT selectionTextChanged();
+  if (selectedText != d->selected_text) {
+    d->selected_text = selectedText;
+    Q_EMIT selectedTextChanged();
   }
 }

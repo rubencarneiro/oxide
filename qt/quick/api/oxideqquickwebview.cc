@@ -297,7 +297,7 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
 void OxideQQuickWebViewPrivate::TouchSelectionChanged(
     bool active,
     oxide::qt::EditCapabilityFlags edit_flags,
-    const QString& selection_text) {
+    const QString& selected_text) {
   Q_Q(OxideQQuickWebView);
 
   OxideQQuickTouchSelectionController* controller =
@@ -305,7 +305,7 @@ void OxideQQuickWebViewPrivate::TouchSelectionChanged(
   controller->setActive(active);
   controller->setEditFlags(
       static_cast<OxideQQuickWebView::EditCapabilities>(edit_flags));
-  controller->setSelectionText(selection_text);
+  controller->setSelectedText(selected_text);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(

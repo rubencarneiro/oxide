@@ -167,7 +167,7 @@ class WebView : public InputMethodContextClient,
   void TouchSelectionChanged(
       bool active,
       int edit_flags,
-      const base::string16& selection_text) const override;
+      const base::string16& selected_text) const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;

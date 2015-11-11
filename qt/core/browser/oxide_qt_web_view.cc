@@ -831,7 +831,7 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 void WebView::TouchSelectionChanged(
     bool active,
     int edit_flags,
-    const base::string16& selection_text) const {
+    const base::string16& selected_text) const {
   EditCapabilityFlags flags = NO_CAPABILITY;
   if (edit_flags & blink::WebContextMenuData::CanUndo) {
     flags |= UNDO_CAPABILITY;
@@ -857,7 +857,7 @@ void WebView::TouchSelectionChanged(
   client_->TouchSelectionChanged(
       active,
       flags,
-      QString::fromStdString(base::UTF16ToUTF8(selection_text)));
+      QString::fromStdString(base::UTF16ToUTF8(selected_text)));
 }
 
 void WebView::SwapCompositorFrame() {

@@ -138,7 +138,7 @@ TouchHandleDrawableDelegate* WebViewClient::CreateTouchHandleDrawableDelegate() 
 void WebViewClient::TouchSelectionChanged(
     bool active,
     int edit_flags,
-    const base::string16& selection_text) const {}
+    const base::string16& selected_text) const {}
 
 void WebViewClient::EvictCurrentFrame() {}
 

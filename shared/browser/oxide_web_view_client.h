@@ -167,7 +167,7 @@ class WebViewClient : public ScriptMessageTarget {
   virtual void TouchSelectionChanged(
       bool active,
       int edit_flags,
-      const base::string16& selection_text) const;
+      const base::string16& selected_text) const;
 
   virtual void SwapCompositorFrame() = 0;
 
