@@ -101,4 +101,8 @@ void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
                     ApplicationStateChanged());
 }
 
+void BrowserPlatformIntegration::CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+}
+
 } // namespace oxide

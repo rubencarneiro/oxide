@@ -26,6 +26,8 @@
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
+#include "oxide_vibration_manager.h"
+
 class GURL;
 
 namespace content {
@@ -104,6 +106,10 @@ class BrowserPlatformIntegration {
 
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
+
+  // Get the proper vibration manager factory
+  virtual void CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request);
 
  protected:
   BrowserPlatformIntegration();

@@ -438,6 +438,8 @@
         'browser/oxide_user_agent_settings.h',
         'browser/oxide_user_script_master.cc',
         'browser/oxide_user_script_master.h',
+        'browser/oxide_vibration_manager.cc',
+        'browser/oxide_vibration_manager.h',
         'browser/oxide_web_contents_unloader.cc',
         'browser/oxide_web_contents_unloader.h',
         'browser/oxide_web_contents_view.cc',
