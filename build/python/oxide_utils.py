@@ -27,7 +27,8 @@ from subprocess import Popen, CalledProcessError, PIPE
 import tempfile
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-CHROMIUMSRCDIR = os.path.join(TOPSRCDIR, "third_party", "chromium", "src")
+CHROMIUMDIR = os.path.join(TOPSRCDIR, "third_party", "chromium")
+CHROMIUMSRCDIR = os.path.join(CHROMIUMDIR, "src")
 
 class VersionFileParserError(Exception):
   pass
