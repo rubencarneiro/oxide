@@ -20,12 +20,13 @@
 from __future__ import print_function
 from ConfigParser import ConfigParser, NoOptionError
 from optparse import OptionParser
+import json
 import os
 import os.path
 import re
 import shutil
 import sys
-from urlparse import urljoin, urlsplit
+from urlparse import urlsplit
 
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -66,6 +67,8 @@ CHROMIUM_GCLIENT_SPEC = (
 )
 CHROMIUM_GCLIENT_FILE = os.path.join(os.path.dirname(CHROMIUMSRCDIR), ".gclient")
 
+FORKED_GIT_REPOS_CONFIG = "FORKED_GIT_REPOS"
+
 def IsGitRepo(path):
   try:
     CheckCall(["git", "status"], path, quiet=True)
@@ -97,6 +100,11 @@ def PopulateGitMirror(cachedir, url, refs = []):
   args.append(url)
   CheckCall(args)
 
+def AddExtraRefs(extra_refs, remote, path):
+  for r in extra_refs:
+    CheckCall(["git", "config", "--add", "remote.%s.fetch" % remote,
+               "+%s:%s" % (r, r)], path)
+
 def InitGitRepo(url, path, cachedir = None, additional_refs = []):
   if IsGitRepo(path):
     return
@@ -116,9 +124,7 @@ def InitGitRepo(url, path, cachedir = None, additional_refs = []):
   args.extend([url, path])
   CheckCall(args)
 
-  for r in additional_refs:
-    CheckCall(["git", "config", "--add", "remote.origin.fetch",
-               "+%s:%s" % (r, r)], CHROMIUMSRCDIR)
+  AddExtraRefs(additional_refs, "origin", CHROMIUMSRCDIR)
 
 def UpdateGitRepo(url, path, commit, cachedir = None):
   newly_cloned = False
@@ -157,6 +163,19 @@ def PrepareDepotTools():
   sys.path.insert(0, DEPOT_TOOLS_PATH)
   os.environ["PATH"] = DEPOT_TOOLS_PATH + ":" + os.getenv("PATH")
 
+def RunMigration():
+  old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
+  if os.path.isdir(old_chromium_dir):
+    shutil.rmtree(old_chromium_dir)
+  release_deps_dir = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
+  if os.path.isdir(release_deps_dir):
+    shutil.rmtree(release_deps_dir)
+  hg_dir = os.path.join(CHROMIUMSRCDIR, ".hg")
+  if os.path.isdir(hg_dir):
+    os.rename(os.path.join(hg_dir, "patches"),
+              os.path.join(CHROMIUMSRCDIR, "old_patches"))
+    shutil.rmtree(hg_dir)
+
 def NeedsChromiumSync(config):
   # Check that CHROMIUMSRCDIR is a git repo
   if not IsGitRepo(CHROMIUMSRCDIR):
@@ -177,11 +196,7 @@ def NeedsChromiumSync(config):
 
   return False
 
-def SyncChromium(config):
-  if os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
-    shutil.rmtree(os.path.join(CHROMIUMSRCDIR, ".hg"))
-    os.remove(os.path.join(CHROMIUMSRCDIR, ".hgignore"))
-
+def SyncChromium(config, extra_refs, force):
   chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
   if not os.path.isdir(chromium_dir):
     os.makedirs(chromium_dir)
@@ -191,10 +206,9 @@ def SyncChromium(config):
   with open(os.path.join(chromium_dir, ".gclient"), "w") as f:
     f.write(GetChromiumGclientSpec(config.cachedir))
 
-  refs = [ "refs/tags/*" ]
-
   if not IsGitRepo(CHROMIUMSRCDIR):
-    InitGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR, config.cachedir, refs)
+    extra_refs = [ "refs/branch-heads/*" ]
+    InitGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR, config.cachedir, extra_refs)
     CheckCall(["git", "submodule", "foreach",
                "git config -f $toplevel/.git/config submodule.$name.ignore all"],
               CHROMIUMSRCDIR)
@@ -203,8 +217,45 @@ def SyncChromium(config):
   UpdateGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR,
                 GetDesiredChromiumVersion(), config.cachedir)
 
-  CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
-             "sync", "-D", "--with_branch_heads"], chromium_dir)
+  args = [sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
+          "sync", "-D", "--with_branch_heads"]
+  if force:
+    args.append("--force")
+  CheckCall(args, chromium_dir)
+
+def AddUpstreamRemotes():
+  config = {}
+  with open(os.path.join(TOPSRCDIR, FORKED_GIT_REPOS_CONFIG), "r") as fd:
+    config = json.load(fd)
+  for p in config:
+    path = os.path.join(TOPSRCDIR, p)
+    try:
+      CheckCall(["git", "remote", "show", "upstream"], path, True)
+    except:
+      CheckCall(["git", "remote", "add", "upstream", config[p]], path)
+      extra_refs = [ "refs/branch-heads/*" ]
+      if p == "third_party/chromium/src":
+        extra_refs.append("refs/tags/*")
+      AddExtraRefs(extra_refs, "upstream", path)
+      CheckCall(["git", "fetch", "upstream"], path)
+
+def AddGitPushUrls(userid):
+  config = {}
+  with open(os.path.join(TOPSRCDIR, FORKED_GIT_REPOS_CONFIG), "r") as fd:
+    config = json.load(fd)
+  for p in config:
+    path = os.path.join(TOPSRCDIR, p)
+    url = CheckOutput(["git", "config", "remote.origin.url"], path).strip()
+    if os.path.isdir(url):
+      url = CheckOutput(["git", "config", "remote.origin.url"], url).strip()
+    url = urlsplit(url)
+    if url.netloc != "git.launchpad.net":
+      print("Unexpected origin %s" % url.netloc, file=sys.stderr)
+      sys.exit(1)
+    url = url._replace(scheme="git+ssh")
+    if userid:
+      url = url._replace(netloc="%s@%s" % (userid, url.netloc))
+    CheckCall(["git", "remote", "set-url", "--push", "origin", url.geturl()], path)
 
 class Options(OptionParser):
   def __init__(self):
@@ -212,6 +263,17 @@ class Options(OptionParser):
 
     self.add_option("-c", "--cache-dir", dest="cache_dir",
                     help="Specify a directory for a local mirror")
+    self.add_option("-f", "--force", dest="force", action="store_true",
+                    help="Force an update")
+    self.add_option("--add-pushurls", dest="add_pushurls", action="store_true",
+                    help="Add a push URL to the remote for Launchpad "
+                         "maintained GIT repositories")
+    self.add_option("--lp-userid", dest="lp_userid",
+                    help="Specify your launchpad user ID for pushing to GIT")
+    self.add_option("--add-upstream-remotes", dest="add_upstream_remotes",
+                    action="store_true",
+                    help="Add upstream remotes for Launchpad forked GIT "
+                         "repositories")
 
 class Config(ConfigParser):
   def __init__(self, opts):
@@ -246,20 +308,23 @@ def main():
   (options, args) = o.parse_args()
   if options.cache_dir:
     options.cache_dir = os.path.abspath(options.cache_dir)
+  if options.lp_userid and not options.add_pushurls:
+    print("--lp-userid must be used with --add-pushurls", file=sys.stderr)
+    sys.exit(1)
 
   c = Config(options)
 
   PrepareDepotTools()
+  RunMigration()
 
-  old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
-  if os.path.isdir(old_chromium_dir):
-    shutil.rmtree(old_chromium_dir)
-  release_deps_dir = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
-  if os.path.isdir(release_deps_dir):
-    shutil.rmtree(release_deps_dir)
+  if options.force or NeedsChromiumSync(c):
+    SyncChromium(c, options.force)
 
-  if NeedsChromiumSync(c):
-    SyncChromium(c)
+  if options.add_upstream_remotes:
+    AddUpstreamRemotes()
+
+  if options.add_pushurls:
+    AddGitPushUrls(options.lp_userid)
 
 if __name__ == "__main__":
   main()

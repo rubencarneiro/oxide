@@ -1,0 +1,7 @@
+{
+  "third_party/chromium/src/": "https://chromium.googlesource.com/chromium/src.git",
+  "third_party/chromium/src/third_party/icu": "https://chromium.googlesource.com/chromium/deps/icu",
+  "third_party/chromium/src/third_party/openmax_dl": "https://chromium.googlesource.com/external/webrtc/deps/third_party/openmax.git",
+  "third_party/chromium/src/third_party/webrtc": "https://chromium.googlesource.com/external/webrtc/trunk/webrtc.git",
+  "third_party/chromium/src/tools/gyp": "https://chromium.googlesource.com/external/gyp.git"
+}

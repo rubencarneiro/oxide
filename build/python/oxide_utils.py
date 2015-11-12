@@ -112,7 +112,9 @@ def GetFileChecksum(file):
 
 def CheckCall(args, cwd=None, quiet=False):
   with open(os.devnull, "w") as devnull:
-    p = Popen(args, cwd=cwd, stdout = devnull if quiet == True else None)
+    p = Popen(args, cwd=cwd,
+              stdout = devnull if quiet == True else None,
+              stderr = devnull if quiet == True else None)
     r = p.wait()
     if r is not 0: raise CalledProcessError(r, args)
 
