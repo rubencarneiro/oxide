@@ -118,6 +118,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
       std::string* os_version) final;
+  void RegisterRenderProcessMojoServices(content::ServiceRegistry* registry) final;
 
   std::string application_locale_;
   scoped_ptr<BrowserPlatformIntegration> platform_integration_;

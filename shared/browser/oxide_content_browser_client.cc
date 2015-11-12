@@ -24,6 +24,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/location_provider.h"
@@ -52,6 +53,7 @@
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_user_agent_settings.h"
+#include "oxide_vibration_manager.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
@@ -296,6 +298,12 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 std::string
 ContentBrowserClient::GetApplicationLocale() {
   return application_locale_;
+}
+
+void ContentBrowserClient::RegisterRenderProcessMojoServices(
+      content::ServiceRegistry* registry) {
+  DCHECK(registry);
+  registry->AddService(base::Bind(&oxide::CreateVibrationManager));
 }
 
 ContentBrowserClient::ContentBrowserClient(

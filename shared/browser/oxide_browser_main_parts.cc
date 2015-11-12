@@ -69,6 +69,11 @@ ui::Clipboard* CreateClipboard() {
   return BrowserPlatformIntegration::GetInstance()->CreateClipboard();
 }
 
+void CreateVibrationManagerRequestHandler(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+  BrowserPlatformIntegration::GetInstance()->CreateVibrationManager(request.Pass());
+}
+
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
   return BrowserPlatformIntegration::GetInstance()->CreateUIMessagePump();
 }
@@ -203,6 +208,8 @@ void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
   ui::SetClipboardOxideFactory(CreateClipboard);
+
+  oxide::SetVibrationManagerFactory(CreateVibrationManagerRequestHandler);
 
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
