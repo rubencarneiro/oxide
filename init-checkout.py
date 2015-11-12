@@ -44,10 +44,11 @@ CHROMIUM_GCLIENT_SPEC = (
   "solutions = ["
     "{ \"name\": \"src\", "
       "\"url\": \"%s\", "
-      "\"deps_file\": \".DEPS.git\", "
+      "\"deps_file\": \"DEPS\", "
       "\"managed\": False, "
       "\"custom_deps\": "
-        "{ \"build/scripts/command_wrapper/bin\": None, "
+        "{"
+          "\"build/scripts/command_wrapper/bin\": None, "
           "\"build/scripts/private/data/reliability\": None, "
           "\"build/scripts/tools/deps2git\": None, "
           "\"build/scripts/gsd_generate_index\": None, "
@@ -61,6 +62,11 @@ CHROMIUM_GCLIENT_SPEC = (
           "\"src/chrome/tools/test/reference_build/chrome_mac\": None, "
           "\"src/third_party/hunspell_dictionaries\": None, "
         "}, "
+      "\"custom_hooks\": "
+        "["
+          "{ \"name\": \"check_git_config\", \"action\": [\"true\"] },"
+          "{ \"name\": \"gyp\", \"action\": [\"true\"] },"
+        "],"
       "\"safesync_url\": \"\", "
     "} "
   "]"
@@ -196,7 +202,7 @@ def NeedsChromiumSync(config):
 
   return False
 
-def SyncChromium(config, extra_refs, force):
+def SyncChromium(config, force):
   chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
   if not os.path.isdir(chromium_dir):
     os.makedirs(chromium_dir)
@@ -322,7 +328,6 @@ def main():
 
   if options.add_upstream_remotes:
     AddUpstreamRemotes()
-
   if options.add_pushurls:
     AddGitPushUrls(options.lp_userid)
 
