@@ -437,6 +437,24 @@ void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
   // TODO(chrisccoulson): Merge these
   client_->FrameMetadataUpdated(old);
   client_->SwapCompositorFrame();
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    ui::TouchSelectionController* controller = rwhv->selection_controller();
+    // If the location bar offset changes while a touch selection is active,
+    // the bounding rect and the position of the handles need to be updated.
+    if ((controller->active_status() !=
+         ui::TouchSelectionController::INACTIVE) &&
+        ((old.location_bar_offset.y() !=
+          compositor_frame_metadata_.location_bar_offset.y()) ||
+         (old.location_bar_content_translation.y() !=
+          compositor_frame_metadata_.location_bar_content_translation.y()))) {
+      TouchSelectionChanged();
+      // XXX: hack to ensure the position of the handles is updated.
+      controller->SetTemporarilyHidden(true);
+      controller->SetTemporarilyHidden(false);
+    }
+  }
 }
 
 void WebView::WebPreferencesDestroyed() {
