@@ -34,6 +34,8 @@ namespace qquick {
 class TouchHandleDrawableDelegateContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickTouchSelectionController::Orientation orientation READ orientation NOTIFY orientationChanged FINAL)
+  Q_PROPERTY(bool mirrorVertical READ mirrorVertical NOTIFY mirrorVerticalChanged FINAL)
+  Q_PROPERTY(bool mirrorHorizontal READ mirrorHorizontal NOTIFY mirrorHorizontalChanged FINAL)
 
  public:
   virtual ~TouchHandleDrawableDelegateContext() {}
@@ -41,19 +43,29 @@ class TouchHandleDrawableDelegateContext : public QObject {
 
   OxideQQuickTouchSelectionController::Orientation orientation() const;
   void setOrientation(
-      OxideQQuickTouchSelectionController::Orientation orientation,
-      bool mirror_vertical,
-      bool mirror_horizontal);
+      OxideQQuickTouchSelectionController::Orientation orientation);
+
+  bool mirrorVertical() const;
+  void setMirrorVertical(bool mirror);
+
+  bool mirrorHorizontal() const;
+  void setMirrorHorizontal(bool mirror);
 
  Q_SIGNALS:
   void orientationChanged() const;
+  void mirrorVerticalChanged() const;
+  void mirrorHorizontalChanged() const;
 
  private:
   OxideQQuickTouchSelectionController::Orientation orientation_;
+  bool mirror_vertical_;
+  bool mirror_horizontal_;
 };
 
 TouchHandleDrawableDelegateContext::TouchHandleDrawableDelegateContext()
-    : orientation_(OxideQQuickTouchSelectionController::OrientationUndefined) {}
+    : orientation_(OxideQQuickTouchSelectionController::OrientationUndefined)
+    , mirror_vertical_(false)
+    , mirror_horizontal_(false) {}
 
 OxideQQuickTouchSelectionController::Orientation
 TouchHandleDrawableDelegateContext::orientation() const {
@@ -61,15 +73,32 @@ TouchHandleDrawableDelegateContext::orientation() const {
 }
 
 void TouchHandleDrawableDelegateContext::setOrientation(
-    OxideQQuickTouchSelectionController::Orientation orientation,
-    bool mirror_vertical,
-    bool mirror_horizontal) {
-  Q_UNUSED(mirror_vertical);
-  Q_UNUSED(mirror_horizontal);
-
+    OxideQQuickTouchSelectionController::Orientation orientation) {
   if (orientation_ != orientation) {
     orientation_ = orientation;
     Q_EMIT orientationChanged();
+  }
+}
+
+bool TouchHandleDrawableDelegateContext::mirrorVertical() const {
+  return mirror_vertical_;
+}
+
+void TouchHandleDrawableDelegateContext::setMirrorVertical(bool mirror) {
+  if (mirror_vertical_ != mirror) {
+    mirror_vertical_ = mirror;
+    Q_EMIT mirrorVerticalChanged();
+  }
+}
+
+bool TouchHandleDrawableDelegateContext::mirrorHorizontal() const {
+  return mirror_horizontal_;
+}
+
+void TouchHandleDrawableDelegateContext::setMirrorHorizontal(bool mirror) {
+  if (mirror_horizontal_ != mirror) {
+    mirror_horizontal_ = mirror;
+    Q_EMIT mirrorHorizontalChanged();
   }
 }
 
@@ -105,7 +134,9 @@ void TouchHandleDrawableDelegate::SetOrientation(Orientation orientation,
         default:
           Q_UNREACHABLE();
       }
-      context->setOrientation(o, mirror_vertical, mirror_horizontal);
+      context->setOrientation(o);
+      context->setMirrorVertical(mirror_vertical);
+      context->setMirrorHorizontal(mirror_horizontal);
     }
   }
 }
@@ -194,10 +225,15 @@ void TouchHandleDrawableDelegate::handleComponentChanged() {
   bool visible = item_.isNull() ? false : item_->isVisible();
   OxideQQuickTouchSelectionController::Orientation orientation =
       OxideQQuickTouchSelectionController::OrientationUndefined;
+  bool mirror_vertical = false;
+  bool mirror_horizontal = false;
   if (!context_.isNull()) {
-    orientation =
+    TouchHandleDrawableDelegateContext* context =
         qobject_cast<TouchHandleDrawableDelegateContext*>(
-          context_->contextObject())->orientation();
+          context_->contextObject());
+    orientation = context->orientation();
+    mirror_vertical = context->mirrorVertical();
+    mirror_horizontal = context->mirrorHorizontal();
   }
   QPointF position(item_.isNull() ? 0.0 : item_->x(),
                    item_.isNull() ? 0.0 : item_->y());
@@ -209,8 +245,12 @@ void TouchHandleDrawableDelegate::handleComponentChanged() {
 
   if (!item_.isNull()) {
     SetEnabled(visible);
-    qobject_cast<TouchHandleDrawableDelegateContext*>(
-        context_->contextObject())->setOrientation(orientation, false, false);
+    TouchHandleDrawableDelegateContext* context =
+        qobject_cast<TouchHandleDrawableDelegateContext*>(
+          context_->contextObject());
+    context->setOrientation(orientation);
+    context->setMirrorVertical(mirror_vertical);
+    context->setMirrorHorizontal(mirror_horizontal);
     SetOrigin(position);
     SetAlpha(opacity);
   }
