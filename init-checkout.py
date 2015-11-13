@@ -250,8 +250,7 @@ def SyncChromium(config, force):
     f.write(GetChromiumGclientSpec(config.cachedir))
 
   if not IsGitRepo(CHROMIUMSRCDIR):
-    extra_refs = [ "refs/branch-heads/*" ]
-    InitGitRepo(GetChromiumGitUrl(), CHROMIUMSRCDIR, config.cachedir, extra_refs)
+    InitGitRepo(GetChromiumGitUrl(), CHROMIUMSRCDIR, config.cachedir)
     CheckCall(["git", "submodule", "foreach",
                "git config -f $toplevel/.git/config submodule.$name.ignore all"],
               CHROMIUMSRCDIR)
