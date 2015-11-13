@@ -1669,17 +1669,17 @@ gfx::Size WebView::GetCompositorFrameViewportSizePix() {
   return gfx::Size(std::round(size.width()), std::round(size.height()));
 }
 
-int WebView::GetLocationBarOffsetPix() {
+int WebView::GetLocationBarOffsetPix() const {
   return compositor_frame_metadata().location_bar_offset.y() *
          compositor_frame_metadata().device_scale_factor;
 }
 
-int WebView::GetLocationBarContentOffsetPix() {
+int WebView::GetLocationBarContentOffsetPix() const {
   return compositor_frame_metadata().location_bar_content_translation.y() *
          compositor_frame_metadata().device_scale_factor;
 }
 
-float WebView::GetLocationBarContentOffsetDip() {
+float WebView::GetLocationBarContentOffsetDip() const {
   return compositor_frame_metadata().location_bar_content_translation.y();
 }
 
@@ -1967,6 +1967,7 @@ void WebView::TouchSelectionChanged() const {
       (controller->active_status() != ui::TouchSelectionController::INACTIVE);
 
   gfx::RectF bounds = controller->GetRectBetweenBounds();
+  bounds.Offset(0, GetLocationBarContentOffsetDip());
 
   ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
   bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);

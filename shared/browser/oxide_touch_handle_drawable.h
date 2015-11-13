@@ -25,6 +25,7 @@ namespace oxide {
 
 class RenderWidgetHostView;
 class TouchHandleDrawableDelegate;
+class WebView;
 
 class TouchHandleDrawable final : public ui::TouchHandleDrawable {
  public:
@@ -42,6 +43,9 @@ class TouchHandleDrawable final : public ui::TouchHandleDrawable {
   gfx::RectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
 
+  WebView* GetWebView() const;
+
+  RenderWidgetHostView* rwhv_;
   scoped_ptr<TouchHandleDrawableDelegate> delegate_;
 };
 

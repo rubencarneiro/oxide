@@ -26,17 +26,21 @@
 
 namespace oxide {
 
-TouchHandleDrawable::TouchHandleDrawable(RenderWidgetHostView* rwhv) {
-  content::RenderWidgetHost* rwh = rwhv->GetRenderWidgetHost();
-  content::RenderViewHost* rvh = content::RenderViewHost::From(rwh);
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  if (!webview) {
-    return;
+TouchHandleDrawable::TouchHandleDrawable(RenderWidgetHostView* rwhv)
+    : rwhv_(rwhv) {
+  WebView* webview = GetWebView();
+  if (webview) {
+    delegate_.reset(webview->CreateTouchHandleDrawableDelegate());
   }
-  delegate_.reset(webview->CreateTouchHandleDrawableDelegate());
 }
 
 TouchHandleDrawable::~TouchHandleDrawable() {}
+
+WebView* TouchHandleDrawable::GetWebView() const {
+  content::RenderWidgetHost* rwh = rwhv_->GetRenderWidgetHost();
+  content::RenderViewHost* rvh = content::RenderViewHost::From(rwh);
+  return WebView::FromRenderViewHost(rvh);
+}
 
 void TouchHandleDrawable::SetEnabled(bool enabled) {
   if (delegate_) {
@@ -54,7 +58,9 @@ void TouchHandleDrawable::SetOrientation(ui::TouchHandleOrientation orientation,
 
 void TouchHandleDrawable::SetOrigin(const gfx::PointF& origin) {
   if (delegate_) {
-    delegate_->SetOrigin(origin);
+    gfx::PointF o(origin);
+    o.Offset(0, GetWebView()->GetLocationBarContentOffsetDip());
+    delegate_->SetOrigin(o);
   }
 }
 
@@ -66,7 +72,9 @@ void TouchHandleDrawable::SetAlpha(float alpha) {
 
 gfx::RectF TouchHandleDrawable::GetVisibleBounds() const {
   if (delegate_) {
-    return delegate_->GetVisibleBounds();
+    gfx::RectF bounds = delegate_->GetVisibleBounds();
+    bounds.Offset(0, -GetWebView()->GetLocationBarContentOffsetDip());
+    return bounds;
   }
   return gfx::RectF();
 }

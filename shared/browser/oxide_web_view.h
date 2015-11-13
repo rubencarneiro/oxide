@@ -226,9 +226,9 @@ class WebView : public ScriptMessageTarget,
   gfx::Size GetCompositorFrameContentSizePix();
   gfx::Size GetCompositorFrameViewportSizePix();
 
-  int GetLocationBarOffsetPix();
-  int GetLocationBarContentOffsetPix();
-  float GetLocationBarContentOffsetDip();
+  int GetLocationBarOffsetPix() const;
+  int GetLocationBarContentOffsetPix() const;
+  float GetLocationBarContentOffsetDip() const;
 
   const SecurityStatus& security_status() const { return security_status_; }
 
