@@ -1,7 +1,7 @@
 diff --git a/content/public/renderer/content_renderer_client.cc b/content/public/renderer/content_renderer_client.cc
 --- a/content/public/renderer/content_renderer_client.cc
 +++ b/content/public/renderer/content_renderer_client.cc
-@@ -220,9 +220,17 @@ scoped_ptr<blink::WebAppBannerClient>
+@@ -206,9 +206,17 @@ scoped_ptr<blink::WebAppBannerClient>
  ContentRendererClient::CreateAppBannerClient(RenderFrame* render_frame) {
    return nullptr;
  }
@@ -22,7 +22,7 @@ diff --git a/content/public/renderer/content_renderer_client.cc b/content/public
 diff --git a/content/public/renderer/content_renderer_client.h b/content/public/renderer/content_renderer_client.h
 --- a/content/public/renderer/content_renderer_client.h
 +++ b/content/public/renderer/content_renderer_client.h
-@@ -32,16 +32,18 @@ class SingleThreadTaskRunner;
+@@ -30,16 +30,18 @@ class SingleThreadTaskRunner;
  namespace blink {
  class WebAppBannerClient;
  class WebAudioDevice;
@@ -41,7 +41,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class WebRTCPeerConnectionHandler;
  class WebRTCPeerConnectionHandlerClient;
  class WebSpeechSynthesizer;
-@@ -53,16 +55,17 @@ class WebWorkerContentSettingsClientProx
+@@ -51,16 +53,17 @@ class WebWorkerContentSettingsClientProx
  struct WebPluginParams;
  struct WebURLError;
  }
@@ -59,7 +59,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
  class DocumentState;
  class MediaStreamRendererFactory;
  class RenderFrame;
-@@ -317,13 +320,20 @@ class CONTENT_EXPORT ContentRendererClie
+@@ -298,13 +301,20 @@ class CONTENT_EXPORT ContentRendererClie
    // is called from the worker thread.
    virtual void WillDestroyServiceWorkerContextOnWorkerThread(
        v8::Local<v8::Context> context,
@@ -83,8 +83,8 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2149,16 +2149,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
-   scoped_refptr<media::AudioRendererSink> audio_renderer_sink =
+@@ -2152,16 +2152,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
+   scoped_refptr<media::RestartableAudioRendererSink> audio_renderer_sink =
        render_thread->GetAudioRendererMixerManager()->CreateInput(
            routing_id_, sink_id.utf8(), frame->securityOrigin());
    media::WebMediaPlayerParams::Context3DCB context_3d_cb =
