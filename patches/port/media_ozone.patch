@@ -5,12 +5,12 @@
 diff --git a/media/ozone/media_ozone_platform.cc b/media/ozone/media_ozone_platform.cc
 --- a/media/ozone/media_ozone_platform.cc
 +++ b/media/ozone/media_ozone_platform.cc
-@@ -43,16 +43,20 @@ MediaOzonePlatform* CreateMediaOzonePlat
+@@ -51,16 +51,20 @@ MediaOzonePlatform* CreateMediaOzonePlat
  MediaOzonePlatform* CreateMediaOzonePlatformGbm() {
    return new MediaOzonePlatformStub;
  }
  
- MediaOzonePlatform* CreateMediaOzonePlatformTest() {
+ MediaOzonePlatform* CreateMediaOzonePlatformHeadless() {
    return new MediaOzonePlatformStub;
  }
  

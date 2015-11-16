@@ -1201,7 +1201,7 @@ WebView::WebView(const Params& params)
   CommonInit(contents.Pass());
 
   if (params.restore_entries.size() > 0) {
-    ScopedVector<content::NavigationEntry> entries =
+    std::vector<scoped_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
             params.restore_entries, context.get());
     web_contents_->GetController().Restore(

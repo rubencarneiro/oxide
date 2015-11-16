@@ -83,7 +83,7 @@ diff --git a/content/public/renderer/content_renderer_client.h b/content/public/
 diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_frame_impl.cc
 --- a/content/renderer/render_frame_impl.cc
 +++ b/content/renderer/render_frame_impl.cc
-@@ -2152,16 +2152,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
+@@ -2156,16 +2156,27 @@ blink::WebMediaPlayer* RenderFrameImpl::
    scoped_refptr<media::RestartableAudioRendererSink> audio_renderer_sink =
        render_thread->GetAudioRendererMixerManager()->CreateInput(
            routing_id_, sink_id.utf8(), frame->securityOrigin());
@@ -106,8 +106,8 @@ diff --git a/content/renderer/render_frame_impl.cc b/content/renderer/render_fra
    media::WebMediaPlayerParams params(
        base::Bind(&ContentRendererClient::DeferMediaLoad,
                   base::Unretained(GetContentClient()->renderer()),
-                  static_cast<RenderFrame*>(this), has_played_media_),
+                  static_cast<RenderFrame*>(this),
+                  GetWebMediaPlayerDelegate()->has_played_media()),
        audio_renderer_sink, media_log, render_thread->GetMediaThreadTaskRunner(),
        render_thread->GetWorkerTaskRunner(),
        render_thread->compositor_task_runner(), context_3d_cb,
-       base::Bind(&v8::Isolate::AdjustAmountOfExternalAllocatedMemory,

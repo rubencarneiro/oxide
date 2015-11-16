@@ -134,7 +134,7 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
       const scoped_refptr<media::VideoFrame>& target,
-      const base::Callback<void(bool)>& callback) final;
+      const base::Callback<void(const gfx::Rect&, bool)>& callback) final;
   bool CanCopyToVideoFrame() const final;
   bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
   void GetScreenInfo(blink::WebScreenInfo* results) final;

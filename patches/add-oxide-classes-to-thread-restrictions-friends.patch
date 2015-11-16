@@ -5,7 +5,7 @@
 diff --git a/base/threading/thread_restrictions.h b/base/threading/thread_restrictions.h
 --- a/base/threading/thread_restrictions.h
 +++ b/base/threading/thread_restrictions.h
-@@ -58,16 +58,20 @@ class WatcherThreadManager;
+@@ -61,16 +61,20 @@ class WatcherThreadManager;
  }
  namespace net {
  class NetworkChangeNotifierMac;
@@ -26,14 +26,14 @@ diff --git a/base/threading/thread_restrictions.h b/base/threading/thread_restri
  class WindowResizeHelperMac;
  }
  
-@@ -190,16 +194,18 @@ class BASE_EXPORT ThreadRestrictions {
-   friend class MessagePumpDefault;
+@@ -194,16 +198,18 @@ class BASE_EXPORT ThreadRestrictions {
    friend class SequencedWorkerPool;
    friend class SimpleThread;
    friend class Thread;
    friend class ThreadTestHelper;
    friend class PlatformThread;
    friend class android::JavaHandlerThread;
+   friend class gles2::CommandBufferClientImpl;
  
 +  friend class oxide::CompositorUtilsImpl;
 +
