@@ -619,6 +619,7 @@ Module {
             isPointer: true
         }
         Property { name: "webProcessStatus"; revision: 4; type: "WebProcessStatus"; isReadonly: true }
+        Property { name: "hoveredUrl"; type: "QUrl"; isReadonly: true }
         Signal { name: "loadingStateChanged"; revision: 1 }
         Signal {
             name: "loadEvent"
@@ -687,11 +688,7 @@ Module {
             revision: 5
             Parameter { name: "request"; type: "QJSValue" }
         }
-        Signal {
-            name: "linkHovered"
-            revision: 7
-            Parameter { name: "hoveredUrl"; type: "QUrl" }
-        }
+        Signal { name: "hoveredUrlChanged"; revision: 7 }
         Signal {
             name: "loadingChanged"
             Parameter { name: "loadEvent"; type: "OxideQLoadEvent" }

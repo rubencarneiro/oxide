@@ -197,6 +197,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
 
+  QUrl hovered_url_;
+
   bool received_new_compositor_frame_;
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;

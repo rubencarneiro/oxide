@@ -131,6 +131,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
 
+  Q_PROPERTY(QUrl hoveredUrl READ hoveredUrl NOTIFY hoveredUrlChanged)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -293,6 +295,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   WebProcessStatus webProcessStatus() const;
 
+  QUrl hoveredUrl() const;
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
   OxideQFindController* findController() const;
@@ -357,7 +361,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(2) void closeRequested();
   Q_REVISION(4) void webProcessStatusChanged();
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
-  Q_REVISION(7) void linkHovered(const QUrl& hoveredUrl);
+  Q_REVISION(7) void hoveredUrlChanged();
 
   // Deprecated since 1.3
   void loadingChanged(const OxideQLoadEvent& loadEvent);
