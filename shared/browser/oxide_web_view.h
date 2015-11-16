@@ -390,6 +390,7 @@ class WebView : public ScriptMessageTarget,
                       bool* was_blocked) final;
   void LoadProgressChanged(content::WebContents* source, double progress) final;
   void CloseContents(content::WebContents* source) final;
+  void UpdateTargetURL(content::WebContents* source, const GURL& url) final;
   bool AddMessageToConsole(content::WebContents* source,
                int32 level,
                const base::string16& message,

@@ -183,6 +183,8 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void CloseRequested();
 
+  virtual void UpdateTargetURL(const GURL& url);
+
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
 };

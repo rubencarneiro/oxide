@@ -171,6 +171,7 @@ class WebView : public InputMethodContextClient,
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
+  void UpdateTargetURL(const GURL& url) override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;

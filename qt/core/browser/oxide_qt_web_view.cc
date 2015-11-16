@@ -873,6 +873,10 @@ void WebView::CloseRequested() {
   client_->CloseRequested();
 }
 
+void WebView::UpdateTargetURL(const GURL& url) {
+  client_->UpdateTargetURL(QUrl(QString::fromStdString(url.spec())));
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return message_handlers_.size();
 }

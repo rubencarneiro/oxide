@@ -636,6 +636,12 @@ void OxideQQuickWebViewPrivate::CloseRequested() {
   emit q->closeRequested();
 }
 
+void OxideQQuickWebViewPrivate::UpdateTargetURL(const QUrl& url) {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->linkHovered(url);
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 

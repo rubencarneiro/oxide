@@ -357,6 +357,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(2) void closeRequested();
   Q_REVISION(4) void webProcessStatusChanged();
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
+  Q_REVISION(7) void linkHovered(const QUrl& hoveredUrl);
 
   // Deprecated since 1.3
   void loadingChanged(const OxideQLoadEvent& loadEvent);
