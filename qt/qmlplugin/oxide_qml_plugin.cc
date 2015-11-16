@@ -162,9 +162,11 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "HttpAuthenticationRequest is delivered by WebView.httpAuthenticationRequested");
     qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
 
+    qmlRegisterType<OxideQQuickWebView, 6>(uri, 1, 11, "WebView");
+
     qmlRegisterUncreatableType<OxideQQuickTouchSelectionController>(uri, 1, 12, "TouchSelectionController",
         "TouchSelectionController is accessed via WebView.touchSelectionController");
-    qmlRegisterType<OxideQQuickWebView, 6>(uri, 1, 12, "WebView");
+    qmlRegisterType<OxideQQuickWebView, 7>(uri, 1, 12, "WebView");
   }
 };
 
