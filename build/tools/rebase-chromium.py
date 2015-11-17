@@ -69,9 +69,102 @@ A tool for updating the Chromium version in Oxide
 def cmd_abort(options, args):
   raise NotImplemented
 
+class PushFailure(Exception):
+  def __init__(self, msg):
+    Exception.__init__(self, msg)
+
+def LoadExistingState():
+  state = LoadJsonFromPath(STATE_FILE)
+
+  assert "config" in state
+  assert "id" in state
+  assert "master" in state
+  assert "merged" in state
+  assert "rev" in state
+
+  return state
+
+def DoPush(path, branch, id):
+  print("Pushing changes from %s to origin/%s" % (path, branch))
+
+  working_branch = "rebase-%s" % id
+
+  # Checkout the working branch, if there is one
+  try:
+    CheckCall(["git", "checkout", working_branch], path, True)
+  except:
+    print("Nothing to push")
+    return None
+
+  # Pull from the remote branch
+  try:
+    CheckCall(["git", "pull", "--commit", "origin", branch], path)
+  except:
+    raise PushFailure("git pull failed")
+
+  # Push the merge result
+  try:
+    CheckCall(["git", "push", "origin", branch], path)
+  except:
+    raise PushFailure("git push failed")
+
+  try:
+    CheckCall(["git", "fetch", "upstream"], path)
+  except:
+    raise PushFailure("git fetch failed")
+
+  # Capture the merge revision
+  rev = CheckOutput(["git", "rev-parse", "HEAD"], path).strip()
+
+  # Fast forward the local branch
+  CheckCall(["git", "checkout", branch], path)
+  try:
+    CheckCall(["git", "merge", "--ff-only"], path)
+  except:
+    print("Failed to fast-forward the local branch. This might be caused by unmerged "
+          "changesets", file=sys.stderr)
+
+  # Check out the new rev on a detached head
+  CheckCall(["git", "checkout", rev], path)
+
+  # Discard the working branch
+  CheckCall(["git", "branch", "-d", working_branch], path)
+
+  return rev
+
 @subcommand.Command("push")
 def cmd_push(options, args):
-  raise NotImplemented
+  try:
+    state = LoadExistingState()
+  except Exception as e:
+    print("Failed to load existing state for push operation: %s" % e.message,
+          file=sys.stderr)
+    sys.exit(1)
+
+  if not state["merged"]:
+    print("Cannot push until the merge is completed. Please run %s merge "
+          "--continue first" % sys.argv[0], file=sys.stderr)
+    sys.exit(1)
+
+  for path in state["config"]:
+    try:
+      rev = DoPush(os.path.join(CHROMIUMDIR, path), "master", state["id"])
+      if rev:
+        state["config"][path]["rev"] = rev
+    except PushFailure as e:
+      with open(STATE_FILE, "w") as fd:
+        json.dump(state, fd)
+      print("** Push FAILED in %s: %s **" % (path, e.message), file=sys.stderr)
+      print("** Once the problem is corrected, please rerun %s push**" % sys.argv[0],
+            file=sys.stderr)
+      sys.exit(1)
+
+  with open(CHECKOUT_CONFIG, "w") as fd:
+    json.dump(state["config"], fd, indent=2)
+
+  os.remove(STATE_FILE)
+
+  print("\n** Push completed SUCCESSFULLY. Please commit changes to checkout.conf now **")
 
 class MergeFailure(Exception):
   def __init__(self, msg):
@@ -101,18 +194,17 @@ def InitializeState(options, args, config):
 
   if options.resume:
     try:
-      state = LoadJsonFromPath(STATE_FILE)
+      state = LoadExistingState()
     except Exception as e:
-      print("Failed to load existing state for --continue operation: %s" % e.message,
-            file=sys.stderr)
+      print("Failed to load existing state for merge --continue operation: %s" %
+            e.message, file=sys.stderr)
       sys.exit(1)
-    assert "config" in state
-    assert "id" in state
-    assert "rev" in state
   else:
     state["config"] = config
-    state["rev"] = args[0]
     state["id"] = "".join(random.choice(string.ascii_uppercase + string.digits) for i in range(8))
+    state["master"] = True if options.master else False
+    state["merged"] = False
+    state["rev"] = args[0]
 
   return state
 
@@ -126,7 +218,7 @@ def GitRevisionIsInBranch(rev, branch, path):
   return CheckOutput(args, path).strip() != ""
 
 def DoMerge(old_rev, rev, branch, path, id):
-  print("Merging revision %s in to branch %s (%s)" % (rev, branch, path))
+  print("\nBeginning merge of revision %s in to branch %s (%s)" % (rev, branch, path))
 
   working_branch = "rebase-%s" % id
   commit_string = "Merge upstream %s in to %s" % (rev, branch)
@@ -154,7 +246,7 @@ def DoMerge(old_rev, rev, branch, path, id):
       if GitRevisionIsInBranch(rev, "HEAD", path):
         print("Nothing to do - new revision already exists in current HEAD")
         # Nothing to do
-        return None
+        return
 
       # Check out the destination branch and make sure it's up-to-date with
       # the remote
@@ -196,38 +288,17 @@ def DoMerge(old_rev, rev, branch, path, id):
   if can_commit:
     CheckCall(["git", "commit", "-a", "-m", commit_string], path)
 
-  # Check out the destination branch again
-  CheckCall(["git", "checkout", branch], path)
-
-  # Do a FF-merge from the working branch, then delete it
-  try:
-    CheckCall(["git", "merge", "--ff-only", working_branch], path)
-  except:
-    raise MergeFailure(
-        "Fast forward merge from working branch failed. This might happen if "
-        "your local branch contains unmerged changesets")
-
-  CheckCall(["git", "branch", "-d", working_branch], path)
-
-  # Check out the new rev on a detached head
-  new_rev = CheckOutput(["git", "rev-parse", "HEAD"], path).strip()
-  CheckCall(["git", "checkout", new_rev], path)
-
-  return new_rev
-
 def AttemptMerge(rev, branch, path, state):
   full_path = os.path.join(CHROMIUMDIR, path)
   old_rev = state["config"][path]["rev"]
   try:
-    new_rev = DoMerge(old_rev, rev, branch, full_path, state["id"])
-    if new_rev:
-      state["config"][path]["rev"] = new_rev
+    DoMerge(old_rev, rev, branch, full_path, state["id"])
   except MergeFailure as e:
     with open(STATE_FILE, "w") as fd:
       json.dump(state, fd)
-    print("Rebase failed: %s" % e.message, file=sys.stderr)
-    print("** Once the problem is corrected, please rerun this script with "
-          "--continue **", file=sys.stderr)
+    print("\n** Merge FAILED in %s: %s **" % (path, e.message), file=sys.stderr)
+    print("** Once the problem is corrected, please rerun %s merge --continue **" %
+          sys.argv[0], file=sys.stderr)
     sys.exit(1)
 
 @subcommand.Command("merge")
@@ -288,8 +359,13 @@ def cmd_merge(options, args):
 
     AttemptMerge(rev, "master", path, state)
 
-  with open(CHECKOUT_CONFIG, "w") as fd:
-    json.dump(state["config"], fd, indent=2)
+  state["merged"] = True
+
+  with open(STATE_FILE, "w") as fd:
+    json.dump(state, fd)
+
+  print("\n** Merge completed SUCCESSFULLY. Please review changes and then run "
+        "%s push to push these changes to the remote repository **" % sys.argv[0])
 
 def main(argv):
   return subcommand.Dispatcher.execute(argv, OptionParser())
