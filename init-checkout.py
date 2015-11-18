@@ -209,9 +209,10 @@ def RunMigration():
     shutil.rmtree(release_deps_dir)
   hg_dir = os.path.join(CHROMIUMSRCDIR, ".hg")
   if os.path.isdir(hg_dir):
+    CheckCall(["hg", "qpop", "-a"], CHROMIUMSRCDIR)
     os.rename(os.path.join(hg_dir, "patches"),
-              os.path.join(CHROMIUMSRCDIR, "old_patches"))
-    shutil.rmtree(hg_dir)
+              os.path.join(CHROMIUMDIR, "_old_patches"))
+    shutil.rmtree(CHROMIUMSRCDIR)
 
 def NeedsChromiumSync(config):
   # Check that CHROMIUMSRCDIR is a git repo
