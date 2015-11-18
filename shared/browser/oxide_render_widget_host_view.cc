@@ -346,9 +346,9 @@ void RenderWidgetHostView::CopyFromCompositingSurface(
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
     const gfx::Rect& src_subrect,
     const scoped_refptr<media::VideoFrame>& target,
-    const base::Callback<void(bool)>& callback) {
+    const base::Callback<void(const gfx::Rect&, bool)>& callback) {
   NOTIMPLEMENTED();
-  callback.Run(false);
+  callback.Run(gfx::Rect(), false);
 }
 
 bool RenderWidgetHostView::CanCopyToVideoFrame() const {

@@ -619,9 +619,9 @@
             '<(DEPTH)/media/blink/media_blink.gyp:media_blink',
           ],
         }],
-        ['target_arch=="arm"', {
+        ['enable_hybris==1', {
           'defines': [
-            'ENABLE_ANDROID_SYSPROPS=1',
+            'ENABLE_HYBRIS=1',
           ],
           'dependencies': [
             '../build/system.gyp:android-properties',
