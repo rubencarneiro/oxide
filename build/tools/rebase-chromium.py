@@ -248,14 +248,6 @@ def DoMerge(old_rev, rev, branch, path, id):
   working_branch = "rebase-%s" % id
   commit_string = "Merge upstream %s in to %s" % (rev, branch)
 
-  # Don't create dev branches unnecessarily if the changeset exists
-  # on upstream's master
-  if (branch.startswith(DEV_BRANCH_PREFIX) and
-      GitRevisionIsInBranch(rev, "upstream/master", path)):
-    print("Revision exists in upstream/master, so switching the merge to "
-          "master instead")
-    branch = "master"
-
   # If there is an unfinished merge, we skip straight to commit
   if not os.path.isfile(os.path.join(path, ".git", "MERGE_HEAD")):
     # Check if the working branch already exists
@@ -285,12 +277,17 @@ def DoMerge(old_rev, rev, branch, path, id):
 
       # Sanity checks - ensure the branch we checked out is tracking the
       # correct remote
-      if CheckOutput(["git", "config", "--get", "branch.%s.remote" % branch],
-                     path).strip() != "origin":
-        raise MergeFailure("Unexpected remote for branch")
-      if CheckOutput(["git", "config", "--get", "branch.%s.merge" % branch],
-                     path).strip() != "refs/heads/%s" % branch:
-        raise MergeFailure("Unexpected merge ref for branch")
+      try:
+        if CheckOutput(["git", "config", "--get", "branch.%s.remote" % branch],
+                       path).strip() != "origin":
+          raise MergeFailure("Unexpected remote for branch")
+        if CheckOutput(["git", "config", "--get", "branch.%s.merge" % branch],
+                       path).strip() != "refs/heads/%s" % branch:
+          raise MergeFailure("Unexpected merge ref for branch")
+      except MergeFailure:
+        raise
+      except:
+        raise MergeFailure("Branch has no remote configured")
 
       try:
         CheckCall(["git", "merge", "--ff-only"], path)
@@ -298,12 +295,6 @@ def DoMerge(old_rev, rev, branch, path, id):
         raise MergeFailure(
             "Fast forward merge from remote branch failed. This might happen if "
             "your local branch contains unmerged changesets")
-
-      # Another sanity check
-      if GitRevisionIsInBranch(rev, "HEAD", path):
-        print("The new revision already does exist in %s, but not in the "
-              "current HEAD. This probably means that somebody did a manual "
-              "merge and didn't update checkout.conf. Tut tut")
 
       # Create a working merge branch
       CheckCall(["git", "checkout", "-b", working_branch, branch], path)
@@ -313,8 +304,6 @@ def DoMerge(old_rev, rev, branch, path, id):
       CheckCall(["git", "merge", rev, "-m", commit_string], path)
     except:
       raise MergeFailure("git merge failed")
-
-  # XXX: Check that the merge is ready to commit
 
   can_commit = False
   try:
