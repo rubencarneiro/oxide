@@ -45,7 +45,11 @@ from utils import (
 )
 import subcommand
 
+RELBRANCH_FILE = os.path.join(TOPSRCDIR, ".relbranch")
 STATE_FILE = os.path.join(TOPSRCDIR, ".rebase.state")
+
+DEV_BRANCH_PREFIX = "oxide/dev/"
+REL_BRANCH_PREFIX = "oxide/"
 
 GCLIENT_REVINFO_SPEC = (
   "solutions = ["
@@ -76,15 +80,15 @@ class PushFailure(Exception):
 def LoadExistingState():
   state = LoadJsonFromPath(STATE_FILE)
 
-  assert "config" in state
+  assert "branch" in state
   assert "id" in state
-  assert "master" in state
   assert "merged" in state
+  assert "repos" in state
   assert "rev" in state
 
   return state
 
-def DoPush(path, branch, id):
+def DoPushAndDiscardWorkingBranch(path, branch, id):
   print("Pushing changes from %s to origin/%s" % (path, branch))
 
   working_branch = "rebase-%s" % id
@@ -104,33 +108,31 @@ def DoPush(path, branch, id):
 
   # Push the merge result
   try:
-    CheckCall(["git", "push", "origin", branch], path)
+    CheckCall(["git", "push", "origin", "HEAD:%s" % branch], path)
   except:
     raise PushFailure("git push failed")
 
-  try:
-    CheckCall(["git", "fetch", "upstream"], path)
-  except:
-    raise PushFailure("git fetch failed")
-
-  # Capture the merge revision
+  # Return the merge revision
   rev = CheckOutput(["git", "rev-parse", "HEAD"], path).strip()
 
-  # Fast forward the local branch
-  CheckCall(["git", "checkout", branch], path)
-  try:
-    CheckCall(["git", "merge", "--ff-only"], path)
-  except:
-    print("Failed to fast-forward the local branch. This might be caused by unmerged "
-          "changesets", file=sys.stderr)
-
-  # Check out the new rev on a detached head
+  # Check out the new rev on a detached head - this is how gclient leaves us
   CheckCall(["git", "checkout", rev], path)
 
   # Discard the working branch
   CheckCall(["git", "branch", "-d", working_branch], path)
 
   return rev
+
+def WriteStateFile(state):
+  with open(STATE_FILE, "w") as fd:
+    json.dump(state, fd)
+
+def WriteUpdatedCheckoutConfig(config, state):
+  for path in state["repos"]:
+    config[path]["rev"] = state["repos"][path]["rev"]
+
+  with open(CHECKOUT_CONFIG, "w") as fd:      
+    json.dump(config, fd, indent=2)
 
 @subcommand.Command("push")
 def cmd_push(options, args):
@@ -146,21 +148,26 @@ def cmd_push(options, args):
           "--continue first" % sys.argv[0], file=sys.stderr)
     sys.exit(1)
 
-  for path in state["config"]:
+  for path in state["repos"]:
+    branch = state["repos"][path]["branch"]
+    if not branch:
+      print("Skipping %s - nothing to push" % path)
+      continue
+
     try:
-      rev = DoPush(os.path.join(CHROMIUMDIR, path), "master", state["id"])
+      rev = DoPushAndDiscardWorkingBranch(os.path.join(CHROMIUMDIR, path),
+                                          branch, state["id"])
       if rev:
-        state["config"][path]["rev"] = rev
+        state["repos"][path]["rev"] = rev
     except PushFailure as e:
-      with open(STATE_FILE, "w") as fd:
-        json.dump(state, fd)
+      WriteStateFile(state)
       print("** Push FAILED in %s: %s **" % (path, e.message), file=sys.stderr)
       print("** Once the problem is corrected, please rerun %s push**" % sys.argv[0],
             file=sys.stderr)
       sys.exit(1)
 
-  with open(CHECKOUT_CONFIG, "w") as fd:
-    json.dump(state["config"], fd, indent=2)
+  config = LoadJsonFromPath(CHECKOUT_CONFIG)
+  WriteUpdatedCheckoutConfig(config, state)
 
   os.remove(STATE_FILE)
 
@@ -175,11 +182,6 @@ def SanitizeMergeArguments(options, args):
     if len(args) != 1:
       print("Expected a merge revision", file=sys.stderr)
       sys.exit(1)
-
-    if not options.master:
-      print("Only merges from master are supported right now",
-            file=sys.stderr)
-      sys.exit(1)
   else:
     if len(args) > 0:
       print("Expected no arguments in continue mode", file=sys.stderr)
@@ -188,6 +190,21 @@ def SanitizeMergeArguments(options, args):
     if options.master:
       print("--master is not valid with --continue", file=sys.stderr)
       sys.exit(1)
+
+def DetermineBranchForMerge(options, rev):
+  if os.path.isfile(RELBRANCH_FILE):
+    with open(RELBRANCH_FILE, "r") as fd:
+      return "%s%s" % (REL_BRANCH_PREFIX, fd.read().strip())
+
+  if options.master:
+    return "master"
+
+  try:
+    return ("%s%s" %
+            (DEV_BRANCH_PREFIX,
+             re.match(r'[\d]+\.[\d]+\.([\d]+)\.[\d]+', rev).groups()[0]))
+  except:
+    return None
 
 def InitializeState(options, args, config):
   state = {}
@@ -200,10 +217,18 @@ def InitializeState(options, args, config):
             e.message, file=sys.stderr)
       sys.exit(1)
   else:
-    state["config"] = config
+    state["branch"] = DetermineBranchForMerge(options, args[0])
+    if not state["branch"]:
+      print("Unable to determine correct branch to perform the merge in",
+            file=sys.stderr)
+      sys.exit(1)
     state["id"] = "".join(random.choice(string.ascii_uppercase + string.digits) for i in range(8))
-    state["master"] = True if options.master else False
     state["merged"] = False
+    state["repos"] = {}
+    for path in config:
+      state["repos"][path] = {}
+      state["repos"][path]["branch"] = None
+      state["repos"][path]["rev"] = config[path]["rev"]
     state["rev"] = args[0]
 
   return state
@@ -223,6 +248,14 @@ def DoMerge(old_rev, rev, branch, path, id):
   working_branch = "rebase-%s" % id
   commit_string = "Merge upstream %s in to %s" % (rev, branch)
 
+  # Don't create dev branches unnecessarily if the changeset exists
+  # on upstream's master
+  if (branch.startswith(DEV_BRANCH_PREFIX) and
+      GitRevisionIsInBranch(rev, "upstream/master", path)):
+    print("Revision exists in upstream/master, so switching the merge to "
+          "master instead")
+    branch = "master"
+
   # If there is an unfinished merge, we skip straight to commit
   if not os.path.isfile(os.path.join(path, ".git", "MERGE_HEAD")):
     # Check if the working branch already exists
@@ -235,28 +268,33 @@ def DoMerge(old_rev, rev, branch, path, id):
 
     # If the working branch doesn't exist, create one
     if not in_working_branch:
-      # Sanity check - current HEAD should be what's in checkout.conf
-      if CheckOutput(["git", "rev-parse", "HEAD"], path).strip() != old_rev:
-        raise MergeFailure("Current HEAD does not match the expected revision "
-                           "in checkout.conf. Do you have local changes?")
-
-      assert GitRevisionIsInBranch(old_rev, branch, path)
-
       # Check if the new rev exists in the current HEAD
       if GitRevisionIsInBranch(rev, "HEAD", path):
         print("Nothing to do - new revision already exists in current HEAD")
         # Nothing to do
-        return
+        return None
 
       # Check out the destination branch and make sure it's up-to-date with
       # the remote
-      CheckCall(["git", "checkout", branch], path)
+      try:
+        CheckCall(["git", "checkout", branch], path)
+      except:
+        raise MergeFailure(
+            "Branch %s does not yet exist in repository. Please create it "
+            "and ensure it's tracking a remote before trying again" % branch)
+
+      # Sanity checks - ensure the branch we checked out is tracking the
+      # correct remote
+      if CheckOutput(["git", "config", "--get", "branch.%s.remote" % branch],
+                     path).strip() != "origin":
+        raise MergeFailure("Unexpected remote for branch")
+      if CheckOutput(["git", "config", "--get", "branch.%s.merge" % branch],
+                     path).strip() != "refs/heads/%s" % branch:
+        raise MergeFailure("Unexpected merge ref for branch")
+
       try:
         CheckCall(["git", "merge", "--ff-only"], path)
       except:
-        # We haven't even created the working branch, let alone started the
-        # merge. In this case, we go back to the original state
-        CheckCall(["git", "checkout", old_rev], path)
         raise MergeFailure(
             "Fast forward merge from remote branch failed. This might happen if "
             "your local branch contains unmerged changesets")
@@ -288,14 +326,20 @@ def DoMerge(old_rev, rev, branch, path, id):
   if can_commit:
     CheckCall(["git", "commit", "-a", "-m", commit_string], path)
 
-def AttemptMerge(rev, branch, path, state):
+  rev = CheckOutput(["git", "rev-parse", "HEAD"], path).strip()
+  return (rev, branch)
+
+def AttemptMerge(rev, path, state):
+  old_rev = state["repos"][path]["rev"]
   full_path = os.path.join(CHROMIUMDIR, path)
-  old_rev = state["config"][path]["rev"]
+
   try:
-    DoMerge(old_rev, rev, branch, full_path, state["id"])
+    rv = DoMerge(old_rev, rev, state["branch"], full_path, state["id"])
+    if rv:
+      state["repos"][path]["rev"] = rv[0]
+      state["repos"][path]["branch"] = rv[1]
   except MergeFailure as e:
-    with open(STATE_FILE, "w") as fd:
-      json.dump(state, fd)
+    WriteStateFile(state)
     print("\n** Merge FAILED in %s: %s **" % (path, e.message), file=sys.stderr)
     print("** Once the problem is corrected, please rerun %s merge --continue **" %
           sys.argv[0], file=sys.stderr)
@@ -313,13 +357,14 @@ def cmd_merge(options, args):
 
   config = LoadJsonFromPath(CHECKOUT_CONFIG)
   state = InitializeState(options, args, config)
+
   rev = state["rev"]
 
   if not options.resume:
     CheckCall(["git", "fetch", "--all"], CHROMIUMSRCDIR)
 
     try:
-      rev = CheckOutput(["git", "rev-parse", rev], CHROMIUMSRCDIR).strip()
+      CheckOutput(["git", "rev-parse", rev], CHROMIUMSRCDIR).strip()
     except:
       print("Revision %s does not exist in repository. Have you added the "
             "upstream remotes? (init-checkout.py --add-upstream-remotes)" %
@@ -335,13 +380,9 @@ def cmd_merge(options, args):
         if GitRevisionIsInBranch(rev, "upstream/master", CHROMIUMSRCDIR):
           break
         rev = CheckOutput(["git", "rev-parse", "%s^" % rev], CHROMIUMSRCDIR).strip()
+      state["rev"] = rev
 
-  # XXX: For non-master merges on oxide trunk, we will have a branch name
-  #  here of the form "oxide/dev/<CHROMIUM_BRANCH>". We can get the branch
-  #  from the Chromium tag specified by the caller. For merges on oxide
-  #  release branches, we'll have a branch of the form "oxide/<OXIDE_BRANCH>".
-  #  We could probably get this number from the source tree.
-  AttemptMerge(rev, "master", CHROMIUMSRCDIR_REL, state)
+  AttemptMerge(rev, CHROMIUMSRCDIR_REL, state)
 
   spec = GCLIENT_REVINFO_SPEC % config[CHROMIUMSRCDIR_REL]["custom_remote"]
 
@@ -357,15 +398,17 @@ def cmd_merge(options, args):
       continue
     rev = re.sub(r'[^@]*@(.*)', r'\1', i.split()[1].strip())
 
-    AttemptMerge(rev, "master", path, state)
+    AttemptMerge(rev, path, state)
 
   state["merged"] = True
 
-  with open(STATE_FILE, "w") as fd:
-    json.dump(state, fd)
+  WriteStateFile(state)
+  WriteUpdatedCheckoutConfig(config, state)
 
-  print("\n** Merge completed SUCCESSFULLY. Please review changes and then run "
-        "%s push to push these changes to the remote repository **" % sys.argv[0])
+  print("\n** Merge completed SUCCESSFULLY. Please update your repository "
+        "with init-checkout.py, review and test your changes and then "
+        "run %s push to push these changes to the remote repository **" %
+        sys.argv[0])
 
 def main(argv):
   return subcommand.Dispatcher.execute(argv, OptionParser())
