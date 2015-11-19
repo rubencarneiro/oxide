@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,29 +25,39 @@ import os.path
 import re
 import shutil
 import sys
-from urlparse import urljoin, urlsplit
+from urlparse import urlsplit
 
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import CheckCall, CheckOutput, GetChecksum, GetFileChecksum, CHROMIUMSRCDIR, TOPSRCDIR
-from patch_utils import SyncablePatchSet, SyncError
+from utils import (
+  CheckCall,
+  CheckOutput,
+  CHECKOUT_CONFIG,
+  CHROMIUMDIR,
+  CHROMIUMSRCDIR,
+  CHROMIUMSRCDIR_REL,
+  DEPOTTOOLSDIR,
+  GetChecksum,
+  GetFileChecksum,
+  LoadJsonFromPath,
+  TOPSRCDIR
+)
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
 DEPOT_TOOLS_GIT_REV = "c1ae89ecd635abfea2d94e5b49c7d92f49f28f22"
-DEPOT_TOOLS_PATH = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
-CHROMIUM_GIT_URL = "https://chromium.googlesource.com/chromium/src.git"
-CHROMIUM_GCLIENT_SPEC = (
+CHROMIUM_GCLIENT_SPEC_TEMPLATE = (
   "solutions = ["
     "{ \"name\": \"src\", "
-      "\"url\": \"%s\", "
-      "\"deps_file\": \".DEPS.git\", "
+      "\"url\": \"%(url)s\", "
+      "\"deps_file\": \"DEPS\", "
       "\"managed\": False, "
       "\"custom_deps\": "
-        "{ \"build/scripts/command_wrapper/bin\": None, "
+        "{"
+          "\"build/scripts/command_wrapper/bin\": None, "
           "\"build/scripts/private/data/reliability\": None, "
           "\"build/scripts/tools/deps2git\": None, "
           "\"build/scripts/gsd_generate_index\": None, "
@@ -60,7 +70,13 @@ CHROMIUM_GCLIENT_SPEC = (
           "\"src/chrome/tools/test/reference_build/chrome_linux\": None, "
           "\"src/chrome/tools/test/reference_build/chrome_mac\": None, "
           "\"src/third_party/hunspell_dictionaries\": None, "
+          "%(custom_deps)s"
         "}, "
+      "\"custom_hooks\": "
+        "["
+          "{ \"name\": \"check_git_config\", \"action\": [\"true\"] },"
+          "{ \"name\": \"gyp\", \"action\": [\"true\"] },"
+        "],"
       "\"safesync_url\": \"\", "
     "} "
   "]"
@@ -85,18 +101,29 @@ def GitRepoHeadMatchesId(path, id):
 
 def GetMirrorPath(cachedir, url):
   try:
-    return CheckOutput([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "git_cache.py"),
+    return CheckOutput([sys.executable, os.path.join(DEPOTTOOLSDIR, "git_cache.py"),
                         "exists", "--cache-dir", cachedir, url]).strip()
   except subprocess.CalledProcessError:
     return None
 
 def PopulateGitMirror(cachedir, url, refs = []):
-  args = [sys.executable, os.path.join(DEPOT_TOOLS_PATH, "git_cache.py"),
+  args = [sys.executable, os.path.join(DEPOTTOOLSDIR, "git_cache.py"),
           "populate", "--cache-dir", cachedir]
   for r in refs:
     args.extend(["--ref", r])
   args.append(url)
   CheckCall(args)
+
+def AddExtraRefs(extra_refs, remote, path):
+  for r in extra_refs:
+    if type(r) == tuple:
+      s = r[0]
+      d = r[1]
+    else:
+      s = r
+      d = r
+    CheckCall(["git", "config", "--add", "remote.%s.fetch" % remote,
+               "+%s:%s" % (s, d)], path)
 
 def InitGitRepo(url, path, cachedir = None, additional_refs = []):
   if IsGitRepo(path):
@@ -117,9 +144,7 @@ def InitGitRepo(url, path, cachedir = None, additional_refs = []):
   args.extend([url, path])
   CheckCall(args)
 
-  for r in additional_refs:
-    CheckCall(["git", "config", "--add", "remote.origin.fetch",
-               "+%s:%s" % (r, r)], CHROMIUMSRCDIR)
+  AddExtraRefs(additional_refs, "origin", CHROMIUMSRCDIR)
 
 def UpdateGitRepo(url, path, commit, cachedir = None):
   newly_cloned = False
@@ -139,43 +164,55 @@ def UpdateGitRepo(url, path, commit, cachedir = None):
   CheckCall(["git", "fetch"], path)
   CheckCall(["git", "checkout", commit], path)
 
-def GetDesiredChromiumVersion():
-  with open(os.path.join(TOPSRCDIR, "CHROMIUM_VERSION"), "r") as fd:
-    return fd.read().strip()
+def GetChromiumGitUrl():
+  return LoadJsonFromPath(CHECKOUT_CONFIG)[CHROMIUMSRCDIR_REL]["custom_remote"]
+
+def GetDesiredChromiumRev():
+  return LoadJsonFromPath(CHECKOUT_CONFIG)[CHROMIUMSRCDIR_REL]["rev"]
 
 def GetChromiumGclientSpec(cachedir):
-  spec = CHROMIUM_GCLIENT_SPEC % CHROMIUM_GIT_URL
+  deps = LoadJsonFromPath(CHECKOUT_CONFIG)
+  custom_deps = ""
+  chromium_url = None
+  for dep in deps:
+    if dep == CHROMIUMSRCDIR_REL:
+      chromium_url = deps[dep]["custom_remote"]
+      continue
+    custom_deps += "\"%s\": \"%s@%s\", " % (dep,
+                                            deps[dep]["custom_remote"],
+                                            deps[dep]["rev"])
+  if not chromium_url:
+    print("checkout.conf must have a src entry pointing to the Chromium GIT "
+          "repository", file=sys.stderr)
+    sys.exit(1)
+  spec = CHROMIUM_GCLIENT_SPEC_TEMPLATE % { "url": chromium_url,
+                                            "custom_deps": custom_deps }
   if cachedir:
     spec = "%s\ncache_dir = \"%s\"" % (spec, cachedir)
   return spec
 
 def PrepareDepotTools():
-  if IsGitRepo(DEPOT_TOOLS_OLD_PATH) and not IsGitRepo(DEPOT_TOOLS_PATH):
-    os.rename(DEPOT_TOOLS_OLD_PATH, DEPOT_TOOLS_PATH)
+  if IsGitRepo(DEPOT_TOOLS_OLD_PATH) and not IsGitRepo(DEPOTTOOLSDIR):
+    os.rename(DEPOT_TOOLS_OLD_PATH, DEPOTTOOLSDIR)
 
-  UpdateGitRepo(DEPOT_TOOLS_GIT_URL, DEPOT_TOOLS_PATH, DEPOT_TOOLS_GIT_REV)
+  UpdateGitRepo(DEPOT_TOOLS_GIT_URL, DEPOTTOOLSDIR, DEPOT_TOOLS_GIT_REV)
 
-  sys.path.insert(0, DEPOT_TOOLS_PATH)
-  os.environ["PATH"] = DEPOT_TOOLS_PATH + ":" + os.getenv("PATH")
+  sys.path.insert(0, DEPOTTOOLSDIR)
+  os.environ["PATH"] = DEPOTTOOLSDIR + ":" + os.getenv("PATH")
 
-def EnsurePatchConsistency():
-  patchset = SyncablePatchSet()
-  for patch in patchset.hg_patches:
-    if (patch in patchset.old_patches and
-        patch.checksum == patchset.old_patches[patch.filename].checksum):
-      continue
-
-    # For pre-r238 checkouts
-    if (patch in patchset.src_patches and
-        patch.checksum == patchset.src_patches[patch.filename].checksum):
-      continue
-
-    print("Patch %s in your Chromium source checkout has been "
-          "modified. Please resolve this manually. Note, you may "
-          "see this error if your Chromium checkout was created "
-          "using a revision of Oxide before r238" % patch.filename,
-          file=sys.stderr)
-    sys.exit(1)
+def RunMigration():
+  old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
+  if os.path.isdir(old_chromium_dir):
+    shutil.rmtree(old_chromium_dir)
+  release_deps_dir = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
+  if os.path.isdir(release_deps_dir):
+    shutil.rmtree(release_deps_dir)
+  hg_dir = os.path.join(CHROMIUMSRCDIR, ".hg")
+  if os.path.isdir(hg_dir):
+    CheckCall(["hg", "qpop", "-a"], CHROMIUMSRCDIR)
+    os.rename(os.path.join(hg_dir, "patches"),
+              os.path.join(CHROMIUMDIR, "_old_patches"))
+    shutil.rmtree(CHROMIUMSRCDIR)
 
 def NeedsChromiumSync(config):
   # Check that CHROMIUMSRCDIR is a git repo
@@ -183,11 +220,7 @@ def NeedsChromiumSync(config):
     return True
 
   if not GitRepoHeadMatchesId(CHROMIUMSRCDIR,
-                              GetDesiredChromiumVersion()):
-    return True
-
-  # Need a sync if there is no .hg folder
-  if not os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
+                              GetDesiredChromiumRev()):
     return True
 
   # Sync if there is no .gclient file
@@ -201,12 +234,7 @@ def NeedsChromiumSync(config):
 
   return False
 
-def SyncChromium(config):
-  if os.path.isdir(os.path.join(CHROMIUMSRCDIR, ".hg")):
-    SyncablePatchSet().hg_patches.unapply_all()
-    shutil.rmtree(os.path.join(CHROMIUMSRCDIR, ".hg"))
-    os.remove(os.path.join(CHROMIUMSRCDIR, ".hgignore"))
-
+def SyncChromium(config, force):
   chromium_dir = os.path.dirname(CHROMIUMSRCDIR)
   if not os.path.isdir(chromium_dir):
     os.makedirs(chromium_dir)
@@ -216,53 +244,51 @@ def SyncChromium(config):
   with open(os.path.join(chromium_dir, ".gclient"), "w") as f:
     f.write(GetChromiumGclientSpec(config.cachedir))
 
-  refs = [ "refs/tags/*", "refs/branch-heads/*" ]
-
   if not IsGitRepo(CHROMIUMSRCDIR):
-    InitGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR, config.cachedir, refs)
+    InitGitRepo(GetChromiumGitUrl(), CHROMIUMSRCDIR, config.cachedir)
     CheckCall(["git", "submodule", "foreach",
                "git config -f $toplevel/.git/config submodule.$name.ignore all"],
               CHROMIUMSRCDIR)
     CheckCall(["git", "config", "diff.ignoreSubmodules", "all"],
               CHROMIUMSRCDIR)
-  UpdateGitRepo(CHROMIUM_GIT_URL, CHROMIUMSRCDIR,
-                GetDesiredChromiumVersion(), config.cachedir)
+  UpdateGitRepo(GetChromiumGitUrl(), CHROMIUMSRCDIR,
+                GetDesiredChromiumRev(), config.cachedir)
 
-  CheckCall([sys.executable, os.path.join(DEPOT_TOOLS_PATH, "gclient.py"),
-             "sync", "-D", "--with_branch_heads"], chromium_dir)
+  args = [sys.executable, os.path.join(DEPOTTOOLSDIR, "gclient.py"),
+          "sync", "-D", "--with_branch_heads"]
+  if force:
+    args.append("--force")
+  CheckCall(args, chromium_dir)
 
-  with open(os.path.join(CHROMIUMSRCDIR, ".hgignore"), "w") as f:
-    f.write("~$\n")
-    f.write("\.svn/\n")
-    f.write("\.git/\n")
-    f.write("^out/\n")
-    f.write("\.host\.(.*\.|)mk$\n")
-    f.write("\.target\.(.*\.|)mk$\n")
-    f.write("Makefile(\.*|)$\n")
-    f.write("^\.hgignore$\n")
-    f.write("\.pyc$\n")
-    f.write("\.tmp$\n")
-  CheckCall(["hg", "init"], CHROMIUMSRCDIR)
-  hgrc = os.path.join(CHROMIUMSRCDIR, ".hg", "hgrc")
-  if not os.path.isfile(hgrc):
-    with open(hgrc, "w") as f:
-      f.write("[ui]\n")
-      f.write("username = oxide\n\n")
-      f.write("[extensions]\n")
-      f.write("mq =\n")
-  CheckCall(["hg", "addremove"], CHROMIUMSRCDIR)
-  CheckCall(["hg", "ci", "-m", "Base checkout with client.py"], CHROMIUMSRCDIR)
-  CheckCall(["hg", "qinit"], CHROMIUMSRCDIR)
+def AddUpstreamRemotes():
+  config = LoadJsonFromPath(CHECKOUT_CONFIG)
+  for dep in config:
+    path = os.path.join(CHROMIUMDIR, dep)
+    try:
+      CheckCall(["git", "remote", "show", "upstream"], path, True)
+    except:
+      CheckCall(["git", "remote", "add", "upstream",
+                 config[dep]["upstream_remote"]], path)
+      extra_refs = [ "refs/branch-heads/*" ]
+      if CHROMIUMSRCDIR_REL == dep:
+        extra_refs.append("refs/tags/*")
+      AddExtraRefs(extra_refs, "upstream", path)
+      CheckCall(["git", "fetch", "upstream"], path)
 
-def SyncChromiumPatches():
-  patchset = SyncablePatchSet()
-  try:
-    patchset.calculate_sync()
-    patchset.do_sync()
-    patchset.hg_patches.apply_all()
-  except SyncError as e:
-    print(e, file=sys.stderr)
-    sys.exit(1)
+def AddGitPushUrls(userid):
+  config = LoadJsonFromPath(CHECKOUT_CONFIG)
+  for dep in config:
+    path = os.path.join(CHROMIUMDIR, dep)
+    url = config[dep]["custom_remote"]
+    url = urlsplit(url)
+    if url.netloc != "git.launchpad.net":
+      print("Unexpected origin %s found for GIT checkout %s" %
+            (url.netloc, path), file=sys.stderr)
+      sys.exit(1)
+    url = url._replace(scheme="git+ssh")
+    if userid:
+      url = url._replace(netloc="%s@%s" % (userid, url.netloc))
+    CheckCall(["git", "remote", "set-url", "--push", "origin", url.geturl()], path)
 
 class Options(OptionParser):
   def __init__(self):
@@ -270,6 +296,17 @@ class Options(OptionParser):
 
     self.add_option("-c", "--cache-dir", dest="cache_dir",
                     help="Specify a directory for a local mirror")
+    self.add_option("-f", "--force", dest="force", action="store_true",
+                    help="Force an update")
+    self.add_option("--add-pushurls", dest="add_pushurls", action="store_true",
+                    help="Add a push URL to the remote for Launchpad "
+                         "maintained GIT repositories")
+    self.add_option("--lp-userid", dest="lp_userid",
+                    help="Specify your launchpad user ID for pushing to GIT")
+    self.add_option("--add-upstream-remotes", dest="add_upstream_remotes",
+                    action="store_true",
+                    help="Add upstream remotes for Launchpad forked GIT "
+                         "repositories")
 
 class Config(ConfigParser):
   def __init__(self, opts):
@@ -304,24 +341,22 @@ def main():
   (options, args) = o.parse_args()
   if options.cache_dir:
     options.cache_dir = os.path.abspath(options.cache_dir)
+  if options.lp_userid and not options.add_pushurls:
+    print("--lp-userid must be used with --add-pushurls", file=sys.stderr)
+    sys.exit(1)
 
   c = Config(options)
 
   PrepareDepotTools()
+  RunMigration()
 
-  EnsurePatchConsistency()
+  if options.force or NeedsChromiumSync(c):
+    SyncChromium(c, options.force)
 
-  old_chromium_dir = os.path.join(TOPSRCDIR, "chromium")
-  if os.path.isdir(old_chromium_dir):
-    shutil.rmtree(old_chromium_dir)
-  release_deps_dir = os.path.join(os.path.dirname(CHROMIUMSRCDIR), "release_deps")
-  if os.path.isdir(release_deps_dir):
-    shutil.rmtree(release_deps_dir)
-
-  if NeedsChromiumSync(c):
-    SyncChromium(c)
-
-  SyncChromiumPatches()
+  if options.add_upstream_remotes:
+    AddUpstreamRemotes()
+  if options.add_pushurls:
+    AddGitPushUrls(options.lp_userid)
 
 if __name__ == "__main__":
   main()
