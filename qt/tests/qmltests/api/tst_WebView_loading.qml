@@ -39,7 +39,7 @@ TestWebView {
                  event.type != LoadEvent.TypeStarted && event.type != LoadEvent.TypeStopped ?
                   expected.httpStatusCode : 0,
                  "Unexpected value of httpStatusCode");
-    test.compare(loading, expected.loading,
+    test.compare(loading, true,
                  "Unexpected state of WebView.loading");
   }
 
@@ -66,9 +66,9 @@ TestWebView {
     function test_WebView_loading1_browser_initiated() {
       var url = "http://testsuite/empty.html";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: url, httpStatusCode: 200, loading: false }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeCommitted, url: url, error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: url, httpStatusCode: 200 }
       ];
 
       webView.url = url;
@@ -92,11 +92,11 @@ TestWebView {
       var new_url = "http://foo.testsuite/empty.html";
       expectedLoadEvents = [
         { type: LoadEvent.TypeStarted, url: initial_url, loading: true },
-        { type: LoadEvent.TypeCommitted, url: initial_url, httpStatusCode: 200, error: false, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200, loading: false },
-        { type: LoadEvent.TypeStarted, url: new_url, loading: true },
-        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: new_url, httpStatusCode: 200, loading: false }
+        { type: LoadEvent.TypeCommitted, url: initial_url, httpStatusCode: 200, error: false },
+        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200 },
+        { type: LoadEvent.TypeStarted, url: new_url },
+        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: new_url, httpStatusCode: 200 }
       ];
 
       webView.url = initial_url;
@@ -117,8 +117,8 @@ TestWebView {
     function test_WebView_loading3_stop() {
       var url = "http://testsuite/tst_WebView_loading_delay.py";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeStopped, url: url, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeStopped, url: url }
       ];
 
       function _loadEvent(event) {
@@ -149,9 +149,9 @@ TestWebView {
     function test_WebView_loading4_fail() {
       var url = "http://invalid/";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0 },
+        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200 }
       ];
 
       webView.url = url;
@@ -171,9 +171,9 @@ TestWebView {
       // generates the same sequence of load events
       spy.clear();
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeFailed, url: url, httpStatusCode: 0 },
+        { type: LoadEvent.TypeCommitted, url: url, error: true, httpStatusCode: 200 }
       ];
       webView.reload();
 
@@ -194,12 +194,12 @@ TestWebView {
     function test_WebView_loading5_redirection() {
       var url = "http://testsuite/tst_WebView_loading_redirect.py";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
+        { type: LoadEvent.TypeStarted, url: url },
         { type: LoadEvent.TypeRedirected, url: "http://testsuite/empty.html",
-          originalUrl: url, httpStatusCode: 302, loading: true },
+          originalUrl: url, httpStatusCode: 302 },
         { type: LoadEvent.TypeCommitted, url: "http://testsuite/empty.html",
-          error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html", httpStatusCode: 200, loading: false }
+          error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html", httpStatusCode: 200 }
       ];
 
       webView.url = url;
@@ -222,10 +222,10 @@ TestWebView {
       var initial_url = "http://testsuite/empty.html";
       var new_url = "http://testsuite/empty.html#foo";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: initial_url, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeCommitted, url: initial_url, error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200, loading: false },
-        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200, loading: true }
+        { type: LoadEvent.TypeStarted, url: initial_url, httpStatusCode: 200 },
+        { type: LoadEvent.TypeCommitted, url: initial_url, error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200 },
+        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200 }
       ];
 
       webView.url = initial_url;
@@ -247,10 +247,10 @@ TestWebView {
       var initial_url = "http://testsuite/empty.html";
       var new_url = "http://testsuite/empty.html#foo";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: initial_url, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeCommitted, url: initial_url, error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200, loading: false },
-        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200, loading: true }
+        { type: LoadEvent.TypeStarted, url: initial_url, httpStatusCode: 200 },
+        { type: LoadEvent.TypeCommitted, url: initial_url, error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: initial_url, httpStatusCode: 200 },
+        { type: LoadEvent.TypeCommitted, url: new_url, error: false, httpStatusCode: 200 }
       ];
 
       webView.url = initial_url;
@@ -272,8 +272,8 @@ TestWebView {
     function test_WebView_loading8_cancelled_internally() {
       var url = "foo://bar.com/";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeStopped, url: url, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeStopped, url: url }
       ];
 
       webView.url = url;
@@ -293,9 +293,9 @@ TestWebView {
     function test_WebView_loading9_subframe() {
       var url = "http://testsuite/tst_WebView_loading_subframe.html";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeCommitted, url: url, error: false, httpStatusCode: 200, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: url, httpStatusCode: 200, loading: false }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeCommitted, url: url, error: false, httpStatusCode: 200 },
+        { type: LoadEvent.TypeSucceeded, url: url, httpStatusCode: 200 }
       ];
 
       webView.url = url;
