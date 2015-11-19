@@ -30,7 +30,7 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "build", "python"))
 from eventloop import EventLoop
 from httpserver import TestHTTPServer, TestHTTPRequestHandler
-from oxide_utils import ScopedTmpdir
+from utils import ScopedTmpdir
 
 class TestProcess(object):
   def __init__(self, args):

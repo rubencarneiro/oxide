@@ -28,7 +28,6 @@
 #include "shared/renderer/oxide_content_renderer_client.h"
 
 #if defined(ENABLE_PLUGINS)
-#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/json/json_reader.h"
@@ -42,7 +41,6 @@
 #include "content/public/common/content_constants.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
 
-#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_paths.h"
 #endif
 
@@ -159,17 +157,14 @@ const std::vector<content::PepperPluginInfo>::const_iterator FindNewestPlugin(
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
 #if defined(ENABLE_PLUGINS)
-  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kEnablePepperFlashPlugin)) {
-    std::vector<content::PepperPluginInfo> flash_plugins;
-    GetPepperFlashPluginInfo(FILE_SYSTEM_PEPPER_FLASH_PLUGIN, &flash_plugins);
-    GetPepperFlashPluginInfo(FILE_CHROME_PEPPER_FLASH_PLUGIN, &flash_plugins);
+  std::vector<content::PepperPluginInfo> flash_plugins;
+  GetPepperFlashPluginInfo(FILE_SYSTEM_PEPPER_FLASH_PLUGIN, &flash_plugins);
+  GetPepperFlashPluginInfo(FILE_CHROME_PEPPER_FLASH_PLUGIN, &flash_plugins);
 
-    auto it = FindNewestPlugin(flash_plugins);
-    if (it != flash_plugins.end()) {
-      plugins->push_back(*it);
-    }    
-  }
+  auto it = FindNewestPlugin(flash_plugins);
+  if (it != flash_plugins.end()) {
+    plugins->push_back(*it);
+  }    
 #endif
 }
 

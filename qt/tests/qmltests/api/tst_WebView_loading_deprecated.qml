@@ -28,7 +28,7 @@ TestWebView {
 
     test.compare(loadEvent.type, expected.type, "Unexpected load event");
     test.compare(loadEvent.url, expected.url, "Unexpected load event URL");
-    test.compare(loading, expected.loading,
+    test.compare(loading, true,
                  "Unexpected state of WebView.loading");
   }
 
@@ -55,8 +55,8 @@ TestWebView {
     function test_WebView_loading_deprecated1_browser_initiated() {
       var url = "http://testsuite/empty.html";
       expectedLoadEvents = [
-          { type: LoadEvent.TypeStarted, url: url, loading: true },
-          { type: LoadEvent.TypeSucceeded, url: url, loading: false }
+          { type: LoadEvent.TypeStarted, url: url },
+          { type: LoadEvent.TypeSucceeded, url: url }
       ];
 
       webView.url = url;
@@ -79,10 +79,10 @@ TestWebView {
       var initial_url = "http://testsuite/empty.html";
       var new_url = "http://foo.testsuite/empty.html";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: initial_url, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: initial_url, loading: false },
-        { type: LoadEvent.TypeStarted, url: new_url, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: new_url, loading: false }
+        { type: LoadEvent.TypeStarted, url: initial_url },
+        { type: LoadEvent.TypeSucceeded, url: initial_url },
+        { type: LoadEvent.TypeStarted, url: new_url },
+        { type: LoadEvent.TypeSucceeded, url: new_url }
       ];
 
       webView.url = initial_url;
@@ -103,8 +103,8 @@ TestWebView {
     function test_WebView_loading_deprecated3_stop() {
       var url = "http://testsuite/tst_WebView_loading_delay.py";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeStopped, url: url, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeStopped, url: url }
       ];
 
       function _loadingChanged(event) {
@@ -135,8 +135,8 @@ TestWebView {
     function test_WebView_loading_deprecated4_fail() {
       var url = "http://invalid/";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeFailed, url: url, loading: true }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeFailed, url: url }
       ];
 
       webView.url = url;
@@ -156,8 +156,8 @@ TestWebView {
     function test_WebView_loading_deprecated5_redirection() {
       var url = "http://testsuite/tst_WebView_loading_redirect.py";
       expectedLoadEvents = [
-        { type: LoadEvent.TypeStarted, url: url, loading: true },
-        { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html", loading: false }
+        { type: LoadEvent.TypeStarted, url: url },
+        { type: LoadEvent.TypeSucceeded, url: "http://testsuite/empty.html" }
       ];
 
       webView.url = url;

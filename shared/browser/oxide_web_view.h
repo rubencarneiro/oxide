@@ -317,6 +317,8 @@ class WebView : public ScriptMessageTarget,
 
   void RestartFindInPage();
 
+  void MaybeCancelFullscreenMode();
+
   // ScriptMessageTarget implementation
   virtual size_t GetScriptMessageHandlerCount() const override;
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -365,6 +367,7 @@ class WebView : public ScriptMessageTarget,
       content::WebContents* source,
       int route_id,
       int main_frame_route_id,
+      int main_frame_widget_route_id,
       WindowContainerType window_container_type,
       const std::string& frame_name,
       const GURL& target_url,

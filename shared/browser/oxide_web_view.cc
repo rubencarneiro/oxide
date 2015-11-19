@@ -380,6 +380,15 @@ void WebView::DispatchPrepareToCloseResponse(bool proceed) {
   client_->PrepareToCloseResponseReceived(proceed);
 }
 
+void WebView::MaybeCancelFullscreenMode() {
+  if (IsFullscreen()) {
+    // The application might have granted fullscreen by now
+    return;
+  }
+
+  web_contents_->ExitFullscreen();
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return client_->GetScriptMessageHandlerCount();
 }
@@ -681,6 +690,7 @@ bool WebView::ShouldCreateWebContents(
     content::WebContents* source,
     int route_id,
     int main_frame_route_id,
+    int main_frame_widget_route_id,
     WindowContainerType window_container_type,
     const std::string& frame_name,
     const GURL& target_url,
@@ -1080,11 +1090,19 @@ void WebView::DidShowFullscreenWidget(int routing_id) {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
 
-  rwh->WasResized();
-  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
-  rwh->GetView()->Show();
-
   web_contents_->GetRenderWidgetHostView()->Hide();
+
+  if (!IsFullscreen()) {
+    // If the application didn't grant us fullscreen, schedule a task to cancel
+    // the fullscreen. We do this as we'll have a fullscreen view that the
+    // application can't get rid of.
+    // We do this asynchronously to avoid a UAF in
+    // WebContentsImpl::ShowCreatedWidget
+    // See https://launchpad.net/bugs/1510973
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
+  }
 }
 
 void WebView::DidDestroyFullscreenWidget(int routing_id) {
@@ -1183,7 +1201,7 @@ WebView::WebView(const Params& params)
   CommonInit(contents.Pass());
 
   if (params.restore_entries.size() > 0) {
-    ScopedVector<content::NavigationEntry> entries =
+    std::vector<scoped_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
             params.restore_entries, context.get());
     web_contents_->GetController().Restore(
@@ -1435,6 +1453,9 @@ void WebView::SetFullscreenGranted(bool fullscreen) {
   }
 
   bool was_fullscreen = IsFullscreen();
+  // It's important to do this before calling WebContents::ExitFullscreen,
+  // as this calls back in to ExitFullscreenModeForTab. If the application
+  // calls us synchronously, then we'll run out of stack
   fullscreen_granted_ = fullscreen;
   bool is_fullscreen = IsFullscreen();
 
@@ -1883,6 +1904,17 @@ blink::WebScreenInfo WebView::GetScreenInfo() const {
 }
 
 gfx::Rect WebView::GetViewBoundsPix() const {
+  if (IsFullscreen()) {
+    // If we're in fullscreen mode, return the screen size rather than the
+    // view bounds. This works around an issue where buggy Flash content
+    // expects the view to resize synchronously when it goes fullscreen, but it
+    // happens asynchronously instead.
+    // See https://launchpad.net/bugs/1510508
+    // XXX: Obviously, this means we assume that we do occupy the full screen
+    //  when the browser grants us fullscreen. If that's not the case, then
+    //  this is going to break
+    return GetScreenInfo().rect;
+  }
   return client_->GetViewBoundsPix();
 }
 

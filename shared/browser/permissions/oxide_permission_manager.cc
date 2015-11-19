@@ -201,6 +201,29 @@ int PermissionManager::RequestPermission(
   return request_id;
 }
 
+int PermissionManager::RequestPermissions(
+    const std::vector<content::PermissionType>& permissions,
+    content::RenderFrameHost* render_frame_host,
+    const GURL& requesting_origin,
+    bool user_gesture,
+    const base::Callback<void(
+        const std::vector<content::PermissionStatus>&)>& callback) {
+  NOTIMPLEMENTED();
+
+  std::vector<content::PermissionStatus> result(permissions.size());
+  const GURL& embedding_origin =
+      content::WebContents::FromRenderFrameHost(render_frame_host)
+          ->GetLastCommittedURL().GetOrigin();
+
+  for (content::PermissionType type : permissions) {
+    result.push_back(GetPermissionStatus(
+        type, requesting_origin, embedding_origin));
+  }
+
+  callback.Run(result);
+  return kNoPendingOperation;
+}
+
 void PermissionManager::CancelPermissionRequest(int request_id) {
   RequestData* data = requests_.Lookup(request_id);
 
