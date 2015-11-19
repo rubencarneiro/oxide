@@ -78,6 +78,7 @@ class TouchEventState : public ui::MotionEvent {
   float GetTouchMinor(size_t pointer_index) const override;
   float GetOrientation(size_t pointer_index) const override;
   float GetPressure(size_t pointer_index) const override;
+  float GetTilt(size_t pointer_index) const override;
   base::TimeTicks GetEventTime() const override;
   size_t GetHistorySize() const override;
   base::TimeTicks GetHistoricalEventTime(

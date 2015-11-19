@@ -19,6 +19,7 @@
 
 import base64
 import hashlib
+import json
 import os
 import os.path
 import re
@@ -27,7 +28,12 @@ from subprocess import Popen, CalledProcessError, PIPE
 import tempfile
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-CHROMIUMSRCDIR = os.path.join(TOPSRCDIR, "third_party", "chromium", "src")
+CHROMIUMDIR = os.path.join(TOPSRCDIR, "third_party", "chromium")
+CHROMIUMSRCDIR_REL = "src"
+CHROMIUMSRCDIR = os.path.join(CHROMIUMDIR, CHROMIUMSRCDIR_REL)
+DEPOTTOOLSDIR = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
+
+CHECKOUT_CONFIG = os.path.join(TOPSRCDIR, "checkout.conf")
 
 class VersionFileParserError(Exception):
   pass
@@ -112,7 +118,9 @@ def GetFileChecksum(file):
 
 def CheckCall(args, cwd=None, quiet=False):
   with open(os.devnull, "w") as devnull:
-    p = Popen(args, cwd=cwd, stdout = devnull if quiet == True else None)
+    p = Popen(args, cwd=cwd,
+              stdout = devnull if quiet == True else None,
+              stderr = devnull if quiet == True else None)
     r = p.wait()
     if r is not 0: raise CalledProcessError(r, args)
 
@@ -135,3 +143,12 @@ class ScopedTmpdir:
 
   def __exit__(self, type, value, traceback):
     shutil.rmtree(self._tmpdir)
+
+def LoadJsonFromPath(path, throw_on_failure = True):
+  try:
+    with open(path, "r") as fd:
+      return json.load(fd)
+  except:
+    if throw_on_failure:
+      raise
+  return {}

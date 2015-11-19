@@ -270,6 +270,14 @@ void RenderWidgetHostView::ClearCompositorFrame() {
   DestroyDelegatedContent();
 }
 
+void RenderWidgetHostView::ProcessAckedTouchEvent(
+    const content::TouchEventWithLatencyInfo& touch,
+    content::InputEventAckState ack_result) {
+  gesture_provider_->OnTouchEventAck(
+      touch.event.uniqueTouchEventId,
+      ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
@@ -338,9 +346,9 @@ void RenderWidgetHostView::CopyFromCompositingSurface(
 void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
     const gfx::Rect& src_subrect,
     const scoped_refptr<media::VideoFrame>& target,
-    const base::Callback<void(bool)>& callback) {
+    const base::Callback<void(const gfx::Rect&, bool)>& callback) {
   NOTIMPLEMENTED();
-  callback.Run(false);
+  callback.Run(gfx::Rect(), false);
 }
 
 bool RenderWidgetHostView::CanCopyToVideoFrame() const {
@@ -377,12 +385,12 @@ void RenderWidgetHostView::ShowDisambiguationPopup(
     const gfx::Rect& rect_pixels,
     const SkBitmap& zoomed_bitmap) {}
 
-void RenderWidgetHostView::ProcessAckedTouchEvent(
-    const content::TouchEventWithLatencyInfo& touch,
-    content::InputEventAckState ack_result) {
-  gesture_provider_->OnTouchEventAck(
-      touch.event.uniqueTouchEventId,
-      ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
+void RenderWidgetHostView::LockCompositingSurface() {
+  NOTIMPLEMENTED();
+}
+
+void RenderWidgetHostView::UnlockCompositingSurface() {
+  NOTIMPLEMENTED();
 }
 
 void RenderWidgetHostView::ImeCompositionRangeChanged(

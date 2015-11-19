@@ -27,7 +27,7 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
-from oxide_utils import (
+from utils import (
   CHROMIUMSRCDIR,
   TOPSRCDIR,
   CheckCall,

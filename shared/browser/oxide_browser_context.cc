@@ -419,17 +419,17 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       FROM_HERE,
       base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
 
-  net::HttpCache::BackendFactory* cache_backend = nullptr;
+  scoped_ptr<net::HttpCache::BackendFactory> cache_backend;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
-    cache_backend = new net::HttpCache::DefaultBackend(
+    cache_backend.reset(new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
           net::CACHE_BACKEND_SIMPLE,
           GetCachePath().Append(kCacheDirname2),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
-              content::BrowserThread::CACHE));
+              content::BrowserThread::CACHE)));
   }
 
   net::HttpNetworkSession::Params session_params;
@@ -456,7 +456,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
         make_scoped_ptr(new net::HttpCache(http_network_session_.get(),
-                                           cache_backend,
+                                           cache_backend.Pass(),
                                            true)));
   }
 
