@@ -23,11 +23,11 @@
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/delegated_frame_provider.h"
 #include "cc/layers/delegated_renderer_layer.h"
+#include "cc/layers/layer_settings.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
-#include "cc/trees/layer_tree_settings.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -200,7 +200,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   ack_callbacks_.push(ack_callback);
 
   float device_scale_factor = frame->metadata.device_scale_factor;
-  cc::RenderPass* root_pass = frame_data->render_pass_list.back();
+  cc::RenderPass* root_pass = frame_data->render_pass_list.back().get();
 
   gfx::Size frame_size = root_pass->output_rect.size();
   gfx::Size frame_size_dip = gfx::Size(
