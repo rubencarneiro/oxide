@@ -36,6 +36,7 @@ class TouchHandleDrawableDelegateContext : public QObject {
   Q_PROPERTY(OxideQQuickTouchSelectionController::Orientation orientation READ orientation NOTIFY orientationChanged FINAL)
   Q_PROPERTY(bool mirrorVertical READ mirrorVertical NOTIFY mirrorVerticalChanged FINAL)
   Q_PROPERTY(bool mirrorHorizontal READ mirrorHorizontal NOTIFY mirrorHorizontalChanged FINAL)
+  Q_PROPERTY(qreal horizontalPaddingRatio READ horizontalPaddingRatio WRITE setHorizontalPaddingRatio NOTIFY horizontalPaddingRatioChanged)
 
  public:
   virtual ~TouchHandleDrawableDelegateContext() {}
@@ -51,21 +52,27 @@ class TouchHandleDrawableDelegateContext : public QObject {
   bool mirrorHorizontal() const;
   void setMirrorHorizontal(bool mirror);
 
+  qreal horizontalPaddingRatio() const;
+  void setHorizontalPaddingRatio(qreal ratio);
+
  Q_SIGNALS:
   void orientationChanged() const;
   void mirrorVerticalChanged() const;
   void mirrorHorizontalChanged() const;
+  void horizontalPaddingRatioChanged() const;
 
  private:
   OxideQQuickTouchSelectionController::Orientation orientation_;
   bool mirror_vertical_;
   bool mirror_horizontal_;
+  qreal horizontal_padding_ratio_;
 };
 
 TouchHandleDrawableDelegateContext::TouchHandleDrawableDelegateContext()
     : orientation_(OxideQQuickTouchSelectionController::OrientationUndefined)
     , mirror_vertical_(false)
-    , mirror_horizontal_(false) {}
+    , mirror_horizontal_(false)
+    , horizontal_padding_ratio_(0.0) {}
 
 OxideQQuickTouchSelectionController::Orientation
 TouchHandleDrawableDelegateContext::orientation() const {
@@ -102,6 +109,19 @@ void TouchHandleDrawableDelegateContext::setMirrorHorizontal(bool mirror) {
   }
 }
 
+qreal TouchHandleDrawableDelegateContext::horizontalPaddingRatio() const {
+  return horizontal_padding_ratio_;
+}
+
+void TouchHandleDrawableDelegateContext::setHorizontalPaddingRatio(
+    qreal ratio) {
+  qreal bound = qBound(0.0, ratio, 1.0);
+  if (horizontal_padding_ratio_ != bound) {
+    horizontal_padding_ratio_ = bound;
+    Q_EMIT horizontalPaddingRatioChanged();
+  }
+}
+
 TouchHandleDrawableDelegate::~TouchHandleDrawableDelegate() {}
 
 void TouchHandleDrawableDelegate::SetEnabled(bool enabled) {
@@ -115,7 +135,8 @@ void TouchHandleDrawableDelegate::SetOrientation(Orientation orientation,
                                                  bool mirror_horizontal) {
   if (!context_.isNull()) {
     TouchHandleDrawableDelegateContext* context =
-        qobject_cast<TouchHandleDrawableDelegateContext*>(context_->contextObject());
+        qobject_cast<TouchHandleDrawableDelegateContext*>(
+            context_->contextObject());
     if (context) {
       OxideQQuickTouchSelectionController::Orientation o;
       switch (orientation) {
@@ -163,7 +184,14 @@ QRectF TouchHandleDrawableDelegate::GetVisibleBounds() const {
 }
 
 float TouchHandleDrawableDelegate::GetDrawableHorizontalPaddingRatio() const {
-  return 0.0f;
+  if (context_.isNull()) {
+    return 0.0f;
+  }
+
+  TouchHandleDrawableDelegateContext* context =
+      qobject_cast<TouchHandleDrawableDelegateContext*>(
+          context_->contextObject());
+  return context->horizontalPaddingRatio();
 }
 
 void TouchHandleDrawableDelegate::instantiateComponent() {
