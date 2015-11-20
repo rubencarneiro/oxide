@@ -326,7 +326,7 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
 bool OxideQQuickWebViewPrivate::HasFocus() const {
   Q_Q(const OxideQQuickWebView);
 
-  return q->hasActiveFocus();
+  return q->hasActiveFocus() && (q->window() ? q->window()->isActive() : false);
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
