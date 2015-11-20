@@ -25,12 +25,12 @@ namespace oxide {
 
 namespace {
 
-class VibrationManagerOxideImpl : public device::VibrationManager {
+class NullVibrationManager : public device::VibrationManager {
  public:
-  explicit VibrationManagerOxideImpl(
+  explicit NullVibrationManager(
       mojo::InterfaceRequest<device::VibrationManager> request)
       : binding_(this, request.Pass()) {}
-  ~VibrationManagerOxideImpl() override {}
+  ~NullVibrationManager() override {}
 
   void Vibrate(int64 milliseconds) override {}
   void Cancel() override {}
@@ -46,12 +46,10 @@ VibrationManagerOxideFactory g_vibration_manager_factory =
 
 void CreateVibrationManager(
       mojo::InterfaceRequest<device::VibrationManager> request) {
-  DLOG(ERROR) << "Vibate 22 ";
   if (g_vibration_manager_factory) {
     g_vibration_manager_factory(request.Pass());
-  }
-  else {
-    new VibrationManagerOxideImpl(request.Pass());
+  } else {
+    new NullVibrationManager(request.Pass());
   }
 }
 
