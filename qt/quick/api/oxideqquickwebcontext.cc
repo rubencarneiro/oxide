@@ -31,7 +31,6 @@
 #include <QWeakPointer>
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
-#include "qt/core/api/oxideqstoragepermissionrequest.h"
 #include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickcookiemanager_p.h"
@@ -124,14 +123,11 @@ class WebContextIODelegate : public oxide::qt::WebContextProxyClient::IOClient {
   void OnBeforeURLRequest(OxideQBeforeURLRequestEvent* event) override;
   void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) override;
   void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) override;
-  void HandleStoragePermissionRequest(
-      OxideQStoragePermissionRequest* req) override;
   QString GetUserAgentOverride(const QUrl& url) override;
 
   QMutex lock;
 
   QWeakPointer<IOThreadController> network_request_delegate;
-  QWeakPointer<IOThreadController> storage_access_permission_delegate;
   QWeakPointer<IOThreadController> user_agent_override_delegate;
 };
 
@@ -177,20 +173,6 @@ void WebContextIODelegate::OnBeforeRedirect(
   emit delegate->CallEntryPointInWorker("onBeforeRedirect", event);
 }
 
-void WebContextIODelegate::HandleStoragePermissionRequest(
-    OxideQStoragePermissionRequest* req) {
-  QSharedPointer<IOThreadController> delegate;
-  {
-    QMutexLocker locker(&lock);
-    delegate = storage_access_permission_delegate.toStrongRef();
-  }
-  if (!delegate) {
-    return;
-  }
-
-  delegate->CallEntryPointInWorker("onStoragePermissionRequest", req);
-}
-
 QString WebContextIODelegate::GetUserAgentOverride(const QUrl& url) {
   QSharedPointer<IOThreadController> delegate;
   {
@@ -224,7 +206,7 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
       network_request_delegate_(nullptr),
-      storage_access_permission_delegate_(nullptr),
+      unused_storage_access_permission_delegate_(nullptr),
       user_agent_override_delegate_(nullptr),
       cookie_manager_(nullptr) {}
 
@@ -471,7 +453,7 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
   // These call back in to us when destroyed, so delete them now in order
   // to avoid a reentrancy crash
   delete d->network_request_delegate_;
-  delete d->storage_access_permission_delegate_;
+  delete d->unused_storage_access_permission_delegate_;
   delete d->user_agent_override_delegate_;
 }
 
@@ -817,14 +799,14 @@ OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::storageAccessPermissionDelegate() const {
   Q_D(const OxideQQuickWebContext);
 
-  return d->storage_access_permission_delegate_;
+  return d->unused_storage_access_permission_delegate_;
 }
 
 void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
     OxideQQuickWebContextDelegateWorker* delegate) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->storage_access_permission_delegate_ == delegate) {
+  if (d->unused_storage_access_permission_delegate_ == delegate) {
     return;
   }
 
@@ -832,18 +814,13 @@ void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
     return;
   }
 
-  QSharedPointer<webcontextdelegateworker::IOThreadController> io_delegate;
-  if (delegate) {
-    io_delegate = OxideQQuickWebContextDelegateWorkerPrivate::get(
-        delegate)->io_thread_controller();
-  }
+  qWarning() <<
+      "OxideQQuickWebContext::storageAccessPermissionDelegate is deprecated "
+      "and no longer works";
 
-  OxideQQuickWebContextDelegateWorker* old = d->storage_access_permission_delegate_;
-  d->storage_access_permission_delegate_ = delegate;
-  {
-    QMutexLocker lock(&d->io_->lock);
-    d->io_->storage_access_permission_delegate = io_delegate.toWeakRef();
-  }
+  OxideQQuickWebContextDelegateWorker* old =
+      d->unused_storage_access_permission_delegate_;
+  d->unused_storage_access_permission_delegate_ = delegate;
 
   d->detachedDelegateWorker(old);
 
