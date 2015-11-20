@@ -53,7 +53,7 @@ void VideoCaptureDeviceHybris::OnPreviewTextureNeedsUpdateCallback(
 
 void VideoCaptureDeviceHybris::OnError() {
   // XXX: Can we get any more information about the error?
-  client_->OnError("Error from Hybris");
+  client_->OnError(FROM_HERE, "Error from Hybris");
 }
 
 void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
@@ -88,7 +88,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   task_runner_ = base::ThreadTaskRunnerHandle::Get();
 
   if (gfx::GetGLImplementation() != gfx::kGLImplementationEGLGLES2) {
-    client_->OnError("Unsupported GL implementation");
+    client_->OnError(FROM_HERE, "Unsupported GL implementation");
     return;
   }
 
@@ -102,7 +102,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
 
   camera_control_ = android_camera_connect_to(type_, listener_.get());
   if (!camera_control_) {
-    client_->OnError("Couldn't create camera for specified type");
+    client_->OnError(FROM_HERE, "Couldn't create camera for specified type");
     return;
   }
 
@@ -123,7 +123,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
                                                 gl_surface_.get(),
                                                 gfx::PreferIntegratedGpu);
   if (!gl_context_) {
-    client_->OnError("Failed to create GL context");
+    client_->OnError(FROM_HERE, "Failed to create GL context");
     return;
   }
   gl_context_->MakeCurrent(gl_surface_.get());
