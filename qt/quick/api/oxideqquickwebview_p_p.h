@@ -142,7 +142,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void ContentBlocked() override;
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
-  void UpdateTargetURL(const QUrl& url) override;
+  void TargetURLChanged() override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();
@@ -196,8 +196,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
-
-  QUrl hovered_url_;
 
   bool received_new_compositor_frame_;
   bool frame_evicted_;

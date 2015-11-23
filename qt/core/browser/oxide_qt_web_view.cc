@@ -873,8 +873,8 @@ void WebView::CloseRequested() {
   client_->CloseRequested();
 }
 
-void WebView::UpdateTargetURL(const GURL& url) {
-  client_->UpdateTargetURL(QUrl(QString::fromStdString(url.spec())));
+void WebView::TargetURLChanged() {
+  client_->TargetURLChanged();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1360,6 +1360,10 @@ void WebView::executeEditingCommand(EditingCommands command) const {
     default:
       NOTREACHED();
   }
+}
+
+QUrl WebView::targetUrl() const {
+  return QUrl(QString::fromStdString(view_->target_url().spec()));
 }
 
 void WebView::teardownFrameTree() {

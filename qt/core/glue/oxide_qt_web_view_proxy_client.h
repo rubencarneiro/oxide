@@ -40,7 +40,6 @@ class QKeyEvent;
 class QObject;
 class QScreen;
 class QString;
-class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -151,7 +150,7 @@ class WebViewProxyClient {
   virtual void PrepareToCloseResponse(bool proceed) = 0;
   virtual void CloseRequested() = 0;
 
-  virtual void UpdateTargetURL(const QUrl& url) = 0;
+  virtual void TargetURLChanged() = 0;
 };
 
 } // namespace qt

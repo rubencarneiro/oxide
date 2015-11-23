@@ -147,7 +147,7 @@ void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}
 
 void WebViewClient::CloseRequested() {}
 
-void WebViewClient::UpdateTargetURL(const GURL& url) {}
+void WebViewClient::TargetURLChanged() {}
 
 void WebViewClient::HttpAuthenticationRequested(
     ResourceDispatcherHostLoginDelegate* login_delegate) {}

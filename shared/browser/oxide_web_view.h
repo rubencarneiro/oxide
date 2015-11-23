@@ -288,6 +288,8 @@ class WebView : public ScriptMessageTarget,
 
   bool CanCreateWindows() const;
 
+  const GURL& target_url() const { return target_url_; }
+
  private:
   WebView(WebViewClient* client);
 
@@ -511,6 +513,8 @@ class WebView : public ScriptMessageTarget,
   bool location_bar_animated_;
 
   RenderWidgetHostID interstitial_rwh_id_;
+
+  GURL target_url_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

@@ -788,7 +788,10 @@ void WebView::CloseContents(content::WebContents* source) {
 void WebView::UpdateTargetURL(content::WebContents* source, const GURL& url) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  client_->UpdateTargetURL(url);
+  if (url != target_url_) {
+    target_url_ = url;
+    client_->TargetURLChanged();
+  }
 }
 
 bool WebView::AddMessageToConsole(content::WebContents* source,
