@@ -636,6 +636,12 @@ void OxideQQuickWebViewPrivate::CloseRequested() {
   emit q->closeRequested();
 }
 
+void OxideQQuickWebViewPrivate::TargetURLChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->hoveredUrlChanged();
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -2066,6 +2072,16 @@ OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() cons
   }
 
   return static_cast<WebProcessStatus>(d->proxy()->webProcessStatus());
+}
+
+QUrl OxideQQuickWebView::hoveredUrl() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return QUrl();
+  }
+
+  return d->proxy()->targetUrl();
 }
 
 // static
