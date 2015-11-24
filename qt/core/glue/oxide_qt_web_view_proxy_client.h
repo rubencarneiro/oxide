@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
-#include <QUrl>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
@@ -150,6 +149,8 @@ class WebViewProxyClient {
 
   virtual void PrepareToCloseResponse(bool proceed) = 0;
   virtual void CloseRequested() = 0;
+
+  virtual void TargetURLChanged() = 0;
 };
 
 } // namespace qt

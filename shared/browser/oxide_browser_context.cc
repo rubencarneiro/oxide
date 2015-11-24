@@ -517,16 +517,6 @@ content::ResourceContext* BrowserContextIOData::GetResourceContext() {
 bool BrowserContextIOData::CanAccessCookies(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write) {
-  scoped_refptr<BrowserContextDelegate> delegate(GetDelegate());
-  if (delegate.get()) {
-    StoragePermission res =
-        delegate->CanAccessStorage(url, first_party_url, write,
-                                   STORAGE_TYPE_COOKIES);
-    if (res != STORAGE_PERMISSION_UNDEFINED) {
-      return res == STORAGE_PERMISSION_ALLOW;
-    }
-  }
-
   net::StaticCookiePolicy policy(GetCookiePolicy());
   if (write) {
     return policy.CanSetCookie(url, first_party_url) == net::OK;

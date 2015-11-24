@@ -326,7 +326,7 @@ bool OxideQQuickWebViewPrivate::IsVisible() const {
 bool OxideQQuickWebViewPrivate::HasFocus() const {
   Q_Q(const OxideQQuickWebView);
 
-  return q->hasActiveFocus();
+  return q->hasActiveFocus() && (q->window() ? q->window()->isActive() : false);
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
@@ -634,6 +634,12 @@ void OxideQQuickWebViewPrivate::CloseRequested() {
   Q_Q(OxideQQuickWebView);
 
   emit q->closeRequested();
+}
+
+void OxideQQuickWebViewPrivate::TargetURLChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->hoveredUrlChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -2066,6 +2072,16 @@ OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() cons
   }
 
   return static_cast<WebProcessStatus>(d->proxy()->webProcessStatus());
+}
+
+QUrl OxideQQuickWebView::hoveredUrl() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return QUrl();
+  }
+
+  return d->proxy()->targetUrl();
 }
 
 // static
