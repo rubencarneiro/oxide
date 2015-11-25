@@ -47,12 +47,10 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
 
  private:
   static void OnMsgErrorCallback(void* context);
-  static void OnDataRawImageCallback(void* data, uint32_t size, void* context);
-  static void OnPreviewTextureNeedsUpdateCallback(void* context);
+  static void OnPreviewFrameCallback(void* data, uint32_t size, void* context);
 
   void OnError();
   void OnFrameAvailable(void* data, uint32_t size);
-  void OnPreviewTextureNeedsUpdate();
 
   // media::VideoCaptureDevice implementation
   void AllocateAndStart(const media::VideoCaptureParams& params,

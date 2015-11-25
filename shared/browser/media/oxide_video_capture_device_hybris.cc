@@ -31,24 +31,21 @@
 
 namespace oxide {
 
+namespace {
+void DummyOnPreviewTextureNeedsUpdateCallback(void* context) {}
+}
+
 // static
 void VideoCaptureDeviceHybris::OnMsgErrorCallback(void* context) {
   reinterpret_cast<VideoCaptureDeviceHybris*>(context)->OnError();
 }
 
 // static
-void VideoCaptureDeviceHybris::OnDataRawImageCallback(void* data,
+void VideoCaptureDeviceHybris::OnPreviewFrameCallback(void* data,
                                                       uint32_t size,
                                                       void* context) {
   reinterpret_cast<VideoCaptureDeviceHybris*>(context)
       ->OnFrameAvailable(data, size);
-}
-
-// static
-void VideoCaptureDeviceHybris::OnPreviewTextureNeedsUpdateCallback(
-    void* context) {
-  reinterpret_cast<VideoCaptureDeviceHybris*>(context)
-      ->OnPreviewTextureNeedsUpdate();
 }
 
 void VideoCaptureDeviceHybris::OnError() {
@@ -57,24 +54,11 @@ void VideoCaptureDeviceHybris::OnError() {
 }
 
 void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
-  printf("OnFrameAvailable\n");
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
                                   0,
                                   base::TimeTicks::Now());
-}
-
-void DoUpdate(CameraControl* control) {
-  android_camera_update_preview_texture(control);
-}
-
-void VideoCaptureDeviceHybris::OnPreviewTextureNeedsUpdate() {
-  printf("OnPreviewTextureNeedsUpdate\n");
-  // FIXME: THIS IS NOT SAFE (we don't ensure CameraControl stays alive).
-  //  This is just here to get frame notifications from the camera
-  task_runner_->PostTask(FROM_HERE,
-                         base::Bind(&DoUpdate, camera_control_));
 }
 
 void VideoCaptureDeviceHybris::AllocateAndStart(
@@ -96,9 +80,9 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   memset(listener_.get(), 0, sizeof(CameraControlListener));
   listener_->context = this;
   listener_->on_msg_error_cb = &OnMsgErrorCallback;
-  listener_->on_data_raw_image_cb = &OnDataRawImageCallback;
   listener_->on_preview_texture_needs_update_cb =
-      &OnPreviewTextureNeedsUpdateCallback;
+      &DummyOnPreviewTextureNeedsUpdateCallback;
+  listener_->on_preview_frame_cb = &OnPreviewFrameCallback;
 
   camera_control_ = android_camera_connect_to(type_, listener_.get());
   if (!camera_control_) {
@@ -106,15 +90,17 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
     return;
   }
 
+  android_camera_set_preview_callback_mode(camera_control_,
+                                           PREVIEW_CALLBACK_ENABLED);
+
   android_camera_set_preview_size(camera_control_,
                                   params.requested_format.frame_size.width(),
                                   params.requested_format.frame_size.height());
   android_camera_set_preview_fps(
       camera_control_,
       static_cast<int>(params.requested_format.frame_rate));
-  // FIXME: Export this from libhybris
-  //android_camera_set_preview_format(camera_control_,
-  //                                  CAMERA_PIXEL_FORMAT_YUV420P);      
+  android_camera_set_preview_format(camera_control_,
+                                    CAMERA_PIXEL_FORMAT_YUV420P);      
 
   // XXX: Not sure if we need to give the Hybris compat layer a texture. We're
   // not actually using it in Oxide
@@ -128,16 +114,6 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   }
   gl_context_->MakeCurrent(gl_surface_.get());
   glGenTextures(1, &preview_texture_);
-  //glBindTexture(GL_TEXTURE_EXTERNAL_OES, preview_texture_);
-  //glTexParameterf(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  //glTexParameterf(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  //glTexParameteri(GL_TEXTURE_EXTERNAL_OES,
-  //                GL_TEXTURE_WRAP_S,
-  //                GL_CLAMP_TO_EDGE);
-  //glTexParameteri(GL_TEXTURE_EXTERNAL_OES,
-  //                GL_TEXTURE_WRAP_T,
-  //                GL_CLAMP_TO_EDGE);
-
   android_camera_set_preview_texture(camera_control_, preview_texture_);
 
   int width = 0;
@@ -160,10 +136,7 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
   if (camera_control_) {
     android_camera_stop_preview(camera_control_);
     android_camera_disconnect(camera_control_);
-    // FIXME: This deletes a reference counted object in the Hybris
-    // compatibility layer, and results in a crash when creating a new
-    // CameraControl
-    //android_camera_delete(camera_control_);
+    android_camera_delete(camera_control_);
     camera_control_ = nullptr;
   }
 

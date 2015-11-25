@@ -29,6 +29,8 @@
 #include "base/bind.h"
 #include "base/callback.h"
 
+#include "shared/browser/oxide_android_properties.h"
+
 #include "oxide_video_capture_device_hybris.h"
 #endif
 
@@ -62,14 +64,6 @@ const char* GetDeviceIdFromCameraType(CameraType type) {
   return "";
 }
 
-bool IsHybrisDeviceName(const media::VideoCaptureDevice::Name& name) {
-  if (name.id() == "HybrisRear" || name.id() == "HybrisFront") {
-    return true;
-  }
-
-  return false;
-}
-
 CameraType GetCameraTypeFromDeviceName(
     const media::VideoCaptureDevice::Name& name) {
   if (name.id() == "HybrisRear") {
@@ -96,8 +90,8 @@ scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
       new media::VideoCaptureDevice::Names());
 
   static const CameraType types[] = {
-    BACK_FACING_CAMERA_TYPE,
-    FRONT_FACING_CAMERA_TYPE
+    FRONT_FACING_CAMERA_TYPE,
+    BACK_FACING_CAMERA_TYPE
   };
 
   for (size_t i = 0; i < arraysize(types); ++i) {
@@ -108,10 +102,7 @@ scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
     }
 
     android_camera_disconnect(control);
-    // FIXME: This deletes a reference counted object in the Hybris
-    // compatibility layer, and results in a crash when creating a new
-    // CameraControl
-    //android_camera_delete(control);
+    android_camera_delete(control);
 
     names->push_back(
         media::VideoCaptureDevice::Name(
@@ -133,44 +124,23 @@ bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
       }) != names->end();
 }
 
-void RespondToEnumerateDeviceNames(
-    const EnumerateDevicesCallback& callback,
-    media::VideoCaptureDevice::Names* hybris_names,
-    scoped_ptr<media::VideoCaptureDevice::Names> names) {
-  if (hybris_names) {
-    for (const auto& hybris_name : *hybris_names) {
-      if (IsDeviceNameIn(hybris_name, names.get())) {
-        LOG(ERROR) <<
-            "A capture device with the ID \"" << hybris_name.id() <<
-            "\" was produced by both the default backend and from Hybris. "
-            "This is not supported";
-        continue;
-      }
-
-      names->push_back(hybris_name);
-    }
-  }
-
-  callback.Run(names.Pass());
-}
-
 #endif
 
 }
 
 scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
-  if (!IsHybrisDeviceName(device_name)) {
+  if (!AndroidProperties::GetInstance()->Available()) {
     return delegate_->Create(device_name);
   }
 
-  scoped_ptr<media::VideoCaptureDevice::Names> hybris_names =
+  scoped_ptr<media::VideoCaptureDevice::Names> names =
       GetDeviceNamesFromHybris();
-  if (!hybris_names) {
+  if (!names) {
     return nullptr;
   }
 
-  if (!IsDeviceNameIn(device_name, hybris_names.get())) {
+  if (!IsDeviceNameIn(device_name, names.get())) {
     return nullptr;
   }
 
@@ -180,23 +150,26 @@ scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
 
 void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
     const EnumerateDevicesCallback& callback) {
-  EnumerateDevicesCallback local_callback = callback;
 #if defined(ENABLE_HYBRIS)
-  scoped_ptr<media::VideoCaptureDevice::Names> names =
-      GetDeviceNamesFromHybris();
-  local_callback = base::Bind(RespondToEnumerateDeviceNames,
-                              local_callback,
-                              base::Owned(names.release()));
+  if (AndroidProperties::GetInstance()->Available()) {
+    scoped_ptr<media::VideoCaptureDevice::Names> names =
+        GetDeviceNamesFromHybris();
+    callback.Run(names.Pass());
+  } else
 #endif
-  delegate_->EnumerateDeviceNames(local_callback);
+  {
+    delegate_->EnumerateDeviceNames(callback);
+  }
 }
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
     const media::VideoCaptureDevice::Name& device,
     media::VideoCaptureFormats* supported_formats) {
-  if (!IsHybrisDeviceName(device)) {
-    delegate_->GetDeviceSupportedFormats(device, supported_formats);
+  if (AndroidProperties::GetInstance()->Available()) {
+    return;
   }
+
+  delegate_->GetDeviceSupportedFormats(device, supported_formats);
 }
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
