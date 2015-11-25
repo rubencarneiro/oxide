@@ -102,8 +102,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   android_camera_set_preview_format(camera_control_,
                                     CAMERA_PIXEL_FORMAT_YUV420P);      
 
-  // XXX: Not sure if we need to give the Hybris compat layer a texture. We're
-  // not actually using it in Oxide
+  // We have to provide a preview texture, even though we aren't using it
   gl_surface_ = gfx::GLSurface::CreateOffscreenGLSurface(gfx::Size(0, 0));
   gl_context_ = gfx::GLContext::CreateGLContext(nullptr,
                                                 gl_surface_.get(),
@@ -126,7 +125,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   capture_format_ =
       media::VideoCaptureFormat(gfx::Size(width, height),
                                 fps,
-                                media::PIXEL_FORMAT_I420,
+                                media::PIXEL_FORMAT_YV12,
                                 media::PIXEL_STORAGE_CPU);
 
   android_camera_start_preview(camera_control_);
