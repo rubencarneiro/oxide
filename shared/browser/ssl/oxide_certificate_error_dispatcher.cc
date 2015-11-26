@@ -99,8 +99,7 @@ void CertificateErrorDispatcher::CreateForWebContents(
 
 // static
 void CertificateErrorDispatcher::AllowCertificateError(
-    int render_process_id,
-    int render_frame_id,
+    content::WebContents* contents,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& request_url,
@@ -115,20 +114,6 @@ void CertificateErrorDispatcher::AllowCertificateError(
   // Note, CANCEL will stop the resource load associated with the error, and
   // DENY will fail it, resulting in an error page being loaded if it's
   // for the document request
-
-  content::RenderFrameHost* rfh =
-      content::RenderFrameHost::FromID(render_process_id, render_frame_id);
-  if (!rfh) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  content::WebContents* contents =
-      content::WebContents::FromRenderFrameHost(rfh);
-  if (!contents) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
 
   CertificateErrorDispatcher* dispatcher = FromWebContents(contents);
 
@@ -156,7 +141,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
       new CertificateErrorProxy(
         overridable ? callback : base::Callback<void(bool)>());
   scoped_ptr<CertificateError> error(
-      new CertificateError(!rfh->GetParent(),
+      new CertificateError(resource_type == content::RESOURCE_TYPE_MAIN_FRAME,
                            !content::IsResourceTypeFrame(resource_type),
                            ToCertError(cert_error, ssl_info.cert.get()),
                            ssl_info.cert.get(),

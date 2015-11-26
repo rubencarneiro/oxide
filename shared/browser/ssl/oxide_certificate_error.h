@@ -48,6 +48,9 @@ class CertificateError {
   ~CertificateError();
 
   // If the error is from the main frame
+  // XXX: Since Chromium 0d32d6d30fec43e2ad159193c65ace6636537b23, this no
+  //  longer works correctly - it will indicate false for subresources in
+  //  the main frame. Consider this property deprecated
   bool is_main_frame() const { return is_main_frame_; }
 
   // Whether the error is for a subresource of the frame
