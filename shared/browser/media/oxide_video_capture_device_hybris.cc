@@ -147,11 +147,13 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
     camera_control_ = nullptr;
   }
 
-  gl_context_->MakeCurrent(gl_surface_.get());
-  glDeleteTextures(1, &preview_texture_);
+  if (gl_context_) {
+    gl_context_->MakeCurrent(gl_surface_.get());
+    glDeleteTextures(1, &preview_texture_);
 
-  gl_context_ = nullptr;
-  gl_surface_ = nullptr;
+    gl_context_ = nullptr;
+    gl_surface_ = nullptr;
+  }
 }
 
 VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
