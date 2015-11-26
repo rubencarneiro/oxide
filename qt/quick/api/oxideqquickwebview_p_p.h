@@ -142,6 +142,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void ContentBlocked() override;
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
+  void TargetURLChanged() override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();

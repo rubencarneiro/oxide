@@ -114,7 +114,7 @@ class Q_DECL_EXPORT OxideQQuickWebContextPrivate
   QSharedPointer<oxide::qquick::WebContextIODelegate> io_;
 
   OxideQQuickWebContextDelegateWorker* network_request_delegate_;
-  OxideQQuickWebContextDelegateWorker* storage_access_permission_delegate_;
+  OxideQQuickWebContextDelegateWorker* unused_storage_access_permission_delegate_;
   OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
 
   mutable OxideQQuickCookieManager* cookie_manager_;
