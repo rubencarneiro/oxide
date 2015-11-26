@@ -22,6 +22,7 @@
 
 #include "base/logging.h"
 #include "base/single_thread_task_runner.h"
+#include "base/strings/stringprintf.h"
 #include "base/thread_task_runner_handle.h"
 #include "media/base/video_types.h"
 #include "ui/gl/gl_bindings.h"
@@ -84,7 +85,14 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
       &DummyOnPreviewTextureNeedsUpdateCallback;
   listener_->on_preview_frame_cb = &OnPreviewFrameCallback;
 
-  camera_control_ = android_camera_connect_to(type_, listener_.get());
+  std::string device_id_format =
+      base::StringPrintf("%s%%d", GetDeviceIdPrefix());
+  int32_t camera_id = -1;
+  CHECK_EQ(
+      sscanf(device_name_.id().c_str(), device_id_format.c_str(), &camera_id),
+      1);
+
+  camera_control_ = android_camera_connect_by_id(camera_id, listener_.get());
   if (!camera_control_) {
     client_->OnError(FROM_HERE, "Couldn't create camera for specified type");
     return;
@@ -146,8 +154,8 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
   gl_surface_ = nullptr;
 }
 
-VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(CameraType type)
-    : type_(type),
+VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
+    : device_name_(device_name),
       camera_control_(nullptr) {}
 
 VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {
@@ -157,6 +165,11 @@ VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {
   // about to delete it now. If Hybris doesn't provide a guarantee that the
   // listener will never be called once we're disconnected (and any in-progress
   // notification will have returned), then this is unsafe
+}
+
+// static
+const char* VideoCaptureDeviceHybris::GetDeviceIdPrefix() {
+  return "Hybris";
 }
 
 } // namespace oxide

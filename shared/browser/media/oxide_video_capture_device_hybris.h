@@ -42,8 +42,10 @@ namespace oxide {
 
 class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
  public:
-  VideoCaptureDeviceHybris(CameraType type);
+  VideoCaptureDeviceHybris(const Name& device_name);
   ~VideoCaptureDeviceHybris() override;
+
+  static const char* GetDeviceIdPrefix();
 
  private:
   static void OnMsgErrorCallback(void* context);
@@ -57,7 +59,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
                         scoped_ptr<Client> client) override;
   void StopAndDeAllocate() override;
 
-  CameraType type_;
+  Name device_name_;
 
   scoped_ptr<Client> client_;
 

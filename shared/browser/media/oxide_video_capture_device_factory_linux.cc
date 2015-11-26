@@ -28,6 +28,7 @@
 
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/strings/stringprintf.h"
 
 #include "shared/browser/oxide_android_properties.h"
 
@@ -52,62 +53,30 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
   return "";
 }
 
-const char* GetDeviceIdFromCameraType(CameraType type) {
-  switch (type) {
-    case BACK_FACING_CAMERA_TYPE:
-      return "HybrisRear";
-    case FRONT_FACING_CAMERA_TYPE:
-      return "HybrisFront";
-  }
-
-  NOTREACHED();
-  return "";
-}
-
-CameraType GetCameraTypeFromDeviceName(
-    const media::VideoCaptureDevice::Name& name) {
-  if (name.id() == "HybrisRear") {
-    return BACK_FACING_CAMERA_TYPE;
-  }
-  if (name.id() == "HybrisFront") {
-    return FRONT_FACING_CAMERA_TYPE;
-  }
-
-  NOTREACHED();
-  return FRONT_FACING_CAMERA_TYPE;
-}
-
 scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
-  // Although hybris provides a way to detect the number of cameras attached,
-  // it provides no way to enumerate these. So we just check for a front or
-  // rear camera
-
-  if (android_camera_get_number_of_devices() == 0) {
-    return nullptr;
-  }
+  int32_t number_of_devices = android_camera_get_number_of_devices();
 
   scoped_ptr<media::VideoCaptureDevice::Names> names(
       new media::VideoCaptureDevice::Names());
 
-  static const CameraType types[] = {
-    FRONT_FACING_CAMERA_TYPE,
-    BACK_FACING_CAMERA_TYPE
-  };
+  for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
+    CameraType type;
+    int orientation;
+    android_camera_get_device_info(camera_id,
+                                   reinterpret_cast<int*>(&type),
+                                   &orientation);
 
-  for (size_t i = 0; i < arraysize(types); ++i) {
-    CameraType type = types[i];
-    CameraControl* control = android_camera_connect_to(type, nullptr);
-    if (!control) {
-      continue;
-    }
-
-    android_camera_disconnect(control);
-    android_camera_delete(control);
+    std::string device_id =
+        base::StringPrintf("%s%d",
+                           VideoCaptureDeviceHybris::GetDeviceIdPrefix(),
+                           camera_id);
 
     names->push_back(
         media::VideoCaptureDevice::Name(
+          // XXX: We should append an integer to this when there are multiple
+          // cameras facing the same direction
           GetDeviceNameFromCameraType(type),
-          GetDeviceIdFromCameraType(type),
+          device_id,
           media::VideoCaptureDevice::Name::API_TYPE_UNKNOWN));
   }
 
@@ -130,6 +99,7 @@ bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
 
 scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
+#if defined(ENABLE_HYBRIS)
   if (!AndroidProperties::GetInstance()->Available()) {
     return delegate_->Create(device_name);
   }
@@ -144,8 +114,10 @@ scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     return nullptr;
   }
 
-  return make_scoped_ptr(
-      new VideoCaptureDeviceHybris(GetCameraTypeFromDeviceName(device_name)));
+  return make_scoped_ptr(new VideoCaptureDeviceHybris(device_name));
+#else
+  return delegate_->Create(device_name);
+#endif
 }
 
 void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
@@ -165,9 +137,11 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
 void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
     const media::VideoCaptureDevice::Name& device,
     media::VideoCaptureFormats* supported_formats) {
+#if defined(ENABLE_HYBRIS)
   if (AndroidProperties::GetInstance()->Available()) {
     return;
   }
+#endif
 
   delegate_->GetDeviceSupportedFormats(device, supported_formats);
 }
