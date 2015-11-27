@@ -30,10 +30,32 @@
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
 
+#include "shared/browser/oxide_browser_platform_integration.h"
+
 namespace oxide {
 
 namespace {
+
 void DummyOnPreviewTextureNeedsUpdateCallback(void* context) {}
+
+int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
+  std::string device_id_format =
+      base::StringPrintf("%s%%d",
+                         VideoCaptureDeviceHybris::GetDeviceIdPrefix());
+  int32_t camera_id = -1;
+  int rv =
+      sscanf(device_name.id().c_str(), device_id_format.c_str(), &camera_id);
+  CHECK_EQ(rv, 1);
+
+  return camera_id;
+}
+
+int GetRotation(int orientation) {
+  blink::WebScreenInfo info =
+      BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+  return (orientation - info.orientationAngle) % 360;
+}
+
 }
 
 // static
@@ -58,7 +80,7 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
-                                  0,
+                                  GetRotation(orientation_),
                                   base::TimeTicks::Now());
 }
 
@@ -85,12 +107,10 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
       &DummyOnPreviewTextureNeedsUpdateCallback;
   listener_->on_preview_frame_cb = &OnPreviewFrameCallback;
 
-  std::string device_id_format =
-      base::StringPrintf("%s%%d", GetDeviceIdPrefix());
-  int32_t camera_id = -1;
-  CHECK_EQ(
-      sscanf(device_name_.id().c_str(), device_id_format.c_str(), &camera_id),
-      1);
+  int32_t camera_id = GetCameraId(device_name_);
+
+  int facing;
+  android_camera_get_device_info(camera_id, &facing, &orientation_);
 
   camera_control_ = android_camera_connect_by_id(camera_id, listener_.get());
   if (!camera_control_) {
@@ -158,6 +178,7 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
 
 VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
     : device_name_(device_name),
+      orientation_(0),
       camera_control_(nullptr) {}
 
 VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {

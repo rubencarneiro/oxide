@@ -61,6 +61,8 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
 
   Name device_name_;
 
+  int orientation_;
+
   scoped_ptr<Client> client_;
 
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;

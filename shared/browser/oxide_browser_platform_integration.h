@@ -76,7 +76,7 @@ class BrowserPlatformIntegration {
   // Called on the UI thread
   virtual intptr_t GetNativeDisplay() = 0;
 
-  // Return information about the default screen. Called on the UI thread
+  // Return information about the default screen. Can be called on any thread
   virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
 
   // Return the shared GL context provided by the application, if one exists.
