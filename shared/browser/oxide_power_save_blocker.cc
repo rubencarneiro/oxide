@@ -254,10 +254,11 @@ void PowerSaveBlocker::ApplicationStateChanged() {
 }
 
 PowerSaveBlocker::PowerSaveBlocker(const std::string& description)
-    : form_factor_(oxide::GetFormFactorHint())
-    , unity_cookie_(kInvalidCookie)
-    , description_(description)
-{}
+    : form_factor_(oxide::GetFormFactorHint()),
+      unity_cookie_(kInvalidCookie),
+      description_(description) {
+  Attach();
+}
 
 content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
     content::PowerSaveBlocker::PowerSaveBlockerType type,

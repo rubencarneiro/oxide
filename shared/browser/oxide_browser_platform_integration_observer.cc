@@ -19,8 +19,14 @@
 
 namespace oxide {
 
-BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver() {
+BrowserPlatformIntegrationObserver::BrowserPlatformIntegrationObserver() {}
+
+void BrowserPlatformIntegrationObserver::Attach() {
   BrowserPlatformIntegration::GetInstance()->AddObserver(this);
+}
+
+void BrowserPlatformIntegrationObserver::Detach() {
+  BrowserPlatformIntegration::GetInstance()->RemoveObserver(this);
 }
 
 BrowserPlatformIntegrationObserver::~BrowserPlatformIntegrationObserver() {

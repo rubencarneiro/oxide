@@ -22,7 +22,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/observer_list.h"
+#include "base/observer_list_threadsafe.h"
 #include "content/public/browser/browser_thread.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
@@ -116,7 +116,9 @@ class BrowserPlatformIntegration {
   void AddObserver(BrowserPlatformIntegrationObserver* observer);
   void RemoveObserver(BrowserPlatformIntegrationObserver* observer);
 
-  base::ObserverList<BrowserPlatformIntegrationObserver> observers_;
+  typedef base::ObserverListThreadSafe<BrowserPlatformIntegrationObserver>
+      BrowserPlatformIntegrationObserverList;
+  const scoped_refptr<BrowserPlatformIntegrationObserverList> observers_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

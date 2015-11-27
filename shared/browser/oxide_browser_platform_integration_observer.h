@@ -30,6 +30,13 @@ class BrowserPlatformIntegrationObserver {
 
  protected:
   BrowserPlatformIntegrationObserver();
+
+  // Attach to the BrowserPlatformIntegration instance. This class will receive
+  // notifications on the calling thread
+  void Attach();
+
+  // Detach from the BrowserPlatformIntegration instance
+  void Detach();
 };
 
 } // namespace oxide

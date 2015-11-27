@@ -61,7 +61,9 @@ void LifecycleObserver::ApplicationStateChanged() {
   BrowserContext::ForEach(base::Bind(&FlushBrowserContext));
 }
 
-LifecycleObserver::LifecycleObserver() {}
+LifecycleObserver::LifecycleObserver() {
+  Attach();
+}
 
 LifecycleObserver::~LifecycleObserver() {}
 
