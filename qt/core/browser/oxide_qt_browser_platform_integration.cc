@@ -104,11 +104,14 @@ bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
 }
 
 bool BrowserPlatformIntegration::IsTouchSupported() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   // XXX: Is there a way to get notified if a touch device is added?
   return QTouchDevice::devices().size() > 0;
 }
 
 intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
   QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
   if (!pni) {
     return 0;
@@ -120,10 +123,12 @@ intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
 }
 
 blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return BrowserStartup::GetInstance()->shared_gl_context();
 }
 
@@ -163,11 +168,12 @@ BrowserPlatformIntegration::CreateLocationProvider() {
 
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return state_;
 }
 
 std::string BrowserPlatformIntegration::GetApplicationName() {
-  return qApp->applicationName().toStdString();
+  return application_name_;
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
@@ -181,16 +187,18 @@ bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
 }
 
 BrowserPlatformIntegration::BrowserPlatformIntegration()
-    : suspended_(false),
+    : application_name_(qApp->applicationName().toStdString()),
+      suspended_(false),
       state_(CalculateApplicationState(false)) {
-  QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(OnApplicationStateChanged()));
+  connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
+          SLOT(OnApplicationStateChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     QGuiApplication::instance()->installEventFilter(this);
   }
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
+  qApp->disconnect(this);
   QGuiApplication::instance()->removeEventFilter(this);
 }
 
