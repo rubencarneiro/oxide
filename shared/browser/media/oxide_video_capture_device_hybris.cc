@@ -50,10 +50,14 @@ int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
   return camera_id;
 }
 
-int GetRotation(int orientation) {
+int GetRotation(int orientation, CameraType position) {
   blink::WebScreenInfo info =
       BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
-  return (orientation - info.orientationAngle) % 360;
+  int screen_orientation =
+      position == BACK_FACING_CAMERA_TYPE ?
+        (360 - info.orientationAngle) :
+        info.orientationAngle;
+  return (orientation - screen_orientation) % 360;
 }
 
 }
@@ -80,7 +84,7 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
-                                  GetRotation(orientation_),
+                                  GetRotation(orientation_, position_),
                                   base::TimeTicks::Now());
 }
 
@@ -109,8 +113,9 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
 
   int32_t camera_id = GetCameraId(device_name_);
 
-  int facing;
-  android_camera_get_device_info(camera_id, &facing, &orientation_);
+  android_camera_get_device_info(camera_id,
+                                 reinterpret_cast<int*>(&position_),
+                                 &orientation_);
 
   camera_control_ = android_camera_connect_by_id(camera_id, listener_.get());
   if (!camera_control_) {
@@ -178,6 +183,7 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
 
 VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
     : device_name_(device_name),
+      position_(BACK_FACING_CAMERA_TYPE),
       orientation_(0),
       camera_control_(nullptr) {}
 

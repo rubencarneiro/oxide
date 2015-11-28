@@ -61,6 +61,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
 
   Name device_name_;
 
+  CameraType position_;
   int orientation_;
 
   scoped_ptr<Client> client_;
