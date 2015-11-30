@@ -32,8 +32,7 @@ BrowserPlatformIntegration* g_instance;
 
 }
 
-BrowserPlatformIntegration::BrowserPlatformIntegration()
-    : observers_(new BrowserPlatformIntegrationObserverList()) {
+BrowserPlatformIntegration::BrowserPlatformIntegration() {
   CHECK(!g_instance)
       << "Can't create more than one BrowserPlatformIntegration instance";
   g_instance = this;
@@ -88,18 +87,18 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
 
 void BrowserPlatformIntegration::AddObserver(
     BrowserPlatformIntegrationObserver* observer) {
-  observers_->AddObserver(observer);
+  observers_.AddObserver(observer);
 }
 
 void BrowserPlatformIntegration::RemoveObserver(
     BrowserPlatformIntegrationObserver* observer) {
-  observers_->RemoveObserver(observer);
+  observers_.RemoveObserver(observer);
 }
 
 void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
-  observers_->Notify(
-      FROM_HERE,
-      &BrowserPlatformIntegrationObserver::ApplicationStateChanged);
+  FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
+                    observers_,
+                    ApplicationStateChanged());
 }
 
 } // namespace oxide
