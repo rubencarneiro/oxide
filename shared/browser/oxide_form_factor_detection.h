@@ -21,9 +21,13 @@
 
 #include "shared/common/oxide_form_factor.h"
 
+namespace gfx {
+class Size;
+}
+
 namespace oxide {
 
-FormFactor DetectFormFactorHint();
+FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size_dip);
 
 } // namespace oxide
 
