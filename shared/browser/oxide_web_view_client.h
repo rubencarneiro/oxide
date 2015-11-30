@@ -192,6 +192,8 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void CloseRequested();
 
+  virtual void TargetURLChanged();
+
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
 };

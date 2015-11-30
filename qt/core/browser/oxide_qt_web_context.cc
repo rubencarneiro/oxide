@@ -47,8 +47,6 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
-#include "qt/core/api/oxideqstoragepermissionrequest.h"
-#include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
@@ -115,10 +113,6 @@ class WebContext::BrowserContextDelegate
                           net::HttpRequestHeaders* headers) override;
   int OnBeforeRedirect(net::URLRequest* request,
                        const GURL& new_location) override;
-  oxide::StoragePermission CanAccessStorage(const GURL& url,
-                                            const GURL& first_party_url,
-                                            bool write,
-                                            oxide::StorageType type) override;
   std::string GetUserAgentOverride(const GURL& url) override;
   bool IsCustomProtocolHandlerRegistered(
       const std::string& scheme) const override;
@@ -278,27 +272,6 @@ int WebContext::BrowserContextDelegate::OnBeforeRedirect(
       OxideQBeforeRedirectEventPrivate::get(&event);
 
   return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
-}
-
-oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
-    const GURL& url,
-    const GURL& first_party_url,
-    bool write,
-    oxide::StorageType type) {
-  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
-  if (!io_client) {
-    return oxide::STORAGE_PERMISSION_UNDEFINED;
-  }
-
-  OxideQStoragePermissionRequest req(
-      QUrl(QString::fromStdString(url.spec())),
-      QUrl(QString::fromStdString(first_party_url.spec())),
-      write,
-      static_cast<OxideQStoragePermissionRequest::Type>(type));
-
-  io_client->HandleStoragePermissionRequest(&req);
-
-  return OxideQStoragePermissionRequestPrivate::get(&req)->permission;
 }
 
 std::string WebContext::BrowserContextDelegate::GetUserAgentOverride(

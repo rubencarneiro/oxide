@@ -110,7 +110,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  DCHECK_IMPLIES(strict_enforcement, !overridable);
+  DCHECK(!strict_enforcement || !overridable);
 
   // Note, CANCEL will stop the resource load associated with the error, and
   // DENY will fail it, resulting in an error page being loaded if it's

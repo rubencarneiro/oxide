@@ -105,7 +105,7 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   result.deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
   QRect rect =
-      screen->mapBetween(screen->primaryOrientation(),
+      screen->mapBetween(Qt::PrimaryOrientation,
                          screen->orientation(),
                          screen->geometry());
   result.rect = blink::WebRect(rect.x(),
@@ -114,7 +114,7 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
                                rect.height());
 
   QRect availableRect =
-      screen->mapBetween(screen->primaryOrientation(),
+      screen->mapBetween(Qt::PrimaryOrientation,
                          screen->orientation(),
                          screen->availableGeometry());
   result.availableRect = blink::WebRect(availableRect.x(),
@@ -126,7 +126,7 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
       GetOrientationTypeFromScreenOrientation(screen->orientation());
   result.orientationAngle =
       screen->angleBetween(screen->orientation(),
-                           screen->primaryOrientation());
+                           Qt::PrimaryOrientation);
 
   return result;
 }

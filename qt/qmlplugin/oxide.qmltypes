@@ -640,6 +640,7 @@ Module {
             isPointer: true
         }
         Property { name: "webProcessStatus"; revision: 4; type: "WebProcessStatus"; isReadonly: true }
+        Property { name: "hoveredUrl"; type: "QUrl"; isReadonly: true }
         Property {
             name: "touchSelectionController"
             revision: 7
@@ -715,6 +716,7 @@ Module {
             revision: 5
             Parameter { name: "request"; type: "QJSValue" }
         }
+        Signal { name: "hoveredUrlChanged"; revision: 7 }
         Signal {
             name: "loadingChanged"
             Parameter { name: "loadEvent"; type: "OxideQLoadEvent" }

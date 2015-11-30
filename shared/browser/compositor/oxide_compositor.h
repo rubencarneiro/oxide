@@ -81,7 +81,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void BeginMainFrame(const cc::BeginFrameArgs& args) final;
   void BeginMainFrameNotExpectedSoon() final;
   void DidBeginMainFrame() final;
-  void Layout() final;
+  void UpdateLayerTreeHost() final;
   void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,
                            const gfx::Vector2dF& outer_delta,
                            const gfx::Vector2dF& elastic_overscroll_delta,

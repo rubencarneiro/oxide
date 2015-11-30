@@ -63,6 +63,14 @@ class BrowserPlatformIntegration : public QObject,
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;
 
+  // QCoreApplication::applicationName() does no locking and QString isn't
+  // thread-safe. As GetApplicationName can be called on any thread, we cache
+  // the app name here. This protects against the case where we call
+  // QCoreApplication::applicationName() off the UI thread whilst the
+  // application is in QCoreApplication::setApplicationName. We don't expect
+  // this to change, so we don't bother listening for updates
+  const std::string application_name_;
+
   // Whether the application is suspended. If the Qt platform is ubuntu,
   // we detect Qt::ApplicationSuspended synthetically because it doesn't
   // set applicatonState accordingly (we get Qt::ApplicationInactive when

@@ -5,3 +5,4 @@ objdir*
 third_party/*
 *.swp
 qt/examples/oxide-test-browser/*.click
+.rebase.state

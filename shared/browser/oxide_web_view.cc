@@ -805,6 +805,15 @@ void WebView::CloseContents(content::WebContents* source) {
   client_->CloseRequested();
 }
 
+void WebView::UpdateTargetURL(content::WebContents* source, const GURL& url) {
+  DCHECK_VALID_SOURCE_CONTENTS
+
+  if (url != target_url_) {
+    target_url_ = url;
+    client_->TargetURLChanged();
+  }
+}
+
 bool WebView::AddMessageToConsole(content::WebContents* source,
                                   int32 level,
                                   const base::string16& message,
@@ -1221,7 +1230,7 @@ WebView::WebView(const Params& params)
   CommonInit(contents.Pass());
 
   if (params.restore_entries.size() > 0) {
-    ScopedVector<content::NavigationEntry> entries =
+    std::vector<scoped_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
             params.restore_entries, context.get());
     web_contents_->GetController().Restore(

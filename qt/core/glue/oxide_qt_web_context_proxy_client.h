@@ -24,7 +24,6 @@
 class OxideQBeforeRedirectEvent;
 class OxideQBeforeSendHeadersEvent;
 class OxideQBeforeURLRequestEvent;
-class OxideQStoragePermissionRequest;
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
@@ -63,8 +62,6 @@ class WebContextProxyClient {
     virtual void OnBeforeSendHeaders(OxideQBeforeSendHeadersEvent* event) = 0;
 
     virtual void OnBeforeRedirect(OxideQBeforeRedirectEvent* event) = 0;
-
-    virtual void HandleStoragePermissionRequest(OxideQStoragePermissionRequest* req) = 0;
 
     virtual QString GetUserAgentOverride(const QUrl& url) = 0;
   };

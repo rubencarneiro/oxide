@@ -231,7 +231,6 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqfindcontroller.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqstoragepermissionrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         'api/oxideqcertificateerror.cc',
         'api/oxideqcertificateerror.h',
@@ -269,9 +268,6 @@
         'api/oxideqsslcertificate.cc',
         'api/oxideqsslcertificate.h',
         'api/oxideqsslcertificate_p.h',
-        'api/oxideqstoragepermissionrequest.cc',
-        'api/oxideqstoragepermissionrequest.h',
-        'api/oxideqstoragepermissionrequest_p.h',
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
@@ -335,11 +331,6 @@
         {
           'action_name': 'moc_oxideqsslcertificate.cc',
           'moc_input': 'api/oxideqsslcertificate.h',
-          'includes': [ 'moc.gypi' ],
-        },
-        {
-          'action_name': 'moc_oxideqstoragepermissionrequest.cc',
-          'moc_input': 'api/oxideqstoragepermissionrequest.h',
           'includes': [ 'moc.gypi' ],
         },
         {

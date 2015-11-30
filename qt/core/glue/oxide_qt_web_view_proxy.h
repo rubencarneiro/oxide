@@ -238,6 +238,8 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void executeEditingCommand(EditingCommands command) const = 0;
 
+  virtual QUrl targetUrl() const = 0;
+
   virtual void teardownFrameTree() = 0;
 };
 
