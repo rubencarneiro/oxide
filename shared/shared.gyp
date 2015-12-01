@@ -627,6 +627,13 @@
           ],
           'dependencies': [
             '../build/system.gyp:android-properties',
+          ],
+        }],
+        ['enable_hybris_camera==1 and enable_hybris==1', {
+          'defines': [
+            'ENABLE_HYBRIS_CAMERA=1',
+          ],
+          'dependencies': [
             '../build/system.gyp:hybris-camera',
           ],
           'sources': [

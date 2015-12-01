@@ -21,7 +21,7 @@
 #include "base/logging.h"
 #include "media/capture/video/video_capture_device.h"
 
-#if defined(ENABLE_HYBRIS)
+#if defined(ENABLE_HYBRIS_CAMERA)
 #include <algorithm>
 #include <hybris/camera/camera_compatibility_layer.h>
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
@@ -39,7 +39,7 @@ namespace oxide {
 
 namespace {
 
-#if defined(ENABLE_HYBRIS)
+#if defined(ENABLE_HYBRIS_CAMERA)
 
 const char* GetDeviceNameFromCameraType(CameraType type) {
   switch (type) {
@@ -99,7 +99,7 @@ bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
 
 scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
-#if defined(ENABLE_HYBRIS)
+#if defined(ENABLE_HYBRIS_CAMERA)
   if (!AndroidProperties::GetInstance()->Available()) {
     return delegate_->Create(device_name);
   }
@@ -122,7 +122,7 @@ scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
 
 void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
     const EnumerateDevicesCallback& callback) {
-#if defined(ENABLE_HYBRIS)
+#if defined(ENABLE_HYBRIS_CAMERA)
   if (AndroidProperties::GetInstance()->Available()) {
     scoped_ptr<media::VideoCaptureDevice::Names> names =
         GetDeviceNamesFromHybris();
@@ -137,7 +137,7 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
 void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
     const media::VideoCaptureDevice::Name& device,
     media::VideoCaptureFormats* supported_formats) {
-#if defined(ENABLE_HYBRIS)
+#if defined(ENABLE_HYBRIS_CAMERA)
   if (AndroidProperties::GetInstance()->Available()) {
     return;
   }
