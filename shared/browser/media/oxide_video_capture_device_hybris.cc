@@ -50,14 +50,10 @@ int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
   return camera_id;
 }
 
-int GetRotation(int orientation, CameraType position) {
+int GetRotation(int orientation) {
   blink::WebScreenInfo info =
       BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
-  int screen_orientation =
-      position == BACK_FACING_CAMERA_TYPE ?
-        (360 - info.orientationAngle) :
-        info.orientationAngle;
-  return (orientation - screen_orientation) % 360;
+  return (orientation - info.orientationAngle) % 360;
 }
 
 }
@@ -84,7 +80,7 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
-                                  GetRotation(orientation_, position_),
+                                  GetRotation(orientation_),
                                   base::TimeTicks::Now());
 }
 
