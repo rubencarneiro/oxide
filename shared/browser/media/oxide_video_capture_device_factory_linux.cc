@@ -54,6 +54,8 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
 }
 
 scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
+  DCHECK(AndroidProperties::GetInstance()->Available());
+
   int32_t number_of_devices = android_camera_get_number_of_devices();
 
   scoped_ptr<media::VideoCaptureDevice::Names> names(

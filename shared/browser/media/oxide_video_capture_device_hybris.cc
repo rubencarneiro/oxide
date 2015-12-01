@@ -30,6 +30,7 @@
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
 
+#include "shared/browser/oxide_android_properties.h"
 #include "shared/browser/oxide_browser_platform_integration.h"
 
 namespace oxide {
@@ -181,7 +182,9 @@ VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
     : device_name_(device_name),
       position_(BACK_FACING_CAMERA_TYPE),
       orientation_(0),
-      camera_control_(nullptr) {}
+      camera_control_(nullptr) {
+  DCHECK(AndroidProperties::GetInstance()->Available());
+}
 
 VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {
   StopAndDeAllocate();
