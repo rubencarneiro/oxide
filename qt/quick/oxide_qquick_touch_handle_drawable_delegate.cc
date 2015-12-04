@@ -33,7 +33,7 @@ namespace qquick {
 
 class TouchHandleDrawableDelegateContext : public QObject {
   Q_OBJECT
-  Q_PROPERTY(OxideQQuickTouchSelectionController::Orientation orientation READ orientation NOTIFY orientationChanged FINAL)
+  Q_PROPERTY(OxideQQuickTouchSelectionController::HandleOrientation orientation READ orientation NOTIFY orientationChanged FINAL)
   Q_PROPERTY(bool mirrorVertical READ mirrorVertical NOTIFY mirrorVerticalChanged FINAL)
   Q_PROPERTY(bool mirrorHorizontal READ mirrorHorizontal NOTIFY mirrorHorizontalChanged FINAL)
   Q_PROPERTY(qreal horizontalPaddingRatio READ horizontalPaddingRatio WRITE setHorizontalPaddingRatio NOTIFY horizontalPaddingRatioChanged)
@@ -42,9 +42,9 @@ class TouchHandleDrawableDelegateContext : public QObject {
   virtual ~TouchHandleDrawableDelegateContext() {}
   TouchHandleDrawableDelegateContext();
 
-  OxideQQuickTouchSelectionController::Orientation orientation() const;
+  OxideQQuickTouchSelectionController::HandleOrientation orientation() const;
   void setOrientation(
-      OxideQQuickTouchSelectionController::Orientation orientation);
+      OxideQQuickTouchSelectionController::HandleOrientation orientation);
 
   bool mirrorVertical() const;
   void setMirrorVertical(bool mirror);
@@ -62,25 +62,26 @@ class TouchHandleDrawableDelegateContext : public QObject {
   void horizontalPaddingRatioChanged() const;
 
  private:
-  OxideQQuickTouchSelectionController::Orientation orientation_;
+  OxideQQuickTouchSelectionController::HandleOrientation orientation_;
   bool mirror_vertical_;
   bool mirror_horizontal_;
   qreal horizontal_padding_ratio_;
 };
 
 TouchHandleDrawableDelegateContext::TouchHandleDrawableDelegateContext()
-    : orientation_(OxideQQuickTouchSelectionController::OrientationUndefined)
+    : orientation_(
+        OxideQQuickTouchSelectionController::HandleOrientationUndefined)
     , mirror_vertical_(false)
     , mirror_horizontal_(false)
     , horizontal_padding_ratio_(0.0) {}
 
-OxideQQuickTouchSelectionController::Orientation
+OxideQQuickTouchSelectionController::HandleOrientation
 TouchHandleDrawableDelegateContext::orientation() const {
   return orientation_;
 }
 
 void TouchHandleDrawableDelegateContext::setOrientation(
-    OxideQQuickTouchSelectionController::Orientation orientation) {
+    OxideQQuickTouchSelectionController::HandleOrientation orientation) {
   if (orientation_ != orientation) {
     orientation_ = orientation;
     Q_EMIT orientationChanged();
@@ -138,19 +139,19 @@ void TouchHandleDrawableDelegate::SetOrientation(Orientation orientation,
         qobject_cast<TouchHandleDrawableDelegateContext*>(
             context_->contextObject());
     if (context) {
-      OxideQQuickTouchSelectionController::Orientation o;
+      OxideQQuickTouchSelectionController::HandleOrientation o;
       switch (orientation) {
         case Orientation::Left:
-          o = OxideQQuickTouchSelectionController::OrientationLeft;
+          o = OxideQQuickTouchSelectionController::HandleOrientationLeft;
           break;
         case Orientation::Center:
-          o = OxideQQuickTouchSelectionController::OrientationCenter;
+          o = OxideQQuickTouchSelectionController::HandleOrientationCenter;
           break;
         case Orientation::Right:
-          o = OxideQQuickTouchSelectionController::OrientationRight;
+          o = OxideQQuickTouchSelectionController::HandleOrientationRight;
           break;
         case Orientation::Undefined:
-          o = OxideQQuickTouchSelectionController::OrientationUndefined;
+          o = OxideQQuickTouchSelectionController::HandleOrientationUndefined;
           break;
         default:
           Q_UNREACHABLE();
@@ -251,8 +252,8 @@ TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
 
 void TouchHandleDrawableDelegate::handleComponentChanged() {
   bool visible = item_.isNull() ? false : item_->isVisible();
-  OxideQQuickTouchSelectionController::Orientation orientation =
-      OxideQQuickTouchSelectionController::OrientationUndefined;
+  OxideQQuickTouchSelectionController::HandleOrientation orientation =
+      OxideQQuickTouchSelectionController::HandleOrientationUndefined;
   bool mirror_vertical = false;
   bool mirror_horizontal = false;
   if (!context_.isNull()) {

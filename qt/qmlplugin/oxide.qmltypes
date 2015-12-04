@@ -296,12 +296,12 @@ Module {
         isCreatable: false
         exportMetaObjectRevisions: [0]
         Enum {
-            name: "Orientation"
+            name: "HandleOrientation"
             values: {
-                "OrientationLeft": 0,
-                "OrientationCenter": 1,
-                "OrientationRight": 2,
-                "OrientationUndefined": 3
+                "HandleOrientationLeft": 0,
+                "HandleOrientationCenter": 1,
+                "HandleOrientationRight": 2,
+                "HandleOrientationUndefined": 3
             }
         }
         Property { name: "active"; type: "bool"; isReadonly: true }

@@ -32,7 +32,7 @@ class OxideQQuickTouchSelectionControllerPrivate;
 class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   Q_OBJECT
 
-  Q_ENUMS(Orientation);
+  Q_ENUMS(HandleOrientation);
 
   Q_PROPERTY(bool active READ active NOTIFY activeChanged)
   Q_PROPERTY(QQmlComponent* handle READ handle WRITE setHandle NOTIFY handleChanged)
@@ -46,11 +46,11 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   Q_DECL_HIDDEN OxideQQuickTouchSelectionController(OxideQQuickWebView* view);
   virtual ~OxideQQuickTouchSelectionController();
 
-  enum Orientation {
-    OrientationLeft,
-    OrientationCenter,
-    OrientationRight,
-    OrientationUndefined
+  enum HandleOrientation {
+    HandleOrientationLeft,
+    HandleOrientationCenter,
+    HandleOrientationRight,
+    HandleOrientationUndefined
   };
 
   bool active() const;
