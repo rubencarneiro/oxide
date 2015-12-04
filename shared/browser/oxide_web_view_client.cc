@@ -135,11 +135,9 @@ TouchHandleDrawableDelegate* WebViewClient::CreateTouchHandleDrawableDelegate() 
   return nullptr;
 }
 
-void WebViewClient::TouchSelectionChanged(
-    bool active,
-    gfx::RectF bounds,
-    int edit_flags,
-    const base::string16& selected_text) const {}
+void WebViewClient::TouchSelectionChanged(bool active,
+                                          gfx::RectF bounds,
+                                          int edit_flags) const {}
 
 void WebViewClient::EvictCurrentFrame() {}
 

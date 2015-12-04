@@ -165,11 +165,9 @@ class WebViewClient : public ScriptMessageTarget {
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
   virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
-  virtual void TouchSelectionChanged(
-      bool active,
-      gfx::RectF bounds,
-      int edit_flags,
-      const base::string16& selected_text) const;
+  virtual void TouchSelectionChanged(bool active,
+                                     gfx::RectF bounds,
+                                     int edit_flags) const;
 
   virtual void SwapCompositorFrame() = 0;
 

@@ -114,8 +114,7 @@ class WebViewProxyClient {
 
   virtual void TouchSelectionChanged(bool active,
                                      QRectF bounds,
-                                     EditCapabilityFlags edit_flags,
-                                     const QString& selected_text) = 0;
+                                     EditCapabilityFlags edit_flags) = 0;
 
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 

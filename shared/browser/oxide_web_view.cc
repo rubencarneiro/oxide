@@ -2019,8 +2019,7 @@ void WebView::TouchSelectionChanged() const {
   }
   flags |= blink::WebContextMenuData::CanSelectAll;
 
-  client_->TouchSelectionChanged(active, bounds, flags,
-                                 rwhv->GetSelectedText());
+  client_->TouchSelectionChanged(active, bounds, flags);
 }
 
 } // namespace oxide

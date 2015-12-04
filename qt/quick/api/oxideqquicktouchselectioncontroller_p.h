@@ -38,7 +38,6 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   Q_PROPERTY(QQmlComponent* handle READ handle WRITE setHandle NOTIFY handleChanged)
   Q_PROPERTY(QRectF bounds READ bounds NOTIFY boundsChanged)
   Q_PROPERTY(OxideQQuickWebView::EditCapabilities editFlags READ editFlags NOTIFY editFlagsChanged)
-  Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectedTextChanged)
 
   Q_DISABLE_COPY(OxideQQuickTouchSelectionController)
   Q_DECLARE_PRIVATE(OxideQQuickTouchSelectionController)
@@ -66,15 +65,11 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   OxideQQuickWebView::EditCapabilities editFlags() const;
   void setEditFlags(OxideQQuickWebView::EditCapabilities flags);
 
-  const QString& selectedText() const;
-  void setSelectedText(const QString& selectedText);
-
  Q_SIGNALS:
   void activeChanged();
   void handleChanged();
   void boundsChanged();
   void editFlagsChanged();
-  void selectedTextChanged();
 
  private:
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;
