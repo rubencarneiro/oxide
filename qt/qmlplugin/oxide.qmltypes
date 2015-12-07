@@ -307,7 +307,6 @@ Module {
         Property { name: "active"; type: "bool"; isReadonly: true }
         Property { name: "handle"; type: "QQmlComponent"; isPointer: true }
         Property { name: "bounds"; type: "QRectF"; isReadonly: true }
-        Property { name: "editFlags"; type: "OxideQQuickWebView::EditCapabilities"; isReadonly: true }
     }
     Component {
         name: "OxideQQuickUserScript"
@@ -647,6 +646,7 @@ Module {
             isReadonly: true
             isPointer: true
         }
+        Property { name: "editingCapabilities"; revision: 7; type: "EditCapabilities"; isReadonly: true }
         Signal { name: "loadingStateChanged"; revision: 1 }
         Signal {
             name: "loadEvent"
@@ -716,6 +716,7 @@ Module {
             Parameter { name: "request"; type: "QJSValue" }
         }
         Signal { name: "hoveredUrlChanged"; revision: 7 }
+        Signal { name: "editingCapabilitiesChanged"; revision: 7 }
         Signal {
             name: "loadingChanged"
             Parameter { name: "loadEvent"; type: "OxideQLoadEvent" }

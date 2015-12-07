@@ -111,10 +111,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
-  void TouchSelectionChanged(
-      bool active,
-      QRectF bounds,
-      oxide::qt::EditCapabilityFlags edit_flags) override;
+  void TouchSelectionChanged(bool active, QRectF bounds) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
   QScreen* GetScreen() const override;
   QRect GetViewBoundsPix() const override;
@@ -153,6 +150,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
+  void OnEditingCapabilitiesChanged() override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();

@@ -136,8 +136,7 @@ TouchHandleDrawableDelegate* WebViewClient::CreateTouchHandleDrawableDelegate() 
 }
 
 void WebViewClient::TouchSelectionChanged(bool active,
-                                          gfx::RectF bounds,
-                                          int edit_flags) const {}
+                                          gfx::RectF bounds) const {}
 
 void WebViewClient::EvictCurrentFrame() {}
 
@@ -159,5 +158,7 @@ void WebViewClient::TargetURLChanged() {}
 
 void WebViewClient::HttpAuthenticationRequested(
     ResourceDispatcherHostLoginDelegate* login_delegate) {}
+
+void WebViewClient::OnEditingCapabilitiesChanged() {}
 
 } // namespace oxide

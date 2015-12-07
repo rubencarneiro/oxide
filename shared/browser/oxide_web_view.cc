@@ -1978,6 +1978,41 @@ bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
 }
 
+void WebView::OnEditingCapabilitiesChanged() {
+  client_->OnEditingCapabilitiesChanged();
+}
+
+int WebView::GetEditFlags() const {
+  int flags = blink::WebContextMenuData::CanDoNone;
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return flags;
+  }
+
+  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+  bool has_selection = !rwhv->selection_range().is_empty();
+  base::string16 clipboard;
+  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
+                                                 &clipboard);
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable && !clipboard.empty()) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+  return flags;
+}
+
 TouchHandleDrawableDelegate*
 WebView::CreateTouchHandleDrawableDelegate() const {
   return client_->CreateTouchHandleDrawableDelegate();
@@ -1996,30 +2031,7 @@ void WebView::TouchSelectionChanged() const {
   gfx::RectF bounds = controller->GetRectBetweenBounds();
   bounds.Offset(0, GetLocationBarContentOffsetDip());
 
-  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
-  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
-  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
-  bool has_selection = !rwhv->selection_range().is_empty();
-  base::string16 clipboard;
-  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
-                                                 &clipboard);
-  int flags = blink::WebContextMenuData::CanDoNone;
-  // XXX: if editable, can we determine whether undo/redo is available?
-  if (editable && readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCut;
-  }
-  if (readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCopy;
-  }
-  if (editable && !clipboard.empty()) {
-    flags |= blink::WebContextMenuData::CanPaste;
-  }
-  if (editable && has_selection) {
-    flags |= blink::WebContextMenuData::CanDelete;
-  }
-  flags |= blink::WebContextMenuData::CanSelectAll;
-
-  client_->TouchSelectionChanged(active, bounds, flags);
+  client_->TouchSelectionChanged(active, bounds);
 }
 
 } // namespace oxide

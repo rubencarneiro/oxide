@@ -291,6 +291,9 @@ class WebView : public ScriptMessageTarget,
 
   const GURL& target_url() const { return target_url_; }
 
+  void OnEditingCapabilitiesChanged();
+  int GetEditFlags() const;
+
   TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
   void TouchSelectionChanged() const;
 

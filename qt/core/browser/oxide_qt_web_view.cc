@@ -828,38 +828,11 @@ oxide::TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate()
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
-void WebView::TouchSelectionChanged(
-    bool active,
-    gfx::RectF bounds,
-    int edit_flags) const {
+void WebView::TouchSelectionChanged(bool active, gfx::RectF bounds) const {
   const float dpr = GetDeviceScaleFactor();
   QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
               bounds.width() * dpr, bounds.height() * dpr);
-
-  EditCapabilityFlags flags = NO_CAPABILITY;
-  if (edit_flags & blink::WebContextMenuData::CanUndo) {
-    flags |= UNDO_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanRedo) {
-    flags |= REDO_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanCut) {
-    flags |= CUT_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanCopy) {
-    flags |= COPY_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanPaste) {
-    flags |= PASTE_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanDelete) {
-    flags |= ERASE_CAPABILITY;
-  }
-  if (edit_flags & blink::WebContextMenuData::CanSelectAll) {
-    flags |= SELECT_ALL_CAPABILITY;
-  }
-
-  client_->TouchSelectionChanged(active, rect, flags);
+  client_->TouchSelectionChanged(active, rect);
 }
 
 void WebView::SwapCompositorFrame() {
@@ -919,6 +892,10 @@ void WebView::CloseRequested() {
 
 void WebView::TargetURLChanged() {
   client_->TargetURLChanged();
+}
+
+void WebView::OnEditingCapabilitiesChanged() {
+  client_->OnEditingCapabilitiesChanged();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1408,6 +1385,33 @@ void WebView::executeEditingCommand(EditingCommands command) const {
 
 QUrl WebView::targetUrl() const {
   return QUrl(QString::fromStdString(view_->target_url().spec()));
+}
+
+EditCapabilityFlags WebView::editFlags() const {
+  EditCapabilityFlags capabilities = NO_CAPABILITY;
+  int flags = view_->GetEditFlags();
+  if (flags & blink::WebContextMenuData::CanUndo) {
+    capabilities |= UNDO_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanRedo) {
+    capabilities |= REDO_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanCut) {
+    capabilities |= CUT_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanCopy) {
+    capabilities |= COPY_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanPaste) {
+    capabilities |= PASTE_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanDelete) {
+    capabilities |= ERASE_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanSelectAll) {
+    capabilities |= SELECT_ALL_CAPABILITY;
+  }
+  return capabilities;
 }
 
 void WebView::teardownFrameTree() {

@@ -294,18 +294,14 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-void OxideQQuickWebViewPrivate::TouchSelectionChanged(
-    bool active,
-    QRectF bounds,
-    oxide::qt::EditCapabilityFlags edit_flags) {
+void OxideQQuickWebViewPrivate::TouchSelectionChanged(bool active,
+                                                      QRectF bounds) {
   Q_Q(OxideQQuickWebView);
 
   OxideQQuickTouchSelectionController* controller =
       q->touchSelectionController();
   controller->setActive(active);
   controller->setBounds(bounds);
-  controller->setEditFlags(
-      static_cast<OxideQQuickWebView::EditCapabilities>(edit_flags));
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(
@@ -664,6 +660,12 @@ void OxideQQuickWebViewPrivate::TargetURLChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->hoveredUrlChanged();
+}
+
+void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->editingCapabilitiesChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -2119,6 +2121,17 @@ QUrl OxideQQuickWebView::hoveredUrl() const {
   }
 
   return d->proxy()->targetUrl();
+}
+
+OxideQQuickWebView::EditCapabilities OxideQQuickWebView::editingCapabilities() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return NoCapability;
+  }
+
+  oxide::qt::EditCapabilityFlags flags = d->proxy()->editFlags();
+  return static_cast<EditCapabilities>(flags);
 }
 
 // static

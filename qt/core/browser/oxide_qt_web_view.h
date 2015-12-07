@@ -150,7 +150,6 @@ class WebView : public InputMethodContextClient,
       const std::string& user_agent) override;
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
-
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
@@ -164,9 +163,7 @@ class WebView : public InputMethodContextClient,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
   oxide::TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const override;
-  void TouchSelectionChanged(bool active,
-                             gfx::RectF bounds,
-                             int edit_flags) const override;
+  void TouchSelectionChanged(bool active, gfx::RectF bounds) const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
@@ -176,6 +173,7 @@ class WebView : public InputMethodContextClient,
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
+  void OnEditingCapabilitiesChanged() override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -291,6 +289,8 @@ class WebView : public InputMethodContextClient,
   void executeEditingCommand(EditingCommands command) const override;
 
   QUrl targetUrl() const override;
+
+  EditCapabilityFlags editFlags() const override;
 
   void teardownFrameTree() override;
 

@@ -165,9 +165,7 @@ class WebViewClient : public ScriptMessageTarget {
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
   virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
-  virtual void TouchSelectionChanged(bool active,
-                                     gfx::RectF bounds,
-                                     int edit_flags) const;
+  virtual void TouchSelectionChanged(bool active, gfx::RectF bounds) const;
 
   virtual void SwapCompositorFrame() = 0;
 
@@ -194,6 +192,8 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
+
+  virtual void OnEditingCapabilitiesChanged();
 };
 
 } // namespace oxide

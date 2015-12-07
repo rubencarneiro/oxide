@@ -23,13 +23,11 @@ class OxideQQuickTouchSelectionControllerPrivate {
  public:
   OxideQQuickTouchSelectionControllerPrivate()
       : view(nullptr)
-      , active(false)
-      , edit_flags(OxideQQuickWebView::NoCapability) {}
+      , active(false) {}
 
   OxideQQuickWebView* view;
   bool active;
   QRectF bounds;
-  OxideQQuickWebView::EditCapabilities edit_flags;
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
@@ -86,22 +84,5 @@ void OxideQQuickTouchSelectionController::setBounds(const QRectF& bounds) {
   if (bounds != d->bounds) {
     d->bounds = bounds;
     Q_EMIT boundsChanged();
-  }
-}
-
-OxideQQuickWebView::EditCapabilities
-OxideQQuickTouchSelectionController::editFlags() const {
-  Q_D(const OxideQQuickTouchSelectionController);
-
-  return d->edit_flags;
-}
-
-void OxideQQuickTouchSelectionController::setEditFlags(
-    OxideQQuickWebView::EditCapabilities flags) {
-  Q_D(OxideQQuickTouchSelectionController);
-
-  if (flags != d->edit_flags) {
-    d->edit_flags = flags;
-    Q_EMIT editFlagsChanged();
   }
 }

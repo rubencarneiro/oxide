@@ -85,6 +85,17 @@ enum WebProcessStatus {
   WEB_PROCESS_CRASHED
 };
 
+enum EditCapabilityFlags {
+  NO_CAPABILITY = 0,
+  UNDO_CAPABILITY = 1 << 0,
+  REDO_CAPABILITY = 1 << 1,
+  CUT_CAPABILITY = 1 << 2,
+  COPY_CAPABILITY = 1 << 3,
+  PASTE_CAPABILITY = 1 << 4,
+  ERASE_CAPABILITY = 1 << 5,
+  SELECT_ALL_CAPABILITY = 1 << 6
+};
+
 enum EditingCommands {
   EDITING_COMMAND_UNDO,
   EDITING_COMMAND_REDO,
@@ -239,6 +250,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void executeEditingCommand(EditingCommands command) const = 0;
 
   virtual QUrl targetUrl() const = 0;
+
+  virtual EditCapabilityFlags editFlags() const = 0;
 
   virtual void teardownFrameTree() = 0;
 };

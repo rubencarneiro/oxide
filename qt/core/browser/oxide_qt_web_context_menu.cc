@@ -24,7 +24,7 @@
 #include "base/strings/utf_string_conversions.h"
 
 #include "qt/core/glue/oxide_qt_web_context_menu_proxy.h"
-#include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_web_view.h"
 
 namespace oxide {

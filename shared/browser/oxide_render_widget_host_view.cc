@@ -32,6 +32,7 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
@@ -51,6 +52,7 @@
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_container.h"
 #include "oxide_touch_selection_controller_client.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -142,6 +144,16 @@ void RenderWidgetHostView::OnSelectionBoundsChanged(
   ime_bridge_.SelectionBoundsChanged(caret_rect,
                                      selection_cursor_position,
                                      selection_anchor_position);
+
+  content::RenderViewHost* rvh = content::RenderViewHost::From(host_);
+  if (!rvh) {
+    return;
+  }
+  WebView* webview = WebView::FromRenderViewHost(rvh);
+  if (!webview) {
+    return;
+  }
+  webview->OnEditingCapabilitiesChanged();
 }
 
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,

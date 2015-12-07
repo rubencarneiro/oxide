@@ -66,17 +66,6 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
-enum EditCapabilityFlags {
-  NO_CAPABILITY = 0,
-  UNDO_CAPABILITY = 1 << 0,
-  REDO_CAPABILITY = 1 << 1,
-  CUT_CAPABILITY = 1 << 2,
-  COPY_CAPABILITY = 1 << 3,
-  PASTE_CAPABILITY = 1 << 4,
-  ERASE_CAPABILITY = 1 << 5,
-  SELECT_ALL_CAPABILITY = 1 << 6
-};
-
 OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 
 class WebViewProxyClient {
@@ -112,9 +101,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual void TouchSelectionChanged(bool active,
-                                     QRectF bounds,
-                                     EditCapabilityFlags edit_flags) = 0;
+  virtual void TouchSelectionChanged(bool active, QRectF bounds) = 0;
 
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 
@@ -170,6 +157,8 @@ class WebViewProxyClient {
   virtual void CloseRequested() = 0;
 
   virtual void TargetURLChanged() = 0;
+  
+  virtual void OnEditingCapabilitiesChanged() = 0;
 };
 
 } // namespace qt
