@@ -53,18 +53,20 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   };
 
   bool active() const;
-  void setActive(bool active);
 
   QQmlComponent* handle() const;
   void setHandle(QQmlComponent* handle);
 
   const QRectF& bounds() const;
-  void setBounds(const QRectF& bounds);
 
  Q_SIGNALS:
   void activeChanged();
   void handleChanged();
   void boundsChanged();
+
+ private Q_SLOTS:
+  friend class OxideQQuickWebViewPrivate;
+  void onTouchSelectionChanged(bool active, const QRectF& bounds);
 
  private:
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;

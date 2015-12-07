@@ -298,10 +298,7 @@ void OxideQQuickWebViewPrivate::TouchSelectionChanged(bool active,
                                                       QRectF bounds) {
   Q_Q(OxideQQuickWebView);
 
-  OxideQQuickTouchSelectionController* controller =
-      q->touchSelectionController();
-  controller->setActive(active);
-  controller->setBounds(bounds);
+  q->touchSelectionController()->onTouchSelectionChanged(active, bounds);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(

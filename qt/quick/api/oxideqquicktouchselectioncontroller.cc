@@ -46,15 +46,6 @@ bool OxideQQuickTouchSelectionController::active() const {
   return d->active;
 }
 
-void OxideQQuickTouchSelectionController::setActive(bool active) {
-  Q_D(OxideQQuickTouchSelectionController);
-
-  if (active != d->active) {
-    d->active = active;
-    Q_EMIT activeChanged();
-  }
-}
-
 QQmlComponent* OxideQQuickTouchSelectionController::handle() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
@@ -78,8 +69,15 @@ const QRectF& OxideQQuickTouchSelectionController::bounds() const {
   return d->bounds;
 }
 
-void OxideQQuickTouchSelectionController::setBounds(const QRectF& bounds) {
+void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
+    bool active,
+    const QRectF& bounds) {
   Q_D(OxideQQuickTouchSelectionController);
+
+  if (active != d->active) {
+    d->active = active;
+    Q_EMIT activeChanged();
+  }
 
   if (bounds != d->bounds) {
     d->bounds = bounds;
