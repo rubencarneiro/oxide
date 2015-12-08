@@ -44,6 +44,7 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/oxide_browser_platform_integration_observer.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
@@ -132,7 +133,8 @@ class WebView : public ScriptMessageTarget,
                 private content::NotificationObserver,
                 private RenderWidgetHostViewContainer,
                 private content::WebContentsDelegate,
-                private content::WebContentsObserver {
+                private content::WebContentsObserver,
+                private BrowserPlatformIntegrationObserver {
  public:
 
   struct Params {
@@ -478,6 +480,9 @@ class WebView : public ScriptMessageTarget,
   void DidDetachInterstitialPage() final;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
+
+  // BrowserPlatformIntegrationObserver implementation
+  void ClipboardDataChanged() final;
 
   WebViewClient* client_;
 

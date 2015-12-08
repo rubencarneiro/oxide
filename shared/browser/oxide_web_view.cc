@@ -1210,6 +1210,10 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
+void WebView::ClipboardDataChanged() {
+  OnEditingCapabilitiesChanged();
+}
+
 WebView::WebView(const Params& params)
     : WebView(params.client) {
   CHECK(params.context) << "Didn't specify a BrowserContext";

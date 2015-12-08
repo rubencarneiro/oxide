@@ -17,6 +17,7 @@
 
 #include "oxide_qt_browser_platform_integration.h"
 
+#include <QClipboard>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
@@ -88,6 +89,10 @@ void BrowserPlatformIntegration::UpdateApplicationState() {
   state_ = state;
 
   NotifyApplicationStateChanged();
+}
+
+void BrowserPlatformIntegration::OnClipboardDataChanged() {
+  NotifyClipboardDataChanged();
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
@@ -192,6 +197,8 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
       state_(CalculateApplicationState(false)) {
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
+  connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
+          SLOT(OnClipboardDataChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     QGuiApplication::instance()->installEventFilter(this);
   }

@@ -43,6 +43,7 @@ class BrowserPlatformIntegration : public QObject,
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
+  void OnClipboardDataChanged();
 
  private:
   void UpdateApplicationState();
