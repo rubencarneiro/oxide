@@ -21,9 +21,9 @@
 
 namespace oxide {
 
-FormFactor DetectFormFactorHintImpl();
+FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size_dip);
 
-FormFactor DetectFormFactorHint() {
+FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size_dip) {
   const char* force = getenv("OXIDE_FORCE_FORM_FACTOR");
   if (force) {
     if (!strcmp(force, "desktop")) {
@@ -37,7 +37,7 @@ FormFactor DetectFormFactorHint() {
     }
   }
 
-  return DetectFormFactorHintImpl();
+  return DetectFormFactorHintImpl(primary_screen_size_dip);
 }
 
 } // namespace oxide

@@ -19,25 +19,22 @@
 
 #include <algorithm>
 
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/common/oxide_form_factor.h"
 
 #include "oxide_android_properties.h"
-#include "oxide_browser_platform_integration.h"
 
 namespace oxide {
 
-FormFactor DetectFormFactorHintImpl() {
+FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size_dip) {
   if (AndroidProperties::GetInstance()->Available()) {
     // Ubuntu on phones and tablets currently uses an Android kernel and EGL
     // stack. If we detect these, assume we are a phone or tablet. The screen
     // size check here is basically the same as Chrome for Android, where
     // a minimum DIP width of less than 600 is a phone
-    blink::WebScreenInfo screen(
-        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
-    if (std::min(screen.rect.width / screen.deviceScaleFactor,
-                 screen.rect.height / screen.deviceScaleFactor) >= 600) {
+    if (std::min(primary_screen_size_dip.width(),
+                 primary_screen_size_dip.height()) >= 600) {
       return FORM_FACTOR_TABLET;
     }
 

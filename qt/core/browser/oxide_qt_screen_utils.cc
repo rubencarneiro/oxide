@@ -26,6 +26,8 @@
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
 
+#include "shared/common/oxide_form_factor.h"
+
 namespace oxide {
 namespace qt {
 
@@ -124,9 +126,23 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
 
   result.orientationType =
       GetOrientationTypeFromScreenOrientation(screen->orientation());
+
+  // We calculate orientationAngle, which is the clockwise rotation of the
+  // content. However, QScreen::primaryOrientation doesn't work properly in
+  // qtubuntu, so we assume it's portrait on phones and landscape elsewhere
+  // See https://launchpad.net/bugs/1520670
+  Qt::ScreenOrientation primary_orientation = Qt::PrimaryOrientation;
+  if (QGuiApplication::platformName().startsWith("ubuntu")) {
+    if (oxide::GetFormFactorHint() == oxide::FORM_FACTOR_PHONE) {
+      primary_orientation = Qt::PortraitOrientation;
+    } else {
+      primary_orientation = Qt::LandscapeOrientation;
+    }
+  }
+
   result.orientationAngle =
       screen->angleBetween(screen->orientation(),
-                           Qt::PrimaryOrientation);
+                           primary_orientation);
 
   return result;
 }

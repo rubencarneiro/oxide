@@ -20,17 +20,22 @@
 #include <QCoreApplication>
 #include <QGlobalStatic>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QtDebug>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
 #include <QtGui/private/qopenglcontext_p.h>
 #endif
 
 #include "base/logging.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "qt/core/app/oxide_qt_platform_delegate.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
+#include "oxide_qt_screen_utils.h"
 #include "oxide_qt_web_context.h"
+
+using oxide::BrowserProcessMain;
 
 namespace oxide {
 namespace qt {
@@ -41,7 +46,7 @@ Q_GLOBAL_STATIC(BrowserStartup, g_instance)
 
 void ShutdownChromium() {
   WebContext::DestroyDefault();
-  oxide::BrowserProcessMain::GetInstance()->Shutdown();
+  BrowserProcessMain::GetInstance()->Shutdown();
 }
 
 }
@@ -67,7 +72,7 @@ base::FilePath BrowserStartup::GetNSSDbPath() const {
 
 void BrowserStartup::SetNSSDbPath(const base::FilePath& path) {
 #if defined(USE_NSS_CERTS)
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+  if (BrowserProcessMain::GetInstance()->IsRunning()) {
     qWarning() << "Cannot set the NSS DB directory once Oxide is running";
     return;
   }
@@ -93,7 +98,7 @@ oxide::ProcessModel BrowserStartup::GetProcessModel() {
 }
 
 void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+  if (BrowserProcessMain::GetInstance()->IsRunning()) {
     qWarning() << "Cannot set the process model once Oxide is running";
     return;
   }
@@ -117,7 +122,7 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 void BrowserStartup::SetSharedGLContext(GLContextDependent* context) {
-  DCHECK(!oxide::BrowserProcessMain::GetInstance()->IsRunning());
+  DCHECK(!BrowserProcessMain::GetInstance()->IsRunning());
   shared_gl_context_ = context;
 }
 #endif
@@ -127,7 +132,7 @@ bool BrowserStartup::DidSelectProcessModelFromEnv() const {
 }
 
 void BrowserStartup::EnsureChromiumStarted() {
-  if (oxide::BrowserProcessMain::GetInstance()->IsRunning()) {
+  if (BrowserProcessMain::GetInstance()->IsRunning()) {
     return;
   }
 
@@ -142,21 +147,26 @@ void BrowserStartup::EnsureChromiumStarted() {
       QOpenGLContextPrivate::globalShareContext());
 #endif
 
-  scoped_ptr<PlatformDelegate> delegate(new PlatformDelegate());
+  BrowserProcessMain::StartParams params(
+      make_scoped_ptr(new PlatformDelegate()));
+#if defined(USE_NSS_CERTS)
+  params.nss_db_path = GetNSSDbPath();
+#endif
+  params.process_model = GetProcessModel();
 
-  gfx::GLImplementation gl_impl = gfx::kGLImplementationNone;
+  params.gl_implementation = gfx::kGLImplementationNone;
 
   if (shared_gl_context_) {
-    gl_impl = shared_gl_context_->implementation();
+    params.gl_implementation = shared_gl_context_->implementation();
   } else {
     QString platform = QGuiApplication::platformName();
     if (QGuiApplication::platformNativeInterface()) {
       if (platform == QLatin1String("xcb")) {
-        gl_impl = gfx::kGLImplementationDesktopGL;
+        params.gl_implementation = gfx::kGLImplementationDesktopGL;
       } else if (platform.startsWith("ubuntu") ||
                  platform == QLatin1String("mirserver") ||
                  platform == QLatin1String("egl")) {
-        gl_impl = gfx::kGLImplementationEGLGLES2;
+        params.gl_implementation = gfx::kGLImplementationEGLGLES2;
       } else {
         LOG(WARNING)
             << "Cannot determine GL implementation to use - "
@@ -169,13 +179,14 @@ void BrowserStartup::EnsureChromiumStarted() {
     }
   }
 
-  oxide::BrowserProcessMain::GetInstance()->Start(
-      delegate.Pass(),
-#if defined(USE_NSS_CERTS)
-      GetNSSDbPath(),
-#endif
-      gl_impl,
-      GetProcessModel());
+  QScreen* primary_screen = QGuiApplication::primaryScreen();
+  QSize primary_screen_size = primary_screen->size();
+  params.primary_screen_size_dip =
+      gfx::ScaleToRoundedSize(
+          gfx::Size(primary_screen_size.width(), primary_screen_size.height()),
+          1 / GetDeviceScaleFactorFromQScreen(primary_screen));
+
+  oxide::BrowserProcessMain::GetInstance()->Start(params);
 
   qAddPostRoutine(ShutdownChromium);
 }

@@ -100,12 +100,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS_CERTS)
-             const base::FilePath& nss_db_path,
-#endif
-             gfx::GLImplementation gl_impl,
-             ProcessModel process_model) final;
+  void Start(StartParams& params) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -360,6 +355,14 @@ const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
 
 }
 
+BrowserProcessMain::StartParams::StartParams(
+    scoped_ptr<PlatformDelegate> delegate)
+    : delegate(delegate.Pass()),
+      gl_implementation(gfx::kGLImplementationNone),
+      process_model(PROCESS_MODEL_MULTI_PROCESS) {}
+
+BrowserProcessMain::StartParams::~StartParams() {}
+
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
       process_model_(PROCESS_MODEL_MULTI_PROCESS) {}
@@ -369,25 +372,20 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS_CERTS)
-                                   const base::FilePath& nss_db_path,
-#endif
-                                   gfx::GLImplementation gl_impl,
-                                   ProcessModel process_model) {
+void BrowserProcessMainImpl::Start(StartParams& params) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
-  CHECK(delegate) << "No PlatformDelegate provided";
+  CHECK(params.delegate) << "No PlatformDelegate provided";
 
-  platform_delegate_ = delegate.Pass();
+  platform_delegate_ = params.delegate.Pass();
   main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
-  if (IsUnsupportedProcessModel(process_model)) {
+  if (IsUnsupportedProcessModel(params.process_model)) {
     LOG(WARNING) <<
         "Using an unsupported process model. This may affect stability and "
         "security. Use at your own risk!";
   }
-  process_model_ = process_model;
+  process_model_ = params.process_model;
 
   state_ = STATE_STARTED;
 
@@ -400,7 +398,15 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   exit_manager_.reset(new base::AtExitManager());
 
   base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe, process_model_, gl_impl);
+  InitializeCommandLine(subprocess_exe, process_model_,
+                        params.gl_implementation);
+
+  FormFactor form_factor =
+      DetectFormFactorHint(params.primary_screen_size_dip);
+  base::CommandLine::ForCurrentProcess()
+      ->AppendSwitchASCII(switches::kFormFactor,
+                          GetFormFactorHintCommandLine(form_factor));
+  AddFormFactorSpecificCommandLineArguments();
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources
@@ -417,24 +423,11 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
 
-  // Ideally we'd do this before calling
-  // ContentMainDelegate::BasicStartupComplete, and then ContentMainDelegate
-  // would call InitFormFactorHint for all process types. However,
-  // DetectFormFactorHint depends on BrowserPlatformIntegration, which is
-  // initialized when ContentBrowserClient is created. Perhaps we could create
-  // BPI earlier?
-  FormFactor form_factor = DetectFormFactorHint();
-  base::CommandLine::ForCurrentProcess()
-      ->AppendSwitchASCII(switches::kFormFactor,
-                          GetFormFactorHintCommandLine(form_factor));
-
-  AddFormFactorSpecificCommandLineArguments();
-
 #if defined(USE_NSS_CERTS)
-  if (!nss_db_path.empty()) {
+  if (!params.nss_db_path.empty()) {
     // Used for testing
     PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,
-                                           nss_db_path,
+                                           params.nss_db_path,
                                            false, true);
   }
   crypto::EarlySetupForNSSInit();

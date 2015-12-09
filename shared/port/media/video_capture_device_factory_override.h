@@ -16,19 +16,22 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 // USA
 
-#ifndef _OXIDE_SHARED_BROWSER_FORM_FACTOR_DETECTION_H_
-#define _OXIDE_SHARED_BROWSER_FORM_FACTOR_DETECTION_H_
+#ifndef _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_OVERRIDE_H_
+#define _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_OVERRIDE_H_
 
-#include "shared/common/oxide_form_factor.h"
+#include "base/memory/scoped_ptr.h"
+#include "media/base/video_capture_types.h"
+#include "media/capture/video/video_capture_device_factory.h"
 
-namespace gfx {
-class Size;
-}
+namespace media {
 
-namespace oxide {
+typedef scoped_ptr<VideoCaptureDeviceFactory>
+    (VideoCaptureDeviceFactoryOverrideFactory)(
+      scoped_ptr<VideoCaptureDeviceFactory>);
 
-FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size_dip);
+MEDIA_EXPORT void SetVideoCaptureDeviceFactoryOverrideFactory(
+    VideoCaptureDeviceFactoryOverrideFactory* factory);
 
-} // namespace oxide
+} // namespace media
 
-#endif // _OXIDE_SHARED_BROWSER_FORM_FACTOR_DETECTION_H_
+#endif // _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_OVERRIDE_H_
