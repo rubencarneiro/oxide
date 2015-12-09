@@ -79,7 +79,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                       content::ResourceContext* context,
                       int render_process_id,
                       int render_frame_id,
-                      net::CookieOptions* options) final;
+                      const net::CookieOptions& options) final;
   content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
   void AllowCertificateError(
       content::WebContents* contents,
