@@ -189,10 +189,9 @@ VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
 VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {
   StopAndDeAllocate();
 
-  // XXX(chrisccoulson): The listener is called on another thread, and we're
-  // about to delete it now. If Hybris doesn't provide a guarantee that the
-  // listener will never be called once we're disconnected (and any in-progress
-  // notification will have returned), then this is unsafe
+  // XXX(chrisccoulson): As the listener is called on another thread, we need
+  //  a guarantee that it will no longer be called in to from Android before
+  //  we delete it now
 }
 
 // static
