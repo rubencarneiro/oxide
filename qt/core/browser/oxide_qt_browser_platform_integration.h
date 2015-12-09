@@ -23,6 +23,7 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/synchronization/lock.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 
@@ -43,9 +44,12 @@ class BrowserPlatformIntegration : public QObject,
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
+  void OnScreenGeometryChanged(const QRect& geometry);
+  void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
 
  private:
   void UpdateApplicationState();
+  void UpdateDefaultScreenInfo();
 
   // oxide::BrowserPlatformIntegration implementation
   bool LaunchURLExternally(const GURL& url) override;
@@ -83,6 +87,9 @@ class BrowserPlatformIntegration : public QObject,
   // sources for state changes, and we want to ensure we only notify observers
   // when the state really does change
   ApplicationState state_;
+
+  base::Lock default_screen_info_lock_;
+  blink::WebScreenInfo default_screen_info_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
