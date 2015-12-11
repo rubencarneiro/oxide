@@ -74,6 +74,23 @@
             ],
           },
         },
+        {
+          'target_name': 'hybris-camera',
+          'type': 'none',
+          'direct_dependent_settings': {
+            'cflags_cc': [
+              '<!@(<(pkg_config) --cflags libcamera)'
+            ]
+          },
+          'link_settings': {
+            'ldflags': [
+              '<!@(<(pkg_config) --libs-only-L --libs-only-other libcamera)',
+            ],
+            'libraries': [
+              '<!@(<(pkg_config) --libs-only-l libcamera)',
+            ],
+          },
+        },
       ],
     }],
   ],

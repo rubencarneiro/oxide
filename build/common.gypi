@@ -27,6 +27,7 @@
     'linux_use_gold_flags': 1,
     'use_allocator': 'none',
     'sysroot': '',
+    'use_ash': 0,
     'use_aura': 1,
     'use_cups': 0,
     'use_gconf': 0,

@@ -22,6 +22,7 @@
 #include <QEvent>
 #include <QGuiApplication>
 #include <QPointer>
+#include <QScreen>
 #include <QString>
 #include <QThread>
 #include <QTouchDevice>
@@ -80,6 +81,20 @@ void BrowserPlatformIntegration::OnApplicationStateChanged() {
   UpdateApplicationState();
 }
 
+void BrowserPlatformIntegration::OnClipboardDataChanged() {
+  NotifyClipboardDataChanged();
+}
+
+void BrowserPlatformIntegration::OnScreenGeometryChanged(
+    const QRect& geometry) {
+  UpdateDefaultScreenInfo();
+}
+
+void BrowserPlatformIntegration::OnScreenOrientationChanged(
+    Qt::ScreenOrientation orientation) {
+  UpdateDefaultScreenInfo();
+}
+
 void BrowserPlatformIntegration::UpdateApplicationState() {
   ApplicationState state = CalculateApplicationState(suspended_);
   if (state == state_) {
@@ -91,8 +106,10 @@ void BrowserPlatformIntegration::UpdateApplicationState() {
   NotifyApplicationStateChanged();
 }
 
-void BrowserPlatformIntegration::OnClipboardDataChanged() {
-  NotifyClipboardDataChanged();
+void BrowserPlatformIntegration::UpdateDefaultScreenInfo() {
+  base::AutoLock lock(default_screen_info_lock_);
+  default_screen_info_ =
+      GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
@@ -128,8 +145,8 @@ intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
 }
 
 blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
+  base::AutoLock lock(default_screen_info_lock_);
+  return default_screen_info_;
 }
 
 oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
@@ -195,18 +212,36 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
     : application_name_(qApp->applicationName().toStdString()),
       suspended_(false),
       state_(CalculateApplicationState(false)) {
+  QScreen* primary_screen = QGuiApplication::primaryScreen();
+  primary_screen->setOrientationUpdateMask(Qt::LandscapeOrientation |
+                                           Qt::PortraitOrientation |
+                                           Qt::InvertedLandscapeOrientation |
+                                           Qt::InvertedPortraitOrientation);
+  connect(primary_screen, SIGNAL(virtualGeometryChanged(const QRect&)),
+          SLOT(OnScreenGeometryChanged(const QRect&)));
+  connect(primary_screen, SIGNAL(geometryChanged(const QRect&)),
+          SLOT(OnScreenGeometryChanged(const QRect&)));
+  connect(primary_screen, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
+          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
+  connect(primary_screen,
+          SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
+          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
+
+  UpdateDefaultScreenInfo();
+
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
   connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
           SLOT(OnClipboardDataChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
-    QGuiApplication::instance()->installEventFilter(this);
+    qApp->installEventFilter(this);
   }
+
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   qApp->disconnect(this);
-  QGuiApplication::instance()->removeEventFilter(this);
+  qApp->removeEventFilter(this);
 }
 
 QThread* GetIOQThread() {
