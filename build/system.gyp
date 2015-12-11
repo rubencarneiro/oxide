@@ -74,6 +74,10 @@
             ],
           },
         },
+      ],
+    }],
+    ['enable_hybris_camera==1 and enable_hybris==1', {
+      'targets': [
         {
           'target_name': 'hybris-camera',
           'type': 'none',
