@@ -528,6 +528,8 @@ class WebView : public ScriptMessageTarget,
 
   GURL target_url_;
 
+  int edit_flags_;
+
   base::WeakPtrFactory<WebView> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);

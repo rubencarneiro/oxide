@@ -213,6 +213,7 @@ WebView::WebView(WebViewClient* client)
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
+      edit_flags_(blink::WebContextMenuData::CanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
@@ -1983,14 +1984,10 @@ bool WebView::CanCreateWindows() const {
 }
 
 void WebView::OnEditingCapabilitiesChanged() {
-  client_->OnEditingCapabilitiesChanged();
-}
-
-int WebView::GetEditFlags() const {
   int flags = blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
-    return flags;
+    return;
   }
 
   ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
@@ -2014,7 +2011,15 @@ int WebView::GetEditFlags() const {
     flags |= blink::WebContextMenuData::CanDelete;
   }
   flags |= blink::WebContextMenuData::CanSelectAll;
-  return flags;
+  
+  if (flags != edit_flags_) {
+    edit_flags_ = flags;
+    client_->OnEditingCapabilitiesChanged();
+  }
+}
+
+int WebView::GetEditFlags() const {
+  return edit_flags_;
 }
 
 TouchHandleDrawableDelegate*
