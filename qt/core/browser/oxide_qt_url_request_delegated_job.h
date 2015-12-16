@@ -64,7 +64,7 @@ class URLRequestDelegatedJob final
   // net::URLRequestJob implementation
   void Kill() final;
 
-  bool ReadRawData(net::IOBuffer* buf, int buf_size, int* bytes_read) final;
+  int ReadRawData(net::IOBuffer* buf, int buf_size) final;
 
   // oxide::URLRequestDelegatedJob implementation
   void OnStart() final;

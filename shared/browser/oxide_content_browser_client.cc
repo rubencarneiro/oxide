@@ -148,7 +148,7 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           content::ResourceContext* context,
                                           int render_process_id,
                                           int render_frame_id,
-                                          net::CookieOptions* options) {
+                                          const net::CookieOptions& options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
 }
@@ -158,8 +158,7 @@ content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionCont
 }
 
 void ContentBrowserClient::AllowCertificateError(
-    int render_process_id,
-    int render_frame_id,
+    content::WebContents* contents,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& request_url,
@@ -169,8 +168,7 @@ void ContentBrowserClient::AllowCertificateError(
     bool expired_previous_decision,
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
-  CertificateErrorDispatcher::AllowCertificateError(render_process_id,
-                                                    render_frame_id,
+  CertificateErrorDispatcher::AllowCertificateError(contents,
                                                     cert_error,
                                                     ssl_info,
                                                     request_url,

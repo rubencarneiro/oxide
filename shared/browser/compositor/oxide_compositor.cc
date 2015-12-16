@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "base/thread_task_runner_handle.h"
 #include "cc/layers/layer.h"
+#include "cc/layers/layer_settings.h"
 #include "cc/output/context_provider.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"

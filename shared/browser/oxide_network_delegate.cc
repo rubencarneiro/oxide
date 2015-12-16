@@ -116,8 +116,6 @@ void NetworkDelegate::OnCompleted(net::URLRequest* request, bool started) {}
 
 void NetworkDelegate::OnURLRequestDestroyed(net::URLRequest* request) {}
 
-void NetworkDelegate::OnURLRequestJobOrphaned(net::URLRequest* request) {}
-
 void NetworkDelegate::OnPACScriptError(int line_number,
                                        const base::string16& error) {}
 
@@ -160,6 +158,10 @@ bool NetworkDelegate::OnCanEnablePrivacyMode(
 }
 
 bool NetworkDelegate::OnAreExperimentalCookieFeaturesEnabled() const {
+  return false;
+}
+
+bool NetworkDelegate::OnAreStrictSecureCookiesEnabled() const {
   return false;
 }
 
