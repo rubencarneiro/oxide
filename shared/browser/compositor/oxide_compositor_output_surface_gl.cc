@@ -115,7 +115,8 @@ void CompositorOutputSurfaceGL::DiscardBackbuffer() {
 }
 
 void CompositorOutputSurfaceGL::Reshape(const gfx::Size& size,
-                                        float scale_factor) {
+                                        float scale_factor,
+                                        bool has_alpha) {
   if (surface_size_ == size && device_scale_factor_ == scale_factor) {
     return;
   }
