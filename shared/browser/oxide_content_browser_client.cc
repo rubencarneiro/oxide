@@ -159,6 +159,7 @@ content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionCont
 
 void ContentBrowserClient::AllowCertificateError(
     content::WebContents* contents,
+    bool is_main_frame,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& request_url,
@@ -169,6 +170,7 @@ void ContentBrowserClient::AllowCertificateError(
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
   CertificateErrorDispatcher::AllowCertificateError(contents,
+                                                    is_main_frame,
                                                     cert_error,
                                                     ssl_info,
                                                     request_url,

@@ -100,6 +100,7 @@ void CertificateErrorDispatcher::CreateForWebContents(
 // static
 void CertificateErrorDispatcher::AllowCertificateError(
     content::WebContents* contents,
+    bool is_main_frame,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& request_url,
@@ -141,7 +142,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
       new CertificateErrorProxy(
         overridable ? callback : base::Callback<void(bool)>());
   scoped_ptr<CertificateError> error(
-      new CertificateError(resource_type == content::RESOURCE_TYPE_MAIN_FRAME,
+      new CertificateError(is_main_frame,
                            !content::IsResourceTypeFrame(resource_type),
                            ToCertError(cert_error, ssl_info.cert.get()),
                            ssl_info.cert.get(),
