@@ -47,6 +47,7 @@ class CertificateErrorDispatcher
   // Entry point from Chromium
   static void AllowCertificateError(
       content::WebContents* contents,
+      bool is_main_frame,
       int cert_error,
       const net::SSLInfo& ssl_info,
       const GURL& request_url,

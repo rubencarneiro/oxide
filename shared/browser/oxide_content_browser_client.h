@@ -83,6 +83,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
   void AllowCertificateError(
       content::WebContents* contents,
+      bool is_main_frame,
       int cert_error,
       const net::SSLInfo& ssl_info,
       const GURL& request_url,
