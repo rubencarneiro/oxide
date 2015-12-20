@@ -502,7 +502,7 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
   if (is_loading_) {
     content::WebCursor::CursorInfo busy_cursor_info(
         blink::WebCursorInfo::TypeWait);
-    current_cursor_ = content::WebCursor(busy_cursor_info);
+    current_cursor_.InitFromCursorInfo(busy_cursor_info);
   } else {
     current_cursor_ = web_cursor_;
   }
