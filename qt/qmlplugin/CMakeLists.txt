@@ -64,6 +64,7 @@ set_target_properties(
     ${OXIDE_QMLPLUGIN} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
     AUTOMOC TRUE)
+target_compile_options(${OXIDE_QMLPLUGIN} PRIVATE -fno-rtti)
 if(DEFINED LEGACY_QMLVALUE_TYPES)
   target_compile_definitions(${OXIDE_QMLPLUGIN} PRIVATE -DLEGACY_QMLVALUE_TYPES)
   target_include_directories(
