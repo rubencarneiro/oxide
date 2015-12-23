@@ -26,7 +26,7 @@
 #include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "base/synchronization/lock.h"
-#include "third_party/re2/re2/re2.h"
+#include "third_party/re2/src/re2/re2.h"
 
 class GURL;
 
