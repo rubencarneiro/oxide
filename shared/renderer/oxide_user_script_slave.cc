@@ -91,7 +91,7 @@ void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   base::Pickle pickle(reinterpret_cast<char *>(shmem->memory()), size);
   base::PickleIterator iter(pickle);
 
-  uint64 num_scripts = 0;
+  uint64_t num_scripts = 0;
   CHECK(iter.ReadUInt64(&num_scripts));
   for (; num_scripts > 0; --num_scripts) {
     linked_ptr<UserScript> script(new UserScript());

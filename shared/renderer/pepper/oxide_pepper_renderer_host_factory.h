@@ -6,8 +6,7 @@
 #ifndef _OXIDE_SHARED_PEPPER_RENDERER_HOST_FACTORY_H_
 #define _OXIDE_SHARED_PEPPER_RENDERER_HOST_FACTORY_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "ppapi/host/host_factory.h"
 #include "content/public/renderer/render_frame_observer.h"
 

@@ -20,7 +20,6 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/macros.h"
 #include "base/files/file.h"
 #include "url/gurl.h"

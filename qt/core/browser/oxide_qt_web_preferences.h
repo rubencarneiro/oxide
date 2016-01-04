@@ -18,8 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_PREFERENCES_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_PREFERENCES_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 
 #include "shared/browser/oxide_web_preferences.h"
 

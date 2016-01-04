@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_RENDERER_SCRIPT_REFERENCED_OBJECT_H_
 #define _OXIDE_SHARED_RENDERER_SCRIPT_REFERENCED_OBJECT_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "v8/include/v8.h"

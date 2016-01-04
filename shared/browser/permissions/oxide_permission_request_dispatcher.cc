@@ -18,6 +18,7 @@
 #include "oxide_permission_request_dispatcher.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "base/logging.h"
 #include "content/public/browser/navigation_details.h"
@@ -194,10 +195,10 @@ int PermissionRequestDispatcher::RequestPermission(
 
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
-      client_->RequestGeolocationPermission(request.Pass());
+      client_->RequestGeolocationPermission(std::move(request));
       break;
     case content::PermissionType::NOTIFICATIONS:
-      client_->RequestNotificationPermission(request.Pass());
+      client_->RequestNotificationPermission(std::move(request));
       break;
     default:
       NOTIMPLEMENTED();
@@ -243,7 +244,7 @@ int PermissionRequestDispatcher::RequestMediaAccessPermission(
         callback));
   AddPendingRequest(req.get());
 
-  client_->RequestMediaAccessPermission(req.Pass());
+  client_->RequestMediaAccessPermission(std::move(req));
 
   return request_id;
 }

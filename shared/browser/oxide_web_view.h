@@ -394,9 +394,9 @@ class WebView : public ScriptMessageTarget,
   void CloseContents(content::WebContents* source) final;
   void UpdateTargetURL(content::WebContents* source, const GURL& url) final;
   bool AddMessageToConsole(content::WebContents* source,
-               int32 level,
+               int32_t level,
                const base::string16& message,
-               int32 line_no,
+               int32_t line_no,
                const base::string16& source_id) final;
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
@@ -488,7 +488,7 @@ class WebView : public ScriptMessageTarget,
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
-  std::queue<uint32> received_surface_ids_;
+  std::queue<uint32_t> received_surface_ids_;
 
   gfx::Point global_mouse_position_;
   TouchEventState touch_state_;

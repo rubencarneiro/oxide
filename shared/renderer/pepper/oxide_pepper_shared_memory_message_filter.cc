@@ -4,6 +4,8 @@
 
 #include "chrome/renderer/pepper/pepper_shared_memory_message_filter.h"
 
+#include <utility>
+
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/shared_memory.h"
 #include "base/process/process_handle.h"
@@ -43,11 +45,11 @@ void PepperSharedMemoryMessageFilter::OnHostMsgCreateSharedMemory(
     ppapi::proxy::SerializedHandle* plugin_handle) {
   plugin_handle->set_null_shmem();
   *host_handle_id = -1;
-  scoped_ptr<base::SharedMemory> shm(content::RenderThread::Get()
-                                         ->HostAllocateSharedMemoryBuffer(size)
-                                         .Pass());
-  if (!shm.get())
+  scoped_ptr<base::SharedMemory> shm(
+      content::RenderThread::Get()->HostAllocateSharedMemoryBuffer(size));
+  if (!shm.get()) {
     return;
+  }
 
   base::SharedMemoryHandle host_shm_handle;
   shm->ShareToProcess(base::GetCurrentProcessHandle(), &host_shm_handle);

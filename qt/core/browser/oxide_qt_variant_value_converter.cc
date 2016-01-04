@@ -17,6 +17,8 @@
 
 #include "oxide_qt_variant_value_converter.h"
 
+#include <utility>
+
 #include <QList>
 #include <QMap>
 #include <QString>
@@ -69,10 +71,10 @@ scoped_ptr<base::ListValue> FromVariantListValueInternal(
     if (!value) {
       value = base::Value::CreateNullValue();
     }
-    rv->Append(value.Pass());
+    rv->Append(std::move(value));
   }
 
-  return rv.Pass();
+  return std::move(rv);
 }
 
 scoped_ptr<base::DictionaryValue> FromVariantMapValueInternal(
@@ -85,10 +87,10 @@ scoped_ptr<base::DictionaryValue> FromVariantMapValueInternal(
     if (!value) {
       continue;
     }
-    rv->Set(it.key().toStdString(), value.Pass());
+    rv->Set(it.key().toStdString(), std::move(value));
   }
 
-  return rv.Pass();
+  return std::move(rv);
 }
 
 scoped_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,

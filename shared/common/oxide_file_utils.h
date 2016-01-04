@@ -18,10 +18,9 @@
 #ifndef _OXIDE_SHARED_COMMON_FILE_UTILS_H_
 #define _OXIDE_SHARED_COMMON_FILE_UTILS_H_
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
 #include "base/files/file.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 
 namespace base {

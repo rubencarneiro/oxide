@@ -18,6 +18,8 @@
 #include "oxideqcertificateerror.h"
 #include "oxideqcertificateerror_p.h"
 
+#include <utility>
+
 #include <QString>
 #include <QtDebug>
 #include <QUrl>
@@ -36,7 +38,7 @@ OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
     scoped_ptr<oxide::CertificateError> error)
     : q_ptr(nullptr),
       certificate_(OxideQSslCertificateData::Create(error->cert())),
-      error_(error.Pass()),
+      error_(std::move(error)),
       did_respond_(false) {}
 
 void OxideQCertificateErrorPrivate::OnCancel() {
@@ -78,7 +80,7 @@ OxideQCertificateError* OxideQCertificateErrorPrivate::Create(
     scoped_ptr<oxide::CertificateError> error,
     QObject* parent) {
   return new OxideQCertificateError(
-      *new OxideQCertificateErrorPrivate(error.Pass()),
+      *new OxideQCertificateErrorPrivate(std::move(error)),
       parent);
 }
 

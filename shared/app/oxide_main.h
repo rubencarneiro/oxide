@@ -18,8 +18,6 @@
 #ifndef _OXIDE_SHARED_APP_MAIN_H_
 #define _OXIDE_SHARED_APP_MAIN_H_
 
-#include "base/basictypes.h"
-
 namespace oxide {
 
 class PlatformDelegate;

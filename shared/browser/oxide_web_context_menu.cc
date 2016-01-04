@@ -17,6 +17,8 @@
 
 #include "oxide_web_context_menu.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_context.h"
@@ -88,7 +90,7 @@ void WebContextMenu::SaveLink() const {
   dl_params->set_referrer_encoding(params_.frame_charset);
   dl_params->set_suggested_name(params_.suggested_filename);
   dl_params->set_prompt(true);
-  dlm->DownloadUrl(dl_params.Pass());
+  dlm->DownloadUrl(std::move(dl_params));
 }
 
 void WebContextMenu::SaveMedia() const {

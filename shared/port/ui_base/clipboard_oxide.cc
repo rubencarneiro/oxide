@@ -17,7 +17,7 @@
 
 #include "clipboard_oxide.h"
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "ui/base/clipboard/custom_data_helper.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 
@@ -167,9 +167,9 @@ ClipboardOxide::~ClipboardOxide() {
   DCHECK(CalledOnValidThread());
 }
 
-uint64 ClipboardOxide::GetSequenceNumber(ClipboardType type) const {
+uint64_t ClipboardOxide::GetSequenceNumber(ClipboardType type) const {
   DCHECK(CalledOnValidThread());
-  return uint64();
+  return 0;
 }
 
 bool ClipboardOxide::IsFormatAvailable(const FormatType& format,
@@ -200,8 +200,8 @@ void ClipboardOxide::ReadAsciiText(ClipboardType type,
 void ClipboardOxide::ReadHTML(ClipboardType type,
                              base::string16* markup,
                              std::string* src_url,
-                             uint32* fragment_start,
-                             uint32* fragment_end) const {
+                             uint32_t* fragment_start,
+                             uint32_t* fragment_end) const {
   DCHECK(CalledOnValidThread());
 }
 

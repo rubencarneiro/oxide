@@ -17,6 +17,8 @@
 
 #include "oxide_platform_notification_service.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "content/public/browser/desktop_notification_delegate.h"
 #include "content/public/common/platform_notification_data.h"
@@ -108,7 +110,7 @@ void PlatformNotificationService::DisplayNotification(
                         notification_data.body,
                         icon);
   scoped_refptr<NotificationDelegateProxy> delegate_proxy =
-      new NotificationDelegateProxy(delegate.Pass());
+      new NotificationDelegateProxy(std::move(delegate));
 
   // In the future we might have the ability to let the application handle
   // this notification, in which case we'll look up a NotificationDispatcher

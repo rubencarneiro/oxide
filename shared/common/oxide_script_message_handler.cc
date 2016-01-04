@@ -17,6 +17,8 @@
 
 #include "oxide_script_message_handler.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "base/values.h"
 
@@ -44,7 +46,7 @@ void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) const {
 
   if (!success) {
     message->Error(ScriptMessageParams::ERROR_UNCAUGHT_EXCEPTION,
-                   error_payload.Pass());
+                   std::move(error_payload));
   }
 }
 

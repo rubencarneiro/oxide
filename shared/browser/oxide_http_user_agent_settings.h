@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
 #define _OXIDE_SHARED_BROWSER_HTTP_USER_AGENT_SETTINGS_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "net/url_request/http_user_agent_settings.h"
 
 namespace oxide {

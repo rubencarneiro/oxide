@@ -51,7 +51,7 @@ void UserScript::UnpickleGlobs(base::PickleIterator* iter,
                                std::vector<std::string>* globs) {
   globs->clear();
 
-  uint64 size = 0;
+  uint64_t size = 0;
   CHECK(iter->ReadUInt64(&size));
   for (; size > 0; --size) {
     std::string glob;
@@ -76,7 +76,7 @@ void UserScript::UnpickleURLPatternSet(base::PickleIterator* iter,
                                        extensions::URLPatternSet* set) {
   set->ClearPatterns();
 
-  uint64 size = 0;
+  uint64_t size = 0;
   CHECK(iter->ReadUInt64(&size));
   for (; size > 0; --size) {
     int valid_schemes = 0;

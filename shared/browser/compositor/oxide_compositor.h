@@ -60,7 +60,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
-  void DidSwapCompositorFrame(uint32 surface_id,
+  void DidSwapCompositorFrame(uint32_t surface_id,
                               FrameHandleVector returned_frames);
 
  private:
@@ -111,7 +111,7 @@ class Compositor final : public cc::LayerTreeHostClient,
   scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
   scoped_refptr<CompositorThreadProxy> proxy_;
 
-  uint32 next_output_surface_id_;
+  uint32_t next_output_surface_id_;
 
   base::ObserverList<CompositorObserver> observers_;
 

@@ -5,7 +5,6 @@
 #include "oxide_player_media_hub.h"
 #include "oxide_browser_media_player_manager.h"
 
-#include "base/basictypes.h"
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/strings/string_util.h"

@@ -19,6 +19,7 @@
 #include "oxide_video_capture_device_hybris.h"
 
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
+#include <utility>
 
 #include "base/logging.h"
 #include "base/single_thread_task_runner.h"
@@ -91,7 +92,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   DCHECK(params.requested_format.IsValid());
   DCHECK(!camera_control_);
 
-  client_ = client.Pass();
+  client_ = std::move(client);
 
   task_runner_ = base::ThreadTaskRunnerHandle::Get();
 

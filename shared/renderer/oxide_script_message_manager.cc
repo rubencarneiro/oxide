@@ -19,6 +19,8 @@
 
 #include "oxide_script_message_manager.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/strings/string16.h"
@@ -229,7 +231,7 @@ void ScriptMessageManager::SendMessageInner(
   PopulateScriptMessageParams(serial,
                               GetContextURL(),
                               V8StringToStdString(msg_id),
-                              payload.Pass(),
+                              std::move(payload),
                               &params);
 
   if (!frame()->Send(new OxideHostMsg_SendMessage(frame()->GetRoutingID(),

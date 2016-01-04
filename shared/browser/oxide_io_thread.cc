@@ -17,6 +17,8 @@
 
 #include "oxide_io_thread.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
@@ -198,7 +200,7 @@ void IOThread::Init() {
 
   globals()->proxy_service_ =
       net::ProxyService::CreateUsingSystemProxyResolver(
-        proxy_config_service.Pass(), 4, IOThread::instance()->net_log());
+        std::move(proxy_config_service), 4, IOThread::instance()->net_log());
 
   globals()->throttler_manager_.reset(new net::URLRequestThrottlerManager());
 

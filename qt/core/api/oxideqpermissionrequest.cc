@@ -18,6 +18,8 @@
 #include "oxideqpermissionrequest.h"
 #include "oxideqpermissionrequest_p.h"
 
+#include <utility>
+
 #include <QString>
 #include <QtDebug>
 #include <string>
@@ -38,13 +40,13 @@ void OxideQPermissionRequestPrivate::OnCancelled() {
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
     scoped_ptr<oxide::PermissionRequest> request)
     : q_ptr(nullptr),
-      request_(request.Pass()) {}
+      request_(std::move(request)) {}
 
 OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
     scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQPermissionRequestPrivate(request.Pass()) {}
+    : OxideQPermissionRequestPrivate(std::move(request)) {}
 
 bool OxideQSimplePermissionRequestPrivate::canRespond() const {
   if (request_->is_cancelled()) {
@@ -78,13 +80,13 @@ OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
   DCHECK(request);
 
   return new OxideQSimplePermissionRequest(
-      *new OxideQSimplePermissionRequestPrivate(request.Pass()));
+      *new OxideQSimplePermissionRequestPrivate(std::move(request)));
 }
 
 OxideQGeolocationPermissionRequestPrivate::
     OxideQGeolocationPermissionRequestPrivate(
       scoped_ptr<oxide::SimplePermissionRequest> request)
-      : OxideQSimplePermissionRequestPrivate(request.Pass()) {}
+      : OxideQSimplePermissionRequestPrivate(std::move(request)) {}
 
 OxideQGeolocationPermissionRequestPrivate::
     ~OxideQGeolocationPermissionRequestPrivate() {}
@@ -96,13 +98,13 @@ OxideQGeolocationPermissionRequestPrivate::Create(
   DCHECK(request);
 
   return new OxideQGeolocationPermissionRequest(
-      *new OxideQGeolocationPermissionRequestPrivate(request.Pass()));
+      *new OxideQGeolocationPermissionRequestPrivate(std::move(request)));
 }
 
 OxideQMediaAccessPermissionRequestPrivate::
     OxideQMediaAccessPermissionRequestPrivate(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request)
-      : OxideQPermissionRequestPrivate(request.Pass()) {}
+      : OxideQPermissionRequestPrivate(std::move(request)) {}
 
 bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
   if (request_->is_cancelled()) {
@@ -137,7 +139,7 @@ OxideQMediaAccessPermissionRequestPrivate::Create(
   DCHECK(request);
 
   return new OxideQMediaAccessPermissionRequest(
-      *new OxideQMediaAccessPermissionRequestPrivate(request.Pass()));
+      *new OxideQMediaAccessPermissionRequestPrivate(std::move(request)));
 }
 
 OxideQPermissionRequest::OxideQPermissionRequest(

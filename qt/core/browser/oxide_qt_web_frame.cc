@@ -18,6 +18,7 @@
 #include "oxide_qt_web_frame.h"
 
 #include <map>
+#include <utility>
 
 #include <QObject>
 #include <QString>
@@ -106,12 +107,12 @@ bool WebFrame::sendMessage(const QUrl& context,
   scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
       frame_->SendMessage(GURL(context.toString().toStdString()),
                           msg_id.toStdString(),
-                          payload_value.Pass());
+                          std::move(payload_value));
   if (!smr) {
     return false;
   }
 
-  ScriptMessageRequest::FromProxyHandle(req)->SetRequest(smr.Pass());
+  ScriptMessageRequest::FromProxyHandle(req)->SetRequest(std::move(smr));
 
   return true;
 }
