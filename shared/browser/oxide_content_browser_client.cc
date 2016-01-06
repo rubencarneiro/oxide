@@ -26,6 +26,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
+#include "content/public/browser/location_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -35,8 +36,11 @@
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
+#include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 
 #include "oxide_access_token_store.h"
 #include "oxide_android_properties.h"
@@ -44,7 +48,6 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_form_factor.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -57,7 +60,7 @@
 #include "content/public/browser/browser_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 
-#include "oxide_pepper_host_factory_browser.h"
+#include "pepper/oxide_pepper_host_factory_browser.h"
 #endif
 
 namespace oxide {
@@ -104,10 +107,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
     int child_process_id) {
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
-    switches::kEnableGoogleTalkPlugin,
-    switches::kFormFactor,
-    switches::kLimitMaxDecodedImageBytes,
     switches::kEnableMediaHubAudio,
+    switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
@@ -147,7 +148,7 @@ bool ContentBrowserClient::AllowSetCookie(const GURL& url,
                                           content::ResourceContext* context,
                                           int render_process_id,
                                           int render_frame_id,
-                                          net::CookieOptions* options) {
+                                          const net::CookieOptions& options) {
   return BrowserContextIOData::FromResourceContext(
       context)->CanAccessCookies(url, first_party, true);
 }
@@ -157,8 +158,8 @@ content::QuotaPermissionContext* ContentBrowserClient::CreateQuotaPermissionCont
 }
 
 void ContentBrowserClient::AllowCertificateError(
-    int render_process_id,
-    int render_frame_id,
+    content::WebContents* contents,
+    bool is_main_frame,
     int cert_error,
     const net::SSLInfo& ssl_info,
     const GURL& request_url,
@@ -168,29 +169,25 @@ void ContentBrowserClient::AllowCertificateError(
     bool expired_previous_decision,
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-
-  content::RenderFrameHost* rfh = content::RenderFrameHost::FromID(
-      render_process_id, render_frame_id);
-  if (!rfh) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  WebView* webview = WebView::FromRenderFrameHost(rfh);
-  if (!webview) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
-    return;
-  }
-
-  webview->AllowCertificateError(rfh, cert_error, ssl_info, request_url,
-                                 resource_type, overridable,
-                                 strict_enforcement, callback,
-                                 result);
+  CertificateErrorDispatcher::AllowCertificateError(contents,
+                                                    is_main_frame,
+                                                    cert_error,
+                                                    ssl_info,
+                                                    request_url,
+                                                    resource_type,
+                                                    overridable,
+                                                    strict_enforcement,
+                                                    callback,
+                                                    result);
 }
 
 content::MediaObserver* ContentBrowserClient::GetMediaObserver() {
   return MediaCaptureDevicesDispatcher::GetInstance();
+}
+
+content::PlatformNotificationService*
+ContentBrowserClient::GetPlatformNotificationService() {
+  return PlatformNotificationService::GetInstance();
 }
 
 bool ContentBrowserClient::CanCreateWindow(
@@ -235,7 +232,13 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   WebViewContentsHelper* contents_helper =
       WebViewContentsHelper::FromRenderViewHost(render_view_host);
 
-  WebPreferences* web_prefs = contents_helper->GetWebPreferences();
+  WebPreferences* web_prefs = nullptr;
+  if (contents_helper) {
+    // If RVH is for an InterstitialPage, we can't map to WebContents
+    // XXX: If we ever expose transient pages in the public API, we should find
+    //  a way around this, so that transient pages get the same preferences
+    web_prefs = contents_helper->GetWebPreferences();
+  }
   if (!web_prefs) {
     web_prefs = WebPreferences::GetFallback();
   }
@@ -247,7 +250,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
-      !contents_helper->GetBrowserContext()->IsPopupBlockerEnabled();
+      !BrowserContext::FromContent(
+        render_view_host->GetProcess()->GetBrowserContext())
+        ->IsPopupBlockerEnabled();
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
@@ -266,7 +271,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
 content::LocationProvider*
 ContentBrowserClient::OverrideSystemLocationProvider() {
-  return platform_integration_->CreateLocationProvider();
+  return platform_integration_->CreateLocationProvider().release();
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

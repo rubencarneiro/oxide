@@ -65,8 +65,11 @@ class NetworkDelegate final : public net::NetworkDelegate {
 
   void OnResponseStarted(net::URLRequest* request) final;
 
-  void OnNetworkBytesReceived(const net::URLRequest& request,
+  void OnNetworkBytesReceived(net::URLRequest* request,
                               int64_t bytes_received) final;
+
+  void OnNetworkBytesSent(net::URLRequest* request,
+                          int64_t bytes_sent) final;
 
   void OnCompleted(net::URLRequest* request, bool started) final;
 
@@ -94,7 +97,8 @@ class NetworkDelegate final : public net::NetworkDelegate {
       const GURL& url,
       const GURL& first_party_for_cookies) const final;
 
-  bool OnFirstPartyOnlyCookieExperimentEnabled() const final;
+  bool OnAreExperimentalCookieFeaturesEnabled() const final;
+  bool OnAreStrictSecureCookiesEnabled() const final;
 
   bool OnCancelURLRequestWithPolicyViolatingReferrerHeader(
       const net::URLRequest& request,

@@ -21,7 +21,11 @@
 #include "base/callback.h"
 #include "base/id_map.h"
 #include "base/macros.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/permission_manager.h"
+
+#include "shared/browser/oxide_render_object_id.h"
+#include "shared/browser/permissions/oxide_permission_request_response.h"
 
 namespace oxide {
 
@@ -33,18 +37,29 @@ class PermissionManager : public content::PermissionManager {
   ~PermissionManager() override;
 
  private:
+  void RespondToPermissionRequest(
+      int request_id,
+      content::PermissionType permission,
+      const GURL& requesting_origin,
+      const GURL& embedding_origin,
+      const base::Callback<void(content::PermissionStatus)>& callback,
+      PermissionRequestResponse response);
+
   // content::PermissionManager implementation
-  void RequestPermission(
+  int RequestPermission(
       content::PermissionType permission,
       content::RenderFrameHost* render_frame_host,
-      int request_id,
       const GURL& requesting_origin,
       bool user_gesture,
       const base::Callback<void(content::PermissionStatus)>& callback) override;
-  void CancelPermissionRequest(content::PermissionType permission,
-                               content::RenderFrameHost* render_frame_host,
-                               int request_id,
-                               const GURL& requesting_origin) override;
+  int RequestPermissions(
+      const std::vector<content::PermissionType>& permissions,
+      content::RenderFrameHost* render_frame_host,
+      const GURL& requesting_origin,
+      bool user_gesture,
+      const base::Callback<void(
+          const std::vector<content::PermissionStatus>&)>& callback) override;
+  void CancelPermissionRequest(int request_id) override;
   content::PermissionStatus GetPermissionStatus(
       content::PermissionType permission,
       const GURL& requesting_origin,
@@ -66,6 +81,11 @@ class PermissionManager : public content::PermissionManager {
 
   struct Subscription;
   IDMap<Subscription, IDMapOwnPointer> subscriptions_;
+
+  struct RequestData;
+  IDMap<RequestData, IDMapOwnPointer> requests_;
+
+  base::WeakPtrFactory<PermissionManager> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(PermissionManager);
 };

@@ -23,6 +23,7 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/synchronization/lock.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 
@@ -43,9 +44,12 @@ class BrowserPlatformIntegration : public QObject,
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
+  void OnScreenGeometryChanged(const QRect& geometry);
+  void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
 
  private:
   void UpdateApplicationState();
+  void UpdateDefaultScreenInfo();
 
   // oxide::BrowserPlatformIntegration implementation
   bool LaunchURLExternally(const GURL& url) override;
@@ -54,15 +58,23 @@ class BrowserPlatformIntegration : public QObject,
   blink::WebScreenInfo GetDefaultScreenInfo() override;
   oxide::GLContextDependent* GetGLShareContext() override;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() override;
+  ui::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
-  content::LocationProvider* CreateLocationProvider() override;
+  scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   virtual int GetClickInterval() override;
   std::string GetApplicationName() override;
-  ui::ClipboardOxideFactory GetClipboardOxideFactory() override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;
+
+  // QCoreApplication::applicationName() does no locking and QString isn't
+  // thread-safe. As GetApplicationName can be called on any thread, we cache
+  // the app name here. This protects against the case where we call
+  // QCoreApplication::applicationName() off the UI thread whilst the
+  // application is in QCoreApplication::setApplicationName. We don't expect
+  // this to change, so we don't bother listening for updates
+  const std::string application_name_;
 
   // Whether the application is suspended. If the Qt platform is ubuntu,
   // we detect Qt::ApplicationSuspended synthetically because it doesn't
@@ -76,6 +88,9 @@ class BrowserPlatformIntegration : public QObject,
   // sources for state changes, and we want to ensure we only notify observers
   // when the state really does change
   ApplicationState state_;
+
+  base::Lock default_screen_info_lock_;
+  blink::WebScreenInfo default_screen_info_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

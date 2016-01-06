@@ -183,7 +183,7 @@ void JavaScriptDialogManager::ResetDialogState(
 }
 
 JavaScriptDialogManager* JavaScriptDialogManager::GetInstance() {
-  return Singleton<JavaScriptDialogManager>::get();
+  return base::Singleton<JavaScriptDialogManager>::get();
 }
 
 } // namespace oxide

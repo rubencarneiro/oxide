@@ -35,6 +35,13 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   return true;
 }
 
+void CompositorOutputSurface::DetachFromClient() {
+  DCHECK(CalledOnValidThread());
+  proxy_->SetOutputSurface(nullptr);
+  cc::OutputSurface::DetachFromClient();
+  DetachFromThread();
+}
+
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
@@ -65,9 +72,7 @@ void CompositorOutputSurface::DoSwapBuffers(CompositorFrameData* frame) {
   client_->DidSwapBuffers();
 }
 
-CompositorOutputSurface::~CompositorOutputSurface() {
-  proxy_->SetOutputSurface(nullptr);
-}
+CompositorOutputSurface::~CompositorOutputSurface() {}
 
 void CompositorOutputSurface::DidSwapBuffers() {
   DCHECK(CalledOnValidThread());

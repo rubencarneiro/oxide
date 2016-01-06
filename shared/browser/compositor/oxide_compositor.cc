@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "base/thread_task_runner_handle.h"
 #include "cc/layers/layer.h"
+#include "cc/layers/layer_settings.h"
 #include "cc/output/context_provider.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/trees/layer_tree_host.h"
@@ -40,6 +41,7 @@
 #include "oxide_compositor_client.h"
 #include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_frame_handle.h"
+#include "oxide_compositor_observer.h"
 #include "oxide_compositor_output_surface_gl.h"
 #include "oxide_compositor_output_surface_software.h"
 #include "oxide_compositor_software_output_device.h"
@@ -87,7 +89,6 @@ Compositor::Compositor(CompositorClient* client)
       root_layer_(cc::Layer::Create(cc::LayerSettings())),
       proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
-      lock_count_(0),
       weak_factory_(this) {
   DCHECK(CalledOnValidThread());
 }
@@ -101,29 +102,6 @@ void Compositor::SendSwapCompositorFrameToClient(
   scoped_refptr<CompositorFrameHandle> handle =
       new CompositorFrameHandle(proxy_, frame.Pass());
   client_->CompositorSwapFrame(handle.get());
-}
-
-void Compositor::LockCompositor() {
-  DCHECK(CalledOnValidThread());
-  if (lock_count_++ > 0) {
-    return;
-  }
-
-  if (layer_tree_host_) {
-    layer_tree_host_->SetDeferCommits(true);
-  }
-}
-
-void Compositor::UnlockCompositor() {
-  DCHECK(CalledOnValidThread());
-  DCHECK(lock_count_ > 0);
-  if (--lock_count_ > 0) {
-    return;
-  }
-
-  if (layer_tree_host_) {
-    layer_tree_host_->SetDeferCommits(false);
-  }
 }
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
@@ -155,11 +133,19 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   return output.Pass();
 }
 
+void Compositor::AddObserver(CompositorObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void Compositor::RemoveObserver(CompositorObserver* observer) {
+  observers_.RemoveObserver(observer);
+}
+
 void Compositor::WillBeginMainFrame() {}
 void Compositor::BeginMainFrame(const cc::BeginFrameArgs& args) {}
 void Compositor::BeginMainFrameNotExpectedSoon() {}
 void Compositor::DidBeginMainFrame() {}
-void Compositor::Layout() {}
+void Compositor::UpdateLayerTreeHost() {}
 void Compositor::ApplyViewportDeltas(
     const gfx::Vector2dF& inner_delta,
     const gfx::Vector2dF& outer_delta,
@@ -194,7 +180,7 @@ void Compositor::DidFailToInitializeOutputSurface() {
 void Compositor::WillCommit() {}
 
 void Compositor::DidCommit() {
-  client_->CompositorDidCommit();
+  FOR_EACH_OBSERVER(CompositorObserver, observers_, CompositorDidCommit());
 }
 
 void Compositor::DidCommitAndDrawFrame() {}
@@ -214,7 +200,7 @@ scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 }
 
 Compositor::~Compositor() {
-  CHECK_EQ(lock_count_, 0U);
+  FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
   proxy_->CompositorDestroyed();
 }
 
@@ -249,17 +235,15 @@ void Compositor::SetVisibility(bool visible) {
     layer_tree_host_->SetVisible(true);
     layer_tree_host_->SetViewportSize(size_);
     layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
-
-    if (lock_count_ > 0) {
-      layer_tree_host_->SetDeferCommits(true);
-    }
-
-    layer_tree_host_->SetLayerTreeHostClientReady();
   }
 }
 
 void Compositor::SetDeviceScaleFactor(float scale) {
   DCHECK(CalledOnValidThread());
+  if (scale == device_scale_factor_) {
+    return;
+  }
+
   device_scale_factor_ = scale;
 
   if (layer_tree_host_) {
@@ -283,6 +267,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(CalledOnValidThread());
+
   root_layer_->RemoveAllChildren();
   if (layer.get()) {
     root_layer_->AddChild(layer);

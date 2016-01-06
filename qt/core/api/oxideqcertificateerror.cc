@@ -27,8 +27,8 @@
 #include "base/macros.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/browser/oxide_certificate_error.h"
 #include "shared/browser/oxide_security_types.h"
+#include "shared/browser/ssl/oxide_certificate_error.h"
 
 #include "oxideqsslcertificate_p.h"
 
@@ -58,7 +58,7 @@ void OxideQCertificateErrorPrivate::respond(bool accept) {
     return;
   }
 
-  if (error_->is_cancelled()) {
+  if (error_->IsCancelled()) {
     qWarning() << "Cannot respond to a CertificateError that has been cancelled";
     return;
   }
@@ -97,34 +97,34 @@ OxideQCertificateError::OxideQCertificateError(
                  // excusively owns |error_|
                  base::Unretained(d)));
   
-  COMPILE_ASSERT(
+  static_assert(
       OK == static_cast<Error>(oxide::CERT_OK),
-      error_enums_ok_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: OK");
+  static_assert(
       ErrorBadIdentity == static_cast<Error>(oxide::CERT_ERROR_BAD_IDENTITY),
-      error_enums_bad_identity_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorBadIdentity");
+  static_assert(
       ErrorExpired == static_cast<Error>(oxide::CERT_ERROR_EXPIRED),
-      error_enums_expired_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorExpired");
+  static_assert(
       ErrorDateInvalid == static_cast<Error>(oxide::CERT_ERROR_DATE_INVALID),
-      error_enums_date_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorDateInvalid");
+  static_assert(
       ErrorAuthorityInvalid ==
         static_cast<Error>(oxide::CERT_ERROR_AUTHORITY_INVALID),
-      error_enums_authority_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorAuthorityInvalid");
+  static_assert(
       ErrorRevoked == static_cast<Error>(oxide::CERT_ERROR_REVOKED),
-      error_enums_revoked_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorRevoked");
+  static_assert(
       ErrorInvalid == static_cast<Error>(oxide::CERT_ERROR_INVALID),
-      error_enums_invalid_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorInvalid");
+  static_assert(
       ErrorInsecure == static_cast<Error>(oxide::CERT_ERROR_INSECURE),
-      error_enums_insecure_doesnt_match);
-  COMPILE_ASSERT(
+      "Error and oxide::CertError enums dont match: ErrorInsecure");
+  static_assert(
       ErrorGeneric == static_cast<Error>(oxide::CERT_ERROR_GENERIC),
-      error_enums_generic_doesnt_match);
+      "Error and oxide::CertError enums dont match: ErrorGeneric");
 }
 
 OxideQCertificateError::~OxideQCertificateError() {}
@@ -138,7 +138,7 @@ QUrl OxideQCertificateError::url() const {
 bool OxideQCertificateError::isCancelled() const {
   Q_D(const OxideQCertificateError);
 
-  return d->error_->is_cancelled();
+  return d->error_->IsCancelled();
 }
 
 bool OxideQCertificateError::isMainFrame() const {

@@ -213,8 +213,9 @@ void WebMediaPlayer::setRate(double rate) {
 }
 
 void WebMediaPlayer::setSinkId(
-      const blink::WebString& deviceId,
-      blink::WebCallbacks<void, blink::WebSetSinkIdError*>*) {
+      const blink::WebString& sinkId,
+      const blink::WebSecurityOrigin& origin,
+      blink::WebSetSinkIdCallbacks* callbacks) {
   NOTIMPLEMENTED();
 }
 
@@ -325,7 +326,8 @@ WebTimeRanges WebMediaPlayer::buffered() const {
 }
 
 WebTimeRanges WebMediaPlayer::seekable() const {
-  return buffered_;
+  const blink::WebTimeRange seekable_range(0.0, duration());
+  return blink::WebTimeRanges(&seekable_range, 1);
 }
 
 double WebMediaPlayer::maxTimeSeekable() const {

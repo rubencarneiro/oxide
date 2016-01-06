@@ -22,10 +22,11 @@
 #include "content/public/browser/permission_type.h"
 #include "content/public/common/permission_status.mojom.h"
 
+#include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
+#include "shared/browser/oxide_render_object_id.h"
 
 #include "oxide_permission_request_dispatcher.h"
-#include "oxide_permission_request_response.h"
 #include "oxide_temporary_saved_permission_context.h"
 
 namespace oxide {
@@ -57,6 +58,7 @@ content::PermissionStatus ToPermissionStatus(
 bool IsPermissionTypeSupported(content::PermissionType permission) {
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
+    case content::PermissionType::NOTIFICATIONS:
       return true;
     default:
       return false;
@@ -68,6 +70,8 @@ TemporarySavedPermissionType ToTemporarySavedPermissionType(
   switch (permission) {
     case content::PermissionType::GEOLOCATION:
       return TEMPORARY_SAVED_PERMISSION_TYPE_GEOLOCATION;
+    case content::PermissionType::NOTIFICATIONS:
+      return TEMPORARY_SAVED_PERMISSION_TYPE_NOTIFICATIONS;
     default:
       NOTREACHED();
       // XXX(chrisccoulson): Perhaps we need __builtin_unreachable here?
@@ -83,88 +87,77 @@ TemporarySavedPermissionStatus ToTemporarySavedPermissionStatus(
       TEMPORARY_SAVED_PERMISSION_STATUS_DENIED;
 }
 
-void RespondToGeolocationPermissionRequest(
-    const PermissionRequestCallback& callback,
-    PermissionRequestResponse response) {
-  if (response == PERMISSION_REQUEST_RESPONSE_ALLOW) {
-    content::GeolocationProvider::GetInstance()
-        ->UserDidOptIntoLocationServices();
-  }
-  callback.Run(response);
-}
-
-void RespondToPermissionRequest(
-    const base::Callback<void(content::PermissionStatus)>& callback,
-    content::PermissionType permission,
-    BrowserContext* context,
-    const GURL& requesting_origin,
-    const GURL& embedding_origin,
-    PermissionRequestResponse response) {
-  callback.Run(ToPermissionStatus(response));
-
-  if (response == PERMISSION_REQUEST_RESPONSE_CANCEL) {
-    return;
-  }
-
-  context->GetTemporarySavedPermissionContext()->SetPermissionStatus(
-      ToTemporarySavedPermissionType(permission),
-      requesting_origin,
-      embedding_origin,
-      ToTemporarySavedPermissionStatus(response));
-}
-
-const PermissionRequestCallback WrapCallback(
-    const base::Callback<void(content::PermissionStatus)>& callback,
-    content::PermissionType permission,
-    BrowserContext* context,
-    const GURL& requesting_origin,
-    const GURL& embedding_origin) {
-  const PermissionRequestCallback wrapped_callback =
-      base::Bind(&RespondToPermissionRequest,
-                 callback,
-                 permission,
-                 // The owner of PermissionRequestDispatcher keeps |context|
-                 // alive. The request will be cancelled by
-                 // PermissionRequestDispatcher when it is destroyed, so it's
-                 // ok to not have a strong reference here
-                 base::Unretained(context),
-                 requesting_origin,
-                 embedding_origin);
-  switch (permission) {
-    case content::PermissionType::GEOLOCATION:
-      return base::Bind(&RespondToGeolocationPermissionRequest,
-                        wrapped_callback);
-    default:
-      return wrapped_callback;
-  }
-}
-
 }
 
 struct PermissionManager::Subscription {
   base::Callback<void(content::PermissionStatus)> callback;
 };
 
-void PermissionManager::RequestPermission(
+struct PermissionManager::RequestData {
+  RequestData(content::RenderFrameHost* render_frame_host)
+      : request_id(-1),
+        render_frame_host_id(render_frame_host) {}
+
+  int request_id;
+  RenderFrameHostID render_frame_host_id;
+};
+
+void PermissionManager::RespondToPermissionRequest(
+    int request_id,
+    content::PermissionType permission,
+    const GURL& requesting_origin,
+    const GURL& embedding_origin,
+    const base::Callback<void(content::PermissionStatus)>& callback,
+    PermissionRequestResponse response) {
+  if (permission == content::PermissionType::GEOLOCATION &&
+      response == PERMISSION_REQUEST_RESPONSE_ALLOW) {
+    content::GeolocationProvider::GetInstance()
+        ->UserDidOptIntoLocationServices();
+  }
+
+  requests_.Remove(request_id);
+  callback.Run(ToPermissionStatus(response));
+
+  if (response == PERMISSION_REQUEST_RESPONSE_CANCEL) {
+    return;
+  }
+
+  context_->GetTemporarySavedPermissionContext()->SetPermissionStatus(
+      ToTemporarySavedPermissionType(permission),
+      requesting_origin,
+      embedding_origin,
+      ToTemporarySavedPermissionStatus(response));
+}
+
+int PermissionManager::RequestPermission(
     content::PermissionType permission,
     content::RenderFrameHost* render_frame_host,
-    int request_id,
     const GURL& requesting_origin,
     bool user_gesture,
     const base::Callback<void(content::PermissionStatus)>& callback) {
   if (!IsPermissionTypeSupported(permission)) {
     callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
+    return kNoPendingOperation;
   }
 
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   if (!web_contents) {
     callback.Run(content::PERMISSION_STATUS_DENIED);
-    return;
+    return kNoPendingOperation;
   }
 
   GURL embedding_origin = web_contents->GetLastCommittedURL().GetOrigin();
+  if (permission == content::PermissionType::NOTIFICATIONS) {
+    // Use the requesting origin as the embedding origin for notifications,
+    // as we don't get an embedding origin in
+    // PlatformNotificationService::CheckPermissionOn{UI,IO}Thread
+    // XXX(chrisccoulson): I don't really like having PermissionType specific
+    //  code here in PermissionManager. PermissionManager should probably
+    //  delegate this to PermissionType specific classes (same for geolocation
+    //  response handling above)
+    embedding_origin = requesting_origin;
+  }
 
   TemporarySavedPermissionStatus status =
       context_->GetTemporarySavedPermissionContext()->GetPermissionStatus(
@@ -173,30 +166,78 @@ void PermissionManager::RequestPermission(
         embedding_origin);
   if (status != TEMPORARY_SAVED_PERMISSION_STATUS_ASK) {
     callback.Run(ToPermissionStatus(status));
-    return;
+    return kNoPendingOperation;
   }
 
   PermissionRequestDispatcher* dispatcher =
       PermissionRequestDispatcher::FromWebContents(web_contents);
   if (!dispatcher) {
+    // Are there any cases when this can be null?
     callback.Run(content::PERMISSION_STATUS_DENIED);
+    return kNoPendingOperation;
+  }
+
+  if (!dispatcher->CanDispatchRequest()) {
+    callback.Run(content::PERMISSION_STATUS_DENIED);
+    return kNoPendingOperation;
+  }
+
+  RequestData* request_data = new RequestData(render_frame_host);
+  int request_id = requests_.Add(request_data);
+
+  request_data->request_id = dispatcher->RequestPermission(
+      permission,
+      render_frame_host,
+      requesting_origin,
+      base::Bind(&PermissionManager::RespondToPermissionRequest,
+                 weak_factory_.GetWeakPtr(),
+                 request_id,
+                 permission,
+                 requesting_origin,
+                 embedding_origin,
+                 callback));
+  DCHECK_NE(request_data->request_id, -1);
+
+  return request_id;
+}
+
+int PermissionManager::RequestPermissions(
+    const std::vector<content::PermissionType>& permissions,
+    content::RenderFrameHost* render_frame_host,
+    const GURL& requesting_origin,
+    bool user_gesture,
+    const base::Callback<void(
+        const std::vector<content::PermissionStatus>&)>& callback) {
+  NOTIMPLEMENTED();
+
+  std::vector<content::PermissionStatus> result(permissions.size());
+  const GURL& embedding_origin =
+      content::WebContents::FromRenderFrameHost(render_frame_host)
+          ->GetLastCommittedURL().GetOrigin();
+
+  for (content::PermissionType type : permissions) {
+    result.push_back(GetPermissionStatus(
+        type, requesting_origin, embedding_origin));
+  }
+
+  callback.Run(result);
+  return kNoPendingOperation;
+}
+
+void PermissionManager::CancelPermissionRequest(int request_id) {
+  RequestData* data = requests_.Lookup(request_id);
+
+  int dispatcher_request_id = data->request_id;
+  RenderFrameHostID render_frame_host_id = data->render_frame_host_id;
+
+  requests_.Remove(request_id);
+
+  content::RenderFrameHost* render_frame_host =
+      render_frame_host_id.ToInstance();
+  if (!render_frame_host) {
     return;
   }
 
-  dispatcher->RequestPermission(
-      permission,
-      render_frame_host,
-      request_id,
-      requesting_origin,
-      WrapCallback(callback, permission, context_, requesting_origin,
-                   embedding_origin));
-}
-
-void PermissionManager::CancelPermissionRequest(
-    content::PermissionType permission,
-    content::RenderFrameHost* render_frame_host,
-    int request_id,
-    const GURL& requesting_origin) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   if (!web_contents) {
@@ -209,10 +250,7 @@ void PermissionManager::CancelPermissionRequest(
     return;
   }
 
-  dispatcher->CancelPermissionRequest(permission,
-                                      render_frame_host,
-                                      request_id,
-                                      requesting_origin);
+  dispatcher->CancelPermissionRequest(dispatcher_request_id);
 }
 
 content::PermissionStatus PermissionManager::GetPermissionStatus(
@@ -259,8 +297,12 @@ void PermissionManager::UnsubscribePermissionStatusChange(int subscription_id) {
 }
 
 PermissionManager::PermissionManager(BrowserContext* context)
-    : context_(context) {}
+    : context_(context),
+      weak_factory_(this) {}
 
-PermissionManager::~PermissionManager() {}
+PermissionManager::~PermissionManager() {
+  DCHECK(subscriptions_.IsEmpty());
+  DCHECK(requests_.IsEmpty());
+}
 
 } // namespace oxide

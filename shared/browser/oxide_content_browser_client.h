@@ -79,11 +79,11 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                       content::ResourceContext* context,
                       int render_process_id,
                       int render_frame_id,
-                      net::CookieOptions* options) final;
+                      const net::CookieOptions& options) final;
   content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
   void AllowCertificateError(
-      int render_process_id,
-      int render_frame_id,
+      content::WebContents* contents,
+      bool is_main_frame,
       int cert_error,
       const net::SSLInfo& ssl_info,
       const GURL& request_url,
@@ -94,6 +94,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       const base::Callback<void(bool)>& callback,
       content::CertificateRequestResultType* result) final;
   content::MediaObserver* GetMediaObserver() final;
+  content::PlatformNotificationService* GetPlatformNotificationService() final;
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,

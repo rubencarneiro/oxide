@@ -69,7 +69,7 @@ WebContentsUnloader::~WebContentsUnloader() {
 
 // static
 WebContentsUnloader* WebContentsUnloader::GetInstance() {
-  return Singleton<WebContentsUnloader>::get();
+  return base::Singleton<WebContentsUnloader>::get();
 }
 
 void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {

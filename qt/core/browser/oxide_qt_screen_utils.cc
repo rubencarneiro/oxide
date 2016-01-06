@@ -26,6 +26,8 @@
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
 
+#include "shared/common/oxide_form_factor.h"
+
 namespace oxide {
 namespace qt {
 
@@ -105,7 +107,7 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   result.deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
   QRect rect =
-      screen->mapBetween(screen->primaryOrientation(),
+      screen->mapBetween(Qt::PrimaryOrientation,
                          screen->orientation(),
                          screen->geometry());
   result.rect = blink::WebRect(rect.x(),
@@ -114,7 +116,7 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
                                rect.height());
 
   QRect availableRect =
-      screen->mapBetween(screen->primaryOrientation(),
+      screen->mapBetween(Qt::PrimaryOrientation,
                          screen->orientation(),
                          screen->availableGeometry());
   result.availableRect = blink::WebRect(availableRect.x(),
@@ -124,9 +126,23 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
 
   result.orientationType =
       GetOrientationTypeFromScreenOrientation(screen->orientation());
+
+  // We calculate orientationAngle, which is the clockwise rotation of the
+  // content. However, QScreen::primaryOrientation doesn't work properly in
+  // qtubuntu, so we assume it's portrait on phones and landscape elsewhere
+  // See https://launchpad.net/bugs/1520670
+  Qt::ScreenOrientation primary_orientation = Qt::PrimaryOrientation;
+  if (QGuiApplication::platformName().startsWith("ubuntu")) {
+    if (oxide::GetFormFactorHint() == oxide::FORM_FACTOR_PHONE) {
+      primary_orientation = Qt::PortraitOrientation;
+    } else {
+      primary_orientation = Qt::LandscapeOrientation;
+    }
+  }
+
   result.orientationAngle =
       screen->angleBetween(screen->orientation(),
-                           screen->primaryOrientation());
+                           primary_orientation);
 
   return result;
 }

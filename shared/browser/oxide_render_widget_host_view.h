@@ -30,10 +30,10 @@
 #include "cc/layers/delegated_frame_resource_collection.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
-#include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/input/oxide_ime_bridge_impl.h"
 #include "shared/browser/oxide_gesture_provider.h"
 #include "shared/browser/oxide_renderer_frame_evictor_client.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
@@ -53,23 +53,22 @@ class MotionEvent;
 
 namespace oxide {
 
-class RenderWidgetHostViewDelegate;
-class WebView;
+class RenderWidgetHostViewContainer;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
+    public CompositorObserver,
     public GestureProviderClient,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
-  RenderWidgetHostView(content::RenderWidgetHost* render_widget_host);
+  RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
   ~RenderWidgetHostView();
 
-  content::RenderWidgetHostImpl* host() const { return host_; }
+  void SetContainer(RenderWidgetHostViewContainer* container);
 
-  void CompositorDidCommit();
-  void SetDelegate(RenderWidgetHostViewDelegate* delegate);
+  ImeBridgeImpl* ime_bridge() { return &ime_bridge_; }
 
   const base::string16& selection_text() const {
     return selection_text_;
@@ -78,6 +77,8 @@ class RenderWidgetHostView final :
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
+
+  const content::WebCursor& current_cursor() const { return current_cursor_; }
 
   void HandleTouchEvent(const ui::MotionEvent& event);
   void ResetGestureDetection();
@@ -89,6 +90,8 @@ class RenderWidgetHostView final :
   void SetSize(const gfx::Size& size) final;
   void SetBounds(const gfx::Rect& rect) final;
   void Focus() final;
+  void Show() final;
+  void Hide() final;
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -108,6 +111,9 @@ class RenderWidgetHostView final :
   void FocusedNodeChanged(bool is_editable_node) final;
   void OnSwapCompositorFrame(uint32 output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
+  void ClearCompositorFrame() final;
+  void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
+                              content::InputEventAckState ack_result) final;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
@@ -123,22 +129,21 @@ class RenderWidgetHostView final :
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
-      content::ReadbackRequestCallback& callback,
+      const content::ReadbackRequestCallback& callback,
       const SkColorType color_type) final;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
       const scoped_refptr<media::VideoFrame>& target,
-      const base::Callback<void(bool)>& callback) final;
+      const base::Callback<void(const gfx::Rect&, bool)>& callback) final;
   bool CanCopyToVideoFrame() const final;
   bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
   void GetScreenInfo(blink::WebScreenInfo* results) final;
   bool GetScreenColorProfile(std::vector<char>* color_profile) final;
   gfx::Rect GetBoundsInRootWindow() final;
-  gfx::GLSurfaceHandle GetCompositingSurface() final;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) final;
-  void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
-                              content::InputEventAckState ack_result) final;
+  void LockCompositingSurface() final;
+  void UnlockCompositingSurface() final;
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
       const std::vector<gfx::Rect>& character_bounds) final;
@@ -151,12 +156,13 @@ class RenderWidgetHostView final :
   gfx::NativeViewAccessible GetNativeViewAccessible() final;
   bool HasFocus() const final;
   bool IsSurfaceAvailableForCopy() const final;
-  void Show() final;
-  void Hide() final;
   bool IsShowing() final;
   gfx::Rect GetViewBounds() const final;
   bool LockMouse() final;
   void UnlockMouse() final;
+
+  // CompositorObserver implementation
+  void CompositorDidCommit() final;
 
   // GestureProviderClient implementation
   void OnGestureEvent(const blink::WebGestureEvent& event) final;
@@ -169,7 +175,7 @@ class RenderWidgetHostView final :
 
   // ===================
 
-  void UpdateCursorOnWebView();
+  void UpdateCurrentCursor();
 
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32 surface_id);
@@ -180,7 +186,7 @@ class RenderWidgetHostView final :
 
   content::RenderWidgetHostImpl* host_;
 
-  RenderWidgetHostViewDelegate* delegate_;
+  RenderWidgetHostViewContainer* container_;
 
   gfx::GLSurfaceHandle shared_surface_handle_;
 
@@ -197,15 +203,10 @@ class RenderWidgetHostView final :
 
   bool frame_is_evicted_;
 
-  gfx::Rect caret_rect_;
-  size_t selection_cursor_position_;
-  size_t selection_anchor_position_;
-
-  ui::TextInputType current_text_input_type_;
-  bool show_ime_if_needed_;
-  bool focused_node_is_editable_;
+  ImeBridgeImpl ime_bridge_;
 
   bool is_loading_;
+  content::WebCursor web_cursor_;
   content::WebCursor current_cursor_;
 
   bool is_showing_;

@@ -23,6 +23,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
+#include "base/observer_list.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "ui/gfx/geometry/size.h"
@@ -41,7 +42,7 @@ namespace oxide {
 class CompositorClient;
 class CompositorFrameData;
 class CompositorFrameHandle;
-class CompositorLock;
+class CompositorObserver;
 class CompositorThreadProxy;
 
 class Compositor final : public cc::LayerTreeHostClient,
@@ -63,24 +64,24 @@ class Compositor final : public cc::LayerTreeHostClient,
                               FrameHandleVector returned_frames);
 
  private:
-  friend class CompositorLock;
+  friend class CompositorObserver;
   friend class CompositorThreadProxy;
 
   Compositor(CompositorClient* client);
 
   void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
 
-  void LockCompositor();
-  void UnlockCompositor();
-
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
+
+  void AddObserver(CompositorObserver* observer);
+  void RemoveObserver(CompositorObserver* observer);
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame() final;
   void BeginMainFrame(const cc::BeginFrameArgs& args) final;
   void BeginMainFrameNotExpectedSoon() final;
   void DidBeginMainFrame() final;
-  void Layout() final;
+  void UpdateLayerTreeHost() final;
   void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,
                            const gfx::Vector2dF& outer_delta,
                            const gfx::Vector2dF& elastic_overscroll_delta,
@@ -112,32 +113,11 @@ class Compositor final : public cc::LayerTreeHostClient,
 
   uint32 next_output_surface_id_;
 
-  uint32 lock_count_;
+  base::ObserverList<CompositorObserver> observers_;
 
   base::WeakPtrFactory<Compositor> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(Compositor);
-};
-
-class CompositorLock final {
- public:
-  CompositorLock(Compositor* compositor)
-      : compositor_(compositor) {
-    if (compositor_) {
-      compositor_->LockCompositor();
-    }
-  }
-
-  ~CompositorLock() {
-    if (compositor_) {
-      compositor_->UnlockCompositor();
-    }
-  }
-
- private:
-  Compositor* compositor_;
-
-  DISALLOW_COPY_AND_ASSIGN(CompositorLock);
 };
 
 } // namespace oxide

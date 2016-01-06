@@ -40,6 +40,7 @@ struct ContextMenuParams;
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderViewHost;
+class WebContents;
 class WebCursor;
 }
 
@@ -47,11 +48,11 @@ namespace oxide {
 
 class CertificateError;
 class FilePicker;
+class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
 class WebContextMenu;
-class WebFrame;
 class WebPopupMenu;
 class WebView;
 
@@ -61,8 +62,6 @@ class WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
 
-  virtual void Initialized();
-
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
   virtual gfx::Rect GetViewBoundsPix() const = 0;
@@ -70,9 +69,6 @@ class WebViewClient : public ScriptMessageTarget {
   virtual bool IsVisible() const = 0;
 
   virtual bool HasFocus() const = 0;
-
-  // XXX(chrisccoulson): This is global state, so it doesn't belong here
-  virtual bool IsInputPanelVisible() const;
 
   // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
   virtual JavaScriptDialog* CreateJavaScriptDialog(
@@ -89,8 +85,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void TitleChanged();
 
-  // TODO(chrisccoulson): Track |icon| as a property in WebView
-  virtual void IconChanged(const GURL& icon);
+  virtual void FaviconChanged();
 
   virtual void CommandsUpdated();
 
@@ -155,9 +150,6 @@ class WebViewClient : public ScriptMessageTarget {
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual WebFrame* CreateWebFrame(
-      content::RenderFrameHost* render_frame_host);
-
   virtual WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params);
@@ -165,7 +157,8 @@ class WebViewClient : public ScriptMessageTarget {
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
 
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                    WindowOpenDisposition disposition);
+                                    WindowOpenDisposition disposition,
+                                    scoped_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
@@ -173,27 +166,12 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void EvictCurrentFrame();
 
-  // XXX(chrisccoulson): Rethink all of these IME related bits:
-  //    - Move some logic down from qt/ to shared/
-  //    - The implementations of some of these only touch process-global
-  //      stuff - should we have an InputMethod singleton in shared/
-  //      rather than dumping it all in WebView?
-  virtual void TextInputStateChanged();
-
-  virtual void FocusedNodeChanged();
-
-  virtual void SelectionBoundsChanged();
-
-  virtual void ImeCancelComposition();
-
-  virtual void SelectionChanged();
+  virtual InputMethodContext* GetInputMethodContext() const;
 
   virtual void UpdateCursor(const content::WebCursor& cursor);
 
   // TODO(chrisccoulson): Get rid of |old| and add |changed_flags|
   virtual void SecurityStatusChanged(const SecurityStatus& old);
-
-  virtual void OnCertificateError(scoped_ptr<CertificateError> error);
 
   // TODO(chrisccoulson): Rename to BlockedContentChanged or something
   // TODO(chrisccoulson): Move content tracking to a separate class with its
@@ -205,8 +183,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void CloseRequested();
 
-  virtual void FindInPageCurrentChanged();
-  virtual void FindInPageCountChanged();
+  virtual void TargetURLChanged();
 
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);

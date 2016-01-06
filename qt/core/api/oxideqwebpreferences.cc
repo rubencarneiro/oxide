@@ -22,6 +22,16 @@
 
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 
+OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
+    OxideQWebPreferences* q)
+    : preferences_(q) {}
+
+OxideQWebPreferencesPrivate::~OxideQWebPreferencesPrivate() {}
+
+// static
+OxideQWebPreferencesPrivate* OxideQWebPreferencesPrivate::get(OxideQWebPreferences* q) {
+  return q->d_func();
+}
 OxideQWebPreferences::~OxideQWebPreferences() {}
 
 OxideQWebPreferences::OxideQWebPreferences(QObject* parent)

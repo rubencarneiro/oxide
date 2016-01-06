@@ -27,6 +27,7 @@
     'linux_use_gold_flags': 1,
     'use_allocator': 'none',
     'sysroot': '',
+    'use_ash': 0,
     'use_aura': 1,
     'use_cups': 0,
     'use_gconf': 0,
@@ -40,8 +41,8 @@
     'variables': {
       'conditions': [
         ['target_arch=="arm"', {
-          'arm_neon': 0,
-          'arm_neon_optional': 1,
+          'arm_neon': 1,
+          'arm_neon_optional': 0,
         }],
       ],
     },

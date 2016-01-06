@@ -47,8 +47,6 @@
 
 #include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
-#include "qt/core/api/oxideqstoragepermissionrequest.h"
-#include "qt/core/api/oxideqstoragepermissionrequest_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
@@ -115,10 +113,6 @@ class WebContext::BrowserContextDelegate
                           net::HttpRequestHeaders* headers) override;
   int OnBeforeRedirect(net::URLRequest* request,
                        const GURL& new_location) override;
-  oxide::StoragePermission CanAccessStorage(const GURL& url,
-                                            const GURL& first_party_url,
-                                            bool write,
-                                            oxide::StorageType type) override;
   std::string GetUserAgentOverride(const GURL& url) override;
   bool IsCustomProtocolHandlerRegistered(
       const std::string& scheme) const override;
@@ -280,27 +274,6 @@ int WebContext::BrowserContextDelegate::OnBeforeRedirect(
   return eventp->request_cancelled ? net::ERR_ABORTED : net::OK;
 }
 
-oxide::StoragePermission WebContext::BrowserContextDelegate::CanAccessStorage(
-    const GURL& url,
-    const GURL& first_party_url,
-    bool write,
-    oxide::StorageType type) {
-  QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
-  if (!io_client) {
-    return oxide::STORAGE_PERMISSION_UNDEFINED;
-  }
-
-  OxideQStoragePermissionRequest req(
-      QUrl(QString::fromStdString(url.spec())),
-      QUrl(QString::fromStdString(first_party_url.spec())),
-      write,
-      static_cast<OxideQStoragePermissionRequest::Type>(type));
-
-  io_client->HandleStoragePermissionRequest(&req);
-
-  return OxideQStoragePermissionRequestPrivate::get(&req)->permission;
-}
-
 std::string WebContext::BrowserContextDelegate::GetUserAgentOverride(
     const GURL& url) {
   QSharedPointer<WebContextProxyClient::IOClient> io_client = GetIOClient();
@@ -371,8 +344,7 @@ void WebContext::UpdateUserScripts() {
 
   for (int i = 0; i < user_scripts_.size(); ++i) {
     UserScript* script = UserScript::FromProxyHandle(user_scripts_.at(i));
-    if (script->state() == UserScript::Loading ||
-        script->state() == UserScript::Constructing) {
+    if (!script || script->state() == UserScript::Loading) {
       return;
     } else if (script->state() == UserScript::Loaded) {
       scripts.push_back(script->impl());
@@ -450,31 +422,37 @@ WebContext::WebContext(WebContextProxyClient* client)
       weak_factory_(this) {
   delegate_ = new BrowserContextDelegate(weak_factory_.GetWeakPtr());
 
-  COMPILE_ASSERT(
+  static_assert(
       CookiePolicyAllowAll == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::ALLOW_ALL_COOKIES),
-      cookie_enums_allowall_doesnt_match);
-  COMPILE_ASSERT(
+      "CookiePolicy and net::StaticCookiePolicy::Type values don't match: "
+      "CookiePolicyAllowAll");
+  static_assert(
       CookiePolicyBlockAll == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_COOKIES),
-      cookie_enums_blockall_doesnt_match);
-  COMPILE_ASSERT(
+      "CookiePolicy and net::StaticCookiePolicy::Type values don't match: "
+      "CookiePolicyBlockAll");
+  static_assert(
       CookiePolicyBlockThirdParty == static_cast<CookiePolicy>(
         net::StaticCookiePolicy::BLOCK_ALL_THIRD_PARTY_COOKIES),
-      cookie_enums_blockall3rdparty_doesnt_match);
+      "CookiePolicy and net::StaticCookiePolicy::Type values don't match: "
+      "CookiePolicyBlockThirdParty");
 
-  COMPILE_ASSERT(
+  static_assert(
       SessionCookieModeEphemeral == static_cast<SessionCookieMode>(
         content::CookieStoreConfig::EPHEMERAL_SESSION_COOKIES),
-      session_cookie_mode_enums_ephemeral_doesnt_match);
-  COMPILE_ASSERT(
+      "SessionCookieMode and net::CookieStoreConfig::SessionCookieMode values "
+      "don't match: SessionCookieModeEphemeral");
+  static_assert(
       SessionCookieModePersistent == static_cast<SessionCookieMode>(
         content::CookieStoreConfig::PERSISTANT_SESSION_COOKIES),
-      session_cookie_mode_enums_persistent_doesnt_match);
-  COMPILE_ASSERT(
+      "SessionCookieMode and net::CookieStoreConfig::SessionCookieMode values "
+      "don't match: SessionCookieModePersistent");
+  static_assert(
       SessionCookieModeRestored == static_cast<SessionCookieMode>(
         content::CookieStoreConfig::RESTORED_SESSION_COOKIES),
-      session_cookie_mode_enums_restored_doesnt_match);
+      "SessionCookieMode and net::CookieStoreConfig::SessionCookieMode values "
+      "don't match: SessionCookieModeRestored");
 }
 
 WebContext::~WebContext() {
@@ -859,7 +837,9 @@ int WebContext::setCookies(const QUrl& url,
         expiry,
         cookie.isSecure(),
         cookie.isHttpOnly(),
-        false,
+        false, // first_party
+        false, // enforce_prefixes
+        false, // enforce_strict_secure
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback,
                    weak_factory_.GetWeakPtr(), ctxt, cookie));

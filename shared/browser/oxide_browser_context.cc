@@ -419,17 +419,17 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       FROM_HERE,
       base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
 
-  net::HttpCache::BackendFactory* cache_backend = nullptr;
+  scoped_ptr<net::HttpCache::BackendFactory> cache_backend;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
-    cache_backend = new net::HttpCache::DefaultBackend(
+    cache_backend.reset(new net::HttpCache::DefaultBackend(
           net::DISK_CACHE,
           net::CACHE_BACKEND_SIMPLE,
           GetCachePath().Append(kCacheDirname2),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
           content::BrowserThread::GetMessageLoopProxyForThread(
-              content::BrowserThread::CACHE));
+              content::BrowserThread::CACHE)));
   }
 
   net::HttpNetworkSession::Params session_params;
@@ -448,11 +448,16 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.net_log = context->net_log();
   session_params.host_mapping_rules = host_mapping_rules_.get();
 
+  http_network_session_ =
+      make_scoped_ptr(new net::HttpNetworkSession(session_params));
+
   {
     // Calls QuickStreamFactory constructor which uses base::CPU
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
-        new net::HttpCache(session_params, cache_backend));
+        make_scoped_ptr(new net::HttpCache(http_network_session_.get(),
+                                           cache_backend.Pass(),
+                                           true)));
   }
 
   scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
@@ -499,7 +504,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   }
   request_interceptors.weak_clear();
 
-  storage->set_job_factory(top_job_factory.release());
+  storage->set_job_factory(top_job_factory.Pass());
 
   resource_context_->request_context_ = context;
   return main_request_context_.get();
@@ -512,16 +517,6 @@ content::ResourceContext* BrowserContextIOData::GetResourceContext() {
 bool BrowserContextIOData::CanAccessCookies(const GURL& url,
                                             const GURL& first_party_url,
                                             bool write) {
-  scoped_refptr<BrowserContextDelegate> delegate(GetDelegate());
-  if (delegate.get()) {
-    StoragePermission res =
-        delegate->CanAccessStorage(url, first_party_url, write,
-                                   STORAGE_TYPE_COOKIES);
-    if (res != STORAGE_PERMISSION_UNDEFINED) {
-      return res == STORAGE_PERMISSION_ALLOW;
-    }
-  }
-
   net::StaticCookiePolicy policy(GetCookiePolicy());
   if (write) {
     return policy.CanSetCookie(url, first_party_url) == net::OK;
@@ -713,6 +708,11 @@ content::PermissionManager* BrowserContext::GetPermissionManager() {
   return permission_manager_.get();
 }
 
+content::BackgroundSyncController*
+BrowserContext::GetBackgroundSyncController() {
+  return nullptr;
+}
+
 void BrowserContext::AddObserver(BrowserContextObserver* observer) {
   DCHECK(CalledOnValidThread());
   observers_.AddObserver(observer);
@@ -771,6 +771,10 @@ void BrowserContext::ForEach(const BrowserContextCallback& callback) {
 // static
 void BrowserContext::AssertNoContextsExist() {
   CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
+}
+
+BrowserContextID BrowserContext::GetID() const {
+  return reinterpret_cast<BrowserContextID>(this);
 }
 
 net::URLRequestContextGetter* BrowserContext::CreateRequestContext(

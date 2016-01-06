@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,14 @@
 #include <QRect>
 #include <QtGlobal>
 
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 #include "qt/core/api/oxideqnewviewrequest.h"
+
+namespace content {
+class WebContents;
+}
 
 namespace oxide {
 class WebView;
@@ -35,6 +40,7 @@ class OxideQNewViewRequestPrivate final {
 
   static OxideQNewViewRequestPrivate* get(OxideQNewViewRequest* q);
 
+  scoped_ptr<content::WebContents> contents;
   base::WeakPtr<oxide::WebView> view;
 
  private:

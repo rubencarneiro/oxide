@@ -63,12 +63,7 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
         {
           url: "https://testsuite/tst_WebView_mixedContentOverrides_in_subframe.html", testMode: "display",
           checkMixedDisplay: _did_display_mixed_content_in_subframe, checkMixedScript: _did_run_mixed_content_in_subframe,
-          hasMixedDisplay: true, hasMixedScript: true, blockedCount: [3,6,9,12,13,16]
-        },
-        {
-          url: "https://testsuite/tst_WebView_mixedContentOverrides_in_subframe.html", testMode: "run",
-          checkMixedDisplay: _did_display_mixed_content_in_subframe, checkMixedScript: _did_run_mixed_content_in_subframe,
-          hasMixedDisplay: true, hasMixedScript: true, blockedCount: [3,5,8,10,11,14]
+          hasMixedDisplay: true, hasMixedScript: false, blockedCount: [2,4,6,8,9,11]
         }
       ];
     }

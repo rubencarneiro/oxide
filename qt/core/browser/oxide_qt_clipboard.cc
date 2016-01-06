@@ -110,29 +110,15 @@ const char kMimeTypeWebkitSmartPaste[] = "chromium/x-webkit-paste";
 ///////////////////////////////////////////////////////////////////////////////
 // ClipboardAuraX11
 
-ClipboardQt::ClipboardQt()
-  : clipboard_changed_listener_(new ClipboardChangedListener()),
-    write_mime_data_acc_(new QMimeData()) {
-  DCHECK(CalledOnValidThread());
-}
-
-ui::Clipboard* ClipboardQt::DoCreate() {
-  return new ClipboardQt();
-}
-
-ClipboardQt::~ClipboardQt() {
-  DCHECK(CalledOnValidThread());
-}
-
-uint64 ClipboardQt::GetSequenceNumber(ui::ClipboardType type) const {
+uint64 Clipboard::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   return type == ui::CLIPBOARD_TYPE_COPY_PASTE
     ? clipboard_changed_listener_->clipboard_sequence_number()
     : clipboard_changed_listener_->selection_sequence_number();
 }
 
-bool ClipboardQt::IsFormatAvailable(const FormatType& format,
-                                    ui::ClipboardType type) const {
+bool Clipboard::IsFormatAvailable(const FormatType& format,
+                                  ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
 
@@ -144,15 +130,15 @@ bool ClipboardQt::IsFormatAvailable(const FormatType& format,
   return data->hasFormat(format.ToString().c_str());
 }
 
-void ClipboardQt::Clear(ui::ClipboardType type) {
+void Clipboard::Clear(ui::ClipboardType type) {
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
   QGuiApplication::clipboard()->clear();
 }
 
-void ClipboardQt::ReadAvailableTypes(ui::ClipboardType type,
-                                     std::vector<base::string16>* types,
-                                     bool* contains_filenames) const {
+void Clipboard::ReadAvailableTypes(ui::ClipboardType type,
+                                   std::vector<base::string16>* types,
+                                   bool* contains_filenames) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
   DCHECK(types != nullptr);
@@ -173,8 +159,8 @@ void ClipboardQt::ReadAvailableTypes(ui::ClipboardType type,
   }
 }
 
-void ClipboardQt::ReadText(ui::ClipboardType type,
-                           base::string16* result) const {
+void Clipboard::ReadText(ui::ClipboardType type,
+                         base::string16* result) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -186,8 +172,8 @@ void ClipboardQt::ReadText(ui::ClipboardType type,
   *result = base::UTF8ToUTF16(data->text().toUtf8().data());
 }
 
-void ClipboardQt::ReadAsciiText(ui::ClipboardType type,
-                                std::string* result) const {
+void Clipboard::ReadAsciiText(ui::ClipboardType type,
+                              std::string* result) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -199,11 +185,11 @@ void ClipboardQt::ReadAsciiText(ui::ClipboardType type,
   *result = data->text().toStdString().c_str();
 }
 
-void ClipboardQt::ReadHTML(ui::ClipboardType type,
-                           base::string16* markup,
-                           std::string* src_url,
-                           uint32* fragment_start,
-                           uint32* fragment_end) const {
+void Clipboard::ReadHTML(ui::ClipboardType type,
+                         base::string16* markup,
+                         std::string* src_url,
+                         uint32_t* fragment_start,
+                         uint32_t* fragment_end) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -214,11 +200,11 @@ void ClipboardQt::ReadHTML(ui::ClipboardType type,
 
   *markup = base::UTF8ToUTF16(data->html().toStdString());
   *fragment_start = 0;
-  DCHECK(markup->length() <= kuint32max);
-  *fragment_end = static_cast<uint32>(markup->length());
+  DCHECK(markup->length() <= std::numeric_limits<uint32_t>::max());
+  *fragment_end = static_cast<uint32_t>(markup->length());
 }
 
-void ClipboardQt::ReadRTF(ui::ClipboardType type, std::string* result) const {
+void Clipboard::ReadRTF(ui::ClipboardType type, std::string* result) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -230,7 +216,7 @@ void ClipboardQt::ReadRTF(ui::ClipboardType type, std::string* result) const {
   *result = data->data(QString::fromLatin1(kMimeTypeRTF)).data();
 }
 
-SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
+SkBitmap Clipboard::ReadImage(ui::ClipboardType type) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -273,9 +259,9 @@ SkBitmap ClipboardQt::ReadImage(ui::ClipboardType type) const {
   return copy;
 }
 
-void ClipboardQt::ReadCustomData(ui::ClipboardType type,
-                                 const base::string16& data_type,
-                                 base::string16* result) const {
+void Clipboard::ReadCustomData(ui::ClipboardType type,
+                               const base::string16& data_type,
+                               base::string16* result) const {
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
   
@@ -292,13 +278,13 @@ void ClipboardQt::ReadCustomData(ui::ClipboardType type,
       result);
 }
 
-void ClipboardQt::ReadBookmark(base::string16* title,
-                               std::string* url) const {
+void Clipboard::ReadBookmark(base::string16* title,
+                             std::string* url) const {
   NOTIMPLEMENTED();
 }
 
-void ClipboardQt::ReadData(const FormatType& format,
-                           std::string* result) const {
+void Clipboard::ReadData(const FormatType& format,
+                         std::string* result) const {
   DCHECK(CalledOnValidThread());
 
   const QMimeData *data = QGuiApplication::clipboard()->mimeData(QClipboard::Clipboard);
@@ -309,8 +295,8 @@ void ClipboardQt::ReadData(const FormatType& format,
   *result = data->data(format.ToString().c_str()).data();
 }
 
-void ClipboardQt::WriteObjects(ui::ClipboardType type,
-                               const ObjectMap& objects) {
+void Clipboard::WriteObjects(ui::ClipboardType type,
+                             const ObjectMap& objects) {
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
 
@@ -332,36 +318,36 @@ void ClipboardQt::WriteObjects(ui::ClipboardType type,
       : QClipboard::Selection);
 }
 
-void ClipboardQt::WriteText(const char* text_data, size_t text_len) {
+void Clipboard::WriteText(const char* text_data, size_t text_len) {
   write_mime_data_acc_->setText(QString::fromUtf8(text_data, text_len));
 }
 
-void ClipboardQt::WriteHTML(const char* markup_data,
-                            size_t markup_len,
-                            const char* url_data,
-                            size_t url_len) {
+void Clipboard::WriteHTML(const char* markup_data,
+                          size_t markup_len,
+                          const char* url_data,
+                          size_t url_len) {
   write_mime_data_acc_->setHtml(
       QString::fromUtf8(markup_data, markup_len));
 }
 
-void ClipboardQt::WriteRTF(const char* rtf_data, size_t data_len) {
+void Clipboard::WriteRTF(const char* rtf_data, size_t data_len) {
   write_mime_data_acc_->setData(QString::fromLatin1(kMimeTypeRTF), QByteArray(rtf_data, data_len));
 }
 
-void ClipboardQt::WriteBookmark(const char* title_data,
-                                     size_t title_len,
-                                     const char* url_data,
-                                     size_t url_len) {
+void Clipboard::WriteBookmark(const char* title_data,
+                              size_t title_len,
+                              const char* url_data,
+                              size_t url_len) {
   NOTIMPLEMENTED();
 }
 
-void ClipboardQt::WriteWebSmartPaste() {
+void Clipboard::WriteWebSmartPaste() {
   write_mime_data_acc_->setData(
       QString::fromLatin1(kMimeTypeWebkitSmartPaste),
       QByteArray());
 }
 
-void ClipboardQt::WriteBitmap(const SkBitmap& bitmap) {
+void Clipboard::WriteBitmap(const SkBitmap& bitmap) {
   QImage image;
   if (bitmap.info().colorType() != kN32_SkColorType) {
     SkImageInfo info =
@@ -394,12 +380,22 @@ void ClipboardQt::WriteBitmap(const SkBitmap& bitmap) {
   write_mime_data_acc_->setImageData(image.copy());
 }
 
-void ClipboardQt::WriteData(const FormatType& format,
-                                 const char* data_data,
-                                 size_t data_len) {
+void Clipboard::WriteData(const FormatType& format,
+                          const char* data_data,
+                          size_t data_len) {
   write_mime_data_acc_->setData(
       QString::fromStdString(format.ToString()),
       QByteArray(data_data, data_len));
+}
+
+Clipboard::Clipboard()
+  : clipboard_changed_listener_(new ClipboardChangedListener()),
+    write_mime_data_acc_(new QMimeData()) {
+  DCHECK(CalledOnValidThread());
+}
+
+Clipboard::~Clipboard() {
+  DCHECK(CalledOnValidThread());
 }
 
 } // namespace qt

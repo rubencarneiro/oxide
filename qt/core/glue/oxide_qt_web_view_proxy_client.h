@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
-#include <QUrl>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
@@ -28,11 +27,12 @@
 class OxideQCertificateError;
 class OxideQDownloadRequest;
 class OxideQGeolocationPermissionRequest;
+class OxideQHttpAuthenticationRequest;
 class OxideQLoadEvent;
 class OxideQMediaAccessPermissionRequest;
 class OxideQNavigationRequest;
 class OxideQNewViewRequest;
-class OxideQHttpAuthenticationRequest;
+class OxideQPermissionRequest;
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -70,8 +70,6 @@ class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
 
-  virtual void Initialized() = 0;
-
   virtual QObject* GetApiHandle() = 0;
 
   virtual WebContextMenuProxy* CreateWebContextMenu(
@@ -89,7 +87,7 @@ class WebViewProxyClient {
 
   virtual void URLChanged() = 0;
   virtual void TitleChanged() = 0;
-  virtual void IconChanged(QUrl icon) = 0; // XXX(chrisccoulson): Move paramter to a member on WebView
+  virtual void FaviconChanged() = 0;
   virtual void CommandsUpdated() = 0;
   virtual void LoadingChanged() = 0;
   virtual void LoadProgressChanged(double progress) = 0;
@@ -99,7 +97,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual WebFrameProxyHandle* CreateWebFrame(WebFrameProxy* proxy) = 0;
+  virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 
   virtual QScreen* GetScreen() const = 0;
   virtual QRect GetViewBoundsPix() const = 0;
@@ -115,7 +113,6 @@ class WebViewProxyClient {
 
   virtual void WebPreferencesReplaced() = 0;
 
-  virtual void FrameAdded(WebFrameProxyHandle* frame) = 0;
   virtual void FrameRemoved(WebFrameProxyHandle* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;
@@ -129,6 +126,8 @@ class WebViewProxyClient {
       OxideQGeolocationPermissionRequest* request) = 0;
   virtual void RequestMediaAccessPermission(
       OxideQMediaAccessPermissionRequest* request) = 0;
+  virtual void RequestNotificationPermission(
+      OxideQPermissionRequest* request) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
@@ -150,6 +149,8 @@ class WebViewProxyClient {
 
   virtual void PrepareToCloseResponse(bool proceed) = 0;
   virtual void CloseRequested() = 0;
+
+  virtual void TargetURLChanged() = 0;
 };
 
 } // namespace qt

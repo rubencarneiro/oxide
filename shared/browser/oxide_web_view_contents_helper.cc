@@ -85,7 +85,6 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->browser_handles_non_local_top_level_requests = true;
   renderer_prefs->enable_do_not_track = context_->GetDoNotTrack();
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
@@ -112,7 +111,13 @@ WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
 // static
 WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
-  return FromWebContents(content::WebContents::FromRenderViewHost(rvh));
+  content::WebContents* contents =
+      content::WebContents::FromRenderViewHost(rvh);
+  if (!contents) {
+    return nullptr;
+  }
+
+  return FromWebContents(contents);
 }
 
 content::WebContents* WebViewContentsHelper::GetWebContents() const {

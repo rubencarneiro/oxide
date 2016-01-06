@@ -29,7 +29,7 @@ namespace oxide {
 namespace qt {
 
 WebFrameProxyHandle* ScriptMessage::frame() const {
-  WebFrame* frame = static_cast<WebFrame*>(impl_->source_frame());
+  WebFrame* frame = WebFrame::FromSharedWebFrame(impl_->source_frame());
   if (!frame) {
     return nullptr;
   }

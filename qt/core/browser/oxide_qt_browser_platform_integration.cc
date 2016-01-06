@@ -22,6 +22,7 @@
 #include <QGuiApplication>
 #include <QStyleHints>
 #include <QPointer>
+#include <QScreen>
 #include <QString>
 #include <QThread>
 #include <QTouchDevice>
@@ -80,6 +81,16 @@ void BrowserPlatformIntegration::OnApplicationStateChanged() {
   UpdateApplicationState();
 }
 
+void BrowserPlatformIntegration::OnScreenGeometryChanged(
+    const QRect& geometry) {
+  UpdateDefaultScreenInfo();
+}
+
+void BrowserPlatformIntegration::OnScreenOrientationChanged(
+    Qt::ScreenOrientation orientation) {
+  UpdateDefaultScreenInfo();
+}
+
 void BrowserPlatformIntegration::UpdateApplicationState() {
   ApplicationState state = CalculateApplicationState(suspended_);
   if (state == state_) {
@@ -89,6 +100,12 @@ void BrowserPlatformIntegration::UpdateApplicationState() {
   state_ = state;
 
   NotifyApplicationStateChanged();
+}
+
+void BrowserPlatformIntegration::UpdateDefaultScreenInfo() {
+  base::AutoLock lock(default_screen_info_lock_);
+  default_screen_info_ =
+      GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
@@ -105,11 +122,14 @@ bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
 }
 
 bool BrowserPlatformIntegration::IsTouchSupported() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   // XXX: Is there a way to get notified if a touch device is added?
   return QTouchDevice::devices().size() > 0;
 }
 
 intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
   QPlatformNativeInterface* pni = QGuiApplication::platformNativeInterface();
   if (!pni) {
     return 0;
@@ -121,16 +141,22 @@ intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
 }
 
 blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
-  return GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
+  base::AutoLock lock(default_screen_info_lock_);
+  return default_screen_info_;
 }
 
 oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return BrowserStartup::GetInstance()->shared_gl_context();
 }
 
 scoped_ptr<oxide::MessagePump>
 BrowserPlatformIntegration::CreateUIMessagePump() {
   return make_scoped_ptr(new MessagePump());
+}
+
+ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+  return new Clipboard();
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(
@@ -145,7 +171,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
   g_io_thread.Get() = thread;
 }
 
-content::LocationProvider*
+scoped_ptr<content::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   // Give the geolocation thread a Qt event dispatcher, so that we can use
   // Queued signals / slots between it and the IO thread
@@ -155,11 +181,12 @@ BrowserPlatformIntegration::CreateLocationProvider() {
       new BrowserThreadQEventDispatcher(base::ThreadTaskRunnerHandle::Get()));
   }
 
-  return new LocationProvider();
+  return make_scoped_ptr(new LocationProvider());
 }
 
 oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return state_;
 }
 
@@ -168,7 +195,7 @@ int BrowserPlatformIntegration::GetClickInterval() {
 }
 
 std::string BrowserPlatformIntegration::GetApplicationName() {
-  return qApp->applicationName().toStdString();
+  return application_name_;
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
@@ -182,21 +209,37 @@ bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
 }
 
 BrowserPlatformIntegration::BrowserPlatformIntegration()
-    : suspended_(false),
+    : application_name_(qApp->applicationName().toStdString()),
+      suspended_(false),
       state_(CalculateApplicationState(false)) {
-  QObject::connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
-                   this, SLOT(OnApplicationStateChanged()));
+  QScreen* primary_screen = QGuiApplication::primaryScreen();
+  primary_screen->setOrientationUpdateMask(Qt::LandscapeOrientation |
+                                           Qt::PortraitOrientation |
+                                           Qt::InvertedLandscapeOrientation |
+                                           Qt::InvertedPortraitOrientation);
+  connect(primary_screen, SIGNAL(virtualGeometryChanged(const QRect&)),
+          SLOT(OnScreenGeometryChanged(const QRect&)));
+  connect(primary_screen, SIGNAL(geometryChanged(const QRect&)),
+          SLOT(OnScreenGeometryChanged(const QRect&)));
+  connect(primary_screen, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
+          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
+  connect(primary_screen,
+          SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
+          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
+
+  UpdateDefaultScreenInfo();
+
+  connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
+          SLOT(OnApplicationStateChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
-    QGuiApplication::instance()->installEventFilter(this);
+    qApp->installEventFilter(this);
   }
+
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
-  QGuiApplication::instance()->removeEventFilter(this);
-}
-
-ui::ClipboardOxideFactory BrowserPlatformIntegration::GetClipboardOxideFactory() {
-  return ClipboardQt::DoCreate;
+  qApp->disconnect(this);
+  qApp->removeEventFilter(this);
 }
 
 QThread* GetIOQThread() {

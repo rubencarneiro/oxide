@@ -103,7 +103,7 @@ class MediaPlayerMediaHub : public MediaPlayer,
 
   base::WeakPtrFactory<MediaPlayerMediaHub> weak_factory_;
 
-  base::RepeatingTimer<MediaPlayerMediaHub> timer_;
+  base::RepeatingTimer timer_;
 
   DISALLOW_COPY_AND_ASSIGN(MediaPlayerMediaHub);
 };

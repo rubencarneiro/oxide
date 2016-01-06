@@ -65,10 +65,11 @@
 #include "shared/app/oxide_platform_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 
 #include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
-#include "oxide_form_factor.h"
+#include "oxide_form_factor_detection.h"
 #include "oxide_message_pump.h"
 #include "oxide_web_contents_unloader.h"
 
@@ -99,12 +100,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS_CERTS)
-             const base::FilePath& nss_db_path,
-#endif
-             gfx::GLImplementation gl_impl,
-             ProcessModel process_model) final;
+  void Start(StartParams& params) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -239,9 +235,6 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
-  // Remove this when we implement a selection API (see bug #1324292)
-  command_line->AppendSwitch(switches::kDisableTouchEditing);
-
   if (gl_impl == gfx::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
     command_line->AppendSwitch(switches::kDisableGpu);
@@ -321,35 +314,17 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 }
 
 void AddFormFactorSpecificCommandLineArguments() {
+  if (GetFormFactorHint() == FORM_FACTOR_DESKTOP) {
+    return;
+  }
+
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-
-  FormFactor form_factor = GetFormFactorHint();
-
-  if (form_factor != FORM_FACTOR_DESKTOP) {
-    command_line->AppendSwitch(switches::kEnableViewport);
-    command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
-    command_line->AppendSwitch(switches::kEnablePinch);
-    // Note, overlay scrollbars do not work properly on desktop yet
-    // see https://launchpad.net/bugs/1426567
-    command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-    command_line->AppendSwitch(switches::kLimitMaxDecodedImageBytes);
-  }
-
-  const char* form_factor_string = nullptr;
-  switch (form_factor) {
-    case FORM_FACTOR_DESKTOP:
-      form_factor_string = switches::kFormFactorDesktop;
-      break;
-    case FORM_FACTOR_TABLET:
-      form_factor_string = switches::kFormFactorTablet;
-      break;
-    case FORM_FACTOR_PHONE:
-      form_factor_string = switches::kFormFactorPhone;
-      break;
-    default:
-      NOTREACHED();
-  }
-  command_line->AppendSwitchASCII(switches::kFormFactor, form_factor_string);
+  command_line->AppendSwitch(switches::kEnableViewport);
+  command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
+  command_line->AppendSwitch(switches::kEnablePinch);
+  // Note, overlay scrollbars do not work properly on desktop yet
+  // see https://launchpad.net/bugs/1426567
+  command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 }
 
 bool IsUnsupportedProcessModel(ProcessModel process_model) {
@@ -364,7 +339,29 @@ bool IsUnsupportedProcessModel(ProcessModel process_model) {
   }
 }
 
+const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
+  switch (form_factor) {
+    case FORM_FACTOR_DESKTOP:
+      return switches::kFormFactorDesktop;
+    case FORM_FACTOR_TABLET:
+      return switches::kFormFactorTablet;
+    case FORM_FACTOR_PHONE:
+      return switches::kFormFactorPhone;
+  }
+
+  NOTREACHED();
+  return nullptr;
 }
+
+}
+
+BrowserProcessMain::StartParams::StartParams(
+    scoped_ptr<PlatformDelegate> delegate)
+    : delegate(delegate.Pass()),
+      gl_implementation(gfx::kGLImplementationNone),
+      process_model(PROCESS_MODEL_MULTI_PROCESS) {}
+
+BrowserProcessMain::StartParams::~StartParams() {}
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
@@ -375,25 +372,20 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS_CERTS)
-                                   const base::FilePath& nss_db_path,
-#endif
-                                   gfx::GLImplementation gl_impl,
-                                   ProcessModel process_model) {
+void BrowserProcessMainImpl::Start(StartParams& params) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
-  CHECK(delegate) << "No PlatformDelegate provided";
+  CHECK(params.delegate) << "No PlatformDelegate provided";
 
-  platform_delegate_ = delegate.Pass();
+  platform_delegate_ = params.delegate.Pass();
   main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
-  if (IsUnsupportedProcessModel(process_model)) {
+  if (IsUnsupportedProcessModel(params.process_model)) {
     LOG(WARNING) <<
         "Using an unsupported process model. This may affect stability and "
         "security. Use at your own risk!";
   }
-  process_model_ = process_model;
+  process_model_ = params.process_model;
 
   state_ = STATE_STARTED;
 
@@ -406,7 +398,15 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
   exit_manager_.reset(new base::AtExitManager());
 
   base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe, process_model_, gl_impl);
+  InitializeCommandLine(subprocess_exe, process_model_,
+                        params.gl_implementation);
+
+  FormFactor form_factor =
+      DetectFormFactorHint(params.primary_screen_size_dip);
+  base::CommandLine::ForCurrentProcess()
+      ->AppendSwitchASCII(switches::kFormFactor,
+                          GetFormFactorHintCommandLine(form_factor));
+  AddFormFactorSpecificCommandLineArguments();
 
   // We need to override FILE_EXE in the browser process to the path of the
   // renderer, as various bits of Chrome use this to find other resources
@@ -423,13 +423,11 @@ void BrowserProcessMainImpl::Start(scoped_ptr<PlatformDelegate> delegate,
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
 
-  AddFormFactorSpecificCommandLineArguments();
-
 #if defined(USE_NSS_CERTS)
-  if (!nss_db_path.empty()) {
+  if (!params.nss_db_path.empty()) {
     // Used for testing
     PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,
-                                           nss_db_path,
+                                           params.nss_db_path,
                                            false, true);
   }
   crypto::EarlySetupForNSSInit();

@@ -52,8 +52,7 @@ class Q_DECL_EXPORT WebFrameProxy {
   virtual QUrl url() const = 0;
 
   virtual WebFrameProxyHandle* parent() const = 0;
-  virtual int childFrameCount() const = 0;
-  virtual WebFrameProxyHandle* childFrameAt(int index) const = 0;
+  virtual QList<WebFrameProxyHandle*> childFrames() const = 0;
 
   virtual bool sendMessage(const QUrl& context,
                            const QString& msg_id,

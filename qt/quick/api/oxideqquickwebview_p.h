@@ -131,6 +131,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
 
+  Q_PROPERTY(QUrl hoveredUrl READ hoveredUrl NOTIFY hoveredUrlChanged)
+
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
  public:
@@ -213,7 +215,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
     EditingCommandSelectAll
   };
 
-  void componentComplete();
+  void componentComplete() Q_DECL_OVERRIDE;
 
   QUrl url() const;
   void setUrl(const QUrl& url);
@@ -293,6 +295,8 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   WebProcessStatus webProcessStatus() const;
 
+  QUrl hoveredUrl() const;
+
   static OxideQQuickWebViewAttached* qmlAttachedProperties(QObject* object);
 
   OxideQFindController* findController() const;
@@ -345,6 +349,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   void newViewRequested(OxideQNewViewRequest* request);
   void geolocationPermissionRequested(const QJSValue& request);
   Q_REVISION(4) void mediaAccessPermissionRequested(const QJSValue& request);
+  Q_REVISION(6) void notificationPermissionRequested(const QJSValue& request);
   void javaScriptConsoleMessage(LogMessageSeverityLevel level,
                                 const QString& message,
                                 int lineNumber,
@@ -356,6 +361,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(2) void closeRequested();
   Q_REVISION(4) void webProcessStatusChanged();
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
+  Q_REVISION(7) void hoveredUrlChanged();
 
   // Deprecated since 1.3
   void loadingChanged(const OxideQLoadEvent& loadEvent);
@@ -373,6 +379,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   // QObject implementation
   void connectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
+  bool event(QEvent* event) Q_DECL_OVERRIDE;
 
   // QQuickItem implementation
   void itemChange(QQuickItem::ItemChange change,

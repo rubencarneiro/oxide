@@ -6,7 +6,7 @@ def handler(request):
   html.write("<html></html>");
 
   request.send_response(307)
-  request.send_header("Content-type", "test/html")
+  request.send_header("Content-type", "text/html")
   request.send_header("Content-Length", html.tell())
   request.send_header("Location", re.match(r"[^\?]+\??(.*)", request.path).groups()[0])
   request.send_header("Cache-Control", "no-cache")

@@ -42,7 +42,7 @@ int OxideQQuickWebFramePrivate::childFrame_count(
   oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
       static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
-  return p->childFrameCount();
+  return p->childFrames().size();
 }
 
 // static
@@ -52,7 +52,7 @@ OxideQQuickWebFrame* OxideQQuickWebFramePrivate::childFrame_at(
   oxide::qt::WebFrameProxy* p = OxideQQuickWebFramePrivate::get(
       static_cast<OxideQQuickWebFrame*>(prop->object))->proxy();
 
-  return fromProxyHandle(p->childFrameAt(index));
+  return fromProxyHandle(p->childFrames().at(index));
 }
 
 // static
@@ -75,7 +75,7 @@ OxideQQuickScriptMessageHandler* OxideQQuickWebFramePrivate::messageHandler_at(
       p->messageHandlers().at(index));
 }
 
-void OxideQQuickWebFramePrivate::URLCommitted() {
+void OxideQQuickWebFramePrivate::LoadCommitted() {
   Q_Q(OxideQQuickWebFrame);
 
   emit q->urlChanged();

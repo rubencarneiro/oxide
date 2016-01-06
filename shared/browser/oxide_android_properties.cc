@@ -17,7 +17,7 @@
 
 #include "oxide_android_properties.h"
 
-#if defined(ENABLE_ANDROID_SYSPROPS)
+#if defined(ENABLE_HYBRIS)
 #include <cstdio>
 #include <hybris/properties/properties.h>
 #include "base/strings/stringprintf.h"
@@ -30,7 +30,7 @@ namespace oxide {
 
 namespace {
 
-#if defined(ENABLE_ANDROID_SYSPROPS)
+#if defined(ENABLE_HYBRIS)
 std::string ParseOSVersion(const char* os_version_str) {
   int32 major, minor, bugfix;
 
@@ -58,7 +58,7 @@ std::string ParseOSVersion(const char* os_version_str) {
 
 AndroidProperties::AndroidProperties()
     : available_(false) {
-#if defined(ENABLE_ANDROID_SYSPROPS)
+#if defined(ENABLE_HYBRIS)
   char value[PROP_VALUE_MAX];
 
   if (::property_get("ro.product.name", value, nullptr) <= 0) {
@@ -89,7 +89,7 @@ AndroidProperties::~AndroidProperties() {}
 
 // static
 AndroidProperties* AndroidProperties::GetInstance() {
-  return Singleton<AndroidProperties>::get();
+  return base::Singleton<AndroidProperties>::get();
 }
 
 bool AndroidProperties::Available() const {

@@ -28,6 +28,7 @@
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
 #include "net/base/net_module.h"
+#include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
@@ -35,6 +36,7 @@
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
+#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
 #include "oxide_renderer_user_agent_settings.h"
@@ -43,6 +45,10 @@
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 #include "oxide_web_content_settings_client.h"
+
+#if defined(ENABLE_PLUGINS)
+#include "pepper/oxide_pepper_render_frame_observer.h"
+#endif
 
 #if defined(ENABLE_MEDIAHUB)
 #include "media/oxide_renderer_media_player_manager.h"
@@ -75,6 +81,9 @@ void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebContentSettingsClient(render_frame);
+#if defined(ENABLE_PLUGINS)
+  new PepperRenderFrameObserver(render_frame);
+#endif
 #if defined(ENABLE_MEDIAHUB)
   new RendererMediaPlayerManager(render_frame);
 #endif
@@ -91,22 +100,16 @@ void ContentRendererClient::RenderViewCreated(
   blink::WebSettings* settings = render_view->GetWebView()->settings();
   settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
 
-  std::string form_factor =
-      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
-        switches::kFormFactor);
-  if (form_factor == switches::kFormFactorTablet ||
-      form_factor == switches::kFormFactorPhone) {
+  // Remove this when we implement a selection API (see bug #1324292)
+  settings->setTouchEditingEnabled(false);
+
+  if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
+      GetFormFactorHint() == FORM_FACTOR_PHONE) {
     settings->setAllowCustomScrollbarInMainFrame(false);
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
     settings->setUseMobileViewportStyle(true);
-
-    // XXX(chrisccoulson): This should be set when the layout viewport provides
-    // scrollbars (desktop), but basing this on the form-factor may not be the
-    // right way. It looks like blink hides the layout scrollbars when viewport
-    // meta is enabled
-    settings->setHidePinchScrollbarsNearMinScale(false);
   }
 }
 
@@ -118,6 +121,15 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
   }
 
   return user_agent_settings_->GetUserAgentOverrideForURL(url);
+}
+
+void ContentRendererClient::AddImageContextMenuProperties(
+    const blink::WebURLResponse& response,
+    std::map<std::string, std::string>* properties) {
+  // XXX(oSoMoN): see comment in
+  // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
+  (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
+      response.mimeType().utf8();
 }
 
 #if defined(ENABLE_MEDIAHUB)

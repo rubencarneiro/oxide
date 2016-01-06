@@ -25,7 +25,7 @@ class WebFrameProxyClient {
  public:
   virtual ~WebFrameProxyClient() {}
 
-  virtual void URLCommitted() = 0;
+  virtual void LoadCommitted() = 0;
 
   virtual void ChildFramesChanged() = 0;
 

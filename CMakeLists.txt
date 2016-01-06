@@ -63,7 +63,8 @@ foreach(comp MAJOR MINOR PATCH)
   execute_process(
       COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
       OUTPUT_VARIABLE _OUTPUT
-      RESULT_VARIABLE _RESULT)
+      RESULT_VARIABLE _RESULT
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT _RESULT EQUAL 0)
     message(FATAL_ERROR "Failed to get version number")
   endif()
@@ -143,6 +144,20 @@ endif()
 if(USE_SYSTEM_PROTOBUF)
   list(APPEND _GYP_COMMAND -Duse_system_protobuf=1)
 endif()
+if(DEFINED ENABLE_HYBRIS AND ENABLE_HYBRIS EQUAL 0)
+  list(APPEND _GYP_COMMAND -Denable_hybris=0)
+else()
+  set(ENABLE_HYBRIS 1)
+  list(APPEND _GYP_COMMAND -Denable_hybris=1)
+endif()
+if(DEFINED ENABLE_HYBRIS_CAMERA AND ENABLE_HYBRIS_CAMERA EQUAL 1)
+  if (ENABLE_HYBRIS EQUAL 0)
+    message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
+  endif()
+  list(APPEND _GYP_COMMAND -Denable_hybris_camera=1)
+else()
+  list(APPEND _GYP_COMMAND -Denable_hybris_camera=0)
+endif()
 
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER OR NOT CHROMIUM_HOST_AR)
@@ -190,7 +205,7 @@ if(CMAKE_VERBOSE_MAKEFILE)
 endif()
 list(APPEND _NINJA_BUILD_COMMAND all)
 add_custom_target(
-    gyp_all COMMAND ${_NINJA_BUILD_COMMAND} 
+    gyp_all COMMAND ${_NINJA_BUILD_COMMAND}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Building the GYP \"all\" target")
 

@@ -19,10 +19,12 @@
 
 #include "base/memory/ref_counted.h"
 #include "net/base/net_errors.h"
+#include "net/http/http_request_headers.h"
 #include "net/url_request/url_request.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
+#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
@@ -92,12 +94,23 @@ int NetworkDelegate::OnHeadersReceived(
 }
 
 void NetworkDelegate::OnBeforeRedirect(net::URLRequest* request,
-                                       const GURL& new_location) {}
+                                       const GURL& new_location) {
+  std::string user_agent =
+      context_->GetUserAgentSettings()
+        ->GetUserAgentOverrideForURL(new_location);
+  if (!user_agent.empty()) {
+    request->SetExtraRequestHeaderByName(net::HttpRequestHeaders::kUserAgent,
+                                         user_agent, true);
+  }
+}
 
 void NetworkDelegate::OnResponseStarted(net::URLRequest* request) {}
 
-void NetworkDelegate::OnNetworkBytesReceived(const net::URLRequest& request,
+void NetworkDelegate::OnNetworkBytesReceived(net::URLRequest* request,
                                              int64_t bytes_received) {}
+
+void NetworkDelegate::OnNetworkBytesSent(net::URLRequest* request,
+                                         int64_t bytes_sent) {}
 
 void NetworkDelegate::OnCompleted(net::URLRequest* request, bool started) {}
 
@@ -144,7 +157,11 @@ bool NetworkDelegate::OnCanEnablePrivacyMode(
   return !(cookie_read_allowed && cookie_write_allowed);
 }
 
-bool NetworkDelegate::OnFirstPartyOnlyCookieExperimentEnabled() const {
+bool NetworkDelegate::OnAreExperimentalCookieFeaturesEnabled() const {
+  return false;
+}
+
+bool NetworkDelegate::OnAreStrictSecureCookiesEnabled() const {
   return false;
 }
 

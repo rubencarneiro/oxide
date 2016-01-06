@@ -18,8 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 #define _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 
+#include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "ui/gfx/geometry/size.h"
 #include "ui/gl/gl_implementation.h"
 
 #if defined(USE_NSS_CERTS)
@@ -48,6 +50,20 @@ enum ProcessModel {
 // Chrome (which is not possible in a public API)
 class BrowserProcessMain {
  public:
+
+  struct StartParams {
+    StartParams(scoped_ptr<PlatformDelegate> delegate);
+    ~StartParams();
+
+    scoped_ptr<PlatformDelegate> delegate;
+#if defined(USE_NSS_CERTS)
+    base::FilePath nss_db_path;
+#endif
+    gfx::GLImplementation gl_implementation;
+    ProcessModel process_model;
+    gfx::Size primary_screen_size_dip;
+  };
+
   virtual ~BrowserProcessMain();
 
   static ProcessModel GetProcessModelOverrideFromEnv();
@@ -57,12 +73,7 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  virtual void Start(scoped_ptr<PlatformDelegate> delegate,
-#if defined(USE_NSS_CERTS)
-                     const base::FilePath& nss_db_path,
-#endif
-                     gfx::GLImplementation gl_impl,
-                     ProcessModel process_model) = 0;
+  virtual void Start(StartParams& params) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton

@@ -214,6 +214,11 @@ float TouchEventState::GetPressure(size_t pointer_index) const {
   return touch_points_[pointer_index].pressure;
 }
 
+float TouchEventState::GetTilt(size_t pointer_index) const {
+  DCHECK_LE(pointer_index, pointer_count_);
+  return 0;
+}
+
 base::TimeTicks TouchEventState::GetEventTime() const {
   return last_event_time_;
 }

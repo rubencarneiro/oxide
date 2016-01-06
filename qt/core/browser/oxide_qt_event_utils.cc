@@ -477,20 +477,24 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
         gfx::ScalePoint(gfx::PointF(touch_point.pos().x(),
                                     touch_point.pos().y()),
                         scale);
-    gfx::Vector2dF offset(0, -touch_point_content_offsets_[touch_point.id()]);
+    location +=
+        gfx::Vector2dF(0, -touch_point_content_offsets_[touch_point.id()]);
 
     ui::TouchEvent* ui_event = new ui::TouchEvent(
         QTouchPointStateToEventType(touch_point.state()),
-        location + offset,
+        gfx::Point(location.x(), location.y()),
         0,
         touch_point.id(),
         timestamp,
         0.0f, 0.0f,
         0.0f,
         float(touch_point.pressure()));
+    gfx::PointF root_location =
+        gfx::ScalePoint(gfx::PointF(touch_point.screenPos().x(),
+                                    touch_point.screenPos().y()),
+                        scale);
     ui_event->set_root_location(
-        gfx::ScalePoint(gfx::PointF(
-          touch_point.screenPos().x(), touch_point.screenPos().y()), scale));
+        gfx::Point(root_location.x(), root_location.y()));
 
     results->push_back(ui_event);
 
@@ -542,8 +546,9 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   const unsigned short* text = event->text().utf16();
   memcpy(result.unmodifiedText, text, qMin(sizeof(result.unmodifiedText), sizeof(*text)));
 
-  COMPILE_ASSERT(sizeof(result.unmodifiedText) == sizeof(result.text),
-                 text_member_sizes_dont_match);
+  static_assert(sizeof(result.unmodifiedText) == sizeof(result.text),
+                "blink::WebKeyboardEvent::text and "
+                "blink::WebKeyboardEvent::unmodifiedText sizes don't match");
 
   if (result.modifiers & blink::WebInputEvent::ControlKey) {
     result.text[0] = GetControlCharacter(

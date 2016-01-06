@@ -42,6 +42,7 @@ namespace net {
 class CookieMonster;
 class FtpNetworkLayer;
 class HostMappingRules;
+class HttpNetworkSession;
 class HttpServerProperties;
 class HttpUserAgentSettings;
 class SSLConfigService;
@@ -51,6 +52,9 @@ class TransportSecurityState;
 }
 
 namespace oxide {
+
+class BrowserContext;
+typedef uintptr_t BrowserContextID;
 
 class BrowserContextDelegate;
 class BrowserContextImpl;
@@ -126,6 +130,8 @@ class BrowserContextIOData {
   scoped_ptr<net::TransportSecurityState> transport_security_state_;
   scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
 
+  scoped_ptr<net::HttpNetworkSession> http_network_session_;
+
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
   scoped_refptr<net::CookieStore> cookie_store_;
@@ -180,6 +186,8 @@ class BrowserContext
 
   // Aborts if there are any live contexts
   static void AssertNoContextsExist();
+
+  BrowserContextID GetID() const;
 
   net::URLRequestContextGetter* CreateRequestContext(
       content::ProtocolHandlerMap* protocol_handlers,
@@ -251,6 +259,7 @@ class BrowserContext
   content::PushMessagingService* GetPushMessagingService() override;
   content::SSLHostStateDelegate* GetSSLHostStateDelegate() override;
   content::PermissionManager* GetPermissionManager() override;
+  content::BackgroundSyncController* GetBackgroundSyncController() override;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);

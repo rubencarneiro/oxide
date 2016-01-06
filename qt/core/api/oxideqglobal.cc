@@ -44,31 +44,37 @@ QThread* oxideGetIOThread() {
 }
 
 OxideProcessModel oxideGetProcessModel() {
-  COMPILE_ASSERT(
+  static_assert(
       OxideProcessModelMultiProcess ==
         static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_MULTI_PROCESS),
-      process_model_enums_multi_process_doesnt_match);
-  COMPILE_ASSERT(
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelMultiProcess");
+  static_assert(
       OxideProcessModelSingleProcess ==
         static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SINGLE_PROCESS),
-      process_model_enums_single_process_doesnt_match);
-  COMPILE_ASSERT(
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelSingleProcess");
+  static_assert(
       OxideProcessModelProcessPerSiteInstance ==
         static_cast<OxideProcessModel>(
           oxide::PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE),
-      process_model_enums_process_per_site_instance_doesnt_match);
-  COMPILE_ASSERT(
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelProcessPerSiteInstance");
+  static_assert(
       OxideProcessModelProcessPerView ==
         static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_VIEW),
-      process_model_enums_process_per_view_doesnt_match);
-  COMPILE_ASSERT(
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelProcessPerView");
+  static_assert(
       OxideProcessModelProcessPerSite ==
         static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_PROCESS_PER_SITE),
-      process_model_enums_process_per_site_doesnt_match);
-  COMPILE_ASSERT(
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelProcessPerSite");
+  static_assert(
       OxideProcessModelSitePerProcess ==
         static_cast<OxideProcessModel>(oxide::PROCESS_MODEL_SITE_PER_PROCESS),
-      process_model_enums_site_per_process_doesnt_match);
+      "OxideProcessModel and oxide::ProcessModel enums don't match: "
+      "OxideProcessModelSitePerProcess");
 
   oxide::ProcessModel model = BrowserStartup::GetInstance()->GetProcessModel();
   return static_cast<OxideProcessModel>(model);

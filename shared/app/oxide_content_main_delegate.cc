@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,17 +25,21 @@
 #include "base/i18n/rtl.h"
 #include "base/logging.h"
 #include "base/path_service.h"
+#include "base/sys_info.h"
 #include "content/public/common/content_client.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "content/public/utility/content_utility_client.h"
+#include "third_party/skia/include/core/SkGraphics.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/base/ui_base_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_browser_client.h"
+#include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
+#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_paths.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
@@ -84,6 +88,14 @@ void ContentMainDelegate::PreSandboxStartup() {
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       dir_exe.Append(FILE_PATH_LITERAL("oxide_200_percent.pak")),
       ui::SCALE_FACTOR_200P);
+
+  if (GetFormFactorHint() != FORM_FACTOR_DESKTOP) {
+    // Limit the Skia font cache on mobile
+    const int kMB = 1024 * 1024;
+    size_t font_cache_limit =
+        base::SysInfo::IsLowEndDevice() ? kMB : 8 * kMB;
+    SkGraphics::SetFontCacheLimit(font_cache_limit);
+  }
 }
 
 int ContentMainDelegate::RunProcess(
