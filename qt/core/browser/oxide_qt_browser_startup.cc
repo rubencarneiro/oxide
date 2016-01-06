@@ -186,7 +186,7 @@ void BrowserStartup::EnsureChromiumStarted() {
           gfx::Size(primary_screen_size.width(), primary_screen_size.height()),
           1 / GetDeviceScaleFactorFromQScreen(primary_screen));
 
-  oxide::BrowserProcessMain::GetInstance()->Start(params);
+  oxide::BrowserProcessMain::GetInstance()->Start(std::move(params));
 
   qAddPostRoutine(ShutdownChromium);
 }
