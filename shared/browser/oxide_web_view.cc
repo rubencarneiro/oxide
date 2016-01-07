@@ -151,6 +151,18 @@ void CreateHelpers(content::WebContents* contents,
   FaviconHelper::CreateForWebContents(contents);
 }
 
+bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
+                                 const cc::CompositorFrameMetadata& current) {
+  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
+    return true;
+  }
+  if (old.location_bar_content_translation.y() !=
+      current.location_bar_content_translation.y()) {
+    return true;
+  }
+  return false;
+}
+
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
@@ -446,10 +458,7 @@ void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
     // the bounding rect and the position of the handles need to be updated.
     if ((controller->active_status() !=
          ui::TouchSelectionController::INACTIVE) &&
-        ((old.location_bar_offset.y() !=
-          compositor_frame_metadata_.location_bar_offset.y()) ||
-         (old.location_bar_content_translation.y() !=
-          compositor_frame_metadata_.location_bar_content_translation.y()))) {
+        HasLocationBarOffsetChanged(old, compositor_frame_metadata_)) {
       TouchSelectionChanged();
       // XXX: hack to ensure the position of the handles is updated.
       controller->SetTemporarilyHidden(true);
