@@ -562,6 +562,7 @@ void WebView::EditingCapabilitiesChanged() {
   int flags = blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
+    edit_flags_ = flags;
     return;
   }
 
