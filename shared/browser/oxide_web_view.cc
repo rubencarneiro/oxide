@@ -1027,6 +1027,8 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   }
 
   InitializeTopControlsForHost(new_host, !old_host);
+
+  EditingCapabilitiesChanged();
 }
 
 void WebView::DidStartLoading() {
