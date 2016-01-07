@@ -52,7 +52,6 @@
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_container.h"
 #include "oxide_touch_selection_controller_client.h"
-#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -145,15 +144,9 @@ void RenderWidgetHostView::OnSelectionBoundsChanged(
                                      selection_cursor_position,
                                      selection_anchor_position);
 
-  content::RenderViewHost* rvh = content::RenderViewHost::From(host_);
-  if (!rvh) {
-    return;
+  if (container_) {
+    container_->EditingCapabilitiesChanged();
   }
-  WebView* webview = WebView::FromRenderViewHost(rvh);
-  if (!webview) {
-    return;
-  }
-  webview->OnEditingCapabilitiesChanged();
 }
 
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,

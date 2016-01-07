@@ -79,6 +79,8 @@ class RenderWidgetHostViewContainer {
                              const std::vector<content::MenuItem>& items,
                              bool allow_multiple_selection) = 0;
   virtual void HidePopupMenu() = 0;
+
+  virtual void EditingCapabilitiesChanged() = 0;
 };
 
 } // namespace oxide

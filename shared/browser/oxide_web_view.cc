@@ -558,6 +558,41 @@ void WebView::HidePopupMenu() {
   active_popup_menu_->Close();
 }
 
+void WebView::EditingCapabilitiesChanged() {
+  int flags = blink::WebContextMenuData::CanDoNone;
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+  bool has_selection = !rwhv->selection_range().is_empty();
+  base::string16 clipboard;
+  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
+                                                 &clipboard);
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable && !clipboard.empty()) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+  
+  if (flags != edit_flags_) {
+    edit_flags_ = flags;
+    client_->OnEditingCapabilitiesChanged();
+  }
+}
+
 content::WebContents* WebView::OpenURLFromTab(
     content::WebContents* source,
     const content::OpenURLParams& params) {
@@ -1212,7 +1247,7 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
 }
 
 void WebView::ClipboardDataChanged() {
-  OnEditingCapabilitiesChanged();
+  EditingCapabilitiesChanged();
 }
 
 WebView::WebView(const Params& params)
@@ -1981,41 +2016,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
-}
-
-void WebView::OnEditingCapabilitiesChanged() {
-  int flags = blink::WebContextMenuData::CanDoNone;
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
-  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
-  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
-  bool has_selection = !rwhv->selection_range().is_empty();
-  base::string16 clipboard;
-  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
-                                                 &clipboard);
-  // XXX: if editable, can we determine whether undo/redo is available?
-  if (editable && readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCut;
-  }
-  if (readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCopy;
-  }
-  if (editable && !clipboard.empty()) {
-    flags |= blink::WebContextMenuData::CanPaste;
-  }
-  if (editable && has_selection) {
-    flags |= blink::WebContextMenuData::CanDelete;
-  }
-  flags |= blink::WebContextMenuData::CanSelectAll;
-  
-  if (flags != edit_flags_) {
-    edit_flags_ = flags;
-    client_->OnEditingCapabilitiesChanged();
-  }
 }
 
 int WebView::GetEditFlags() const {
