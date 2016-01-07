@@ -28,8 +28,8 @@
         '../build/system.gyp:Qt5Core-private',
         '../build/system.gyp:Qt5Gui',
         '../build/system.gyp:Qt5Gui-private',
-        '../build/system.gyp:Qt5Positioning',
         '../build/system.gyp:Qt5Network',
+        '../build/system.gyp:Qt5Positioning',
         '../../shared/shared.gyp:oxide_shared',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -43,8 +43,7 @@
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/surface/surface.gyp:surface',
-        '<(DEPTH)/url/url.gyp:url_lib',
-        'OxideQtCore_public',
+        '<(DEPTH)/url/url.gyp:url_lib'
       ],
       'variables': {
         'chromium_code': 1,
@@ -58,10 +57,60 @@
         '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
       ],
       'sources': [
+        '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqfindcontroller.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
-        'api/internal/oxideqmediacapturedevices_p.cc',
-        'api/internal/oxideqwebpreferences_p.cc',
+        'api/oxideqcertificateerror.cc',
+        'api/oxideqcertificateerror.h',
+        'api/oxideqcertificateerror_p.h',
+        'api/oxideqdownloadrequest.cc',
+        'api/oxideqdownloadrequest.h',
+        'api/oxideqglobal.cc',
+        'api/oxideqglobal.h',
+        'api/oxideqhttpauthenticationrequest.cc',
+        'api/oxideqhttpauthenticationrequest.h',
+        'api/oxideqhttpauthenticationrequest_p.h',
+        'api/oxideqloadevent.cc',
+        'api/oxideqloadevent.h',
+        'api/oxideqloadevent_p.h',
+        'api/oxideqmediacapturedevices.cc',
+        'api/oxideqmediacapturedevices.h',
+        'api/oxideqmediacapturedevices_p.h',
+        'api/oxideqnetworkcallbackevents.cc',
+        'api/oxideqnetworkcallbackevents.h',
+        'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnavigationrequest.cc',
+        'api/oxideqnavigationrequest.h',
+        'api/oxideqnewviewrequest.cc',
+        'api/oxideqnewviewrequest.h',
+        'api/oxideqnewviewrequest_p.h',
+        'api/oxideqpermissionrequest.cc',
+        'api/oxideqpermissionrequest.h',
+        'api/oxideqpermissionrequest_p.h',
+        'api/oxideqfindcontroller.cc',
+        'api/oxideqfindcontroller.h',
+        'api/oxideqfindcontroller_p.h',
+        'api/oxideqsecuritystatus.cc',
+        'api/oxideqsecuritystatus.h',
+        'api/oxideqsecuritystatus_p.h',
+        'api/oxideqsslcertificate.cc',
+        'api/oxideqsslcertificate.h',
+        'api/oxideqsslcertificate_p.h',
+        'api/oxideqwebpreferences.cc',
+        'api/oxideqwebpreferences.h',
+        'api/oxideqwebpreferences_p.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
         'app/oxide_qt_platform_delegate.cc',
@@ -151,126 +200,6 @@
       ],
       'actions': [
         {
-          'action_name': 'oxide_qt_clipboard.moc',
-          'moc_input': 'browser/oxide_qt_clipboard.cc',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qt_location_provider.moc',
-          'moc_input': 'browser/oxide_qt_location_provider.cc',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qt_url_request_delegated_job.moc',
-          'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
-          'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'moc_oxide_qt_input_method_context.cc',
-          'moc_input': 'browser/input/oxide_qt_input_method_context.h',
-          'includes': [ 'moc.gypi' ]
-        },
-      ],
-      'conditions': [
-        ['component=="shared_library"', {
-          'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
-          ],
-        }],
-      ],
-    },
-    {
-      'target_name': 'OxideQtCore_public',
-      'type': 'static_library',
-      'cflags_cc!': [ '-fno-rtti' ],
-      'defines': [
-        'QT_NO_SIGNALS_SLOTS_KEYWORDS',
-      ],
-      'dependencies': [
-        '../build/system.gyp:Qt5Core',
-        '../build/system.gyp:Qt5Gui',
-        '../build/system.gyp:Qt5Gui-private',
-        '../build/system.gyp:Qt5Network',
-        '../../shared/shared.gyp:oxide_shared',
-        '<(DEPTH)/base/base.gyp:base',
-        '<(DEPTH)/content/content.gyp:content_browser',
-        '<(DEPTH)/content/content.gyp:content_common',
-        '<(DEPTH)/net/net.gyp:net',
-        '<(DEPTH)/skia/skia.gyp:skia',
-        '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
-        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
-        '<(DEPTH)/ui/gl/gl.gyp:gl',
-        '<(DEPTH)/url/url.gyp:url_lib'
-      ],
-      'variables': {
-        'chromium_code': 1,
-      },
-      'include_dirs': [
-        '../..',
-        '<(INTERMEDIATE_DIR)',
-        '<(DEPTH)'
-      ],
-      'sources': [
-        '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqfindcontroller.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqsecuritystatus.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
-        'api/oxideqcertificateerror.cc',
-        'api/oxideqcertificateerror.h',
-        'api/oxideqcertificateerror_p.h',
-        'api/oxideqdownloadrequest.cc',
-        'api/oxideqdownloadrequest.h',
-        'api/oxideqglobal.cc',
-        'api/oxideqglobal.h',
-        'api/oxideqhttpauthenticationrequest.cc',
-        'api/oxideqhttpauthenticationrequest.h',
-        'api/oxideqhttpauthenticationrequest_p.h',
-        'api/oxideqloadevent.cc',
-        'api/oxideqloadevent.h',
-        'api/oxideqloadevent_p.h',
-        'api/oxideqmediacapturedevices.cc',
-        'api/oxideqmediacapturedevices.h',
-        'api/oxideqmediacapturedevices_p.h',
-        'api/oxideqnetworkcallbackevents.cc',
-        'api/oxideqnetworkcallbackevents.h',
-        'api/oxideqnetworkcallbackevents_p.h',
-        'api/oxideqnavigationrequest.cc',
-        'api/oxideqnavigationrequest.h',
-        'api/oxideqnewviewrequest.cc',
-        'api/oxideqnewviewrequest.h',
-        'api/oxideqnewviewrequest_p.h',
-        'api/oxideqpermissionrequest.cc',
-        'api/oxideqpermissionrequest.h',
-        'api/oxideqpermissionrequest_p.h',
-        'api/oxideqfindcontroller.cc',
-        'api/oxideqfindcontroller.h',
-        'api/oxideqfindcontroller_p.h',
-        'api/oxideqsecuritystatus.cc',
-        'api/oxideqsecuritystatus.h',
-        'api/oxideqsecuritystatus_p.h',
-        'api/oxideqsslcertificate.cc',
-        'api/oxideqsslcertificate.h',
-        'api/oxideqsslcertificate_p.h',
-        'api/oxideqwebpreferences.cc',
-        'api/oxideqwebpreferences.h',
-        'api/oxideqwebpreferences_p.h',
-      ],
-      'actions': [
-        {
           'action_name': 'moc_oxideqcertificateerror.cc',
           'moc_input': 'api/oxideqcertificateerror.h',
           'includes': [ 'moc.gypi' ],
@@ -335,7 +264,39 @@
           'moc_input': 'api/oxideqwebpreferences.h',
           'includes': [ 'moc.gypi' ]
         },
-      ]
-    }
+        {
+          'action_name': 'moc_oxide_qt_browser_platform_integration.cc',
+          'moc_input': 'browser/oxide_qt_browser_platform_integration.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxide_qt_input_method_context.cc',
+          'moc_input': 'browser/input/oxide_qt_input_method_context.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_clipboard.moc',
+          'moc_input': 'browser/oxide_qt_clipboard.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_location_provider.moc',
+          'moc_input': 'browser/oxide_qt_location_provider.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_qt_url_request_delegated_job.moc',
+          'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
+          'includes': [ 'moc.gypi' ]
+        },
+      ],
+      'conditions': [
+        ['component=="shared_library"', {
+          'ldflags': [
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+          ],
+        }],
+      ],
+    },
   ]
 }

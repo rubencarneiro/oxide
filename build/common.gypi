@@ -64,14 +64,6 @@
       # Should remove this
       '-Werror',
     ],
-    'ldflags': [
-      # Always link with --gc-sections, as translation units in qt/core/api
-      # may fail to link.
-      # XXX: Either we should re-architect qt/core/api to go through a proxy
-      #  layer (like qt/quick/api does), or re-visit whether we need RTTI for
-      #  public facing classes
-      '-Wl,--gc-sections',
-    ],
     'ldflags!': [
       # Currently get a bunch of "warning: hidden symbol" warnings from harfbuzz with gold
       '-Wl,--fatal-warnings',

@@ -16,13 +16,14 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqmediacapturedevices.h"
-#include "oxideqmediacapturedevices_p.h"
 
 #include <QGlobalStatic>
 
+#include "base/macros.h"
 #include "content/public/common/media_stream_request.h"
 
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
+#include "shared/browser/media/oxide_media_capture_devices_dispatcher_observer.h"
 
 namespace {
 
@@ -65,6 +66,48 @@ class OxideQVideoCaptureDeviceData : public QSharedData {
   QString name;
   OxideQVideoCaptureDevice::Position position;
 };
+
+class OxideQMediaCaptureDevicesPrivate :
+    public oxide::MediaCaptureDevicesDispatcherObserver {
+  Q_DECLARE_PUBLIC(OxideQMediaCaptureDevices)
+
+ public:
+  ~OxideQMediaCaptureDevicesPrivate() override {}
+
+ private:
+  OxideQMediaCaptureDevicesPrivate(OxideQMediaCaptureDevices* q)
+      : q_ptr(q),
+        audio_devices_need_update_(true),
+        video_devices_need_update_(true) {}
+
+  // oxide::MediaCaptureDevicesDispatcherObserver implementation
+  void OnAudioCaptureDevicesChanged() override;
+  void OnVideoCaptureDevicesChanged() override;
+
+  OxideQMediaCaptureDevices* q_ptr;
+
+  bool audio_devices_need_update_;
+  QList<OxideQAudioCaptureDevice> audio_devices_;
+
+  bool video_devices_need_update_;
+  QList<OxideQVideoCaptureDevice> video_devices_;
+
+  DISALLOW_COPY_AND_ASSIGN(OxideQMediaCaptureDevicesPrivate);
+};
+
+void OxideQMediaCaptureDevicesPrivate::OnAudioCaptureDevicesChanged() {
+  Q_Q(OxideQMediaCaptureDevices);
+
+  audio_devices_need_update_ = true;
+  Q_EMIT q->availableAudioDevicesChanged();
+}
+
+void OxideQMediaCaptureDevicesPrivate::OnVideoCaptureDevicesChanged() {
+  Q_Q(OxideQMediaCaptureDevices);
+
+  video_devices_need_update_ = true;
+  Q_EMIT q->availableVideoDevicesChanged();
+}
 
 OxideQAudioCaptureDevice::OxideQAudioCaptureDevice(const QString& id,
                                                    const QString& name)

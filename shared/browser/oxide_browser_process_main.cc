@@ -101,7 +101,7 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   BrowserProcessMainImpl();
   virtual ~BrowserProcessMainImpl();
 
-  void Start(StartParams& params) final;
+  void Start(StartParams params) final;
   void Shutdown() final;
 
   bool IsRunning() const final {
@@ -364,6 +364,15 @@ BrowserProcessMain::StartParams::StartParams(
 
 BrowserProcessMain::StartParams::~StartParams() {}
 
+BrowserProcessMain::StartParams::StartParams(StartParams&& other)
+    : delegate(std::move(other.delegate)),
+#if defined(USE_NSS_CERTS)
+      nss_db_path(std::move(other.nss_db_path)),
+#endif
+      gl_implementation(std::move(other.gl_implementation)),
+      process_model(std::move(other.process_model)),
+      primary_screen_size_dip(std::move(other.primary_screen_size_dip)) {}
+
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
       process_model_(PROCESS_MODEL_MULTI_PROCESS) {}
@@ -373,7 +382,7 @@ BrowserProcessMainImpl::~BrowserProcessMainImpl() {
       "BrowserProcessMain::Shutdown() should be called before process exit";
 }
 
-void BrowserProcessMainImpl::Start(StartParams& params) {
+void BrowserProcessMainImpl::Start(StartParams params) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
       "Browser components cannot be started more than once";
   CHECK(params.delegate) << "No PlatformDelegate provided";

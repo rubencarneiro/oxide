@@ -55,6 +55,8 @@ class BrowserProcessMain {
     StartParams(scoped_ptr<PlatformDelegate> delegate);
     ~StartParams();
 
+    StartParams(StartParams&& other);
+
     scoped_ptr<PlatformDelegate> delegate;
 #if defined(USE_NSS_CERTS)
     base::FilePath nss_db_path;
@@ -73,7 +75,7 @@ class BrowserProcessMain {
 
   // Creates the BrowserProcessMain singleton and starts the
   // browser process components
-  virtual void Start(StartParams& params) = 0;
+  virtual void Start(StartParams params) = 0;
 
   // Quit the browser process components and delete the
   // BrowserProcessMain singleton
