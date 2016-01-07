@@ -163,7 +163,8 @@ class WebView : public InputMethodContextClient,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
   oxide::TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const override;
-  void TouchSelectionChanged(bool active, gfx::RectF bounds) const override;
+  void TouchSelectionChanged(bool active,
+                             const gfx::RectF& bounds) const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;

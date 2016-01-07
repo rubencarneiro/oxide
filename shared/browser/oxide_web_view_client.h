@@ -26,7 +26,6 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/gfx/geometry/rect.h"
-#include "ui/gfx/geometry/rect_f.h"
 
 #include "shared/browser/oxide_script_message_target.h"
 
@@ -43,6 +42,10 @@ class RenderFrameHost;
 class RenderViewHost;
 class WebContents;
 class WebCursor;
+}
+
+namespace gfx {
+class RectF;
 }
 
 namespace oxide {
@@ -165,7 +168,8 @@ class WebViewClient : public ScriptMessageTarget {
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
   virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
-  virtual void TouchSelectionChanged(bool active, gfx::RectF bounds) const;
+  virtual void TouchSelectionChanged(bool active,
+                                     const gfx::RectF& bounds) const;
 
   virtual void SwapCompositorFrame() = 0;
 

@@ -49,6 +49,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
@@ -828,7 +829,8 @@ oxide::TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate()
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
-void WebView::TouchSelectionChanged(bool active, gfx::RectF bounds) const {
+void WebView::TouchSelectionChanged(bool active,
+                                    const gfx::RectF& bounds) const {
   const float dpr = GetDeviceScaleFactor();
   QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
               bounds.width() * dpr, bounds.height() * dpr);
