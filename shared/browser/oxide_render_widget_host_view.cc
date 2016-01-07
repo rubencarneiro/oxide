@@ -686,8 +686,6 @@ RenderWidgetHostView::RenderWidgetHostView(
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
-  selection_controller_.reset();
-  selection_controller_client_.reset();
   resource_collection_->SetClient(nullptr);
   SetContainer(nullptr);
 }
