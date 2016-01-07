@@ -236,10 +236,11 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     qApp->installEventFilter(this);
   }
-
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
+  QGuiApplication::primaryScreen()->disconnect(this);
+  QGuiApplication::clipboard()->disconnect(this);
   qApp->disconnect(this);
   qApp->removeEventFilter(this);
 }
