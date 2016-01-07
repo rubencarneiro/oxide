@@ -20,6 +20,7 @@
 #include <deque>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <QCursor>
@@ -791,7 +792,7 @@ oxide::WebView* WebView::CreateNewWebView(
                                      initial_pos.width(),
                                      initial_pos.height()),
                                d);
-  OxideQNewViewRequestPrivate::get(&request)->contents = contents.Pass();
+  OxideQNewViewRequestPrivate::get(&request)->contents = std::move(contents);
 
   client_->NewViewRequested(&request);
 
@@ -891,7 +892,7 @@ void WebView::RequestGeolocationPermission(
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQGeolocationPermissionRequest> req(
       OxideQGeolocationPermissionRequestPrivate::Create(
-        request.Pass()));
+        std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestGeolocationPermission(req.release());
@@ -901,7 +902,7 @@ void WebView::RequestNotificationPermission(
     scoped_ptr<oxide::SimplePermissionRequest> request) {
   scoped_ptr<OxideQSimplePermissionRequest> req(
       OxideQSimplePermissionRequestPrivate::Create(
-        request.Pass()));
+        std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestNotificationPermission(req.release());
@@ -911,7 +912,7 @@ void WebView::RequestMediaAccessPermission(
     scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
   scoped_ptr<OxideQMediaAccessPermissionRequest> req(
       OxideQMediaAccessPermissionRequestPrivate::Create(
-        request.Pass()));
+        std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestMediaAccessPermission(req.release());
@@ -957,7 +958,7 @@ void WebView::LoadCommittedInFrame(oxide::WebFrame* frame) {
 
 void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
   scoped_ptr<OxideQCertificateError> qerror(
-      OxideQCertificateErrorPrivate::Create(error.Pass()));
+      OxideQCertificateErrorPrivate::Create(std::move(error)));
 
   // Embedder takes ownership of qerror
   client_->CertificateError(qerror.release());
@@ -1171,7 +1172,8 @@ QByteArray WebView::currentState() const {
   pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
   pickle.WriteInt(entries.size());
   std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
-  static const size_t max_state_size = std::numeric_limits<uint16>::max() - 1024;
+  static const size_t max_state_size =
+      std::numeric_limits<uint16_t>::max() - 1024;
   for (i = entries.begin(); i != entries.end(); ++i) {
     i->WriteToPickle(max_state_size, &pickle);
   }
@@ -1430,7 +1432,7 @@ WebView* WebView::CreateFromNewViewRequest(
   }
 
   WebView* new_view = new WebView(client, security_status);
-  new_view->view_.reset(new oxide::WebView(rd->contents.Pass(), new_view));
+  new_view->view_.reset(new oxide::WebView(std::move(rd->contents), new_view));
   rd->view = new_view->view_->AsWeakPtr();
 
   new_view->CommonInit(find_controller);

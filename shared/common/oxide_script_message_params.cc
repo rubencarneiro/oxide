@@ -17,6 +17,8 @@
 
 #include "oxide_script_message_params.h"
 
+#include <utility>
+
 #include "base/logging.h"
 
 namespace oxide {
@@ -53,7 +55,7 @@ void PopulateScriptMessageParams(int serial,
   params->error = ScriptMessageParams::ERROR_OK;
   params->msg_id = msg_id;
   params->wrapped_payload.Set(0, payload ?
-      payload.Pass() :
+      std::move(payload) :
       base::Value::CreateNullValue());
 }
 

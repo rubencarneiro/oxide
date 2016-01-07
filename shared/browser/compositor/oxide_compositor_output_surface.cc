@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_output_surface.h"
 
+#include <utility>
+
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
 
@@ -56,7 +58,7 @@ CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
     scoped_refptr<CompositorThreadProxy> proxy)
-    : cc::OutputSurface(software_device.Pass()),
+    : cc::OutputSurface(std::move(software_device)),
       proxy_(proxy),
       surface_id_(surface_id) {
   DetachFromThread();

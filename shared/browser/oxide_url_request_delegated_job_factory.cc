@@ -17,6 +17,8 @@
 
 #include "oxide_url_request_delegated_job_factory.h"
 
+#include <utility>
+
 #include "base/containers/hash_tables.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
@@ -151,7 +153,7 @@ bool URLRequestDelegatedJobFactory::IsSafeRedirectTarget(
 URLRequestDelegatedJobFactory::URLRequestDelegatedJobFactory(
     scoped_ptr<net::URLRequestJobFactory> job_factory,
     BrowserContextIOData* context)
-    : job_factory_(job_factory.Pass()),
+    : job_factory_(std::move(job_factory)),
       context_(context) {
   DCHECK(job_factory_.get());
   DCHECK(context_);

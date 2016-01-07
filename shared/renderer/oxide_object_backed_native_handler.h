@@ -20,9 +20,8 @@
 
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "v8/include/v8.h"
 #include "v8/include/v8-util.h"
 

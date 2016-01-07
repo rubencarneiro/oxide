@@ -20,7 +20,6 @@
 #include <list>
 #include <set>
 
-#include "base/basictypes.h"
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/memory/ref_counted_memory.h"
@@ -58,17 +57,17 @@ class ClipboardChangedListener : public QObject {
   
  public:
   ClipboardChangedListener();
-  uint64 clipboard_sequence_number() const {
+  uint64_t clipboard_sequence_number() const {
     return clipboard_sequence_number_;
   }
-  uint64 selection_sequence_number() const {
+  uint64_t selection_sequence_number() const {
     return selection_sequence_number_;
   }
  private Q_SLOTS:
   void OnClipboardDataChanged(QClipboard::Mode mode);
  private:
-  uint64 clipboard_sequence_number_;
-  uint64 selection_sequence_number_;
+  uint64_t clipboard_sequence_number_;
+  uint64_t selection_sequence_number_;
 
   Q_DISABLE_COPY(ClipboardChangedListener);
 };
@@ -110,7 +109,7 @@ const char kMimeTypeWebkitSmartPaste[] = "chromium/x-webkit-paste";
 ///////////////////////////////////////////////////////////////////////////////
 // ClipboardAuraX11
 
-uint64 Clipboard::GetSequenceNumber(ui::ClipboardType type) const {
+uint64_t Clipboard::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   return type == ui::CLIPBOARD_TYPE_COPY_PASTE
     ? clipboard_changed_listener_->clipboard_sequence_number()

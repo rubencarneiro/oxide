@@ -140,7 +140,7 @@ GestureProviderClient::~GestureProviderClient() {}
 scoped_ptr<GestureProvider> GestureProvider::Create(
     GestureProviderClient* client) {
   DCHECK(client) << "A GestureProviderClient must be provided";
-  return make_scoped_ptr(new GestureProviderImpl(client)).Pass();
+  return make_scoped_ptr(new GestureProviderImpl(client));
 }
 
 GestureProvider::~GestureProvider() {}

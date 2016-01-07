@@ -32,7 +32,8 @@ class GpuInfoCollectorOxideLinux {
  public:
   virtual ~GpuInfoCollectorOxideLinux() {}
 
-  virtual CollectInfoResult CollectGpuID(uint32* vendor_id, uint32* device_id) = 0;
+  virtual CollectInfoResult CollectGpuID(uint32_t* vendor_id,
+                                         uint32_t* device_id) = 0;
 
   virtual CollectInfoResult CollectContextGraphicsInfo(GPUInfo* gpu_info) = 0;
 

@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
 #define _OXIDE_SHARED_PEPPER_RENDER_FRAME_OBSERVER_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "content/public/renderer/render_frame_observer.h"
 
 

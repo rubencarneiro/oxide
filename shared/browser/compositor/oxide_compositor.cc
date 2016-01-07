@@ -100,14 +100,14 @@ void Compositor::SendSwapCompositorFrameToClient(
   // XXX: Should we check that surface_id matches the last created
   //  surface?
   scoped_refptr<CompositorFrameHandle> handle =
-      new CompositorFrameHandle(proxy_, frame.Pass());
+      new CompositorFrameHandle(proxy_, std::move(frame));
   client_->CompositorSwapFrame(handle.get());
 }
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   DCHECK(CalledOnValidThread());
 
-  uint32 output_surface_id = next_output_surface_id_++;
+  uint32_t output_surface_id = next_output_surface_id_++;
 
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     scoped_refptr<cc::ContextProvider> context_provider =
@@ -120,7 +120,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
         new CompositorOutputSurfaceGL(output_surface_id,
                                       context_provider,
                                       proxy_));
-    return output.Pass();
+    return std::move(output);
   }
 
   scoped_ptr<CompositorSoftwareOutputDevice> output_device(
@@ -128,9 +128,9 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   scoped_ptr<CompositorOutputSurfaceSoftware> output(
       new CompositorOutputSurfaceSoftware(
         output_surface_id,
-        output_device.Pass(),
+        std::move(output_device),
         proxy_));
-  return output.Pass();
+  return std::move(output);
 }
 
 void Compositor::AddObserver(CompositorObserver* observer) {
@@ -160,7 +160,7 @@ void Compositor::RequestNewOutputSurface() {
     return;
   }
 
-  layer_tree_host_->SetOutputSurface(surface.Pass());
+  layer_tree_host_->SetOutputSurface(std::move(surface));
 }
 
 void Compositor::DidInitializeOutputSurface() {
@@ -274,7 +274,7 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
-void Compositor::DidSwapCompositorFrame(uint32 surface_id,
+void Compositor::DidSwapCompositorFrame(uint32_t surface_id,
                                         FrameHandleVector returned_frames) {
   proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }

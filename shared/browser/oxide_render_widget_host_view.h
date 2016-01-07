@@ -21,9 +21,8 @@
 #include <queue>
 #include <string>
 
-#include "base/basictypes.h"
 #include "base/callback.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
@@ -109,7 +108,7 @@ class RenderWidgetHostView final :
   bool DoTopControlsShrinkBlinkSize() const final;
   float GetTopControlsHeight() const final;
   void FocusedNodeChanged(bool is_editable_node) final;
-  void OnSwapCompositorFrame(uint32 output_surface_id,
+  void OnSwapCompositorFrame(uint32_t output_surface_id,
                              scoped_ptr<cc::CompositorFrame> frame) final;
   void ClearCompositorFrame() final;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -178,7 +177,7 @@ class RenderWidgetHostView final :
   void UpdateCurrentCursor();
 
   void DestroyDelegatedContent();
-  void SendDelegatedFrameAck(uint32 surface_id);
+  void SendDelegatedFrameAck(uint32_t surface_id);
   void SendReturnedDelegatedResources();
   void RunAckCallbacks();
   void AttachLayer();
@@ -195,7 +194,7 @@ class RenderWidgetHostView final :
   scoped_refptr<cc::DelegatedRendererLayer> layer_;
 
   // The output surface ID for the last frame from the renderer
-  uint32 last_output_surface_id_;
+  uint32_t last_output_surface_id_;
 
   std::queue<base::Closure> ack_callbacks_;
 

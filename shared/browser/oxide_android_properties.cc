@@ -32,7 +32,7 @@ namespace {
 
 #if defined(ENABLE_HYBRIS)
 std::string ParseOSVersion(const char* os_version_str) {
-  int32 major, minor, bugfix;
+  int32_t major, minor, bugfix;
 
   if (!os_version_str[0]) {
     return std::string();

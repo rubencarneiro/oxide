@@ -17,6 +17,8 @@
 
 #include "oxide_render_widget_host_view.h"
 
+#include <utility>
+
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/logging.h"
@@ -162,7 +164,7 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
 }
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
-    uint32 output_surface_id,
+    uint32_t output_surface_id,
     scoped_ptr<cc::CompositorFrame> frame) {
   if (!frame->delegated_frame_data) {
     DLOG(ERROR) << "Non delegated renderer path is not supported";
@@ -171,7 +173,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   scoped_ptr<cc::DelegatedFrameData> frame_data =
-      frame->delegated_frame_data.Pass();
+      std::move(frame->delegated_frame_data);
 
   if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
@@ -220,7 +222,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       DetachLayer();
 
       frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
-                                                       frame_data.Pass());
+                                                       std::move(frame_data));
       layer_ = cc::DelegatedRendererLayer::Create(cc::LayerSettings(),
                                                   frame_provider_);
       layer_->SetIsDrawable(true);
@@ -230,7 +232,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
 
       AttachLayer();
     } else {
-      frame_provider_->SetFrameData(frame_data.Pass());
+      frame_provider_->SetFrameData(std::move(frame_data));
     }
   }
 
@@ -502,7 +504,7 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
   if (is_loading_) {
     content::WebCursor::CursorInfo busy_cursor_info(
         blink::WebCursorInfo::TypeWait);
-    current_cursor_ = content::WebCursor(busy_cursor_info);
+    current_cursor_.InitFromCursorInfo(busy_cursor_info);
   } else {
     current_cursor_ = web_cursor_;
   }
@@ -520,7 +522,7 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
   layer_ = nullptr;
 }
 
-void RenderWidgetHostView::SendDelegatedFrameAck(uint32 surface_id) {
+void RenderWidgetHostView::SendDelegatedFrameAck(uint32_t surface_id) {
   cc::CompositorFrameAck ack;
   resource_collection_->TakeUnusedResourcesForChildCompositor(&ack.resources);
 

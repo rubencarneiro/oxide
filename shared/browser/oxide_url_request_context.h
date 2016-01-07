@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_URL_REQUEST_CONTEXT_H_
 #define _OXIDE_SHARED_BROWSER_URL_REQUEST_CONTEXT_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "net/url_request/url_request_context.h"

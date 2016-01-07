@@ -17,6 +17,8 @@
 
 #include "oxide_certificate_error_dispatcher.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/browser_thread.h"
@@ -83,7 +85,7 @@ bool CertificateErrorDispatcher::CanDispatch() const {
 }
 
 void CertificateErrorDispatcher::Dispatch(scoped_ptr<CertificateError> error) {
-  client_->OnCertificateError(error.Pass());
+  client_->OnCertificateError(std::move(error));
 }
 
 CertificateErrorDispatcher::~CertificateErrorDispatcher() {}
@@ -151,7 +153,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
                            overridable,
                            proxy.get()));
 
-  dispatcher->Dispatch(error.Pass());
+  dispatcher->Dispatch(std::move(error));
 
   if (proxy->did_respond()) {
     // If the application responded explicitly or by CertificateError being

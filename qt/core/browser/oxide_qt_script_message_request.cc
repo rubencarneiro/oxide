@@ -17,6 +17,8 @@
 
 #include "oxide_qt_script_message_request.h"
 
+#include <utility>
+
 #include <QByteArray>
 #include <QJsonDocument>
 #include <QString>
@@ -59,7 +61,7 @@ ScriptMessageRequest* ScriptMessageRequest::FromProxyHandle(
 void ScriptMessageRequest::SetRequest(
     scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req) {
   DCHECK(!request_ && req);
-  request_ = req.Pass();
+  request_ = std::move(req);
 
   request_->SetReplyCallback(
       base::Bind(

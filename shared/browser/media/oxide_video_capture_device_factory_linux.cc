@@ -18,6 +18,8 @@
 
 #include "oxide_video_capture_device_factory_linux.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "media/capture/video/video_capture_device.h"
 
@@ -128,7 +130,7 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
   if (AndroidProperties::GetInstance()->Available()) {
     scoped_ptr<media::VideoCaptureDevice::Names> names =
         GetDeviceNamesFromHybris();
-    callback.Run(names.Pass());
+    callback.Run(std::move(names));
   } else
 #endif
   {
@@ -155,7 +157,7 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate)
-    : delegate_(delegate.Pass()) {}
+    : delegate_(std::move(delegate)) {}
 
 VideoCaptureDeviceFactoryLinux::~VideoCaptureDeviceFactoryLinux() {}
 

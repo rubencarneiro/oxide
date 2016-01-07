@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_NETWORK_DELEGATE_H_
 #define _OXIDE_SHARED_BROWSER_NETWORK_DELEGATE_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "net/base/network_delegate.h"
 
 namespace oxide {

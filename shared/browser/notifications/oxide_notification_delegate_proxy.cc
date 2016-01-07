@@ -17,6 +17,8 @@
 
 #include "oxide_notification_delegate_proxy.h"
 
+#include <utility>
+
 #include "content/public/browser/desktop_notification_delegate.h"
 
 namespace oxide {
@@ -25,7 +27,7 @@ NotificationDelegateProxy::~NotificationDelegateProxy() {}
 
 NotificationDelegateProxy::NotificationDelegateProxy(
     scoped_ptr<content::DesktopNotificationDelegate> delegate)
-    : delegate_(delegate.Pass()) {}
+    : delegate_(std::move(delegate)) {}
 
 void NotificationDelegateProxy::NotificationDisplayed() {
   delegate_->NotificationDisplayed();

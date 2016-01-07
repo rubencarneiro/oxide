@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
 #define _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "ppapi/host/host_factory.h"
 
 namespace content {

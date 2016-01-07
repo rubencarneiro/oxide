@@ -162,13 +162,13 @@ class CompositorUtilsImpl : public CompositorUtils,
   void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32 sync_point,
+      uint32_t sync_point,
       const CompositorUtils::GetTextureFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
   void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32 sync_point,
+      uint32_t sync_point,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
   bool CanUseGpuCompositing() const override;
@@ -198,7 +198,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   void DidProcessTask(const base::PendingTask& pending_task) override;
 
   // The client ID for this process's GPU channel
-  int32 client_id_;
+  int32_t client_id_;
 
   // Whether or not we have a shared GL context
   bool has_share_context_;
@@ -545,7 +545,7 @@ CompositorUtilsImpl::GetTaskRunner() {
 void CompositorUtilsImpl::GetTextureFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint32 sync_point,
+    uint32_t sync_point,
     const CompositorUtils::GetTextureFromMailboxCallback& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
   DCHECK(context_provider);
@@ -585,7 +585,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
 void CompositorUtilsImpl::CreateEGLImageFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint32 sync_point,
+    uint32_t sync_point,
     const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
   DCHECK(context_provider);
