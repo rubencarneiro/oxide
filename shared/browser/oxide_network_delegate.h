@@ -75,8 +75,6 @@ class NetworkDelegate final : public net::NetworkDelegate {
 
   void OnURLRequestDestroyed(net::URLRequest* request) final;
 
-  void OnURLRequestJobOrphaned(net::URLRequest* request) final;
-
   void OnPACScriptError(int line_number, const base::string16& error) final;
 
   AuthRequiredResponse OnAuthRequired(
@@ -100,6 +98,7 @@ class NetworkDelegate final : public net::NetworkDelegate {
       const GURL& first_party_for_cookies) const final;
 
   bool OnAreExperimentalCookieFeaturesEnabled() const final;
+  bool OnAreStrictSecureCookiesEnabled() const final;
 
   bool OnCancelURLRequestWithPolicyViolatingReferrerHeader(
       const net::URLRequest& request,

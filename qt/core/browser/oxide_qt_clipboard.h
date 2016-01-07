@@ -47,8 +47,8 @@ class Clipboard : public ui::Clipboard {
   void ReadHTML(ui::ClipboardType type,
                 base::string16* markup,
                 std::string* src_url,
-                uint32* fragment_start,
-                uint32* fragment_end) const override;
+                uint32_t* fragment_start,
+                uint32_t* fragment_end) const override;
   void ReadRTF(ui::ClipboardType type, std::string* result) const override;
   SkBitmap ReadImage(ui::ClipboardType type) const override;
   void ReadCustomData(ui::ClipboardType clipboard_type,

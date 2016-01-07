@@ -188,8 +188,8 @@ void Clipboard::ReadAsciiText(ui::ClipboardType type,
 void Clipboard::ReadHTML(ui::ClipboardType type,
                          base::string16* markup,
                          std::string* src_url,
-                         uint32* fragment_start,
-                         uint32* fragment_end) const {
+                         uint32_t* fragment_start,
+                         uint32_t* fragment_end) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
@@ -200,8 +200,8 @@ void Clipboard::ReadHTML(ui::ClipboardType type,
 
   *markup = base::UTF8ToUTF16(data->html().toStdString());
   *fragment_start = 0;
-  DCHECK(markup->length() <= kuint32max);
-  *fragment_end = static_cast<uint32>(markup->length());
+  DCHECK(markup->length() <= std::numeric_limits<uint32_t>::max());
+  *fragment_end = static_cast<uint32_t>(markup->length());
 }
 
 void Clipboard::ReadRTF(ui::ClipboardType type, std::string* result) const {
