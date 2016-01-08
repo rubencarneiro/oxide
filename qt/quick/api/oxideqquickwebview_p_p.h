@@ -77,9 +77,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
-  QQmlComponent* touchSelectionControllerHandle() const;
-  void setTouchSelectionControllerHandle(QQmlComponent* handle);
-
  private:
   friend class UpdatePaintNodeScope;
 
@@ -203,7 +200,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
-  QQmlComponent* touch_selection_handle_;
 
   bool received_new_compositor_frame_;
   bool frame_evicted_;

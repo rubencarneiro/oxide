@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,13 +19,19 @@
 
 #include "oxideqquickwebview_p_p.h"
 
+QT_BEGIN_NAMESPACE
+class QQmlComponent;
+QT_END_NAMESPACE
+
 class OxideQQuickTouchSelectionControllerPrivate {
  public:
   OxideQQuickTouchSelectionControllerPrivate()
       : view(nullptr)
+      , handle(nullptr)
       , active(false) {}
 
   OxideQQuickWebView* view;
+  QQmlComponent* handle;
   bool active;
   QRectF bounds;
 };
@@ -49,17 +55,17 @@ bool OxideQQuickTouchSelectionController::active() const {
 QQmlComponent* OxideQQuickTouchSelectionController::handle() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->touchSelectionControllerHandle();
+  return d->handle;
 }
 
 void OxideQQuickTouchSelectionController::setHandle(QQmlComponent* handle) {
   Q_D(OxideQQuickTouchSelectionController);
 
-  if (handle == this->handle()) {
+  if (handle == d->handle) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->setTouchSelectionControllerHandle(handle);
+  d->handle = handle;
   Q_EMIT handleChanged();
 }
 

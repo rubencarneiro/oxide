@@ -154,7 +154,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     prompt_dialog_(nullptr),
     before_unload_dialog_(nullptr),
     file_picker_(nullptr),
-    touch_selection_handle_(nullptr),
     received_new_compositor_frame_(false),
     frame_evicted_(false),
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
@@ -1061,19 +1060,6 @@ QString OxideQQuickWebViewPrivate::getNavigationEntryTitle(int index) const {
 QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
     int index) const {
   return proxy()->getNavigationEntryTimestamp(index);
-}
-
-QQmlComponent* OxideQQuickWebViewPrivate::touchSelectionControllerHandle() const {
-  return touch_selection_handle_;
-}
-
-void OxideQQuickWebViewPrivate::setTouchSelectionControllerHandle(
-    QQmlComponent* handle) {
-  if (touch_selection_handle_ == handle) {
-    return;
-  }
-
-  touch_selection_handle_ = handle;
 }
 
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
