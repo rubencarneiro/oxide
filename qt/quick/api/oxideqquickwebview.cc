@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -57,7 +57,7 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
-#include "qt/quick/oxide_qquick_touch_handle_drawable_delegate.h"
+#include "qt/quick/oxide_qquick_touch_handle_drawable.h"
 #include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
@@ -217,11 +217,11 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   return new oxide::qquick::FilePicker(q, client);
 }
 
-oxide::qt::TouchHandleDrawableDelegateProxy*
-OxideQQuickWebViewPrivate::CreateTouchHandleDrawableDelegate() {
+oxide::qt::TouchHandleDrawableProxy*
+OxideQQuickWebViewPrivate::CreateTouchHandleDrawable() {
   Q_Q(OxideQQuickWebView);
 
-  return new oxide::qquick::TouchHandleDrawableDelegate(q);
+  return new oxide::qquick::TouchHandleDrawable(q);
 }
 
 void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {

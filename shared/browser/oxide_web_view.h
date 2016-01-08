@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -86,6 +86,7 @@ class Size;
 
 namespace ui {
 class TouchEvent;
+class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -97,7 +98,6 @@ class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
-class TouchHandleDrawableDelegate;
 class WebContextMenu;
 class WebFrame;
 class WebPopupMenu;
@@ -295,7 +295,6 @@ class WebView : public ScriptMessageTarget,
 
   int GetEditFlags() const;
 
-  TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
   void TouchSelectionChanged() const;
 
  private:
@@ -366,6 +365,7 @@ class WebView : public ScriptMessageTarget,
                      const std::vector<content::MenuItem>& items,
                      bool allow_multiple_selection) final;
   void HidePopupMenu() final;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const final;
   void EditingCapabilitiesChanged() final;
 
   // content::WebContentsDelegate implementation

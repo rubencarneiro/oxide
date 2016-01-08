@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -93,7 +93,7 @@
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_skutils.h"
-#include "oxide_qt_touch_handle_drawable_delegate.h"
+#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
@@ -821,10 +821,10 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   return picker;
 }
 
-oxide::TouchHandleDrawableDelegate* WebView::CreateTouchHandleDrawableDelegate() const {
-  TouchHandleDrawableDelegate* delegate = new TouchHandleDrawableDelegate(this);
-  delegate->SetProxy(client_->CreateTouchHandleDrawableDelegate());
-  return delegate;
+ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
+  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
+  drawable->SetProxy(client_->CreateTouchHandleDrawable());
+  return drawable;
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)

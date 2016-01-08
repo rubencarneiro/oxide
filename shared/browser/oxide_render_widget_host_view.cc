@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -808,6 +808,15 @@ void RenderWidgetHostView::Hide() {
   }
 
   host_->WasHidden();
+}
+
+scoped_ptr<ui::TouchHandleDrawable> RenderWidgetHostView::CreateTouchHandleDrawable() const {
+  if (!container_) {
+    return nullptr;
+  }
+
+  return scoped_ptr<ui::TouchHandleDrawable>(
+      container_->CreateTouchHandleDrawable());
 }
 
 } // namespace oxide

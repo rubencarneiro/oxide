@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,14 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
-#define _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
+#ifndef _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_H_
+#define _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_H_
 
 #include <QPointer>
 #include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_touch_handle_drawable_delegate_proxy.h"
+#include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
 class OxideQQuickWebView;
 
@@ -34,22 +34,22 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qquick {
 
-class TouchHandleDrawableDelegate :
-    public QObject, public oxide::qt::TouchHandleDrawableDelegateProxy {
+class TouchHandleDrawable :
+    public QObject, public oxide::qt::TouchHandleDrawableProxy {
   Q_OBJECT
 
  public:
-  TouchHandleDrawableDelegate(OxideQQuickWebView* view);
+  TouchHandleDrawable(OxideQQuickWebView* view);
 
  private Q_SLOTS:
   void handleComponentChanged();
 
  private:
-  ~TouchHandleDrawableDelegate() override;
+  ~TouchHandleDrawable() override;
 
   void instantiateComponent();
 
-  // oxide::qt::TouchHandleDrawableDelegateProxy implementation
+  // oxide::qt::TouchHandleDrawableProxy implementation
   void SetEnabled(bool enabled);
   void SetOrientation(Orientation orientation,
                       bool mirror_vertical,
@@ -67,4 +67,4 @@ class TouchHandleDrawableDelegate :
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
+#endif // _OXIDE_QT_QUICK_TOUCH_HANDLE_DRAWABLE_H_

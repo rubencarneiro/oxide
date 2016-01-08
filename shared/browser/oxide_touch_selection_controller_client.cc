@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,6 @@
 #include "ui/gfx/geometry/point_conversions.h"
 
 #include "oxide_render_widget_host_view.h"
-#include "oxide_touch_handle_drawable.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -98,7 +97,7 @@ void TouchSelectionControllerClient::OnSelectionEvent(
 }
 
 scoped_ptr<ui::TouchHandleDrawable> TouchSelectionControllerClient::CreateDrawable() {
-  return scoped_ptr<ui::TouchHandleDrawable>(new TouchHandleDrawable(rwhv_));
+  return rwhv_->CreateTouchHandleDrawable();
 }
 
 } // namespace oxide

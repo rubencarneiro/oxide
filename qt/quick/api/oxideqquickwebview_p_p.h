@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -98,8 +98,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
-  oxide::qt::TouchHandleDrawableDelegateProxy*
-      CreateTouchHandleDrawableDelegate() override;
+  oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;

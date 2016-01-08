@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,51 +15,50 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_touch_handle_drawable_delegate.h"
+#include "oxide_qt_touch_handle_drawable.h"
 
-#include <QPointF>
-
-#include "qt/core/glue/oxide_qt_touch_handle_drawable_delegate_proxy.h"
+#include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
 #include "oxide_qt_web_view.h"
+
+#include <QPointF>
 
 namespace oxide {
 namespace qt {
 
-TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(const WebView* view)
+TouchHandleDrawable::TouchHandleDrawable(const WebView* view)
     : view_(view) {}
 
-TouchHandleDrawableDelegate::~TouchHandleDrawableDelegate() {}
+TouchHandleDrawable::~TouchHandleDrawable() {}
 
-void TouchHandleDrawableDelegate::SetProxy(
-    TouchHandleDrawableDelegateProxy* proxy) {
+void TouchHandleDrawable::SetProxy(TouchHandleDrawableProxy* proxy) {
   proxy_.reset(proxy);
 }
 
-void TouchHandleDrawableDelegate::SetEnabled(bool enabled) {
+void TouchHandleDrawable::SetEnabled(bool enabled) {
   if (proxy_) {
     proxy_->SetEnabled(enabled);
   }
 }
 
-void TouchHandleDrawableDelegate::SetOrientation(
+void TouchHandleDrawable::SetOrientation(
     ui::TouchHandleOrientation orientation,
     bool mirror_vertical,
     bool mirror_horizontal) {
   if (proxy_) {
-    TouchHandleDrawableDelegateProxy::Orientation o;
+    TouchHandleDrawableProxy::Orientation o;
     switch (orientation) {
       case ui::TouchHandleOrientation::LEFT:
-        o = TouchHandleDrawableDelegateProxy::Left;
+        o = TouchHandleDrawableProxy::Left;
         break;
       case ui::TouchHandleOrientation::CENTER:
-        o = TouchHandleDrawableDelegateProxy::Center;
+        o = TouchHandleDrawableProxy::Center;
         break;
       case ui::TouchHandleOrientation::RIGHT:
-        o = TouchHandleDrawableDelegateProxy::Right;
+        o = TouchHandleDrawableProxy::Right;
         break;
       case ui::TouchHandleOrientation::UNDEFINED:
-        o = TouchHandleDrawableDelegateProxy::Undefined;
+        o = TouchHandleDrawableProxy::Undefined;
         break;
       default:
         Q_UNREACHABLE();
@@ -68,20 +67,20 @@ void TouchHandleDrawableDelegate::SetOrientation(
   }
 }
 
-void TouchHandleDrawableDelegate::SetOrigin(const gfx::PointF& origin) {
+void TouchHandleDrawable::SetOrigin(const gfx::PointF& origin) {
   if (proxy_) {
     const float dpr = view_->GetDeviceScaleFactor();
     proxy_->SetOrigin(QPointF(origin.x() * dpr, origin.y() * dpr));
   }
 }
 
-void TouchHandleDrawableDelegate::SetAlpha(float alpha) {
+void TouchHandleDrawable::SetAlpha(float alpha) {
   if (proxy_) {
     proxy_->SetAlpha(alpha);
   }
 }
 
-gfx::RectF TouchHandleDrawableDelegate::GetVisibleBounds() const {
+gfx::RectF TouchHandleDrawable::GetVisibleBounds() const {
   if (!proxy_) {
     return gfx::RectF();
   }
@@ -92,7 +91,7 @@ gfx::RectF TouchHandleDrawableDelegate::GetVisibleBounds() const {
                     bounds.width() / dpr, bounds.height() / dpr);
 }
 
-float TouchHandleDrawableDelegate::GetDrawableHorizontalPaddingRatio() const {
+float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
   if (!proxy_) {
     return 0.0f;
   }

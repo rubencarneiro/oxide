@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -565,6 +565,10 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
+}
+
+ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
+  return client_->CreateTouchHandleDrawable();
 }
 
 void WebView::EditingCapabilitiesChanged() {
@@ -2032,11 +2036,6 @@ bool WebView::CanCreateWindows() const {
 
 int WebView::GetEditFlags() const {
   return edit_flags_;
-}
-
-TouchHandleDrawableDelegate*
-WebView::CreateTouchHandleDrawableDelegate() const {
-  return client_->CreateTouchHandleDrawableDelegate();
 }
 
 void WebView::TouchSelectionChanged() const {

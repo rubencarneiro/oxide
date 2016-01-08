@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -162,7 +162,7 @@ class WebView : public InputMethodContextClient,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
-  oxide::TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const override;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(bool active,
                              const gfx::RectF& bounds) const override;
   void SwapCompositorFrame() override;

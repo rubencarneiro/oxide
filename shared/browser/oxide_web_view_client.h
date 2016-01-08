@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -46,6 +46,10 @@ class WebCursor;
 
 namespace gfx {
 class RectF;
+}
+
+namespace ui {
+class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -167,7 +171,7 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
-  virtual TouchHandleDrawableDelegate* CreateTouchHandleDrawableDelegate() const;
+  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
   virtual void TouchSelectionChanged(bool active,
                                      const gfx::RectF& bounds) const;
 

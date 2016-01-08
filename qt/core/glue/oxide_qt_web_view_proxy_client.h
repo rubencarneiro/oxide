@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,7 +49,7 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
-class TouchHandleDrawableDelegateProxy;
+class TouchHandleDrawableProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
 class WebFrameProxy;
@@ -84,8 +84,7 @@ class WebViewProxyClient {
   virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
-  virtual TouchHandleDrawableDelegateProxy*
-      CreateTouchHandleDrawableDelegate() = 0;
+  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void WebProcessStatusChanged() = 0;
 

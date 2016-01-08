@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,30 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
-#define _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
+#define _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
 
-#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-
-#include "shared/browser/oxide_touch_handle_drawable_delegate.h"
+#include "ui/touch_selection/touch_handle.h"
 
 namespace oxide {
 namespace qt {
 
-class TouchHandleDrawableDelegateProxy;
+class TouchHandleDrawableProxy;
 class WebView;
 
-class TouchHandleDrawableDelegate : public oxide::TouchHandleDrawableDelegate {
+class TouchHandleDrawable : public ui::TouchHandleDrawable {
  public:
-  TouchHandleDrawableDelegate(const WebView* view);
+  TouchHandleDrawable(const WebView* view);
 
-  void SetProxy(TouchHandleDrawableDelegateProxy* proxy);
+  void SetProxy(TouchHandleDrawableProxy* proxy);
 
  private:
-  ~TouchHandleDrawableDelegate() override;
+  ~TouchHandleDrawable() override;
 
-  // oxide::TouchHandleDrawableDelegate implementation
+  // ui::TouchHandleDrawable implementation
   void SetEnabled(bool enabled) override;
   void SetOrientation(ui::TouchHandleOrientation orientation,
                       bool mirror_vertical,
@@ -48,11 +46,11 @@ class TouchHandleDrawableDelegate : public oxide::TouchHandleDrawableDelegate {
   gfx::RectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
 
-  scoped_ptr<TouchHandleDrawableDelegateProxy> proxy_;
+  scoped_ptr<TouchHandleDrawableProxy> proxy_;
   const WebView* view_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_DELEGATE_H_
+#endif // _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_

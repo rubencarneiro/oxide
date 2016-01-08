@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_touch_handle_drawable_delegate.h"
+#include "oxide_qquick_touch_handle_drawable.h"
 
 #include <QDebug>
 #include <QObject>
@@ -31,7 +31,7 @@
 namespace oxide {
 namespace qquick {
 
-class TouchHandleDrawableDelegateContext : public QObject {
+class TouchHandleDrawableContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickTouchSelectionController::HandleOrientation orientation READ orientation NOTIFY orientationChanged FINAL)
   Q_PROPERTY(bool mirrorVertical READ mirrorVertical NOTIFY mirrorVerticalChanged FINAL)
@@ -39,8 +39,8 @@ class TouchHandleDrawableDelegateContext : public QObject {
   Q_PROPERTY(qreal horizontalPaddingRatio READ horizontalPaddingRatio WRITE setHorizontalPaddingRatio NOTIFY horizontalPaddingRatioChanged)
 
  public:
-  virtual ~TouchHandleDrawableDelegateContext() {}
-  TouchHandleDrawableDelegateContext();
+  virtual ~TouchHandleDrawableContext() {}
+  TouchHandleDrawableContext();
 
   OxideQQuickTouchSelectionController::HandleOrientation orientation() const;
   void setOrientation(
@@ -68,7 +68,7 @@ class TouchHandleDrawableDelegateContext : public QObject {
   qreal horizontal_padding_ratio_;
 };
 
-TouchHandleDrawableDelegateContext::TouchHandleDrawableDelegateContext()
+TouchHandleDrawableContext::TouchHandleDrawableContext()
     : orientation_(
         OxideQQuickTouchSelectionController::HandleOrientationUndefined)
     , mirror_vertical_(false)
@@ -76,11 +76,11 @@ TouchHandleDrawableDelegateContext::TouchHandleDrawableDelegateContext()
     , horizontal_padding_ratio_(0.0) {}
 
 OxideQQuickTouchSelectionController::HandleOrientation
-TouchHandleDrawableDelegateContext::orientation() const {
+TouchHandleDrawableContext::orientation() const {
   return orientation_;
 }
 
-void TouchHandleDrawableDelegateContext::setOrientation(
+void TouchHandleDrawableContext::setOrientation(
     OxideQQuickTouchSelectionController::HandleOrientation orientation) {
   if (orientation_ != orientation) {
     orientation_ = orientation;
@@ -88,34 +88,33 @@ void TouchHandleDrawableDelegateContext::setOrientation(
   }
 }
 
-bool TouchHandleDrawableDelegateContext::mirrorVertical() const {
+bool TouchHandleDrawableContext::mirrorVertical() const {
   return mirror_vertical_;
 }
 
-void TouchHandleDrawableDelegateContext::setMirrorVertical(bool mirror) {
+void TouchHandleDrawableContext::setMirrorVertical(bool mirror) {
   if (mirror_vertical_ != mirror) {
     mirror_vertical_ = mirror;
     Q_EMIT mirrorVerticalChanged();
   }
 }
 
-bool TouchHandleDrawableDelegateContext::mirrorHorizontal() const {
+bool TouchHandleDrawableContext::mirrorHorizontal() const {
   return mirror_horizontal_;
 }
 
-void TouchHandleDrawableDelegateContext::setMirrorHorizontal(bool mirror) {
+void TouchHandleDrawableContext::setMirrorHorizontal(bool mirror) {
   if (mirror_horizontal_ != mirror) {
     mirror_horizontal_ = mirror;
     Q_EMIT mirrorHorizontalChanged();
   }
 }
 
-qreal TouchHandleDrawableDelegateContext::horizontalPaddingRatio() const {
+qreal TouchHandleDrawableContext::horizontalPaddingRatio() const {
   return horizontal_padding_ratio_;
 }
 
-void TouchHandleDrawableDelegateContext::setHorizontalPaddingRatio(
-    qreal ratio) {
+void TouchHandleDrawableContext::setHorizontalPaddingRatio(qreal ratio) {
   qreal bound = qBound(0.0, ratio, 1.0);
   if (horizontal_padding_ratio_ != bound) {
     horizontal_padding_ratio_ = bound;
@@ -123,21 +122,20 @@ void TouchHandleDrawableDelegateContext::setHorizontalPaddingRatio(
   }
 }
 
-TouchHandleDrawableDelegate::~TouchHandleDrawableDelegate() {}
+TouchHandleDrawable::~TouchHandleDrawable() {}
 
-void TouchHandleDrawableDelegate::SetEnabled(bool enabled) {
+void TouchHandleDrawable::SetEnabled(bool enabled) {
   if (!item_.isNull()) {
     item_->setVisible(enabled);
   }
 }
 
-void TouchHandleDrawableDelegate::SetOrientation(Orientation orientation,
-                                                 bool mirror_vertical,
-                                                 bool mirror_horizontal) {
+void TouchHandleDrawable::SetOrientation(Orientation orientation,
+                                         bool mirror_vertical,
+                                         bool mirror_horizontal) {
   if (!context_.isNull()) {
-    TouchHandleDrawableDelegateContext* context =
-        qobject_cast<TouchHandleDrawableDelegateContext*>(
-            context_->contextObject());
+    TouchHandleDrawableContext* context =
+        qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
     if (context) {
       OxideQQuickTouchSelectionController::HandleOrientation o;
       switch (orientation) {
@@ -163,20 +161,20 @@ void TouchHandleDrawableDelegate::SetOrientation(Orientation orientation,
   }
 }
 
-void TouchHandleDrawableDelegate::SetOrigin(const QPointF& origin) {
+void TouchHandleDrawable::SetOrigin(const QPointF& origin) {
   if (!item_.isNull()) {
     item_->setX(origin.x());
     item_->setY(origin.y());
   }
 }
 
-void TouchHandleDrawableDelegate::SetAlpha(float alpha) {
+void TouchHandleDrawable::SetAlpha(float alpha) {
   if (!item_.isNull()) {
     item_->setOpacity(alpha);
   }
 }
 
-QRectF TouchHandleDrawableDelegate::GetVisibleBounds() const {
+QRectF TouchHandleDrawable::GetVisibleBounds() const {
   if (item_.isNull()) {
     return QRectF();
   }
@@ -184,31 +182,30 @@ QRectF TouchHandleDrawableDelegate::GetVisibleBounds() const {
   return QRectF(item_->x(), item_->y(), item_->width(), item_->height());
 }
 
-float TouchHandleDrawableDelegate::GetDrawableHorizontalPaddingRatio() const {
+float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
   if (context_.isNull()) {
     return 0.0f;
   }
 
-  TouchHandleDrawableDelegateContext* context =
-      qobject_cast<TouchHandleDrawableDelegateContext*>(
-          context_->contextObject());
+  TouchHandleDrawableContext* context =
+      qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
   return context->horizontalPaddingRatio();
 }
 
-void TouchHandleDrawableDelegate::instantiateComponent() {
+void TouchHandleDrawable::instantiateComponent() {
   if (view_.isNull()) {
     qWarning() <<
-        "TouchHandleDrawableDelegate: "
+        "TouchHandleDrawable: "
         "Can't instantiate after the view has gone";
     return;
   }
 
-  TouchHandleDrawableDelegateContext* contextObject =
-      new TouchHandleDrawableDelegateContext();
+  TouchHandleDrawableContext* contextObject =
+      new TouchHandleDrawableContext();
   QQmlComponent* component = view_->touchSelectionController()->handle();
   if (!component) {
     qWarning() <<
-        "TouchHandleDrawableDelegate: Content requested a touch handle "
+        "TouchHandleDrawable: Content requested a touch handle "
         "drawable, but the application hasn't provided one";
     delete contextObject;
     return;
@@ -227,7 +224,7 @@ void TouchHandleDrawableDelegate::instantiateComponent() {
       qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
   if (!item_) {
     qWarning() <<
-        "TouchHandleDrawableDelegate: Failed to create instance of "
+        "TouchHandleDrawable: Failed to create instance of "
         "Qml touch selection handle component";
     context_.reset();
     return;
@@ -239,8 +236,7 @@ void TouchHandleDrawableDelegate::instantiateComponent() {
   component->completeCreate();
 }
 
-TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
-    OxideQQuickWebView* view)
+TouchHandleDrawable::TouchHandleDrawable(OxideQQuickWebView* view)
     : view_(view) {
   instantiateComponent();
 
@@ -250,16 +246,15 @@ TouchHandleDrawableDelegate::TouchHandleDrawableDelegate(
   }
 }
 
-void TouchHandleDrawableDelegate::handleComponentChanged() {
+void TouchHandleDrawable::handleComponentChanged() {
   bool visible = item_.isNull() ? false : item_->isVisible();
   OxideQQuickTouchSelectionController::HandleOrientation orientation =
       OxideQQuickTouchSelectionController::HandleOrientationUndefined;
   bool mirror_vertical = false;
   bool mirror_horizontal = false;
   if (!context_.isNull()) {
-    TouchHandleDrawableDelegateContext* context =
-        qobject_cast<TouchHandleDrawableDelegateContext*>(
-          context_->contextObject());
+    TouchHandleDrawableContext* context =
+        qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
     orientation = context->orientation();
     mirror_vertical = context->mirrorVertical();
     mirror_horizontal = context->mirrorHorizontal();
@@ -274,8 +269,8 @@ void TouchHandleDrawableDelegate::handleComponentChanged() {
 
   if (!item_.isNull()) {
     SetEnabled(visible);
-    TouchHandleDrawableDelegateContext* context =
-        qobject_cast<TouchHandleDrawableDelegateContext*>(
+    TouchHandleDrawableContext* context =
+        qobject_cast<TouchHandleDrawableContext*>(
           context_->contextObject());
     context->setOrientation(orientation);
     context->setMirrorVertical(mirror_vertical);
@@ -288,4 +283,4 @@ void TouchHandleDrawableDelegate::handleComponentChanged() {
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_touch_handle_drawable_delegate.moc"
+#include "oxide_qquick_touch_handle_drawable.moc"
