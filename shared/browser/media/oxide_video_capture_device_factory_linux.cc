@@ -66,9 +66,13 @@ scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
   for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
     CameraType type;
     int orientation;
-    android_camera_get_device_info(camera_id,
-                                   reinterpret_cast<int*>(&type),
-                                   &orientation);
+    if (android_camera_get_device_info(camera_id,
+                                       reinterpret_cast<int*>(&type),
+                                       &orientation) != 0) {
+      LOG(ERROR) <<
+          "Failed to get device info for camera with ID " << camera_id;
+      continue;
+    }
 
     std::string device_id =
         base::StringPrintf("%s%d",
