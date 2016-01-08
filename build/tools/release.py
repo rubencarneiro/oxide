@@ -26,7 +26,7 @@ import sys
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "python"))
 from utils import (
   CHROMIUMSRCDIR,
   TOPSRCDIR,
