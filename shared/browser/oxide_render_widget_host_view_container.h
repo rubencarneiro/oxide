@@ -87,6 +87,8 @@ class RenderWidgetHostViewContainer {
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
+  virtual void TouchSelectionChanged() const = 0;
+
   virtual void EditingCapabilitiesChanged() = 0;
 };
 

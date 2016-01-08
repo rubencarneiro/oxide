@@ -295,8 +295,6 @@ class WebView : public ScriptMessageTarget,
 
   int GetEditFlags() const;
 
-  void TouchSelectionChanged() const;
-
  private:
   WebView(WebViewClient* client);
 
@@ -366,6 +364,7 @@ class WebView : public ScriptMessageTarget,
                      bool allow_multiple_selection) final;
   void HidePopupMenu() final;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const final;
+  void TouchSelectionChanged() const final;
   void EditingCapabilitiesChanged() final;
 
   // content::WebContentsDelegate implementation

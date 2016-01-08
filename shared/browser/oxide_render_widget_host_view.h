@@ -30,6 +30,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_ime_bridge_impl.h"
@@ -55,7 +56,6 @@ class TouchSelectionController;
 namespace oxide {
 
 class RenderWidgetHostViewContainer;
-class TouchSelectionControllerClient;
 
 class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
@@ -63,6 +63,7 @@ class RenderWidgetHostView final :
     public GestureProviderClient,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
+    public ui::TouchSelectionControllerClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
@@ -102,8 +103,6 @@ class RenderWidgetHostView final :
   ui::TouchSelectionController* selection_controller() const {
     return selection_controller_.get();
   }
-
-  scoped_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() const;
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -185,6 +184,16 @@ class RenderWidgetHostView final :
   // cc::DelegatedFrameResourceCollectionClient implementation
   void UnusedResourcesAreAvailable() final;
 
+  // ui::TouchSelectionControllerClient implementation
+  bool SupportsAnimation() const override;
+  void SetNeedsAnimate() override;
+  void MoveCaret(const gfx::PointF& position) override;
+  void MoveRangeSelectionExtent(const gfx::PointF& extent) override;
+  void SelectBetweenCoordinates(const gfx::PointF& base,
+                                const gfx::PointF& extent) override;
+  void OnSelectionEvent(ui::SelectionEventType event) override;
+  scoped_ptr<ui::TouchHandleDrawable> CreateDrawable() override;
+
   // ===================
 
   void UpdateCurrentCursor();
@@ -232,7 +241,6 @@ class RenderWidgetHostView final :
 
   scoped_ptr<GestureProvider> gesture_provider_;
 
-  scoped_ptr<TouchSelectionControllerClient> selection_controller_client_;
   scoped_ptr<ui::TouchSelectionController> selection_controller_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);

@@ -571,6 +571,22 @@ ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
   return client_->CreateTouchHandleDrawable();
 }
 
+void WebView::TouchSelectionChanged() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  bool active =
+      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  gfx::RectF bounds = controller->GetRectBetweenBounds();
+  bounds.Offset(0, GetLocationBarContentOffsetDip());
+
+  client_->TouchSelectionChanged(active, bounds);
+}
+
 void WebView::EditingCapabilitiesChanged() {
   int flags = blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
@@ -2036,22 +2052,6 @@ bool WebView::CanCreateWindows() const {
 
 int WebView::GetEditFlags() const {
   return edit_flags_;
-}
-
-void WebView::TouchSelectionChanged() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  ui::TouchSelectionController* controller = rwhv->selection_controller();
-  bool active =
-      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
-
-  gfx::RectF bounds = controller->GetRectBetweenBounds();
-  bounds.Offset(0, GetLocationBarContentOffsetDip());
-
-  client_->TouchSelectionChanged(active, bounds);
 }
 
 } // namespace oxide

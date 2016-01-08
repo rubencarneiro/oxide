@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -431,8 +431,6 @@
         'browser/oxide_ssl_host_state_delegate.h',
         'browser/oxide_touch_event_state.cc',
         'browser/oxide_touch_event_state.h',
-        'browser/oxide_touch_selection_controller_client.cc',
-        'browser/oxide_touch_selection_controller_client.h',
         'browser/oxide_url_request_context.cc',
         'browser/oxide_url_request_context.h',
         'browser/oxide_url_request_delegated_job.cc',

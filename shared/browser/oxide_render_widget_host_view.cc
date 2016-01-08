@@ -31,6 +31,7 @@
 #include "cc/output/delegated_frame_data.h"
 #include "cc/output/viewport_selection_bound.h"
 #include "cc/quads/render_pass.h"
+#include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -41,6 +42,7 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/touch/selection_bound.h"
 #include "ui/events/gesture_detection/motion_event.h"
+#include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
 #include "ui/touch_selection/touch_selection_controller.h"
@@ -53,7 +55,6 @@
 #include "oxide_event_utils.h"
 #include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_container.h"
-#include "oxide_touch_selection_controller_client.h"
 
 namespace oxide {
 
@@ -559,10 +560,14 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
       break;
     }
     case blink::WebInputEvent::GestureScrollBegin:
-      selection_controller_client_->OnScrollStarted();
+      // XXX: currently commented out because when doing a pinch-to-zoom
+      // gesture, we don’t always get the corresponding GestureScrollEnd event,
+      // so selection handles would remain hidden.
+      //selection_controller()->SetTemporarilyHidden(true);
       break;
     case blink::WebInputEvent::GestureScrollEnd:
-      selection_controller_client_->OnScrollCompleted();
+      // XXX: see above
+      //selection_controller()->SetTemporarilyHidden(false);
       break;
     default:
       break;
@@ -579,6 +584,55 @@ void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   if (ack_callbacks_.empty()) {
     SendReturnedDelegatedResources();
   }
+}
+
+bool RenderWidgetHostView::SupportsAnimation() const {
+  return false;
+}
+
+void RenderWidgetHostView::SetNeedsAnimate() {
+  NOTREACHED();
+}
+
+void RenderWidgetHostView::MoveCaret(const gfx::PointF& position) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  rwhi->MoveCaret(gfx::ToRoundedPoint(position));
+}
+
+void RenderWidgetHostView::MoveRangeSelectionExtent(const gfx::PointF& extent) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  content::RenderWidgetHostDelegate* host_delegate = rwhi->delegate();
+  if (host_delegate) {
+    host_delegate->MoveRangeSelectionExtent(gfx::ToRoundedPoint(extent));
+  }
+}
+
+void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
+                                                    const gfx::PointF& extent) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  content::RenderWidgetHostDelegate* host_delegate = rwhi->delegate();
+  if (host_delegate) {
+    host_delegate->SelectRange(gfx::ToRoundedPoint(base),
+                               gfx::ToRoundedPoint(extent));
+  }
+}
+
+void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
+  if (container_) {
+    container_->TouchSelectionChanged();
+  }
+}
+
+scoped_ptr<ui::TouchHandleDrawable> RenderWidgetHostView::CreateDrawable() {
+  if (!container_) {
+    return nullptr;
+  }
+
+  return scoped_ptr<ui::TouchHandleDrawable>(
+      container_->CreateTouchHandleDrawable());
 }
 
 void RenderWidgetHostView::UpdateCurrentCursor() {
@@ -675,7 +729,6 @@ RenderWidgetHostView::RenderWidgetHostView(
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
 
-  selection_controller_client_.reset(new TouchSelectionControllerClient(this));
   ui::TouchSelectionController::Config tsc_config;
   // default values from ui/events/gesture_detection/gesture_configuration.cc
   tsc_config.max_tap_duration = base::TimeDelta::FromMilliseconds(150);
@@ -683,8 +736,8 @@ RenderWidgetHostView::RenderWidgetHostView(
   tsc_config.enable_adaptive_handle_orientation = false;
   tsc_config.show_on_tap_for_empty_editable = true;
   tsc_config.enable_longpress_drag_selection = false;
-  selection_controller_.reset(new ui::TouchSelectionController(
-      selection_controller_client_.get(), tsc_config));
+  selection_controller_.reset(
+      new ui::TouchSelectionController(this, tsc_config));
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
@@ -810,15 +863,6 @@ void RenderWidgetHostView::Hide() {
   }
 
   host_->WasHidden();
-}
-
-scoped_ptr<ui::TouchHandleDrawable> RenderWidgetHostView::CreateTouchHandleDrawable() const {
-  if (!container_) {
-    return nullptr;
-  }
-
-  return scoped_ptr<ui::TouchHandleDrawable>(
-      container_->CreateTouchHandleDrawable());
 }
 
 } // namespace oxide
