@@ -43,32 +43,35 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/native_library.h"
-#include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_tokenizer.h"
 #include "base/strings/string_util.h"
-#include "base/strings/stringprintf.h"
 #include "gpu/config/gpu_info.h"
 #include "gpu/config/gpu_info_collector.h"
 #include "third_party/libXNVCtrl/NVCtrl.h"
 #include "third_party/libXNVCtrl/NVCtrlLib.h"
 #include "ui/gfx/x/x11_types.h"
-#include "ui/gl/egl_util.h"
-#include "ui/gl/gl_bindings.h"
-#include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 
 #include "library_loaders/libpci.h"
 
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
-#include "oxide_android_properties.h"
+#if defined(ENABLE_HYBRIS)
+#include "base/native_library.h"
+#include "base/strings/string_number_conversions.h"
+#include "base/strings/stringprintf.h"
+#include "ui/gl/egl_util.h"
+#include "ui/gl/gl_bindings.h"
+
+#include "oxide_hybris_utils.h"
+#endif
 
 namespace oxide {
 
 namespace {
 
+#if defined(ENABLE_HYBRIS)
 std::string GetDriverVersionFromString(const std::string& version_string) {
   // Extract driver version from the second number in a string like:
   // "OpenGL ES 2.0 V@6.0 AU@ (CL@2946718)"
@@ -310,7 +313,7 @@ gpu::CollectInfoResult CollectBasicGraphicsInfoAndroid(
     gpu::GPUInfo* gpu_info) {
   gpu_info->can_lose_context = false;
 
-  gpu_info->machine_model_name = AndroidProperties::GetInstance()->GetModel();
+  gpu_info->machine_model_name = HybrisUtils::GetDeviceProperties().model;
 
   // Create a short-lived context on the UI thread to collect the GL strings.
   gpu::CollectInfoResult result = CollectDriverInfo(gpu_info);
@@ -333,6 +336,8 @@ gpu::CollectInfoResult CollectDriverInfoGLAndroid(gpu::GPUInfo* gpu_info) {
 
   return gpu::kCollectInfoSuccess;
 }
+
+#endif
 
 // Scan /etc/ati/amdpcsdb.default for "ReleaseVersion".
 // Return empty string on failing.
@@ -597,9 +602,11 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(
   *vendor_id = 0;
   *device_id = 0;
 
-  if (AndroidProperties::GetInstance()->Available()) {
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::IsUsingAndroidEGL()) {
     return gpu::kCollectInfoNonFatalFailure;
   }
+#endif
 
   gpu::GPUInfo gpu_info;
   gpu::CollectInfoResult result = CollectPCIVideoCardInfo(&gpu_info);
@@ -613,27 +620,33 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(
 
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectContextGraphicsInfo(
     gpu::GPUInfo* gpu_info) {
-  if (AndroidProperties::GetInstance()->Available()) {
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::IsUsingAndroidEGL()) {
     return CollectContextGraphicsInfoAndroid(gpu_info);
   }
+#endif
 
   return CollectContextGraphicsInfoLinux(gpu_info);
 }
 
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectBasicGraphicsInfo(
     gpu::GPUInfo* gpu_info) {
-  if (AndroidProperties::GetInstance()->Available()) {
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::IsUsingAndroidEGL()) {
     return CollectBasicGraphicsInfoAndroid(gpu_info);
   }
+#endif
 
   return CollectBasicGraphicsInfoLinux(gpu_info);
 }
 
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectDriverInfoGL(
     gpu::GPUInfo* gpu_info) {
-  if (AndroidProperties::GetInstance()->Available()) {
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::IsUsingAndroidEGL()) {
     return CollectDriverInfoGLAndroid(gpu_info);
   }
+#endif
 
   return CollectDriverInfoGLLinux(gpu_info);
 }

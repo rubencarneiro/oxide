@@ -26,7 +26,7 @@ import sys
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "build", "python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "python"))
 from utils import (
   CHROMIUMSRCDIR,
   TOPSRCDIR,
@@ -37,6 +37,12 @@ import subcommand
 
 TAR_EXCLUDE_DIRS = [
   '.bzrignore',
+  '.client.cfg',
+  '.relbranch',
+  'build/tools',
+  'gclient.conf',
+  'gclient.conf_entries',
+  'init-checkout.py',
   'third_party/chromium/src/breakpad/src/processor/testdata',
   'third_party/chromium/src/chrome/browser/resources/tracing/tests',
   'third_party/chromium/src/chrome/common/extensions/docs',
@@ -65,17 +71,12 @@ TAR_EXCLUDE_DIRS = [
   'third_party/chromium/src/tools/gyp/test',
   'third_party/chromium/src/v8/test',
   'third_party/chromium/src/webkit/tools/test/reference_build',
-  'client.py',
-  'gclient.conf',
-  'patch-tool.py',
-  'release-tool.py',
 ]
 
 TAR_EXCLUDE_REGEXPS = [
   r'(^|\/)\.git\/(?!(|index)$)',
   r'(^|\/)\.gitignore$',
   r'(^|\/)\.gitattributes$',
-  r'(^|\/)\.hg(\/|$)',
   r'(^|\/)\.svn(\/|$)',
   r'\.mk$',
   r'\.o$',
@@ -122,7 +123,7 @@ def cmd_make_tarball(options, args):
   import tarfile
 
   # Make sure we have an up-to-date Chromium checkout
-  CheckCall([sys.executable, "client.py"])
+  CheckCall([sys.executable, "init-checkout.py"])
 
   # XXX: Qt-specific
   v = VersionFileParser(os.path.join(TOPSRCDIR, "qt", "VERSION"))

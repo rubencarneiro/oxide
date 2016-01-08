@@ -337,8 +337,6 @@
         'browser/notifications/oxide_system_notification_dispatcher_linux.cc',
         'browser/oxide_access_token_store.cc',
         'browser/oxide_access_token_store.h',
-        'browser/oxide_android_properties.cc',
-        'browser/oxide_android_properties.h',
         'browser/oxide_browser_context.cc',
         'browser/oxide_browser_context.h',
         'browser/oxide_browser_context_delegate.h',
@@ -627,6 +625,10 @@
           ],
           'dependencies': [
             '../build/system.gyp:android-properties',
+          ],
+          'sources': [
+            'browser/oxide_hybris_utils.cc',
+            'browser/oxide_hybris_utils.h',
           ],
         }],
         ['enable_hybris_camera==1 and enable_hybris==1', {
