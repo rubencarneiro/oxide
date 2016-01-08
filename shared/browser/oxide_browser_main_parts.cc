@@ -17,6 +17,8 @@
 
 #include "oxide_browser_main_parts.h"
 
+#include <utility>
+
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
@@ -69,7 +71,8 @@ blink::WebScreenInfo DefaultScreenInfoGetter() {
 
 scoped_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate) {
-  return make_scoped_ptr(new VideoCaptureDeviceFactoryLinux(delegate.Pass()));
+  return make_scoped_ptr(
+      new VideoCaptureDeviceFactoryLinux(std::move(delegate)));
 }
 
 ui::Clipboard* CreateClipboard() {

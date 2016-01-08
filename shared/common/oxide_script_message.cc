@@ -17,6 +17,8 @@
 
 #include "oxide_script_message.h"
 
+#include <utility>
+
 #include "base/logging.h"
 
 namespace oxide {
@@ -38,7 +40,7 @@ void ScriptMessage::MakeResponseParams(ScriptMessageParams* params,
   params->type = ScriptMessageParams::TYPE_REPLY;
   params->error = error;
   params->msg_id = msg_id();
-  params->wrapped_payload.Set(0, payload.Pass());
+  params->wrapped_payload.Set(0, std::move(payload));
 }
 
 ScriptMessage::ScriptMessage(int serial,
@@ -66,7 +68,9 @@ void ScriptMessage::Reply(scoped_ptr<base::Value> payload) {
   has_responded_ = true;
 
   ScriptMessageParams params;
-  MakeResponseParams(&params, ScriptMessageParams::ERROR_OK, payload.Pass());
+  MakeResponseParams(&params,
+                     ScriptMessageParams::ERROR_OK,
+                     std::move(payload));
 
   DoSendResponse(params);
 }
@@ -82,7 +86,7 @@ void ScriptMessage::Error(ScriptMessageParams::Error code,
   has_responded_ = true;
 
   ScriptMessageParams params;
-  MakeResponseParams(&params, code, payload.Pass());
+  MakeResponseParams(&params, code, std::move(payload));
 
   DoSendResponse(params);
 }

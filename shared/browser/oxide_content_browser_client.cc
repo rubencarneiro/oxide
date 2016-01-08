@@ -18,6 +18,7 @@
 #include "oxide_content_browser_client.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/command_line.h"
@@ -81,7 +82,7 @@ net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
     content::URLRequestInterceptorScopedVector request_interceptors) {
   return BrowserContext::FromContent(
       browser_context)->CreateRequestContext(protocol_handlers,
-                                             request_interceptors.Pass());
+                                             std::move(request_interceptors));
 }
 
 net::URLRequestContextGetter*

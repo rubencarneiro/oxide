@@ -111,13 +111,13 @@ void CompositorThreadProxy::SendSwapSoftwareFrameOnOwnerThread(
   }
 
   if (!owner().compositor) {
-    DidSkipSwapCompositorFrame(frame.Pass());
+    DidSkipSwapCompositorFrame(std::move(frame));
     return;
   }
 
   frame->software_frame_data->pixels = bitmap->pixels();
 
-  owner().compositor->SendSwapCompositorFrameToClient(frame.Pass());
+  owner().compositor->SendSwapCompositorFrameToClient(std::move(frame));
 }
 
 void CompositorThreadProxy::DidCompleteGLFrameOnImplThread(
@@ -171,11 +171,11 @@ void CompositorThreadProxy::SendSwapGLFrameOnOwnerThread(
   }
 
   if (!owner().compositor) {
-    DidSkipSwapCompositorFrame(frame.Pass());
+    DidSkipSwapCompositorFrame(std::move(frame));
     return;
   }
 
-  owner().compositor->SendSwapCompositorFrameToClient(frame.Pass());
+  owner().compositor->SendSwapCompositorFrameToClient(std::move(frame));
 }
 
 void CompositorThreadProxy::DidSkipSwapCompositorFrame(
@@ -183,7 +183,7 @@ void CompositorThreadProxy::DidSkipSwapCompositorFrame(
   uint32_t surface_id = frame->surface_id;
 
   FrameHandleVector frames;
-  frames.push_back(new CompositorFrameHandle(this, frame.Pass()));
+  frames.push_back(new CompositorFrameHandle(this, std::move(frame)));
 
   impl_message_loop_->PostTask(
       FROM_HERE,
@@ -208,7 +208,7 @@ void CompositorThreadProxy::SendDidSwapBuffersToOutputSurfaceOnImplThread(
       continue;
     }
 
-    scoped_ptr<CompositorFrameData> frame = handle->data_.Pass();
+    scoped_ptr<CompositorFrameData> frame = std::move(handle->data_);
 
     CompositorFrameAck ack;
     switch (mode_) {
@@ -332,7 +332,7 @@ void CompositorThreadProxy::SwapCompositorFrame(CompositorFrameData* frame) {
 
       if (!context_provider->ContextCapabilities().gpu.sync_query) {
         gl->Finish();
-        DidCompleteGLFrameOnImplThread(frame_copy.Pass());
+        DidCompleteGLFrameOnImplThread(std::move(frame_copy));
       } else {
         uint32_t query_id;
         gl->GenQueriesEXT(1, &query_id);

@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_frame_handle.h"
 
+#include <utility>
+
 #include "oxide_compositor_frame_data.h"
 #include "oxide_compositor_thread_proxy.h"
 
@@ -26,7 +28,7 @@ CompositorFrameHandle::CompositorFrameHandle(
     scoped_refptr<CompositorThreadProxy> proxy,
     scoped_ptr<CompositorFrameData> data)
     : proxy_(proxy),
-      data_(data.Pass()) {}
+      data_(std::move(data)) {}
 
 CompositorFrameHandle::~CompositorFrameHandle() {
   if (data_) {

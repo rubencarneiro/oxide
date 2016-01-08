@@ -20,6 +20,7 @@
 #include <dlfcn.h>
 #include <signal.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "base/at_exit.h"
@@ -357,7 +358,7 @@ const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
 
 BrowserProcessMain::StartParams::StartParams(
     scoped_ptr<PlatformDelegate> delegate)
-    : delegate(delegate.Pass()),
+    : delegate(std::move(delegate)),
       gl_implementation(gfx::kGLImplementationNone),
       process_model(PROCESS_MODEL_MULTI_PROCESS) {}
 
@@ -386,7 +387,7 @@ void BrowserProcessMainImpl::Start(StartParams params) {
       "Browser components cannot be started more than once";
   CHECK(params.delegate) << "No PlatformDelegate provided";
 
-  platform_delegate_ = params.delegate.Pass();
+  platform_delegate_ = std::move(params.delegate);
   main_delegate_.reset(new ContentMainDelegate(platform_delegate_.get()));
 
   if (IsUnsupportedProcessModel(params.process_model)) {

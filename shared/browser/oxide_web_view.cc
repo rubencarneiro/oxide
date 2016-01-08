@@ -710,7 +710,7 @@ content::WebContents* WebView::OpenURLFromTab(
   WebView* new_view =
       client_->CreateNewWebView(GetViewBoundsPix(),
                                 disposition,
-                                contents.Pass());
+                                std::move(contents));
   if (!new_view) {
     return nullptr;
   }
@@ -831,7 +831,7 @@ void WebView::AddNewContents(content::WebContents* source,
   WebView* new_view =
       client_->CreateNewWebView(initial_pos,
                                 user_gesture ? disposition : NEW_POPUP,
-                                contents.Pass());
+                                std::move(contents));
   if (!new_view) {
     return;
   }
@@ -865,9 +865,9 @@ void WebView::UpdateTargetURL(content::WebContents* source, const GURL& url) {
 }
 
 bool WebView::AddMessageToConsole(content::WebContents* source,
-                                  int32 level,
+                                  int32_t level,
                                   const base::string16& message,
-                                  int32 line_no,
+                                  int32_t line_no,
                                   const base::string16& source_id) {
   DCHECK_VALID_SOURCE_CONTENTS
 
@@ -1283,7 +1283,7 @@ WebView::WebView(const Params& params)
   CHECK(contents.get()) << "Failed to create WebContents";
 
   CreateHelpers(contents.get());
-  CommonInit(contents.Pass());
+  CommonInit(std::move(contents));
 
   if (params.restore_entries.size() > 0) {
     std::vector<scoped_ptr<content::NavigationEntry>> entries =
@@ -1308,7 +1308,7 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   CHECK(!FromWebContents(contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
-  CommonInit(contents.Pass());
+  CommonInit(std::move(contents));
 
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
@@ -1975,7 +1975,7 @@ void WebView::DidCommitCompositorFrame() {
   DCHECK(!received_surface_ids_.empty());
 
   while (!received_surface_ids_.empty()) {
-    uint32 surface_id = received_surface_ids_.front();
+    uint32_t surface_id = received_surface_ids_.front();
     received_surface_ids_.pop();
 
     compositor_->DidSwapCompositorFrame(

@@ -22,7 +22,7 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 
-#include "base/basictypes.h"
+#include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "cc/resources/shared_bitmap.h"
 #include "gpu/command_buffer/common/mailbox.h"

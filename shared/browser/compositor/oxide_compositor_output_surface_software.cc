@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_output_surface_software.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/output_surface_client.h"
@@ -54,7 +56,7 @@ CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
     scoped_refptr<CompositorThreadProxy> proxy)
-    : CompositorOutputSurface(surface_id, software_device.Pass(), proxy) {}
+    : CompositorOutputSurface(surface_id, std::move(software_device), proxy) {}
 
 CompositorOutputSurfaceSoftware::~CompositorOutputSurfaceSoftware() {}
 

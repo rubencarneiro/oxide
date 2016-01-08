@@ -18,8 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_SSL_CONFIG_SERVICE_H_
 #define _OXIDE_SHARED_BROWSER_SSL_CONFIG_SERVICE_H_
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "net/ssl/ssl_config_service.h"
 
 namespace oxide {

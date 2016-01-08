@@ -35,7 +35,7 @@ class Clipboard : public ui::Clipboard {
 
  private:
   // ui::Clipboard overrides
-  uint64 GetSequenceNumber(ui::ClipboardType type) const override;
+  uint64_t GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;
   void Clear(ui::ClipboardType type) override;

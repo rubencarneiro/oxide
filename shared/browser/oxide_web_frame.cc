@@ -185,7 +185,7 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
   PopulateScriptMessageParams(request->serial(),
                               context,
                               msg_id,
-                              payload.Pass(),
+                              std::move(payload),
                               &params);
 
   if (!render_frame_host_->Send(new OxideMsg_SendMessage(
@@ -195,7 +195,7 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
 
   current_script_message_requests_.push_back(request.get());
 
-  return request.Pass();
+  return std::move(request);
 }
 
 bool WebFrame::SendMessageNoReply(const GURL& context,
@@ -209,7 +209,7 @@ bool WebFrame::SendMessageNoReply(const GURL& context,
   PopulateScriptMessageParams(ScriptMessageParams::kInvalidSerial,
                               context,
                               msg_id,
-                              payload.Pass(),
+                              std::move(payload),
                               &params);
 
   return render_frame_host_->Send(

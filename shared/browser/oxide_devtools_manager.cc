@@ -17,6 +17,8 @@
 
 #include "oxide_devtools_manager.h"
 
+#include <utility>
+
 #include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/memory/singleton.h"
@@ -61,7 +63,7 @@ class TCPServerSocketFactory
       return nullptr;
     }
 
-    return socket.Pass();
+    return std::move(socket);
   }
 
   scoped_ptr<net::ServerSocket> CreateForTethering(
@@ -155,7 +157,7 @@ void DevToolsManager::SetEnabled(bool enabled) {
 
   http_handler_.reset(
       new devtools_http_handler::DevToolsHttpHandler(
-        factory.Pass(),
+        std::move(factory),
         std::string(),
         new DevtoolsHttpHandlerDelegate(),
         base::FilePath(),

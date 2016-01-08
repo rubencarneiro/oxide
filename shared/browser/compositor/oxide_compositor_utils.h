@@ -76,7 +76,7 @@ class CompositorUtils {
   virtual void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32 sync_point,
+      uint32_t sync_point,
       const GetTextureFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 
@@ -91,7 +91,7 @@ class CompositorUtils {
   virtual void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32 sync_point,
+      uint32_t sync_point,
       const CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
 

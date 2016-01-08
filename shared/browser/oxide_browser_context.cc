@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include <set>
+#include <utility>
 #include <vector>
 
 #include "base/files/file_enumerator.h"
@@ -128,7 +129,7 @@ class MainURLRequestContextGetter : public URLRequestContextGetter {
       content::ProtocolHandlerMap* protocol_handlers,
       content::URLRequestInterceptorScopedVector request_interceptors) :
       context_(context),
-      request_interceptors_(request_interceptors.Pass()) {
+      request_interceptors_(std::move(request_interceptors)) {
     std::swap(protocol_handlers_, *protocol_handlers);
   }
 
@@ -140,7 +141,7 @@ class MainURLRequestContextGetter : public URLRequestContextGetter {
     if (!url_request_context_) {
       DCHECK(context_);
       url_request_context_ = context_->CreateMainRequestContext(
-          protocol_handlers_, request_interceptors_.Pass())->AsWeakPtr();
+          protocol_handlers_, std::move(request_interceptors_))->AsWeakPtr();
       context_ = nullptr;
     }
 
@@ -456,7 +457,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
         make_scoped_ptr(new net::HttpCache(http_network_session_.get(),
-                                           cache_backend.Pass(),
+                                           std::move(cache_backend),
                                            true)));
   }
 
@@ -492,7 +493,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK(set_protocol);
 
   scoped_ptr<net::URLRequestJobFactory> top_job_factory(
-      new URLRequestDelegatedJobFactory(job_factory.Pass(),
+      new URLRequestDelegatedJobFactory(std::move(job_factory),
                                         this));
 
   for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
@@ -500,11 +501,11 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
        it != request_interceptors.rend();
        ++it) {
     top_job_factory.reset(new net::URLRequestInterceptingJobFactory(
-        top_job_factory.Pass(), make_scoped_ptr(*it)));
+        std::move(top_job_factory), make_scoped_ptr(*it)));
   }
   request_interceptors.weak_clear();
 
-  storage->set_job_factory(top_job_factory.Pass());
+  storage->set_job_factory(std::move(top_job_factory));
 
   resource_context_->request_context_ = context;
   return main_request_context_.get();
@@ -786,7 +787,7 @@ net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
   main_request_context_getter_ =
       new MainURLRequestContextGetter(io_data(),
                                       protocol_handlers,
-                                      request_interceptors.Pass());
+                                      std::move(request_interceptors));
 
   return main_request_context_getter_.get();
 }

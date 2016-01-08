@@ -18,6 +18,8 @@
 
 #include "video_capture_device_factory_override.h"
 
+#include <utility>
+
 namespace media {
 
 namespace {
@@ -27,10 +29,10 @@ VideoCaptureDeviceFactoryOverrideFactory* g_factory;
 scoped_ptr<VideoCaptureDeviceFactory> CreateOverrideVideoCaptureDeviceFactory(
     scoped_ptr<VideoCaptureDeviceFactory> factory) {
   if (!g_factory) {
-    return factory.Pass();
+    return std::move(factory);
   }
 
-  return g_factory(factory.Pass());
+  return g_factory(std::move(factory));
 }
 
 void SetVideoCaptureDeviceFactoryOverrideFactory(

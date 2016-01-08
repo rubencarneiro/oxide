@@ -403,9 +403,9 @@ bool IsPciSupported() {
   return (base::PathExists(pci_path) || base::PathExists(pcie_path));
 }
 
-const uint32 kVendorIDIntel = 0x8086;
-const uint32 kVendorIDNVidia = 0x10de;
-const uint32 kVendorIDAMD = 0x1002;
+const uint32_t kVendorIDIntel = 0x8086;
+const uint32_t kVendorIDNVidia = 0x10de;
+const uint32_t kVendorIDAMD = 0x1002;
 
 gpu::CollectInfoResult CollectPCIVideoCardInfo(gpu::GPUInfo* gpu_info) {
   DCHECK(gpu_info);
@@ -579,8 +579,8 @@ class GpuInfoCollectorLinux : public gpu::GpuInfoCollectorOxideLinux {
   GpuInfoCollectorLinux() {}
   ~GpuInfoCollectorLinux() override {}
 
-  gpu::CollectInfoResult CollectGpuID(uint32* vendor_id,
-                                      uint32* device_id) override;
+  gpu::CollectInfoResult CollectGpuID(uint32_t* vendor_id,
+                                      uint32_t* device_id) override;
   gpu::CollectInfoResult CollectContextGraphicsInfo(
       gpu::GPUInfo* gpu_info) override;
   gpu::CollectInfoResult CollectBasicGraphicsInfo(
@@ -591,8 +591,9 @@ class GpuInfoCollectorLinux : public gpu::GpuInfoCollectorOxideLinux {
   DISALLOW_COPY_AND_ASSIGN(GpuInfoCollectorLinux);
 };
 
-gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(uint32* vendor_id,
-                                                           uint32* device_id) {
+gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(
+    uint32_t* vendor_id,
+    uint32_t* device_id) {
   *vendor_id = 0;
   *device_id = 0;
 

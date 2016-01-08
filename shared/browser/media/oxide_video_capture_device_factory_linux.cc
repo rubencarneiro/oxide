@@ -18,6 +18,8 @@
 
 #include "oxide_video_capture_device_factory_linux.h"
 
+#include <utility>
+
 #include "base/logging.h"
 #include "media/capture/video/video_capture_device.h"
 
@@ -64,9 +66,13 @@ scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
   for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
     CameraType type;
     int orientation;
-    android_camera_get_device_info(camera_id,
-                                   reinterpret_cast<int*>(&type),
-                                   &orientation);
+    if (android_camera_get_device_info(camera_id,
+                                       reinterpret_cast<int*>(&type),
+                                       &orientation) != 0) {
+      LOG(ERROR) <<
+          "Failed to get device info for camera with ID " << camera_id;
+      continue;
+    }
 
     std::string device_id =
         base::StringPrintf("%s%d",
@@ -128,7 +134,7 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
   if (AndroidProperties::GetInstance()->Available()) {
     scoped_ptr<media::VideoCaptureDevice::Names> names =
         GetDeviceNamesFromHybris();
-    callback.Run(names.Pass());
+    callback.Run(std::move(names));
   } else
 #endif
   {
@@ -155,7 +161,7 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate)
-    : delegate_(delegate.Pass()) {}
+    : delegate_(std::move(delegate)) {}
 
 VideoCaptureDeviceFactoryLinux::~VideoCaptureDeviceFactoryLinux() {}
 

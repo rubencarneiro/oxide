@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "base/basictypes.h"
-#include "base/compiler_specific.h"
+#include "base/macros.h"
 #include "extensions/common/url_pattern_set.h"
 #include "url/gurl.h"
 
