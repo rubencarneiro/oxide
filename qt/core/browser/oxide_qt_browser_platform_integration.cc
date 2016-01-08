@@ -239,9 +239,6 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
-  QGuiApplication::primaryScreen()->disconnect(this);
-  QGuiApplication::clipboard()->disconnect(this);
-  qApp->disconnect(this);
   qApp->removeEventFilter(this);
 }
 
