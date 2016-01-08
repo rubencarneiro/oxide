@@ -111,13 +111,16 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
 
   int32_t camera_id = GetCameraId(device_name_);
 
-  android_camera_get_device_info(camera_id,
-                                 reinterpret_cast<int*>(&position_),
-                                 &orientation_);
+  if (android_camera_get_device_info(camera_id,
+                                     reinterpret_cast<int*>(&position_),
+                                     &orientation_) != 0) {
+    client_->OnError(FROM_HERE, "Failed to get camera info");
+    return;
+  }
 
   camera_control_ = android_camera_connect_by_id(camera_id, listener_.get());
   if (!camera_control_) {
-    client_->OnError(FROM_HERE, "Couldn't create camera for specified type");
+    client_->OnError(FROM_HERE, "Couldn't create camera for specified id");
     return;
   }
 
