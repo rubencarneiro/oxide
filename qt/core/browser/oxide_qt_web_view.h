@@ -87,6 +87,7 @@ class WebView : public InputMethodContextClient,
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
   float GetDeviceScaleFactor() const;
+  int GetLocationBarContentOffsetPix() const;
 
  private:
   WebView(WebViewProxyClient* client,
@@ -274,10 +275,10 @@ class WebView : public InputMethodContextClient,
 
   void prepareToClose() override;
 
-  int locationBarHeight() override;
+  int locationBarHeight() const override;
   void setLocationBarHeight(int height) override;
-  int locationBarOffsetPix() override;
-  int locationBarContentOffsetPix() override;
+  int locationBarOffsetPix() const override;
+  int locationBarContentOffsetPix() const override;
   LocationBarMode locationBarMode() const override;
   void setLocationBarMode(LocationBarMode mode) override;
   bool locationBarAnimated() const override;

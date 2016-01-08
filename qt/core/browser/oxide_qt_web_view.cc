@@ -414,6 +414,10 @@ float WebView::GetDeviceScaleFactor() const {
   return GetDeviceScaleFactorFromQScreen(screen);
 }
 
+int WebView::GetLocationBarContentOffsetPix() const {
+  return locationBarContentOffsetPix();
+}
+
 void WebView::CommonInit(OxideQFindController* find_controller) {
   content::WebContents* contents = view_->GetWebContents();
 
@@ -1300,7 +1304,7 @@ void WebView::prepareToClose() {
   view_->PrepareToClose();
 }
 
-int WebView::locationBarHeight() {
+int WebView::locationBarHeight() const {
   return view_->GetLocationBarHeightPix();
 }
 
@@ -1308,11 +1312,11 @@ void WebView::setLocationBarHeight(int height) {
   view_->SetLocationBarHeightPix(height);
 }
 
-int WebView::locationBarOffsetPix() {
+int WebView::locationBarOffsetPix() const {
   return view_->GetLocationBarOffsetPix();
 }
 
-int WebView::locationBarContentOffsetPix() {
+int WebView::locationBarContentOffsetPix() const {
   return view_->GetLocationBarContentOffsetPix();
 }
 

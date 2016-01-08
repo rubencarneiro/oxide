@@ -70,7 +70,8 @@ void TouchHandleDrawable::SetOrientation(
 void TouchHandleDrawable::SetOrigin(const gfx::PointF& origin) {
   if (proxy_) {
     const float dpr = view_->GetDeviceScaleFactor();
-    proxy_->SetOrigin(QPointF(origin.x() * dpr, origin.y() * dpr));
+    const int y_offset = view_->GetLocationBarContentOffsetPix();
+    proxy_->SetOrigin(QPointF(origin.x() * dpr, origin.y() * dpr + y_offset));
   }
 }
 
@@ -86,8 +87,9 @@ gfx::RectF TouchHandleDrawable::GetVisibleBounds() const {
   }
 
   const float dpr = view_->GetDeviceScaleFactor();
+  const int y_offset = view_->GetLocationBarContentOffsetPix();
   QRectF bounds = proxy_->GetVisibleBounds();
-  return gfx::RectF(bounds.x() / dpr, bounds.y() / dpr,
+  return gfx::RectF(bounds.x() / dpr, (bounds.y() - y_offset) / dpr,
                     bounds.width() / dpr, bounds.height() / dpr);
 }
 

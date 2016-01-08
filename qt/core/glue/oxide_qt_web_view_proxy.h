@@ -234,10 +234,10 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void prepareToClose() = 0;
 
-  virtual int locationBarHeight() = 0;
+  virtual int locationBarHeight() const = 0;
   virtual void setLocationBarHeight(int height) = 0;
-  virtual int locationBarOffsetPix() = 0;
-  virtual int locationBarContentOffsetPix() = 0;
+  virtual int locationBarOffsetPix() const = 0;
+  virtual int locationBarContentOffsetPix() const = 0;
   virtual LocationBarMode locationBarMode() const = 0;
   virtual void setLocationBarMode(LocationBarMode mode) = 0;
   virtual bool locationBarAnimated() const = 0;
