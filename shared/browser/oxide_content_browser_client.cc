@@ -44,7 +44,6 @@
 #include "shared/common/oxide_form_factor.h"
 
 #include "oxide_access_token_store.h"
-#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
@@ -56,6 +55,10 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
+
+#if defined(ENABLE_HYBRIS)
+#include "oxide_hybris_utils.h"
+#endif
 
 #if defined(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
@@ -285,13 +288,17 @@ void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host)
 gpu::GpuControlList::OsType
 ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
     std::string* os_version) {
-  if (!AndroidProperties::GetInstance()->Available()) {
+#if defined(ENABLE_HYBRIS)
+  if (!HybrisUtils::IsUsingAndroidEGL()) {
     // Use the platform defaults in this case
     return gpu::GpuControlList::kOsAny;
   }
 
-  *os_version = AndroidProperties::GetInstance()->GetOSVersion();
+  *os_version = HybrisUtils::GetDeviceProperties().os_version;
   return gpu::GpuControlList::kOsAndroid;
+#else
+  return gpu::GpuControlList::kOsAny;
+#endif
 }
 
 std::string

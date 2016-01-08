@@ -68,7 +68,6 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
 
-#include "oxide_android_properties.h"
 #include "oxide_browser_context.h"
 #include "oxide_form_factor_detection.h"
 #include "oxide_message_pump.h"
