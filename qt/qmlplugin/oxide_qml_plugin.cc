@@ -17,10 +17,11 @@
 
 #include <QLatin1String>
 #include <QtGlobal>
-#include <QtQml>
 #include <QNetworkCookie>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
+#include <QtQml>
+#include <QtQml/private/qqmlvaluetype_p.h>
 
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -47,8 +48,6 @@
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
 #ifdef LEGACY_QMLVALUE_TYPES
-#include <QtQml/private/qqmlvaluetype_p.h>
-
 #include "oxide_qml_download_request.h"
 #include "oxide_qml_load_event.h"
 #include "oxide_qml_ssl_certificate.h"
@@ -102,6 +101,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "LoadEvent is delivered by WebView.loadingChanged");
     qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(uri, 1, 0, "SslCertificate",
         "SslCertificate is accessed via SecurityStatus.certificate");
+#else
+    qmlRegisterValueTypeEnums<OxideQLoadEvent>(uri, 1, 0, "LoadEvent");
+    qmlRegisterValueTypeEnums<OxideQSslCertificate>(uri, 1, 0, "SslCertificate");
 #endif
 
     qmlRegisterSingletonType<OxideQQuickGlobal>(
