@@ -74,7 +74,7 @@ TAR_EXCLUDE_DIRS = [
 ]
 
 TAR_EXCLUDE_REGEXPS = [
-  r'(^|\/)\.git\/(?!(|index)$)',
+  r'(^|\/)\.git(\/|$)',
   r'(^|\/)\.gitignore$',
   r'(^|\/)\.gitattributes$',
   r'(^|\/)\.svn(\/|$)',
