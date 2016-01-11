@@ -619,7 +619,7 @@ Module {
             isPointer: true
         }
         Property { name: "webProcessStatus"; revision: 4; type: "WebProcessStatus"; isReadonly: true }
-        Property { name: "hoveredUrl"; type: "QUrl"; isReadonly: true }
+        Property { name: "hoveredUrl"; revision: 7; type: "QUrl"; isReadonly: true }
         Signal { name: "loadingStateChanged"; revision: 1 }
         Signal {
             name: "loadEvent"
