@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -57,12 +57,14 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_touch_handle_drawable.h"
 #include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickscriptmessagehandler_p_p.h"
+#include "oxideqquicktouchselectioncontroller_p.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebcontext_p_p.h"
 #include "oxideqquickwebframe_p.h"
@@ -214,6 +216,13 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   return new oxide::qquick::FilePicker(q, client);
 }
 
+oxide::qt::TouchHandleDrawableProxy*
+OxideQQuickWebViewPrivate::CreateTouchHandleDrawable() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::TouchHandleDrawable(q);
+}
+
 void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {
   Q_Q(OxideQQuickWebView);
 
@@ -282,6 +291,13 @@ void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count)
 
 void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
+}
+
+void OxideQQuickWebViewPrivate::TouchSelectionChanged(bool active,
+                                                      QRectF bounds) {
+  Q_Q(OxideQQuickWebView);
+
+  q->touchSelectionController()->onTouchSelectionChanged(active, bounds);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(
@@ -640,6 +656,12 @@ void OxideQQuickWebViewPrivate::TargetURLChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->hoveredUrlChanged();
+}
+
+void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->editingCapabilitiesChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -2084,6 +2106,17 @@ QUrl OxideQQuickWebView::hoveredUrl() const {
   return d->proxy()->targetUrl();
 }
 
+OxideQQuickWebView::EditCapabilities OxideQQuickWebView::editingCapabilities() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return NoCapability;
+  }
+
+  oxide::qt::EditCapabilityFlags flags = d->proxy()->editFlags();
+  return static_cast<EditCapabilities>(flags);
+}
+
 // static
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {
@@ -2212,6 +2245,17 @@ OxideQFindController* OxideQQuickWebView::findController() const {
   Q_D(const OxideQQuickWebView);
 
   return d->find_controller_.data();
+}
+
+OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->touch_selection_controller_) {
+    d->touch_selection_controller_.reset(
+        new OxideQQuickTouchSelectionController(this));
+  }
+
+  return d->touch_selection_controller_.data();
 }
 
 #include "moc_oxideqquickwebview_p.cpp"

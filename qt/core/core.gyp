@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -148,6 +148,8 @@
         'browser/oxide_qt_script_message_request.h',
         'browser/oxide_qt_skutils.cc',
         'browser/oxide_qt_skutils.h',
+        'browser/oxide_qt_touch_handle_drawable.cc',
+        'browser/oxide_qt_touch_handle_drawable.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
@@ -180,6 +182,7 @@
         'glue/oxide_qt_script_message_request_proxy.cc',
         'glue/oxide_qt_script_message_request_proxy.h',
         'glue/oxide_qt_script_message_request_proxy_client.h',
+        'glue/oxide_qt_touch_handle_drawable_proxy.h',
         'glue/oxide_qt_user_script_proxy.cc',
         'glue/oxide_qt_user_script_proxy.h',
         'glue/oxide_qt_user_script_proxy_client.h',

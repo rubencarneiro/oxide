@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
+#include <QRectF>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
@@ -48,6 +49,7 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
+class TouchHandleDrawableProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
 class WebFrameProxy;
@@ -82,6 +84,7 @@ class WebViewProxyClient {
   virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
+  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void WebProcessStatusChanged() = 0;
 
@@ -96,6 +99,8 @@ class WebViewProxyClient {
   virtual void NavigationEntryCommitted() = 0;
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
+
+  virtual void TouchSelectionChanged(bool active, QRectF bounds) = 0;
 
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 
@@ -151,6 +156,8 @@ class WebViewProxyClient {
   virtual void CloseRequested() = 0;
 
   virtual void TargetURLChanged() = 0;
+  
+  virtual void OnEditingCapabilitiesChanged() = 0;
 };
 
 } // namespace qt

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -60,10 +60,12 @@
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/clipboard/clipboard.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
@@ -149,6 +151,18 @@ void CreateHelpers(content::WebContents* contents,
   FaviconHelper::CreateForWebContents(contents);
 }
 
+bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
+                                 const cc::CompositorFrameMetadata& current) {
+  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
+    return true;
+  }
+  if (old.location_bar_content_translation.y() !=
+      current.location_bar_content_translation.y()) {
+    return true;
+  }
+  return false;
+}
+
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 
@@ -211,6 +225,7 @@ WebView::WebView(WebViewClient* client)
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
       location_bar_animated_(true),
+      edit_flags_(blink::WebContextMenuData::CanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
@@ -435,6 +450,21 @@ void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
   // TODO(chrisccoulson): Merge these
   client_->FrameMetadataUpdated(old);
   client_->SwapCompositorFrame();
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    ui::TouchSelectionController* controller = rwhv->selection_controller();
+    // If the location bar offset changes while a touch selection is active,
+    // the bounding rect and the position of the handles need to be updated.
+    if ((controller->active_status() !=
+         ui::TouchSelectionController::INACTIVE) &&
+        HasLocationBarOffsetChanged(old, compositor_frame_metadata_)) {
+      TouchSelectionChanged();
+      // XXX: hack to ensure the position of the handles is updated.
+      controller->SetTemporarilyHidden(true);
+      controller->SetTemporarilyHidden(false);
+    }
+  }
 }
 
 void WebView::WebPreferencesDestroyed() {
@@ -535,6 +565,62 @@ void WebView::HidePopupMenu() {
   }
 
   active_popup_menu_->Close();
+}
+
+ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
+  return client_->CreateTouchHandleDrawable();
+}
+
+void WebView::TouchSelectionChanged() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  bool active =
+      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  gfx::RectF bounds = controller->GetRectBetweenBounds();
+  bounds.Offset(0, GetLocationBarContentOffsetDip());
+
+  client_->TouchSelectionChanged(active, bounds);
+}
+
+void WebView::EditingCapabilitiesChanged() {
+  int flags = blink::WebContextMenuData::CanDoNone;
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    edit_flags_ = flags;
+    return;
+  }
+
+  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+  bool has_selection = !rwhv->selection_range().is_empty();
+  base::string16 clipboard;
+  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
+                                                 &clipboard);
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable && !clipboard.empty()) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+  
+  if (flags != edit_flags_) {
+    edit_flags_ = flags;
+    client_->OnEditingCapabilitiesChanged();
+  }
 }
 
 content::WebContents* WebView::OpenURLFromTab(
@@ -971,6 +1057,8 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   }
 
   InitializeTopControlsForHost(new_host, !old_host);
+
+  EditingCapabilitiesChanged();
 }
 
 void WebView::DidStartLoading() {
@@ -1188,6 +1276,10 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   IPC_END_MESSAGE_MAP()
 
   return handled;
+}
+
+void WebView::ClipboardDataChanged() {
+  EditingCapabilitiesChanged();
 }
 
 WebView::WebView(const Params& params)
@@ -1676,17 +1768,17 @@ gfx::Size WebView::GetCompositorFrameViewportSizePix() {
   return gfx::Size(std::round(size.width()), std::round(size.height()));
 }
 
-int WebView::GetLocationBarOffsetPix() {
+int WebView::GetLocationBarOffsetPix() const {
   return compositor_frame_metadata().location_bar_offset.y() *
          compositor_frame_metadata().device_scale_factor;
 }
 
-int WebView::GetLocationBarContentOffsetPix() {
+int WebView::GetLocationBarContentOffsetPix() const {
   return compositor_frame_metadata().location_bar_content_translation.y() *
          compositor_frame_metadata().device_scale_factor;
 }
 
-float WebView::GetLocationBarContentOffsetDip() {
+float WebView::GetLocationBarContentOffsetDip() const {
   return compositor_frame_metadata().location_bar_content_translation.y();
 }
 
@@ -1956,6 +2048,10 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
+}
+
+int WebView::GetEditFlags() const {
+  return edit_flags_;
 }
 
 } // namespace oxide

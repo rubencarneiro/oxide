@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_ime_bridge_impl.h"
@@ -48,6 +49,8 @@ class RenderWidgetHostImpl;
 
 namespace ui {
 class MotionEvent;
+class TouchHandleDrawable;
+class TouchSelectionController;
 }
 
 namespace oxide {
@@ -60,6 +63,7 @@ class RenderWidgetHostView final :
     public GestureProviderClient,
     public RendererFrameEvictorClient,
     public cc::DelegatedFrameResourceCollectionClient,
+    public ui::TouchSelectionControllerClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
@@ -71,6 +75,10 @@ class RenderWidgetHostView final :
 
   const base::string16& selection_text() const {
     return selection_text_;
+  }
+
+  const gfx::Range& selection_range() const {
+    return selection_range_;
   }
 
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
@@ -91,6 +99,10 @@ class RenderWidgetHostView final :
   void Focus() final;
   void Show() final;
   void Hide() final;
+
+  ui::TouchSelectionController* selection_controller() const {
+    return selection_controller_.get();
+  }
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -172,6 +184,16 @@ class RenderWidgetHostView final :
   // cc::DelegatedFrameResourceCollectionClient implementation
   void UnusedResourcesAreAvailable() final;
 
+  // ui::TouchSelectionControllerClient implementation
+  bool SupportsAnimation() const override;
+  void SetNeedsAnimate() override;
+  void MoveCaret(const gfx::PointF& position) override;
+  void MoveRangeSelectionExtent(const gfx::PointF& extent) override;
+  void SelectBetweenCoordinates(const gfx::PointF& base,
+                                const gfx::PointF& extent) override;
+  void OnSelectionEvent(ui::SelectionEventType event) override;
+  scoped_ptr<ui::TouchHandleDrawable> CreateDrawable() override;
+
   // ===================
 
   void UpdateCurrentCursor();
@@ -182,6 +204,8 @@ class RenderWidgetHostView final :
   void RunAckCallbacks();
   void AttachLayer();
   void DetachLayer();
+
+  bool HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
 
   content::RenderWidgetHostImpl* host_;
 
@@ -216,6 +240,8 @@ class RenderWidgetHostView final :
   bool top_controls_shrink_blink_size_;
 
   scoped_ptr<GestureProvider> gesture_provider_;
+
+  scoped_ptr<ui::TouchSelectionController> selection_controller_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
 };

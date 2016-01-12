@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,9 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -92,6 +94,7 @@
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_skutils.h"
+#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
@@ -409,6 +412,10 @@ float WebView::GetDeviceScaleFactor() const {
   }
 
   return GetDeviceScaleFactorFromQScreen(screen);
+}
+
+int WebView::GetLocationBarContentOffsetPix() const {
+  return locationBarContentOffsetPix();
 }
 
 void WebView::CommonInit(OxideQFindController* find_controller) {
@@ -819,6 +826,22 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   return picker;
 }
 
+ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
+  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
+  drawable->SetProxy(client_->CreateTouchHandleDrawable());
+  return drawable;
+}
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
+
+void WebView::TouchSelectionChanged(bool active,
+                                    const gfx::RectF& bounds) const {
+  const float dpr = GetDeviceScaleFactor();
+  QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
+              bounds.width() * dpr, bounds.height() * dpr);
+  client_->TouchSelectionChanged(active, rect);
+}
+
 void WebView::SwapCompositorFrame() {
   compositor_frame_.reset();
   client_->ScheduleUpdate();
@@ -876,6 +899,10 @@ void WebView::CloseRequested() {
 
 void WebView::TargetURLChanged() {
   client_->TargetURLChanged();
+}
+
+void WebView::OnEditingCapabilitiesChanged() {
+  client_->OnEditingCapabilitiesChanged();
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1277,7 +1304,7 @@ void WebView::prepareToClose() {
   view_->PrepareToClose();
 }
 
-int WebView::locationBarHeight() {
+int WebView::locationBarHeight() const {
   return view_->GetLocationBarHeightPix();
 }
 
@@ -1285,11 +1312,11 @@ void WebView::setLocationBarHeight(int height) {
   view_->SetLocationBarHeightPix(height);
 }
 
-int WebView::locationBarOffsetPix() {
+int WebView::locationBarOffsetPix() const {
   return view_->GetLocationBarOffsetPix();
 }
 
-int WebView::locationBarContentOffsetPix() {
+int WebView::locationBarContentOffsetPix() const {
   return view_->GetLocationBarContentOffsetPix();
 }
 
@@ -1366,6 +1393,33 @@ void WebView::executeEditingCommand(EditingCommands command) const {
 
 QUrl WebView::targetUrl() const {
   return QUrl(QString::fromStdString(view_->target_url().spec()));
+}
+
+EditCapabilityFlags WebView::editFlags() const {
+  EditCapabilityFlags capabilities = NO_CAPABILITY;
+  int flags = view_->GetEditFlags();
+  if (flags & blink::WebContextMenuData::CanUndo) {
+    capabilities |= UNDO_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanRedo) {
+    capabilities |= REDO_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanCut) {
+    capabilities |= CUT_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanCopy) {
+    capabilities |= COPY_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanPaste) {
+    capabilities |= PASTE_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanDelete) {
+    capabilities |= ERASE_CAPABILITY;
+  }
+  if (flags & blink::WebContextMenuData::CanSelectAll) {
+    capabilities |= SELECT_ALL_CAPABILITY;
+  }
+  return capabilities;
 }
 
 void WebView::teardownFrameTree() {

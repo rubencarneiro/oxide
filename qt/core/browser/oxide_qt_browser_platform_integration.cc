@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,7 @@
 
 #include "oxide_qt_browser_platform_integration.h"
 
+#include <QClipboard>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
@@ -78,6 +79,10 @@ CalculateApplicationState(bool suspended) {
 
 void BrowserPlatformIntegration::OnApplicationStateChanged() {
   UpdateApplicationState();
+}
+
+void BrowserPlatformIntegration::OnClipboardDataChanged() {
+  NotifyClipboardDataChanged();
 }
 
 void BrowserPlatformIntegration::OnScreenGeometryChanged(
@@ -226,14 +231,14 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
+  connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
+          SLOT(OnClipboardDataChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     qApp->installEventFilter(this);
   }
-
 }
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
-  qApp->disconnect(this);
   qApp->removeEventFilter(this);
 }
 

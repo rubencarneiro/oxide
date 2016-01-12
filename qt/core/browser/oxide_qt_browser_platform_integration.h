@@ -44,6 +44,7 @@ class BrowserPlatformIntegration : public QObject,
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
+  void OnClipboardDataChanged();
   void OnScreenGeometryChanged(const QRect& geometry);
   void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -44,6 +44,14 @@ class WebContents;
 class WebCursor;
 }
 
+namespace gfx {
+class RectF;
+}
+
+namespace ui {
+class TouchHandleDrawable;
+}
+
 namespace oxide {
 
 class CertificateError;
@@ -52,6 +60,7 @@ class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
+class TouchHandleDrawableDelegate;
 class WebContextMenu;
 class WebPopupMenu;
 class WebView;
@@ -162,6 +171,10 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
+  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
+  virtual void TouchSelectionChanged(bool active,
+                                     const gfx::RectF& bounds) const;
+
   virtual void SwapCompositorFrame() = 0;
 
   virtual void EvictCurrentFrame();
@@ -187,6 +200,8 @@ class WebViewClient : public ScriptMessageTarget {
 
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
+
+  virtual void OnEditingCapabilitiesChanged();
 };
 
 } // namespace oxide

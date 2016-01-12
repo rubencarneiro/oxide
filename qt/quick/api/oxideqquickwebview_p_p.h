@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@
 class OxideQNewViewRequest;
 class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
+class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
@@ -94,6 +95,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
+  oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
@@ -105,6 +107,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
+  void TouchSelectionChanged(bool active, QRectF bounds) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
   QScreen* GetScreen() const override;
   QRect GetViewBoundsPix() const override;
@@ -143,6 +146,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
+  void OnEditingCapabilitiesChanged() override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();
@@ -209,6 +213,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   QScopedPointer<ConstructProps> construct_props_;
 
   QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
+
+  QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

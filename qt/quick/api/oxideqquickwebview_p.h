@@ -39,6 +39,7 @@ class OxideQWebPreferences;
 class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
+class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContext;
 class OxideQQuickWebFrame;
 class OxideQQuickWebView;
@@ -132,6 +133,10 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
 
   Q_PROPERTY(QUrl hoveredUrl READ hoveredUrl NOTIFY hoveredUrlChanged REVISION 7)
+
+  Q_PROPERTY(OxideQQuickTouchSelectionController* touchSelectionController READ touchSelectionController CONSTANT REVISION 7)
+
+  Q_PROPERTY(EditCapabilities editingCapabilities READ editingCapabilities NOTIFY editingCapabilitiesChanged REVISION 7)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -303,6 +308,10 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_REVISION(4) Q_INVOKABLE void executeEditingCommand(EditingCommands command) const;
 
+  OxideQQuickTouchSelectionController* touchSelectionController();
+
+  EditCapabilities editingCapabilities() const;
+
  public Q_SLOTS:
   void goBack();
   void goForward();
@@ -362,6 +371,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(4) void webProcessStatusChanged();
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
   Q_REVISION(7) void hoveredUrlChanged();
+  Q_REVISION(7) void editingCapabilitiesChanged();
 
   // Deprecated since 1.3
   void loadingChanged(const OxideQLoadEvent& loadEvent);

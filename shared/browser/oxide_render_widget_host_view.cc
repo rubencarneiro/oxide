@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,17 +29,23 @@
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
+#include "cc/output/viewport_selection_bound.h"
 #include "cc/quads/render_pass.h"
+#include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/touch/selection_bound.h"
 #include "ui/events/gesture_detection/motion_event.h"
+#include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/input/oxide_input_method_context.h"
@@ -78,7 +84,35 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
+ui::SelectionBound::Type ConvertSelectionBoundType(
+    cc::SelectionBoundType type) {
+  switch (type) {
+    case cc::SELECTION_BOUND_LEFT:
+      return ui::SelectionBound::LEFT;
+    case cc::SELECTION_BOUND_RIGHT:
+      return ui::SelectionBound::RIGHT;
+    case cc::SELECTION_BOUND_CENTER:
+      return ui::SelectionBound::CENTER;
+    case cc::SELECTION_BOUND_EMPTY:
+      return ui::SelectionBound::EMPTY;
+  }
+  NOTREACHED() << "Unknown selection bound type";
+  return ui::SelectionBound::EMPTY;
 }
+
+// Copied from content/browser/renderer_host/input/ui_touch_selection_helper.cc,
+// because that helper is not part of content’s public API.
+ui::SelectionBound ConvertSelectionBound(
+    const cc::ViewportSelectionBound& bound) {
+  ui::SelectionBound ui_bound;
+  ui_bound.set_type(ConvertSelectionBoundType(bound.type));
+  ui_bound.set_visible(bound.visible);
+  if (ui_bound.type() != ui::SelectionBound::EMPTY)
+    ui_bound.SetEdge(bound.edge_top, bound.edge_bottom);
+  return ui_bound;
+}
+
+} // namespace
 
 void RenderWidgetHostView::OnTextInputStateChanged(
     ui::TextInputType type,
@@ -112,6 +146,10 @@ void RenderWidgetHostView::OnSelectionBoundsChanged(
   ime_bridge_.SelectionBoundsChanged(caret_rect,
                                      selection_cursor_position,
                                      selection_anchor_position);
+
+  if (container_) {
+    container_->EditingCapabilitiesChanged();
+  }
 }
 
 void RenderWidgetHostView::SelectionChanged(const base::string16& text,
@@ -266,6 +304,13 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   if (!compositor || !compositor->IsActive()) {
     RunAckCallbacks();
   }
+
+  const cc::ViewportSelection& selection = compositor_frame_metadata_.selection;
+  selection_controller_->OnSelectionEditable(selection.is_editable);
+  selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
+  selection_controller_->OnSelectionBoundsChanged(
+      ConvertSelectionBound(selection.start),
+      ConvertSelectionBound(selection.end));
 }
 
 void RenderWidgetHostView::ClearCompositorFrame() {
@@ -473,6 +518,10 @@ void RenderWidgetHostView::OnGestureEvent(
     return;
   }
 
+  if (HandleGestureForTouchSelection(event)) {
+    return;
+  }
+
   if (event.type == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
     // event to stop any in-progress flings.
@@ -489,6 +538,43 @@ void RenderWidgetHostView::OnGestureEvent(
   host_->ForwardGestureEvent(event);
 }
 
+bool RenderWidgetHostView::HandleGestureForTouchSelection(
+    const blink::WebGestureEvent& event) const {
+  switch (event.type) {
+    case blink::WebInputEvent::GestureLongPress: {
+      base::TimeTicks event_time = base::TimeTicks() +
+          base::TimeDelta::FromSecondsD(event.timeStampSeconds);
+      gfx::PointF location(event.x, event.y);
+      if (selection_controller_->WillHandleLongPressEvent(
+              event_time, location)) {
+        return true;
+      }
+      break;
+    }
+    case blink::WebInputEvent::GestureTap: {
+      gfx::PointF location(event.x, event.y);
+      if (selection_controller_->WillHandleTapEvent(
+              location, event.data.tap.tapCount)) {
+        return true;
+      }
+      break;
+    }
+    case blink::WebInputEvent::GestureScrollBegin:
+      // XXX: currently commented out because when doing a pinch-to-zoom
+      // gesture, we don’t always get the corresponding GestureScrollEnd event,
+      // so selection handles would remain hidden.
+      //selection_controller()->SetTemporarilyHidden(true);
+      break;
+    case blink::WebInputEvent::GestureScrollEnd:
+      // XXX: see above
+      //selection_controller()->SetTemporarilyHidden(false);
+      break;
+    default:
+      break;
+  }
+  return false;
+}
+
 void RenderWidgetHostView::EvictCurrentFrame() {
   frame_is_evicted_ = true;
   DestroyDelegatedContent();
@@ -498,6 +584,55 @@ void RenderWidgetHostView::UnusedResourcesAreAvailable() {
   if (ack_callbacks_.empty()) {
     SendReturnedDelegatedResources();
   }
+}
+
+bool RenderWidgetHostView::SupportsAnimation() const {
+  return false;
+}
+
+void RenderWidgetHostView::SetNeedsAnimate() {
+  NOTREACHED();
+}
+
+void RenderWidgetHostView::MoveCaret(const gfx::PointF& position) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  rwhi->MoveCaret(gfx::ToRoundedPoint(position));
+}
+
+void RenderWidgetHostView::MoveRangeSelectionExtent(const gfx::PointF& extent) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  content::RenderWidgetHostDelegate* host_delegate = rwhi->delegate();
+  if (host_delegate) {
+    host_delegate->MoveRangeSelectionExtent(gfx::ToRoundedPoint(extent));
+  }
+}
+
+void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
+                                                    const gfx::PointF& extent) {
+  content::RenderWidgetHostImpl* rwhi =
+      content::RenderWidgetHostImpl::From(host_);
+  content::RenderWidgetHostDelegate* host_delegate = rwhi->delegate();
+  if (host_delegate) {
+    host_delegate->SelectRange(gfx::ToRoundedPoint(base),
+                               gfx::ToRoundedPoint(extent));
+  }
+}
+
+void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
+  if (container_) {
+    container_->TouchSelectionChanged();
+  }
+}
+
+scoped_ptr<ui::TouchHandleDrawable> RenderWidgetHostView::CreateDrawable() {
+  if (!container_) {
+    return nullptr;
+  }
+
+  return scoped_ptr<ui::TouchHandleDrawable>(
+      container_->CreateTouchHandleDrawable());
 }
 
 void RenderWidgetHostView::UpdateCurrentCursor() {
@@ -593,6 +728,16 @@ RenderWidgetHostView::RenderWidgetHostView(
   host_->SetView(this);
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
+
+  ui::TouchSelectionController::Config tsc_config;
+  // default values from ui/events/gesture_detection/gesture_configuration.cc
+  tsc_config.max_tap_duration = base::TimeDelta::FromMilliseconds(150);
+  tsc_config.tap_slop = 15;
+  tsc_config.enable_adaptive_handle_orientation = false;
+  tsc_config.show_on_tap_for_empty_editable = true;
+  tsc_config.enable_longpress_drag_selection = false;
+  selection_controller_.reset(
+      new ui::TouchSelectionController(this, tsc_config));
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
@@ -624,9 +769,15 @@ void RenderWidgetHostView::SetContainer(
 void RenderWidgetHostView::Blur() {
   host_->SetActive(false);
   host_->Blur();
+
+  selection_controller_->HideAndDisallowShowingAutomatically();
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
+  if (selection_controller_->WillHandleTouchEvent(event)) {
+    return;
+  }
+
   auto rv = gesture_provider_->OnTouchEvent(event);
   if (!rv.succeeded) {
     return;

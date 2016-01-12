@@ -101,4 +101,10 @@ void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
                     ApplicationStateChanged());
 }
 
+void BrowserPlatformIntegration::NotifyClipboardDataChanged() {
+  FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
+                    observers_,
+                    ClipboardDataChanged());
+}
+
 } // namespace oxide

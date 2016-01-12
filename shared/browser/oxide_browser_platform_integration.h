@@ -110,6 +110,8 @@ class BrowserPlatformIntegration {
 
   void NotifyApplicationStateChanged();
 
+  void NotifyClipboardDataChanged();
+
  private:
   friend class BrowserPlatformIntegrationObserver;
 
