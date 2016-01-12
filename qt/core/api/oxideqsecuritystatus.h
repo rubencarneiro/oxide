@@ -35,14 +35,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(SecurityLevel securityLevel READ securityLevel NOTIFY securityLevelChanged)
-  Q_PROPERTY(ContentStatusFlags contentStatus READ contentStatus NOTIFY contentStatusChanged)
-  Q_PROPERTY(CertStatusFlags certStatus READ certStatus NOTIFY certStatusChanged)
+  Q_PROPERTY(ContentStatus contentStatus READ contentStatus NOTIFY contentStatusChanged)
+  Q_PROPERTY(CertStatus certStatus READ certStatus NOTIFY certStatusChanged)
 
   Q_PROPERTY(QVariant certificate READ certificate NOTIFY certificateChanged)
 
   Q_ENUMS(SecurityLevel)
-  Q_FLAGS(ContentStatusFlags)
-  Q_FLAGS(CertStatusFlags)
+  Q_FLAGS(ContentStatus)
+  Q_FLAGS(CertStatus)
  
   Q_DECLARE_PRIVATE(OxideQSecurityStatus)
   Q_DISABLE_COPY(OxideQSecurityStatus)
@@ -57,14 +57,14 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
     SecurityLevelError
   };
 
-  enum ContentStatus {
+  enum ContentStatusFlags {
     ContentStatusNormal = 0,
     ContentStatusDisplayedInsecure = 1 << 0,
     ContentStatusRanInsecure = 1 << 1
   };
-  Q_DECLARE_FLAGS(ContentStatusFlags, ContentStatus)
+  Q_DECLARE_FLAGS(ContentStatus, ContentStatusFlags)
 
-  enum CertStatus {
+  enum CertStatusFlags {
     CertStatusOk = 0,
     CertStatusBadIdentity = 1 << 0,
     CertStatusExpired = 1 << 1,
@@ -76,13 +76,13 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
     CertStatusInsecure = 1 << 7,
     CertStatusGenericError = 1 << 8
   };
-  Q_DECLARE_FLAGS(CertStatusFlags, CertStatus)
+  Q_DECLARE_FLAGS(CertStatus, CertStatusFlags)
 
   ~OxideQSecurityStatus();
 
   SecurityLevel securityLevel() const;
-  ContentStatusFlags contentStatus() const;
-  CertStatusFlags certStatus() const;
+  ContentStatus contentStatus() const;
+  CertStatus certStatus() const;
 
   QVariant certificate() const;
 
