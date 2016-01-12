@@ -132,7 +132,7 @@ class Q_DECL_EXPORT OxideQQuickWebView : public QQuickItem {
 
   Q_PROPERTY(WebProcessStatus webProcessStatus READ webProcessStatus NOTIFY webProcessStatusChanged REVISION 4)
 
-  Q_PROPERTY(QUrl hoveredUrl READ hoveredUrl NOTIFY hoveredUrlChanged)
+  Q_PROPERTY(QUrl hoveredUrl READ hoveredUrl NOTIFY hoveredUrlChanged REVISION 7)
 
   Q_PROPERTY(OxideQQuickTouchSelectionController* touchSelectionController READ touchSelectionController CONSTANT REVISION 7)
 

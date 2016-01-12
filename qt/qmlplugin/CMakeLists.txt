@@ -65,12 +65,12 @@ set_target_properties(
     LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
     AUTOMOC TRUE)
 target_compile_options(${OXIDE_QMLPLUGIN} PRIVATE -fno-rtti)
+target_include_directories(
+    ${OXIDE_QMLPLUGIN} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 if(DEFINED LEGACY_QMLVALUE_TYPES)
   target_compile_definitions(${OXIDE_QMLPLUGIN} PRIVATE -DLEGACY_QMLVALUE_TYPES)
-  target_include_directories(
-      ${OXIDE_QMLPLUGIN} PRIVATE
-      ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-      ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 endif()
 
 add_custom_target(
