@@ -28,7 +28,6 @@
 class OxideQGeolocationPermissionRequestPrivate;
 class OxideQMediaAccessPermissionRequestPrivate;
 class OxideQPermissionRequestPrivate;
-class OxideQSimplePermissionRequestPrivate;
 
 class OXIDE_QTCORE_EXPORT OxideQPermissionRequest : public QObject {
   Q_OBJECT
@@ -53,6 +52,10 @@ class OXIDE_QTCORE_EXPORT OxideQPermissionRequest : public QObject {
 
   bool isCancelled() const;
 
+ public Q_SLOTS:
+  void allow();
+  void deny();
+
  Q_SIGNALS:
   void cancelled();
 
@@ -62,40 +65,15 @@ class OXIDE_QTCORE_EXPORT OxideQPermissionRequest : public QObject {
   QScopedPointer<OxideQPermissionRequestPrivate> d_ptr;
 };
 
-class OXIDE_QTCORE_EXPORT OxideQSimplePermissionRequest
+class OXIDE_QTCORE_EXPORT OxideQGeolocationPermissionRequest
     : public OxideQPermissionRequest {
   Q_OBJECT
-
-  Q_DECLARE_PRIVATE(OxideQSimplePermissionRequest)
-  Q_DISABLE_COPY(OxideQSimplePermissionRequest)
-
- public:
-  ~OxideQSimplePermissionRequest() Q_DECL_OVERRIDE;
-
- public Q_SLOTS:
-  void allow();
-  void deny();
-
- protected:
-  OxideQSimplePermissionRequest(OxideQSimplePermissionRequestPrivate& dd);
-};
-
-class OXIDE_QTCORE_EXPORT OxideQGeolocationPermissionRequest
-    : public OxideQSimplePermissionRequest {
-  Q_OBJECT
-
-  // This has been replaced by url. origin made sense for geolocation
-  // because we only get an origin from Chromium, whereas we get a full URL
-  // for other types of request
-  Q_PROPERTY(QUrl origin READ origin CONSTANT)
 
   Q_DECLARE_PRIVATE(OxideQGeolocationPermissionRequest)
   Q_DISABLE_COPY(OxideQGeolocationPermissionRequest)
 
  public:
   ~OxideQGeolocationPermissionRequest() Q_DECL_OVERRIDE;
-
-  QUrl origin() const;
 
  public Q_SLOTS:
   // This has been replaced by allow(). With hindsight, allow/deny always made
@@ -122,10 +100,6 @@ class OXIDE_QTCORE_EXPORT OxideQMediaAccessPermissionRequest
 
   bool isForAudio() const;
   bool isForVideo() const;
-
- public Q_SLOTS:
-  void allow();
-  void deny();
 
  private:
   OxideQMediaAccessPermissionRequest(

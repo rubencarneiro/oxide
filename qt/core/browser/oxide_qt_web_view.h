@@ -184,9 +184,9 @@ class WebView : public InputMethodContextClient,
 
   // oxide::PermissionRequestDispatcherClient implementation
   void RequestGeolocationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) override;
+      scoped_ptr<oxide::PermissionRequest> request) override;
   void RequestNotificationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) override;
+      scoped_ptr<oxide::PermissionRequest> request) override;
   void RequestMediaAccessPermission(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 

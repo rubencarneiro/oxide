@@ -185,9 +185,10 @@ int PermissionRequestDispatcher::RequestPermission(
 
   int request_id = next_request_id_++;
 
-  scoped_ptr<SimplePermissionRequest> request(
-      new SimplePermissionRequest(
+  scoped_ptr<PermissionRequest> request(
+      new PermissionRequest(
         request_id,
+        RenderFrameHostID(),
         requesting_origin,
         web_contents()->GetLastCommittedURL().GetOrigin(),
         callback));

@@ -28,7 +28,6 @@
 namespace oxide {
 class MediaAccessPermissionRequest;
 class PermissionRequest;
-class SimplePermissionRequest;
 }
 
 class OxideQPermissionRequest;
@@ -39,6 +38,9 @@ class OxideQPermissionRequestPrivate {
  public:
   virtual ~OxideQPermissionRequestPrivate();
 
+  static OxideQPermissionRequest* Create(
+      scoped_ptr<oxide::PermissionRequest> request);
+
  protected:
   OxideQPermissionRequestPrivate(scoped_ptr<oxide::PermissionRequest> request);
 
@@ -46,39 +48,22 @@ class OxideQPermissionRequestPrivate {
   scoped_ptr<oxide::PermissionRequest> request_;
 
  private:
+  bool canRespond() const;
+
   void OnCancelled();
 };
 
-class OxideQSimplePermissionRequestPrivate
-    : public OxideQPermissionRequestPrivate {
- public:
-  ~OxideQSimplePermissionRequestPrivate() override;
-
-  static OxideQSimplePermissionRequest* Create(
-      scoped_ptr<oxide::SimplePermissionRequest> request);
-
- protected:
-  OxideQSimplePermissionRequestPrivate(
-      scoped_ptr<oxide::SimplePermissionRequest> request);
-
- private:
-  friend class OxideQSimplePermissionRequest;
-
-  bool canRespond() const;
-  oxide::SimplePermissionRequest* request() const;
-};
-
 class OxideQGeolocationPermissionRequestPrivate
-    : public OxideQSimplePermissionRequestPrivate {
+    : public OxideQPermissionRequestPrivate {
  public:
   ~OxideQGeolocationPermissionRequestPrivate() override;
 
   static OxideQGeolocationPermissionRequest* Create(
-      scoped_ptr<oxide::SimplePermissionRequest> request);
+      scoped_ptr<oxide::PermissionRequest> request);
 
  private:
   OxideQGeolocationPermissionRequestPrivate(
-      scoped_ptr<oxide::SimplePermissionRequest> request);
+      scoped_ptr<oxide::PermissionRequest> request);
 };
 
 class OxideQMediaAccessPermissionRequestPrivate
@@ -95,7 +80,6 @@ class OxideQMediaAccessPermissionRequestPrivate
   OxideQMediaAccessPermissionRequestPrivate(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request);
 
-  bool canRespond() const;
   oxide::MediaAccessPermissionRequest* request() const;
 };
 

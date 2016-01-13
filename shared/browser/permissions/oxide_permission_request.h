@@ -91,18 +91,6 @@ class PermissionRequest {
   DISALLOW_COPY_AND_ASSIGN(PermissionRequest);
 };
 
-// XXX(chrisccoulson): This class is going to be deleted
-class SimplePermissionRequest : public PermissionRequest {
- public:
-  SimplePermissionRequest(int request_id,
-                          const GURL& origin,
-                          const GURL& embedder,
-                          const PermissionRequestCallback& callback);
-  ~SimplePermissionRequest() override;
-
-  DISALLOW_COPY_AND_ASSIGN(SimplePermissionRequest);
-};
-
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
   MediaAccessPermissionRequest(int request_id,

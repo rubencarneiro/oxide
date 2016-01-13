@@ -42,23 +42,17 @@ OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
     : q_ptr(nullptr),
       request_(std::move(request)) {}
 
-OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
-
-OxideQSimplePermissionRequestPrivate::OxideQSimplePermissionRequestPrivate(
-    scoped_ptr<oxide::SimplePermissionRequest> request)
-    : OxideQPermissionRequestPrivate(std::move(request)) {}
-
-bool OxideQSimplePermissionRequestPrivate::canRespond() const {
+bool OxideQPermissionRequestPrivate::canRespond() const {
   if (request_->is_cancelled()) {
     qWarning() <<
-        "OxideQSimplePermissionRequest: Can't respond to a cancelled "
+        "OxideQPermissionRequest: Can't respond to a cancelled "
         "permission request";
     return false;
   }
 
   if (!request_->IsPending()) {
     qWarning() <<
-        "OxideQSimplePermissionRequest: Can only respond once to a permission "
+        "OxideQPermissionRequest: Can only respond once to a permission "
         "request";
     return false;
   }
@@ -66,27 +60,21 @@ bool OxideQSimplePermissionRequestPrivate::canRespond() const {
   return true;
 }
 
-oxide::SimplePermissionRequest*
-OxideQSimplePermissionRequestPrivate::request() const {
-  return static_cast<oxide::SimplePermissionRequest *>(request_.get());
-}
-
-OxideQSimplePermissionRequestPrivate::
-    ~OxideQSimplePermissionRequestPrivate() {}
+OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 // static
-OxideQSimplePermissionRequest* OxideQSimplePermissionRequestPrivate::Create(
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
+OxideQPermissionRequest* OxideQPermissionRequestPrivate::Create(
+    scoped_ptr<oxide::PermissionRequest> request) {
   DCHECK(request);
 
-  return new OxideQSimplePermissionRequest(
-      *new OxideQSimplePermissionRequestPrivate(std::move(request)));
+  return new OxideQPermissionRequest(
+      *new OxideQPermissionRequestPrivate(std::move(request)));
 }
 
 OxideQGeolocationPermissionRequestPrivate::
     OxideQGeolocationPermissionRequestPrivate(
-      scoped_ptr<oxide::SimplePermissionRequest> request)
-      : OxideQSimplePermissionRequestPrivate(std::move(request)) {}
+      scoped_ptr<oxide::PermissionRequest> request)
+      : OxideQPermissionRequestPrivate(std::move(request)) {}
 
 OxideQGeolocationPermissionRequestPrivate::
     ~OxideQGeolocationPermissionRequestPrivate() {}
@@ -94,7 +82,7 @@ OxideQGeolocationPermissionRequestPrivate::
 // static
 OxideQGeolocationPermissionRequest*
 OxideQGeolocationPermissionRequestPrivate::Create(
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
+    scoped_ptr<oxide::PermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQGeolocationPermissionRequest(
@@ -105,24 +93,6 @@ OxideQMediaAccessPermissionRequestPrivate::
     OxideQMediaAccessPermissionRequestPrivate(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request)
       : OxideQPermissionRequestPrivate(std::move(request)) {}
-
-bool OxideQMediaAccessPermissionRequestPrivate::canRespond() const {
-  if (request_->is_cancelled()) {
-    qWarning() <<
-        "OxideQMediaAccessPermissionRequest: Can't respond to a cancelled "
-        "permission request";
-    return false;
-  }
-
-  if (!request_->IsPending()) {
-    qWarning() <<
-        "OxideQMediaAccessPermissionRequest: Can only respond once to a "
-        "permission request";
-    return false;
-  }
-
-  return true;
-}
 
 oxide::MediaAccessPermissionRequest*
 OxideQMediaAccessPermissionRequestPrivate::request() const {
@@ -187,41 +157,31 @@ bool OxideQPermissionRequest::isCancelled() const {
   return d->request_->is_cancelled();
 }
 
-OxideQSimplePermissionRequest::OxideQSimplePermissionRequest(
-    OxideQSimplePermissionRequestPrivate& dd)
-    : OxideQPermissionRequest(dd) {}
-
-OxideQSimplePermissionRequest::~OxideQSimplePermissionRequest() {}
-
-void OxideQSimplePermissionRequest::allow() {
-  Q_D(OxideQSimplePermissionRequest);
+void OxideQPermissionRequest::allow() {
+  Q_D(OxideQPermissionRequest);
 
   if (!d->canRespond()) {
     return;
   }
 
-  d->request()->Allow();
+  d->request_->Allow();
 }
 
-void OxideQSimplePermissionRequest::deny() {
-  Q_D(OxideQSimplePermissionRequest);
+void OxideQPermissionRequest::deny() {
+  Q_D(OxideQPermissionRequest);
 
   if (!d->canRespond()) {
     return;
   }
 
-  d->request()->Deny();
+  d->request_->Deny();
 }
 
 OxideQGeolocationPermissionRequest::OxideQGeolocationPermissionRequest(
     OxideQGeolocationPermissionRequestPrivate& dd)
-    : OxideQSimplePermissionRequest(dd) {}
+    : OxideQPermissionRequest(dd) {}
 
 OxideQGeolocationPermissionRequest::~OxideQGeolocationPermissionRequest() {}
-
-QUrl OxideQGeolocationPermissionRequest::origin() const {
-  return OxideQPermissionRequest::origin();
-}
 
 void OxideQGeolocationPermissionRequest::accept() {
   static bool warn_once = false;
@@ -251,24 +211,4 @@ bool OxideQMediaAccessPermissionRequest::isForVideo() const {
   Q_D(const OxideQMediaAccessPermissionRequest);
 
   return d->request()->video_requested();
-}
-
-void OxideQMediaAccessPermissionRequest::allow() {
-  Q_D(OxideQMediaAccessPermissionRequest);
-
-  if (!d->canRespond()) {
-    return;
-  }
-
-  d->request()->Allow();
-}
-
-void OxideQMediaAccessPermissionRequest::deny() {
-  Q_D(OxideQMediaAccessPermissionRequest);
-
-  if (!d->canRespond()) {
-    return;
-  }
-
-  d->request()->Deny();
 }

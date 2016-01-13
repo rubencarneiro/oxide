@@ -85,19 +85,6 @@ void PermissionRequest::Deny() {
   Respond(PERMISSION_REQUEST_RESPONSE_DENY);
 }
 
-SimplePermissionRequest::SimplePermissionRequest(
-    int request_id,
-    const GURL& origin,
-    const GURL& embedder,
-    const base::Callback<void(PermissionRequestResponse)>& callback)
-    : PermissionRequest(request_id,
-                        RenderFrameHostID(),
-                        origin,
-                        embedder,
-                        callback) {}
-
-SimplePermissionRequest::~SimplePermissionRequest() {}
-
 MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     int request_id,
     const RenderFrameHostID& frame_id,

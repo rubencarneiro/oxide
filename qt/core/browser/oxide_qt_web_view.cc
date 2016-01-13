@@ -916,20 +916,18 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
 }
 
 void WebView::RequestGeolocationPermission(
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
+    scoped_ptr<oxide::PermissionRequest> request) {
   scoped_ptr<OxideQGeolocationPermissionRequest> req(
-      OxideQGeolocationPermissionRequestPrivate::Create(
-        std::move(request)));
+      OxideQGeolocationPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestGeolocationPermission(req.release());
 }
 
 void WebView::RequestNotificationPermission(
-    scoped_ptr<oxide::SimplePermissionRequest> request) {
-  scoped_ptr<OxideQSimplePermissionRequest> req(
-      OxideQSimplePermissionRequestPrivate::Create(
-        std::move(request)));
+    scoped_ptr<oxide::PermissionRequest> request) {
+  scoped_ptr<OxideQPermissionRequest> req(
+      OxideQPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestNotificationPermission(req.release());
@@ -938,8 +936,7 @@ void WebView::RequestNotificationPermission(
 void WebView::RequestMediaAccessPermission(
     scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
   scoped_ptr<OxideQMediaAccessPermissionRequest> req(
-      OxideQMediaAccessPermissionRequestPrivate::Create(
-        std::move(request)));
+      OxideQMediaAccessPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
   client_->RequestMediaAccessPermission(req.release());
