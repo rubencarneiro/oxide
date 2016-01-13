@@ -55,6 +55,7 @@ set(OXIDE_QUICKLIB_SRCS
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
+target_compile_definitions(${OXIDE_QUICKLIB} PRIVATE -DOXIDE_QTQUICK_IMPLEMENTATION)
 target_include_directories(
     ${OXIDE_QUICKLIB} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/api/includes)
