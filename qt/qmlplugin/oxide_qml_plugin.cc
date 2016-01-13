@@ -96,11 +96,14 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 #ifdef LEGACY_QMLVALUE_TYPES
     QQml_addValueTypeProvider(GetValueTypeProvider());
 
-    qmlRegisterUncreatableType<oxide::qmlplugin::DownloadRequest>(uri, 1, 0, "DownloadRequest",
+    qmlRegisterUncreatableType<oxide::qmlplugin::DownloadRequest>(
+        uri, 1, 0, "DownloadRequest",
         "DownloadRequest is delivered by WebView.downloadRequested");
-    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent>(uri, 1, 0, "LoadEvent",
+    qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent>(
+        uri, 1, 0, "LoadEvent",
         "LoadEvent is delivered by WebView.loadingChanged");
-    qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(uri, 1, 0, "SslCertificate",
+    qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(
+        uri, 1, 0, "SslCertificate",
         "SslCertificate is accessed via SecurityStatus.certificate");
 #else
     qmlRegisterValueTypeEnums<OxideQLoadEvent>(uri, 1, 0, "LoadEvent");
@@ -110,41 +113,59 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterSingletonType<OxideQQuickGlobal>(
         uri, 1, 0, "Oxide", GlobalSingletonFactory);
 
-    qmlRegisterUncreatableType<OxideQCertificateError>(uri, 1, 0, "CertificateError",
+    qmlRegisterUncreatableType<OxideQCertificateError>(
+        uri, 1, 0, "CertificateError",
         "CertificateError is delivered by WebView.certificateError");
-    qmlRegisterUncreatableType<OxideQQuickCookieManager>(uri, 1, 0, "CookieManager",
+    qmlRegisterUncreatableType<OxideQQuickCookieManager>(
+        uri, 1, 0, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
-    qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(uri, 1, 0,
-        "GeolocationPermissionRequest",
-        "GeolocationPermissionRequest is delivered by WebView.geolocationPermissionRequested");
-    qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(uri, 1, 0, "NavigationHistory",
+    qmlRegisterUncreatableType<OxideQGeolocationPermissionRequest>(
+        uri, 1, 0, "GeolocationPermissionRequest",
+        "GeolocationPermissionRequest is delivered by "
+        "WebView.geolocationPermissionRequested");
+    qmlRegisterUncreatableType<OxideQQuickNavigationHistory>(
+        uri, 1, 0, "NavigationHistory",
         "NavigationHistory is accessed via WebView.navigationHistory");
-    qmlRegisterUncreatableType<OxideQNavigationRequest>(uri, 1, 0, "NavigationRequest",
+    qmlRegisterUncreatableType<OxideQNavigationRequest>(
+        uri, 1, 0, "NavigationRequest",
         "NavigationRequest is delivered by WebView.navigationRequested");
-    qmlRegisterUncreatableType<OxideQNewViewRequest>(uri, 1, 0, "NewViewRequest",
+    qmlRegisterUncreatableType<OxideQNewViewRequest>(
+        uri, 1, 0, "NewViewRequest",
         "NewViewRequest is delivered by WebView.newViewRequested");
-    qmlRegisterUncreatableType<OxideQQuickScriptMessage>(uri, 1, 0, "ScriptMessage",
+    qmlRegisterUncreatableType<OxideQPermissionRequest>(
+        uri, 1, 0, "PermissionRequest",
+        "PermissionRequest is delivered by one of the permission request "
+        "signals on WebView");
+    qmlRegisterUncreatableType<OxideQQuickScriptMessage>(
+        uri, 1, 0, "ScriptMessage",
         "ScriptMessage is delivered by ScriptMessageHandler.callback");
-    qmlRegisterUncreatableType<OxideQQuickScriptMessageRequest>(uri, 1, 0, "ScriptMessageRequest",
+    qmlRegisterUncreatableType<OxideQQuickScriptMessageRequest>(
+        uri, 1, 0, "ScriptMessageRequest",
         "ScriptMessageRequest is returned from WebFrame.sendMessage");
-    qmlRegisterUncreatableType<OxideQSecurityStatus>(uri, 1, 0, "SecurityStatus",
+    qmlRegisterUncreatableType<OxideQSecurityStatus>(
+        uri, 1, 0, "SecurityStatus",
         "SecurityStatus is accessed via WebView.securityStatus");
     qmlRegisterUncreatableType<OxideQQuickWebFrame>(uri, 1, 0, "WebFrame",
-        "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and WebFrame.parentFrame");
+        "WebFrame is accessed via WebView.rootFrame, WebFrame.childFrames and "
+        "WebFrame.parentFrame");
 
-    qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0, "ScriptMessageHandler");
+    qmlRegisterType<OxideQQuickScriptMessageHandler>(uri, 1, 0,
+        "ScriptMessageHandler");
     qmlRegisterType<OxideQQuickUserScript>(uri, 1, 0, "UserScript");
     qmlRegisterType<OxideQQuickWebContext>(uri, 1, 0, "WebContext");
-    qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 1, 0, "WebContextDelegateWorker");
+    qmlRegisterType<OxideQQuickWebContextDelegateWorker>(uri, 1, 0,
+        "WebContextDelegateWorker");
     qmlRegisterType<OxideQWebPreferences>(uri, 1, 0, "WebPreferences");
     qmlRegisterType<OxideQQuickWebView>(uri, 1, 0, "WebView");
 
-    qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(uri, 1, 3, "CookieManager",
+    qmlRegisterUncreatableType<OxideQQuickCookieManager, 1>(
+        uri, 1, 3, "CookieManager",
         "CookieManager is accessed via WebContext.cookieManager");
     qmlRegisterType<OxideQQuickWebContext, 1>(uri, 1, 3, "WebContext");
     qmlRegisterType<OxideQQuickWebView, 1>(uri, 1, 3, "WebView");
 
-    qmlRegisterUncreatableType<OxideQQuickLocationBarController>(uri, 1, 4, "LocationBarController",
+    qmlRegisterUncreatableType<OxideQQuickLocationBarController>(
+        uri, 1, 4, "LocationBarController",
         "LocationBarController is accessed via WebView.locationBarController");
     qmlRegisterType<OxideQQuickWebView, 2>(uri, 1, 4, "WebView");
 
@@ -152,22 +173,32 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
 
     qmlRegisterType<OxideQQuickWebContext, 2>(uri, 1, 6, "WebContext");
 
-    qmlRegisterUncreatableType<OxideQQuickLocationBarController, 1>(uri, 1, 7, "LocationBarController",
+    qmlRegisterUncreatableType<OxideQQuickLocationBarController, 1>(
+        uri, 1, 7, "LocationBarController",
         "LocationBarController is accessed via WebView.locationBarController");
 
-    qmlRegisterUncreatableType<OxideQFindController>(uri, 1, 8, "FindController",
-        "FindInPage is accessed via WebView.findController");
+    qmlRegisterUncreatableType<OxideQFindController>(
+        uri, 1, 8, "FindController",
+        "FindController is accessed via WebView.findController");
+    qmlRegisterUncreatableType<OxideQMediaAccessPermissionRequest>(
+        uri, 1, 0, "MediaAccessPermissionRequest",
+        "MediaAccessPermissionRequest is delivered by "
+        "WebView.mediaAccessPermissionRequested");
     qmlRegisterType<OxideQQuickWebView, 4>(uri, 1, 8, "WebView");
 
     qmlRegisterType<OxideQQuickWebContext, 3>(uri, 1, 9, "WebContext");
-    qmlRegisterUncreatableType<OxideQHttpAuthenticationRequest>(uri, 1, 9, "HttpAuthenticationRequest",
-        "HttpAuthenticationRequest is delivered by WebView.httpAuthenticationRequested");
+    qmlRegisterUncreatableType<OxideQHttpAuthenticationRequest>(
+        uri, 1, 9, "HttpAuthenticationRequest",
+        "HttpAuthenticationRequest is delivered by "
+        "WebView.httpAuthenticationRequested");
     qmlRegisterType<OxideQQuickWebView, 5>(uri, 1, 9, "WebView");
 
     qmlRegisterType<OxideQQuickWebView, 6>(uri, 1, 11, "WebView");
 
-    qmlRegisterUncreatableType<OxideQQuickTouchSelectionController>(uri, 1, 12, "TouchSelectionController",
-        "TouchSelectionController is accessed via WebView.touchSelectionController");
+    qmlRegisterUncreatableType<OxideQQuickTouchSelectionController>(
+        uri, 1, 12, "TouchSelectionController",
+        "TouchSelectionController is accessed via "
+        "WebView.touchSelectionController");
     qmlRegisterType<OxideQQuickWebView, 7>(uri, 1, 12, "WebView");
   }
 };
