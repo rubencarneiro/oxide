@@ -810,13 +810,17 @@ void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
     return;
   }
 
+  static bool warned = false;
+  if (!warned) {
+    warned = true;
+    qWarning() <<
+        "OxideQQuickWebContext::storageAccessPermissionDelegate is deprecated "
+        "and no longer works";
+  }
+
   if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
     return;
   }
-
-  qWarning() <<
-      "OxideQQuickWebContext::storageAccessPermissionDelegate is deprecated "
-      "and no longer works";
 
   OxideQQuickWebContextDelegateWorker* old =
       d->unused_storage_access_permission_delegate_;
@@ -842,9 +846,11 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
     return;
   }
 
-  if (delegate) {
+  static bool warned = false;
+  if (!warned) {
+    warned = true;
     qWarning() <<
-        "OxideQQuickWebContext: userAgentOverrideDelegate is deprecated. "
+        "OxideQQuickWebContext::userAgentOverrideDelegate is deprecated. "
         "Please consider switching to userAgentOverrides instead";
   }
 

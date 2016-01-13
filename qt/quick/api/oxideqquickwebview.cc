@@ -1071,6 +1071,13 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy()) {
     d->proxy()->updateWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      qWarning() <<
+          "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
+          "to loadEvent instead";
+    }
     d->using_old_load_event_signal_ = true;
   }
 #undef VIEW_SIGNAL

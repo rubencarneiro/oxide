@@ -70,6 +70,18 @@ QString OxideQQuickScriptMessage::msgId() const {
   return d->proxy()->msgId();
 }
 
+QVariant OxideQQuickScriptMessage::args() const {
+  static bool warned = false;
+  if (!warned) {
+    warned = true;
+    qWarning() <<
+        "OxideQQuickScriptMessage: args is deprecated. Please use "
+        "OxideQQuickScriptMessage::payload instead";
+  }
+
+  return payload();
+}
+
 QVariant OxideQQuickScriptMessage::payload() const {
   Q_D(const OxideQQuickScriptMessage);
 
