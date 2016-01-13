@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
-#include "oxideqquickwebcontext_p_p.h"
 
 #include <limits>
 
@@ -30,12 +30,12 @@
 #include <QtQuickVersion>
 #include <QWeakPointer>
 
-#include "qt/core/api/oxideqnetworkcallbackevents.h"
+#include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickcookiemanager_p.h"
+#include "oxideqquickuserscript.h"
 #include "oxideqquickuserscript_p.h"
-#include "oxideqquickuserscript_p_p.h"
 #include "oxideqquickwebcontextdelegateworker_p.h"
 #include "oxideqquickwebcontextdelegateworker_p_p.h"
 #include "oxidequseragentoverriderequest_p.h"
@@ -429,6 +429,15 @@ int OxideQQuickWebContextPrivate::deleteAllCookies() {
   return proxy()->deleteAllCookies();
 }
 
+void OxideQQuickWebContext::classBegin() {}
+
+void OxideQQuickWebContext::componentComplete() {
+  Q_D(OxideQQuickWebContext);
+
+  d->constructed_ = true;
+  emit d->constructed();
+}
+
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
     QObject(parent) {
   oxide::qquick::EnsureChromiumStarted();
@@ -455,15 +464,6 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
   delete d->network_request_delegate_;
   delete d->unused_storage_access_permission_delegate_;
   delete d->user_agent_override_delegate_;
-}
-
-void OxideQQuickWebContext::classBegin() {}
-
-void OxideQQuickWebContext::componentComplete() {
-  Q_D(OxideQQuickWebContext);
-
-  d->constructed_ = true;
-  emit d->constructed();
 }
 
 // static
@@ -1156,4 +1156,4 @@ void OxideQQuickWebContext::setDoNotTrack(bool dnt) {
   emit doNotTrackEnabledChanged();
 }
 
-#include "moc_oxideqquickwebcontext_p.cpp"
+#include "moc_oxideqquickwebcontext.cpp"

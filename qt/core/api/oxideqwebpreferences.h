@@ -15,17 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_WEB_PREFERENCES
-#define OXIDE_Q_WEB_PREFERENCES
+#ifndef OXIDE_QTCORE_WEB_PREFERENCES
+#define OXIDE_QTCORE_WEB_PREFERENCES
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQWebPreferencesPrivate;
 
-class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQWebPreferences : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QString standardFontFamily READ standardFontFamily WRITE setStandardFontFamily NOTIFY standardFontFamilyChanged)
@@ -70,7 +72,7 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   Q_DISABLE_COPY(OxideQWebPreferences)
 
  public:
-  virtual ~OxideQWebPreferences();
+  ~OxideQWebPreferences() Q_DECL_OVERRIDE;
   OxideQWebPreferences(QObject* parent = nullptr);
 
   QString standardFontFamily() const;
@@ -182,4 +184,4 @@ class Q_DECL_EXPORT OxideQWebPreferences : public QObject {
   QScopedPointer<OxideQWebPreferencesPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_WEB_PREFERENCES
+#endif // OXIDE_QTCORE_WEB_PREFERENCES

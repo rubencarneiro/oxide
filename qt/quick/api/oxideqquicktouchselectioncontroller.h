@@ -15,21 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_H_
-#define _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_H_
+#ifndef OXIDE_QTQUICK_TOUCH_SELECTION_CONTROLLER
+#define OXIDE_QTQUICK_TOUCH_SELECTION_CONTROLLER
 
-#include <QObject>
-#include <QRectF>
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QRectF>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
 
-#include "oxideqquickwebview_p.h"
+#include <OxideQtQuick/oxideqquickglobal.h>
 
+QT_BEGIN_NAMESPACE
 class QQmlComponent;
+QT_END_NAMESPACE
 
 class OxideQQuickTouchSelectionControllerPrivate;
+class OxideQQuickWebView;
+class OxideQQuickWebViewPrivate;
 
-class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
+class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
+    : public QObject {
   Q_OBJECT
 
   Q_ENUMS(HandleOrientation);
@@ -42,8 +47,7 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
   Q_DECLARE_PRIVATE(OxideQQuickTouchSelectionController)
 
  public:
-  Q_DECL_HIDDEN OxideQQuickTouchSelectionController(OxideQQuickWebView* view);
-  virtual ~OxideQQuickTouchSelectionController();
+  ~OxideQQuickTouchSelectionController() Q_DECL_OVERRIDE;
 
   enum HandleOrientation {
     HandleOrientationLeft,
@@ -66,9 +70,12 @@ class Q_DECL_EXPORT OxideQQuickTouchSelectionController : public QObject {
 
  private:
   friend class OxideQQuickWebViewPrivate;
+  friend class OxideQQuickWebView;
+  Q_DECL_HIDDEN OxideQQuickTouchSelectionController(OxideQQuickWebView* view);
+
   void onTouchSelectionChanged(bool active, const QRectF& bounds);
 
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_H_
+#endif // OXIDE_QTQUICK_TOUCH_SELECTION_CONTROLLER

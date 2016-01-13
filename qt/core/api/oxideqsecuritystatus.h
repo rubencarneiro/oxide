@@ -15,23 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_SECURITY_STATUS
-#define OXIDE_Q_SECURITY_STATUS
+#ifndef OXIDE_QTCORE_SECURITY_STATUS
+#define OXIDE_QTCORE_SECURITY_STATUS
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
-#include <QVariant>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QtGlobal>
+#include <QtCore/QVariant>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQSecurityStatusPrivate;
 
-namespace oxide {
-namespace qt {
-class WebViewProxy;
-}
-}
-
-class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQSecurityStatus : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(SecurityLevel securityLevel READ securityLevel NOTIFY securityLevelChanged)
@@ -78,7 +74,7 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   };
   Q_DECLARE_FLAGS(CertStatus, CertStatusFlags)
 
-  ~OxideQSecurityStatus();
+  ~OxideQSecurityStatus() Q_DECL_OVERRIDE;
 
   SecurityLevel securityLevel() const;
   ContentStatus contentStatus() const;
@@ -93,11 +89,9 @@ class Q_DECL_EXPORT OxideQSecurityStatus Q_DECL_FINAL : public QObject {
   void certificateChanged();
 
  private:
-  friend class oxide::qt::WebViewProxy;
-
   Q_DECL_HIDDEN OxideQSecurityStatus();
 
   QScopedPointer<OxideQSecurityStatusPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_SECURITY_STATUS
+#endif // OXIDE_QTCORE_SECURITY_STATUS

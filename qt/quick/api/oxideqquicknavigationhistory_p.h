@@ -22,16 +22,19 @@
 #include <QScopedPointer>
 #include <QtQml>
 
+#include "qt/quick/api/oxideqquickglobal.h"
+
 class OxideQQuickNavigationHistoryPrivate;
 class OxideQQuickWebView;
 
-class Q_DECL_EXPORT OxideQQuickNavigationHistory : public QAbstractListModel {
+class OXIDE_QTQUICK_EXPORT OxideQQuickNavigationHistory
+    : public QAbstractListModel {
   Q_OBJECT
   Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
 
  public:
   OxideQQuickNavigationHistory(OxideQQuickWebView* webview);
-  ~OxideQQuickNavigationHistory();
+  ~OxideQQuickNavigationHistory() Q_DECL_OVERRIDE;
 
   // reimplemented from QAbstractListModel
   QHash<int, QByteArray> roleNames() const;
@@ -41,16 +44,16 @@ class Q_DECL_EXPORT OxideQQuickNavigationHistory : public QAbstractListModel {
   int currentIndex() const;
   void setCurrentIndex(int index);
 
-Q_SIGNALS:
+ Q_SIGNALS:
   void currentIndexChanged();
 
-private Q_SLOTS:
+ private Q_SLOTS:
   friend class OxideQQuickWebViewPrivate;
   void onNavigationEntryCommitted();
   void onNavigationListPruned(bool from_front, int count);
   void onNavigationEntryChanged(int index);
 
-private:
+ private:
   Q_DISABLE_COPY(OxideQQuickNavigationHistory)
   QScopedPointer<OxideQQuickNavigationHistoryPrivate> d_ptr;
   Q_DECLARE_PRIVATE(OxideQQuickNavigationHistory)

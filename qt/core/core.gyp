@@ -21,6 +21,7 @@
       'type': 'shared_library',
       'product_extension': 'so.<(oxide_core_so_version)',
       'defines': [
+        'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
@@ -51,7 +52,8 @@
       'include_dirs': [
         '../..',
         '<(INTERMEDIATE_DIR)',
-        '<(DEPTH)'
+        'api/includes',
+        '<(DEPTH)',
       ],
       'ldflags': [
         '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
@@ -62,7 +64,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents_p.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
@@ -89,8 +91,8 @@
         'api/oxideqmediacapturedevices.h',
         'api/oxideqmediacapturedevices_p.h',
         'api/oxideqnetworkcallbackevents.cc',
-        'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnetworkcallbackevents_p_p.h',
         'api/oxideqnavigationrequest.cc',
         'api/oxideqnavigationrequest.h',
         'api/oxideqnewviewrequest.cc',
@@ -228,8 +230,8 @@
           'includes': [ 'moc.gypi' ]
         },
         {
-          'action_name': 'moc_oxideqnetworkcallbackevents.cc',
-          'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'action_name': 'moc_oxideqnetworkcallbackevents_p.cc',
+          'moc_input': 'api/oxideqnetworkcallbackevents_p.h',
           'includes': [ 'moc.gypi' ],
         },
         {

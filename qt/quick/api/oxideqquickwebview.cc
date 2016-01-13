@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickwebview.h"
 #include "oxideqquickwebview_p.h"
-#include "oxideqquickwebview_p_p.h"
 
 #include <QByteArray>
 #include <QEvent>
@@ -61,14 +61,14 @@
 #include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
-#include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicklocationbarcontroller.h"
+#include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
-#include "oxideqquickscriptmessagehandler_p_p.h"
-#include "oxideqquicktouchselectioncontroller_p.h"
+#include "oxideqquicktouchselectioncontroller.h"
+#include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
-#include "oxideqquickwebcontext_p_p.h"
+#include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
-#include "oxideqquickwebframe_p_p.h"
 
 
 using oxide::qquick::AcceleratedFrameNode;
@@ -1097,6 +1097,38 @@ bool OxideQQuickWebView::event(QEvent* event) {
   return QQuickItem::event(event);
 }
 
+void OxideQQuickWebView::componentComplete() {
+  Q_D(OxideQQuickWebView);
+
+  Q_ASSERT(!d->constructed_);
+  d->constructed_ = true;
+
+  QQuickItem::componentComplete();
+
+  OxideQQuickWebContext* context = nullptr;
+  if (d->construct_props_->context) {
+    context =
+        OxideQQuickWebContextPrivate::fromProxyHandle(
+          d->construct_props_->context);
+  }
+
+  if (!context && !d->construct_props_->new_view_request) {
+    context = OxideQQuickWebContext::defaultContext(true);
+    if (!context) {
+      qFatal("OxideQQuickWebView: No context available!");
+    }
+    OxideQQuickWebContextPrivate* cd =
+        OxideQQuickWebContextPrivate::get(context);
+    d->construct_props_->context = cd;
+    d->attachContextSignals(cd);
+  }
+
+  if (d->construct_props_->new_view_request ||
+      OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
+    d->completeConstruction();
+  }
+}
+
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
                                     const QQuickItem::ItemChangeData& value) {
   Q_D(OxideQQuickWebView);
@@ -1433,38 +1465,6 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   }
 
   d->proxy()->teardownFrameTree();
-}
-
-void OxideQQuickWebView::componentComplete() {
-  Q_D(OxideQQuickWebView);
-
-  Q_ASSERT(!d->constructed_);
-  d->constructed_ = true;
-
-  QQuickItem::componentComplete();
-
-  OxideQQuickWebContext* context = nullptr;
-  if (d->construct_props_->context) {
-    context =
-        OxideQQuickWebContextPrivate::fromProxyHandle(
-          d->construct_props_->context);
-  }
-
-  if (!context && !d->construct_props_->new_view_request) {
-    context = OxideQQuickWebContext::defaultContext(true);
-    if (!context) {
-      qFatal("OxideQQuickWebView: No context available!");
-    }
-    OxideQQuickWebContextPrivate* cd =
-        OxideQQuickWebContextPrivate::get(context);
-    d->construct_props_->context = cd;
-    d->attachContextSignals(cd);
-  }
-
-  if (d->construct_props_->new_view_request ||
-      OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
-    d->completeConstruction();
-  }
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -2258,4 +2258,4 @@ OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionControlle
   return d->touch_selection_controller_.data();
 }
 
-#include "moc_oxideqquickwebview_p.cpp"
+#include "moc_oxideqquickwebview.cpp"

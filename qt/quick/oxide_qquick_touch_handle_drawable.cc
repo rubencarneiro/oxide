@@ -24,9 +24,9 @@
 #include <QQmlEngine>
 #include <QQuickItem>
 
-#include "qt/quick/api/oxideqquicktouchselectioncontroller_p.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {

@@ -81,6 +81,11 @@ OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
 
 // static
+OxideQSecurityStatus* OxideQSecurityStatusPrivate::Create() {
+  return new OxideQSecurityStatus();
+}
+
+// static
 OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
     OxideQSecurityStatus* q) {
   return q->d_func();

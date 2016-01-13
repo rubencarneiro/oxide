@@ -24,7 +24,7 @@
 #include <QSGTexture>
 
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
-#include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 
 namespace oxide {
 namespace qquick {

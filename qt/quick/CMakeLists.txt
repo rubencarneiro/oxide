@@ -22,8 +22,6 @@ find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 
 qt5_wrap_cpp(MOC_EXTRA
-             api/oxideqquickuserscript_p_p.h
-             api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(OXIDE_QUICKLIB_SRCS
@@ -57,6 +55,9 @@ set(OXIDE_QUICKLIB_SRCS
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
+target_include_directories(
+    ${OXIDE_QUICKLIB} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/api/includes)
 target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}

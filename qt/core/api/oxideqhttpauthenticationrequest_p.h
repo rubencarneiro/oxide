@@ -38,6 +38,7 @@ class OxideQHttpAuthenticationRequestPrivate {
 
  private:
   OxideQHttpAuthenticationRequestPrivate(
+      OxideQHttpAuthenticationRequest* q,
       oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
   void RequestCancelled();
 

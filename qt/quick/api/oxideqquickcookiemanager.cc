@@ -22,7 +22,7 @@
 #include <QNetworkCookie>
 #include <QtDebug>
 
-#include "oxideqquickwebcontext_p_p.h"
+#include "oxideqquickwebcontext_p.h"
 
 namespace {
 

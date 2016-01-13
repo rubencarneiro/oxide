@@ -15,20 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_PERMISSION_REQUEST
-#define OXIDE_Q_PERMISSION_REQUEST
+#ifndef OXIDE_QTCORE_PERMISSION_REQUEST
+#define OXIDE_QTCORE_PERMISSION_REQUEST
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QtGlobal>
+#include <QtCore/QUrl>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQGeolocationPermissionRequestPrivate;
 class OxideQMediaAccessPermissionRequestPrivate;
 class OxideQPermissionRequestPrivate;
 class OxideQSimplePermissionRequestPrivate;
 
-class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQPermissionRequest : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QUrl origin READ origin CONSTANT)
@@ -60,8 +62,8 @@ class Q_DECL_EXPORT OxideQPermissionRequest : public QObject {
   QScopedPointer<OxideQPermissionRequestPrivate> d_ptr;
 };
 
-class Q_DECL_EXPORT OxideQSimplePermissionRequest :
-    public OxideQPermissionRequest {
+class OXIDE_QTCORE_EXPORT OxideQSimplePermissionRequest
+    : public OxideQPermissionRequest {
   Q_OBJECT
 
   Q_DECLARE_PRIVATE(OxideQSimplePermissionRequest)
@@ -78,8 +80,8 @@ class Q_DECL_EXPORT OxideQSimplePermissionRequest :
   OxideQSimplePermissionRequest(OxideQSimplePermissionRequestPrivate& dd);
 };
 
-class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
-    public OxideQSimplePermissionRequest {
+class OXIDE_QTCORE_EXPORT OxideQGeolocationPermissionRequest
+    : public OxideQSimplePermissionRequest {
   Q_OBJECT
 
   // This has been replaced by url. origin made sense for geolocation
@@ -91,7 +93,7 @@ class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
   Q_DISABLE_COPY(OxideQGeolocationPermissionRequest)
 
  public:
-  ~OxideQGeolocationPermissionRequest() Q_DECL_FINAL;
+  ~OxideQGeolocationPermissionRequest() Q_DECL_OVERRIDE;
 
   QUrl origin() const;
 
@@ -105,7 +107,7 @@ class Q_DECL_EXPORT OxideQGeolocationPermissionRequest Q_DECL_FINAL :
       OxideQGeolocationPermissionRequestPrivate& dd);
 };
 
-class Q_DECL_EXPORT OxideQMediaAccessPermissionRequest Q_DECL_FINAL
+class OXIDE_QTCORE_EXPORT OxideQMediaAccessPermissionRequest
     : public OxideQPermissionRequest {
   Q_OBJECT
 
@@ -116,7 +118,7 @@ class Q_DECL_EXPORT OxideQMediaAccessPermissionRequest Q_DECL_FINAL
   Q_DISABLE_COPY(OxideQMediaAccessPermissionRequest)
 
  public:
-  ~OxideQMediaAccessPermissionRequest() Q_DECL_FINAL;
+  ~OxideQMediaAccessPermissionRequest() Q_DECL_OVERRIDE;
 
   bool isForAudio() const;
   bool isForVideo() const;
@@ -130,4 +132,4 @@ class Q_DECL_EXPORT OxideQMediaAccessPermissionRequest Q_DECL_FINAL
       OxideQMediaAccessPermissionRequestPrivate& dd);
 };
 
-#endif // OXIDE_Q_PERMISSION_REQUEST
+#endif // OXIDE_QTCORE_PERMISSION_REQUEST
