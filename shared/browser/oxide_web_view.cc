@@ -124,8 +124,6 @@ void FillLoadURLParamsFromOpenURLParams(
   load_params->redirect_chain = params.redirect_chain;
   load_params->extra_headers = params.extra_headers;
   load_params->is_renderer_initiated = params.is_renderer_initiated;
-  load_params->transferred_global_request_id =
-      params.transferred_global_request_id;
   load_params->should_replace_current_entry =
       params.should_replace_current_entry;
 
@@ -629,6 +627,7 @@ content::WebContents* WebView::OpenURLFromTab(
   DCHECK_VALID_SOURCE_CONTENTS
 
   // We get here from the following places:
+  // FIXME(chrisccoulson): 1 isn't really true anymore, and re-evaluate 2
   //  1) RenderFrameHostManager::OnCrossSiteResponse. In this case, disposition
   //     is always CURRENT_TAB and we always want to perform the navigation.
   //     Asking the embedder whether to proceed is done via
@@ -637,6 +636,8 @@ content::WebContents* WebView::OpenURLFromTab(
   //     this case, we want to ask the embedder whether to perform the
   //     navigation unless we change it to CURRENT_TAB (in which case, we ask
   //     the embedder via NavigationInterceptResourceThrottle)
+  //  3) CURRENT_TAB navigations in new webviews. Asking the embedder whether
+  //     to proceed is done via NavigationInterceptResourceThrottle
 
   if (params.disposition != CURRENT_TAB &&
       params.disposition != NEW_FOREGROUND_TAB &&
