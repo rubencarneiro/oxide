@@ -15,12 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickuserscript.h"
 #include "oxideqquickuserscript_p.h"
-#include "oxideqquickuserscript_p_p.h"
 
 #include "qt/quick/oxide_qquick_init.h"
 
-#include "oxideqquickwebcontext_p_p.h"
+#include "oxideqquickwebcontext_p.h"
 
 struct OxideQQuickUserScriptPrivate::ConstructProps {
   ConstructProps()
@@ -62,17 +62,6 @@ OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
   return user_script->d_func();
 }
 
-OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
-    QObject(parent),
-    d_ptr(new OxideQQuickUserScriptPrivate(this)) {
-}
-
-OxideQQuickUserScript::~OxideQQuickUserScript() {
-  Q_D(OxideQQuickUserScript);
-
-  emit d->willBeDeleted();
-}
-
 void OxideQQuickUserScript::classBegin() {}
 
 void OxideQQuickUserScript::componentComplete() {
@@ -106,6 +95,17 @@ void OxideQQuickUserScript::componentComplete() {
   d->proxy()->setContext(d->construct_props_->context);
 
   d->construct_props_.reset();
+}
+
+OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
+    QObject(parent),
+    d_ptr(new OxideQQuickUserScriptPrivate(this)) {
+}
+
+OxideQQuickUserScript::~OxideQQuickUserScript() {
+  Q_D(OxideQQuickUserScript);
+
+  emit d->willBeDeleted();
 }
 
 QUrl OxideQQuickUserScript::url() const {

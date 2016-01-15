@@ -15,58 +15,38 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_
-#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
 
 #include <QJSValue>
-#include <QObject>
-#include <QScopedPointer>
 #include <QtGlobal>
-#include <QtQml>
 
-class OxideQQuickScriptMessageRequestPrivate;
+#include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
+#include "qt/core/glue/oxide_qt_script_message_request_proxy_client.h"
 
-class Q_DECL_EXPORT OxideQQuickScriptMessageRequest : public QObject {
-  Q_OBJECT
-  Q_PROPERTY(QJSValue onreply READ replyCallback WRITE setReplyCallback NOTIFY replyCallbackChanged)
-  Q_PROPERTY(QJSValue onerror READ errorCallback WRITE setErrorCallback NOTIFY errorCallbackChanged)
-  Q_ENUMS(ErrorCode)
+class OxideQQuickScriptMessageRequest;
 
-  Q_DECLARE_PRIVATE(OxideQQuickScriptMessageRequest)
+class OxideQQuickScriptMessageRequestPrivate
+    : public oxide::qt::ScriptMessageRequestProxyHandle,
+      public oxide::qt::ScriptMessageRequestProxyClient {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessageRequest)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
+                                      oxide::qt::ScriptMessageRequestProxyHandle);
 
  public:
-  virtual ~OxideQQuickScriptMessageRequest();
+  OxideQQuickScriptMessageRequestPrivate(
+      OxideQQuickScriptMessageRequest* q);
 
-  enum ErrorCode {
-    ErrorNone,
-    ErrorInvalidContext,
-    ErrorUncaughtException,
-    ErrorNoHandler,
-    ErrorHandlerReportedError,
-    ErrorHandlerDidNotRespond,
-
-    ErrorDestinationNotFound = ErrorInvalidContext
-  };
-
-  QJSValue replyCallback() const;
-  void setReplyCallback(const QJSValue& callback);
-
-  QJSValue errorCallback() const;
-  void setErrorCallback(const QJSValue& callback);
-
- Q_SIGNALS:
-  void replyCallbackChanged();
-  void errorCallbackChanged();
-
- protected:
-  friend class OxideQQuickWebFrame;
-
-  OxideQQuickScriptMessageRequest();
+  static OxideQQuickScriptMessageRequestPrivate* get(
+      OxideQQuickScriptMessageRequest* request);
 
  private:
-  QScopedPointer<OxideQQuickScriptMessageRequestPrivate> d_ptr;
+  // oxide::qt::ScriptMessageRequestProxyClient
+  void ReceiveReply(const QVariant& payload) override;
+  void ReceiveError(int error, const QVariant& payload) override;
+
+  QJSValue reply_callback;
+  QJSValue error_callback;
 };
 
-QML_DECLARE_TYPE(OxideQQuickScriptMessageRequest);
-
-#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_

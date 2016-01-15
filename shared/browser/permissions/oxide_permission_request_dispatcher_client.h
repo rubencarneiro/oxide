@@ -27,20 +27,20 @@ class WebContents;
 namespace oxide {
 
 class MediaAccessPermissionRequest;
-class SimplePermissionRequest;
+class PermissionRequest;
 
 class PermissionRequestDispatcherClient {
  public:
   virtual ~PermissionRequestDispatcherClient() {}
 
   virtual void RequestGeolocationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
+      scoped_ptr<PermissionRequest> request) {}
 
   virtual void RequestMediaAccessPermission(
       scoped_ptr<MediaAccessPermissionRequest> request) {}
 
   virtual void RequestNotificationPermission(
-      scoped_ptr<SimplePermissionRequest> request) {}
+      scoped_ptr<PermissionRequest> request) {}
 };
 
 } // namespace oxide

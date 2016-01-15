@@ -33,6 +33,8 @@ class OxideQFindControllerPrivate {
  public:
   ~OxideQFindControllerPrivate();
 
+  static OxideQFindController* Create();
+
   static OxideQFindControllerPrivate* get(OxideQFindController* q);
 
   oxide::qt::FindController* controller() const { return controller_.data(); }

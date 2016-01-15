@@ -15,18 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_CERTIFICATE_ERROR
-#define OXIDE_Q_CERTIFICATE_ERROR
+#ifndef OXIDE_QTCORE_CERTIFICATE_ERROR
+#define OXIDE_QTCORE_CERTIFICATE_ERROR
 
-#include <QObject>
-#include <QtGlobal>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QtGlobal>
+#include <QtCore/QUrl>
 
-#include "qt/core/api/oxideqsslcertificate.h"
+#include <OxideQtCore/oxideqglobal.h>
+#include <OxideQtCore/oxideqsslcertificate.h>
 
 class OxideQCertificateErrorPrivate;
 
-class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQCertificateError : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
@@ -58,7 +59,7 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
     ErrorGeneric
   };
 
-  ~OxideQCertificateError();
+  ~OxideQCertificateError() Q_DECL_OVERRIDE;
 
   QUrl url() const;
   QUrl embedder() const;
@@ -82,10 +83,10 @@ class Q_DECL_EXPORT OxideQCertificateError Q_DECL_FINAL : public QObject {
   void cancelled();
 
  private:
-  OxideQCertificateError(OxideQCertificateErrorPrivate& dd,
-                         QObject* parent = nullptr);
+  Q_DECL_HIDDEN OxideQCertificateError(OxideQCertificateErrorPrivate& dd,
+                                       QObject* parent = nullptr);
 
   QScopedPointer<OxideQCertificateErrorPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_CERTIFICATE_ERROR
+#endif // OXIDE_QTCORE_CERTIFICATE_ERROR

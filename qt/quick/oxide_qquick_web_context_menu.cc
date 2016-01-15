@@ -27,8 +27,9 @@
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_web_context_menu_proxy_client.h"
+#include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {

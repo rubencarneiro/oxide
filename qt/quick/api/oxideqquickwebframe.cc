@@ -15,16 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
-#include "oxideqquickwebframe_p_p.h"
 
 #include <QtDebug>
 #include <QString>
 
+#include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
-#include "oxideqquickscriptmessagehandler_p_p.h"
+#include "oxideqquickscriptmessagerequest.h"
 #include "oxideqquickscriptmessagerequest_p.h"
-#include "oxideqquickscriptmessagerequest_p_p.h"
 
 OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
                                     oxide::qt::WebFrameProxyHandle);

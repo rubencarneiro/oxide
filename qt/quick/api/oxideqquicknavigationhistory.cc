@@ -25,8 +25,8 @@
 #include <QtAlgorithms>
 #include <QUrl>
 
+#include "oxideqquickwebview.h"
 #include "oxideqquickwebview_p.h"
-#include "oxideqquickwebview_p_p.h"
 
 struct NavigationEntry {
   QUrl url;

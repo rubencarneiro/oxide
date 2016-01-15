@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -49,6 +49,7 @@ QT_END_NAMESPACE
 class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
+class OxideQTouchSelectionController;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -82,6 +83,17 @@ enum WebProcessStatus {
   WEB_PROCESS_RUNNING,
   WEB_PROCESS_KILLED,
   WEB_PROCESS_CRASHED
+};
+
+enum EditCapabilityFlags {
+  NO_CAPABILITY = 0,
+  UNDO_CAPABILITY = 1 << 0,
+  REDO_CAPABILITY = 1 << 1,
+  CUT_CAPABILITY = 1 << 2,
+  COPY_CAPABILITY = 1 << 3,
+  PASTE_CAPABILITY = 1 << 4,
+  ERASE_CAPABILITY = 1 << 5,
+  SELECT_ALL_CAPABILITY = 1 << 6
 };
 
 enum EditingCommands {
@@ -222,10 +234,10 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void prepareToClose() = 0;
 
-  virtual int locationBarHeight() = 0;
+  virtual int locationBarHeight() const = 0;
   virtual void setLocationBarHeight(int height) = 0;
-  virtual int locationBarOffsetPix() = 0;
-  virtual int locationBarContentOffsetPix() = 0;
+  virtual int locationBarOffsetPix() const = 0;
+  virtual int locationBarContentOffsetPix() const = 0;
   virtual LocationBarMode locationBarMode() const = 0;
   virtual void setLocationBarMode(LocationBarMode mode) = 0;
   virtual bool locationBarAnimated() const = 0;
@@ -238,6 +250,8 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void executeEditingCommand(EditingCommands command) const = 0;
 
   virtual QUrl targetUrl() const = 0;
+
+  virtual EditCapabilityFlags editFlags() const = 0;
 
   virtual void teardownFrameTree() = 0;
 };

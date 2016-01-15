@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "content/public/common/menu_item.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/geometry/rect.h"
@@ -37,6 +38,10 @@ class RenderFrameHost;
 
 namespace gfx {
 class Rect;
+}
+
+namespace ui {
+class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -79,6 +84,12 @@ class RenderWidgetHostViewContainer {
                              const std::vector<content::MenuItem>& items,
                              bool allow_multiple_selection) = 0;
   virtual void HidePopupMenu() = 0;
+
+  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
+
+  virtual void TouchSelectionChanged() const = 0;
+
+  virtual void EditingCapabilitiesChanged() = 0;
 };
 
 } // namespace oxide

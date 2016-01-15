@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -86,11 +86,12 @@ class WebView : public InputMethodContextClient,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
+  float GetDeviceScaleFactor() const;
+  int GetLocationBarContentOffsetPix() const;
+
  private:
   WebView(WebViewProxyClient* client,
           OxideQSecurityStatus* security_status);
-
-  float GetDeviceScaleFactor() const;
 
   void CommonInit(OxideQFindController* find_controller);
 
@@ -150,7 +151,6 @@ class WebView : public InputMethodContextClient,
       const std::string& user_agent) override;
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
-
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
@@ -163,6 +163,9 @@ class WebView : public InputMethodContextClient,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  void TouchSelectionChanged(bool active,
+                             const gfx::RectF& bounds) const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
@@ -172,6 +175,7 @@ class WebView : public InputMethodContextClient,
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
+  void OnEditingCapabilitiesChanged() override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
@@ -180,9 +184,9 @@ class WebView : public InputMethodContextClient,
 
   // oxide::PermissionRequestDispatcherClient implementation
   void RequestGeolocationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) override;
+      scoped_ptr<oxide::PermissionRequest> request) override;
   void RequestNotificationPermission(
-      scoped_ptr<oxide::SimplePermissionRequest> request) override;
+      scoped_ptr<oxide::PermissionRequest> request) override;
   void RequestMediaAccessPermission(
       scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
@@ -271,10 +275,10 @@ class WebView : public InputMethodContextClient,
 
   void prepareToClose() override;
 
-  int locationBarHeight() override;
+  int locationBarHeight() const override;
   void setLocationBarHeight(int height) override;
-  int locationBarOffsetPix() override;
-  int locationBarContentOffsetPix() override;
+  int locationBarOffsetPix() const override;
+  int locationBarContentOffsetPix() const override;
   LocationBarMode locationBarMode() const override;
   void setLocationBarMode(LocationBarMode mode) override;
   bool locationBarAnimated() const override;
@@ -287,6 +291,8 @@ class WebView : public InputMethodContextClient,
   void executeEditingCommand(EditingCommands command) const override;
 
   QUrl targetUrl() const override;
+
+  EditCapabilityFlags editFlags() const override;
 
   void teardownFrameTree() override;
 

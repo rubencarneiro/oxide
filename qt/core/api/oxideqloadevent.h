@@ -15,18 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_LOAD_EVENT_H
-#define OXIDE_Q_LOAD_EVENT_H
+#ifndef OXIDE_QTCORE_LOAD_EVENT
+#define OXIDE_QTCORE_LOAD_EVENT
 
-#include <QMetaType>
-#include <QSharedDataPointer>
-#include <QString>
-#include <QtGlobal>
-#include <QUrl>
+#include <QtCore/QMetaType>
+#include <QtCore/QSharedDataPointer>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+#include <QtCore/QUrl>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQLoadEventData;
 
-class Q_DECL_EXPORT OxideQLoadEvent {
+class OXIDE_QTCORE_EXPORT OxideQLoadEvent {
   Q_GADGET
   Q_PROPERTY(QUrl url READ url CONSTANT)
   Q_PROPERTY(Type type READ type CONSTANT)
@@ -73,21 +75,23 @@ class Q_DECL_EXPORT OxideQLoadEvent {
     ErrorDomainDNS
   };
 
-  static OxideQLoadEvent createStarted(const QUrl& url);
-  static OxideQLoadEvent createStopped(const QUrl& url);
-  static OxideQLoadEvent createSucceeded(const QUrl& url,
-                                         int http_status_code);
-  static OxideQLoadEvent createFailed(const QUrl& url,
-                                      ErrorDomain error_domain,
-                                      const QString& error_string,
-                                      int error_code,
-                                      int http_status_code);
-  static OxideQLoadEvent createCommitted(const QUrl& url,
-                                         bool is_error,
-                                         int http_status_code);
-  static OxideQLoadEvent createRedirected(const QUrl& url,
-                                          const QUrl& original_url,
-                                          int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createStarted(const QUrl& url);
+  Q_DECL_HIDDEN static OxideQLoadEvent createStopped(const QUrl& url);
+  Q_DECL_HIDDEN static OxideQLoadEvent createSucceeded(const QUrl& url,
+                                                       int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createFailed(
+      const QUrl& url,
+      ErrorDomain error_domain,
+      const QString& error_string,
+      int error_code,
+      int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createCommitted(const QUrl& url,
+                                                       bool is_error,
+                                                       int http_status_code);
+  Q_DECL_HIDDEN static OxideQLoadEvent createRedirected(
+      const QUrl& url,
+      const QUrl& original_url,
+      int http_status_code);
 
   OxideQLoadEvent();
   OxideQLoadEvent(const OxideQLoadEvent& other);
@@ -115,4 +119,4 @@ class Q_DECL_EXPORT OxideQLoadEvent {
 
 Q_DECLARE_METATYPE(OxideQLoadEvent)
 
-#endif // OXIDE_Q_LOAD_EVENT_H
+#endif // OXIDE_QTCORE_LOAD_EVENT

@@ -20,7 +20,7 @@
 #include <QObject>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 
 namespace oxide {
 namespace qquick {

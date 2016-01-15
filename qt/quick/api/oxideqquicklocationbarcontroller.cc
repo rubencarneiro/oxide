@@ -15,10 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicklocationbarcontroller.h"
 
+#include "oxideqquickwebview.h"
 #include "oxideqquickwebview_p.h"
-#include "oxideqquickwebview_p_p.h"
 
 class OxideQQuickLocationBarControllerPrivate {
  public:

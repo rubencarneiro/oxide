@@ -24,6 +24,8 @@
 #include <QtGlobal>
 #include <QVariant>
 
+#include "qt/quick/api/oxideqquickglobal.h"
+
 QT_BEGIN_NAMESPACE
 class QUrl;
 QT_END_NAMESPACE
@@ -31,7 +33,7 @@ QT_END_NAMESPACE
 class OxideQQuickCookieManagerPrivate;
 class OxideQQuickWebContext;
 
-class Q_DECL_EXPORT OxideQQuickCookieManager : public QObject {
+class OXIDE_QTQUICK_EXPORT OxideQQuickCookieManager : public QObject {
   Q_OBJECT
 
   Q_ENUMS(RequestStatus)
@@ -42,7 +44,7 @@ class Q_DECL_EXPORT OxideQQuickCookieManager : public QObject {
 public:
   OxideQQuickCookieManager(OxideQQuickWebContext* webContext,
                            QObject* parent = nullptr);
-  virtual ~OxideQQuickCookieManager();
+  ~OxideQQuickCookieManager() Q_DECL_OVERRIDE;
 
   Q_INVOKABLE int setCookies(const QUrl& url, const QVariant& cookies);
   Q_INVOKABLE int setNetworkCookies(const QUrl& url,

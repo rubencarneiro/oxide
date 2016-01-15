@@ -34,8 +34,8 @@
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/quick/oxide_qquick_init.h"
 
+#include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
-#include "oxideqquickwebcontext_p_p.h"
 
 // WebContextDelegateWorker runs a script on Chromium's IO thread. It can
 // exchange messages with the UI thread, and provides entry points for

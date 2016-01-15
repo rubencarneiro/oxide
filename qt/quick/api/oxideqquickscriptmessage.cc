@@ -15,11 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickscriptmessage.h"
 #include "oxideqquickscriptmessage_p.h"
-#include "oxideqquickscriptmessage_p_p.h"
 
+#include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
-#include "oxideqquickwebframe_p_p.h"
 
 OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
                                     oxide::qt::ScriptMessageProxyHandle);
@@ -68,6 +68,18 @@ QString OxideQQuickScriptMessage::msgId() const {
   Q_D(const OxideQQuickScriptMessage);
 
   return d->proxy()->msgId();
+}
+
+QVariant OxideQQuickScriptMessage::args() const {
+  static bool warned = false;
+  if (!warned) {
+    warned = true;
+    qWarning() <<
+        "OxideQQuickScriptMessage: args is deprecated. Please use "
+        "OxideQQuickScriptMessage::payload instead";
+  }
+
+  return payload();
 }
 
 QVariant OxideQQuickScriptMessage::payload() const {

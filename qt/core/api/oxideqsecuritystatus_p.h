@@ -42,6 +42,8 @@ class OxideQSecurityStatusPrivate final {
  public:
   ~OxideQSecurityStatusPrivate();
 
+  static OxideQSecurityStatus* Create();
+
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
   void Update(const oxide::SecurityStatus& old);

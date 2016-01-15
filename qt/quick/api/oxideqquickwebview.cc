@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqquickwebview.h"
 #include "oxideqquickwebview_p.h"
-#include "oxideqquickwebview_p_p.h"
 
 #include <QByteArray>
 #include <QEvent>
@@ -57,16 +57,18 @@
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
+#include "qt/quick/oxide_qquick_touch_handle_drawable.h"
 #include "qt/quick/oxide_qquick_web_context_menu.h"
 #include "qt/quick/oxide_qquick_web_popup_menu.h"
 
-#include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicklocationbarcontroller.h"
+#include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
-#include "oxideqquickscriptmessagehandler_p_p.h"
+#include "oxideqquicktouchselectioncontroller.h"
+#include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
-#include "oxideqquickwebcontext_p_p.h"
+#include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
-#include "oxideqquickwebframe_p_p.h"
 
 
 using oxide::qquick::AcceleratedFrameNode;
@@ -214,6 +216,13 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   return new oxide::qquick::FilePicker(q, client);
 }
 
+oxide::qt::TouchHandleDrawableProxy*
+OxideQQuickWebViewPrivate::CreateTouchHandleDrawable() {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::TouchHandleDrawable(q);
+}
+
 void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {
   Q_Q(OxideQQuickWebView);
 
@@ -282,6 +291,13 @@ void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count)
 
 void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
+}
+
+void OxideQQuickWebViewPrivate::TouchSelectionChanged(bool active,
+                                                      QRectF bounds) {
+  Q_Q(OxideQQuickWebView);
+
+  q->touchSelectionController()->onTouchSelectionChanged(active, bounds);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(
@@ -640,6 +656,12 @@ void OxideQQuickWebViewPrivate::TargetURLChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->hoveredUrlChanged();
+}
+
+void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->editingCapabilitiesChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -1049,6 +1071,13 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy()) {
     d->proxy()->updateWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      qWarning() <<
+          "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
+          "to loadEvent instead";
+    }
     d->using_old_load_event_signal_ = true;
   }
 #undef VIEW_SIGNAL
@@ -1073,6 +1102,38 @@ bool OxideQQuickWebView::event(QEvent* event) {
   }
 
   return QQuickItem::event(event);
+}
+
+void OxideQQuickWebView::componentComplete() {
+  Q_D(OxideQQuickWebView);
+
+  Q_ASSERT(!d->constructed_);
+  d->constructed_ = true;
+
+  QQuickItem::componentComplete();
+
+  OxideQQuickWebContext* context = nullptr;
+  if (d->construct_props_->context) {
+    context =
+        OxideQQuickWebContextPrivate::fromProxyHandle(
+          d->construct_props_->context);
+  }
+
+  if (!context && !d->construct_props_->new_view_request) {
+    context = OxideQQuickWebContext::defaultContext(true);
+    if (!context) {
+      qFatal("OxideQQuickWebView: No context available!");
+    }
+    OxideQQuickWebContextPrivate* cd =
+        OxideQQuickWebContextPrivate::get(context);
+    d->construct_props_->context = cd;
+    d->attachContextSignals(cd);
+  }
+
+  if (d->construct_props_->new_view_request ||
+      OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
+    d->completeConstruction();
+  }
 }
 
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
@@ -1411,38 +1472,6 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   }
 
   d->proxy()->teardownFrameTree();
-}
-
-void OxideQQuickWebView::componentComplete() {
-  Q_D(OxideQQuickWebView);
-
-  Q_ASSERT(!d->constructed_);
-  d->constructed_ = true;
-
-  QQuickItem::componentComplete();
-
-  OxideQQuickWebContext* context = nullptr;
-  if (d->construct_props_->context) {
-    context =
-        OxideQQuickWebContextPrivate::fromProxyHandle(
-          d->construct_props_->context);
-  }
-
-  if (!context && !d->construct_props_->new_view_request) {
-    context = OxideQQuickWebContext::defaultContext(true);
-    if (!context) {
-      qFatal("OxideQQuickWebView: No context available!");
-    }
-    OxideQQuickWebContextPrivate* cd =
-        OxideQQuickWebContextPrivate::get(context);
-    d->construct_props_->context = cd;
-    d->attachContextSignals(cd);
-  }
-
-  if (d->construct_props_->new_view_request ||
-      OxideQQuickWebContextPrivate::get(context)->isConstructed()) {
-    d->completeConstruction();
-  }
 }
 
 QUrl OxideQQuickWebView::url() const {
@@ -2084,6 +2113,17 @@ QUrl OxideQQuickWebView::hoveredUrl() const {
   return d->proxy()->targetUrl();
 }
 
+OxideQQuickWebView::EditCapabilities OxideQQuickWebView::editingCapabilities() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    return NoCapability;
+  }
+
+  oxide::qt::EditCapabilityFlags flags = d->proxy()->editFlags();
+  return static_cast<EditCapabilities>(flags);
+}
+
 // static
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {
@@ -2214,4 +2254,15 @@ OxideQFindController* OxideQQuickWebView::findController() const {
   return d->find_controller_.data();
 }
 
-#include "moc_oxideqquickwebview_p.cpp"
+OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->touch_selection_controller_) {
+    d->touch_selection_controller_.reset(
+        new OxideQQuickTouchSelectionController(this));
+  }
+
+  return d->touch_selection_controller_.data();
+}
+
+#include "moc_oxideqquickwebview.cpp"

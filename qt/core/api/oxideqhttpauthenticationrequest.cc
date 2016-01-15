@@ -25,8 +25,9 @@
 #include "oxideqhttpauthenticationrequest_p.h"
 
 OxideQHttpAuthenticationRequestPrivate::OxideQHttpAuthenticationRequestPrivate(
+    OxideQHttpAuthenticationRequest* q,
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
-    : q_ptr(nullptr),
+    : q_ptr(q),
       login_delegate_(login_delegate),
       host_(QString::fromStdString(login_delegate->Host())),
       realm_(QString::fromStdString(login_delegate->Realm())) {
@@ -54,7 +55,10 @@ OxideQHttpAuthenticationRequest* OxideQHttpAuthenticationRequestPrivate::Create(
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
   DCHECK(login_delegate);
 
-  return new OxideQHttpAuthenticationRequest(login_delegate);
+  OxideQHttpAuthenticationRequest* req = new OxideQHttpAuthenticationRequest();
+  req->d_ptr.reset(new OxideQHttpAuthenticationRequestPrivate(req,
+                                                              login_delegate));
+  return req;
 }
 
 void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
@@ -64,12 +68,7 @@ void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
   q->cancelled();
 }
 
-OxideQHttpAuthenticationRequest::OxideQHttpAuthenticationRequest(
-    oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
-    : d_ptr(new OxideQHttpAuthenticationRequestPrivate(login_delegate)) {
-  Q_D(OxideQHttpAuthenticationRequest);
-  d->q_ptr = this;
-}
+OxideQHttpAuthenticationRequest::OxideQHttpAuthenticationRequest() {}
 
 OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {}
 

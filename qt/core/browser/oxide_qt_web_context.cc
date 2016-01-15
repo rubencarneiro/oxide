@@ -45,8 +45,8 @@
 #include "net/url_request/url_request.h"
 #include "url/gurl.h"
 
-#include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
+#include "qt/core/api/oxideqnetworkcallbackevents_p_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"

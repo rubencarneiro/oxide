@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -131,6 +131,13 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
   return nullptr;
 }
 
+ui::TouchHandleDrawable* WebViewClient::CreateTouchHandleDrawable() const {
+  return nullptr;
+}
+
+void WebViewClient::TouchSelectionChanged(bool active,
+                                          const gfx::RectF& bounds) const {}
+
 void WebViewClient::EvictCurrentFrame() {}
 
 InputMethodContext* WebViewClient::GetInputMethodContext() const {
@@ -151,5 +158,7 @@ void WebViewClient::TargetURLChanged() {}
 
 void WebViewClient::HttpAuthenticationRequested(
     ResourceDispatcherHostLoginDelegate* login_delegate) {}
+
+void WebViewClient::OnEditingCapabilitiesChanged() {}
 
 } // namespace oxide

@@ -15,23 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_FIND_CONTROLLER
-#define OXIDE_Q_FIND_CONTROLLER
+#ifndef OXIDE_QTCORE_FIND_CONTROLLER
+#define OXIDE_QTCORE_FIND_CONTROLLER
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQFindControllerPrivate;
 
-namespace oxide {
-namespace qt {
-class WebViewProxy;
-}
-}
-
-class Q_DECL_EXPORT OxideQFindController : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQFindController : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
   Q_PROPERTY(bool caseSensitive READ caseSensitive WRITE setCaseSensitive NOTIFY caseSensitiveChanged)
@@ -42,7 +38,7 @@ class Q_DECL_EXPORT OxideQFindController : public QObject {
   Q_DISABLE_COPY(OxideQFindController)
 
  public:
-  ~OxideQFindController();
+  ~OxideQFindController() Q_DECL_OVERRIDE;
 
   QString text() const;
   void setText(const QString& text);
@@ -61,11 +57,9 @@ class Q_DECL_EXPORT OxideQFindController : public QObject {
   void currentChanged() const;
 
  private:
-  friend class oxide::qt::WebViewProxy;
-
   Q_DECL_HIDDEN OxideQFindController();
 
   QScopedPointer<OxideQFindControllerPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_FIND_CONTROLLER
+#endif // OXIDE_QTCORE_FIND_CONTROLLER

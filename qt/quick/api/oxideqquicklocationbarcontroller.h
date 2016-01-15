@@ -15,16 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_LOCATION_BAR_CONTROLLER_H_
-#define _OXIDE_QT_QUICK_API_LOCATION_BAR_CONTROLLER_H_
+#ifndef OXIDE_QTQUICK_LOCATION_BAR_CONTROLLER
+#define OXIDE_QTQUICK_LOCATION_BAR_CONTROLLER
 
-#include <QObject>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtQuick/oxideqquickglobal.h>
 
 class OxideQQuickLocationBarControllerPrivate;
 class OxideQQuickWebView;
 
-class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
+class OXIDE_QTQUICK_EXPORT OxideQQuickLocationBarController : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged)
@@ -47,8 +49,7 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
     ModeHidden
   };
 
-  Q_DECL_HIDDEN OxideQQuickLocationBarController(OxideQQuickWebView* view);
-  virtual ~OxideQQuickLocationBarController();
+  ~OxideQQuickLocationBarController() Q_DECL_OVERRIDE;
 
   qreal height() const;
   void setHeight(qreal height);
@@ -74,7 +75,10 @@ class Q_DECL_EXPORT OxideQQuickLocationBarController : public QObject {
   void contentOffsetChanged();
 
  private:
+  friend class OxideQQuickWebView;
+  Q_DECL_HIDDEN OxideQQuickLocationBarController(OxideQQuickWebView* view);
+
   QScopedPointer<OxideQQuickLocationBarControllerPrivate> d_ptr;
 };
 
-#endif // _OXIDE_QT_QUICK_API_LOCATION_BAR_CONTROLLER_H_
+#endif // OXIDE_QTQUICK_LOCATION_BAR_CONTROLLER

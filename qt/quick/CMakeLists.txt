@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2015 Canonical Ltd.
+# Copyright (C) 2014-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,6 @@ find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 
 qt5_wrap_cpp(MOC_EXTRA
-             api/oxideqquickuserscript_p_p.h
-             api/oxideqquickwebcontext_p_p.h
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 
 set(OXIDE_QUICKLIB_SRCS
@@ -34,6 +32,7 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc
+    api/oxideqquicktouchselectioncontroller.cc
     api/oxideqquickuserscript.cc
     api/oxideqquickwebcontext.cc
     api/oxideqquickwebcontextdelegateworker.cc
@@ -50,11 +49,16 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_javascript_dialog.cc
     oxide_qquick_prompt_dialog.cc
     oxide_qquick_software_frame_node.cc
+    oxide_qquick_touch_handle_drawable.cc
     oxide_qquick_web_context_menu.cc
     oxide_qquick_web_popup_menu.cc
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
+target_compile_definitions(${OXIDE_QUICKLIB} PRIVATE -DOXIDE_QTQUICK_IMPLEMENTATION)
+target_include_directories(
+    ${OXIDE_QUICKLIB} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/api/includes)
 target_include_directories(
     ${OXIDE_QUICKLIB} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}

@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
       'type': 'shared_library',
       'product_extension': 'so.<(oxide_core_so_version)',
       'defines': [
+        'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
@@ -51,7 +52,8 @@
       'include_dirs': [
         '../..',
         '<(INTERMEDIATE_DIR)',
-        '<(DEPTH)'
+        'api/includes',
+        '<(DEPTH)',
       ],
       'ldflags': [
         '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
@@ -62,7 +64,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents_p.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
@@ -89,8 +91,8 @@
         'api/oxideqmediacapturedevices.h',
         'api/oxideqmediacapturedevices_p.h',
         'api/oxideqnetworkcallbackevents.cc',
-        'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnetworkcallbackevents_p_p.h',
         'api/oxideqnavigationrequest.cc',
         'api/oxideqnavigationrequest.h',
         'api/oxideqnewviewrequest.cc',
@@ -148,6 +150,8 @@
         'browser/oxide_qt_script_message_request.h',
         'browser/oxide_qt_skutils.cc',
         'browser/oxide_qt_skutils.h',
+        'browser/oxide_qt_touch_handle_drawable.cc',
+        'browser/oxide_qt_touch_handle_drawable.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
@@ -180,6 +184,7 @@
         'glue/oxide_qt_script_message_request_proxy.cc',
         'glue/oxide_qt_script_message_request_proxy.h',
         'glue/oxide_qt_script_message_request_proxy_client.h',
+        'glue/oxide_qt_touch_handle_drawable_proxy.h',
         'glue/oxide_qt_user_script_proxy.cc',
         'glue/oxide_qt_user_script_proxy.h',
         'glue/oxide_qt_user_script_proxy_client.h',
@@ -225,8 +230,8 @@
           'includes': [ 'moc.gypi' ]
         },
         {
-          'action_name': 'moc_oxideqnetworkcallbackevents.cc',
-          'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'action_name': 'moc_oxideqnetworkcallbackevents_p.cc',
+          'moc_input': 'api/oxideqnetworkcallbackevents_p.h',
           'includes': [ 'moc.gypi' ],
         },
         {

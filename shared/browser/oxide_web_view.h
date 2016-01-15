@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -44,6 +44,7 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/oxide_browser_platform_integration_observer.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
@@ -85,6 +86,7 @@ class Size;
 
 namespace ui {
 class TouchEvent;
+class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -131,7 +133,8 @@ class WebView : public ScriptMessageTarget,
                 private content::NotificationObserver,
                 private RenderWidgetHostViewContainer,
                 private content::WebContentsDelegate,
-                private content::WebContentsObserver {
+                private content::WebContentsObserver,
+                private BrowserPlatformIntegrationObserver {
  public:
 
   struct Params {
@@ -225,9 +228,9 @@ class WebView : public ScriptMessageTarget,
   gfx::Size GetCompositorFrameContentSizePix();
   gfx::Size GetCompositorFrameViewportSizePix();
 
-  int GetLocationBarOffsetPix();
-  int GetLocationBarContentOffsetPix();
-  float GetLocationBarContentOffsetDip();
+  int GetLocationBarOffsetPix() const;
+  int GetLocationBarContentOffsetPix() const;
+  float GetLocationBarContentOffsetDip() const;
 
   const SecurityStatus& security_status() const { return security_status_; }
 
@@ -289,6 +292,8 @@ class WebView : public ScriptMessageTarget,
   bool CanCreateWindows() const;
 
   const GURL& target_url() const { return target_url_; }
+
+  int GetEditFlags() const;
 
  private:
   WebView(WebViewClient* client);
@@ -358,6 +363,9 @@ class WebView : public ScriptMessageTarget,
                      const std::vector<content::MenuItem>& items,
                      bool allow_multiple_selection) final;
   void HidePopupMenu() final;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const final;
+  void TouchSelectionChanged() const final;
+  void EditingCapabilitiesChanged() final;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(content::WebContents* source,
@@ -472,6 +480,9 @@ class WebView : public ScriptMessageTarget,
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) final;
 
+  // BrowserPlatformIntegrationObserver implementation
+  void ClipboardDataChanged() final;
+
   WebViewClient* client_;
 
   struct WebContentsDeleter {
@@ -515,6 +526,8 @@ class WebView : public ScriptMessageTarget,
   RenderWidgetHostID interstitial_rwh_id_;
 
   GURL target_url_;
+
+  int edit_flags_;
 
   base::WeakPtrFactory<WebView> weak_factory_;
 

@@ -25,8 +25,8 @@
 #include <QQuickItem>
 
 #include "qt/core/glue/oxide_qt_file_picker_proxy_client.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {

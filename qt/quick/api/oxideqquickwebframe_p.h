@@ -15,63 +15,57 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_WEB_FRAME_P_H_
-#define _OXIDE_QT_QUICK_API_WEB_FRAME_P_H_
+#ifndef _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
+#define _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 
-#include <QObject>
-#include <QQmlListProperty>
-#include <QScopedPointer>
+#include <memory>
 #include <QtGlobal>
-#include <QtQml>
-#include <QUrl>
-#include <QVariant>
+
+#include "qt/core/glue/oxide_qt_web_frame_proxy.h"
+#include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 
 class OxideQQuickScriptMessageHandler;
-class OxideQQuickScriptMessageRequest;
-class OxideQQuickWebFramePrivate;
-class OxideQQuickWebViewPrivate;
+class OxideQQuickWebFrame;
 
-class Q_DECL_EXPORT OxideQQuickWebFrame : public QObject {
-  Q_OBJECT
-  Q_PROPERTY(QUrl url READ url NOTIFY urlChanged)
-  Q_PROPERTY(OxideQQuickWebFrame* parentFrame READ parentFrame)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickWebFrame> childFrames READ childFrames NOTIFY childFramesChanged)
-  Q_PROPERTY(QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers READ messageHandlers NOTIFY messageHandlersChanged)
-  Q_ENUMS(ChildFrameChangedType)
+QT_BEGIN_NAMESPACE
+template <typename T> class QQmlListProperty;
+QT_END_NAMESPACE
 
-  Q_DECLARE_PRIVATE(OxideQQuickWebFrame)
+class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
+                                   public oxide::qt::WebFrameProxyClient {
+  Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
+  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
+                                      oxide::qt::WebFrameProxyHandle)
 
  public:
-  virtual ~OxideQQuickWebFrame();
+  static OxideQQuickWebFrame* create(oxide::qt::WebFrameProxy* proxy);
 
-  QUrl url() const;
+  static OxideQQuickWebFramePrivate* get(OxideQQuickWebFrame* web_frame);
 
-  OxideQQuickWebFrame* parentFrame() const;
-  QQmlListProperty<OxideQQuickWebFrame> childFrames();
+ private:
+  OxideQQuickWebFramePrivate(oxide::qt::WebFrameProxy* proxy,
+                             OxideQQuickWebFrame* q);
 
-  QQmlListProperty<OxideQQuickScriptMessageHandler> messageHandlers();
-  Q_INVOKABLE void addMessageHandler(OxideQQuickScriptMessageHandler* handler);
-  Q_INVOKABLE void removeMessageHandler(OxideQQuickScriptMessageHandler* handler);
+  oxide::qt::WebFrameProxy* proxy() const {
+    return oxide::qt::WebFrameProxyHandle::proxy();
+  }
 
-  Q_INVOKABLE OxideQQuickScriptMessageRequest*
-      sendMessage(const QUrl& context,
-                  const QString& msg_id,
-                  const QVariant& payload = QVariant());
-  Q_INVOKABLE void sendMessageNoReply(const QUrl& context,
-                                      const QString& msg_id,
-                                      const QVariant& payload = QVariant());
+  static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
+  static OxideQQuickWebFrame* childFrame_at(
+      QQmlListProperty<OxideQQuickWebFrame>* prop, int index);
 
- Q_SIGNALS:
-  void urlChanged();
-  void childFramesChanged();
-  void messageHandlersChanged();
+  static int messageHandler_count(
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
+  static OxideQQuickScriptMessageHandler* messageHandler_at(
+      QQmlListProperty<OxideQQuickScriptMessageHandler>* prop,
+      int index);
 
- protected:
-  OxideQQuickWebFrame();
+  // oxide::qt::WebFrameProxyClient implementation
+  void LoadCommitted() override;
+  void ChildFramesChanged() override;
+  void DestroyFrame() override;
 
-  QScopedPointer<OxideQQuickWebFramePrivate> d_ptr;
+  Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };
 
-QML_DECLARE_TYPE(OxideQQuickWebFrame);
-
-#endif // _OXIDE_QT_QUICK_API_WEB_FRAME_P_H_
+#endif // _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
