@@ -256,6 +256,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
     command_line->AppendSwitch(switches::kNoSandbox);
   } else {
+    // See https://launchpad.net/bugs/1447311
+    command_line->AppendSwitch(switches::kDisableNamespaceSandbox);
+
     if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
       command_line->AppendSwitch(switches::kDisableSetuidSandbox);
     }
