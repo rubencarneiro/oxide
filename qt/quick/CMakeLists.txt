@@ -55,7 +55,8 @@ set(OXIDE_QUICKLIB_SRCS
     ${MOC_EXTRA})
 
 add_library(${OXIDE_QUICKLIB} SHARED ${OXIDE_QUICKLIB_SRCS})
-target_compile_definitions(${OXIDE_QUICKLIB} PRIVATE -DOXIDE_QTQUICK_IMPLEMENTATION)
+target_compile_definitions(
+    ${OXIDE_QUICKLIB} PRIVATE -DOXIDE_QTQUICK_IMPLEMENTATION)
 target_include_directories(
     ${OXIDE_QUICKLIB} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/api/includes)
@@ -70,11 +71,17 @@ target_link_libraries(
     Qt5::Gui
     Qt5::Qml
     Qt5::Quick
-    ${OXIDE_CORELIB_NAME})
+    ${OXIDE_LIB})
 set_target_properties(
     ${OXIDE_QUICKLIB} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${LIB_OUTPUT_DIR}
+    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_LIB_OUTPUT_DIR}
     AUTOMOC TRUE
-    SOVERSION ${OXIDE_CORELIB_SO_VERSION})
+    SOVERSION ${OXIDE_LIB_VERSION})
 
 install(TARGETS ${OXIDE_QUICKLIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+add_custom_target(
+    test-package-qt-quick
+    COMMAND ${CMAKE_COMMAND} -DFILES=$<TARGET_FILE:${OXIDE_QUICKLIB}>
+    -DTYPE=FILE -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
+    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
