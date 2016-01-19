@@ -16,6 +16,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+set(OXIDE_QMLRUNNER oxideqmlscene)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Qml REQUIRED)
@@ -37,6 +39,7 @@ target_include_directories(
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 set_target_properties(
     ${OXIDE_QMLRUNNER} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR})
+    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR})
 
-install(TARGETS ${OXIDE_QMLRUNNER} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${OXIDE_QMLRUNNER}
+        DESTINATION ${CMAKE_INSTALL_BINDIR})

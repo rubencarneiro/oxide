@@ -16,9 +16,23 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+set(OXIDE_QMLPLUGIN qmloxideplugin)
+set(OXIDE_QMLPLUGIN_MODULE_NAME com/canonical/Oxide)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
+
+set(OXIDE_QMLPLUGIN_SRCS oxide_qml_plugin.cc)
+
+if(${Qt5Qml_VERSION_STRING} VERSION_LESS "5.5.0")
+  list(APPEND OXIDE_QMLPLUGIN_SRCS
+       oxide_qml_download_request.cc
+       oxide_qml_load_event.cc
+       oxide_qml_ssl_certificate.cc
+       oxide_qml_value_type_provider.cc)
+  set(LEGACY_QMLVALUE_TYPES TRUE)
+endif()
 
 # CMake doesn't seem to provide a way to get at QT_INSTALL_QML
 if(NOT CMAKE_CROSSCOMPILING)
@@ -40,29 +54,17 @@ else()
   set(QT_INSTALL_QML "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}/qt5/qml")
 endif()
 
-set(OXIDE_QMLPLUGIN_SRCS
-    oxide_qml_plugin.cc)
-
-if(${Qt5Qml_VERSION_STRING} VERSION_LESS "5.5.0")
-  list(APPEND OXIDE_QMLPLUGIN_SRCS
-       oxide_qml_download_request.cc
-       oxide_qml_load_event.cc
-       oxide_qml_ssl_certificate.cc
-       oxide_qml_value_type_provider.cc)
-  set(LEGACY_QMLVALUE_TYPES TRUE)
-endif()
-
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
 target_link_libraries(
     ${OXIDE_QMLPLUGIN}
     Qt5::Core
     Qt5::Qml
     Qt5::Quick
-    ${OXIDE_CORELIB_NAME}
+    ${OXIDE_LIB}
     ${OXIDE_QUICKLIB})
 set_target_properties(
     ${OXIDE_QMLPLUGIN} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
+    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
     AUTOMOC TRUE)
 target_compile_options(${OXIDE_QMLPLUGIN} PRIVATE -fno-rtti)
 target_include_directories(
@@ -70,28 +72,38 @@ target_include_directories(
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
     ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 if(DEFINED LEGACY_QMLVALUE_TYPES)
-  target_compile_definitions(${OXIDE_QMLPLUGIN} PRIVATE -DLEGACY_QMLVALUE_TYPES)
+  target_compile_definitions(
+      ${OXIDE_QMLPLUGIN} PRIVATE -DLEGACY_QMLVALUE_TYPES)
 endif()
 
 add_custom_target(
     copy_${OXIDE_QMLPLUGIN}_qmldir ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
-      ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME})
+      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME})
 
-install(FILES ${QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir
+install(FILES ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir
         DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
-install(TARGETS ${OXIDE_QMLPLUGIN} DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
+install(TARGETS ${OXIDE_QMLPLUGIN}
+        DESTINATION ${QT_INSTALL_QML}/${OXIDE_QMLPLUGIN_MODULE_NAME})
+
+add_custom_target(
+    test-package-qt-qmlplugin
+    COMMAND ${CMAKE_COMMAND}
+    "-DFILES=\"$<TARGET_FILE:${OXIDE_QMLPLUGIN}>;${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir\""
+    -DTYPE=FILE
+    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_QT_PACKAGE_QMLPLUGIN_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
+    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 
 # Only generate typeinfo if not cross compiling
 if(NOT CMAKE_CROSSCOMPILING)
   add_custom_target(generate_oxide_qmltypes ALL
-    COMMAND env "LD_LIBRARY_PATH=${CHROMIUM_OUTPUT_DIR}/Release/lib:${LIB_OUTPUT_DIR}"
-            env "QML2_IMPORT_PATH=${QMLPLUGIN_OUTPUT_DIR}"
+    COMMAND env "LD_LIBRARY_PATH=${CHROMIUM_OUTPUT_DIR}/Release/lib:${OXIDE_LIB_OUTPUT_DIR}"
+            env "QML2_IMPORT_PATH=${OXIDE_QMLPLUGIN_OUTPUT_DIR}"
             qmlplugindump -v -noinstantiate com.canonical.Oxide ${OXIDE_VERSION_MAJOR}.${OXIDE_VERSION_MINOR} ${OXIDE_QMLPLUGIN_MODULE_NAME} > ${CMAKE_CURRENT_BINARY_DIR}/oxide.qmltypes
             && cp ${CMAKE_CURRENT_BINARY_DIR}/oxide.qmltypes ${CMAKE_CURRENT_SOURCE_DIR}/
             || true
-    WORKING_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}
+    WORKING_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}
   )
   add_dependencies(generate_oxide_qmltypes ${OXIDE_QMLPLUGIN})
 

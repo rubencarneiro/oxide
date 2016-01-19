@@ -1,4 +1,6 @@
-# Copyright (C) 2013 Canonical Ltd.
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2014-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,24 +16,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-{
-  'targets': [
-    {
-      'target_name': 'All',
-      'type': 'none',
-      'dependencies': [
-        '<@(oxide_lib_target)',
-        '<@(oxide_renderer_target)',
-        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
-      ],
-      'conditions': [
-        ['enable_chromedriver_build==1', {
-            'dependencies': [
-              '<(DEPTH)/chrome/chrome.gyp:chromedriver',
-            ],
-          }
-        ]
-      ]
-    }
-  ]
-}
+cmake_policy(VERSION 2.6.0)
+
+set(OXIDE_LIB_OUTPUT_DIR "$(dirname $(readlink -f $0))")
+set(CHROMIUM_PRODUCT_DIR "$(dirname $(readlink -f $0))/${PRODUCT_DIR}")
+set(OXIDE_QMLPLUGIN_OUTPUT_DIR "$(dirname $(readlink -f $0))/${QML_DIR}")
+
+configure_file(${SRCFILE} ${DESTINATION}/.tmp/run_qmlapp.sh IMMEDIATE @ONLY)
+file(INSTALL FILES ${DESTINATION}/.tmp/run_qmlapp.sh TYPE PROGRAM
+     DESTINATION ${DESTINATION})
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${DESTINATION}/.tmp)

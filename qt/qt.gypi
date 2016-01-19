@@ -16,12 +16,12 @@
 
 {
   'variables': {
-    'oxide_subprocess_path': '<(oxide_subprocess_dir)/<(oxide_renderer_name)',
-    'oxide_all_targets': [
-      '../qt/core/core.gyp:<(oxide_core_name)',
-      '../qt/renderer/renderer.gyp:<(oxide_renderer_name)',
+    'oxide_lib_target': [
+      '../qt/core/core.gyp:<(oxide_lib)',
     ],
-    'oxide_build': 'qt',
+    'oxide_renderer_target': [
+      '../qt/renderer/renderer.gyp:<(oxide_renderer)',
+    ],
   },
   'target_defaults': {
     'defines': [

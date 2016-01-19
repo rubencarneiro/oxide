@@ -194,7 +194,7 @@
       'hard_dependency': 1,
       'variables': {
         'chromium_code': 1,
-        'oxide_subprocess_path%': 'oxide-renderer',
+        'oxide_subprocess_path%': '<(oxide_libexecdir)/<(oxide_renderer)',
       },
       'direct_dependent_settings': {
         'include_dirs': [
