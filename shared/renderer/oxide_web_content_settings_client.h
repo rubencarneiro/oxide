@@ -47,7 +47,6 @@ class WebContentSettingsClient final :
 
   // blink::WebContentSettingsClient implementation
   bool allowDisplayingInsecureContent(bool enabled_per_settings,
-                                      const blink::WebSecurityOrigin& origin,
                                       const blink::WebURL& url) final;
   bool allowRunningInsecureContent(bool enabled_per_settings,
                                    const blink::WebSecurityOrigin& origin,
