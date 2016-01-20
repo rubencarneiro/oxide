@@ -269,7 +269,9 @@ set(_GYP_COMMAND
     -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})
 list(APPEND _GYP_COMMAND -Doxide_lib=${OXIDE_LIB})
-list(APPEND _GYP_COMMAND -Doxide_lib_version=${OXIDE_LIB_VERSION})
+calculate_versioned_library_suffix(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
+string(REGEX REPLACE "^\\." "" _OXIDE_LIB_SUFFIX ${_OXIDE_LIB_SUFFIX})
+list(APPEND _GYP_COMMAND -Doxide_lib_suffix=${_OXIDE_LIB_SUFFIX})
 list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})
 list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PLATFORM_FULLNAME})
 # oxide_build should be renamed to oxide_platform
