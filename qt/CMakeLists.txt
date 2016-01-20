@@ -38,12 +38,11 @@ if(CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
-if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.2.0")
-  message(FATAL_ERROR "A Qt version of at least 5.2.0 is required to build Oxide")
-endif()
+# 5.2.0 is required for us to be able to set a share context
+find_package(Qt5Quick 5.2.0 REQUIRED)
 
 set(_OXIDEQMLSCENE_DEFAULT OFF)
-if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+if(${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
   set(_OXIDEQMLSCENE_DEFAULT ON)
 endif()
 option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
@@ -69,11 +68,11 @@ add_subdirectory(qmlplugin)
 add_subdirectory(quick)
 
 if(ENABLE_OXIDEQMLSCENE)
-  if(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.4.0")
+  if(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.4.0")
     message(FATAL_ERROR
             "oxideqmlscene is not supported on Qt 5.4.0 and later - you can "
             "use qmlscene instead")
-  elseif(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+  elseif(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
     message(WARNING
             "oxideqmlscene is redundant on Qt 5.3.0 and later - you can use "
             "qmlscene instead")

@@ -35,7 +35,10 @@ if(CMAKE_CROSSCOMPILING)
   endif()
 else()
   # This should be enough to initialize QT_MOC_EXECUTABLE
-  find_package(Qt5Core)
+  find_package(Qt5Core REQUIRED)
+  if(NOT DEFINED QT_MOC_EXECUTABLE)
+    message(FATAL_ERROR "Qt5Core didn't define QT_MOC_EXECUTABLE")
+  endif()
 endif()
 
 set(OXIDE_PROJECT_NAME oxide-qt)
