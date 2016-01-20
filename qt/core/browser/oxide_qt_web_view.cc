@@ -1115,6 +1115,10 @@ void WebView::handleTouchEvent(QTouchEvent* event) {
   }
 }
 
+void WebView::handleTouchUngrabEvent() {
+  view_->ResetGestureDetection();
+}
+
 void WebView::handleWheelEvent(QWheelEvent* event,
                                const QPoint& window_pos) {
   view_->HandleWheelEvent(

@@ -29,6 +29,7 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
+#include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/vector2d_f.h"
@@ -457,7 +458,7 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
   // for a fling gesture, so we can’t use it.
-  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+  base::TimeDelta timestamp = ui::EventTimeForNow();
 
   float scale = 1 / device_scale;
 

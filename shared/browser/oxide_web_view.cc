@@ -1154,10 +1154,7 @@ void WebView::DidNavigateMainFrame(
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
 
-    RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-    if (rwhv) {
-      rwhv->ResetGestureDetection();
-    }
+    ResetGestureDetection();
   }
 }
 
@@ -1950,6 +1947,21 @@ void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
   }
 
   rwhv->HandleTouchEvent(touch_state_);
+}
+
+void WebView::ResetGestureDetection() {
+  scoped_ptr<ui::MotionEvent> cancel_event = touch_state_.Cancel();
+  base::TimeDelta timestamp(cancel_event->GetEventTime() - base::TimeTicks());
+  ui::TouchEvent event(ui::ET_TOUCH_CANCELLED,
+                       gfx::Point(cancel_event->GetX(), cancel_event->GetY()),
+                       cancel_event->GetPointerId(),
+                       timestamp);
+  touch_state_.Update(event);
+  
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->ResetGestureDetection();
+  }
 }
 
 void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {

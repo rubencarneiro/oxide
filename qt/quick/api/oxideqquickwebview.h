@@ -396,6 +396,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void touchUngrabEvent() Q_DECL_OVERRIDE;
   void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
   void geometryChanged(const QRectF& newGeometry,
                        const QRectF& oldGeometry) Q_DECL_OVERRIDE;
