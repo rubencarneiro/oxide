@@ -34,6 +34,12 @@ function(configure_and_install_package_config_file _inPath)
       PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
       NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_outFile}
+  string(REGEX REPLACE "([^\\.]+)\\.cmake\\.in$" "\\1" _tmp ${_inFile})
+  set(_versionFile ${_tmp}Version.cmake)
+  write_basic_package_version_file(
+      ${CMAKE_CURRENT_BINARY_DIR}/${_versionFile}
+      COMPATIBILITY AnyNewerVersion)
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_outFile} ${CMAKE_CURRENT_BINARY_DIR}/${_versionFile}
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME})
 endfunction()
