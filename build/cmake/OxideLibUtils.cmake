@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+if(DEFINED _OxideLibUtils_INCLUDED_)
+  return()
+endif()
+set(_OxideLibUtils_INCLUDED_ TRUE)
+
 macro(calculate_versioned_library_filename _out _name _version)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(${_out} ${CMAKE_SHARED_LIBRARY_PREFIX}${_name}${CMAKE_SHARED_LIBRARY_SUFFIX}.${_version})
