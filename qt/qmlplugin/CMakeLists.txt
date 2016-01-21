@@ -100,7 +100,7 @@ if(NOT CMAKE_CROSSCOMPILING)
   add_custom_target(generate_oxide_qmltypes ALL
     COMMAND env "LD_LIBRARY_PATH=${CHROMIUM_OUTPUT_DIR}/Release/lib:${OXIDE_LIB_OUTPUT_DIR}"
             env "QML2_IMPORT_PATH=${OXIDE_QMLPLUGIN_OUTPUT_DIR}"
-            qmlplugindump -v -noinstantiate com.canonical.Oxide ${OXIDE_VERSION_MAJOR}.${OXIDE_VERSION_MINOR} ${OXIDE_QMLPLUGIN_MODULE_NAME} > ${CMAKE_CURRENT_BINARY_DIR}/oxide.qmltypes
+            qmlplugindump -v -noinstantiate com.canonical.Oxide ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR} ${OXIDE_QMLPLUGIN_MODULE_NAME} > ${CMAKE_CURRENT_BINARY_DIR}/oxide.qmltypes
             && cp ${CMAKE_CURRENT_BINARY_DIR}/oxide.qmltypes ${CMAKE_CURRENT_SOURCE_DIR}/
             || true
     WORKING_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}
