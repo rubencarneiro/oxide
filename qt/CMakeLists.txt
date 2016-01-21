@@ -16,7 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+include(OxideCommonProperties)
+include(OxidePackageConfigHelpers)
 
 set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 set(OXIDE_QTPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/plugins)
@@ -59,16 +62,8 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
          GROUP_READ GROUP_EXECUTE
          WORLD_READ WORLD_EXECUTE)
 
-set(_OXIDE_QTCORE_PACKAGE_CONFIG_FILE OxideQtCore.cmake)
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/${_OXIDE_QTCORE_PACKAGE_CONFIG_FILE}.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${_OXIDE_QTCORE_PACKAGE_CONFIG_FILE}
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME}
-    PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
-    NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_OXIDE_QTCORE_PACKAGE_CONFIG_FILE}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME})
+configure_and_install_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCore.cmake.in)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OxideQtCore

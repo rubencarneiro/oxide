@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(GNUInstallDirs)
+
+include(OxideCommonProperties)
+include(OxidePackageConfigHelpers)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Qml REQUIRED)
@@ -89,15 +94,6 @@ add_custom_target(
     -DTYPE=FILE -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
     -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 
-set(_OXIDE_QTQUICK_PACKAGE_CONFIG_FILE OxideQtQuick.cmake)
 calculate_versioned_library_filename(OXIDE_QUICKLIB_FILENAME ${OXIDE_QUICKLIB} ${OXIDE_LIB_VERSION})
-
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/api/${_OXIDE_QTQUICK_PACKAGE_CONFIG_FILE}.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${_OXIDE_QTQUICK_PACKAGE_CONFIG_FILE}
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME}
-    PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
-    NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_OXIDE_QTQUICK_PACKAGE_CONFIG_FILE}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME})
+configure_and_install_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/api/OxideQtQuick.cmake.in)

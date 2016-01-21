@@ -30,32 +30,11 @@ include(CheckCXXCompilerFlag)
 include(CheckIncludeFileCXX)
 include(GNUInstallDirs)
 
-include(${CMAKE_SOURCE_DIR}/build/cmake/LibUtils.cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
-option(OXIDE_PLATFORM "The Oxide project to build")
-option(ENABLE_COMPONENT_BUILD
-       "Build all components of the core library as shared objects"
-       OFF)
-option(ENABLE_TESTS "Enable the tests" OFF)
-option(ENABLE_PROPRIETARY_CODECS "Enable support for MP3, H.264 and AAC" OFF)
-option(ENABLE_PLUGINS
-       "Enable support for PPAPI plugins. Only Flash is supported right now"
-       ON)
-option(ENABLE_CHROMEDRIVER "Build the chromedriver binary" OFF)
-option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
-option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
-option(ENABLE_HYBRIS "Enable code that uses libhybris" ON)
-option(ENABLE_HYBRIS_CAMERA
-       "Enable support for the camera compatibility layer in Ubuntu's libhybris"
-       OFF)
-
-if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
-  message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
-endif()
-
-if(NOT OXIDE_PLATFORM)
-  set(OXIDE_PLATFORM qt CACHE INTERNAL "")
-endif()
+include(OxideCommonOptions)
+include(OxideCommonProperties)
+include(OxideLibUtils)
 
 # Define variables used throughout the build
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -70,9 +49,7 @@ set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)
 set(OXIDE_BIN_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/bin)
 set(OXIDE_LIB_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/lib)
 set(OXIDE_PACKAGE_STAGE_DIR ${CMAKE_BINARY_DIR}/_package_stage)
-set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
 set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
-set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${OXIDE_PLATFORM_FULLNAME})
 
 # Use gold everywhere
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
