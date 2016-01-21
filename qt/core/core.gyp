@@ -19,7 +19,7 @@
     {
       'target_name': '<(oxide_lib)',
       'type': 'shared_library',
-      'product_extension': 'so.<(oxide_lib_version)',
+      'product_extension': '<(oxide_lib_suffix)',
       'defines': [
         'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',

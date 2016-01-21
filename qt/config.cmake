@@ -41,7 +41,6 @@ else()
   endif()
 endif()
 
-set(OXIDE_PROJECT_NAME oxide-qt)
 set(OXIDE_LIB OxideQtCore)
 set(OXIDE_LIB_VERSION 0)
 set(OXIDE_RENDERER oxide-renderer)

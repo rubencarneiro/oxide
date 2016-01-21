@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(GNUInstallDirs)
+
+include(OxideCommonProperties)
+include(OxidePackageConfigHelper)
+
 set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 set(OXIDE_QTPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/plugins)
 
@@ -38,6 +43,7 @@ if(CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
+find_package(Qt5Core REQUIRED)
 # 5.2.0 is required for us to be able to set a share context
 find_package(Qt5Quick 5.2.0 REQUIRED)
 
@@ -56,6 +62,15 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
          GROUP_READ GROUP_EXECUTE
          WORLD_READ WORLD_EXECUTE)
+
+configure_and_install_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCore.cmake.in)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OxideQtCore
+        FILES_MATCHING PATTERN *.h
+        PATTERN *_p.h EXCLUDE
+        PATTERN includes* EXCLUDE)
 
 set_target_properties(
     ${OXIDE_LIB} PROPERTIES
@@ -90,7 +105,7 @@ add_custom_target(
     -DSRCFILE=${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
     -DQML_DIR=${OXIDE_QT_PACKAGE_QMLPLUGIN_DIR}
-    -DPRODUCT_DIR=${OXIDE_PROJECT_NAME} -DOXIDE_RENDERER=${OXIDE_RENDERER}
+    -DPRODUCT_DIR=${OXIDE_PLATFORM_FULLNAME} -DOXIDE_RENDERER=${OXIDE_RENDERER}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/make-test-package-qmlrunner.cmake)
 
 add_custom_target(
