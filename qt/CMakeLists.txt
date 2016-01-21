@@ -43,6 +43,7 @@ if(CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
+find_package(Qt5Core REQUIRED)
 # 5.2.0 is required for us to be able to set a share context
 find_package(Qt5Quick 5.2.0 REQUIRED)
 
