@@ -16,6 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(GNUInstallDirs)
+
+include(OxideCommonProperties)
+include(OxidePackageConfigHelper)
+
 set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 set(OXIDE_QTPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/plugins)
 
@@ -38,12 +43,12 @@ if(CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
-if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.2.0")
-  message(FATAL_ERROR "A Qt version of at least 5.2.0 is required to build Oxide")
-endif()
+find_package(Qt5Core REQUIRED)
+# 5.2.0 is required for us to be able to set a share context
+find_package(Qt5Quick 5.2.0 REQUIRED)
 
 set(_OXIDEQMLSCENE_DEFAULT OFF)
-if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+if(${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
   set(_OXIDEQMLSCENE_DEFAULT ON)
 endif()
 option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
@@ -58,9 +63,19 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
          GROUP_READ GROUP_EXECUTE
          WORLD_READ WORLD_EXECUTE)
 
+configure_and_install_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCore.cmake.in)
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OxideQtCore
+        FILES_MATCHING PATTERN *.h
+        PATTERN *_p.h EXCLUDE
+        PATTERN includes* EXCLUDE)
+
 set_target_properties(
     ${OXIDE_LIB} PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/core/api/includes)
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/core/api/includes
+    INTERFACE_LINK_LIBRARIES Qt5::Core)
 
 set(OXIDE_QT_PACKAGE_QMLPLUGIN_DIR qml)
 
@@ -68,11 +83,11 @@ add_subdirectory(qmlplugin)
 add_subdirectory(quick)
 
 if(ENABLE_OXIDEQMLSCENE)
-  if(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.4.0")
+  if(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.4.0")
     message(FATAL_ERROR
             "oxideqmlscene is not supported on Qt 5.4.0 and later - you can "
             "use qmlscene instead")
-  elseif(NOT ${Qt5Core_VERSION_STRING} VERSION_LESS "5.3.0")
+  elseif(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
     message(WARNING
             "oxideqmlscene is redundant on Qt 5.3.0 and later - you can use "
             "qmlscene instead")
@@ -90,7 +105,7 @@ add_custom_target(
     -DSRCFILE=${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
     -DQML_DIR=${OXIDE_QT_PACKAGE_QMLPLUGIN_DIR}
-    -DPRODUCT_DIR=${OXIDE_PROJECT_NAME} -DOXIDE_RENDERER=${OXIDE_RENDERER}
+    -DPRODUCT_DIR=${OXIDE_PLATFORM_FULLNAME} -DOXIDE_RENDERER=${OXIDE_RENDERER}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/make-test-package-qmlrunner.cmake)
 
 add_custom_target(

@@ -27,15 +27,14 @@ cmake_minimum_required(VERSION 2.8.11)
 project(OXIDE)
 
 include(CheckCXXCompilerFlag)
-include(CheckCXXSymbolExists)
 include(CheckIncludeFileCXX)
-include(CMakeExpandImportedTargets)
-include(CMakeParseArguments)
 include(GNUInstallDirs)
 
-if(NOT DEFINED OXIDE_BUILD)
-  set(OXIDE_BUILD qt CACHE INTERNAL "")
-endif()
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
+
+include(OxideCommonOptions)
+include(OxideCommonProperties)
+include(OxideLibUtils)
 
 # Define variables used throughout the build
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -50,12 +49,14 @@ set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)
 set(OXIDE_BIN_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/bin)
 set(OXIDE_LIB_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/lib)
 set(OXIDE_PACKAGE_STAGE_DIR ${CMAKE_BINARY_DIR}/_package_stage)
+set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
 
 # Use gold everywhere
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
 
+# Find python executable
 if(NOT DEFINED PYTHON)
   find_program(PYTHON python)
   if(PYTHON STREQUAL "PYTHON-NOTFOUND")
@@ -63,65 +64,28 @@ if(NOT DEFINED PYTHON)
   endif()
 endif()
 
-# Allow the version number to be used in the build
-foreach(comp MAJOR MINOR PATCH)
-  execute_process(
-      COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_BUILD} ${comp}
-      OUTPUT_VARIABLE _OUTPUT
-      RESULT_VARIABLE _RESULT
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(NOT _RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to get version number")
-  endif()
-  set(OXIDE_VERSION_${comp} ${_OUTPUT})
-endforeach()
-
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
 # We have a script for loading apps from the tree
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${CMAKE_SOURCE_DIR})
 
-option(OXIDE_BUILD "The Oxide project to build" qt)
-option(ENABLE_COMPONENT_BUILD
-       "Build all components of the core library as shared objects"
-       OFF)
-option(ENABLE_TESTS "Enable the tests" OFF)
-option(ENABLE_PROPRIETARY_CODECS "Enable support for MP3, H.264 and AAC" OFF)
-option(ENABLE_PLUGINS
-       "Enable support for PPAPI plugins. Only Flash is supported right now"
-       ON)
-option(ENABLE_CHROMEDRIVER "Build the chromedriver binary" OFF)
-option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
-option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
-option(ENABLE_HYBRIS "Enable code that uses libhybris" ON)
-option(ENABLE_HYBRIS_CAMERA
-       "Enable support for the camera compatibility layer in Ubuntu's libhybris"
-       OFF)
-
-if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
-  message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
+# Allow the version number to be used in the build
+execute_process(
+    COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
+    OUTPUT_VARIABLE PROJECT_VERSION
+    RESULT_VARIABLE _RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to get version number")
 endif()
+string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_MAJOR ${PROJECT_VERSION})
+string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\2" PROJECT_VERSION_MINOR ${PROJECT_VERSION})
+string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_PATCH ${PROJECT_VERSION})
 
 # for dh_translations to extract the domain
 # (regarding syntax consistency, see http://pad.lv/1181187)
-set(GETTEXT_PACKAGE "oxide-${OXIDE_BUILD}")
-
-if(ENABLE_COMPONENT_BUILD)
-  link_directories(${CHROMIUM_LIB_DIR})
-endif()
-
-if(ENABLE_TESTS)
-  enable_testing()
-endif()
-
-# Import the configuration for this build
-include(${CMAKE_SOURCE_DIR}/${OXIDE_BUILD}/config.cmake)
-
-set(OXIDE_LIB_FILENAME_DEV
-    ${CMAKE_SHARED_LIBRARY_PREFIX}${OXIDE_LIB}${CMAKE_SHARED_LIBRARY_SUFFIX})
-set(OXIDE_LIB_FILENAME ${OXIDE_LIB_FILENAME_DEV}.${OXIDE_LIB_VERSION})
-set(CMAKE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PROJECT_NAME})
+set(GETTEXT_PACKAGE "oxide-${OXIDE_PLATFORM}")
 
 # Check we have a new enough compiler
 # FIXME: Support clang
@@ -134,8 +98,23 @@ if(NOT _COMPILER_HAS_CXX11_RESULT)
 endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+# Import the configuration for this build
+include(${CMAKE_SOURCE_DIR}/${OXIDE_PLATFORM}/config.cmake)
+
+# Set extra variables that depend on the configuration
+calculate_versioned_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
+calculate_library_filename(OXIDE_LIB_FILENAME_DEV ${OXIDE_LIB})
+
+if(ENABLE_COMPONENT_BUILD)
+  link_directories(${CHROMIUM_LIB_DIR})
+endif()
+
+if(ENABLE_TESTS)
+  enable_testing()
+endif()
+
 # Add one target for running "ninja all" on the gyp generated bits.
-# ${OXIDE_BUILD}/${OXIDE_BUILD}.gypi lists the targets that "all" depends on
+# ${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi lists the targets that "all" depends on
 find_program(_NINJA_EXE ninja)
 if(_NINJA_EXE STREQUAL "_NINJA_EXE-NOTFOUND")
   message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
@@ -167,7 +146,7 @@ set_target_properties(
 
 file(GLOB_RECURSE I18N_SRC_FILES
      RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-     ${OXIDE_BUILD}/**.cc shared/**.cc)
+     ${OXIDE_PLATFORM}/**.cc shared/**.cc)
 list(SORT I18N_SRC_FILES)
 
 set(_OXIDE_INSTALL_LIB ${CHROMIUM_LIB_DIR}/${OXIDE_LIB_FILENAME})
@@ -207,7 +186,7 @@ if(ENABLE_COMPONENT_BUILD)
 endif()
 
 add_subdirectory(po)
-add_subdirectory(${OXIDE_BUILD})
+add_subdirectory(${OXIDE_PLATFORM})
 
 add_custom_target(
     test-package-common-libs
@@ -219,26 +198,26 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND}
     "-DFILES=\"${_OXIDE_INSTALL_PROGRAMS};${_CHROME_SANDBOX}\""
     -DTYPE=PROGRAM
-    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PROJECT_NAME}
+    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
     -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 add_custom_target(
     test-package-common-files
     COMMAND ${CMAKE_COMMAND} "-DFILES=\"${_OXIDE_INSTALL_FILES}\""
     -DTYPE=FILE
-    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PROJECT_NAME}
+    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
     -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 add_custom_target(
     test-package-common-locales
     COMMAND ${CMAKE_COMMAND} -DFILES=${_OXIDE_INSTALL_LOCALEDIR}
     -DTYPE=DIRECTORY
-    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PROJECT_NAME}
+    -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
     -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 if(ENABLE_COMPONENT_BUILD)
   add_custom_target(
       test-package-common-component-libs
       COMMAND ${CMAKE_COMMAND} -DFILES=${_OXIDE_INSTALL_LOCALEDIR}
       -DMATCH_PATTERN="*${CMAKE_SHARED_LIBRARY_SUFFIX}" -DTYPE=DIRECTORY
-      -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PROJECT_NAME}
+      -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
       -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 endif()
 
@@ -255,22 +234,25 @@ endif()
 add_custom_target(
     test-package
     COMMAND ${CMAKE_COMMAND} -E
-    tar czvf ${OXIDE_OUTPUT_DIR}/${OXIDE_PROJECT_NAME}.tar.bz2 *
+    tar czvf ${OXIDE_OUTPUT_DIR}/${OXIDE_PLATFORM_FULLNAME}.tar.bz2 *
     WORKING_DIRECTORY ${OXIDE_PACKAGE_STAGE_DIR}
-    DEPENDS test-package-common test-package-${OXIDE_BUILD})
+    DEPENDS test-package-common test-package-${OXIDE_PLATFORM})
 
 # Build the gyp command
 set(_GYP_COMMAND
     ${PYTHON} ${CMAKE_SOURCE_DIR}/build/gyp_oxide
-    -I${OXIDE_BUILD}/${OXIDE_BUILD}.gypi
+    -I${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi
     --generator-output ${CHROMIUM_OUTPUT_DIR}
     -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})
 list(APPEND _GYP_COMMAND -Doxide_lib=${OXIDE_LIB})
-list(APPEND _GYP_COMMAND -Doxide_lib_version=${OXIDE_LIB_VERSION})
+calculate_versioned_library_suffix(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
+string(REGEX REPLACE "^\\." "" _OXIDE_LIB_SUFFIX ${_OXIDE_LIB_SUFFIX})
+list(APPEND _GYP_COMMAND -Doxide_lib_suffix=${_OXIDE_LIB_SUFFIX})
 list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})
-list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PROJECT_NAME})
-list(APPEND _GYP_COMMAND -Doxide_build=${OXIDE_BUILD})
+list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PLATFORM_FULLNAME})
+# oxide_build should be renamed to oxide_platform
+list(APPEND _GYP_COMMAND -Doxide_build=${OXIDE_PLATFORM})
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_TARGET_ARCH)
     message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")

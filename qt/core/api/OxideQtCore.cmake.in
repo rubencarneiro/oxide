@@ -1,0 +1,48 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+@PACKAGE_INIT@
+
+set(OxideQtCore_FOUND TRUE)
+
+set(OxideQtCore_VERSION_MAJOR @PROJECT_VERSION_MAJOR@)
+set(OxideQtCore_VERSION_MINOR @PROJECT_VERSION_MINOR@)
+set(OxideQtCore_VERSION_PATCH @PROJECT_VERSION_PATCH@)
+set(OxideQtCore_VERSION_STRING @PROJECT_VERSION@)
+
+set(OxideQtCore_LIBRARIES OxideQt::Core)
+set(OxideQtCore_INCLUDE_DIRS
+    "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@"
+    "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/OxideQtCore")
+
+set(_FIND_PACKAGE_REQUIRED)
+if(OxideQtCore_FIND_REQUIRED)
+  set(_FIND_PACKAGE_REQUIRED REQUIRED)
+endif()
+
+find_package(Qt5Core ${_FIND_PACKAGE_REQUIRED})
+list(APPEND OxideQtCore_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS})
+
+if(NOT TARGET OxideQt::Core)
+  add_library(OxideQt::Core SHARED IMPORTED)
+  set_target_properties(
+      OxideQt::Core PROPERTIES
+      IMPORTED_LOCATION @PACKAGE_CMAKE_INSTALL_LIBDIR@/@OXIDE_LIB_FILENAME@
+      INTERFACE_INCLUDE_DIRECTORIES ${OxideQtCore_INCLUDE_DIRS}
+      INTERFACE_LINK_LIBRARIES Qt5::Core)
+endif()

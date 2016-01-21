@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2013 Canonical Ltd.
+# Copyright (C) 2013-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,22 +30,12 @@ from utils import (
 
 def main(args):
   if len(args) < 1:
-    print("Usage: get-version.py <port> [<component>]", file=sys.stderr)
+    print("Usage: get-version.py <port>", file=sys.stderr)
     sys.exit(1)
 
   v = VersionFileParser(os.path.join(TOPSRCDIR, args[0], "VERSION"))
 
-  if len(args) == 1:
-    print(v)
-    sys.exit(0)
-
-  component = args[1].lower()
-
-  if component not in ["major", "minor", "patch"]:
-    print("Invalid component", file=sys.stderr)
-    sys.exit(1)
-
-  print(getattr(v, component))
+  print(v)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
