@@ -61,15 +61,19 @@ class MessagePump : public QObject,
   void timerEvent(QTimerEvent* event) override;
   void customEvent(QEvent* event) override;
 
+  class RecursionHandler;
+
   struct RunState {
     RunState() :
         delegate(nullptr),
         event_loop(nullptr),
-        should_quit(false) {}
+        should_quit(false),
+        running_task(false) {}
 
     Delegate* delegate;
     QEventLoop* event_loop;
     bool should_quit;
+    bool running_task;
   };
 
   int32_t work_scheduled_;
