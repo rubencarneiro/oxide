@@ -394,6 +394,8 @@
         'browser/oxide_navigation_intercept_resource_throttle.h',
         'browser/oxide_network_delegate.cc',
         'browser/oxide_network_delegate.h',
+        'browser/oxide_platform_run_loop.cc',
+        'browser/oxide_platform_run_loop.h',
         'browser/oxide_power_save_blocker.cc',
         'browser/oxide_power_save_blocker.h',
         'browser/oxide_quota_permission_context.cc',
