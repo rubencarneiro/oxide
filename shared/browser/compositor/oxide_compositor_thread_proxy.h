@@ -75,7 +75,7 @@ class CompositorThreadProxy
 
   // Notification from the compositor that a buffer was created with the
   // specified mailbox name, called on the impl thread
-  void MailboxBufferCreated(const gpu::Mailbox& mailbox, uint32_t sync_point);
+  void MailboxBufferCreated(const gpu::Mailbox& mailbox, uint64_t sync_point);
 
   // Notification from the compositor that the buffer with the specified
   // mailbox name was destroyed, called on the impl thread
