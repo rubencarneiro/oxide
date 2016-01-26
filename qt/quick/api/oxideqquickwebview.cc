@@ -43,6 +43,7 @@
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqglobal_p.h"
 #include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -1071,13 +1072,11 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy()) {
     d->proxy()->updateWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
-    static bool warned = false;
-    if (!warned) {
-      warned = true;
-      qWarning() <<
-          "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
-          "to loadEvent instead";
-    }
+    WARN_DEPRECATED_API_USAGE() <<
+        "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
+        "loadEvent if you want load event notifications, or "
+        "loadingStateChanged if you want to detect changes to the loading "
+        "property";
     d->using_old_load_event_signal_ = true;
   }
 #undef VIEW_SIGNAL

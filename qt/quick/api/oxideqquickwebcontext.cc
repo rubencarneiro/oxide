@@ -30,6 +30,7 @@
 #include <QtQuickVersion>
 #include <QWeakPointer>
 
+#include "qt/core/api/oxideqglobal_p.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
 #include "qt/quick/oxide_qquick_init.h"
 
@@ -810,13 +811,9 @@ void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
     return;
   }
 
-  static bool warned = false;
-  if (!warned) {
-    warned = true;
-    qWarning() <<
-        "OxideQQuickWebContext::storageAccessPermissionDelegate is deprecated "
-        "and no longer works";
-  }
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebContext: storageAccessPermissionDelegate is deprecated "
+      "and no longer works";
 
   if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
     return;
@@ -846,13 +843,9 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
     return;
   }
 
-  static bool warned = false;
-  if (!warned) {
-    warned = true;
-    qWarning() <<
-        "OxideQQuickWebContext::userAgentOverrideDelegate is deprecated. "
-        "Please consider switching to userAgentOverrides instead";
-  }
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebContext: userAgentOverrideDelegate is deprecated. "
+      "Please use userAgentOverrides instead";
 
   if (delegate && !d->prepareToAttachDelegateWorker(delegate)) {
     return;
