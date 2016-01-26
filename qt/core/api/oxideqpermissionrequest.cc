@@ -31,6 +31,8 @@
 
 #include "shared/browser/permissions/oxide_permission_request.h"
 
+#include "oxideqglobal_p.h"
+
 void OxideQPermissionRequestPrivate::OnCancelled() {
   Q_Q(OxideQPermissionRequest);
 
@@ -140,13 +142,9 @@ QUrl OxideQPermissionRequest::embedder() const {
 }
 
 QUrl OxideQPermissionRequest::url() const {
-  static bool warn_once = false;
-  if (!warn_once) {
-    warn_once = true;
-    qWarning() <<
-        "OxideQPermissionRequest::url is deprecated. Please use "
-        "OxideQPermissionRequest::origin instead";
-  }
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQPermissionRequest::url is deprecated. Please use "
+      "OxideQPermissionRequest::origin instead";
 
   return origin();
 }
@@ -184,13 +182,9 @@ OxideQGeolocationPermissionRequest::OxideQGeolocationPermissionRequest(
 OxideQGeolocationPermissionRequest::~OxideQGeolocationPermissionRequest() {}
 
 void OxideQGeolocationPermissionRequest::accept() {
-  static bool warn_once = false;
-  if (!warn_once) {
-    warn_once = true;
-    qWarning() <<
-        "OxideQGeolocationPermissionRequest::accept is deprecated. Please use "
-        "OxideQPermissionRequest::allow instead";
-  }
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQGeolocationPermissionRequest::accept is deprecated. Please use "
+      "OxideQPermissionRequest::allow instead";
 
   allow();
 }
