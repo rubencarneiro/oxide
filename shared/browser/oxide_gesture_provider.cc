@@ -61,7 +61,7 @@ ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
 
 ui::GestureProvider::Config GetGestureProviderConfig() {
   ui::GestureProvider::Config config;
-  config.display = gfx::Screen::GetNativeScreen()->GetPrimaryDisplay();
+  config.display = gfx::Screen::GetScreen()->GetPrimaryDisplay();
 
   config.gesture_detector_config = GetGestureDetectorConfig();
   config.scale_gesture_detector_config = GetScaleGestureDetectorConfig();
