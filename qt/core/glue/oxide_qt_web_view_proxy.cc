@@ -18,10 +18,6 @@
 #include "oxide_qt_web_view_proxy.h"
 
 #include "base/logging.h"
-#include "qt/core/api/oxideqfindcontroller.h"
-#include "qt/core/api/oxideqfindcontroller_p.h"
-#include "qt/core/api/oxideqsecuritystatus.h"
-#include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/browser/oxide_qt_web_context.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
@@ -59,14 +55,6 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 }
 
 WebViewProxy::~WebViewProxy() {}
-
-// static
-void WebViewProxy::createHelpers(
-    QScopedPointer<OxideQFindController>* find_controller,
-    QScopedPointer<OxideQSecurityStatus>* security_status) {
-  find_controller->reset(OxideQFindControllerPrivate::Create());
-  security_status->reset(OxideQSecurityStatusPrivate::Create());
-}
 
 } // namespace qt
 } // namespace oxide
