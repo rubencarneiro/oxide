@@ -29,7 +29,7 @@ namespace oxide {
 
 class RenderWidgetHostViewContainer;
 
-class WebContentsView final : public content::WebContentsViewOxide {
+class WebContentsView : public content::WebContentsViewOxide {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -39,47 +39,41 @@ class WebContentsView final : public content::WebContentsViewOxide {
 
   void SetContainer(RenderWidgetHostViewContainer* container);
 
+ private:
+  WebContentsView(content::WebContents* web_contents);
+
   // content::WebContentsView
-  gfx::NativeView GetNativeView() const final;
-  gfx::NativeView GetContentNativeView() const final;
-  gfx::NativeWindow GetTopLevelNativeWindow() const final;
-
-  void GetContainerBounds(gfx::Rect* out) const final;
-
-  void SizeContents(const gfx::Size& size) final;
-
-  void Focus() final;
-  void SetInitialFocus() final;
-  void StoreFocus() final;
-  void RestoreFocus() final;
-
-  content::DropData* GetDropData() const final;
-
-  gfx::Rect GetViewBounds() const final;
-
+  gfx::NativeView GetNativeView() const override;
+  gfx::NativeView GetContentNativeView() const override;
+  gfx::NativeWindow GetTopLevelNativeWindow() const override;
+  void GetContainerBounds(gfx::Rect* out) const override;
+  void SizeContents(const gfx::Size& size) override;
+  void Focus() override;
+  void SetInitialFocus() override;
+  void StoreFocus() override;
+  void RestoreFocus() override;
+  content::DropData* GetDropData() const override;
+  gfx::Rect GetViewBounds() const override;
   void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) final;
+                  gfx::NativeView context) override;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host,
-      bool is_guest_view_hack) final;
+      bool is_guest_view_hack) override;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) final;
-
-  void SetPageTitle(const base::string16& title) final;
-
-  void RenderViewCreated(content::RenderViewHost* host) final;
-  void RenderViewSwappedIn(content::RenderViewHost* host) final;
-
-  void SetOverscrollControllerEnabled(bool enabled) final;
+      content::RenderWidgetHost* render_widget_host) override;
+  void SetPageTitle(const base::string16& title) override;
+  void RenderViewCreated(content::RenderViewHost* host) override;
+  void RenderViewSwappedIn(content::RenderViewHost* host) override;
+  void SetOverscrollControllerEnabled(bool enabled) override;
 
   // content::RenderViewHostDelegateView
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params) final;
+                       const content::ContextMenuParams& params) override;
   void StartDragging(const content::DropData& drop_data,
                      blink::WebDragOperationsMask allowed_ops,
                      const gfx::ImageSkia& image,
                      const gfx::Vector2d& image_offset,
-                     const content::DragEventSourceInfo& event_info) final;
+                     const content::DragEventSourceInfo& event_info) override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,
@@ -87,17 +81,14 @@ class WebContentsView final : public content::WebContentsViewOxide {
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
-                     bool allow_multiple_selection) final;
-  void HidePopupMenu() final;
-
- private:
-  WebContentsView(content::WebContents* web_contents);
+                     bool allow_multiple_selection) override;
+  void HidePopupMenu() override;
 
   content::WebContents* web_contents_;
 
   RenderWidgetHostViewContainer* container_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
+  DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };
 
 } // namespace oxide

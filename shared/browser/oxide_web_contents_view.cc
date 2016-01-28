@@ -39,29 +39,6 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
                              new UnownedUserData<WebContentsView>(this));
 }
 
-WebContentsView::~WebContentsView() {
-  web_contents_->RemoveUserData(&kUserDataKey);
-}
-
-// static
-content::WebContentsViewOxide* WebContentsView::Create(
-    content::WebContents* web_contents) {
-  return new WebContentsView(web_contents);
-}
-
-// static
-WebContentsView* WebContentsView::FromWebContents(
-    content::WebContents* contents) {
-  UnownedUserData<WebContentsView>* data =
-      static_cast<UnownedUserData<WebContentsView>*>(
-        contents->GetUserData(&kUserDataKey));
-  if (!data) {
-    return nullptr;
-  }
-
-  return data->get();
-}
-
 void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
   container_ = container;
 }
@@ -179,6 +156,29 @@ void WebContentsView::ShowPopupMenu(
 
 void WebContentsView::HidePopupMenu() {
   container_->HidePopupMenu();
+}
+
+WebContentsView::~WebContentsView() {
+  web_contents_->RemoveUserData(&kUserDataKey);
+}
+
+// static
+content::WebContentsViewOxide* WebContentsView::Create(
+    content::WebContents* web_contents) {
+  return new WebContentsView(web_contents);
+}
+
+// static
+WebContentsView* WebContentsView::FromWebContents(
+    content::WebContents* contents) {
+  UnownedUserData<WebContentsView>* data =
+      static_cast<UnownedUserData<WebContentsView>*>(
+        contents->GetUserData(&kUserDataKey));
+  if (!data) {
+    return nullptr;
+  }
+
+  return data->get();
 }
 
 } // namespace oxide
