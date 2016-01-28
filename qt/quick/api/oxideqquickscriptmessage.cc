@@ -18,6 +18,8 @@
 #include "oxideqquickscriptmessage.h"
 #include "oxideqquickscriptmessage_p.h"
 
+#include "qt/core/api/oxideqglobal_p.h"
+
 #include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
 
@@ -71,13 +73,9 @@ QString OxideQQuickScriptMessage::msgId() const {
 }
 
 QVariant OxideQQuickScriptMessage::args() const {
-  static bool warned = false;
-  if (!warned) {
-    warned = true;
-    qWarning() <<
-        "OxideQQuickScriptMessage: args is deprecated. Please use "
-        "OxideQQuickScriptMessage::payload instead";
-  }
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickScriptMessage: args is deprecated. Please use payload "
+      "instead";
 
   return payload();
 }

@@ -154,10 +154,6 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual ~WebViewProxy();
 
-  static void createHelpers(
-      QScopedPointer<OxideQFindController>* find_controller,
-      QScopedPointer<OxideQSecurityStatus>* security_status);
-
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;
 
