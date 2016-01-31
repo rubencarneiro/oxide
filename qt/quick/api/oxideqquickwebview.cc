@@ -42,12 +42,15 @@
 
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqfindcontroller.h"
+#include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqglobal_p.h"
 #include "qt/core/api/oxideqhttpauthenticationrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqnewviewrequest.h"
 #include "qt/core/api/oxideqpermissionrequest.h"
+#include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/quick/oxide_qquick_accelerated_frame_node.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
@@ -146,6 +149,8 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view) :
     oxide::qt::WebViewProxyHandle(view),
     load_progress_(0),
+    security_status_(OxideQSecurityStatusPrivate::Create()),
+    find_controller_(OxideQFindControllerPrivate::Create()),
     constructed_(false),
     navigation_history_(view),
     context_menu_(nullptr),
@@ -160,10 +165,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
     using_old_load_event_signal_(false),
     handling_unhandled_key_event_(false),
-    construct_props_(new ConstructProps()) {
-  oxide::qt::WebViewProxy::createHelpers(&find_controller_,
-                                         &security_status_);
-}
+    construct_props_(new ConstructProps()) {}
 
 QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   Q_Q(OxideQQuickWebView);
