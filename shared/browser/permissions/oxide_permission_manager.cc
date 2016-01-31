@@ -36,22 +36,22 @@ namespace {
 content::PermissionStatus ToPermissionStatus(
     PermissionRequestResponse response) {
   return response == PERMISSION_REQUEST_RESPONSE_ALLOW ?
-      content::PERMISSION_STATUS_GRANTED :
-      content::PERMISSION_STATUS_DENIED;
+      content::PermissionStatus::GRANTED :
+      content::PermissionStatus::DENIED;
 }
 
 content::PermissionStatus ToPermissionStatus(
     TemporarySavedPermissionStatus status) {
   switch (status) {
     case TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED:
-      return content::PERMISSION_STATUS_GRANTED;
+      return content::PermissionStatus::GRANTED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_DENIED:
-      return content::PERMISSION_STATUS_DENIED;
+      return content::PermissionStatus::DENIED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_ASK:
-      return content::PERMISSION_STATUS_ASK;
+      return content::PermissionStatus::ASK;
     default:
       NOTREACHED();
-      return content::PERMISSION_STATUS_DENIED;
+      return content::PermissionStatus::DENIED;
   }
 }
 
@@ -136,14 +136,14 @@ int PermissionManager::RequestPermission(
     bool user_gesture,
     const base::Callback<void(content::PermissionStatus)>& callback) {
   if (!IsPermissionTypeSupported(permission)) {
-    callback.Run(content::PERMISSION_STATUS_DENIED);
+    callback.Run(content::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   if (!web_contents) {
-    callback.Run(content::PERMISSION_STATUS_DENIED);
+    callback.Run(content::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
@@ -173,12 +173,12 @@ int PermissionManager::RequestPermission(
       PermissionRequestDispatcher::FromWebContents(web_contents);
   if (!dispatcher) {
     // Are there any cases when this can be null?
-    callback.Run(content::PERMISSION_STATUS_DENIED);
+    callback.Run(content::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
   if (!dispatcher->CanDispatchRequest()) {
-    callback.Run(content::PERMISSION_STATUS_DENIED);
+    callback.Run(content::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
@@ -258,7 +258,7 @@ content::PermissionStatus PermissionManager::GetPermissionStatus(
     const GURL& requesting_origin,
     const GURL& embedding_origin) {
   if (!IsPermissionTypeSupported(permission)) {
-    return content::PERMISSION_STATUS_DENIED;
+    return content::PermissionStatus::DENIED;
   }
 
   return ToPermissionStatus(

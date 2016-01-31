@@ -26,6 +26,7 @@
 #include "cc/resources/resource_format.h"
 #include "cc/resources/resource_provider.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
+#include "gpu/command_buffer/common/sync_token.h"
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
@@ -80,9 +81,15 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
     gl->GenMailboxCHROMIUM(back_buffer_.mailbox.name);
     gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, back_buffer_.mailbox.name);
 
-    gl->Flush();
-    proxy_->MailboxBufferCreated(back_buffer_.mailbox,
-                                 gl->InsertSyncPointCHROMIUM());
+    GLuint64 sync_point = gl->InsertFenceSyncCHROMIUM();
+    gl->ShallowFlushCHROMIUM();
+
+    // We don't use the SyncToken. However, generating it ensures that the
+    // sync point has been flushed to the GPU thread before continuing
+    gpu::SyncToken token;
+    gl->GenSyncTokenCHROMIUM(sync_point, token.GetData());
+
+    proxy_->MailboxBufferCreated(back_buffer_.mailbox, sync_point);
   }
 }
 

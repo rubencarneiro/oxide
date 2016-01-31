@@ -17,6 +17,7 @@
 
 #include "oxide_compositor_utils.h"
 
+#include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/containers/hash_tables.h"
 #include "base/logging.h"
@@ -64,7 +65,7 @@ class FetchTextureResourcesTaskInfo {
     return command_buffer_id_;
   }
   const gpu::Mailbox& mailbox() const { return mailbox_; }
-  uint32_t sync_point() const { return sync_point_; }
+  uint64_t sync_point() const { return sync_point_; }
   base::SingleThreadTaskRunner* task_runner() const {
     return task_runner_.get();
   }
@@ -74,7 +75,7 @@ class FetchTextureResourcesTaskInfo {
       int32_t client_id,
       int32_t route_id,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
+      uint64_t sync_point,
       base::SingleThreadTaskRunner* task_runner)
       : command_buffer_id_(client_id, route_id),
         mailbox_(mailbox),
@@ -84,7 +85,7 @@ class FetchTextureResourcesTaskInfo {
  private:
   CommandBufferID command_buffer_id_;
   gpu::Mailbox mailbox_;
-  uint32_t sync_point_;
+  uint64_t sync_point_;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 };
 
@@ -94,7 +95,7 @@ class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
       int32_t client_id,
       int32_t route_id,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
+      uint64_t sync_point,
       const CompositorUtils::GetTextureFromMailboxCallback& callback,
       base::SingleThreadTaskRunner* task_runner)
       : FetchTextureResourcesTaskInfo(client_id,
@@ -120,7 +121,7 @@ class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
       int32_t client_id,
       int32_t route_id,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
+      uint64_t sync_point,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
       base::SingleThreadTaskRunner* task_runner)
       : FetchTextureResourcesTaskInfo(client_id,
@@ -162,13 +163,13 @@ class CompositorUtilsImpl : public CompositorUtils,
   void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
+      uint64_t sync_point,
       const CompositorUtils::GetTextureFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
   void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
+      uint64_t sync_point,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
       scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
   bool CanUseGpuCompositing() const override;
@@ -236,9 +237,12 @@ class CompositorUtilsImpl : public CompositorUtils,
   } main_unsafe_access_;
 
   struct GpuData {
-    GpuData() : has_shutdown(false) {}
+    GpuData()
+        : has_shutdown(false),
+          in_fetch_resources(false) {}
 
     bool has_shutdown;
+    bool in_fetch_resources;
   } gpu_unsafe_access_;
 
   const MainData& main() const;
@@ -322,6 +326,7 @@ void CompositorUtilsImpl::InitializeOnGpuThread() {
 void CompositorUtilsImpl::ShutdownOnGpuThread(
     base::WaitableEvent* shutdown_event) {
   DCHECK(!gpu().has_shutdown);
+  DCHECK(!gpu().in_fetch_resources);
 
   base::MessageLoop::current()->RemoveTaskObserver(this);
   gpu().has_shutdown = true;
@@ -342,21 +347,35 @@ void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
          texture_resource_fetches_.info_map.end());
   texture_resource_fetches_.info_map[id] = info;
 
-  if (GpuUtils::IsSyncPointRetired(info->sync_point())) {
+  if (GpuUtils::IsSyncPointRetired(info->command_buffer_id(),
+                                   info->sync_point())) {
     ContinueFetchTextureResourcesOnGpuThread_Locked(id);
     return;
   }
 
-  GpuUtils::AddSyncPointCallback(
-      info->sync_point(),
-      base::Bind(&CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread,
-                 base::Unretained(this), id));
+  DCHECK(!gpu().in_fetch_resources);
+  base::AutoReset<bool> in_fetch_resources(&gpu().in_fetch_resources, true);
+
+  if (!GpuUtils::WaitForSyncPoint(
+          info->command_buffer_id(),
+          info->sync_point(),
+          base::Bind(
+            &CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread,
+            base::Unretained(this),
+            id))) {
+    LOG(WARNING) << "Failed to wait for invalid fence sync";
+  }
 }
 
 void CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread(int id) {
   DCHECK(gpu_thread_checker_.CalledOnValidThread());
 
   if (gpu().has_shutdown) {
+    return;
+  }
+
+  if (gpu().in_fetch_resources) {
+    ContinueFetchTextureResourcesOnGpuThread_Locked(id);
     return;
   }
 
@@ -545,7 +564,7 @@ CompositorUtilsImpl::GetTaskRunner() {
 void CompositorUtilsImpl::GetTextureFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint32_t sync_point,
+    uint64_t sync_point,
     const CompositorUtils::GetTextureFromMailboxCallback& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
   DCHECK(context_provider);
@@ -585,7 +604,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
 void CompositorUtilsImpl::CreateEGLImageFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint32_t sync_point,
+    uint64_t sync_point,
     const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
   DCHECK(context_provider);

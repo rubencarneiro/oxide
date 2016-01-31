@@ -21,6 +21,7 @@
 
 #include "base/logging.h"
 #include "content/public/browser/desktop_notification_delegate.h"
+#include "content/public/common/notification_resources.h"
 #include "content/public/common/platform_notification_data.h"
 
 #include "shared/browser/oxide_browser_context.h"
@@ -99,8 +100,8 @@ PlatformNotificationService::CheckPermissionOnIOThread(
 void PlatformNotificationService::DisplayNotification(
     content::BrowserContext* browser_context,
     const GURL& origin,
-    const SkBitmap& icon,
     const content::PlatformNotificationData& notification_data,
+    const content::NotificationResources& notification_resources,
     scoped_ptr<content::DesktopNotificationDelegate> delegate,
     base::Closure* cancel_callback) {
   NotificationID id(BrowserContext::FromContent(browser_context)->GetID(),
@@ -108,7 +109,7 @@ void PlatformNotificationService::DisplayNotification(
                     notification_data.tag);
   NotificationData data(notification_data.title,
                         notification_data.body,
-                        icon);
+                        notification_resources.notification_icon);
   scoped_refptr<NotificationDelegateProxy> delegate_proxy =
       new NotificationDelegateProxy(std::move(delegate));
 
@@ -136,8 +137,8 @@ void PlatformNotificationService::DisplayPersistentNotification(
     content::BrowserContext* browser_context,
     int64_t service_worker_registration_id,
     const GURL& origin,
-    const SkBitmap& icon,
-    const content::PlatformNotificationData& notification_data) {
+    const content::PlatformNotificationData& notification_data,
+    const content::NotificationResources& notification_resources) {
   NOTIMPLEMENTED();
 }
 
