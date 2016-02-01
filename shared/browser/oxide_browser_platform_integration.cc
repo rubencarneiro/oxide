@@ -107,4 +107,8 @@ void BrowserPlatformIntegration::NotifyClipboardDataChanged() {
                     ClipboardDataChanged());
 }
 
+void BrowserPlatformIntegration::CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+}
+
 } // namespace oxide

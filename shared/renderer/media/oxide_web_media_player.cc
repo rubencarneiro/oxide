@@ -49,7 +49,7 @@
 #include "ui/gfx/image/image.h"
 // #include "webkit/renderer/compositor_bindings/web_layer_impl.h"
 
-static const uint32 kGLTextureExternalOES = 0x8D65;
+static const uint32_t kGLTextureExternalOES = 0x8D65;
 
 using blink::WebMediaPlayer;
 using blink::WebSize;

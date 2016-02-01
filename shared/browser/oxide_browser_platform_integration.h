@@ -24,6 +24,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
+#include "device/vibration/vibration_manager_impl.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 class GURL;
@@ -104,6 +105,10 @@ class BrowserPlatformIntegration {
 
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
+
+  // Get the proper vibration manager factory
+  virtual void CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request);
 
  protected:
   BrowserPlatformIntegration();
