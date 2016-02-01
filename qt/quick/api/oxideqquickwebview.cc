@@ -1319,6 +1319,17 @@ void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
   d->proxy()->handleTouchEvent(event);
 }
 
+void OxideQQuickWebView::touchUngrabEvent() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->proxy()) {
+    QQuickItem::touchUngrabEvent();
+    return;
+  }
+
+  d->proxy()->handleTouchUngrabEvent();
+}
+
 void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
   Q_D(OxideQQuickWebView);
 

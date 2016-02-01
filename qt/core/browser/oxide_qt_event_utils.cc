@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -460,6 +460,13 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
   // for a fling gesture, so we can’t use it.
   base::TimeDelta timestamp = ui::EventTimeForNow();
 
+  if (event->type() == QEvent::TouchCancel) {
+    results->push_back(
+        new ui::TouchEvent(ui::ET_TOUCH_CANCELLED, gfx::Point(), 0, timestamp));
+    touch_point_content_offsets_.clear();
+    return;
+  }
+
   float scale = 1 / device_scale;
 
   for (int i = 0; i < event->touchPoints().size(); ++i) {
@@ -503,6 +510,14 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
       touch_point_content_offsets_.erase(touch_point.id());
     }
   }
+}
+
+ui::TouchEvent* UITouchEventFactory::Cancel() {
+  ScopedVector<ui::TouchEvent> events;
+  QTouchEvent cancel_event(QEvent::TouchCancel);
+  MakeEvents(&cancel_event, 0.0f, 0.0f, &events);
+  DCHECK_EQ(events.size(), 1);
+  return events.front();
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,

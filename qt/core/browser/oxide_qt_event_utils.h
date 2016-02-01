@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,7 @@ class UITouchEventFactory final {
                   float device_scale,
                   float location_bar_content_offset_dip,
                   ScopedVector<ui::TouchEvent>* results);
+  ui::TouchEvent* Cancel();
 
  private:
   std::map<int, double> touch_point_content_offsets_;

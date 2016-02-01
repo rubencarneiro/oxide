@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -55,6 +55,7 @@ class TouchEventState : public ui::MotionEvent {
   };
 
   bool IsTouchIdActive(int id) const;
+  void MarkAllTouchPointsInactive();
   void RemoveInactiveTouchPoints();
 
   size_t GetIndexFromPlatformId(int id) const;

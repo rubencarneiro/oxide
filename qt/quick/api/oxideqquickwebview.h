@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -396,6 +396,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void touchUngrabEvent() Q_DECL_OVERRIDE;
   void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
   void geometryChanged(const QRectF& newGeometry,
                        const QRectF& oldGeometry) Q_DECL_OVERRIDE;
