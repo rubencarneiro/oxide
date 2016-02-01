@@ -48,7 +48,7 @@ import subcommand
 RELBRANCH_FILE = os.path.join(TOPSRCDIR, ".relbranch")
 STATE_FILE = os.path.join(TOPSRCDIR, ".rebase.state")
 
-DEV_BRANCH_PREFIX = "oxide/dev/"
+DEV_BRANCH_PREFIX = "oxide/dev/cr"
 REL_BRANCH_PREFIX = "oxide/"
 
 GCLIENT_REVINFO_SPEC = (

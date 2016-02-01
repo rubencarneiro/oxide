@@ -38,7 +38,7 @@ target_link_libraries(${QML_PLUGIN}
 set_target_properties(
     ${QML_PLUGIN} PROPERTIES
     AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
+    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 foreach(f
     qmldir
@@ -53,25 +53,25 @@ foreach(f
       copy_${QML_PLUGIN}_${f} ALL
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_SOURCE_DIR}/${f}
-        ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}
+        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}
       DEPENDS ${QML_PLUGIN})
 endforeach()
 
 add_custom_target(
     mkdir_${QML_PLUGIN}.hack ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory
-      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack)
+      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack)
 add_custom_target(
     copy_${QML_PLUGIN}_qmldir.hack ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       ${CMAKE_CURRENT_SOURCE_DIR}/qmldir.hack
-      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/qmldir
+      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/qmldir
     DEPENDS mkdir_${QML_PLUGIN}.hack)
 add_custom_target(
     copy_${QML_PLUGIN}_plugin.hack ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:${QML_PLUGIN}>
-      ${QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
+      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
     DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
 
 set(QML_TEST qmltest)
@@ -85,7 +85,7 @@ target_link_libraries(${QML_TEST}
     Qt5::Quick
     Qt5::QuickTest
     Qt5::Test
-    ${OXIDE_CORELIB_NAME})
+    ${OXIDE_LIB})
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
@@ -94,7 +94,7 @@ target_include_directories(
     ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
 set_target_properties(
     ${QML_TEST} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${BIN_OUTPUT_DIR}
+    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR}
     AUTOMOC TRUE)
 
 function(add_qml_test)
@@ -110,7 +110,7 @@ function(add_qml_test)
   endif()
 
   set(TEST_COMMAND
-      ${BIN_OUTPUT_DIR}/run_qmlapp.sh
+      ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
       --server-dir ${_ARGS_SERVER_DIR}
       --server-config 8080
@@ -126,7 +126,7 @@ function(add_qml_test)
   list(APPEND TEST_COMMAND --
        $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
        -input ${_ARGS_TEST_DIR}
-       -add-library-path ${QTPLUGIN_OUTPUT_DIR}
+       -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR}
        -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
 
   add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})

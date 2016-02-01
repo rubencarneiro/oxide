@@ -15,42 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
-#define _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
+#ifndef _OXIDE_QT_CORE_API_GLOBAL_P_H_
+#define _OXIDE_QT_CORE_API_GLOBAL_P_H_
 
+#include <QtDebug>
 #include <QtGlobal>
-#include <QString>
 
-#include "qt/core/api/oxideqglobal.h"
-
-namespace oxide {
-namespace qt {
-class FindController;
-}
-}
-
-class OXIDE_QTCORE_EXPORT OxideQFindControllerPrivate {
-  Q_DECLARE_PUBLIC(OxideQFindController)
-
- public:
-  ~OxideQFindControllerPrivate();
-
-  static OxideQFindController* Create();
-
-  static OxideQFindControllerPrivate* get(OxideQFindController* q);
-
-  oxide::qt::FindController* controller() const { return controller_.data(); }
-
- private:
-  OxideQFindControllerPrivate(OxideQFindController* q);
-
-  OxideQFindController* q_ptr;
-
-  QScopedPointer<oxide::qt::FindController> controller_;
-
-  QString text_;
-  bool case_sensitive_;
-};
-
-#endif // _OXIDE_QT_CORE_API_FIND_CONTROLLER_P_H_
-
+#define WARN_DEPRECATED_API_USAGE() \
+    static bool _warned_deprecated_api_usage = false; \
+    bool _need_to_warn = !_warned_deprecated_api_usage; \
+    _warned_deprecated_api_usage = true; \
+    if (_need_to_warn) \
+      qWarning()
+      
+#endif // _OXIDE_QT_CORE_API_GLOBAL_P_H_

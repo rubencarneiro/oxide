@@ -68,9 +68,11 @@ class GpuUtils {
 
   static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 
-  static bool IsSyncPointRetired(uint32_t sync_point);
-  static void AddSyncPointCallback(uint32_t sync_point,
-                                   const base::Closure& callback);
+  static bool IsSyncPointRetired(const CommandBufferID& command_buffer_id,
+                                 uint64_t sync_point);
+  static bool WaitForSyncPoint(const CommandBufferID& command_buffer_id,
+                               uint64_t sync_point,
+                               const base::Closure& callback);
 
   static bool CanUseEGLImage();
 

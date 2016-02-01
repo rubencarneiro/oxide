@@ -1,4 +1,6 @@
-# Copyright (C) 2013 Canonical Ltd.
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,24 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-{
-  'targets': [
-    {
-      'target_name': 'All',
-      'type': 'none',
-      'dependencies': [
-        '<@(oxide_lib_target)',
-        '<@(oxide_renderer_target)',
-        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
-      ],
-      'conditions': [
-        ['enable_chromedriver_build==1', {
-            'dependencies': [
-              '<(DEPTH)/chrome/chrome.gyp:chromedriver',
-            ],
-          }
-        ]
-      ]
-    }
-  ]
-}
+if(DEFINED _OxideCommonProperties_INCLUDED_)
+  return()
+endif()
+set(_OxideCommonProperties_INCLUDED_ TRUE)
+
+include(OxideCommonOptions)
+
+set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
+set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR}/${OXIDE_PLATFORM_FULLNAME})

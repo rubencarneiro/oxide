@@ -17,9 +17,9 @@
 {
   'targets': [
     {
-      'target_name': '<(oxide_core_name)',
+      'target_name': '<(oxide_lib)',
       'type': 'shared_library',
-      'product_extension': 'so.<(oxide_core_so_version)',
+      'product_extension': '<(oxide_lib_suffix)',
       'defines': [
         'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
@@ -56,7 +56,7 @@
         '<(DEPTH)',
       ],
       'ldflags': [
-        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
@@ -298,7 +298,7 @@
       'conditions': [
         ['component=="shared_library"', {
           'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)/lib',
           ],
         }],
       ],

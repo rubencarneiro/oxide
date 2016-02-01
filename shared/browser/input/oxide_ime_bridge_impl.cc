@@ -21,6 +21,7 @@
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/keycodes/keyboard_codes.h"
+#include "ui/gfx/range/range.h"
 
 #include "shared/browser/oxide_render_widget_host_view.h"
 
@@ -82,6 +83,7 @@ void ImeBridgeImpl::SetComposingText(
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
   rwhi->ImeSetComposition(text,
                           underlines,
+                          gfx::Range::InvalidRange(),
                           selection_range.start(),
                           selection_range.end());
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
