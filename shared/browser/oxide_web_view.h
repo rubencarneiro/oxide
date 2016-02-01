@@ -261,7 +261,6 @@ class WebView : public ScriptMessageTarget,
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
   void HandleTouchEvent(const ui::TouchEvent& event);
-  void ResetGestureDetection();
   void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
 
   void DownloadRequested(

@@ -187,7 +187,6 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleTouchUngrabEvent() = 0;
   virtual void handleWheelEvent(QWheelEvent* event,
                                 const QPoint& window_pos) = 0;
 

@@ -232,7 +232,6 @@ class WebView : public InputMethodContextClient,
   void handleKeyEvent(QKeyEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchEvent(QTouchEvent* event) override;
-  void handleTouchUngrabEvent() override;
   void handleWheelEvent(QWheelEvent* event,
                         const QPoint& window_pos) override;
 
