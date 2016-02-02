@@ -409,8 +409,7 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   if (!container_) {
-    *result =
-        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+    RenderWidgetHostViewOxide::GetDefaultScreenInfo(result);
     return;
   }
 

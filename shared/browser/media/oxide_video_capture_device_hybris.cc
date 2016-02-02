@@ -26,6 +26,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/thread_task_runner_handle.h"
 #include "media/base/video_types.h"
+#include "ui/gfx/display.h"
 #include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
@@ -33,6 +34,7 @@
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/browser/oxide_hybris_utils.h"
+#include "shared/browser/oxide_screen_client.h"
 
 namespace oxide {
 
@@ -53,9 +55,12 @@ int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
 }
 
 int GetRotation(int orientation) {
-  blink::WebScreenInfo info =
-      BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
-  return (orientation - info.orientationAngle) % 360;
+  gfx::Display display =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetPrimaryDisplay();
+  // XXX(chrisccoulson): Make sure this is the correct way around
+  return (orientation - display.RotationAsDegree()) % 360;
 }
 
 }

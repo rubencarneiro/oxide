@@ -59,15 +59,12 @@
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
 #include "oxide_render_process_initializer.h"
+#include "oxide_screen_client.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
 
 namespace {
-
-blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
-}
 
 scoped_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate) {
@@ -144,27 +141,27 @@ class Screen : public gfx::Screen {
   Screen() {}
 
   gfx::Point GetCursorScreenPoint() final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Point();
   }
 
   gfx::NativeWindow GetWindowUnderCursor() final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return nullptr;
   }
 
   gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return nullptr;
   }
 
   int GetNumDisplays() const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return 1;
   }
 
   std::vector<gfx::Display> GetAllDisplays() const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return std::vector<gfx::Display>();
   }
 
@@ -173,43 +170,36 @@ class Screen : public gfx::Screen {
     //  is the NativeView for the corresponding RenderWidgetHostView. It would
     //  be nice to find a way to cleverly map this to the associated RWHV and
     //  get the correct display
-    return GetPrimaryDisplay();
+    return gfx::Display();
   }
 
   gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Display();
   }
 
   gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Display();
   }
 
   gfx::Display GetPrimaryDisplay() const final {
-    blink::WebScreenInfo info(
-        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
-
-    gfx::Display display;
-    display.set_bounds(info.rect);
-    display.set_work_area(info.availableRect);
-    display.set_device_scale_factor(info.deviceScaleFactor);
-
-    return display;
+    return BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetPrimaryDisplay();
   }
 
   void AddObserver(gfx::DisplayObserver* observer) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
   }
   void RemoveObserver(gfx::DisplayObserver* observer) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
   }
 };
 
 } // namespace
 
 void BrowserMainParts::PreEarlyInitialization() {
-  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
   media::SetVideoCaptureDeviceFactoryOverrideFactory(

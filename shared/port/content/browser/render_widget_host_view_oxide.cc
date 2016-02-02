@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,17 @@
 
 #include "base/logging.h"
 #include "content/common/view_messages.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/gfx/display.h"
+#include "ui/gfx/screen.h"
 
 namespace content {
 
-namespace {
-DefaultScreenInfoGetter* g_default_screen_info_getter;
-}
-
 void RenderWidgetHostViewBase::GetDefaultScreenInfo(
-    blink::WebScreenInfo* results) {
-  DCHECK(g_default_screen_info_getter);
-  *results = g_default_screen_info_getter();
+    blink::WebScreenInfo* result) {
+  RenderWidgetHostViewOxide::GetWebScreenInfoForDisplay(
+      gfx::Screen::GetNativeScreen()->GetPrimaryDisplay(),
+      result);
 }
 
 void RenderWidgetHostViewOxide::TextInputStateChanged(
@@ -46,8 +46,29 @@ void RenderWidgetHostViewOxide::SelectionBoundsChanged(
 
 RenderWidgetHostViewOxide::~RenderWidgetHostViewOxide() {}
 
-void SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter* getter) {
-  g_default_screen_info_getter = getter;
+// static
+void RenderWidgetHostViewOxide::GetWebScreenInfoForDisplay(
+    const gfx::Display& display,
+    blink::WebScreenInfo* result) {
+  result->deviceScaleFactor = display.device_scale_factor();
+  result->depth = 24;
+  result->depthPerComponent = 8;
+  result->isMonochrome = false;
+  result->rect = display.bounds();
+  result->availableRect = display.work_area();
+
+  // The rotation angle of gfx::Display is the clockwise screen rotation,
+  // whereas the orientationAngle of blink::WebScreenInfo is the clockwise
+  // content rotation
+  result->orientationAngle = display.RotationAsDegree();
+  if (result->orientationAngle == 90) {
+    result->orientationAngle = 270;
+  } else if (result->orientationAngle == 270) {
+    result->orientationAngle = 90;
+  }
+
+  result->orientationType =
+      RenderWidgetHostViewBase::GetOrientationTypeForMobile(display);
 }
 
 } // namespace content
