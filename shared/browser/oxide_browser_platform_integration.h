@@ -24,18 +24,11 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
-#include "third_party/WebKit/public/web/WebDragOperation.h"
 
 class GURL;
-class SkBitmap;
 
 namespace content {
-class DropData;
 class LocationProvider;
-}
-
-namespace gfx {
-class Vector2d;
 }
 
 namespace ui {
@@ -45,6 +38,8 @@ class Clipboard;
 namespace oxide {
 
 class BrowserPlatformIntegrationObserver;
+class DragSource;
+class DragSourceClient;
 class GLContextDependent;
 class MessagePump;
 class ScreenClient;
@@ -113,18 +108,10 @@ class BrowserPlatformIntegration {
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
 
-  // Whether the implementation supports system drag and drop. Called on the
-  // UI thread
-  virtual bool IsSystemDragSupported() const;
-
-  // Perform a system drag operation. This is a synchronous operation -
-  // the implementation is expected to block / run a nested event loop.
+  // Create a new DragSource implementation. Ownership of |client| is not
+  // transferred, and |client| will outlive the returned DragSource.
   // Called on the UI thread
-  virtual blink::WebDragOperation PerformSystemDrag(
-      const content::DropData& drop_data,
-      blink::WebDragOperationsMask allowed_ops,
-      const SkBitmap& bitmap,
-      const gfx::Vector2d& image_offset_pix);
+  virtual scoped_ptr<DragSource> CreateDragSource(DragSourceClient* client);
 
  protected:
   BrowserPlatformIntegration();

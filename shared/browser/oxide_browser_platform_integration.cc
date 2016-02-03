@@ -21,6 +21,7 @@
 #include "content/public/browser/location_provider.h"
 
 #include "oxide_browser_platform_integration_observer.h"
+#include "oxide_drag_source.h"
 
 namespace oxide {
 
@@ -85,17 +86,9 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
   return kDefaultApplicationName;
 }
 
-bool BrowserPlatformIntegration::IsSystemDragSupported() const {
-  return false;
-}
-
-blink::WebDragOperation BrowserPlatformIntegration::PerformSystemDrag(
-    const content::DropData& drop_data,
-    blink::WebDragOperationsMask allowed_ops,
-    const SkBitmap& bitmap,
-    const gfx::Vector2d& image_offset_pix) {
-  NOTREACHED();
-  return blink::WebDragOperationNone;
+scoped_ptr<DragSource> BrowserPlatformIntegration::CreateDragSource(
+    DragSourceClient* client) {
+  return nullptr;
 }
 
 void BrowserPlatformIntegration::AddObserver(

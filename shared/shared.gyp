@@ -362,6 +362,8 @@
         'browser/oxide_devtools_manager.h',
         'browser/oxide_download_manager_delegate.cc',
         'browser/oxide_download_manager_delegate.h',
+        'browser/oxide_drag_source.h',
+        'browser/oxide_drag_source_client.h',
         'browser/oxide_event_utils.cc',
         'browser/oxide_event_utils.h',
         'browser/oxide_favicon_helper.cc',

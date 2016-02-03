@@ -19,8 +19,10 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
 #include "base/macros.h"
-#include "base/memory/weak_ptr.h"
+#include "base/memory/scoped_ptr.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
+
+#include "shared/browser/oxide_drag_source_client.h"
 
 namespace content {
 class WebContentsImpl;
@@ -32,9 +34,11 @@ class TouchSelectionController;
 
 namespace oxide {
 
+class DragSource;
 class RenderWidgetHostViewContainer;
 
-class WebContentsView : public content::WebContentsViewOxide {
+class WebContentsView : public content::WebContentsViewOxide,
+                        public DragSourceClient {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -91,11 +95,14 @@ class WebContentsView : public content::WebContentsViewOxide {
                      bool allow_multiple_selection) override;
   void HidePopupMenu() override;
 
+  // DragSourceClient implementaion
+  void EndDrag(blink::WebDragOperation operation) override;
+
   content::WebContentsImpl* web_contents_;
 
   RenderWidgetHostViewContainer* container_;
 
-  base::WeakPtrFactory<WebContentsView> weak_ptr_factory_;
+  scoped_ptr<DragSource> drag_source_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

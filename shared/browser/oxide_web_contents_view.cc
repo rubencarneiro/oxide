@@ -33,6 +33,7 @@
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_platform_integration.h"
+#include "oxide_drag_source.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_render_widget_host_view_container.h"
 #include "oxide_screen_client.h"
@@ -45,8 +46,7 @@ int kUserDataKey;
 
 WebContentsView::WebContentsView(content::WebContents* web_contents)
     : web_contents_(static_cast<content::WebContentsImpl*>(web_contents)),
-      container_(nullptr),
-      weak_ptr_factory_(this) {
+      container_(nullptr) {
   web_contents_->SetUserData(&kUserDataKey,
                              new UnownedUserData<WebContentsView>(this));
 }
@@ -159,22 +159,21 @@ void WebContentsView::StartDragging(
     const gfx::ImageSkia& image,
     const gfx::Vector2d& image_offset,
     const content::DragEventSourceInfo& event_info) {
-  if (!BrowserPlatformIntegration::GetInstance()->IsSystemDragSupported()) {
-    LOG(WARNING) <<
-        "Rejecting request to start a drag - system drag is not supported";
-    web_contents_->SystemDragEnded();
-    return;
-  }
-
-  static bool g_system_drag_active = false;
-  if (g_system_drag_active) {
+  if (drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag when one is already in progress";
     web_contents_->SystemDragEnded();
     return;
   }
 
-  base::AutoReset<bool> reentry_guard(&g_system_drag_active, true);
+  drag_source_ =
+      BrowserPlatformIntegration::GetInstance()->CreateDragSource(this);
+  if (!drag_source_) {
+    LOG(WARNING) <<
+        "Rejecting request to start a drag - not supported";
+    web_contents_->SystemDragEnded();
+    return;
+  }
 
   ui::TouchSelectionController* selection_controller =
       GetTouchSelectionController();
@@ -182,36 +181,15 @@ void WebContentsView::StartDragging(
     selection_controller->HideAndDisallowShowingAutomatically();
   }
 
-  base::WeakPtr<WebContentsView> self = weak_ptr_factory_.GetWeakPtr();
+  float scale = container_->GetScreenInfo().deviceScaleFactor;
+  gfx::Vector2d image_offset_pix(image_offset.x() * scale,
+                                 image_offset.y() * scale);
 
-  blink::WebDragOperation result = blink::WebDragOperationNone;
-  {
-    float scale = container_->GetScreenInfo().deviceScaleFactor;
-    gfx::Vector2d image_offset_pix(image_offset.x() * scale,
-                                   image_offset.y() * scale);
-    base::MessageLoop::ScopedNestableTaskAllower allow(
-        base::MessageLoop::current());
-    result =
-        BrowserPlatformIntegration::GetInstance()->PerformSystemDrag(
-          drop_data, allowed_ops, *image.bitmap(), image_offset_pix);
-  }
-
-  if (!self) {
-    return;
-  }
-
-  gfx::Point screen_point =
-      BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetCursorScreenPoint();
-  gfx::Point view_point =
-      screen_point - gfx::Vector2d(GetViewBounds().origin().x(),
-                                   GetViewBounds().origin().y());
-  web_contents_->DragSourceEndedAt(view_point.x(), view_point.y(),
-                                   screen_point.x(), screen_point.y(),
-                                   result);
-
-  web_contents_->SystemDragEnded();
+  drag_source_->StartDragging(web_contents_,
+                              drop_data,
+                              allowed_ops,
+                              *image.bitmap(),
+                              image_offset_pix);
 }
 
 void WebContentsView::ShowPopupMenu(
@@ -230,6 +208,25 @@ void WebContentsView::ShowPopupMenu(
 
 void WebContentsView::HidePopupMenu() {
   container_->HidePopupMenu();
+}
+
+void WebContentsView::EndDrag(blink::WebDragOperation operation) {
+  DCHECK(drag_source_);
+
+  gfx::Point screen_point =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  gfx::Point view_point =
+      screen_point - gfx::Vector2d(GetViewBounds().origin().x(),
+                                   GetViewBounds().origin().y());
+  web_contents_->DragSourceEndedAt(view_point.x(), view_point.y(),
+                                   screen_point.x(), screen_point.y(),
+                                   operation);
+
+  web_contents_->SystemDragEnded();
+
+  drag_source_.reset();
 }
 
 WebContentsView::~WebContentsView() {
