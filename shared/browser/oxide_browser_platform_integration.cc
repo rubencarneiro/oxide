@@ -85,6 +85,19 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
   return kDefaultApplicationName;
 }
 
+bool BrowserPlatformIntegration::IsSystemDragSupported() const {
+  return false;
+}
+
+blink::WebDragOperation BrowserPlatformIntegration::PerformSystemDrag(
+    const content::DropData& drop_data,
+    blink::WebDragOperationsMask allowed_ops,
+    const SkBitmap& bitmap,
+    const gfx::Vector2d& image_offset_pix) {
+  NOTREACHED();
+  return blink::WebDragOperationNone;
+}
+
 void BrowserPlatformIntegration::AddObserver(
     BrowserPlatformIntegrationObserver* observer) {
   observers_.AddObserver(observer);

@@ -24,13 +24,19 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
+#include "third_party/WebKit/public/web/WebDragOperation.h"
 
 class GURL;
+class SkBitmap;
 
 namespace content {
+class DropData;
 class LocationProvider;
 }
 
+namespace gfx {
+class Vector2d;
+}
 
 namespace ui {
 class Clipboard;
@@ -106,6 +112,19 @@ class BrowserPlatformIntegration {
 
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
+
+  // Whether the implementation supports system drag and drop. Called on the
+  // UI thread
+  virtual bool IsSystemDragSupported() const;
+
+  // Perform a system drag operation. This is a synchronous operation -
+  // the implementation is expected to block / run a nested event loop.
+  // Called on the UI thread
+  virtual blink::WebDragOperation PerformSystemDrag(
+      const content::DropData& drop_data,
+      blink::WebDragOperationsMask allowed_ops,
+      const SkBitmap& bitmap,
+      const gfx::Vector2d& image_offset_pix);
 
  protected:
   BrowserPlatformIntegration();

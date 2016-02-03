@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,14 +17,25 @@
 
 #include "oxide_web_contents_view.h"
 
+#include "base/auto_reset.h"
+#include "base/logging.h"
+#include "base/message_loop/message_loop.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/web_contents.h"
+#include "third_party/skia/include/core/SkImage.h"
+#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "third_party/WebKit/public/web/WebDragOperation.h"
+#include "ui/gfx/image/image_skia.h"
+#include "ui/gfx/image/image_skia_rep.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/common/oxide_unowned_user_data.h"
 
+#include "oxide_browser_platform_integration.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_render_widget_host_view_container.h"
+#include "oxide_screen_client.h"
 
 namespace oxide {
 
@@ -33,10 +44,23 @@ int kUserDataKey;
 }
 
 WebContentsView::WebContentsView(content::WebContents* web_contents)
-    : web_contents_(web_contents),
-      container_(nullptr) {
+    : web_contents_(static_cast<content::WebContentsImpl*>(web_contents)),
+      container_(nullptr),
+      weak_ptr_factory_(this) {
   web_contents_->SetUserData(&kUserDataKey,
                              new UnownedUserData<WebContentsView>(this));
+}
+
+ui::TouchSelectionController* WebContentsView::GetTouchSelectionController() {
+  // We don't care about checking for a fullscreen view here - we're called
+  // from StartDragging which is only supported in RenderViews
+  content::RenderWidgetHostView* view =
+      web_contents_->GetRenderWidgetHostView();
+  if (!view) {
+    return nullptr;
+  }
+
+  return static_cast<RenderWidgetHostView*>(view)->selection_controller();
 }
 
 void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
@@ -135,8 +159,58 @@ void WebContentsView::StartDragging(
     const gfx::ImageSkia& image,
     const gfx::Vector2d& image_offset,
     const content::DragEventSourceInfo& event_info) {
-  // TODO: Implement drag and drop support
-  //  see https://launchpad.net/bugs/1459830
+  if (!BrowserPlatformIntegration::GetInstance()->IsSystemDragSupported()) {
+    LOG(WARNING) <<
+        "Rejecting request to start a drag - system drag is not supported";
+    web_contents_->SystemDragEnded();
+    return;
+  }
+
+  static bool g_system_drag_active = false;
+  if (g_system_drag_active) {
+    LOG(WARNING) <<
+        "Rejecting request to start a drag when one is already in progress";
+    web_contents_->SystemDragEnded();
+    return;
+  }
+
+  base::AutoReset<bool> reentry_guard(&g_system_drag_active, true);
+
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
+
+  base::WeakPtr<WebContentsView> self = weak_ptr_factory_.GetWeakPtr();
+
+  blink::WebDragOperation result = blink::WebDragOperationNone;
+  {
+    float scale = container_->GetScreenInfo().deviceScaleFactor;
+    gfx::Vector2d image_offset_pix(image_offset.x() * scale,
+                                   image_offset.y() * scale);
+    base::MessageLoop::ScopedNestableTaskAllower allow(
+        base::MessageLoop::current());
+    result =
+        BrowserPlatformIntegration::GetInstance()->PerformSystemDrag(
+          drop_data, allowed_ops, *image.bitmap(), image_offset_pix);
+  }
+
+  if (!self) {
+    return;
+  }
+
+  gfx::Point screen_point =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  gfx::Point view_point =
+      screen_point - gfx::Vector2d(GetViewBounds().origin().x(),
+                                   GetViewBounds().origin().y());
+  web_contents_->DragSourceEndedAt(view_point.x(), view_point.y(),
+                                   screen_point.x(), screen_point.y(),
+                                   result);
+
   web_contents_->SystemDragEnded();
 }
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,10 +19,15 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
 #include "base/macros.h"
+#include "base/memory/weak_ptr.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace content {
-class WebContents;
+class WebContentsImpl;
+}
+
+namespace ui {
+class TouchSelectionController;
 }
 
 namespace oxide {
@@ -41,6 +46,8 @@ class WebContentsView : public content::WebContentsViewOxide {
 
  private:
   WebContentsView(content::WebContents* web_contents);
+
+  ui::TouchSelectionController* GetTouchSelectionController();
 
   // content::WebContentsView
   gfx::NativeView GetNativeView() const override;
@@ -84,9 +91,11 @@ class WebContentsView : public content::WebContentsViewOxide {
                      bool allow_multiple_selection) override;
   void HidePopupMenu() override;
 
-  content::WebContents* web_contents_;
+  content::WebContentsImpl* web_contents_;
 
   RenderWidgetHostViewContainer* container_;
+
+  base::WeakPtrFactory<WebContentsView> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };
