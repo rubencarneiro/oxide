@@ -23,11 +23,17 @@
 #include <QPixmap>
 #include <QPointer>
 #include <QPoint>
+#include <QString>
+#include <QUrl>
 
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "base/strings/nullable_string16.h"
+#include "base/strings/utf_string_conversions.h"
+#include "content/public/common/drop_data.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/gfx/geometry/vector2d.h"
+#include "url/gurl.h"
 
 #include "shared/browser/oxide_drag_source_client.h"
 
@@ -41,7 +47,21 @@ namespace {
 
 void PrepareMimeData(QMimeData* mime_data,
                      const content::DropData& drop_data) {
+  mime_data->setData("oxide/x-renderer-taint", QByteArray());
 
+  if (!drop_data.text.string().empty()) {
+    QString text =
+        QString::fromStdString(base::UTF16ToUTF8(drop_data.text.string()));
+    mime_data->setText(text);
+  }
+  if (drop_data.url.is_valid()) {
+    QUrl url = QUrl(QString::fromStdString(drop_data.url.spec()));
+    mime_data->setUrls(QList<QUrl>() << url);
+  }
+  if (!drop_data.html.string().empty()) {
+    mime_data->setHtml(
+        QString::fromStdString(base::UTF16ToUTF8(drop_data.html.string())));
+  }
 }
 
 Qt::DropActions ToDropActions(blink::WebDragOperationsMask mask) {
@@ -93,12 +113,7 @@ void DragSource::StartDragging(content::WebContents* contents,
 
   DCHECK(cnvd->GetNativeView());
 
-  // XXX(chrisccoulson): Pass a fake source to QDrag for now. The problem with
-  //  passing the real source is that it can be deleted during exec(). AFAICT,
-  //  this causes the QDrag instance to be deleted without returning from the
-  //  event loop, which might cause us to blow up when the drag is finished
-  QObject fake_source;
-  QPointer<QDrag> drag = new QDrag(&fake_source);
+  QPointer<QDrag> drag = new QDrag(cnvd->GetNativeView());
   drag->setMimeData(new QMimeData());
 
   drag->setHotSpot(QPoint(image_offset_pix.x(), image_offset_pix.y()));
