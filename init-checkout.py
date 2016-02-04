@@ -69,6 +69,7 @@ CHROMIUM_GCLIENT_SPEC_TEMPLATE = (
           "\"src/chrome/tools/test/reference_build/chrome_win\": None, "
           "\"src/chrome/tools/test/reference_build/chrome_linux\": None, "
           "\"src/chrome/tools/test/reference_build/chrome_mac\": None, "
+          "\"src/third_party/freetype-android/src\": None, "
           "\"src/third_party/hunspell_dictionaries\": None, "
           "%(custom_deps)s"
         "}, "
