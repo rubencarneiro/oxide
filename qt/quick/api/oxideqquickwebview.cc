@@ -674,7 +674,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
   if (construct_props_->new_view_request) {
     set_proxy(oxide::qt::WebViewProxy::create(
-        this,
+        this, q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->new_view_request));
@@ -683,7 +683,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   if (!proxy()) {
     construct_props_->new_view_request = nullptr;
     set_proxy(oxide::qt::WebViewProxy::create(
-        this,
+        this, q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->context,

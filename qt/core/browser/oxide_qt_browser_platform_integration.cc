@@ -40,6 +40,7 @@
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_clipboard.h"
+#include "oxide_qt_drag_source.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_screen_client.h"
@@ -178,6 +179,11 @@ BrowserPlatformIntegration::GetApplicationState() {
 
 std::string BrowserPlatformIntegration::GetApplicationName() {
   return application_name_;
+}
+
+scoped_ptr<oxide::DragSource> BrowserPlatformIntegration::CreateDragSource(
+    oxide::DragSourceClient* client) {
+  return make_scoped_ptr(new DragSource(client));
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {

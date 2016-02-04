@@ -141,6 +141,7 @@ class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
  public:
   static WebViewProxy* create(WebViewProxyClient* client,
+                              QObject* native_view,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               WebContextProxyHandle* context,
@@ -148,6 +149,7 @@ class Q_DECL_EXPORT WebViewProxy {
                               const QByteArray& restore_state,
                               RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
+                              QObject* native_view,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request);

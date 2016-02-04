@@ -62,6 +62,8 @@ class BrowserPlatformIntegration : public QObject,
   scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   std::string GetApplicationName() override;
+  scoped_ptr<oxide::DragSource> CreateDragSource(
+      oxide::DragSourceClient* client) override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;

@@ -88,6 +88,7 @@
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_enum_flags.h"
 
+#include "oxide_qt_contents_native_view_data.h"
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
@@ -418,7 +419,8 @@ int WebView::GetLocationBarContentOffsetPix() const {
   return locationBarContentOffsetPix();
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller) {
+void WebView::CommonInit(OxideQFindController* find_controller,
+                         QObject* native_view) {
   content::WebContents* contents = view_->GetWebContents();
 
   oxide::CertificateErrorDispatcher::FromWebContents(
@@ -430,6 +432,8 @@ void WebView::CommonInit(OxideQFindController* find_controller) {
       contents);
   oxide::WebFrameTreeObserver::Observe(
       oxide::WebFrameTree::FromWebContents(contents));
+
+  ContentsNativeViewData::CreateForWebContents(contents, native_view);
 
   CHECK_EQ(view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(view_->GetRootFrame());
@@ -861,21 +865,13 @@ void WebView::UpdateCursor(const content::WebCursor& cursor) {
 
   cursor.GetCursorInfo(&cursor_info);
   if (cursor.IsCustom()) {
-    QImage::Format format =
-        QImageFormatFromSkImageInfo(cursor_info.custom_image.info());
-    if (format == QImage::Format_Invalid) {
+    QImage cursor_image = QImageFromSkBitmap(cursor_info.custom_image);
+    if (cursor_image.isNull()) {
       return;
     }
-    QImage cursor_image((uchar*)cursor_info.custom_image.getPixels(),
-                        cursor_info.custom_image.width(),
-                        cursor_info.custom_image.height(),
-                        cursor_info.custom_image.rowBytes(),
-                        format);
 
-    QPixmap cursor_pixmap;
-    if (cursor_pixmap.convertFromImage(cursor_image)) {
-      client_->UpdateCursor(QCursor(cursor_pixmap));
-    }
+    QPixmap cursor_pixmap = QPixmap::fromImage(cursor_image);
+    client_->UpdateCursor(QCursor(cursor_pixmap));
   } else {
     client_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
   }
@@ -1438,6 +1434,7 @@ void WebView::teardownFrameTree() {
 }
 
 WebView::WebView(WebViewProxyClient* client,
+                 QObject* native_view,
                  OxideQFindController* find_controller,
                  OxideQSecurityStatus* security_status,
                  WebContext* context,
@@ -1465,7 +1462,7 @@ WebView::WebView(WebViewProxyClient* client,
 
   view_.reset(new oxide::WebView(params));
 
-  CommonInit(find_controller);
+  CommonInit(find_controller, native_view);
 
   EnsurePreferences();
 }
@@ -1473,6 +1470,7 @@ WebView::WebView(WebViewProxyClient* client,
 // static
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
+    QObject* native_view,
     OxideQFindController* find_controller,
     OxideQSecurityStatus* security_status,
     OxideQNewViewRequest* new_view_request) {
@@ -1486,7 +1484,7 @@ WebView* WebView::CreateFromNewViewRequest(
   new_view->view_.reset(new oxide::WebView(std::move(rd->contents), new_view));
   rd->view = new_view->view_->AsWeakPtr();
 
-  new_view->CommonInit(find_controller);
+  new_view->CommonInit(find_controller, native_view);
 
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
