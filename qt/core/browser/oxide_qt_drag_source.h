@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_DRAG_SOURCE_H_
 
 #include "base/macros.h"
+#include "base/memory/weak_ptr.h"
 
 #include "shared/browser/oxide_drag_source.h"
 
@@ -37,6 +38,8 @@ class DragSource : public oxide::DragSource {
                      blink::WebDragOperationsMask allowed_ops,
                      const SkBitmap& bitmap,
                      const gfx::Vector2d& image_offset_pix) override;
+
+  base::WeakPtrFactory<DragSource> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(DragSource);
 };

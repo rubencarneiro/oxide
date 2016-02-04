@@ -93,7 +93,12 @@ void DragSource::StartDragging(content::WebContents* contents,
 
   DCHECK(cnvd->GetNativeView());
 
-  QPointer<QDrag> drag = new QDrag(cnvd->GetNativeView());
+  // XXX(chrisccoulson): Pass a fake source to QDrag for now. The problem with
+  //  passing the real source is that it can be deleted during exec(). AFAICT,
+  //  this causes the QDrag instance to be deleted without returning from the
+  //  event loop, which might cause us to blow up when the drag is finished
+  QObject fake_source;
+  QPointer<QDrag> drag = new QDrag(&fake_source);
   drag->setMimeData(new QMimeData());
 
   drag->setHotSpot(QPoint(image_offset_pix.x(), image_offset_pix.y()));
@@ -109,24 +114,25 @@ void DragSource::StartDragging(content::WebContents* contents,
 
   PrepareMimeData(drag->mimeData(), drop_data);
 
-  QPointer<QObject> source = drag->source();
-  Qt::DropAction action = Qt::IgnoreAction;
+  base::WeakPtr<DragSource> self = weak_ptr_factory_.GetWeakPtr();
 
+  Qt::DropAction action = Qt::IgnoreAction;
   {
     base::MessageLoop::ScopedNestableTaskAllower a(
         base::MessageLoop::current());
     action = drag->exec(ToDropActions(allowed_ops));
   }
 
-  // AFAICT, it's not safe to delete the source item when a drag is in process.
-  // If it happens, we might not get this far, but if we do then fail hard
-  CHECK(source);
+  if (!self) {
+    return;
+  }
 
   client()->EndDrag(ToWebDragOperation(action));
 }
 
 DragSource::DragSource(oxide::DragSourceClient* client)
-    : oxide::DragSource(client) {}
+    : oxide::DragSource(client),
+      weak_ptr_factory_(this) {}
 
 DragSource::~DragSource() {}
 
