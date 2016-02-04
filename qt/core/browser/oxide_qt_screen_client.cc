@@ -17,11 +17,13 @@
 
 #include "oxide_qt_screen_client.h"
 
+#include <QCursor>
 #include <QGuiApplication>
 #include <QRect>
 #include <QScreen>
 
 #include "base/logging.h"
+#include "content/public/browser/browser_thread.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -76,7 +78,10 @@ gfx::Display ScreenClient::GetPrimaryDisplay() {
 }
 
 gfx::Point ScreenClient::GetCursorScreenPoint() {
-  NOTIMPLEMENTED();
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  QPoint point = QCursor::pos();
+  return gfx::Point(point.x(), point.y());
 }
 
 ScreenClient::ScreenClient() {
