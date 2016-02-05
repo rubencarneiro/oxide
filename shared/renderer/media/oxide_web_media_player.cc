@@ -49,7 +49,7 @@
 #include "ui/gfx/image/image.h"
 // #include "webkit/renderer/compositor_bindings/web_layer_impl.h"
 
-static const uint32 kGLTextureExternalOES = 0x8D65;
+static const uint32_t kGLTextureExternalOES = 0x8D65;
 
 using blink::WebMediaPlayer;
 using blink::WebSize;
@@ -679,15 +679,6 @@ static void EmeUMAHistogramEnumeration(const std::string& key_system,
       kMediaEme + media::GetKeySystemNameForUMA(key_system) + "." + method,
       1, boundary_value, boundary_value + 1,
       base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
-}
-
-static void EmeUMAHistogramCounts(const std::string& key_system,
-                                  const std::string& method,
-                                  int sample) {
-  // Use the same parameters as UMA_HISTOGRAM_COUNTS.
-  base::Histogram::FactoryGet(
-      kMediaEme + media::GetKeySystemNameForUMA(key_system) + "." + method,
-      1, 1000000, 50, base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
 }
 
 // Helper enum for reporting generateKeyRequest/addKey histograms.

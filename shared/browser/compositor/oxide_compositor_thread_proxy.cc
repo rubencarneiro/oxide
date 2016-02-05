@@ -289,7 +289,7 @@ void CompositorThreadProxy::SetOutputSurface(
 }
 
 void CompositorThreadProxy::MailboxBufferCreated(const gpu::Mailbox& mailbox,
-                                                 uint32_t sync_point) {
+                                                 uint64_t sync_point) {
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     CompositorUtils::GetInstance()->GetTextureFromMailbox(
         impl().output_surface->context_provider(),

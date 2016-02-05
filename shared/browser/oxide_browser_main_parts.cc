@@ -32,7 +32,6 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
-#include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
@@ -255,8 +254,7 @@ int BrowserMainParts::PreCreateThreads() {
   }
 
   primary_screen_.reset(new Screen());
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
-                                 primary_screen_.get());
+  gfx::Screen::SetScreenInstance(primary_screen_.get());
 
   io_thread_.reset(new IOThread());
 
@@ -308,7 +306,7 @@ void BrowserMainParts::PostDestroyThreads() {
     BrowserContext::AssertNoContextsExist();
   }
 
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
+  gfx::Screen::SetScreenInstance(nullptr);
   io_thread_.reset();
 
   content::oxide_gpu_shim::SetGLShareGroup(nullptr);
