@@ -27,7 +27,7 @@
 namespace IPC {
 
 // static
-void ParamTraits<oxide::ScriptMessageParams>::Write(Message* m,
+void ParamTraits<oxide::ScriptMessageParams>::Write(base::Pickle* m,
                                                     const param_type& p) {
   WriteParam(m, p.context);
   WriteParam(m, p.serial);
@@ -38,7 +38,7 @@ void ParamTraits<oxide::ScriptMessageParams>::Write(Message* m,
 }
 
 // static
-bool ParamTraits<oxide::ScriptMessageParams>::Read(const Message* m,
+bool ParamTraits<oxide::ScriptMessageParams>::Read(const base::Pickle* m,
                                                    base::PickleIterator* iter,
                                                    param_type* r) {
   if (!ReadParam(m, iter, &r->context)) {
@@ -70,7 +70,7 @@ void ParamTraits<oxide::ScriptMessageParams>::Log(const param_type& p,
 
 // static
 void ParamTraits<oxide::UserAgentOverrideSet::Entry>::Write(
-    Message* m,
+    base::Pickle* m,
     const param_type& p) {
   WriteParam(m, p.first);
   WriteParam(m, p.second);
@@ -78,7 +78,7 @@ void ParamTraits<oxide::UserAgentOverrideSet::Entry>::Write(
 
 // static
 bool ParamTraits<oxide::UserAgentOverrideSet::Entry>::Read(
-    const Message* m,
+    const base::Pickle* m,
     base::PickleIterator* iter,
     param_type* r) {
   if (!ReadParam(m, iter, &r->first)) {
