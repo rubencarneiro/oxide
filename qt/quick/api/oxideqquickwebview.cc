@@ -1137,6 +1137,18 @@ void OxideQQuickWebView::componentComplete() {
   }
 }
 
+QVariant OxideQQuickWebView::inputMethodQuery(
+    Qt::InputMethodQuery query) const {
+  Q_D(const OxideQQuickWebView);
+
+  switch (query) {
+    case Qt::ImEnabled:
+      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return d->proxy() ? d->proxy()->inputMethodQuery(query) : QVariant();
+  }
+}
+
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
                                     const QQuickItem::ItemChangeData& value) {
   Q_D(OxideQQuickWebView);
@@ -1150,6 +1162,42 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
   if (change == QQuickItem::ItemVisibleHasChanged) {
     d->proxy()->visibilityChanged();
   }
+}
+
+void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::keyPressEvent(event);
+
+  if (d->handling_unhandled_key_event_ || !d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleKeyEvent(event);
+}
+
+void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::keyReleaseEvent(event);
+
+  if (d->handling_unhandled_key_event_ || !d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleKeyEvent(event);
+}
+
+void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::inputMethodEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleInputMethodEvent(event);
 }
 
 void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
@@ -1176,21 +1224,87 @@ void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
   d->proxy()->handleFocusEvent(event);
 }
 
-void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
+void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  QQuickItem::mousePressEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  forceActiveFocus();
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::mouseMoveEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::mouseReleaseEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::mouseDoubleClickEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleMouseEvent(event);
+}
+
+void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::wheelEvent(event);
 
   if (!d->proxy()) {
     return;
   }
 
   QPointF window_pos = mapToScene(event->posF());
-  d->proxy()->handleHoverEvent(event,
-                               window_pos.toPoint(),
-                               (window_pos + window()->position()).toPoint());
+  d->proxy()->handleWheelEvent(event, window_pos.toPoint());
 }
 
-void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
+void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  QQuickItem::touchEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  if (event->type() == QEvent::TouchBegin) {
+    forceActiveFocus();
+  }
+  d->proxy()->handleTouchEvent(event);
+}
+
+void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::hoverEnterEvent(event);
 
   if (!d->proxy()) {
     return;
@@ -1205,6 +1319,8 @@ void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
 void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
+  QQuickItem::hoverMoveEvent(event);
+
   if (!d->proxy()) {
     return;
   }
@@ -1215,120 +1331,67 @@ void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
                                (window_pos + window()->position()).toPoint());
 }
 
-void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
+void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
+
+  QQuickItem::hoverLeaveEvent(event);
 
   if (!d->proxy()) {
-    QQuickItem::inputMethodEvent(event);
-    return;
-  }
-
-  d->proxy()->handleInputMethodEvent(event);
-}
-
-QVariant OxideQQuickWebView::inputMethodQuery(
-    Qt::InputMethodQuery query) const {
-  Q_D(const OxideQQuickWebView);
-
-  switch (query) {
-    case Qt::ImEnabled:
-      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
-    default:
-      return d->proxy() ? d->proxy()->inputMethodQuery(query) : QVariant();
-  }
-}
-
-void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (d->handling_unhandled_key_event_ || !d->proxy()) {
-    QQuickItem::keyPressEvent(event);
-    return;
-  }
-
-  d->proxy()->handleKeyEvent(event);
-}
-
-void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (d->handling_unhandled_key_event_ || !d->proxy()) {
-    QQuickItem::keyReleaseEvent(event);
-    return;
-  }
-
-  d->proxy()->handleKeyEvent(event);
-}
-
-void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::mouseDoubleClickEvent(event);
-    return;
-  }
-
-  d->proxy()->handleMouseEvent(event);
-}
-
-void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::mouseMoveEvent(event);
-    return;
-  }
-
-  d->proxy()->handleMouseEvent(event);
-}
-
-void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::mousePressEvent(event);
-    return;
-  }
-
-  forceActiveFocus();
-  d->proxy()->handleMouseEvent(event);
-}
-
-void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::mouseReleaseEvent(event);
-    return;
-  }
-
-  d->proxy()->handleMouseEvent(event);
-}
-
-void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::touchEvent(event);
-    return;
-  }
-
-  if (event->type() == QEvent::TouchBegin) {
-    forceActiveFocus();
-  }
-  d->proxy()->handleTouchEvent(event);
-}
-
-void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  if (!d->proxy()) {
-    QQuickItem::wheelEvent(event);
     return;
   }
 
   QPointF window_pos = mapToScene(event->posF());
-  d->proxy()->handleWheelEvent(event, window_pos.toPoint());
+  d->proxy()->handleHoverEvent(event,
+                               window_pos.toPoint(),
+                               (window_pos + window()->position()).toPoint());
+}
+
+void OxideQQuickWebView::dragEnterEvent(QDragEnterEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::dragEnterEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleDragEnterEvent(event);
+}
+
+void OxideQQuickWebView::dragMoveEvent(QDragMoveEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::dragMoveEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleDragMoveEvent(event);
+}
+
+void OxideQQuickWebView::dragLeaveEvent(QDragLeaveEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::dragLeaveEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleDragLeaveEvent(event);
+}
+
+void OxideQQuickWebView::dropEvent(QDropEvent* event) {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::dropEvent(event);
+
+  if (!d->proxy()) {
+    return;
+  }
+
+  d->proxy()->handleDropEvent(event);
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
@@ -1442,7 +1505,8 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
 
   setFlags(QQuickItem::ItemClipsChildrenToShape |
            QQuickItem::ItemHasContents |
-           QQuickItem::ItemIsFocusScope);
+           QQuickItem::ItemIsFocusScope |
+           QQuickItem::ItemAcceptsDrops);
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
 

@@ -20,9 +20,11 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/common/drop_data.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 #include "shared/browser/oxide_drag_source_client.h"
+#include "shared/browser/oxide_render_object_id.h"
 
 namespace content {
 class WebContentsImpl;
@@ -48,12 +50,25 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   void SetContainer(RenderWidgetHostViewContainer* container);
 
+  // XXX(chrisccoulson): Make a new class for these events - we don't use
+  //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
+  //  don't think we want
+  void HandleDragEnter(const content::DropData& drop_data,
+                       const gfx::Point& location,
+                       blink::WebDragOperationsMask allowed_ops,
+                       int key_modifiers);
+  blink::WebDragOperation HandleDragMove(const gfx::Point& location,
+                                         int key_modifiers);
+  void HandleDragLeave();
+  blink::WebDragOperation HandleDrop(const gfx::Point& location,
+                                     int key_modifiers);
+
  private:
   WebContentsView(content::WebContents* web_contents);
 
   ui::TouchSelectionController* GetTouchSelectionController();
 
-  // content::WebContentsView
+  // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
   gfx::NativeView GetContentNativeView() const override;
   gfx::NativeWindow GetTopLevelNativeWindow() const override;
@@ -77,7 +92,7 @@ class WebContentsView : public content::WebContentsViewOxide,
   void RenderViewSwappedIn(content::RenderViewHost* host) override;
   void SetOverscrollControllerEnabled(bool enabled) override;
 
-  // content::RenderViewHostDelegateView
+  // content::RenderViewHostDelegateView implementation
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
                        const content::ContextMenuParams& params) override;
   void StartDragging(const content::DropData& drop_data,
@@ -85,6 +100,7 @@ class WebContentsView : public content::WebContentsViewOxide,
                      const gfx::ImageSkia& image,
                      const gfx::Vector2d& image_offset,
                      const content::DragEventSourceInfo& event_info) override;
+  void UpdateDragCursor(blink::WebDragOperation operation) override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,
@@ -101,6 +117,11 @@ class WebContentsView : public content::WebContentsViewOxide,
   content::WebContentsImpl* web_contents_;
 
   RenderWidgetHostViewContainer* container_;
+
+  scoped_ptr<content::DropData> current_drop_data_;
+  blink::WebDragOperationsMask current_drag_allowed_ops_;
+  blink::WebDragOperation current_drag_op_;
+  RenderWidgetHostID current_drag_target_;
 
   scoped_ptr<DragSource> drag_source_;
 

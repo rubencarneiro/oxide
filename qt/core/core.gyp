@@ -133,6 +133,8 @@
         'browser/oxide_qt_contents_native_view_data.h',
         'browser/oxide_qt_drag_source.cc',
         'browser/oxide_qt_drag_source.h',
+        'browser/oxide_qt_drag_utils.cc',
+        'browser/oxide_qt_drag_utils.h',
         'browser/oxide_qt_event_utils.cc',
         'browser/oxide_qt_event_utils.h',
         'browser/oxide_qt_file_picker.cc',

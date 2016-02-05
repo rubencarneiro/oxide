@@ -237,6 +237,10 @@ class WebView : public InputMethodContextClient,
   void handleTouchEvent(QTouchEvent* event) override;
   void handleWheelEvent(QWheelEvent* event,
                         const QPoint& window_pos) override;
+  void handleDragEnterEvent(QDragEnterEvent* event) override;
+  void handleDragMoveEvent(QDragMoveEvent* event) override;
+  void handleDragLeaveEvent(QDragLeaveEvent* event) override;
+  void handleDropEvent(QDropEvent* event) override;
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 

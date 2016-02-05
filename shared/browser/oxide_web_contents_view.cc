@@ -46,7 +46,9 @@ int kUserDataKey;
 
 WebContentsView::WebContentsView(content::WebContents* web_contents)
     : web_contents_(static_cast<content::WebContentsImpl*>(web_contents)),
-      container_(nullptr) {
+      container_(nullptr),
+      current_drag_allowed_ops_(blink::WebDragOperationNone),
+      current_drag_op_(blink::WebDragOperationNone) {
   web_contents_->SetUserData(&kUserDataKey,
                              new UnownedUserData<WebContentsView>(this));
 }
@@ -65,6 +67,93 @@ ui::TouchSelectionController* WebContentsView::GetTouchSelectionController() {
 
 void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
   container_ = container;
+}
+
+void WebContentsView::HandleDragEnter(
+    const content::DropData& drop_data,
+    const gfx::Point& location,
+    blink::WebDragOperationsMask allowed_ops,
+    int key_modifiers) {
+  current_drop_data_.reset(new content::DropData(drop_data));
+  current_drag_allowed_ops_ = allowed_ops;
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  current_drag_target_ = RenderWidgetHostID(rvh->GetWidget());
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDragEnter(*current_drop_data_,
+                           location,
+                           screen_location,
+                           current_drag_allowed_ops_,
+                           key_modifiers);
+}
+
+blink::WebDragOperation WebContentsView::HandleDragMove(
+    const gfx::Point& location,
+    int key_modifiers) {
+  if (!current_drop_data_) {
+    return blink::WebDragOperationNone;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    HandleDragEnter(*current_drop_data_,
+                    location,
+                    current_drag_allowed_ops_,
+                    key_modifiers);
+  }
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDragOver(location,
+                          screen_location,
+                          current_drag_allowed_ops_,
+                          key_modifiers);
+
+  return current_drag_op_;
+}
+
+void WebContentsView::HandleDragLeave() {
+  if (!current_drop_data_) {
+    return;
+  }
+
+  current_drop_data_.reset();
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    return;
+  }
+
+  rvh->DragTargetDragLeave();
+}
+
+blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
+                                                    int key_modifiers) {
+  if (!current_drop_data_) {
+    return blink::WebDragOperationNone;
+  }
+
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    HandleDragEnter(*current_drop_data_,
+                    location,
+                    current_drag_allowed_ops_,
+                    key_modifiers);
+  }
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDrop(location, screen_location, key_modifiers);
+
+  return current_drag_op_;
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -110,7 +199,7 @@ void WebContentsView::StoreFocus() {}
 void WebContentsView::RestoreFocus() {}
 
 content::DropData* WebContentsView::GetDropData() const {
-  return nullptr;
+  return current_drop_data_.get();
 }
 
 gfx::Rect WebContentsView::GetViewBounds() const {
@@ -190,6 +279,10 @@ void WebContentsView::StartDragging(
                               allowed_ops,
                               *image.bitmap(),
                               image_offset_pix);
+}
+
+void WebContentsView::UpdateDragCursor(blink::WebDragOperation operation) {
+  current_drag_op_ = operation;
 }
 
 void WebContentsView::ShowPopupMenu(

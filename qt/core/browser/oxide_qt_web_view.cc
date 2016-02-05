@@ -24,6 +24,9 @@
 #include <vector>
 
 #include <QCursor>
+#include <QDragEnterEvent>
+#include <QDragMoveEvent>
+#include <QDropEvent>
 #include <QGuiApplication>
 #include <QInputEvent>
 #include <QKeyEvent>
@@ -47,6 +50,7 @@
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "third_party/WebKit/public/web/WebDragOperation.h"
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
@@ -79,6 +83,7 @@
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
+#include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_frame.h"
 #include "shared/browser/oxide_web_frame_tree.h"
 #include "shared/browser/oxide_web_view.h"
@@ -89,6 +94,7 @@
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_contents_native_view_data.h"
+#include "oxide_qt_drag_utils.h"
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
@@ -1057,6 +1063,8 @@ void WebView::visibilityChanged() {
 void WebView::handleFocusEvent(QFocusEvent* event) {
   input_method_context_->FocusChanged(event);
   view_->FocusChanged();
+
+  event->accept();
 }
 
 void WebView::handleHoverEvent(QHoverEvent* event,
@@ -1068,10 +1076,12 @@ void WebView::handleHoverEvent(QHoverEvent* event,
                         global_pos,
                         GetDeviceScaleFactor(),
                         view_->GetLocationBarContentOffsetDip()));
+  event->accept();
 }
 
 void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
   input_method_context_->HandleEvent(event);
+  event->accept();
 }
 
 void WebView::handleKeyEvent(QKeyEvent* event) {
@@ -1082,6 +1092,8 @@ void WebView::handleKeyEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
     view_->HandleKeyEvent(MakeNativeWebKeyboardEvent(event, true));
   }
+
+  event->accept();
 }
 
 void WebView::handleMouseEvent(QMouseEvent* event) {
@@ -1097,6 +1109,7 @@ void WebView::handleMouseEvent(QMouseEvent* event) {
       MakeWebMouseEvent(event,
                         GetDeviceScaleFactor(),
                         view_->GetLocationBarContentOffsetDip()));
+  event->accept();
 }
 
 void WebView::handleTouchEvent(QTouchEvent* event) {
@@ -1109,6 +1122,8 @@ void WebView::handleTouchEvent(QTouchEvent* event) {
   for (size_t i = 0; i < events.size(); ++i) {
     view_->HandleTouchEvent(*events[i]);
   }
+
+  event->accept();
 }
 
 void WebView::handleWheelEvent(QWheelEvent* event,
@@ -1118,6 +1133,68 @@ void WebView::handleWheelEvent(QWheelEvent* event,
                              window_pos,
                              GetDeviceScaleFactor(),
                              view_->GetLocationBarContentOffsetDip()));
+  event->accept();
+}
+
+void WebView::handleDragEnterEvent(QDragEnterEvent* event) {
+  content::DropData drop_data;
+  gfx::Point location;
+  blink::WebDragOperationsMask allowed_ops = blink::WebDragOperationNone;
+  int key_modifiers = 0;
+
+  GetDragEnterEventParams(event,
+                          GetDeviceScaleFactor(),
+                          &drop_data,
+                          &location,
+                          &allowed_ops,
+                          &key_modifiers);
+
+  WebContentsView::FromWebContents(view_->GetWebContents())
+      ->HandleDragEnter(drop_data, location, allowed_ops, key_modifiers);
+
+  event->accept();
+}
+
+void WebView::handleDragMoveEvent(QDragMoveEvent* event) {
+  gfx::Point location;
+  int key_modifiers = 0;
+
+  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+
+  blink::WebDragOperation op =
+      WebContentsView::FromWebContents(view_->GetWebContents())
+        ->HandleDragMove(location, key_modifiers);
+
+  Qt::DropAction action;
+  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
+    event->setDropAction(action);
+    event->accept();
+  } else {
+    event->ignore();
+  }
+}
+
+void WebView::handleDragLeaveEvent(QDragLeaveEvent* event) {
+  WebContentsView::FromWebContents(view_->GetWebContents())->HandleDragLeave();
+}
+
+void WebView::handleDropEvent(QDropEvent* event) {
+  gfx::Point location;
+  int key_modifiers = 0;
+
+  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+
+  blink::WebDragOperation op =
+      WebContentsView::FromWebContents(view_->GetWebContents())
+        ->HandleDrop(location, key_modifiers);
+
+  Qt::DropAction action;
+  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
+    event->setDropAction(action);
+    event->accept();
+  } else {
+    event->ignore();
+  }
 }
 
 QVariant WebView::inputMethodQuery(Qt::InputMethodQuery query) const {
