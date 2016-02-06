@@ -52,20 +52,16 @@ void ScreenClient::UpdatePrimaryDisplay() {
       GetDeviceScaleFactorFromQScreen(screen));
 
   QRect rect = screen->geometry();
-  primary_display_.set_bounds(
-      gfx::ScaleToEnclosingRect(gfx::Rect(rect.x(),
-                                          rect.y(),
-                                          rect.width(),
-                                          rect.height()),
-                                primary_display_.device_scale_factor()));
+  primary_display_.set_bounds(gfx::Rect(rect.x(),
+                                        rect.y(),
+                                        rect.width(),
+                                        rect.height()));
 
   QRect work_area = screen->availableGeometry();
-  primary_display_.set_work_area(
-      gfx::ScaleToEnclosingRect(gfx::Rect(work_area.x(),
-                                          work_area.y(),
-                                          work_area.width(),
-                                          work_area.height()),
-                                primary_display_.device_scale_factor()));
+  primary_display_.set_work_area(gfx::Rect(work_area.x(),
+                                           work_area.y(),
+                                           work_area.width(),
+                                           work_area.height()));
 
   primary_display_.SetRotationAsDegree(
       screen->angleBetween(screen->nativeOrientation(),

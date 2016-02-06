@@ -28,7 +28,7 @@ namespace content {
 void RenderWidgetHostViewBase::GetDefaultScreenInfo(
     blink::WebScreenInfo* result) {
   RenderWidgetHostViewOxide::GetWebScreenInfoForDisplay(
-      gfx::Screen::GetNativeScreen()->GetPrimaryDisplay(),
+      gfx::Screen::GetScreen()->GetPrimaryDisplay(),
       result);
 }
 
