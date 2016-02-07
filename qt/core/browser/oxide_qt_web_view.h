@@ -66,6 +66,7 @@ class WebView : public InputMethodContextClient,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
+          QObject* native_view,
           OxideQFindController* find_controller,
           OxideQSecurityStatus* security_status,
           WebContext* context,
@@ -74,6 +75,7 @@ class WebView : public InputMethodContextClient,
           RestoreType restore_type);
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
+      QObject* native_view,
       OxideQFindController* find_controller,
       OxideQSecurityStatus* security_status,
       OxideQNewViewRequest* new_view_request);
@@ -93,7 +95,8 @@ class WebView : public InputMethodContextClient,
   WebView(WebViewProxyClient* client,
           OxideQSecurityStatus* security_status);
 
-  void CommonInit(OxideQFindController* find_controller);
+  void CommonInit(OxideQFindController* find_controller,
+                  QObject* native_view);
 
   void EnsurePreferences();
 
@@ -234,6 +237,10 @@ class WebView : public InputMethodContextClient,
   void handleTouchEvent(QTouchEvent* event) override;
   void handleWheelEvent(QWheelEvent* event,
                         const QPoint& window_pos) override;
+  void handleDragEnterEvent(QDragEnterEvent* event) override;
+  void handleDragMoveEvent(QDragMoveEvent* event) override;
+  void handleDragLeaveEvent(QDragLeaveEvent* event) override;
+  void handleDropEvent(QDropEvent* event) override;
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 

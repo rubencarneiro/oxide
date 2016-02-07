@@ -37,6 +37,10 @@
 typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
+class QDragEnterEvent;
+class QDragLeaveEvent;
+class QDragMoveEvent;
+class QDropEvent;
 class QFocusEvent;
 class QHoverEvent;
 class QInputMethodEvent;
@@ -141,6 +145,7 @@ class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
  public:
   static WebViewProxy* create(WebViewProxyClient* client,
+                              QObject* native_view,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               WebContextProxyHandle* context,
@@ -148,6 +153,7 @@ class Q_DECL_EXPORT WebViewProxy {
                               const QByteArray& restore_state,
                               RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
+                              QObject* native_view,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request);
@@ -189,6 +195,10 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
   virtual void handleWheelEvent(QWheelEvent* event,
                                 const QPoint& window_pos) = 0;
+  virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
+  virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;
+  virtual void handleDragLeaveEvent(QDragLeaveEvent* event) = 0;
+  virtual void handleDropEvent(QDropEvent* event) = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 

@@ -380,23 +380,27 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void componentComplete() Q_DECL_OVERRIDE;
 
   // QQuickItem implementation
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_OVERRIDE;
   void itemChange(QQuickItem::ItemChange change,
                   const QQuickItem::ItemChangeData& value) Q_DECL_OVERRIDE;
-  void focusInEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
-  void focusOutEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
-  void hoverEnterEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
-  void hoverLeaveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
-  void hoverMoveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
-  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_OVERRIDE;
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const Q_DECL_OVERRIDE;
   void keyPressEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
   void keyReleaseEvent(QKeyEvent* event) Q_DECL_OVERRIDE;
-  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
-  void mouseMoveEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void inputMethodEvent(QInputMethodEvent* event) Q_DECL_OVERRIDE;
+  void focusInEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
+  void focusOutEvent(QFocusEvent* event) Q_DECL_OVERRIDE;
   void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void mouseMoveEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
-  void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void mouseDoubleClickEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
+  void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void hoverEnterEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void hoverMoveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void hoverLeaveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
+  void dragEnterEvent(QDragEnterEvent* event) Q_DECL_OVERRIDE;
+  void dragMoveEvent(QDragMoveEvent* event) Q_DECL_OVERRIDE;
+  void dragLeaveEvent(QDragLeaveEvent* event) Q_DECL_OVERRIDE;
+  void dropEvent(QDropEvent* event) Q_DECL_OVERRIDE;
   void geometryChanged(const QRectF& newGeometry,
                        const QRectF& oldGeometry) Q_DECL_OVERRIDE;
   QSGNode* updatePaintNode(

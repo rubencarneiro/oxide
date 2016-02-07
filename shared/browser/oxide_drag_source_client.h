@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
-#define _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_DRAG_SOURCE_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_DRAG_SOURCE_CLIENT_H_
 
-#include <QImage>
-
-class SkBitmap;
+#include "third_party/WebKit/public/web/WebDragOperation.h"
 
 namespace oxide {
-namespace qt {
 
-QImage QImageFromSkBitmap(const SkBitmap& bitmap);
+class DragSourceClient {
+ public:
+  virtual ~DragSourceClient() {}
 
-} // namespace qt
+  virtual void EndDrag(blink::WebDragOperation operation) = 0;
+};
+
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_DRAG_SOURCE_CLIENT_H_
