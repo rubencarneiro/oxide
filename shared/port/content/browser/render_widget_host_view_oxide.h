@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,13 +20,17 @@
 
 #include "content/browser/renderer_host/render_widget_host_view_base.h"
 #include "content/common/content_export.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/ime/text_input_type.h"
 
 struct ViewHostMsg_TextInputState_Params;
 
+namespace blink {
+class WebScreenInfo;
+}
+
 namespace gfx {
 class Rect;
+class Display;
 }
 
 namespace content {
@@ -35,6 +39,9 @@ class CONTENT_EXPORT RenderWidgetHostViewOxide
     : public RenderWidgetHostViewBase {
  public:
   virtual ~RenderWidgetHostViewOxide();
+
+  static void GetWebScreenInfoForDisplay(const gfx::Display& display,
+                                         blink::WebScreenInfo* result);
 
  private:
   // content::RenderWidgetHostViewBase implementation
@@ -49,10 +56,6 @@ class CONTENT_EXPORT RenderWidgetHostViewOxide
                                         const gfx::Rect& focus_rect,
                                         bool is_anchor_first) = 0;
 };
-
-typedef blink::WebScreenInfo (DefaultScreenInfoGetter)();
-CONTENT_EXPORT void SetDefaultScreenInfoGetterOxide(
-    DefaultScreenInfoGetter* getter);
 
 } // namespace content
 

@@ -65,6 +65,7 @@ class RenderWidgetHostViewContainer {
 
   virtual gfx::Rect GetViewBoundsDip() const = 0;
 
+  // TODO(chrisccoulson): Return a gfx::Display here
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
   virtual bool HasFocus(const RenderWidgetHostView* view) const = 0;

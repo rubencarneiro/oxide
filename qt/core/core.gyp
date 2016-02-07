@@ -74,6 +74,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_screen_client.cc',
         'api/oxideqcertificateerror.cc',
         'api/oxideqcertificateerror.h',
         'api/oxideqcertificateerror_p.h',
@@ -128,6 +129,12 @@
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
         'browser/oxide_qt_clipboard.cc',
         'browser/oxide_qt_clipboard.h',
+        'browser/oxide_qt_contents_native_view_data.cc',
+        'browser/oxide_qt_contents_native_view_data.h',
+        'browser/oxide_qt_drag_source.cc',
+        'browser/oxide_qt_drag_source.h',
+        'browser/oxide_qt_drag_utils.cc',
+        'browser/oxide_qt_drag_utils.h',
         'browser/oxide_qt_event_utils.cc',
         'browser/oxide_qt_event_utils.h',
         'browser/oxide_qt_file_picker.cc',
@@ -140,6 +147,8 @@
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
+        'browser/oxide_qt_screen_client.cc',
+        'browser/oxide_qt_screen_client.h',
         'browser/oxide_qt_screen_utils.cc',
         'browser/oxide_qt_screen_utils.h',
         'browser/oxide_qt_script_message.cc',
@@ -277,6 +286,11 @@
         {
           'action_name': 'moc_oxide_qt_input_method_context.cc',
           'moc_input': 'browser/input/oxide_qt_input_method_context.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'moc_oxide_qt_screen_client.cc',
+          'moc_input': 'browser/oxide_qt_screen_client.h',
           'includes': [ 'moc.gypi' ]
         },
         {

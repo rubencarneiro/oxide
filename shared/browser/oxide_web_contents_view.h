@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,28 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
+#include "content/public/common/drop_data.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
+#include "shared/browser/oxide_drag_source_client.h"
+#include "shared/browser/oxide_render_object_id.h"
+
 namespace content {
-class WebContents;
+class WebContentsImpl;
+}
+
+namespace ui {
+class TouchSelectionController;
 }
 
 namespace oxide {
 
+class DragSource;
 class RenderWidgetHostViewContainer;
 
-class WebContentsView final : public content::WebContentsViewOxide {
+class WebContentsView : public content::WebContentsViewOxide,
+                        public DragSourceClient {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -39,47 +50,57 @@ class WebContentsView final : public content::WebContentsViewOxide {
 
   void SetContainer(RenderWidgetHostViewContainer* container);
 
-  // content::WebContentsView
-  gfx::NativeView GetNativeView() const final;
-  gfx::NativeView GetContentNativeView() const final;
-  gfx::NativeWindow GetTopLevelNativeWindow() const final;
+  // XXX(chrisccoulson): Make a new class for these events - we don't use
+  //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
+  //  don't think we want
+  void HandleDragEnter(const content::DropData& drop_data,
+                       const gfx::Point& location,
+                       blink::WebDragOperationsMask allowed_ops,
+                       int key_modifiers);
+  blink::WebDragOperation HandleDragMove(const gfx::Point& location,
+                                         int key_modifiers);
+  void HandleDragLeave();
+  blink::WebDragOperation HandleDrop(const gfx::Point& location,
+                                     int key_modifiers);
 
-  void GetContainerBounds(gfx::Rect* out) const final;
+ private:
+  WebContentsView(content::WebContents* web_contents);
 
-  void SizeContents(const gfx::Size& size) final;
+  ui::TouchSelectionController* GetTouchSelectionController();
 
-  void Focus() final;
-  void SetInitialFocus() final;
-  void StoreFocus() final;
-  void RestoreFocus() final;
-
-  content::DropData* GetDropData() const final;
-
-  gfx::Rect GetViewBounds() const final;
-
+  // content::WebContentsView implementation
+  gfx::NativeView GetNativeView() const override;
+  gfx::NativeView GetContentNativeView() const override;
+  gfx::NativeWindow GetTopLevelNativeWindow() const override;
+  void GetContainerBounds(gfx::Rect* out) const override;
+  void SizeContents(const gfx::Size& size) override;
+  void Focus() override;
+  void SetInitialFocus() override;
+  void StoreFocus() override;
+  void RestoreFocus() override;
+  content::DropData* GetDropData() const override;
+  gfx::Rect GetViewBounds() const override;
   void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) final;
+                  gfx::NativeView context) override;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host,
-      bool is_guest_view_hack) final;
+      bool is_guest_view_hack) override;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) final;
+      content::RenderWidgetHost* render_widget_host) override;
+  void SetPageTitle(const base::string16& title) override;
+  void RenderViewCreated(content::RenderViewHost* host) override;
+  void RenderViewSwappedIn(content::RenderViewHost* host) override;
+  void SetOverscrollControllerEnabled(bool enabled) override;
 
-  void SetPageTitle(const base::string16& title) final;
-
-  void RenderViewCreated(content::RenderViewHost* host) final;
-  void RenderViewSwappedIn(content::RenderViewHost* host) final;
-
-  void SetOverscrollControllerEnabled(bool enabled) final;
-
-  // content::RenderViewHostDelegateView
+  // content::RenderViewHostDelegateView implementation
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params) final;
+                       const content::ContextMenuParams& params) override;
   void StartDragging(const content::DropData& drop_data,
                      blink::WebDragOperationsMask allowed_ops,
                      const gfx::ImageSkia& image,
                      const gfx::Vector2d& image_offset,
-                     const content::DragEventSourceInfo& event_info) final;
+                     const content::DragEventSourceInfo& event_info) override;
+  void UpdateDragCursor(blink::WebDragOperation operation) override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,
@@ -87,17 +108,24 @@ class WebContentsView final : public content::WebContentsViewOxide {
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
-                     bool allow_multiple_selection) final;
-  void HidePopupMenu() final;
+                     bool allow_multiple_selection) override;
+  void HidePopupMenu() override;
 
- private:
-  WebContentsView(content::WebContents* web_contents);
+  // DragSourceClient implementaion
+  void EndDrag(blink::WebDragOperation operation) override;
 
-  content::WebContents* web_contents_;
+  content::WebContentsImpl* web_contents_;
 
   RenderWidgetHostViewContainer* container_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
+  scoped_ptr<content::DropData> current_drop_data_;
+  blink::WebDragOperationsMask current_drag_allowed_ops_;
+  blink::WebDragOperation current_drag_op_;
+  RenderWidgetHostID current_drag_target_;
+
+  scoped_ptr<DragSource> drag_source_;
+
+  DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };
 
 } // namespace oxide
