@@ -399,7 +399,7 @@ void WebView::MaybeCancelFullscreenMode() {
     return;
   }
 
-  web_contents_->ExitFullscreen(true);
+  web_contents_->ExitFullscreen(false);
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1571,7 +1571,7 @@ void WebView::SetFullscreenGranted(bool fullscreen) {
       host->WasResized();
     }
   } else {
-    web_contents_->ExitFullscreen(true);
+    web_contents_->ExitFullscreen(false);
   }
 }
 

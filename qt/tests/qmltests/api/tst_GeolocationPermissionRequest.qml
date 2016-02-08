@@ -76,7 +76,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest1_main_frame(data) {
-      webView.url = "http://testsuite/tst_GeolocationPermissionRequest.html";
+      webView.url = "https://testsuite/tst_GeolocationPermissionRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -89,8 +89,8 @@ TestWebView {
         spy.wait();
       }
 
-      compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-      compare(webView.lastGeolocationRequest.embedder, "http://testsuite/");
+      compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+      compare(webView.lastGeolocationRequest.embedder, "https://testsuite/");
       compare(webView.lastGeolocationRequest.isCancelled, false);
 
       data.function();
@@ -109,7 +109,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest2_subframe(data) {
-      webView.url = "http://foo.testsuite/tst_GeolocationPermissionRequest_subframe.html";
+      webView.url = "https://foo.testsuite/tst_GeolocationPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -122,8 +122,8 @@ TestWebView {
         spy.wait();
       }
 
-      compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-      compare(webView.lastGeolocationRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+      compare(webView.lastGeolocationRequest.embedder, "https://foo.testsuite/");
       compare(webView.lastGeolocationRequest.isCancelled, false);
 
       data.function();
@@ -134,7 +134,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest3_main_frame_navigation_cancel() {
-      webView.url = "http://testsuite/tst_GeolocationPermissionRequest.html";
+      webView.url = "https://testsuite/tst_GeolocationPermissionRequest.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -154,7 +154,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest4_subframe_navigation_cancel() {
-      webView.url = "http://testsuite/tst_GeolocationPermissionRequest_subframe.html";
+      webView.url = "https://testsuite/tst_GeolocationPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
@@ -175,7 +175,7 @@ TestWebView {
     }
 
     function test_GeolocationPermissionRequest5_subframe_delete_cancel() {
-      webView.url = "http://testsuite/tst_GeolocationPermissionRequest_subframe.html";
+      webView.url = "https://testsuite/tst_GeolocationPermissionRequest_subframe.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
 
