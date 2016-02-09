@@ -274,10 +274,10 @@ TouchEventState::TouchPoint TouchEventState::CreateTouchPointFromEvent(
   result.y = event.y();
   result.raw_x = event.root_location_f().x();
   result.raw_y = event.root_location_f().y();
-  result.pressure = event.pointer_details().force();
+  result.pressure = event.pointer_details().force;
 
-  DCHECK_EQ(event.pointer_details().radius_x(), 0);
-  DCHECK_EQ(event.pointer_details().radius_y(), 0);
+  DCHECK_EQ(event.pointer_details().radius_x, 0);
+  DCHECK_EQ(event.pointer_details().radius_y, 0);
   DCHECK_EQ(event.rotation_angle(), 0);
 
   result.active = event.type() == ui::ET_TOUCH_PRESSED ||
