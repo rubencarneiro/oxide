@@ -31,7 +31,7 @@ function(configure_and_install_package_config_file _inPath)
       ${_inPath}
       ${CMAKE_CURRENT_BINARY_DIR}/${_outFile}
       INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME}
-      PATH_VARS CMAKE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+      PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
       NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
   string(REGEX REPLACE "([^\\.]+)\\.cmake\\.in$" "\\1" _tmp ${_inFile})
