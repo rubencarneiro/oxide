@@ -517,7 +517,7 @@ ui::TouchEvent* UITouchEventFactory::Cancel() {
   QTouchEvent cancel_event(QEvent::TouchCancel);
   MakeEvents(&cancel_event, 0.0f, 0.0f, &events);
   DCHECK_EQ(events.size(), 1);
-  return events.front();
+  return new ui::TouchEvent(events.front());
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
