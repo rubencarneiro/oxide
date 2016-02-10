@@ -83,8 +83,6 @@ bool WebViewClient::AddMessageToConsole(int32_t level,
   return false;
 }
 
-void WebViewClient::ToggleFullscreenMode(bool enter) {}
-
 void WebViewClient::WebPreferencesDestroyed() {}
 
 void WebViewClient::UnhandledKeyboardEvent(
