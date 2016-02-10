@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2016 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
-#define _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H
+#define _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H
 
-#include <QImage>
-
-class SkBitmap;
+#include "third_party/WebKit/public/web/WebInputEvent.h"
 
 namespace oxide {
-namespace qt {
 
-QImage QImageFromSkBitmap(const SkBitmap& bitmap);
+class MouseEventState {
+ public:
+  MouseEventState();
 
-} // namespace qt
+  void UpdateFromSourceEvent(const blink::WebMouseEvent& event);
+  void CoerceForwardEvent(blink::WebMouseEvent& event);
+
+ private:
+   int click_count_;
+   int click_transfer_;
+   blink::WebMouseEvent::Button last_button_;
+   blink::WebMouseEvent::Type event_type_;
+   double last_click_event_;
+   gfx::Point global_position_;
+   gfx::Point delta_;
+};
+
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H

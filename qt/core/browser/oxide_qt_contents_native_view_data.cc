@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
-#define _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#include "oxide_qt_contents_native_view_data.h"
 
-#include <QImage>
-
-class SkBitmap;
+#include <QObject>
 
 namespace oxide {
 namespace qt {
 
-QImage QImageFromSkBitmap(const SkBitmap& bitmap);
+DEFINE_WEB_CONTENTS_USER_DATA_KEY(ContentsNativeViewData);
+
+ContentsNativeViewData::ContentsNativeViewData(QObject* native_view)
+    : native_view_(native_view) {}
+
+ContentsNativeViewData::~ContentsNativeViewData() {}
+
+// static
+void ContentsNativeViewData::CreateForWebContents(
+    content::WebContents* contents,
+    QObject* native_view) {
+  DCHECK(contents);
+  DCHECK(native_view);
+  if (!FromWebContents(contents)) {
+    contents->SetUserData(UserDataKey(),
+                          new ContentsNativeViewData(native_view));
+  }
+}
+
+QObject* ContentsNativeViewData::GetNativeView() const {
+  return native_view_;
+}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_BROWSER_SKUTILS_H_

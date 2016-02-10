@@ -26,8 +26,6 @@
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
 
-#include "shared/common/oxide_form_factor.h"
-
 namespace oxide {
 namespace qt {
 
@@ -101,24 +99,18 @@ float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
 blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   blink::WebScreenInfo result;
 
-  result.depth = screen->depth();
+  result.depth = 24;
   result.depthPerComponent = 8; // XXX: Copied the GTK impl here
   result.isMonochrome = result.depth == 1;
   result.deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
 
-  QRect rect =
-      screen->mapBetween(Qt::PrimaryOrientation,
-                         screen->orientation(),
-                         screen->geometry());
+  QRect rect = screen->geometry();
   result.rect = blink::WebRect(rect.x(),
                                rect.y(),
                                rect.width(),
                                rect.height());
 
-  QRect availableRect =
-      screen->mapBetween(Qt::PrimaryOrientation,
-                         screen->orientation(),
-                         screen->availableGeometry());
+  QRect availableRect = screen->availableGeometry();
   result.availableRect = blink::WebRect(availableRect.x(),
                                         availableRect.y(),
                                         availableRect.width(),
@@ -127,22 +119,9 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   result.orientationType =
       GetOrientationTypeFromScreenOrientation(screen->orientation());
 
-  // We calculate orientationAngle, which is the clockwise rotation of the
-  // content. However, QScreen::primaryOrientation doesn't work properly in
-  // qtubuntu, so we assume it's portrait on phones and landscape elsewhere
-  // See https://launchpad.net/bugs/1520670
-  Qt::ScreenOrientation primary_orientation = Qt::PrimaryOrientation;
-  if (QGuiApplication::platformName().startsWith("ubuntu")) {
-    if (oxide::GetFormFactorHint() == oxide::FORM_FACTOR_PHONE) {
-      primary_orientation = Qt::PortraitOrientation;
-    } else {
-      primary_orientation = Qt::LandscapeOrientation;
-    }
-  }
-
   result.orientationAngle =
       screen->angleBetween(screen->orientation(),
-                           primary_orientation);
+                           screen->nativeOrientation());
 
   return result;
 }

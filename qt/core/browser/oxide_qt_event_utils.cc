@@ -86,7 +86,7 @@ blink::WebUChar GetControlCharacter(int key_code, bool shift) {
 }
 
 double QInputEventTimeToWebEventTime(QInputEvent* qevent) {
-  return static_cast<double>(qevent->timestamp() / 1000.0);
+  return double(qevent->timestamp()) / 1000;
 }
 
 int QInputEventStateToWebEventModifiers(QInputEvent* qevent) {
@@ -407,7 +407,7 @@ int QKeyEventKeyCodeToWebEventKeyCode(QKeyEvent* qevent) {
   default:
     break;
   }
-  
+
   return 0;
 }
 

@@ -51,6 +51,7 @@
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
+#include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_touch_event_state.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
@@ -191,9 +192,6 @@ class WebView : public ScriptMessageTarget,
   bool IsIncognito() const;
 
   bool IsLoading() const;
-
-  bool FullscreenGranted() const;
-  void SetFullscreenGranted(bool fullscreen);
 
   void WasResized();
   void ScreenUpdated();
@@ -501,13 +499,10 @@ class WebView : public ScriptMessageTarget,
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32_t> received_surface_ids_;
 
-  gfx::Point global_mouse_position_;
+  MouseEventState mouse_state_;
   TouchEventState touch_state_;
 
   content::NotificationRegistrar registrar_;
-
-  bool fullscreen_granted_;
-  bool fullscreen_requested_;
 
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;

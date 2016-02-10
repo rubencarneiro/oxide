@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,19 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
-#define _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#ifndef _OXIDE_SHARED_BROWSER_FULLSCREEN_HELPER_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_FULLSCREEN_HELPER_CLIENT_H_
 
-#include <QImage>
-
-class SkBitmap;
+class GURL;
 
 namespace oxide {
-namespace qt {
 
-QImage QImageFromSkBitmap(const SkBitmap& bitmap);
+class FullscreenHelperClient {
+ public:
+  virtual ~FullscreenHelperClient() {}
 
-} // namespace qt
+  virtual void EnterFullscreenMode(const GURL& origin) = 0;
+
+  virtual void ExitFullscreenMode() = 0;
+};
+
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_SKUTILS_H_
+#endif // _OXIDE_SHARED_BROWSER_FULLSCREEN_HELPER_CLIENT_H_

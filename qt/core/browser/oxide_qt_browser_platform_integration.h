@@ -23,7 +23,6 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/synchronization/lock.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 
@@ -33,6 +32,8 @@ QT_END_NAMESPACE;
 
 namespace oxide {
 namespace qt {
+
+class ScreenClient;
 
 class BrowserPlatformIntegration : public QObject,
                                    public oxide::BrowserPlatformIntegration {
@@ -45,25 +46,25 @@ class BrowserPlatformIntegration : public QObject,
  private Q_SLOTS:
   void OnApplicationStateChanged();
   void OnClipboardDataChanged();
-  void OnScreenGeometryChanged(const QRect& geometry);
-  void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
 
  private:
   void UpdateApplicationState();
-  void UpdateDefaultScreenInfo();
 
   // oxide::BrowserPlatformIntegration implementation
   bool LaunchURLExternally(const GURL& url) override;
   bool IsTouchSupported() override;
   intptr_t GetNativeDisplay() override;
-  blink::WebScreenInfo GetDefaultScreenInfo() override;
+  oxide::ScreenClient* GetScreenClient() override;
   oxide::GLContextDependent* GetGLShareContext() override;
   scoped_ptr<oxide::MessagePump> CreateUIMessagePump() override;
   ui::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
   scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
+  virtual int GetClickInterval() override;
   std::string GetApplicationName() override;
+  scoped_ptr<oxide::DragSource> CreateDragSource(
+      oxide::DragSourceClient* client) override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;
@@ -89,8 +90,7 @@ class BrowserPlatformIntegration : public QObject,
   // when the state really does change
   ApplicationState state_;
 
-  base::Lock default_screen_info_lock_;
-  blink::WebScreenInfo default_screen_info_;
+  scoped_ptr<ScreenClient> screen_client_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };
