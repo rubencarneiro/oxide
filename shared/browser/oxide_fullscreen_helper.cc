@@ -67,7 +67,7 @@ void FullscreenHelper::SetFullscreenGranted(bool granted) {
       }
     }
   } else {
-    web_contents_->ExitFullscreen();
+    web_contents_->ExitFullscreen(false);
   }
 }
 

@@ -61,6 +61,7 @@ class BrowserPlatformIntegration : public QObject,
   void BrowserThreadInit(content::BrowserThread::ID id) override;
   scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
+  virtual int GetClickInterval() override;
   std::string GetApplicationName() override;
   scoped_ptr<oxide::DragSource> CreateDragSource(
       oxide::DragSourceClient* client) override;
