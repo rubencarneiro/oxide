@@ -85,6 +85,12 @@ blink::WebUChar GetControlCharacter(int key_code, bool shift) {
 }
 
 double QInputEventTimeToWebEventTime(QInputEvent* qevent) {
+  if (getenv("OXIDE_TESTING_MODE")) {
+    // We don't have timestamps in testing
+    return base::TimeDelta(base::TimeTicks::Now() - base::TimeTicks())
+        .InSecondsF();
+  }
+
   return double(qevent->timestamp()) / 1000;
 }
 
@@ -591,10 +597,6 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
       break;
     case QEvent::MouseMove:
       result.type = blink::WebInputEvent::MouseMove;
-      break;
-    case QEvent::MouseButtonDblClick:
-      result.type = blink::WebInputEvent::MouseDown;
-      result.clickCount = 2;
       break;
     default:
       NOTREACHED();

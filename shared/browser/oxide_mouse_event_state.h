@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,10 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H
-#define _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H
+#ifndef _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
+#define _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
 
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/gfx/geometry/point.h"
 
 namespace oxide {
 
@@ -26,19 +27,22 @@ class MouseEventState {
  public:
   MouseEventState();
 
-  void UpdateFromSourceEvent(const blink::WebMouseEvent& event);
-  void CoerceForwardEvent(blink::WebMouseEvent& event);
+  void Reset();
+
+  void UpdateEvent(blink::WebMouseEvent* event);
 
  private:
-   int click_count_;
-   int click_transfer_;
-   blink::WebMouseEvent::Button last_button_;
-   blink::WebMouseEvent::Type event_type_;
-   double last_click_event_;
-   gfx::Point global_position_;
-   gfx::Point delta_;
+  bool IsConsecutiveClick(const blink::WebMouseEvent& event);
+
+  bool mouse_entered_;
+  gfx::Point global_position_;
+
+  blink::WebMouseEvent::Button click_button_;
+  int click_count_;
+  gfx::Point click_position_;
+  double last_click_event_time_;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H
+#endif // _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
