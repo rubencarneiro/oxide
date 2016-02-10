@@ -82,6 +82,7 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
+#include "shared/browser/oxide_fullscreen_helper.h"
 #include "shared/browser/oxide_render_widget_host_view.h"
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_frame.h"
@@ -110,6 +111,12 @@
 
 namespace oxide {
 namespace qt {
+
+using oxide::CertificateErrorDispatcher;
+using oxide::FullscreenHelper;
+using oxide::PermissionRequestDispatcher;
+using oxide::WebFrameTreeObserver;
+using oxide::WebFrameTree;
 
 namespace {
 
@@ -429,15 +436,13 @@ void WebView::CommonInit(OxideQFindController* find_controller,
                          QObject* native_view) {
   content::WebContents* contents = view_->GetWebContents();
 
-  oxide::CertificateErrorDispatcher::FromWebContents(
-      contents)->set_client(this);
-  oxide::PermissionRequestDispatcher::FromWebContents(
-      contents)->set_client(this);
+  CertificateErrorDispatcher::FromWebContents(contents)->set_client(this);
+  FullscreenHelper::FromWebContents(contents)->set_client(this);
+  PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
   OxideQSecurityStatusPrivate::get(security_status_)->view = this;
   OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
       contents);
-  oxide::WebFrameTreeObserver::Observe(
-      oxide::WebFrameTree::FromWebContents(contents));
+  WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
   ContentsNativeViewData::CreateForWebContents(contents, native_view);
 
@@ -627,10 +632,6 @@ bool WebView::AddMessageToConsole(
       line_no,
       QString::fromStdString(base::UTF16ToUTF8(source_id)));
   return true;
-}
-
-void WebView::ToggleFullscreenMode(bool enter) {
-  client_->ToggleFullscreenMode(enter);
 }
 
 void WebView::WebPreferencesDestroyed() {
@@ -990,6 +991,14 @@ void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
   client_->CertificateError(qerror.release());
 }
 
+void WebView::EnterFullscreenMode(const GURL& origin) {
+  client_->ToggleFullscreenMode(true);
+}
+
+void WebView::ExitFullscreenMode() {
+  client_->ToggleFullscreenMode(false);
+}
+
 QUrl WebView::url() const {
   return QUrl(QString::fromStdString(view_->GetURL().spec()));
 }
@@ -1023,11 +1032,13 @@ bool WebView::loading() const {
 }
 
 bool WebView::fullscreen() const {
-  return view_->FullscreenGranted();
+  return FullscreenHelper::FromWebContents(
+      view_->GetWebContents())->fullscreen_granted();
 }
 
 void WebView::setFullscreen(bool fullscreen) {
-  view_->SetFullscreenGranted(fullscreen);
+  FullscreenHelper::FromWebContents(view_->GetWebContents())
+      ->SetFullscreenGranted(fullscreen);
 }
 
 WebFrameProxyHandle* WebView::rootFrame() const {
@@ -1495,10 +1506,10 @@ EditCapabilityFlags WebView::editFlags() const {
 void WebView::teardownFrameTree() {
   DCHECK(!frame_tree_torn_down_);
 
-  oxide::WebFrameTreeObserver::Observe(nullptr);
+  WebFrameTreeObserver::Observe(nullptr);
 
   std::deque<oxide::WebFrame*> frames;
-  oxide::WebFrameTree::FromWebContents(view_->GetWebContents())->ForEachFrame(
+  WebFrameTree::FromWebContents(view_->GetWebContents())->ForEachFrame(
       base::Bind(&TeardownFrameTreeForEachHelper, &frames));
   while (frames.size() > 0) {
     oxide::WebFrame* frame = frames.back();
@@ -1575,8 +1586,8 @@ WebView* WebView::CreateFromNewViewRequest(
 
 WebView::~WebView() {
   content::WebContents* contents = view_->GetWebContents();
-  oxide::CertificateErrorDispatcher::FromWebContents(
-      contents)->set_client(nullptr);
+  CertificateErrorDispatcher::FromWebContents(contents)->set_client(nullptr);
+  FullscreenHelper::FromWebContents(contents)->set_client(nullptr);
   DCHECK(frame_tree_torn_down_);
 
   input_method_context_->DetachClient();

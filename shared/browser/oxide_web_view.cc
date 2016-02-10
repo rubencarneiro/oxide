@@ -90,6 +90,7 @@
 #include "oxide_favicon_helper.h"
 #include "oxide_file_picker.h"
 #include "oxide_find_controller.h"
+#include "oxide_fullscreen_helper.h"
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
@@ -147,6 +148,7 @@ void CreateHelpers(content::WebContents* contents,
   FindController::CreateForWebContents(contents);
   WebFrameTree::CreateForWebContents(contents);
   FaviconHelper::CreateForWebContents(contents);
+  FullscreenHelper::CreateForWebContents(contents);
 }
 
 bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
@@ -217,8 +219,6 @@ WebView::WebView(WebViewClient* client)
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
-      fullscreen_granted_(false),
-      fullscreen_requested_(false),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
@@ -525,7 +525,12 @@ bool WebView::HasFocus(const RenderWidgetHostView* view) const {
 }
 
 bool WebView::IsFullscreen() const {
-  return fullscreen_granted_ && fullscreen_requested_;
+  if (!web_contents_) {
+    // We're called in the constructor via GetViewSizeDip
+    return false;
+  }
+
+  return FullscreenHelper::FromWebContents(web_contents_.get())->IsFullscreen();
 }
 
 void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
@@ -931,27 +936,15 @@ void WebView::EnterFullscreenModeForTab(content::WebContents* source,
                                         const GURL& origin) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  fullscreen_requested_ = true;
-
-  if (fullscreen_granted_) {
-    // Nothing to do here. Note, RenderFrameHostImpl::OnToggleFullscreen will
-    // send the resize message
-    return;
-  }
-
-  client_->ToggleFullscreenMode(true);
+  FullscreenHelper::FromWebContents(
+      web_contents_.get())->EnterFullscreenMode(origin);
 }
 
 void WebView::ExitFullscreenModeForTab(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  fullscreen_requested_ = false;
-
-  if (!fullscreen_granted_) {
-    return;
-  }
-
-  client_->ToggleFullscreenMode(false);
+  FullscreenHelper::FromWebContents(
+      web_contents_.get())->ExitFullscreenMode();
 }
 
 bool WebView::IsFullscreenForTabOrPending(
@@ -1543,36 +1536,6 @@ bool WebView::IsIncognito() const {
 
 bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
-}
-
-bool WebView::FullscreenGranted() const {
-  return fullscreen_granted_;
-}
-
-void WebView::SetFullscreenGranted(bool fullscreen) {
-  if (fullscreen == fullscreen_granted_) {
-    return;
-  }
-
-  bool was_fullscreen = IsFullscreen();
-  // It's important to do this before calling WebContents::ExitFullscreen,
-  // as this calls back in to ExitFullscreenModeForTab. If the application
-  // calls us synchronously, then we'll run out of stack
-  fullscreen_granted_ = fullscreen;
-  bool is_fullscreen = IsFullscreen();
-
-  if (is_fullscreen == was_fullscreen) {
-    return;
-  }
-
-  if (is_fullscreen) {
-    content::RenderWidgetHost* host = GetRenderWidgetHost();
-    if (host) {
-      host->WasResized();
-    }
-  } else {
-    web_contents_->ExitFullscreen(false);
-  }
 }
 
 void WebView::WasResized() {
