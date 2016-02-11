@@ -32,7 +32,7 @@ function(configure_and_install_package_config_file _inPath)
       ${_inPath}
       ${CMAKE_CURRENT_BINARY_DIR}/${_configFilename}
       INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_name}
-      PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+      PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR OXIDE_INSTALL_LIBEXECDIR
       NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
   write_basic_package_version_file(

@@ -21,6 +21,7 @@ if(DEFINED _OxideCommonProperties_INCLUDED_)
 endif()
 set(_OxideCommonProperties_INCLUDED_ TRUE)
 
+include(GNUInstallDirs)
 include(OxideCommonOptions)
 
 set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
@@ -52,3 +53,5 @@ endif()
 set(_OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE INTERNAL "CMAKE_INSTALL_PREFIX during last run")
 unset(_INCLUDEDIR_DEFAULT)
 unset(__LAST_INCLUDEDIR_DEFAULT)
+
+set(OXIDE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
