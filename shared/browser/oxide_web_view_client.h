@@ -133,8 +133,6 @@ class WebViewClient : public ScriptMessageTarget {
                                    int32_t line_no,
                                    const base::string16& source_id);
 
-  virtual void ToggleFullscreenMode(bool enter);
-
   // TODO(chrisccoulson): Make WebPreferences ref-counted and get rid of this
   virtual void WebPreferencesDestroyed();
 

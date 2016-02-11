@@ -90,13 +90,13 @@ Item {
       var webView = webViewFactory.createObject(null, {});
       spy.target = webView;
 
-      webView.url = "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
+      webView.url = "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
       verify(webView.waitForLoadSucceeded());
 
       spy.wait();
 
-      compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-      compare(webView.lastGeolocationRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+      compare(webView.lastGeolocationRequest.embedder, "https://foo.testsuite/");
 
       data.function(webView.lastGeolocationRequest);
 
@@ -114,8 +114,8 @@ Item {
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
-        compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-        compare(webView.lastGeolocationRequest.embedder, "http://foo.testsuite/");
+        compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+        compare(webView.lastGeolocationRequest.embedder, "https://foo.testsuite/");
       }
     }
 
@@ -130,13 +130,13 @@ Item {
       var webView = webViewFactory.createObject(null, {});
       spy.target = webView;
 
-      webView.url = "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
+      webView.url = "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
       verify(webView.waitForLoadSucceeded());
 
       spy.wait();
 
-      compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-      compare(webView.lastGeolocationRequest.embedder, "http://foo.testsuite/");
+      compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+      compare(webView.lastGeolocationRequest.embedder, "https://foo.testsuite/");
 
       data.function(webView.lastGeolocationRequest);
 
@@ -148,7 +148,7 @@ Item {
 
       spy.clear();
 
-      webView.url = "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
+      webView.url = "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html";
       verify(webView.waitForLoadSucceeded());
 
       if (data.save) {
@@ -156,25 +156,25 @@ Item {
         compare(webView.lastGeolocationStatus, data.expected);
       } else {
         spy.wait();
-        compare(webView.lastGeolocationRequest.origin, "http://testsuite/");
-        compare(webView.lastGeolocationRequest.embedder, "http://foo.testsuite/");
+        compare(webView.lastGeolocationRequest.origin, "https://testsuite/");
+        compare(webView.lastGeolocationRequest.embedder, "https://foo.testsuite/");
       }
     }
 
     function test_GeolocationPermissionRequest_session_persist3_data() {
       return [
         // Same origin / different embedder
-        { url1: "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
-          url2: "http://bar.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
+        { url1: "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
+          url2: "https://bar.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
         // Same origin / embedder == allowed origin
-        { url1: "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
-          url2: "http://testsuite/tst_GeolocationPermissionRequest_session_persist.html" },
+        { url1: "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
+          url2: "https://testsuite/tst_GeolocationPermissionRequest_session_persist.html" },
         // Different origin / same embedder
-        { url1: "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist.html",
-          url2: "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
+        { url1: "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist.html",
+          url2: "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
         // Different origin / different embedder
-        { url1: "http://foo.testsuite/tst_GeolocationPermissionRequest_session_persist.html",
-          url2: "http://bar.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
+        { url1: "https://foo.testsuite/tst_GeolocationPermissionRequest_session_persist.html",
+          url2: "https://bar.testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
       ];
     }
 
@@ -204,10 +204,10 @@ Item {
 
     function test_GeolocationPermissionRequest_session_persist4_data() {
       return [
-        { url1: "http://testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
-          url2: "http://testsuite/tst_GeolocationPermissionRequest_session_persist.html" },
-        { url1: "http://testsuite/tst_GeolocationPermissionRequest_session_persist.html",
-          url2: "http://testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
+        { url1: "https://testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html",
+          url2: "https://testsuite/tst_GeolocationPermissionRequest_session_persist.html" },
+        { url1: "https://testsuite/tst_GeolocationPermissionRequest_session_persist.html",
+          url2: "https://testsuite/tst_GeolocationPermissionRequest_session_persist_embedder.html" },
       ];
     }
 

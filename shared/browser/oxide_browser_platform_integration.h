@@ -105,6 +105,10 @@ class BrowserPlatformIntegration {
   // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();
 
+  // Time limit, in milliseconds, to distinguish between aggregate or just
+  // successive mouse click events. 
+  virtual int GetClickInterval() = 0;
+
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
 

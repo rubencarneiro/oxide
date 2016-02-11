@@ -21,6 +21,7 @@
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QPointer>
 #include <QString>
 #include <QThread>
@@ -175,6 +176,10 @@ oxide::BrowserPlatformIntegration::ApplicationState
 BrowserPlatformIntegration::GetApplicationState() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   return state_;
+}
+
+int BrowserPlatformIntegration::GetClickInterval() {
+  return qApp->styleHints()->mouseDoubleClickInterval();
 }
 
 std::string BrowserPlatformIntegration::GetApplicationName() {

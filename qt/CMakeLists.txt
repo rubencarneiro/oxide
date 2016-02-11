@@ -67,7 +67,7 @@ configure_and_install_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCore.cmake.in)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OxideQtCore
+        DESTINATION ${OXIDE_INSTALL_INCLUDEDIR}/OxideQtCore
         FILES_MATCHING PATTERN *.h
         PATTERN *_p.h EXCLUDE
         PATTERN includes* EXCLUDE)

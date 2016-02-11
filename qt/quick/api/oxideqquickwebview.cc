@@ -1261,18 +1261,6 @@ void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
   d->proxy()->handleMouseEvent(event);
 }
 
-void OxideQQuickWebView::mouseDoubleClickEvent(QMouseEvent* event) {
-  Q_D(OxideQQuickWebView);
-
-  QQuickItem::mouseDoubleClickEvent(event);
-
-  if (!d->proxy()) {
-    return;
-  }
-
-  d->proxy()->handleMouseEvent(event);
-}
-
 void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
   Q_D(OxideQQuickWebView);
 

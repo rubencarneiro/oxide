@@ -30,6 +30,7 @@
 #include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
+#include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
@@ -63,6 +64,7 @@ class WebView : public InputMethodContextClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::CertificateErrorDispatcherClient,
+                public oxide::FullscreenHelperClient,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
@@ -140,7 +142,6 @@ class WebView : public InputMethodContextClient,
                            const base::string16& message,
                            int32_t line_no,
                            const base::string16& source_id) override;
-  void ToggleFullscreenMode(bool enter) override;
   void WebPreferencesDestroyed() override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
@@ -200,6 +201,10 @@ class WebView : public InputMethodContextClient,
 
   // oxide::CertificateErrorDispatcherClient implementation
   void OnCertificateError(scoped_ptr<oxide::CertificateError> error) override;
+
+  // oxide::FullscreenHelperClient
+  void EnterFullscreenMode(const GURL& origin) override;
+  void ExitFullscreenMode() override;
 
   // WebViewProxy implementation
   QUrl url() const override;
