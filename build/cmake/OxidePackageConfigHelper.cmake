@@ -21,6 +21,7 @@ if(DEFINED _OxidePackageConfigHelper_INCLUDED_)
 endif()
 set(_OxidePackageConfigHelper_INCLUDED_ TRUE)
 
+include(OxideCommonProperties)
 include(CMakePackageConfigHelpers)
 
 function(configure_and_install_package_config_file _inPath)
@@ -35,8 +36,10 @@ function(configure_and_install_package_config_file _inPath)
       PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR OXIDE_INSTALL_LIBEXECDIR
       NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
+  # Specify VERSION here to make CMake 2.8 happy
   write_basic_package_version_file(
       ${CMAKE_CURRENT_BINARY_DIR}/${_versionConfigFilename}
+      VERSION ${PROJECT_VERSION}
       COMPATIBILITY AnyNewerVersion)
 
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_configFilename} ${CMAKE_CURRENT_BINARY_DIR}/${_versionConfigFilename}

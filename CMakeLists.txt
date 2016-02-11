@@ -70,14 +70,6 @@ set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${CMAKE_SOURCE_DIR})
 
 # Allow the version number to be used in the build
-execute_process(
-    COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
-    OUTPUT_VARIABLE PROJECT_VERSION
-    RESULT_VARIABLE _RESULT
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to get version number")
-endif()
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_MAJOR ${PROJECT_VERSION})
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\2" PROJECT_VERSION_MINOR ${PROJECT_VERSION})
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_PATCH ${PROJECT_VERSION})
