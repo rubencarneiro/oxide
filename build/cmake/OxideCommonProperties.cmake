@@ -56,6 +56,14 @@ unset(__LAST_INCLUDEDIR_DEFAULT)
 
 set(OXIDE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
 
+# Find python executable
+if(NOT DEFINED PYTHON)
+  find_program(PYTHON python)
+  if(PYTHON STREQUAL "PYTHON-NOTFOUND")
+    message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
+  endif()
+endif()
+
 execute_process(
     COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
     OUTPUT_VARIABLE PROJECT_VERSION

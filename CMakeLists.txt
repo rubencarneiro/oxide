@@ -55,14 +55,6 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
 
-# Find python executable
-if(NOT DEFINED PYTHON)
-  find_program(PYTHON python)
-  if(PYTHON STREQUAL "PYTHON-NOTFOUND")
-    message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
-  endif()
-endif()
-
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
 # We have a script for loading apps from the tree
