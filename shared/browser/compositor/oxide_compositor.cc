@@ -154,7 +154,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   output_surface->set_display_client(display_client_.get());
   display_client_->display()->Resize(layer_tree_host_->device_viewport_size());
 
-  return output_surface;
+  return std::move(output_surface);
 }
 
 void Compositor::AddObserver(CompositorObserver* observer) {
