@@ -29,6 +29,8 @@
 #include "base/threading/thread_restrictions.h"
 #include "cc/output/context_provider.h"
 #include "cc/raster/single_thread_task_graph_runner.h"
+#include "cc/surfaces/surface_id_allocator.h"
+#include "cc/surfaces/surface_manager.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
@@ -45,6 +47,8 @@
 namespace oxide {
 
 namespace {
+
+uint32_t g_surface_id_namespace = 0;
 
 void WakeUpGpuThread() {}
 
@@ -175,6 +179,8 @@ class CompositorUtilsImpl : public CompositorUtils,
   bool CanUseGpuCompositing() const override;
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
+  cc::SurfaceManager* GetSurfaceManager() const override;
+  scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() override;
 
   bool CalledOnMainOrCompositorThread() const;
   bool CalledOnGpuThread() const;
@@ -234,6 +240,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   struct MainData {
     scoped_ptr<CompositorThread> compositor_thread;
     scoped_ptr<cc::SingleThreadTaskGraphRunner> task_graph_runner;
+    scoped_ptr<cc::SurfaceManager> surface_manager;
   } main_unsafe_access_;
 
   struct GpuData {
@@ -495,6 +502,8 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
   main().task_graph_runner->Start("CompositorTileWorker1",
                                   base::SimpleThread::Options());
 
+  main().surface_manager.reset(new cc::SurfaceManager());
+
   content::CauseForGpuLaunch cause =
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
   scoped_refptr<content::GpuChannelHost> gpu_channel_host(
@@ -518,6 +527,8 @@ void CompositorUtilsImpl::Shutdown() {
 
   main().task_graph_runner->Shutdown();
   main().task_graph_runner.reset();
+
+  main().surface_manager.reset();
 
   // Detach the GPU thread MessageLoop::TaskObserver, to stop processing
   // and existing incoming requests
@@ -664,6 +675,18 @@ CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
 
 cc::TaskGraphRunner* CompositorUtilsImpl::GetTaskGraphRunner() const {
   return main().task_graph_runner.get();
+}
+
+cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
+  return main().surface_manager.get();
+}
+
+scoped_ptr<cc::SurfaceIdAllocator>
+CompositorUtilsImpl::CreateSurfaceIdAllocator() {
+  scoped_ptr<cc::SurfaceIdAllocator> allocator(
+      new cc::SurfaceIdAllocator(++g_surface_id_namespace));
+  allocator->RegisterSurfaceIdNamespace(GetSurfaceManager());
+  return allocator;
 }
 
 bool CompositorUtilsImpl::CalledOnMainOrCompositorThread() const {
