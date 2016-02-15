@@ -31,6 +31,8 @@
 namespace cc {
 class Layer;
 class LayerTreeHost;
+class OnscreenDisplayClient;
+class SurfaceIdAllocator;
 }
 
 namespace gfx {
@@ -101,15 +103,19 @@ class Compositor final : public cc::LayerTreeHostClient,
 
   CompositorClient* client_;
 
+  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+
+  scoped_ptr<cc::OnscreenDisplayClient> display_client_;
+
+  scoped_refptr<CompositorThreadProxy> proxy_;
+  scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
+
   int num_failed_recreate_attempts_;
 
   gfx::Size size_;
   float device_scale_factor_;
 
   scoped_refptr<cc::Layer> root_layer_;
-
-  scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
-  scoped_refptr<CompositorThreadProxy> proxy_;
 
   uint32_t next_output_surface_id_;
 

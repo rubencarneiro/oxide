@@ -37,10 +37,9 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   return true;
 }
 
-void CompositorOutputSurface::DetachFromClient() {
+void CompositorOutputSurface::DetachFromDisplayClient() {
   DCHECK(CalledOnValidThread());
   proxy_->SetOutputSurface(nullptr);
-  cc::OutputSurface::DetachFromClient();
   DetachFromThread();
 }
 

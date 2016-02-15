@@ -34,7 +34,7 @@
 
 namespace oxide {
 
-void CompositorOutputSurfaceGL::DetachFromClient() {
+void CompositorOutputSurfaceGL::DetachFromDisplayClient() {
   DCHECK(CalledOnValidThread());
 
   DiscardBackbuffer();
@@ -44,7 +44,7 @@ void CompositorOutputSurfaceGL::DetachFromClient() {
     pending_buffers_.pop_front();
   }
 
-  CompositorOutputSurface::DetachFromClient();
+  CompositorOutputSurface::DetachFromDisplayClient();
 }
 
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {

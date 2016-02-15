@@ -34,6 +34,8 @@ class SingleThreadTaskRunner;
 
 namespace cc {
 class ContextProvider;
+class SurfaceIdAllocator;
+class SurfaceManager;
 class TaskGraphRunner;
 }
 
@@ -100,6 +102,10 @@ class CompositorUtils {
   virtual CompositingMode GetCompositingMode() const = 0;
 
   virtual cc::TaskGraphRunner* GetTaskGraphRunner() const = 0;
+
+  virtual cc::SurfaceManager* GetSurfaceManager() const = 0;
+
+  virtual scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() = 0;
 
  protected:
   virtual ~CompositorUtils();

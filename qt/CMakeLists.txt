@@ -64,7 +64,7 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
          WORLD_READ WORLD_EXECUTE)
 
 configure_and_install_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCore.cmake.in)
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCoreConfig.cmake.in)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
         DESTINATION ${OXIDE_INSTALL_INCLUDEDIR}/OxideQtCore

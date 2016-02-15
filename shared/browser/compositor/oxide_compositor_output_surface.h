@@ -60,7 +60,7 @@ class CompositorOutputSurface : public cc::OutputSurface,
 
   // cc::OutputSurface implementation
   bool BindToClient(cc::OutputSurfaceClient* client) override;
-  void DetachFromClient() override;
+  void DetachFromDisplayClient() override;
 
  private:
   uint32_t surface_id_;
