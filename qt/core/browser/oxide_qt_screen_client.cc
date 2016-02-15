@@ -41,6 +41,14 @@ void ScreenClient::OnScreenOrientationChanged(
   UpdatePrimaryDisplay();
 }
 
+void ScreenClient::OnScreenPropertyChanged(
+    QPlatformScreen *screen, const QString &propertyName) {
+  if (propertyName == QStringLiteral("scale") &&
+      screen == QGuiApplication::primaryScreen()->handle()) {
+    UpdatePrimaryDisplay();
+  }
+}
+
 void ScreenClient::UpdatePrimaryDisplay() {
   base::AutoLock lock(primary_display_lock_);
 
@@ -95,6 +103,13 @@ ScreenClient::ScreenClient() {
   connect(primary_screen,
           SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
           SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
+
+  QString platform = QGuiApplication::platformName();
+  if (platform.startsWith("ubuntu") || platform == "mirserver") {
+    connect(QGuiApplication::platformNativeInterface(),
+            SIGNAL(screenPropertyChanged(QPlatformWindow*, const QString&)),
+            SLOT(OnScreenPropertyChanged(QPlatformWindow*, const QString&)));
+  }
 
   UpdatePrimaryDisplay();
 }
