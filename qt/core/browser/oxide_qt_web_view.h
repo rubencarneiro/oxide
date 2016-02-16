@@ -32,7 +32,6 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
-#include "shared/browser/oxide_web_contents_view_client.h"
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
@@ -56,13 +55,15 @@ class WebView;
 namespace qt {
 
 class CompositorFrameHandle;
+class ContentsView;
+class ContentsViewProxy;
+class ContentsViewProxyClient;
 class InputMethodContext;
 class WebContext;
 class WebViewProxyClient;
 
 class WebView : public InputMethodContextClient,
                 public oxide::WebViewClient,
-                public oxide::WebContentsViewClient, // Split out from this
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::CertificateErrorDispatcherClient,
@@ -70,6 +71,7 @@ class WebView : public InputMethodContextClient,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
+          ContentsViewProxyClient* view_client,
           QObject* native_view,
           OxideQFindController* find_controller,
           OxideQSecurityStatus* security_status,
@@ -79,6 +81,7 @@ class WebView : public InputMethodContextClient,
           RestoreType restore_type);
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
+      ContentsViewProxyClient* view_client,
       QObject* native_view,
       OxideQFindController* find_controller,
       OxideQSecurityStatus* security_status,
@@ -97,6 +100,7 @@ class WebView : public InputMethodContextClient,
 
  private:
   WebView(WebViewProxyClient* client,
+          ContentsViewProxyClient* view_client,
           OxideQSecurityStatus* security_status);
 
   void CommonInit(OxideQFindController* find_controller,
@@ -177,14 +181,6 @@ class WebView : public InputMethodContextClient,
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
 
-  // oxide::WebContentsViewClient implementation
-  blink::WebScreenInfo GetScreenInfo() const override;
-  gfx::Rect GetBoundsPix() const override;
-  oxide::WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params) override;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
-
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;
   const oxide::ScriptMessageHandler* GetScriptMessageHandlerAt(
@@ -211,6 +207,8 @@ class WebView : public InputMethodContextClient,
   void ExitFullscreenMode() override;
 
   // WebViewProxy implementation
+  ContentsViewProxy* view() const override;
+
   QUrl url() const override;
   void setUrl(const QUrl& url) override;
 
@@ -312,12 +310,15 @@ class WebView : public InputMethodContextClient,
 
   void teardownFrameTree() override;
 
-  // This must outlive |view_|
+  // This must outlive |web_view_|
   scoped_ptr<InputMethodContext> input_method_context_;
 
-  scoped_ptr<oxide::WebView> view_;
+  scoped_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
+
+  // This must be deleted before |web_view_|
+  scoped_ptr<ContentsView> contents_view_;
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<ScriptMessageHandlerProxyHandle*> message_handlers_;

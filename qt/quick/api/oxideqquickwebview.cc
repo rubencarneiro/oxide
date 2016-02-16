@@ -172,20 +172,6 @@ QObject* OxideQQuickWebViewPrivate::GetApiHandle() {
   return q;
 }
 
-oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
-    oxide::qt::WebContextMenuProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::WebContextMenu(q, client);
-}
-
-oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
-    oxide::qt::WebPopupMenuProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::WebPopupMenu(q, client);
-}
-
 oxide::qt::JavaScriptDialogProxy*
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
     oxide::qt::JavaScriptDialogProxyClient::Type type,
@@ -311,29 +297,6 @@ void OxideQQuickWebViewPrivate::CreateWebFrame(
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
 
   emit q->frameAdded(frame);
-}
-
-QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
-  Q_Q(const OxideQQuickWebView);
-
-  if (!q->window()) {
-    return nullptr;
-  }
-
-  return q->window()->screen();
-}
-
-QRect OxideQQuickWebViewPrivate::GetViewBoundsPix() const {
-  Q_Q(const OxideQQuickWebView);
-
-  if (!q->window()) {
-    return QRect();
-  }
-
-  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
-
-  return QRect(qRound(pos.x()), qRound(pos.y()),
-               qRound(q->width()), qRound(q->height()));
 }
 
 bool OxideQQuickWebViewPrivate::IsVisible() const {
@@ -667,6 +630,43 @@ void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
   emit q->editingCapabilitiesChanged();
 }
 
+QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
+  Q_Q(const OxideQQuickWebView);
+
+  if (!q->window()) {
+    return nullptr;
+  }
+
+  return q->window()->screen();
+}
+
+QRect OxideQQuickWebViewPrivate::GetBoundsPix() const {
+  Q_Q(const OxideQQuickWebView);
+
+  if (!q->window()) {
+    return QRect();
+  }
+
+  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
+
+  return QRect(qRound(pos.x()), qRound(pos.y()),
+               qRound(q->width()), qRound(q->height()));
+}
+
+oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    oxide::qt::WebContextMenuProxyClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebContextMenu(q, client);
+}
+
+oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
+    oxide::qt::WebPopupMenuProxyClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return new oxide::qquick::WebPopupMenu(q, client);
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -674,7 +674,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
   if (construct_props_->new_view_request) {
     set_proxy(oxide::qt::WebViewProxy::create(
-        this, q,
+        this, this, q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->new_view_request));
@@ -683,7 +683,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   if (!proxy()) {
     construct_props_->new_view_request = nullptr;
     set_proxy(oxide::qt::WebViewProxy::create(
-        this, q,
+        this, this, q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->context,

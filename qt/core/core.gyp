@@ -131,6 +131,8 @@
         'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_contents_native_view_data.cc',
         'browser/oxide_qt_contents_native_view_data.h',
+        'browser/oxide_qt_contents_view.cc',
+        'browser/oxide_qt_contents_view.h',
         'browser/oxide_qt_drag_source.cc',
         'browser/oxide_qt_drag_source.h',
         'browser/oxide_qt_drag_utils.cc',
@@ -179,6 +181,8 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
+        'glue/oxide_qt_contents_view_proxy.h'
+        'glue/oxide_qt_contents_view_proxy_client.h'
         'glue/oxide_qt_file_picker_proxy.h',
         'glue/oxide_qt_file_picker_proxy_client.h',
         'glue/oxide_qt_init.cc',

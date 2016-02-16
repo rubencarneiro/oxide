@@ -25,6 +25,7 @@
 
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
+#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
@@ -47,7 +48,8 @@ class QScreen;
 QT_END_NAMESPACE
 
 class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
-                                  public oxide::qt::WebViewProxyClient {
+                                  public oxide::qt::WebViewProxyClient,
+                                  public oxide::qt::ContentsViewProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
   OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView, oxide::qt::WebViewProxyHandle)
  public:
@@ -85,10 +87,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
 
   // oxide::qt::WebViewProxyClient implementation
   QObject* GetApiHandle() override;
-  oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
-      oxide::qt::WebContextMenuProxyClient* client) override;
-  oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
-      oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
@@ -110,8 +108,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void NavigationEntryChanged(int index) override;
   void TouchSelectionChanged(bool active, QRectF bounds) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
-  QScreen* GetScreen() const override;
-  QRect GetViewBoundsPix() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
   void AddMessageToConsole(int level,
@@ -148,6 +144,14 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   void CloseRequested() override;
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
+
+  // oxide::qt::ContentsViewProxyClient implementation
+  QScreen* GetScreen() const override;
+  QRect GetBoundsPix() const override;
+  oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
+      oxide::qt::WebContextMenuProxyClient* client) override;
+  oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
+      oxide::qt::WebPopupMenuProxyClient* client) override;
 
   oxide::qt::WebViewProxy* proxy() const {
     return oxide::qt::WebViewProxyHandle::proxy();

@@ -26,6 +26,7 @@ namespace qt {
 
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
+                                   ContentsViewProxyClient* view_client,
                                    QObject* native_view,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
@@ -36,6 +37,7 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
   CHECK(context);
 
   return new WebView(client,
+                     view_client,
                      native_view,
                      find_controller,
                      security_status,
@@ -47,11 +49,13 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
+                                   ContentsViewProxyClient* view_client,
                                    QObject* native_view,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
                                    OxideQNewViewRequest* new_view_request) {
   return WebView::CreateFromNewViewRequest(client,
+                                           view_client,
                                            native_view,
                                            find_controller,
                                            security_status,

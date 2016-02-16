@@ -39,7 +39,6 @@ QT_BEGIN_NAMESPACE
 class QCursor;
 class QKeyEvent;
 class QObject;
-class QScreen;
 class QString;
 QT_END_NAMESPACE
 
@@ -50,11 +49,7 @@ class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
 class TouchHandleDrawableProxy;
-class WebContextMenuProxy;
-class WebContextMenuProxyClient;
 class WebFrameProxy;
-class WebPopupMenuProxy;
-class WebPopupMenuProxyClient;
 
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
@@ -74,10 +69,6 @@ class WebViewProxyClient {
 
   virtual QObject* GetApiHandle() = 0;
 
-  virtual WebContextMenuProxy* CreateWebContextMenu(
-      WebContextMenuProxyClient* client) = 0;
-  virtual WebPopupMenuProxy* CreateWebPopupMenu(
-      WebPopupMenuProxyClient* client) = 0;
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
       JavaScriptDialogProxyClient::Type type,
       JavaScriptDialogProxyClient* client) = 0;
@@ -104,8 +95,6 @@ class WebViewProxyClient {
 
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
 
-  virtual QScreen* GetScreen() const = 0;
-  virtual QRect GetViewBoundsPix() const = 0;
   virtual bool IsVisible() const = 0;
   virtual bool HasFocus() const = 0;
 

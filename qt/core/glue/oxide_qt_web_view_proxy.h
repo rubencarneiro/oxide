@@ -59,6 +59,8 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
+class ContentsViewProxy;
+class ContentsViewProxyClient;
 class ScriptMessageHandlerProxy;
 class WebContextProxy;
 class WebFrameProxy;
@@ -144,21 +146,26 @@ OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
 class Q_DECL_EXPORT WebViewProxy {
   OXIDE_Q_DECL_PROXY_FOR(WebView);
  public:
+  static WebViewProxy* create(
+      WebViewProxyClient* client, // Must outlive returned proxy
+      ContentsViewProxyClient* view_client, // Must outlive returned proxy
+      QObject* native_view,
+      OxideQFindController* find_controller, // Returned proxy must outlive this
+      OxideQSecurityStatus* security_status, // Returned proxy must outlive this
+      WebContextProxyHandle* context,
+      bool incognito,
+      const QByteArray& restore_state,
+      RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
-                              QObject* native_view,
-                              OxideQFindController* find_controller,
-                              OxideQSecurityStatus* security_status,
-                              WebContextProxyHandle* context,
-                              bool incognito,
-                              const QByteArray& restore_state,
-                              RestoreType restore_type);
-  static WebViewProxy* create(WebViewProxyClient* client,
+                              ContentsViewProxyClient* view_client,
                               QObject* native_view,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request);
 
   virtual ~WebViewProxy();
+
+  virtual ContentsViewProxy* view() const = 0;
 
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;
