@@ -842,7 +842,7 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
   }
 
   host_->ForwardTouchEventWithLatencyInfo(
-      MakeWebTouchEvent(event, rv.did_generate_scroll),
+      MakeWebTouchEvent(event, rv.moved_beyond_slop_region),
       ui::LatencyInfo());
 }
 
