@@ -59,6 +59,7 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
+#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/window_open_disposition.h"
@@ -96,10 +97,9 @@
 #include "oxide_script_message_contents_helper.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
-#include "oxide_web_context_menu.h"
+#include "oxide_web_contents_view_client.h"
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_frame.h"
-#include "oxide_web_popup_menu.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_client.h"
 #include "oxide_web_view_contents_helper.h"
@@ -200,21 +200,27 @@ WebView* WebViewIterator::GetNext() {
   return nullptr;
 }
 
-WebView::Params::Params()
+WebView::CommonParams::CommonParams()
     : client(nullptr),
-      context(nullptr),
+      view_client(nullptr) {}
+
+WebView::CommonParams::~CommonParams() {}
+
+WebView::CreateParams::CreateParams()
+    : context(nullptr),
       incognito(false),
       restore_type(content::NavigationController::RESTORE_CURRENT_SESSION),
       restore_index(0) {}
 
-WebView::Params::~Params() {}
+WebView::CreateParams::~CreateParams() {}
 
 // static
 WebViewIterator WebView::GetAllWebViews() {
   return WebViewIterator(g_all_web_views.Get());
 }
 
-WebView::WebView(WebViewClient* client)
+WebView::WebView(WebViewClient* client,
+                 WebContentsViewClient* view_client)
     : client_(client),
       web_contents_helper_(nullptr),
       compositor_(Compositor::Create(this)),
@@ -229,18 +235,20 @@ WebView::WebView(WebViewClient* client)
 
   root_layer_->SetIsDrawable(true);
   root_layer_->SetBackgroundColor(SK_ColorWHITE);
-  root_layer_->SetBounds(GetViewSizeDip());
+  root_layer_->SetBounds(view_client->GetBoundsDip().size());
 
   compositor_->SetRootLayer(root_layer_);
-  compositor_->SetViewportSize(GetViewSizePix());
+  compositor_->SetViewportSize(view_client->GetBoundsPix().size());
   compositor_->SetVisibility(IsVisible());
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetDeviceScaleFactor(
+      view_client->GetScreenInfo().deviceScaleFactor);
 
   CompositorObserver::Observe(compositor_.get());
   InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
-void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
+void WebView::CommonInit(scoped_ptr<content::WebContents> contents,
+                         WebContentsViewClient* view_client) {
   web_contents_.reset(contents.release());
 
   // Attach ourself to the WebContents
@@ -262,7 +270,8 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents) {
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(this);
+  WebContentsView::FromWebContents(
+      web_contents_.get())->SetClient(view_client);
 
   DCHECK(std::find(g_all_web_views.Get().begin(),
                    g_all_web_views.Get().end(),
@@ -292,6 +301,14 @@ content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
   }
 
   return rwhv->GetRenderWidgetHost();
+}
+
+gfx::Rect WebView::GetViewBoundsPix() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->GetBoundsPix();
+}
+
+gfx::Size WebView::GetViewSizeDip() const {
+  return GetViewBoundsDip().size();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -516,6 +533,14 @@ void WebView::CursorChanged() {
   client_->UpdateCursor(rwhv->current_cursor());
 }
 
+gfx::Size WebView::GetViewSizePix() const {
+  return GetViewBoundsPix().size();
+}
+
+gfx::Rect WebView::GetViewBoundsDip() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->GetBoundsDip();
+}
+
 bool WebView::HasFocus(const RenderWidgetHostView* view) const {
   if (!HasFocus()) {
     return false;
@@ -531,43 +556,6 @@ bool WebView::IsFullscreen() const {
   }
 
   return FullscreenHelper::FromWebContents(web_contents_.get())->IsFullscreen();
-}
-
-void WebView::ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                              const content::ContextMenuParams& params) {
-  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
-  if (!menu) {
-    return;
-  }
-
-  menu->Show();
-}
-
-void WebView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                            const gfx::Rect& bounds,
-                            int selected_item,
-                            const std::vector<content::MenuItem>& items,
-                            bool allow_multiple_selection) {
-  DCHECK(!active_popup_menu_);
-
-  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
-  if (!menu) {
-    static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->DidCancelPopupMenu();
-    return;
-  }
-
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show(bounds, items, selected_item, allow_multiple_selection);
-}
-
-void WebView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
-  }
-
-  active_popup_menu_->Close();
 }
 
 ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
@@ -1276,16 +1264,18 @@ void WebView::ClipboardDataChanged() {
   EditingCapabilitiesChanged();
 }
 
-WebView::WebView(const Params& params)
-    : WebView(params.client) {
-  CHECK(params.context) << "Didn't specify a BrowserContext";
+WebView::WebView(const CommonParams& common_params,
+                 const CreateParams& create_params)
+    : WebView(common_params.client, common_params.view_client) {
+  CHECK(create_params.context) << "Didn't specify a BrowserContext";
 
-  scoped_refptr<BrowserContext> context = params.incognito ?
-      params.context->GetOffTheRecordContext() :
-      params.context->GetOriginalContext();
+  scoped_refptr<BrowserContext> context = create_params.incognito ?
+      create_params.context->GetOffTheRecordContext() :
+      create_params.context->GetOriginalContext();
 
   content::WebContents::CreateParams content_params(context.get());
-  content_params.initial_size = GetViewSizeDip();
+  content_params.initial_size =
+      common_params.view_client->GetBoundsDip().size();
   content_params.initially_hidden = !IsVisible();
 
   scoped_ptr<content::WebContents> contents(
@@ -1293,23 +1283,23 @@ WebView::WebView(const Params& params)
   CHECK(contents.get()) << "Failed to create WebContents";
 
   CreateHelpers(contents.get());
-  CommonInit(std::move(contents));
+  CommonInit(std::move(contents), common_params.view_client);
 
-  if (params.restore_entries.size() > 0) {
+  if (create_params.restore_entries.size() > 0) {
     std::vector<scoped_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-            params.restore_entries, context.get());
+            create_params.restore_entries, context.get());
     web_contents_->GetController().Restore(
-        params.restore_index,
-        params.restore_type,
+        create_params.restore_index,
+        create_params.restore_type,
         &entries);
     web_contents_->GetController().LoadIfNecessary();
   }
 }
 
-WebView::WebView(scoped_ptr<content::WebContents> contents,
-                 WebViewClient* client)
-    : WebView(client) {
+WebView::WebView(const CommonParams& common_params,
+                 scoped_ptr<content::WebContents> contents)
+    : WebView(common_params.client, common_params.view_client) {
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<
          "Specified WebContents doesn't have a BrowserContext";
@@ -1318,7 +1308,7 @@ WebView::WebView(scoped_ptr<content::WebContents> contents,
   CHECK(!FromWebContents(contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
-  CommonInit(std::move(contents));
+  CommonInit(std::move(contents), common_params.view_client);
 
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
@@ -1362,8 +1352,6 @@ WebView::~WebView() {
                   g_all_web_views.Get().end(),
                   this),
       g_all_web_views.Get().end());
-
-  WebContentsView::FromWebContents(web_contents_.get())->SetContainer(nullptr);
 
   RenderWidgetHostView* rwhv =
       static_cast<RenderWidgetHostView*>(
@@ -1666,32 +1654,6 @@ void WebView::SetWebPreferences(WebPreferences* prefs) {
   web_contents_helper_->SetWebPreferences(prefs);
 }
 
-gfx::Size WebView::GetViewSizePix() const {
-  return GetViewBoundsPix().size();
-}
-
-gfx::Rect WebView::GetViewBoundsDip() const {
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  gfx::Rect bounds(GetViewBoundsPix());
-
-  int x = std::lround(bounds.x() * scale);
-  int y = std::lround(bounds.y() * scale);
-  int width = std::lround(bounds.width() * scale);
-  int height = std::lround(bounds.height() * scale);
-
-  return gfx::Rect(x, y, width, height);
-}
-
-gfx::Size WebView::GetViewSizeDip() const {
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  gfx::Size size(GetViewSizePix());
-
-  int width = std::lround(size.width() * scale);
-  int height = std::lround(size.height() * scale);
-
-  return gfx::Size(width, height);
-}
-
 gfx::Point WebView::GetCompositorFrameScrollOffsetPix() {
   // See https://launchpad.net/bugs/1336730
   const gfx::SizeF& viewport_size =
@@ -1957,22 +1919,7 @@ void WebView::DidCommitCompositorFrame() {
 }
 
 blink::WebScreenInfo WebView::GetScreenInfo() const {
-  return client_->GetScreenInfo();
-}
-
-gfx::Rect WebView::GetViewBoundsPix() const {
-  if (IsFullscreen()) {
-    // If we're in fullscreen mode, return the screen size rather than the
-    // view bounds. This works around an issue where buggy Flash content
-    // expects the view to resize synchronously when it goes fullscreen, but it
-    // happens asynchronously instead.
-    // See https://launchpad.net/bugs/1510508
-    // XXX: Obviously, this means we assume that we do occupy the full screen
-    //  when the browser grants us fullscreen. If that's not the case, then
-    //  this is going to break
-    return GetScreenInfo().rect;
-  }
-  return client_->GetViewBoundsPix();
+  return WebContentsView::FromWebContents(web_contents_.get())->GetScreenInfo();
 }
 
 bool WebView::IsVisible() const {

@@ -71,10 +71,6 @@ class WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
 
-  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
-
-  virtual gfx::Rect GetViewBoundsPix() const = 0;
-
   virtual bool IsVisible() const = 0;
 
   virtual bool HasFocus() const = 0;

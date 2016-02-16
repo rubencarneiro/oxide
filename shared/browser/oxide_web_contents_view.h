@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/common/drop_data.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
@@ -37,7 +38,8 @@ class TouchSelectionController;
 namespace oxide {
 
 class DragSource;
-class RenderWidgetHostViewContainer;
+class WebContentsViewClient;
+class WebPopupMenu;
 
 class WebContentsView : public content::WebContentsViewOxide,
                         public DragSourceClient {
@@ -48,7 +50,12 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   static WebContentsView* FromWebContents(content::WebContents* contents);
 
-  void SetContainer(RenderWidgetHostViewContainer* container);
+  void SetClient(WebContentsViewClient* client);
+
+  gfx::Rect GetBoundsPix() const;
+  gfx::Rect GetBoundsDip() const;
+
+  blink::WebScreenInfo GetScreenInfo() const;
 
   // XXX(chrisccoulson): Make a new class for these events - we don't use
   //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
@@ -116,7 +123,7 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   content::WebContentsImpl* web_contents_;
 
-  RenderWidgetHostViewContainer* container_;
+  WebContentsViewClient* client_;
 
   scoped_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
@@ -124,6 +131,8 @@ class WebContentsView : public content::WebContentsViewOxide,
   RenderWidgetHostID current_drag_target_;
 
   scoped_ptr<DragSource> drag_source_;
+
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

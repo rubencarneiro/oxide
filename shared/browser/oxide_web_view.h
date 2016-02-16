@@ -99,9 +99,8 @@ class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
-class WebContextMenu;
+class WebContentsViewClient;
 class WebFrame;
-class WebPopupMenu;
 class WebPreferences;
 class WebView;
 class WebViewClient;
@@ -138,21 +137,31 @@ class WebView : public ScriptMessageTarget,
                 private BrowserPlatformIntegrationObserver {
  public:
 
-  struct Params {
-    Params();
-    ~Params();
+  struct CommonParams {
+    CommonParams();
+    ~CommonParams();
 
     WebViewClient* client;
+    WebContentsViewClient* view_client;
+  };
+
+  struct CreateParams {
+    CreateParams();
+    ~CreateParams();
+
     BrowserContext* context;
     bool incognito;
     std::vector<sessions::SerializedNavigationEntry> restore_entries;
     content::NavigationController::RestoreType restore_type;
     int restore_index;
+    gfx::Size initial_size;
+    bool initially_hidden;
   };
 
-  WebView(const Params& params);
-  WebView(scoped_ptr<content::WebContents> contents,
-          WebViewClient* client);
+  WebView(const CommonParams& common_params,
+          const CreateParams& create_params);
+  WebView(const CommonParams& common_params,
+          scoped_ptr<content::WebContents> contents);
 
   ~WebView() override;
 
@@ -215,10 +224,6 @@ class WebView : public ScriptMessageTarget,
   WebPreferences* GetWebPreferences();
   void SetWebPreferences(WebPreferences* prefs);
 
-  gfx::Size GetViewSizePix() const;
-  gfx::Rect GetViewBoundsDip() const;
-  gfx::Size GetViewSizeDip() const;
-
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
@@ -277,7 +282,6 @@ class WebView : public ScriptMessageTarget,
   void DidCommitCompositorFrame();
 
   blink::WebScreenInfo GetScreenInfo() const;
-  gfx::Rect GetViewBoundsPix() const;
   bool IsVisible() const;
   bool HasFocus() const;
 
@@ -294,13 +298,18 @@ class WebView : public ScriptMessageTarget,
   int GetEditFlags() const;
 
  private:
-  WebView(WebViewClient* client);
+  WebView(WebViewClient* client,
+          WebContentsViewClient* view_client);
 
-  void CommonInit(scoped_ptr<content::WebContents> contents);
+  void CommonInit(scoped_ptr<content::WebContents> contents,
+                  WebContentsViewClient* view_client);
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
   content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHost* GetRenderWidgetHost() const;
+
+  gfx::Rect GetViewBoundsPix() const;
+  gfx::Size GetViewSizeDip() const;
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
@@ -351,16 +360,10 @@ class WebView : public ScriptMessageTarget,
   void AttachLayer(scoped_refptr<cc::Layer> layer) final;
   void DetachLayer(scoped_refptr<cc::Layer> layer) final;
   void CursorChanged() final;
+  gfx::Size GetViewSizePix() const final;
+  gfx::Rect GetViewBoundsDip() const final;
   bool HasFocus(const RenderWidgetHostView* view) const final;
   bool IsFullscreen() const final;
-  void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params) final;
-  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                     const gfx::Rect& bounds,
-                     int selected_item,
-                     const std::vector<content::MenuItem>& items,
-                     bool allow_multiple_selection) final;
-  void HidePopupMenu() final;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const final;
   void TouchSelectionChanged() const final;
   void EditingCapabilitiesChanged() final;
@@ -504,7 +507,6 @@ class WebView : public ScriptMessageTarget,
 
   content::NotificationRegistrar registrar_;
 
-  base::WeakPtr<WebPopupMenu> active_popup_menu_;
   base::WeakPtr<FilePicker> active_file_picker_;
 
   ContentType blocked_content_;

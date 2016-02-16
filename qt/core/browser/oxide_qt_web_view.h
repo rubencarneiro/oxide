@@ -32,6 +32,7 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
+#include "shared/browser/oxide_web_contents_view_client.h"
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
@@ -61,6 +62,7 @@ class WebViewProxyClient;
 
 class WebView : public InputMethodContextClient,
                 public oxide::WebViewClient,
+                public oxide::WebContentsViewClient, // Split out from this
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::CertificateErrorDispatcherClient,
@@ -106,8 +108,6 @@ class WebView : public InputMethodContextClient,
   void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebViewClient implementation
-  blink::WebScreenInfo GetScreenInfo() const override;
-  gfx::Rect GetViewBoundsPix() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
@@ -158,10 +158,6 @@ class WebView : public InputMethodContextClient,
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
-  oxide::WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params) override;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
   oxide::WebView* CreateNewWebView(
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
@@ -180,6 +176,14 @@ class WebView : public InputMethodContextClient,
   void CloseRequested() override;
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
+
+  // oxide::WebContentsViewClient implementation
+  blink::WebScreenInfo GetScreenInfo() const override;
+  gfx::Rect GetBoundsPix() const override;
+  oxide::WebContextMenu* CreateContextMenu(
+      content::RenderFrameHost* rfh,
+      const content::ContextMenuParams& params) override;
+  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;

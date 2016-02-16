@@ -452,6 +452,8 @@
         'browser/oxide_web_contents_unloader.h',
         'browser/oxide_web_contents_view.cc',
         'browser/oxide_web_contents_view.h',
+        'browser/oxide_web_contents_view_client.cc',
+        'browser/oxide_web_contents_view_client.h',
         'browser/oxide_web_context_menu.cc',
         'browser/oxide_web_context_menu.h',
         'browser/oxide_web_frame.cc',

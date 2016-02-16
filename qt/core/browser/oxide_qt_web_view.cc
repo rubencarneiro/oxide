@@ -466,23 +466,6 @@ void WebView::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
 }
 
-blink::WebScreenInfo WebView::GetScreenInfo() const {
-  QScreen* screen = client_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-
-  return GetWebScreenInfoFromQScreen(screen);
-}
-
-gfx::Rect WebView::GetViewBoundsPix() const {
-  QRect bounds = client_->GetViewBoundsPix();
-  return gfx::Rect(bounds.x(),
-                   bounds.y(),
-                   bounds.width(),
-                   bounds.height());
-}
-
 bool WebView::IsVisible() const {
   return client_->IsVisible();
 }
@@ -765,20 +748,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebContextMenu* WebView::CreateContextMenu(
-    content::RenderFrameHost* rfh,
-    const content::ContextMenuParams& params) {
-  WebContextMenu* menu = new WebContextMenu(rfh, params);
-  menu->SetProxy(client_->CreateWebContextMenu(menu));
-  return menu;
-}
-
-oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  WebPopupMenu* menu = new WebPopupMenu(rfh);
-  menu->SetProxy(client_->CreateWebPopupMenu(menu));
-  return menu;
-}
-
 oxide::WebView* WebView::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
@@ -906,6 +875,37 @@ void WebView::TargetURLChanged() {
 
 void WebView::OnEditingCapabilitiesChanged() {
   client_->OnEditingCapabilitiesChanged();
+}
+
+blink::WebScreenInfo WebView::GetScreenInfo() const {
+  QScreen* screen = client_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+
+  return GetWebScreenInfoFromQScreen(screen);
+}
+
+gfx::Rect WebView::GetBoundsPix() const {
+  QRect bounds = client_->GetViewBoundsPix();
+  return gfx::Rect(bounds.x(),
+                   bounds.y(),
+                   bounds.width(),
+                   bounds.height());
+}
+
+oxide::WebContextMenu* WebView::CreateContextMenu(
+    content::RenderFrameHost* rfh,
+    const content::ContextMenuParams& params) {
+  WebContextMenu* menu = new WebContextMenu(rfh, params);
+  menu->SetProxy(client_->CreateWebContextMenu(menu));
+  return menu;
+}
+
+oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
+  WebPopupMenu* menu = new WebPopupMenu(rfh);
+  menu->SetProxy(client_->CreateWebPopupMenu(menu));
+  return menu;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -1530,16 +1530,20 @@ WebView::WebView(WebViewProxyClient* client,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
     : WebView(client, security_status) {
-  oxide::WebView::Params params;
-  params.client = this;
-  params.context = context->GetContext();
-  params.incognito = incognito;
+  oxide::WebView::CommonParams common_params;
+  common_params.client = this;
+  common_params.view_client = this;
+
+  oxide::WebView::CreateParams create_params;
+  create_params.context = context->GetContext();
+  create_params.incognito = incognito;
 
   if (!restore_state.isEmpty()) {
     CreateRestoreEntriesFromRestoreState(restore_state,
-                                         &params.restore_entries,
-                                         &params.restore_index);
-    params.restore_type = ToNavigationControllerRestoreType(restore_type);
+                                         &create_params.restore_entries,
+                                         &create_params.restore_index);
+    create_params.restore_type =
+        ToNavigationControllerRestoreType(restore_type);
   }
 
   if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
@@ -1548,7 +1552,7 @@ WebView::WebView(WebViewProxyClient* client,
     DCHECK_EQ(context, WebContext::GetDefault());
   }
 
-  view_.reset(new oxide::WebView(params));
+  view_.reset(new oxide::WebView(common_params, create_params));
 
   CommonInit(find_controller, native_view);
 
@@ -1569,7 +1573,12 @@ WebView* WebView::CreateFromNewViewRequest(
   }
 
   WebView* new_view = new WebView(client, security_status);
-  new_view->view_.reset(new oxide::WebView(std::move(rd->contents), new_view));
+
+  oxide::WebView::CommonParams params;
+  params.client = new_view;
+  params.view_client = new_view;
+  new_view->view_.reset(new oxide::WebView(params, std::move(rd->contents)));
+
   rd->view = new_view->view_->AsWeakPtr();
 
   new_view->CommonInit(find_controller, native_view);
