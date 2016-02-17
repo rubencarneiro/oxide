@@ -23,7 +23,6 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 class OxideQCertificateError;
 class OxideQDownloadRequest;
@@ -61,13 +60,9 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
-OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
-
 class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
-
-  virtual QObject* GetApiHandle() = 0;
 
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
       JavaScriptDialogProxyClient::Type type,
@@ -107,7 +102,7 @@ class WebViewProxyClient {
 
   virtual void WebPreferencesReplaced() = 0;
 
-  virtual void FrameRemoved(WebFrameProxyHandle* frame) = 0;
+  virtual void FrameRemoved(QObject* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;
 

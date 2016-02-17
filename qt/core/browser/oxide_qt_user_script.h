@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -44,10 +44,9 @@ class UserScript : public UserScriptProxy {
   };
 
   UserScript(UserScriptProxyClient* client,
+             QObject* handle,
              const QUrl& url);
   ~UserScript() override;
-
-  static UserScript* FromProxyHandle(UserScriptProxyHandle* handle);
 
   const oxide::UserScript* impl() const { return &impl_; }
   State state() const { return state_; }

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -40,11 +40,9 @@ class ScriptMessageHandlerProxyClient;
 
 class ScriptMessageHandler : public ScriptMessageHandlerProxy {
  public:
-  ScriptMessageHandler(ScriptMessageHandlerProxyClient* client);
+  ScriptMessageHandler(ScriptMessageHandlerProxyClient* client,
+                       QObject* handle);
   ~ScriptMessageHandler() override;
-
-  static ScriptMessageHandler* FromProxyHandle(
-      ScriptMessageHandlerProxyHandle* handle);
 
   const oxide::ScriptMessageHandler* handler() const { return &handler_; }
 

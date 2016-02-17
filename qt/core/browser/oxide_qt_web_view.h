@@ -72,7 +72,7 @@ class WebView : public InputMethodContextClient,
  public:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
-          QObject* native_view,
+          QObject* handle,
           OxideQFindController* find_controller,
           OxideQSecurityStatus* security_status,
           WebContext* context,
@@ -82,13 +82,12 @@ class WebView : public InputMethodContextClient,
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
       ContentsViewProxyClient* view_client,
-      QObject* native_view,
+      QObject* handle,
       OxideQFindController* find_controller,
       OxideQSecurityStatus* security_status,
       OxideQNewViewRequest* new_view_request);
   ~WebView();
 
-  static WebView* FromProxyHandle(WebViewProxyHandle* handle);
   static WebView* FromView(oxide::WebView* view);
 
   WebContext* GetContext() const;
@@ -101,10 +100,10 @@ class WebView : public InputMethodContextClient,
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
+          QObject* handle,
           OxideQSecurityStatus* security_status);
 
-  void CommonInit(OxideQFindController* find_controller,
-                  QObject* native_view);
+  void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
 
@@ -226,9 +225,9 @@ class WebView : public InputMethodContextClient,
   bool fullscreen() const override;
   void setFullscreen(bool fullscreen) override;
 
-  WebFrameProxyHandle* rootFrame() const override;
+  QObject* rootFrame() const override;
 
-  WebContextProxyHandle* context() const override;
+  QObject* context() const override;
 
   void wasResized() override;
   void screenUpdated() override;
@@ -258,7 +257,7 @@ class WebView : public InputMethodContextClient,
 
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
-  QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
+  QList<QObject*>& messageHandlers() override;
 
   int getNavigationEntryCount() const override;
   int getNavigationCurrentEntryIndex() const override;
@@ -321,7 +320,7 @@ class WebView : public InputMethodContextClient,
   scoped_ptr<ContentsView> contents_view_;
 
   QPointer<OxideQSecurityStatus> security_status_;
-  QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
+  QList<QObject*> message_handlers_;
 
   UITouchEventFactory touch_event_factory_;
 

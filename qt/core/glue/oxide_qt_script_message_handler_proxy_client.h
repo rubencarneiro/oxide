@@ -20,8 +20,6 @@
 
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
-
 QT_BEGIN_NAMESPACE
 class QVariant;
 QT_END_NAMESPACE

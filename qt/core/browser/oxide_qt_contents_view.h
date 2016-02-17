@@ -20,8 +20,19 @@
 
 #include "base/macros.h"
 
+#include <QPointer>
+#include <QtGlobal>
+
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 #include "shared/browser/oxide_web_contents_view_client.h"
+
+QT_BEGIN_NAMESPACE
+class QObject;
+QT_END_NAMESPACE
+
+namespace content {
+class WebContents;
+}
 
 namespace oxide {
 namespace qt {
@@ -31,8 +42,12 @@ class ContentsViewProxyClient;
 class ContentsView : public ContentsViewProxy,
                      public oxide::WebContentsViewClient {
  public:
-  ContentsView(ContentsViewProxyClient* client);
+  ContentsView(ContentsViewProxyClient* client, QObject* native_view);
   ~ContentsView() override;
+
+  static ContentsView* FromWebContents(content::WebContents* contents);
+
+  QObject* native_view() const { return native_view_; }
 
   // TODO: Get rid
   ContentsViewProxyClient* client() const { return client_; }
@@ -49,6 +64,8 @@ class ContentsView : public ContentsViewProxy,
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
 
   ContentsViewProxyClient* client_;
+
+  QPointer<QObject> native_view_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsView);
 };

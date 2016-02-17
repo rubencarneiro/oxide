@@ -95,7 +95,6 @@
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_enum_flags.h"
 
-#include "oxide_qt_contents_native_view_data.h"
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_file_picker.h"
@@ -416,12 +415,18 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
+                 QObject* handle,
                  OxideQSecurityStatus* security_status)
     : input_method_context_(new InputMethodContext(this)),
       client_(client),
-      contents_view_(new ContentsView(view_client)),
+      contents_view_(new ContentsView(view_client, handle)),
       security_status_(security_status),
-      frame_tree_torn_down_(false) {}
+      frame_tree_torn_down_(false) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+}
 
 float WebView::GetDeviceScaleFactor() const {
   QScreen* screen = contents_view_->client()->GetScreen();
@@ -436,8 +441,7 @@ int WebView::GetLocationBarContentOffsetPix() const {
   return locationBarContentOffsetPix();
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller,
-                         QObject* native_view) {
+void WebView::CommonInit(OxideQFindController* find_controller) {
   content::WebContents* contents = web_view_->GetWebContents();
 
   CertificateErrorDispatcher::FromWebContents(contents)->set_client(this);
@@ -447,8 +451,6 @@ void WebView::CommonInit(OxideQFindController* find_controller,
   OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
       contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
-
-  ContentsNativeViewData::CreateForWebContents(contents, native_view);
 
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
@@ -461,7 +463,7 @@ void WebView::EnsurePreferences() {
     return;
   }
 
-  OxideQWebPreferences* p = new OxideQWebPreferences(client_->GetApiHandle());
+  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
   web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
@@ -622,7 +624,7 @@ bool WebView::AddMessageToConsole(
 }
 
 void WebView::WebPreferencesDestroyed() {
-  OxideQWebPreferences* p = new OxideQWebPreferences(client_->GetApiHandle());
+  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
   web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
   client_->WebPreferencesReplaced();
@@ -927,6 +929,8 @@ void WebView::FrameCreated(oxide::WebFrame* frame) {
   frame->set_script_message_target_delegate(f);
   client_->CreateWebFrame(f);
 
+  DCHECK(f->handle());
+
   WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
   parent->client()->ChildFramesChanged();
 }
@@ -1018,7 +1022,7 @@ void WebView::setFullscreen(bool fullscreen) {
       ->SetFullscreenGranted(fullscreen);
 }
 
-WebFrameProxyHandle* WebView::rootFrame() const {
+QObject* WebView::rootFrame() const {
   WebFrame* f = WebFrame::FromSharedWebFrame(web_view_->GetRootFrame());
   if (!f) {
     return nullptr;
@@ -1027,7 +1031,7 @@ WebFrameProxyHandle* WebView::rootFrame() const {
   return f->handle();
 }
 
-WebContextProxyHandle* WebView::context() const {
+QObject* WebView::context() const {
   WebContext* c = GetContext();
   if (!c) {
     return nullptr;
@@ -1212,7 +1216,7 @@ void WebView::loadHtml(const QString& html, const QUrl& base_url) {
                   GURL(base_url.toString().toStdString()));
 }
 
-QList<ScriptMessageHandlerProxyHandle*>& WebView::messageHandlers() {
+QList<QObject*>& WebView::messageHandlers() {
   return message_handlers_;
 }
 
@@ -1278,9 +1282,9 @@ void WebView::setPreferences(OxideQWebPreferences* prefs) {
   }
 
   if (!prefs) {
-    prefs = new OxideQWebPreferences(client_->GetApiHandle());
+    prefs = new OxideQWebPreferences(handle());
   } else if (!prefs->parent()) {
-    prefs->setParent(client_->GetApiHandle());
+    prefs->setParent(handle());
   }
 
   web_view_->SetWebPreferences(
@@ -1290,7 +1294,7 @@ void WebView::setPreferences(OxideQWebPreferences* prefs) {
     return;
   }
 
-  if (old->parent() == client_->GetApiHandle()) {
+  if (old->parent() == handle()) {
     delete old;
   }
 }
@@ -1500,14 +1504,14 @@ void WebView::teardownFrameTree() {
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
-                 QObject* native_view,
+                 QObject* handle,
                  OxideQFindController* find_controller,
                  OxideQSecurityStatus* security_status,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, view_client, security_status) {
+    : WebView(client, view_client, handle, security_status) {
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
@@ -1532,7 +1536,7 @@ WebView::WebView(WebViewProxyClient* client,
 
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
-  CommonInit(find_controller, native_view);
+  CommonInit(find_controller);
 
   EnsurePreferences();
 }
@@ -1541,7 +1545,7 @@ WebView::WebView(WebViewProxyClient* client,
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
     ContentsViewProxyClient* view_client,
-    QObject* native_view,
+    QObject* handle,
     OxideQFindController* find_controller,
     OxideQSecurityStatus* security_status,
     OxideQNewViewRequest* new_view_request) {
@@ -1551,7 +1555,7 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, view_client, security_status);
+  WebView* new_view = new WebView(client, view_client, handle, security_status);
 
   oxide::WebView::CommonParams params;
   params.client = new_view;
@@ -1560,13 +1564,13 @@ WebView* WebView::CreateFromNewViewRequest(
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
-  new_view->CommonInit(find_controller, native_view);
+  new_view->CommonInit(find_controller);
 
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
         new_view->web_view_->GetWebPreferences())->api_handle();
   if (!p->parent()) {
-    p->setParent(new_view->client_->GetApiHandle());
+    p->setParent(new_view->handle());
   }
 
   return new_view;
@@ -1582,11 +1586,6 @@ WebView::~WebView() {
 
   oxide::PermissionRequestDispatcher::FromWebContents(
       contents)->set_client(nullptr);
-}
-
-// static
-WebView* WebView::FromProxyHandle(WebViewProxyHandle* handle) {
-  return static_cast<WebView*>(handle->proxy_.data());
 }
 
 // static

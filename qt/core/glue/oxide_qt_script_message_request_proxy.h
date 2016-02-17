@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,13 @@
 #ifndef _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_PROXY_H_
 #define _OXIDE_QT_CORE_GLUE_SCRIPT_MESSAGE_REQUEST_PROXY_H_
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include <QtGlobal>
+
+#include "qt/core/glue/oxide_qt_proxy_base.h"
+
+QT_BEGIN_NAMESPACE
+class QObject;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
@@ -26,15 +32,14 @@ namespace qt {
 class ScriptMessageRequest;
 class ScriptMessageRequestProxyClient;
 
-class Q_DECL_EXPORT ScriptMessageRequestProxy {
-  OXIDE_Q_DECL_PROXY_FOR(ScriptMessageRequest);
+class Q_DECL_EXPORT ScriptMessageRequestProxy
+    : public ProxyBase<ScriptMessageRequest> {
  public:
   static ScriptMessageRequestProxy* create(
-      ScriptMessageRequestProxyClient* client);
+      ScriptMessageRequestProxyClient* client,
+      QObject* handle);
   virtual ~ScriptMessageRequestProxy();
 };
-
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageRequestProxy);
 
 } // namespace qt
 } // namespace oxide

@@ -27,10 +27,10 @@ namespace qt {
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
                                    ContentsViewProxyClient* view_client,
-                                   QObject* native_view,
+                                   QObject* handle,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
-                                   WebContextProxyHandle* context,
+                                   QObject* context,
                                    bool incognito,
                                    const QByteArray& restore_state,
                                    RestoreType restore_type) {
@@ -38,7 +38,7 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 
   return new WebView(client,
                      view_client,
-                     native_view,
+                     handle,
                      find_controller,
                      security_status,
                      WebContext::FromProxyHandle(context),
@@ -50,13 +50,13 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
                                    ContentsViewProxyClient* view_client,
-                                   QObject* native_view,
+                                   QObject* handle,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
                                    OxideQNewViewRequest* new_view_request) {
   return WebView::CreateFromNewViewRequest(client,
                                            view_client,
-                                           native_view,
+                                           handle,
                                            find_controller,
                                            security_status,
                                            new_view_request);

@@ -47,11 +47,10 @@ class QQuickWindow;
 class QScreen;
 QT_END_NAMESPACE
 
-class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
-                                  public oxide::qt::WebViewProxyClient,
+class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient,
                                   public oxide::qt::ContentsViewProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebView, oxide::qt::WebViewProxyHandle)
+
  public:
   ~OxideQQuickWebViewPrivate();
 
@@ -86,7 +85,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   // oxide::qt::WebViewProxyClient implementation
-  QObject* GetApiHandle() override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
@@ -116,7 +114,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
                            const QString& source_id) override;
   void ToggleFullscreenMode(bool enter) override;
   void WebPreferencesReplaced() override;
-  void FrameRemoved(oxide::qt::WebFrameProxyHandle* frame) override;
+  void FrameRemoved(QObject* frame) override;
   bool CanCreateWindows() const override;
   void UpdateCursor(const QCursor& cursor) override;
   void NavigationRequested(OxideQNavigationRequest* request) override;
@@ -153,10 +151,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
       oxide::qt::WebPopupMenuProxyClient* client) override;
 
-  oxide::qt::WebViewProxy* proxy() const {
-    return oxide::qt::WebViewProxyHandle::proxy();
-  }
-
   void completeConstruction();
 
   static void messageHandler_append(
@@ -170,9 +164,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
   static void messageHandler_clear(
       QQmlListProperty<OxideQQuickScriptMessageHandler>* prop);
 
-  QList<oxide::qt::ScriptMessageHandlerProxyHandle*>& messageHandlers();
+  QList<QObject*>& messageHandlers();
 
-  oxide::qt::WebContextProxyHandle* context() const;
+  QObject* contextHandle() const;
 
   void contextConstructed();
   void contextDestroyed();
@@ -187,6 +181,10 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyHandle,
 
   void screenGeometryChanged(const QRect&);
   void screenOrientationChanged(Qt::ScreenOrientation);
+
+  OxideQQuickWebView* q_ptr;
+
+  QScopedPointer<oxide::qt::WebViewProxy> proxy_;
 
   QPointer<QScreen> screen_;
   QPointer<QQuickWindow> window_;

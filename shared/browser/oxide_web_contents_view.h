@@ -50,6 +50,8 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   static WebContentsView* FromWebContents(content::WebContents* contents);
 
+  WebContentsViewClient* client() const { return client_; }
+
   void SetClient(WebContentsViewClient* client);
 
   gfx::Rect GetBoundsPix() const;

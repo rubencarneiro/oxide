@@ -31,7 +31,7 @@
 
 #include "shared/browser/oxide_drag_source_client.h"
 
-#include "oxide_qt_contents_native_view_data.h"
+#include "oxide_qt_contents_view.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_skutils.h"
 
@@ -43,16 +43,15 @@ void DragSource::StartDragging(content::WebContents* contents,
                                blink::WebDragOperationsMask allowed_ops,
                                const SkBitmap& bitmap,
                                const gfx::Vector2d& image_offset_pix) {
-  ContentsNativeViewData* cnvd =
-      ContentsNativeViewData::FromWebContents(contents);
-  if (!cnvd) {
+  ContentsView* view = ContentsView::FromWebContents(contents);
+  if (!view) {
     client()->EndDrag(blink::WebDragOperationNone);
     return;
   }
 
-  DCHECK(cnvd->GetNativeView());
+  DCHECK(view->native_view());
 
-  QPointer<QDrag> drag = new QDrag(cnvd->GetNativeView());
+  QPointer<QDrag> drag = new QDrag(view->native_view());
   drag->setMimeData(new QMimeData());
 
   drag->setHotSpot(QPoint(image_offset_pix.x(), image_offset_pix.y()));

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -84,9 +84,15 @@ void UserScript::setContext(const QUrl& context) {
 }
 
 UserScript::UserScript(UserScriptProxyClient* client,
+                       QObject* handle,
                        const QUrl& url)
     : client_(client),
       state_(Loading) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+
   load_job_.reset(oxide::FileUtils::GetFileContents(
       content::BrowserThread::GetMessageLoopProxyForThread(
         content::BrowserThread::FILE).get(),
@@ -102,11 +108,6 @@ UserScript::UserScript(UserScriptProxyClient* client,
 }
 
 UserScript::~UserScript() {}
-
-// static
-UserScript* UserScript::FromProxyHandle(UserScriptProxyHandle* handle) {
-  return static_cast<UserScript*>(handle->proxy_.data());
-}
 
 } // namespace qt
 } // namespace oxide

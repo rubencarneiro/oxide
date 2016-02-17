@@ -32,7 +32,7 @@
 #include <QUrl>
 #include <QVariant>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include "qt/core/glue/oxide_qt_proxy_base.h"
 
 typedef void* EGLImageKHR;
 
@@ -139,26 +139,21 @@ struct FindInPageState {
   int count;
 };
 
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
-
-class Q_DECL_EXPORT WebViewProxy {
-  OXIDE_Q_DECL_PROXY_FOR(WebView);
+class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
  public:
   static WebViewProxy* create(
       WebViewProxyClient* client, // Must outlive returned proxy
       ContentsViewProxyClient* view_client, // Must outlive returned proxy
-      QObject* native_view,
+      QObject* handle,
       OxideQFindController* find_controller, // Returned proxy must outlive this
       OxideQSecurityStatus* security_status, // Returned proxy must outlive this
-      WebContextProxyHandle* context,
+      QObject* context,
       bool incognito,
       const QByteArray& restore_state,
       RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
                               ContentsViewProxyClient* view_client,
-                              QObject* native_view,
+                              QObject* handle,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request);
@@ -184,9 +179,9 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual bool fullscreen() const = 0;
   virtual void setFullscreen(bool fullscreen) = 0;
 
-  virtual WebFrameProxyHandle* rootFrame() const = 0;
+  virtual QObject* rootFrame() const = 0;
 
-  virtual WebContextProxyHandle* context() const = 0;
+  virtual QObject* context() const = 0;
 
   virtual void wasResized() = 0;
   virtual void screenUpdated() = 0;
@@ -216,7 +211,7 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
-  virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
+  virtual QList<QObject*>& messageHandlers() = 0;
 
   virtual int getNavigationEntryCount() const = 0;
   virtual int getNavigationCurrentEntryIndex() const = 0;
@@ -268,8 +263,6 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void teardownFrameTree() = 0;
 };
-
-OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);
 
 } // namespace qt
 } // namespace oxide

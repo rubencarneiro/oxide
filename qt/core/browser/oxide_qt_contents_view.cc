@@ -20,6 +20,7 @@
 #include <QGuiApplication>
 
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
+#include "shared/browser/oxide_web_contents_view.h"
 
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_web_context_menu.h"
@@ -60,10 +61,23 @@ oxide::WebPopupMenu* ContentsView::CreatePopupMenu(
   return menu;
 }
 
-ContentsView::ContentsView(ContentsViewProxyClient* client)
-    : client_(client) {}
+ContentsView::ContentsView(ContentsViewProxyClient* client,
+                           QObject* native_view)
+    : client_(client),
+      native_view_(native_view) {}
 
 ContentsView::~ContentsView() {}
+
+// static
+ContentsView* ContentsView::FromWebContents(content::WebContents* contents) {
+  oxide::WebContentsView* view =
+      oxide::WebContentsView::FromWebContents(contents);
+  if (!view) {
+    return nullptr;
+  }
+
+  return static_cast<ContentsView*>(view->client());
+}
 
 } // namespace qt
 } // namespace oxide

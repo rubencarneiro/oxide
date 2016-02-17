@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,16 @@
 #include "oxideqquickscriptmessage_p.h"
 
 #include "qt/core/api/oxideqglobal_p.h"
+#include "qt/core/glue/oxide_qt_script_message_proxy.h"
 
 #include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
 
-OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
-                                    oxide::qt::ScriptMessageProxyHandle);
-
 OxideQQuickScriptMessagePrivate::OxideQQuickScriptMessagePrivate(
     oxide::qt::ScriptMessageProxy* proxy,
     OxideQQuickScriptMessage* q)
-    : oxide::qt::ScriptMessageProxyHandle(proxy, q) {}
+    : q_ptr(q),
+      proxy_(proxy) {}
 
 // static
 OxideQQuickScriptMessage* OxideQQuickScriptMessagePrivate::create(
@@ -52,24 +51,24 @@ OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  oxide::qt::WebFrameProxyHandle* f = d->proxy()->frame();
+  QObject* f = d->proxy_->frame();
   if (!f) {
     return nullptr;
   }
 
-  return OxideQQuickWebFramePrivate::fromProxyHandle(f);
+  return qobject_cast<OxideQQuickWebFrame*>(f);
 }
 
 QUrl OxideQQuickScriptMessage::context() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->proxy()->context();
+  return d->proxy_->context();
 }
 
 QString OxideQQuickScriptMessage::msgId() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->proxy()->msgId();
+  return d->proxy_->msgId();
 }
 
 QVariant OxideQQuickScriptMessage::args() const {
@@ -83,7 +82,7 @@ QVariant OxideQQuickScriptMessage::args() const {
 QVariant OxideQQuickScriptMessage::payload() const {
   Q_D(const OxideQQuickScriptMessage);
 
-  return d->proxy()->payload();
+  return d->proxy_->payload();
 }
 
 void OxideQQuickScriptMessage::reply(const QVariant& payload) {
@@ -94,7 +93,7 @@ void OxideQQuickScriptMessage::reply(const QVariant& payload) {
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  d->proxy()->reply(aux);
+  d->proxy_->reply(aux);
 }
 
 void OxideQQuickScriptMessage::error(const QVariant& payload) {
@@ -105,5 +104,5 @@ void OxideQQuickScriptMessage::error(const QVariant& payload) {
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  d->proxy()->error(aux);
+  d->proxy_->error(aux);
 }

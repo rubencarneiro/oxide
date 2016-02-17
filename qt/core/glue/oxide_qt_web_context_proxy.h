@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,12 +25,13 @@
 #include <QUrl>
 #include <QWeakPointer>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 
 QT_BEGIN_NAMESPACE
 template <typename T> class QList;
 class QNetworkCookie;
+class QObject;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -41,20 +42,17 @@ class WebContext;
 class WebContextProxy;
 class WebContextProxyClient;
 
-OXIDE_Q_DECL_PROXY_HANDLE(UserScriptProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
-
-class Q_DECL_EXPORT WebContextProxy {
-  OXIDE_Q_DECL_PROXY_FOR(WebContext);
+class Q_DECL_EXPORT WebContextProxy : public ProxyBase<WebContext> {
  public:
-  static WebContextProxy* create(WebContextProxyClient* client);
+  static WebContextProxy* create(WebContextProxyClient* client,
+                                 QObject* handle);
 
   static void getValidDevtoolsPorts(int* min, int* max);
   static bool checkIPAddress(const QString& address);
 
   virtual ~WebContextProxy();
 
-  static WebContextProxyHandle* defaultContext();
+  static QObject* defaultContext();
 
   enum CookiePolicy {
     CookiePolicyAllowAll,
@@ -87,7 +85,7 @@ class Q_DECL_EXPORT WebContextProxy {
   virtual QString acceptLangs() const = 0;
   virtual void setAcceptLangs(const QString& langs) = 0;
 
-  virtual QList<UserScriptProxyHandle*>& userScripts() = 0;
+  virtual QList<QObject*>& userScripts() = 0;
   virtual void updateUserScripts() = 0;
 
   virtual bool isInitialized() const = 0;

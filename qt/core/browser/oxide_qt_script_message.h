@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -38,11 +38,9 @@ class ScriptMessage : public ScriptMessageProxy {
   ScriptMessage(oxide::ScriptMessage* message);
   ~ScriptMessage() override;
 
-  static ScriptMessage* FromProxyHandle(ScriptMessageProxyHandle* handle);
-
  private:
   // ScriptMessageProxy implementation
-  WebFrameProxyHandle* frame() const override;
+  QObject* frame() const override;
   QString msgId() const override;
   QUrl context() const override;
   QVariant payload() const override;
