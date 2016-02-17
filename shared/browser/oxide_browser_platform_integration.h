@@ -24,6 +24,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
+#include "device/vibration/vibration_manager_impl.h"
 
 class GURL;
 
@@ -116,6 +117,10 @@ class BrowserPlatformIntegration {
   // transferred, and |client| will outlive the returned DragSource.
   // Called on the UI thread
   virtual scoped_ptr<DragSource> CreateDragSource(DragSourceClient* client);
+
+  // Get the proper vibration manager factory
+  virtual void CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request);
 
  protected:
   BrowserPlatformIntegration();

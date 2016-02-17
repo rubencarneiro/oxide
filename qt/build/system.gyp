@@ -107,5 +107,22 @@
         ],
       },
     },
+    {
+      'target_name': 'Qt5Feedback',
+      'type': 'none',
+      'direct_dependent_settings': {
+        'cflags_cc': [
+          '<!@(<(pkg_config) --cflags Qt5Feedback)'
+        ]
+      },
+      'link_settings': {
+        'ldflags': [
+          '<!@(<(pkg_config) --libs-only-L --libs-only-other Qt5Feedback)',
+        ],
+        'libraries': [
+          '<!@(<(pkg_config) --libs-only-l Qt5Feedback)',
+        ],
+      },
+    },
   ],
 }
