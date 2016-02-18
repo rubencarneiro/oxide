@@ -21,25 +21,27 @@ if(DEFINED _OxidePackageConfigHelper_INCLUDED_)
 endif()
 set(_OxidePackageConfigHelper_INCLUDED_ TRUE)
 
-include(CMakePackageConfigHelpers)
 include(OxideCommonProperties)
+include(CMakePackageConfigHelpers)
 
 function(configure_and_install_package_config_file _inPath)
   get_filename_component(_inFile ${_inPath} NAME)
-  string(REGEX REPLACE "\\.in$" "" _outFile ${_inFile})
+  string(REGEX REPLACE "Config\\.cmake\\.in$" "" _name ${_inFile})
+  set(_configFilename ${_name}Config.cmake)
+  set(_versionConfigFilename ${_name}ConfigVersion.cmake)
   configure_package_config_file(
       ${_inPath}
-      ${CMAKE_CURRENT_BINARY_DIR}/${_outFile}
-      INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME}
-      PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR
+      ${CMAKE_CURRENT_BINARY_DIR}/${_configFilename}
+      INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_name}
+      PATH_VARS OXIDE_INSTALL_INCLUDEDIR CMAKE_INSTALL_LIBDIR OXIDE_INSTALL_LIBEXECDIR
       NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
-  string(REGEX REPLACE "([^\\.]+)\\.cmake\\.in$" "\\1" _tmp ${_inFile})
-  set(_versionFile ${_tmp}Version.cmake)
+  # Specify VERSION here to make CMake 2.8 happy
   write_basic_package_version_file(
-      ${CMAKE_CURRENT_BINARY_DIR}/${_versionFile}
+      ${CMAKE_CURRENT_BINARY_DIR}/${_versionConfigFilename}
+      VERSION ${PROJECT_VERSION}
       COMPATIBILITY AnyNewerVersion)
 
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_outFile} ${CMAKE_CURRENT_BINARY_DIR}/${_versionFile}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${OXIDE_PLATFORM_FULLNAME})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_configFilename} ${CMAKE_CURRENT_BINARY_DIR}/${_versionConfigFilename}
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_name})
 endfunction()

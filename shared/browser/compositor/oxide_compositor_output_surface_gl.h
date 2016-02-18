@@ -40,7 +40,7 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
 
  private:
   // cc::OutputSurface implementation
-  void DetachFromClient() override;
+  void DetachFromDisplayClient() override;
   void EnsureBackbuffer() override;
   void DiscardBackbuffer() override;
   void Reshape(const gfx::Size& size,

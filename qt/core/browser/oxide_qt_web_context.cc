@@ -835,11 +835,12 @@ int WebContext::setCookies(const QUrl& url,
         std::string(cookie.value().constData()),
         std::string(cookie.domain().toUtf8().constData()),
         std::string(cookie.path().toUtf8().constData()),
+        base::Time(),
         expiry,
+        base::Time(),
         cookie.isSecure(),
         cookie.isHttpOnly(),
-        false, // first_party
-        false, // enforce_prefixes
+        false, // same_site
         false, // enforce_strict_secure
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback,

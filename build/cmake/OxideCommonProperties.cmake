@@ -21,6 +21,7 @@ if(DEFINED _OxideCommonProperties_INCLUDED_)
 endif()
 set(_OxideCommonProperties_INCLUDED_ TRUE)
 
+include(GNUInstallDirs)
 include(OxideCommonOptions)
 
 set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
@@ -52,3 +53,22 @@ endif()
 set(_OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE INTERNAL "CMAKE_INSTALL_PREFIX during last run")
 unset(_INCLUDEDIR_DEFAULT)
 unset(__LAST_INCLUDEDIR_DEFAULT)
+
+set(OXIDE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
+
+# Find python executable
+if(NOT DEFINED PYTHON)
+  find_program(PYTHON python)
+  if(PYTHON STREQUAL "PYTHON-NOTFOUND")
+    message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
+  endif()
+endif()
+
+execute_process(
+    COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
+    OUTPUT_VARIABLE PROJECT_VERSION
+    RESULT_VARIABLE _RESULT
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to get version number")
+endif()

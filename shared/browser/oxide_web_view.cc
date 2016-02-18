@@ -1140,6 +1140,8 @@ void WebView::DidNavigateMainFrame(
     if (rwhv) {
       rwhv->ResetGestureDetection();
     }
+
+    mouse_state_.Reset();
   }
 }
 
@@ -1846,8 +1848,7 @@ void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
 void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
   blink::WebMouseEvent e(event);
 
-  mouse_state_.UpdateFromSourceEvent(event);
-  mouse_state_.CoerceForwardEvent(e);
+  mouse_state_.UpdateEvent(&e);
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {

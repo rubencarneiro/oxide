@@ -24,7 +24,10 @@
 #include "cc/layers/layer.h"
 #include "cc/layers/layer_settings.h"
 #include "cc/output/context_provider.h"
+#include "cc/output/renderer_settings.h"
 #include "cc/scheduler/begin_frame_source.h"
+#include "cc/surfaces/onscreen_display_client.h"
+#include "cc/surfaces/surface_display_output_surface.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
@@ -84,10 +87,12 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 
 Compositor::Compositor(CompositorClient* client)
     : client_(client),
+      surface_id_allocator_(
+          CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
+      proxy_(new CompositorThreadProxy(this)),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create(cc::LayerSettings())),
-      proxy_(new CompositorThreadProxy(this)),
       next_output_surface_id_(1),
       weak_factory_(this) {
   DCHECK(CalledOnValidThread());
@@ -109,28 +114,47 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
   uint32_t output_surface_id = next_output_surface_id_++;
 
+  scoped_refptr<cc::ContextProvider> context_provider;
+  scoped_ptr<cc::OutputSurface> surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
-    scoped_refptr<cc::ContextProvider> context_provider =
+    context_provider =
         content::ContextProviderCommandBuffer::Create(
-          CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
+            CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
     if (!context_provider.get()) {
-      return scoped_ptr<cc::OutputSurface>();
+      return nullptr;
     }
-    scoped_ptr<CompositorOutputSurfaceGL> output(
-        new CompositorOutputSurfaceGL(output_surface_id,
-                                      context_provider,
-                                      proxy_));
-    return std::move(output);
+    surface.reset(new CompositorOutputSurfaceGL(output_surface_id,
+                                                context_provider,
+                                                proxy_));
+  } else {
+    scoped_ptr<CompositorSoftwareOutputDevice> output_device(
+        new CompositorSoftwareOutputDevice());
+    surface.reset(new CompositorOutputSurfaceSoftware(output_surface_id,
+                                                      std::move(output_device),
+                                                      proxy_));
   }
 
-  scoped_ptr<CompositorSoftwareOutputDevice> output_device(
-      new CompositorSoftwareOutputDevice());
-  scoped_ptr<CompositorOutputSurfaceSoftware> output(
-      new CompositorOutputSurfaceSoftware(
-        output_surface_id,
-        std::move(output_device),
-        proxy_));
-  return std::move(output);
+  cc::SurfaceManager* manager =
+      CompositorUtils::GetInstance()->GetSurfaceManager();
+  display_client_.reset(
+      new cc::OnscreenDisplayClient(
+          std::move(surface),
+          manager,
+          content::HostSharedBitmapManager::current(),
+          content::BrowserGpuMemoryBufferManager::current(),
+          cc::RendererSettings(),
+          CompositorUtils::GetInstance()->GetTaskRunner()));
+  scoped_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
+      new cc::SurfaceDisplayOutputSurface(
+          manager,
+          surface_id_allocator_.get(),
+          context_provider,
+          nullptr));
+  display_client_->set_surface_output_surface(output_surface.get());
+  output_surface->set_display_client(display_client_.get());
+  display_client_->display()->Resize(layer_tree_host_->device_viewport_size());
+
+  return std::move(output_surface);
 }
 
 void Compositor::AddObserver(CompositorObserver* observer) {
@@ -212,6 +236,7 @@ void Compositor::SetVisibility(bool visible) {
   DCHECK(CalledOnValidThread());
   if (!visible) {
     layer_tree_host_.reset();
+    display_client_.reset();
   } else if (!layer_tree_host_) {
     cc::LayerTreeSettings settings;
     settings.use_external_begin_frame_source = false;
@@ -261,6 +286,9 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 
   if (layer_tree_host_) {
     layer_tree_host_->SetViewportSize(size);
+  }
+  if (display_client_) {
+    display_client_->display()->Resize(size);
   }
   root_layer_->SetBounds(size);
 }

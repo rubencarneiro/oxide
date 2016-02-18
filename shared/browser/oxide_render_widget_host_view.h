@@ -26,8 +26,11 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
-#include "cc/layers/delegated_frame_resource_collection.h"
 #include "cc/output/compositor_frame_metadata.h"
+#include "cc/resources/returned_resource.h"
+#include "cc/surfaces/surface_factory.h"
+#include "cc/surfaces/surface_factory_client.h"
+#include "cc/surfaces/surface_id.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
@@ -39,8 +42,9 @@
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
 namespace cc {
-class DelegatedFrameProvider;
-class DelegatedRendererLayer;
+class SurfaceFactory;
+class SurfaceIdAllocator;
+class SurfaceLayer;
 }
 
 namespace content {
@@ -62,7 +66,7 @@ class RenderWidgetHostView final :
     public CompositorObserver,
     public GestureProviderClient,
     public RendererFrameEvictorClient,
-    public cc::DelegatedFrameResourceCollectionClient,
+    public cc::SurfaceFactoryClient,
     public ui::TouchSelectionControllerClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
@@ -181,8 +185,10 @@ class RenderWidgetHostView final :
   // RendererFrameEvictorClient implemenetation
   void EvictCurrentFrame() final;
 
-  // cc::DelegatedFrameResourceCollectionClient implementation
-  void UnusedResourcesAreAvailable() final;
+  // cc::SurfaceFactoryClient implementation
+  void ReturnResources(const cc::ReturnedResourceArray& resources) override;
+  void SetBeginFrameSource(cc::SurfaceId surface_id,
+                           cc::BeginFrameSource* begin_frame_source) override;
 
   // ui::TouchSelectionControllerClient implementation
   bool SupportsAnimation() const override;
@@ -201,7 +207,7 @@ class RenderWidgetHostView final :
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32_t surface_id);
   void SendReturnedDelegatedResources();
-  void RunAckCallbacks();
+  void RunAckCallbacks(cc::SurfaceDrawStatus status);
   void AttachLayer();
   void DetachLayer();
 
@@ -211,11 +217,11 @@ class RenderWidgetHostView final :
 
   RenderWidgetHostViewContainer* container_;
 
-  gfx::GLSurfaceHandle shared_surface_handle_;
-
-  scoped_refptr<cc::DelegatedFrameResourceCollection> resource_collection_;
-  scoped_refptr<cc::DelegatedFrameProvider> frame_provider_;
-  scoped_refptr<cc::DelegatedRendererLayer> layer_;
+  scoped_refptr<cc::SurfaceLayer> layer_;
+  scoped_ptr<cc::SurfaceIdAllocator> id_allocator_;
+  scoped_ptr<cc::SurfaceFactory> surface_factory_;
+  cc::SurfaceId surface_id_;
+  cc::ReturnedResourceArray surface_returned_resources_;
 
   // The output surface ID for the last frame from the renderer
   uint32_t last_output_surface_id_;
@@ -243,7 +249,9 @@ class RenderWidgetHostView final :
 
   scoped_ptr<ui::TouchSelectionController> selection_controller_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(RenderWidgetHostView);
+  base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(RenderWidgetHostView);
 };
 
 } // namespace oxide

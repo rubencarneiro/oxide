@@ -49,20 +49,11 @@ set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)
 set(OXIDE_BIN_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/bin)
 set(OXIDE_LIB_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/lib)
 set(OXIDE_PACKAGE_STAGE_DIR ${CMAKE_BINARY_DIR}/_package_stage)
-set(OXIDE_INSTALL_LIBEXECDIR ${CMAKE_INSTALL_LIBDIR}/${OXIDE_PLATFORM_FULLNAME})
 
 # Use gold everywhere
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
-
-# Find python executable
-if(NOT DEFINED PYTHON)
-  find_program(PYTHON python)
-  if(PYTHON STREQUAL "PYTHON-NOTFOUND")
-    message(FATAL_ERROR "Could not find a python interpreter. Please ensure python is installed")
-  endif()
-endif()
 
 # Required for out-of-tree builds
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
@@ -71,14 +62,6 @@ set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${CMAKE_SOURCE_DIR})
 
 # Allow the version number to be used in the build
-execute_process(
-    COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
-    OUTPUT_VARIABLE PROJECT_VERSION
-    RESULT_VARIABLE _RESULT
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(NOT _RESULT EQUAL 0)
-  message(FATAL_ERROR "Failed to get version number")
-endif()
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_MAJOR ${PROJECT_VERSION})
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\2" PROJECT_VERSION_MINOR ${PROJECT_VERSION})
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_PATCH ${PROJECT_VERSION})
