@@ -64,9 +64,15 @@ oxide::WebPopupMenu* ContentsView::CreatePopupMenu(
 ContentsView::ContentsView(ContentsViewProxyClient* client,
                            QObject* native_view)
     : client_(client),
-      native_view_(native_view) {}
+      native_view_(native_view) {
+  DCHECK(!client_->view_);
+  client_->view_ = this;
+}
 
-ContentsView::~ContentsView() {}
+ContentsView::~ContentsView() {
+  DCHECK_EQ(client_->view_, this);
+  client_->view_ = nullptr;
+}
 
 // static
 ContentsView* ContentsView::FromWebContents(content::WebContents* contents) {

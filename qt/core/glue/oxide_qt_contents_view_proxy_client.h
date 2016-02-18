@@ -28,6 +28,8 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
+class ContentsView;
+class ContentsViewProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
 class WebPopupMenuProxy;
@@ -36,6 +38,8 @@ class WebPopupMenuProxyClient;
 class ContentsViewProxyClient {
  public:
   virtual ~ContentsViewProxyClient() {}
+
+  ContentsViewProxy* view() const { return view_; }
 
   virtual QScreen* GetScreen() const = 0;
 
@@ -46,6 +50,14 @@ class ContentsViewProxyClient {
 
   virtual WebPopupMenuProxy* CreateWebPopupMenu(
       WebPopupMenuProxyClient* client) = 0;
+
+ protected:
+  ContentsViewProxyClient() : view_(nullptr) {}
+
+ private:
+  friend class ContentsView;
+
+  ContentsViewProxy* view_;
 };
 
 } // namespace qt

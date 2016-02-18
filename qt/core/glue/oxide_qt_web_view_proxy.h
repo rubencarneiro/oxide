@@ -59,7 +59,6 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
-class ContentsViewProxy;
 class ContentsViewProxyClient;
 class ScriptMessageHandlerProxy;
 class WebContextProxy;
@@ -159,8 +158,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
                               OxideQNewViewRequest* new_view_request);
 
   virtual ~WebViewProxy();
-
-  virtual ContentsViewProxy* view() const = 0;
 
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;

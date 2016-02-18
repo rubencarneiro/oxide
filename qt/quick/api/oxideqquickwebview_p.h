@@ -25,7 +25,6 @@
 
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
@@ -47,8 +46,13 @@ class QQuickWindow;
 class QScreen;
 QT_END_NAMESPACE
 
-class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient,
-                                  public oxide::qt::ContentsViewProxyClient {
+namespace oxide {
+namespace qquick {
+class ContentsView;
+}
+}
+
+class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
@@ -143,14 +147,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient,
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
 
-  // oxide::qt::ContentsViewProxyClient implementation
-  QScreen* GetScreen() const override;
-  QRect GetBoundsPix() const override;
-  oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
-      oxide::qt::WebContextMenuProxyClient* client) override;
-  oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
-      oxide::qt::WebPopupMenuProxyClient* client) override;
-
   void completeConstruction();
 
   static void messageHandler_append(
@@ -184,6 +180,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient,
 
   OxideQQuickWebView* q_ptr;
 
+  QScopedPointer<oxide::qquick::ContentsView> contents_view_;
+
   QScopedPointer<oxide::qt::WebViewProxy> proxy_;
 
   QPointer<QScreen> screen_;
@@ -196,8 +194,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient,
   QScopedPointer<OxideQSecurityStatus> security_status_;
   QScopedPointer<OxideQFindController> find_controller_;
 
-  QQmlComponent* context_menu_;
-  QQmlComponent* popup_menu_;
   QQmlComponent* alert_dialog_;
   QQmlComponent* confirm_dialog_;
   QQmlComponent* prompt_dialog_;

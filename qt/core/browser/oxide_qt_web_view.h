@@ -206,8 +206,6 @@ class WebView : public InputMethodContextClient,
   void ExitFullscreenMode() override;
 
   // WebViewProxy implementation
-  ContentsViewProxy* view() const override;
-
   QUrl url() const override;
   void setUrl(const QUrl& url) override;
 
@@ -312,12 +310,11 @@ class WebView : public InputMethodContextClient,
   // This must outlive |web_view_|
   scoped_ptr<InputMethodContext> input_method_context_;
 
+  scoped_ptr<ContentsView> contents_view_;
+
   scoped_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
-
-  // This must be deleted before |web_view_|
-  scoped_ptr<ContentsView> contents_view_;
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;

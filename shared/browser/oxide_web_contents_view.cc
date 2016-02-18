@@ -264,6 +264,10 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
 }
 
 WebContentsView::~WebContentsView() {
+  if (client_) {
+    DCHECK_EQ(client_->view_, this);
+    client_->view_ = nullptr;
+  }
   web_contents_->RemoveUserData(&kUserDataKey);
 }
 

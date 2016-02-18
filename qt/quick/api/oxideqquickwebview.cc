@@ -56,14 +56,13 @@
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
 #include "qt/quick/oxide_qquick_confirm_dialog.h"
+#include "qt/quick/oxide_qquick_contents_view.h"
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_image_frame_node.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 #include "qt/quick/oxide_qquick_software_frame_node.h"
 #include "qt/quick/oxide_qquick_touch_handle_drawable.h"
-#include "qt/quick/oxide_qquick_web_context_menu.h"
-#include "qt/quick/oxide_qquick_web_popup_menu.h"
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquickscriptmessagehandler.h"
@@ -144,13 +143,12 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
     : q_ptr(view),
+      contents_view_(new oxide::qquick::ContentsView(view)),
       load_progress_(0),
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
       constructed_(false),
       navigation_history_(view),
-      context_menu_(nullptr),
-      popup_menu_(nullptr),
       alert_dialog_(nullptr),
       confirm_dialog_(nullptr),
       prompt_dialog_(nullptr),
@@ -620,43 +618,6 @@ void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
   emit q->editingCapabilitiesChanged();
 }
 
-QScreen* OxideQQuickWebViewPrivate::GetScreen() const {
-  Q_Q(const OxideQQuickWebView);
-
-  if (!q->window()) {
-    return nullptr;
-  }
-
-  return q->window()->screen();
-}
-
-QRect OxideQQuickWebViewPrivate::GetBoundsPix() const {
-  Q_Q(const OxideQQuickWebView);
-
-  if (!q->window()) {
-    return QRect();
-  }
-
-  QPointF pos(q->mapToScene(QPointF(0, 0)) + q->window()->position());
-
-  return QRect(qRound(pos.x()), qRound(pos.y()),
-               qRound(q->width()), qRound(q->height()));
-}
-
-oxide::qt::WebContextMenuProxy* OxideQQuickWebViewPrivate::CreateWebContextMenu(
-    oxide::qt::WebContextMenuProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::WebContextMenu(q, client);
-}
-
-oxide::qt::WebPopupMenuProxy* OxideQQuickWebViewPrivate::CreateWebPopupMenu(
-    oxide::qt::WebPopupMenuProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::WebPopupMenu(q, client);
-}
-
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -664,7 +625,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
   if (construct_props_->new_view_request) {
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, this, q,
+        this, contents_view_.data(), q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->new_view_request));
@@ -673,7 +634,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   if (!proxy_) {
     construct_props_->new_view_request = nullptr;
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, this, q,
+        this, contents_view_.data(), q,
         find_controller_.data(),
         security_status_.data(),
         construct_props_->context,
@@ -1800,34 +1761,34 @@ qreal OxideQQuickWebView::contentY() const {
 QQmlComponent* OxideQQuickWebView::contextMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->context_menu_;
+  return d->contents_view_->contextMenu();
 }
 
 void OxideQQuickWebView::setContextMenu(QQmlComponent* context_menu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->context_menu_ == context_menu) {
+  if (d->contents_view_->contextMenu() == context_menu) {
     return;
   }
 
-  d->context_menu_ = context_menu;
+  d->contents_view_->setContextMenu(context_menu);
   emit contextMenuChanged();
 }
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->popup_menu_;
+  return d->contents_view_->popupMenu();
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->popup_menu_ == popup_menu) {
+  if (d->contents_view_->popupMenu() == popup_menu) {
     return;
   }
 
-  d->popup_menu_ = popup_menu;
+  d->contents_view_->popupMenu();
   emit popupMenuChanged();
 }
 

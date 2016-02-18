@@ -418,8 +418,8 @@ WebView::WebView(WebViewProxyClient* client,
                  QObject* handle,
                  OxideQSecurityStatus* security_status)
     : input_method_context_(new InputMethodContext(this)),
-      client_(client),
       contents_view_(new ContentsView(view_client, handle)),
+      client_(client),
       security_status_(security_status),
       frame_tree_torn_down_(false) {
   DCHECK(client);
@@ -974,10 +974,6 @@ void WebView::EnterFullscreenMode(const GURL& origin) {
 
 void WebView::ExitFullscreenMode() {
   client_->ToggleFullscreenMode(false);
-}
-
-ContentsViewProxy* WebView::view() const {
-  return contents_view_.get();
 }
 
 QUrl WebView::url() const {
