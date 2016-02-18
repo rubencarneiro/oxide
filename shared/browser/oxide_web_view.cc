@@ -29,11 +29,7 @@
 #include "cc/layers/layer_settings.h"
 #include "cc/layers/solid_color_layer.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
-#include "content/browser/renderer_host/event_with_latency_info.h"
-#include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/browser/web_contents/web_contents_impl.h"
-#include "content/browser/web_contents/web_contents_view.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/interstitial_page.h"
 #include "content/public/browser/invalidate_type.h"
@@ -60,7 +56,6 @@
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
@@ -1135,13 +1130,6 @@ void WebView::DidNavigateMainFrame(
   if (details.is_navigation_to_different_page()) {
     blocked_content_ = CONTENT_TYPE_NONE;
     client_->ContentBlocked();
-
-    RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-    if (rwhv) {
-      rwhv->ResetGestureDetection();
-    }
-
-    mouse_state_.Reset();
   }
 }
 
@@ -1834,50 +1822,6 @@ void WebView::PrepareToClose() {
   // This is ok to call multiple times - RFHI tracks whether a response
   // is pending and won't dispatch another event if it is
   web_contents_->DispatchBeforeUnload(false);
-}
-
-void WebView::HandleKeyEvent(const content::NativeWebKeyboardEvent& event) {
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  host->ForwardKeyboardEvent(event);
-}
-
-void WebView::HandleMouseEvent(const blink::WebMouseEvent& event) {
-  blink::WebMouseEvent e(event);
-
-  mouse_state_.UpdateEvent(&e);
-
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  host->ForwardMouseEvent(e);
-}
-
-void WebView::HandleTouchEvent(const ui::TouchEvent& event) {
-  if (!touch_state_.Update(event)) {
-    return;
-  }
-
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  rwhv->HandleTouchEvent(touch_state_);
-}
-
-void WebView::HandleWheelEvent(const blink::WebMouseWheelEvent& event) {
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  host->ForwardWheelEvent(event);
 }
 
 void WebView::DownloadRequested(

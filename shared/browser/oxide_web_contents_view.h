@@ -21,27 +21,41 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 #include "shared/browser/oxide_drag_source_client.h"
+#include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
+#include "shared/browser/oxide_touch_event_state.h"
+
+namespace blink {
+class WebMouseEvent;
+class WebMouseWheelEvent;
+}
 
 namespace content {
+class NativeWebKeyboardEvent;
+class RenderWidgetHost;
+class WebContents;
 class WebContentsImpl;
 }
 
 namespace ui {
+class TouchEvent;
 class TouchSelectionController;
 }
 
 namespace oxide {
 
 class DragSource;
+class RenderWidgetHostView;
 class WebContentsViewClient;
 class WebPopupMenu;
 
 class WebContentsView : public content::WebContentsViewOxide,
+                        public content::WebContentsObserver,
                         public DragSourceClient {
  public:
   ~WebContentsView();
@@ -59,6 +73,11 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   blink::WebScreenInfo GetScreenInfo() const;
 
+  void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
+  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleTouchEvent(const ui::TouchEvent& event);
+  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
+
   // XXX(chrisccoulson): Make a new class for these events - we don't use
   //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
   //  don't think we want
@@ -75,7 +94,17 @@ class WebContentsView : public content::WebContentsViewOxide,
  private:
   WebContentsView(content::WebContents* web_contents);
 
-  ui::TouchSelectionController* GetTouchSelectionController();
+  content::WebContentsImpl* web_contents_impl() const;
+
+  // Return the TouchSelectionController for the current RWHV. Ignores
+  // fullscreen RWHVs
+  ui::TouchSelectionController* GetTouchSelectionController() const;
+
+  // Return the current RWHV. Will return the fullscreen RWHV if there is one
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
+
+  // Return the current RWH. Will return the fullscreen RWH if there is one
+  content::RenderWidgetHost* GetRenderWidgetHost() const;
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -120,10 +149,13 @@ class WebContentsView : public content::WebContentsViewOxide,
                      bool allow_multiple_selection) override;
   void HidePopupMenu() override;
 
+  // content::WebContentsObserver implementation
+  void DidNavigateMainFrame(
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) override;
+
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
-
-  content::WebContentsImpl* web_contents_;
 
   WebContentsViewClient* client_;
 
@@ -135,6 +167,9 @@ class WebContentsView : public content::WebContentsViewOxide,
   scoped_ptr<DragSource> drag_source_;
 
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
+
+  MouseEventState mouse_state_;
+  TouchEventState touch_state_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

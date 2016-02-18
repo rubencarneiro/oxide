@@ -28,7 +28,6 @@
 #include "base/memory/scoped_ptr.h"
 
 #include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
-#include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -102,6 +101,8 @@ class WebView : public InputMethodContextClient,
           ContentsViewProxyClient* view_client,
           QObject* handle,
           OxideQSecurityStatus* security_status);
+
+  float GetLocationBarContentOffsetDip() const;
 
   void CommonInit(OxideQFindController* find_controller);
 
@@ -232,19 +233,7 @@ class WebView : public InputMethodContextClient,
   void visibilityChanged() override;
 
   void handleFocusEvent(QFocusEvent* event) override;
-  void handleHoverEvent(QHoverEvent* event,
-                        const QPoint& window_pos,
-                        const QPoint& global_pos) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
-  void handleKeyEvent(QKeyEvent* event) override;
-  void handleMouseEvent(QMouseEvent* event) override;
-  void handleTouchEvent(QTouchEvent* event) override;
-  void handleWheelEvent(QWheelEvent* event,
-                        const QPoint& window_pos) override;
-  void handleDragEnterEvent(QDragEnterEvent* event) override;
-  void handleDragMoveEvent(QDragMoveEvent* event) override;
-  void handleDragLeaveEvent(QDragLeaveEvent* event) override;
-  void handleDropEvent(QDropEvent* event) override;
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 
@@ -318,8 +307,6 @@ class WebView : public InputMethodContextClient,
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;
-
-  UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
 

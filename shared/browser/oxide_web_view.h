@@ -51,17 +51,10 @@
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_security_status.h"
 #include "shared/browser/oxide_security_types.h"
-#include "shared/browser/oxide_mouse_event_state.h"
-#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
 
 class GURL;
-
-namespace blink {
-class WebMouseEvent;
-class WebMouseWheelEvent;
-} // namespace blink
 
 namespace cc {
 class SolidColorLayer;
@@ -69,7 +62,6 @@ class SolidColorLayer;
 
 namespace content {
 
-class NativeWebKeyboardEvent;
 class NotificationRegistrar;
 struct OpenURLParams;
 class RenderFrameHost;
@@ -86,7 +78,6 @@ class Size;
 }
 
 namespace ui {
-class TouchEvent;
 class TouchHandleDrawable;
 }
 
@@ -260,11 +251,6 @@ class WebView : public ScriptMessageTarget,
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
   void PrepareToClose();
-
-  void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
-  void HandleMouseEvent(const blink::WebMouseEvent& event);
-  void HandleTouchEvent(const ui::TouchEvent& event);
-  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
 
   void DownloadRequested(
       const GURL& url,
@@ -501,9 +487,6 @@ class WebView : public ScriptMessageTarget,
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle> > previous_compositor_frames_;
   std::queue<uint32_t> received_surface_ids_;
-
-  MouseEventState mouse_state_;
-  TouchEventState touch_state_;
 
   content::NotificationRegistrar registrar_;
 

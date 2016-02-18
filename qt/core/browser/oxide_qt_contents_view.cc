@@ -17,17 +17,165 @@
 
 #include "oxide_qt_contents_view.h"
 
+#include <QEvent>
+#include <QKeyEvent>
 #include <QGuiApplication>
+#include <QMouseEvent>
+#include <QTouchEvent>
+
+#include "base/memory/scoped_vector.h"
+#include "content/public/browser/native_web_keyboard_event.h"
+#include "content/public/common/drop_data.h"
+#include "ui/events/event.h"
+#include "ui/gfx/geometry/point.h"
 
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "shared/browser/oxide_web_contents_view.h"
 
+#include "oxide_qt_drag_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
 
 namespace oxide {
 namespace qt {
+
+float ContentsView::GetDeviceScaleFactor() const {
+  QScreen* screen = client_->GetScreen();
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+
+  return GetDeviceScaleFactorFromQScreen(screen);
+}
+
+float ContentsView::GetLocationBarContentOffsetDip() {
+  if (location_bar_content_offset_getter_.is_null()) {
+    return 0.f;
+  }
+
+  return location_bar_content_offset_getter_.Run();
+}
+
+void ContentsView::handleKeyEvent(QKeyEvent* event) {
+  content::NativeWebKeyboardEvent e(MakeNativeWebKeyboardEvent(event, false));
+  view()->HandleKeyEvent(e);
+
+  // If the event is a printable character, send a corresponding Char event
+  if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
+    view()->HandleKeyEvent(MakeNativeWebKeyboardEvent(event, true));
+  }
+
+  event->accept();
+}
+
+void ContentsView::handleMouseEvent(QMouseEvent* event) {
+  if (!(event->button() == Qt::LeftButton ||
+        event->button() == Qt::MidButton ||
+        event->button() == Qt::RightButton ||
+        event->button() == Qt::NoButton)) {
+    event->ignore();
+    return;
+  }
+
+  view()->HandleMouseEvent(
+      MakeWebMouseEvent(event,
+                        GetDeviceScaleFactor(),
+                        GetLocationBarContentOffsetDip()));
+  event->accept();
+}
+
+void ContentsView::handleHoverEvent(QHoverEvent* event,
+                                    const QPoint& window_pos,
+                                    const QPoint& global_pos) {
+  view()->HandleMouseEvent(
+      MakeWebMouseEvent(event,
+                        window_pos,
+                        global_pos,
+                        GetDeviceScaleFactor(),
+                        GetLocationBarContentOffsetDip()));
+  event->accept();
+}
+
+void ContentsView::handleTouchEvent(QTouchEvent* event) {
+  ScopedVector<ui::TouchEvent> events;
+  touch_event_factory_.MakeEvents(event,
+                                  GetDeviceScaleFactor(),
+                                  GetLocationBarContentOffsetDip(),
+                                  &events);
+
+  for (size_t i = 0; i < events.size(); ++i) {
+    view()->HandleTouchEvent(*events[i]);
+  }
+
+  event->accept();
+}
+
+void ContentsView::handleWheelEvent(QWheelEvent* event,
+                                    const QPoint& window_pos) {
+  view()->HandleWheelEvent(
+      MakeWebMouseWheelEvent(event,
+                             window_pos,
+                             GetDeviceScaleFactor(),
+                             GetLocationBarContentOffsetDip()));
+  event->accept();
+}
+
+void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
+  content::DropData drop_data;
+  gfx::Point location;
+  blink::WebDragOperationsMask allowed_ops = blink::WebDragOperationNone;
+  int key_modifiers = 0;
+
+  GetDragEnterEventParams(event,
+                          GetDeviceScaleFactor(),
+                          &drop_data,
+                          &location,
+                          &allowed_ops,
+                          &key_modifiers);
+
+  view()->HandleDragEnter(drop_data, location, allowed_ops, key_modifiers);
+
+  event->accept();
+}
+
+void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
+  gfx::Point location;
+  int key_modifiers = 0;
+
+  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+
+  blink::WebDragOperation op = view()->HandleDragMove(location, key_modifiers);
+
+  Qt::DropAction action;
+  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
+    event->setDropAction(action);
+    event->accept();
+  } else {
+    event->ignore();
+  }
+}
+
+void ContentsView::handleDragLeaveEvent(QDragLeaveEvent* event) {
+  view()->HandleDragLeave();
+}
+
+void ContentsView::handleDropEvent(QDropEvent* event) {
+  gfx::Point location;
+  int key_modifiers = 0;
+
+  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+
+  blink::WebDragOperation op = view()->HandleDrop(location, key_modifiers);
+
+  Qt::DropAction action;
+  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
+    event->setDropAction(action);
+    event->accept();
+  } else {
+    event->ignore();
+  }
+}
 
 blink::WebScreenInfo ContentsView::GetScreenInfo() const {
   QScreen* screen = client_->GetScreen();
@@ -61,17 +209,20 @@ oxide::WebPopupMenu* ContentsView::CreatePopupMenu(
   return menu;
 }
 
-ContentsView::ContentsView(ContentsViewProxyClient* client,
-                           QObject* native_view)
+ContentsView::ContentsView(
+    ContentsViewProxyClient* client,
+    QObject* native_view,
+    const base::Callback<float(void)>& location_bar_content_offset_getter)
     : client_(client),
-      native_view_(native_view) {
-  DCHECK(!client_->view_);
-  client_->view_ = this;
+      native_view_(native_view),
+      location_bar_content_offset_getter_(location_bar_content_offset_getter) {
+  DCHECK(!client_->proxy_);
+  client_->proxy_ = this;
 }
 
 ContentsView::~ContentsView() {
-  DCHECK_EQ(client_->view_, this);
-  client_->view_ = nullptr;
+  DCHECK_EQ(client_->proxy_, this);
+  client_->proxy_ = nullptr;
 }
 
 // static

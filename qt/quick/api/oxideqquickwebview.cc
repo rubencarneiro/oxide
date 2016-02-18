@@ -36,7 +36,6 @@
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
-#include <QTouchEvent>
 #include <QtQml>
 #include <Qt>
 
@@ -1117,11 +1116,11 @@ void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
 
   QQuickItem::keyPressEvent(event);
 
-  if (d->handling_unhandled_key_event_ || !d->proxy_) {
+  if (d->handling_unhandled_key_event_) {
     return;
   }
 
-  d->proxy_->handleKeyEvent(event);
+  d->contents_view_->handleKeyPressEvent(event);
 }
 
 void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
@@ -1129,11 +1128,11 @@ void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
 
   QQuickItem::keyReleaseEvent(event);
 
-  if (d->handling_unhandled_key_event_ || !d->proxy_) {
+  if (d->handling_unhandled_key_event_) {
     return;
   }
 
-  d->proxy_->handleKeyEvent(event);
+  d->contents_view_->handleKeyReleaseEvent(event);
 }
 
 void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
@@ -1176,158 +1175,84 @@ void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::mousePressEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  forceActiveFocus();
-  d->proxy_->handleMouseEvent(event);
+  d->contents_view_->handleMousePressEvent(event);
 }
 
 void OxideQQuickWebView::mouseMoveEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::mouseMoveEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleMouseEvent(event);
+  d->contents_view_->handleMouseMoveEvent(event);
 }
 
 void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::mouseReleaseEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleMouseEvent(event);
+  d->contents_view_->handleMouseReleaseEvent(event);
 }
 
 void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::wheelEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  QPointF window_pos = mapToScene(event->posF());
-  d->proxy_->handleWheelEvent(event, window_pos.toPoint());
+  d->contents_view_->handleWheelEvent(event);
 }
 
 void OxideQQuickWebView::touchEvent(QTouchEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::touchEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  if (event->type() == QEvent::TouchBegin) {
-    forceActiveFocus();
-  }
-  d->proxy_->handleTouchEvent(event);
+  d->contents_view_->handleTouchEvent(event);
 }
 
 void OxideQQuickWebView::hoverEnterEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::hoverEnterEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  QPointF window_pos = mapToScene(event->posF());
-  d->proxy_->handleHoverEvent(event,
-                              window_pos.toPoint(),
-                              (window_pos + window()->position()).toPoint());
+  d->contents_view_->handleHoverEnterEvent(event);
 }
 
 void OxideQQuickWebView::hoverMoveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::hoverMoveEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  QPointF window_pos = mapToScene(event->posF());
-  d->proxy_->handleHoverEvent(event,
-                              window_pos.toPoint(),
-                              (window_pos + window()->position()).toPoint());
+  d->contents_view_->handleHoverMoveEvent(event);
 }
 
 void OxideQQuickWebView::hoverLeaveEvent(QHoverEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::hoverLeaveEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  QPointF window_pos = mapToScene(event->posF());
-  d->proxy_->handleHoverEvent(event,
-                              window_pos.toPoint(),
-                              (window_pos + window()->position()).toPoint());
+  d->contents_view_->handleHoverLeaveEvent(event);
 }
 
 void OxideQQuickWebView::dragEnterEvent(QDragEnterEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::dragEnterEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleDragEnterEvent(event);
+  d->contents_view_->handleDragEnterEvent(event);
 }
 
 void OxideQQuickWebView::dragMoveEvent(QDragMoveEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::dragMoveEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleDragMoveEvent(event);
+  d->contents_view_->handleDragMoveEvent(event);
 }
 
 void OxideQQuickWebView::dragLeaveEvent(QDragLeaveEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::dragLeaveEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleDragLeaveEvent(event);
+  d->contents_view_->handleDragLeaveEvent(event);
 }
 
 void OxideQQuickWebView::dropEvent(QDropEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::dropEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleDropEvent(event);
+  d->contents_view_->handleDropEvent(event);
 }
 
 void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,

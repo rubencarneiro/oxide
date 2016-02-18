@@ -37,17 +37,8 @@
 typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
-class QDragEnterEvent;
-class QDragLeaveEvent;
-class QDragMoveEvent;
-class QDropEvent;
 class QFocusEvent;
-class QHoverEvent;
 class QInputMethodEvent;
-class QKeyEvent;
-class QMouseEvent;
-class QTouchEvent;
-class QWheelEvent;
 QT_END_NAMESPACE
 
 class OxideQFindController;
@@ -185,19 +176,7 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual void visibilityChanged() = 0;
 
   virtual void handleFocusEvent(QFocusEvent* event) = 0;
-  virtual void handleHoverEvent(QHoverEvent* event,
-                                const QPoint& window_pos,
-                                const QPoint& global_pos) = 0;
   virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
-  virtual void handleKeyEvent(QKeyEvent* event) = 0;
-  virtual void handleMouseEvent(QMouseEvent* event) = 0;
-  virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPoint& window_pos) = 0;
-  virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
-  virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;
-  virtual void handleDragLeaveEvent(QDragLeaveEvent* event) = 0;
-  virtual void handleDropEvent(QDropEvent* event) = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 

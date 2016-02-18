@@ -24,8 +24,17 @@
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 
 QT_BEGIN_NAMESPACE
+class QDragEnterEvent;
+class QDragLeaveEvent;
+class QDragMoveEvent;
+class QDropEvent;
+class QHoverEvent;
+class QKeyEvent;
+class QMouseEvent;
 class QQmlComponent;
 class QQuickItem;
+class QTouchEvent;
+class QWheelEvent;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -35,6 +44,21 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
  public:
   ContentsView(QQuickItem* item);
   ~ContentsView() override;
+
+  void handleKeyPressEvent(QKeyEvent* event);
+  void handleKeyReleaseEvent(QKeyEvent* event);
+  void handleMousePressEvent(QMouseEvent* event);
+  void handleMouseMoveEvent(QMouseEvent* event);
+  void handleMouseReleaseEvent(QMouseEvent* event);
+  void handleWheelEvent(QWheelEvent* event);
+  void handleTouchEvent(QTouchEvent* event);
+  void handleHoverEnterEvent(QHoverEvent* event);
+  void handleHoverMoveEvent(QHoverEvent* event);
+  void handleHoverLeaveEvent(QHoverEvent* event);
+  void handleDragEnterEvent(QDragEnterEvent* event);
+  void handleDragMoveEvent(QDragMoveEvent* event);
+  void handleDragLeaveEvent(QDragLeaveEvent* event);
+  void handleDropEvent(QDropEvent* event);
 
   // XXX(chrisccoulson): Remove these UI component accessors from here in
   //  future. Instead, we should have an auxilliary UI client class. There'll
@@ -51,6 +75,10 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
   }
 
  private:
+  void handleKeyEvent(QKeyEvent* event);
+  void handleMouseEvent(QMouseEvent* event);
+  void handleHoverEvent(QHoverEvent* event);
+
   // oxide::qt::ContentsViewProxyClient implementation
   QScreen* GetScreen() const override;
   QRect GetBoundsPix() const override;

@@ -39,7 +39,7 @@ class ContentsViewProxyClient {
  public:
   virtual ~ContentsViewProxyClient() {}
 
-  ContentsViewProxy* view() const { return view_; }
+  ContentsViewProxy* proxy() const { return proxy_; }
 
   virtual QScreen* GetScreen() const = 0;
 
@@ -52,12 +52,12 @@ class ContentsViewProxyClient {
       WebPopupMenuProxyClient* client) = 0;
 
  protected:
-  ContentsViewProxyClient() : view_(nullptr) {}
+  ContentsViewProxyClient() : proxy_(nullptr) {}
 
  private:
   friend class ContentsView;
 
-  ContentsViewProxy* view_;
+  ContentsViewProxy* proxy_;
 };
 
 } // namespace qt
