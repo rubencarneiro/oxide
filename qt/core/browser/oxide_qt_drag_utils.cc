@@ -56,7 +56,7 @@ void UnpickleCustomRendererData(
   base::PickleIterator iter(pickle);
 
   size_t size;
-  if (!iter.ReadSizeT(&size)) {
+  if (!iter.ReadUInt64(&size)) {
     return;
   }
 
@@ -140,7 +140,7 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
 
   if (drop_data.custom_data.size() > 0) {
     base::Pickle pickle;
-    pickle.WriteSizeT(drop_data.custom_data.size());
+    pickle.WriteUInt64(drop_data.custom_data.size());
     for (const auto& custom_data : drop_data.custom_data) {
       pickle.WriteString16(custom_data.first);
       pickle.WriteString16(custom_data.second);
