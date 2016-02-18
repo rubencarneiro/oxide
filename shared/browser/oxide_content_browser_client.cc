@@ -25,6 +25,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/location_provider.h"
@@ -34,6 +35,7 @@
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
+#include "device/vibration/vibration_manager_impl.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -66,6 +68,16 @@
 
 #include "pepper/oxide_pepper_host_factory_browser.h"
 #endif
+
+namespace {
+
+void CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+  oxide::BrowserPlatformIntegration::GetInstance()
+    ->CreateVibrationManager(std::move(request));
+}
+
+}
 
 namespace oxide {
 
@@ -304,6 +316,12 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 std::string
 ContentBrowserClient::GetApplicationLocale() {
   return application_locale_;
+}
+
+void ContentBrowserClient::RegisterRenderProcessMojoServices(
+      content::ServiceRegistry* registry) {
+  DCHECK(registry);
+  registry->AddService(base::Bind(&CreateVibrationManager));
 }
 
 ContentBrowserClient::ContentBrowserClient(

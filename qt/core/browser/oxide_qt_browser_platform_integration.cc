@@ -45,6 +45,7 @@
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
 #include "oxide_qt_screen_client.h"
+#include "oxide_qt_vibration_manager.h"
 
 namespace oxide {
 namespace qt {
@@ -217,6 +218,11 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   qApp->removeEventFilter(this);
+}
+
+void BrowserPlatformIntegration::CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+  VibrationManager::Create(std::move(request));
 }
 
 QThread* GetIOQThread() {

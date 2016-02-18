@@ -224,6 +224,7 @@
         '<(DEPTH)/build/linux/system.gyp:xext',
         '<(DEPTH)/build/linux/system.gyp:x11',
         '<(DEPTH)/cc/cc.gyp:cc',
+        '<(DEPTH)/cc/cc.gyp:cc_surfaces',
         '<(DEPTH)/components/components.gyp:devtools_http_handler',
         '<(DEPTH)/components/components.gyp:keyed_service_content',
         '<(DEPTH)/components/components.gyp:keyed_service_core',
