@@ -77,6 +77,7 @@ WebMediaPlayer::WebMediaPlayer(
       frame_(frame),
       client_(client),
       delegate_(delegate),
+      delegate_id_(0),
       buffered_(static_cast<size_t>(1)),
       ignore_metadata_duration_change_(false),
       pending_seek_(false),
@@ -99,6 +100,9 @@ WebMediaPlayer::WebMediaPlayer(
   DCHECK(player_manager_);
   DCHECK(main_thread_checker_.CalledOnValidThread());
 
+  if (delegate_)
+    delegate_id_ = delegate_->AddObserver(this);
+
   player_id_ = player_manager_->RegisterMediaPlayer(this);
 }
 
@@ -111,7 +115,7 @@ WebMediaPlayer::~WebMediaPlayer() {
   }
 
   if (player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE && delegate_) {
-    delegate_->PlayerGone(this);
+    delegate_->PlayerGone(delegate_id_);
   }
 }
 
@@ -417,6 +421,28 @@ void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned ch
   NOTIMPLEMENTED();
 }
 
+void WebMediaPlayer::OnHidden() {
+  // RendererMediaPlayerManager will not call SuspendAndReleaseResources() if we
+  // were already in the paused state; thus notify the MediaWebContentsObserver
+  // that we've been hidden so any lingering MediaSessions are released.
+  if (delegate_)
+    delegate_->PlayerGone(delegate_id_);
+}
+
+void WebMediaPlayer::OnShown() {}
+
+void WebMediaPlayer::OnPlay() {
+  play();
+  client_->playbackStateChanged();
+}
+
+void WebMediaPlayer::OnPause() {
+  pause();
+  client_->playbackStateChanged();
+}
+
+void WebMediaPlayer::OnVolumeMultiplierUpdate(double multiplier) {}
+
 void WebMediaPlayer::OnMediaMetadataChanged(
     const base::TimeDelta& duration, int width, int height, bool success) {
   bool need_to_signal_duration_changed = false;
@@ -648,9 +674,14 @@ void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
     return;
   }
   if (is_playing) {
-    delegate_->DidPlay(this);
+    delegate_->DidPlay(delegate_id_,
+                       hasVideo(),
+                       !hasVideo(),
+                       isRemote(),
+                       duration_);
   } else {
-    delegate_->DidPause(this);
+    delegate_->DidPause(delegate_id_,
+                        !pending_seek_ || currentTime() >= duration());
   }
 }
 
