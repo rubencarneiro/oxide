@@ -133,6 +133,18 @@ void RequireCallback(cc::SurfaceManager* manager,
   surface->AddDestructionDependency(sequence);
 }
 
+void DrawCallback(const cc::SurfaceFactory::DrawCallback& callback,
+                  cc::SurfaceDrawStatus status) {
+  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
+    callback.Run(status);
+  } else {
+    content::BrowserThread::PostTask(
+        content::BrowserThread::UI,
+        FROM_HERE,
+        base::Bind(&DrawCallback, callback, status));
+  }
+}
+
 } // namespace
 
 void RenderWidgetHostView::OnTextInputStateChanged(
@@ -306,9 +318,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
+    cc::SurfaceFactory::DrawCallback wrapped_ack_callback =
+        base::Bind(&DrawCallback, ack_callback);
     surface_factory_->SubmitCompositorFrame(surface_id_,
                                             std::move(frame),
-                                            ack_callback);
+                                            wrapped_ack_callback);
   }
 
   last_frame_size_dip_ = frame_size_dip;
