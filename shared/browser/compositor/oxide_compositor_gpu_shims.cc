@@ -53,11 +53,6 @@ namespace {
 base::LazyInstance<SyncPointWaiter> g_sync_point_waiter =
     LAZY_INSTANCE_INITIALIZER;
 
-uint64_t CommandBufferProxyID(const CommandBufferID& command_buffer) {
-  return (static_cast<uint64_t>(command_buffer.client_id) << 32) |
-         command_buffer.route_id;
-}
-
 }
 
 SyncPointWaiter::SyncPointWaiter()
@@ -136,13 +131,13 @@ scoped_refptr<base::SingleThreadTaskRunner> GpuUtils::GetTaskRunner() {
 }
 
 // static
-bool GpuUtils::IsSyncPointRetired(const CommandBufferID& command_buffer_id,
+bool GpuUtils::IsSyncPointRetired(gpu::CommandBufferId command_buffer_id,
                                   uint64_t sync_point) {
   scoped_refptr<gpu::SyncPointClientState> client_state =
       content::GpuChildThread::GetChannelManager()
         ->sync_point_manager()
         ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
-                                  CommandBufferProxyID(command_buffer_id));
+                                  command_buffer_id);
   if (!client_state) {
     return true;
   }
@@ -151,14 +146,14 @@ bool GpuUtils::IsSyncPointRetired(const CommandBufferID& command_buffer_id,
 }
 
 // static
-bool GpuUtils::WaitForSyncPoint(const CommandBufferID& command_buffer_id,
+bool GpuUtils::WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
                                 uint64_t sync_point,
                                 const base::Closure& callback) {
   scoped_refptr<gpu::SyncPointClientState> client_state =
       content::GpuChildThread::GetChannelManager()
         ->sync_point_manager()
         ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
-                                  CommandBufferProxyID(command_buffer_id));
+                                  command_buffer_id);
   DCHECK(client_state);
 
   return g_sync_point_waiter.Get().Wait(client_state.get(),
@@ -179,11 +174,10 @@ EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
 }
 
 // static
-GLuint GpuUtils::GetTextureFromMailbox(const CommandBufferID& command_buffer,
+GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
                                        const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(
-        command_buffer.client_id, command_buffer.route_id);
+      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return 0;
   }
@@ -199,11 +193,10 @@ GLuint GpuUtils::GetTextureFromMailbox(const CommandBufferID& command_buffer,
 
 // static
 EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
-    const CommandBufferID& command_buffer,
+    gpu::CommandBufferId command_buffer,
     const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(
-        command_buffer.client_id, command_buffer.route_id);
+      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return EGL_NO_IMAGE_KHR;
   }

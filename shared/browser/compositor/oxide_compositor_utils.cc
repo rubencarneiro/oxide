@@ -34,12 +34,12 @@
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
+#include "gpu/command_buffer/common/command_buffer_id.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_switches.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/common/oxide_id_allocator.h"
-#include "shared/port/content/common/gpu_client_shim_oxide.h"
 
 #include "oxide_compositor_frame_handle.h"
 #include "oxide_compositor_gpu_shims.h"
@@ -65,7 +65,7 @@ class FetchTextureResourcesTaskInfo {
   virtual void DoFetch() = 0;
   virtual void RunCallback() = 0;
 
-  const CommandBufferID& command_buffer_id() const {
+  gpu::CommandBufferId command_buffer_id() const {
     return command_buffer_id_;
   }
   const gpu::Mailbox& mailbox() const { return mailbox_; }
@@ -76,18 +76,17 @@ class FetchTextureResourcesTaskInfo {
 
  protected:
   FetchTextureResourcesTaskInfo(
-      int32_t client_id,
-      int32_t route_id,
+      const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
       base::SingleThreadTaskRunner* task_runner)
-      : command_buffer_id_(client_id, route_id),
+      : command_buffer_id_(command_buffer_id),
         mailbox_(mailbox),
         sync_point_(sync_point),
         task_runner_(task_runner) {}
 
  private:
-  CommandBufferID command_buffer_id_;
+  gpu::CommandBufferId command_buffer_id_;
   gpu::Mailbox mailbox_;
   uint64_t sync_point_;
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
@@ -96,14 +95,12 @@ class FetchTextureResourcesTaskInfo {
 class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
  public:
   FetchTextureIDTaskInfo(
-      int32_t client_id,
-      int32_t route_id,
+      const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
       const CompositorUtils::GetTextureFromMailboxCallback& callback,
       base::SingleThreadTaskRunner* task_runner)
-      : FetchTextureResourcesTaskInfo(client_id,
-                                      route_id,
+      : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
                                       sync_point,
                                       task_runner),
@@ -122,14 +119,12 @@ class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
 class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
  public:
   FetchEGLImageTaskInfo(
-      int32_t client_id,
-      int32_t route_id,
+      const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
       base::SingleThreadTaskRunner* task_runner)
-      : FetchTextureResourcesTaskInfo(client_id,
-                                      route_id,
+      : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
                                       sync_point,
                                       task_runner),
@@ -587,10 +582,8 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
 
   FetchTextureIDTaskInfo* info =
       new FetchTextureIDTaskInfo(
-        client_id_,
-        content::oxide_gpu_shim::GetContextProviderRouteID(
-          static_cast<content::ContextProviderCommandBuffer*>(
-            context_provider)),
+        static_cast<content::ContextProviderCommandBuffer*>(
+            context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
         callback,
@@ -627,10 +620,8 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
 
   FetchEGLImageTaskInfo* info =
       new FetchEGLImageTaskInfo(
-        client_id_,
-        content::oxide_gpu_shim::GetContextProviderRouteID(
-          static_cast<content::ContextProviderCommandBuffer*>(
-            context_provider)),
+        static_cast<content::ContextProviderCommandBuffer*>(
+            context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
         callback,

@@ -28,6 +28,7 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "gpu/command_buffer/common/command_buffer_id.h"
 
 typedef unsigned int GLuint;
 
@@ -54,33 +55,25 @@ class EGL {
   DISALLOW_IMPLICIT_CONSTRUCTORS(EGL);
 };
 
-struct CommandBufferID {
-  CommandBufferID(int32_t client_id, int32_t route_id)
-      : client_id(client_id), route_id(route_id) {}
-
-  int32_t client_id;
-  int32_t route_id;
-};
-
 class GpuUtils {
  public:
   static EGLDisplay GetHardwareEGLDisplay();
 
   static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 
-  static bool IsSyncPointRetired(const CommandBufferID& command_buffer_id,
+  static bool IsSyncPointRetired(gpu::CommandBufferId command_buffer_id,
                                  uint64_t sync_point);
-  static bool WaitForSyncPoint(const CommandBufferID& command_buffer_id,
+  static bool WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
                                uint64_t sync_point,
                                const base::Closure& callback);
 
   static bool CanUseEGLImage();
 
-  static GLuint GetTextureFromMailbox(const CommandBufferID& command_buffer,
+  static GLuint GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
                                       const gpu::Mailbox& mailbox);
 
   static EGLImageKHR CreateEGLImageFromMailbox(
-      const CommandBufferID& command_buffer,
+      gpu::CommandBufferId command_buffer,
       const gpu::Mailbox& mailbox);
 
  private:
