@@ -142,7 +142,7 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
   if (drop_data.custom_data.size() > 0) {
     base::Pickle pickle;
     pickle.WriteUInt64(
-        base::checked_cast<size_t>(drop_data.custom_data.size()));
+        base::checked_cast<uint64_t>(drop_data.custom_data.size()));
     for (const auto& custom_data : drop_data.custom_data) {
       pickle.WriteString16(custom_data.first);
       pickle.WriteString16(custom_data.second);
