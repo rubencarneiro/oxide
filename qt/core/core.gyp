@@ -36,6 +36,8 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/device/vibration/vibration.gyp:device_vibration',
+        '<(DEPTH)/device/vibration/vibration.gyp:device_vibration_mojo_bindings',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
