@@ -61,19 +61,10 @@ float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
   // plugin. For old versions that don't expose these factors, we deduce the
   // scale factor by reading the "GRID_UNIT_PX" environment variable.
   //
-  // XXX: There are 2 scenarios where this is completely broken:
-  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
-  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
-  //         set, and the application probably uses QScreen::devicePixelRatio,
-  //         which is always 1.0f
-  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
-  //         QPA plugin. In this case, we get the DPR from
-  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
-  //         if set
-  //      I think it would be better if the Ubuntu QPA plugin did override
-  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
-  //      and the Ubuntu SDK used this to convert between grid units and device
-  //      pixels, then we could just use QScreen::devicePixelRatio here
+  // XXX: This is broken for apps not using the Ubuntu SDK but running with the
+  //      Ubuntu QPA plugin. In this case, the scaling is applied even though
+  //      it's unlikely to be expected. A workaround is to have
+  //      "OXIDE_FORCE_DPR" set.
 
   // Allow an override for testing
   {
