@@ -107,8 +107,8 @@ ScreenClient::ScreenClient() {
   QString platform = QGuiApplication::platformName();
   if (platform.startsWith("ubuntu") || platform == "mirserver") {
     connect(QGuiApplication::platformNativeInterface(),
-            SIGNAL(screenPropertyChanged(QPlatformWindow*, const QString&)),
-            SLOT(OnScreenPropertyChanged(QPlatformWindow*, const QString&)));
+            SIGNAL(screenPropertyChanged(QPlatformScreen*, const QString&)),
+            SLOT(OnScreenPropertyChanged(QPlatformScreen*, const QString&)));
   }
 
   UpdatePrimaryDisplay();
