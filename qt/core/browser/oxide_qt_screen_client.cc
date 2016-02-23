@@ -42,7 +42,7 @@ void ScreenClient::OnScreenOrientationChanged(
 }
 
 void ScreenClient::OnScreenPropertyChanged(
-    QPlatformScreen *screen, const QString &propertyName) {
+    QPlatformScreen *screen, const QString& propertyName) {
   if (propertyName == QStringLiteral("scale") &&
       screen == QGuiApplication::primaryScreen()->handle()) {
     UpdatePrimaryDisplay();
