@@ -20,6 +20,8 @@
 
 #include <QtGlobal>
 
+typedef void* EGLImageKHR;
+
 QT_BEGIN_NAMESPACE
 class QDragEnterEvent;
 class QDragLeaveEvent;
@@ -28,6 +30,7 @@ class QDropEvent;
 class QHoverEvent;
 class QKeyEvent;
 class QMouseEvent;
+class QRect;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -35,9 +38,31 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
+class CompositorFrameHandle {
+ public:
+  virtual ~CompositorFrameHandle() {}
+
+  enum Type {
+    TYPE_INVALID,
+    TYPE_SOFTWARE,
+    TYPE_ACCELERATED,
+    TYPE_IMAGE
+  };
+
+  virtual Type GetType() = 0;
+  virtual const QRect& GetRect() const = 0;
+
+  virtual QImage GetSoftwareFrame() = 0;
+  virtual unsigned int GetAcceleratedFrameTexture() = 0;
+  virtual EGLImageKHR GetImageFrame() = 0;
+};
+
 class ContentsViewProxy {
  public:
   virtual ~ContentsViewProxy() {}
+
+  virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
+  virtual void didCommitCompositorFrame() = 0;
 
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;

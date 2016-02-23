@@ -17,16 +17,16 @@
 
 #include "oxide_qt_touch_handle_drawable.h"
 
+#include <QPointF>
+
 #include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
-#include "oxide_qt_web_view.h"
-
-#include <QPointF>
+#include "oxide_qt_contents_view.h"
 
 namespace oxide {
 namespace qt {
 
-TouchHandleDrawable::TouchHandleDrawable(const WebView* view)
+TouchHandleDrawable::TouchHandleDrawable(const ContentsView* view)
     : view_(view) {}
 
 TouchHandleDrawable::~TouchHandleDrawable() {}

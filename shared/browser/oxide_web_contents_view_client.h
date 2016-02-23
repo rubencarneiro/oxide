@@ -25,6 +25,15 @@
 namespace content {
 struct ContextMenuParams;
 class RenderFrameHost;
+class WebCursor;
+}
+
+namespace gfx {
+class RectF;
+}
+
+namespace ui {
+class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -40,15 +49,29 @@ class WebContentsViewClient {
   // XXX(chrisccoulson) This should return a gfx::Display handle
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
+  virtual bool IsVisible() const = 0;
+
+  virtual bool HasFocus() const = 0;
+
   virtual gfx::Rect GetBoundsPix() const = 0;
 
   gfx::Rect GetBoundsDip() const;
+
+  virtual void SwapCompositorFrame() = 0;
+  virtual void EvictCurrentFrame() = 0;
+
+  virtual void UpdateCursor(const content::WebCursor& cursor);
 
   virtual WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params);
 
   virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
+
+  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
+  virtual void TouchSelectionChanged(bool active,
+                                     const gfx::RectF& bounds) const;
+
 
  protected:
   WebContentsViewClient();

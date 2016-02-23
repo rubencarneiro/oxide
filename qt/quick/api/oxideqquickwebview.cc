@@ -51,17 +51,13 @@
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
-#include "qt/quick/oxide_qquick_accelerated_frame_node.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
 #include "qt/quick/oxide_qquick_confirm_dialog.h"
 #include "qt/quick/oxide_qquick_contents_view.h"
 #include "qt/quick/oxide_qquick_file_picker.h"
-#include "qt/quick/oxide_qquick_image_frame_node.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
-#include "qt/quick/oxide_qquick_software_frame_node.h"
-#include "qt/quick/oxide_qquick_touch_handle_drawable.h"
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquickscriptmessagehandler.h"
@@ -72,11 +68,6 @@
 #include "oxideqquickwebframe.h"
 #include "oxideqquickwebframe_p.h"
 
-
-using oxide::qquick::AcceleratedFrameNode;
-using oxide::qquick::ImageFrameNode;
-using oxide::qquick::SoftwareFrameNode;
-
 namespace {
 
 QEvent::Type GetPrepareToCloseBypassEventType() {
@@ -85,19 +76,6 @@ QEvent::Type GetPrepareToCloseBypassEventType() {
 }
 
 }
-
-class UpdatePaintNodeScope {
- public:
-  UpdatePaintNodeScope(OxideQQuickWebViewPrivate* d)
-      : d_(d) {}
-
-  virtual ~UpdatePaintNodeScope() {
-    d_->didUpdatePaintNode();
-  }
-
- private:
-  OxideQQuickWebViewPrivate* d_;
-};
 
 OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
     QObject(parent),
@@ -153,12 +131,14 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       prompt_dialog_(nullptr),
       before_unload_dialog_(nullptr),
       file_picker_(nullptr),
-      received_new_compositor_frame_(false),
-      frame_evicted_(false),
-      last_composited_frame_type_(oxide::qt::CompositorFrameHandle::TYPE_INVALID),
       using_old_load_event_signal_(false),
       handling_unhandled_key_event_(false),
-      construct_props_(new ConstructProps()) {}
+      construct_props_(new ConstructProps()),
+      touch_selection_controller_(
+          new OxideQQuickTouchSelectionController(view)) {
+  contents_view_->set_touch_selection_controller(
+      touch_selection_controller_.data());
+}
 
 oxide::qt::JavaScriptDialogProxy*
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
@@ -191,13 +171,6 @@ oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
   Q_Q(OxideQQuickWebView);
 
   return new oxide::qquick::FilePicker(q, client);
-}
-
-oxide::qt::TouchHandleDrawableProxy*
-OxideQQuickWebViewPrivate::CreateTouchHandleDrawable() {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::TouchHandleDrawable(q);
 }
 
 void OxideQQuickWebViewPrivate::WebProcessStatusChanged() {
@@ -270,13 +243,6 @@ void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
   navigation_history_.onNavigationEntryChanged(index);
 }
 
-void OxideQQuickWebViewPrivate::TouchSelectionChanged(bool active,
-                                                      QRectF bounds) {
-  Q_Q(OxideQQuickWebView);
-
-  q->touchSelectionController()->onTouchSelectionChanged(active, bounds);
-}
-
 void OxideQQuickWebViewPrivate::CreateWebFrame(
     oxide::qt::WebFrameProxy* proxy) {
   Q_Q(OxideQQuickWebView);
@@ -285,18 +251,6 @@ void OxideQQuickWebViewPrivate::CreateWebFrame(
   QQmlEngine::setObjectOwnership(frame, QQmlEngine::CppOwnership);
 
   emit q->frameAdded(frame);
-}
-
-bool OxideQQuickWebViewPrivate::IsVisible() const {
-  Q_Q(const OxideQQuickWebView);
-
-  return q->isVisible();
-}
-
-bool OxideQQuickWebViewPrivate::HasFocus() const {
-  Q_Q(const OxideQQuickWebView);
-
-  return q->hasActiveFocus() && (q->window() ? q->window()->isActive() : false);
 }
 
 void OxideQQuickWebViewPrivate::AddMessageToConsole(
@@ -342,12 +296,6 @@ bool OxideQQuickWebViewPrivate::CanCreateWindows() const {
   // QObject::isSignalConnected doesn't work from here (it still indicates
   // true during the last disconnect)
   return q->receivers(SIGNAL(newViewRequested(OxideQNewViewRequest*))) > 0;
-}
-
-void OxideQQuickWebViewPrivate::UpdateCursor(const QCursor& cursor) {
-  Q_Q(OxideQQuickWebView);
-
-  q->setCursor(cursor);
 }
 
 void OxideQQuickWebViewPrivate::NavigationRequested(
@@ -529,24 +477,6 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
   if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_OFFSET)) {
     emit location_bar_controller_->contentOffsetChanged();
   }
-}
-
-void OxideQQuickWebViewPrivate::ScheduleUpdate() {
-  Q_Q(OxideQQuickWebView);
-
-  frame_evicted_ = false;
-  received_new_compositor_frame_ = true;
-
-  q->update();
-}
-
-void OxideQQuickWebViewPrivate::EvictCurrentFrame() {
-  Q_Q(OxideQQuickWebView);
-
-  frame_evicted_ = true;
-  received_new_compositor_frame_ = false;
-
-  q->update();
 }
 
 void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
@@ -797,13 +727,6 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextConstructed()));
   QObject::disconnect(context, SIGNAL(destroyed()),
                       q, SLOT(contextDestroyed()));
-}
-
-void OxideQQuickWebViewPrivate::didUpdatePaintNode() {
-  if (received_new_compositor_frame_) {
-    received_new_compositor_frame_ = false;
-    proxy_->didCommitCompositorFrame();
-  }
 }
 
 void OxideQQuickWebViewPrivate::screenChanged(QScreen* screen) {
@@ -1272,89 +1195,7 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   Q_UNUSED(updatePaintNodeData);
   Q_D(OxideQQuickWebView);
 
-  UpdatePaintNodeScope scope(d);
-
-  oxide::qt::CompositorFrameHandle::Type type =
-      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
-  QSharedPointer<oxide::qt::CompositorFrameHandle> handle;
-
-  if (d->proxy_) {
-    handle = d->proxy_->compositorFrameHandle();
-    type = handle->GetType();
-  }
-
-  Q_ASSERT(!d->received_new_compositor_frame_ ||
-           (d->received_new_compositor_frame_ && !d->frame_evicted_));
-
-  if (type != d->last_composited_frame_type_) {
-    delete oldNode;
-    oldNode = nullptr;
-  }
-
-  d->last_composited_frame_type_ = type;
-
-  if (d->frame_evicted_) {
-    delete oldNode;
-    return nullptr;
-  }
-
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
-    AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(oldNode);
-    if (!node) {
-      node = new AcceleratedFrameNode(this);
-    }
-
-    if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(handle);
-    }
-
-    return node;
-  }
-
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
-    ImageFrameNode* node = static_cast<ImageFrameNode *>(oldNode);
-    if (!node) {
-      node = new ImageFrameNode();
-    }
-
-    if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(handle);
-    }
-
-    return node;
-  }
-
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
-    SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
-    if (!node) {
-      node = new SoftwareFrameNode(this);
-    }
-
-    if (d->received_new_compositor_frame_ || !oldNode) {
-      node->updateNode(handle);
-    }
-
-    return node;
-  }
-
-  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
-
-  SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(oldNode);
-  if (!node) {
-    node = new SoftwareFrameNode(this);
-  }
-
-  QRectF rect(QPointF(0, 0), QSizeF(width(), height()));
-
-  if (!oldNode || rect != node->rect()) {
-    QImage blank(qRound(rect.width()),
-                 qRound(rect.height()),
-                 QImage::Format_ARGB32);
-    blank.fill(Qt::white);
-    node->setImage(blank);
-  }
-
-  return node;
+  return d->contents_view_->updatePaintNode(oldNode);
 }
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
@@ -2177,11 +2018,6 @@ OxideQFindController* OxideQQuickWebView::findController() const {
 
 OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
   Q_D(OxideQQuickWebView);
-
-  if (!d->touch_selection_controller_) {
-    d->touch_selection_controller_.reset(
-        new OxideQQuickTouchSelectionController(this));
-  }
 
   return d->touch_selection_controller_.data();
 }

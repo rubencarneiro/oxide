@@ -22,6 +22,8 @@
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
+class QCursor;
+class QRectF;
 class QScreen;
 QT_END_NAMESPACE
 
@@ -30,6 +32,7 @@ namespace qt {
 
 class ContentsView;
 class ContentsViewProxy;
+class TouchHandleDrawableProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
 class WebPopupMenuProxy;
@@ -43,13 +46,24 @@ class ContentsViewProxyClient {
 
   virtual QScreen* GetScreen() const = 0;
 
+  virtual bool IsVisible() const = 0;
+
+  virtual bool HasFocus() const = 0;
+
   virtual QRect GetBoundsPix() const = 0;
+
+  virtual void ScheduleUpdate() = 0;
+  virtual void EvictCurrentFrame() = 0;
+
+  virtual void UpdateCursor(const QCursor& cursor) = 0;
 
   virtual WebContextMenuProxy* CreateWebContextMenu(
       WebContextMenuProxyClient* client) = 0;
-
   virtual WebPopupMenuProxy* CreateWebPopupMenu(
       WebPopupMenuProxyClient* client) = 0;
+  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
+
+  virtual void TouchSelectionChanged(bool active, const QRectF& bounds) = 0;
 
  protected:
   ContentsViewProxyClient() : proxy_(nullptr) {}

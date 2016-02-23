@@ -20,6 +20,8 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "cc/layers/layer_settings.h"
+#include "cc/layers/solid_color_layer.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
@@ -30,10 +32,17 @@
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebDragOperation.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/clipboard/clipboard.h"
+#include "ui/base/ime/text_input_type.h"
+#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/image/image_skia_rep.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
+#include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_platform_integration.h"
@@ -44,6 +53,7 @@
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_context_menu.h"
 #include "oxide_web_popup_menu.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -51,13 +61,25 @@ namespace {
 int kUserDataKey;
 }
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
+
 WebContentsView::WebContentsView(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
       client_(nullptr),
+      compositor_(Compositor::Create(this)),
+      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
+
+  root_layer_->SetIsDrawable(true);
+  root_layer_->SetBackgroundColor(SK_ColorWHITE);
+
+  compositor_->SetVisibility(false);
+  compositor_->SetRootLayer(root_layer_);
+
+  CompositorObserver::Observe(compositor_.get());
 }
 
 content::WebContentsImpl* WebContentsView::web_contents_impl() const {
@@ -272,6 +294,44 @@ void WebContentsView::HidePopupMenu() {
   active_popup_menu_->Close();
 }
 
+void WebContentsView::RenderViewHostChanged(
+    content::RenderViewHost* old_host,
+    content::RenderViewHost* new_host) {
+  if (old_host && old_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
+    rwhv->SetContainer(nullptr);
+  }
+
+  if (!new_host) {
+    return;
+  }
+
+  if (new_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
+    rwhv->SetContainer(this);
+
+    // For the initial view, we need to sync its visibility and focus state
+    // with us. For subsequent views, RFHM does this for us
+    if (!old_host) {
+      if (IsVisible()) {
+        rwhv->Show();
+      } else {
+        rwhv->Hide();
+      }
+
+      if (HasFocus()) {
+        rwhv->Focus();
+      } else {
+        rwhv->Blur();
+      }
+    }
+  }
+
+  EditingCapabilitiesChanged();
+}
+
 void WebContentsView::DidNavigateMainFrame(
     const content::LoadCommittedDetails& details,
     const content::FrameNavigateParams& params) {
@@ -283,6 +343,86 @@ void WebContentsView::DidNavigateMainFrame(
 
     mouse_state_.Reset();
   }
+}
+
+void WebContentsView::DidShowFullscreenWidget(int routing_id) {
+  content::RenderWidgetHost* rwh =
+      content::RenderWidgetHost::FromID(
+          web_contents()->GetRenderProcessHost()->GetID(),
+          routing_id);
+  DCHECK(rwh);
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  web_contents()->GetRenderWidgetHostView()->Hide();
+}
+
+void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
+  DCHECK(!web_contents()->GetFullscreenRenderWidgetHostView());
+
+  RenderWidgetHostView* orig_rwhv =
+      static_cast<RenderWidgetHostView*>(
+        web_contents()->GetRenderWidgetHostView());
+  if (!orig_rwhv) {
+    return;
+  }
+
+  content::RenderWidgetHost* orig_rwh = orig_rwhv->GetRenderWidgetHost();
+  orig_rwh->WasResized();
+  content::RenderWidgetHostImpl::From(orig_rwh)->SendScreenRects();
+
+  if (IsVisible()) {
+    orig_rwhv->Show();
+  }
+
+  if (HasFocus()) {
+    orig_rwhv->Focus();
+  } else {
+    orig_rwhv->Blur();
+  }
+}
+
+void WebContentsView::DidAttachInterstitialPage() {
+  DCHECK(!interstitial_rwh_id_.IsValid());
+  DCHECK(web_contents()->GetInterstitialPage());
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  rwhv->SetContainer(this);
+  interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
+}
+
+void WebContentsView::DidDetachInterstitialPage() {
+  if (!interstitial_rwh_id_.IsValid()) {
+    return;
+  }
+
+  content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+  interstitial_rwh_id_ = RenderWidgetHostID();
+  if (!rwh) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+}
+
+void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
+  received_surface_ids_.push(handle->data()->surface_id);
+
+  if (current_compositor_frame_.get()) {
+    previous_compositor_frames_.push_back(current_compositor_frame_);
+  }
+  current_compositor_frame_ = handle;
+
+  if (client_) {
+    client_->SwapCompositorFrame();
+  } else {
+    DidCommitCompositorFrame();
+  }
+}
+
+void WebContentsView::CompositorDidCommit() {
+  committed_frame_metadata_ =
+      GetRenderWidgetHostView()->last_submitted_frame_metadata();
 }
 
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
@@ -302,6 +442,105 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   web_contents()->SystemDragEnded();
 
   drag_source_.reset();
+}
+
+void WebContentsView::AttachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  root_layer_->InsertChild(layer, 0);
+  root_layer_->SetIsDrawable(false);
+}
+
+void WebContentsView::DetachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  DCHECK_EQ(layer->parent(), root_layer_.get());
+  layer->RemoveFromParent();
+  if (root_layer_->children().size() == 0) {
+    root_layer_->SetIsDrawable(true);
+  }
+}
+
+void WebContentsView::CursorChanged() {
+  if (!client_) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  client_->UpdateCursor(rwhv->current_cursor());
+}
+
+gfx::Size WebContentsView::GetViewSizePix() const {
+  return GetBoundsPix().size();
+}
+
+gfx::Rect WebContentsView::GetViewBoundsDip() const {
+  return GetBoundsDip();
+}
+
+bool WebContentsView::HasFocus(const RenderWidgetHostView* view) const {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  return view == GetRenderWidgetHostView();
+}
+
+bool WebContentsView::IsFullscreen() const {
+  return FullscreenHelper::FromWebContents(web_contents())->IsFullscreen();
+}
+
+float WebContentsView::GetLocationBarHeightDip() const {
+  // TODO: Add LocationBarController class
+  WebView* view = WebView::FromWebContents(web_contents());
+  if (!view) {
+    return 0.f;
+  }
+
+  return view->GetLocationBarHeightDip();
+}
+
+ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
+  if (!client_) {
+    return nullptr;
+  }
+
+  return client_->CreateTouchHandleDrawable();
+}
+
+void WebContentsView::TouchSelectionChanged() const {
+  if (!client_) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  bool active =
+      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  gfx::RectF bounds = controller->GetRectBetweenBounds();
+
+  // TODO: Add LocationBarController class
+  float offset = 0.f;
+  WebView* view = WebView::FromWebContents(web_contents());
+  if (view) {
+    offset = view->GetLocationBarContentOffsetDip();
+  }
+  bounds.Offset(0, offset);
+
+  client_->TouchSelectionChanged(active, bounds);
+}
+
+void WebContentsView::EditingCapabilitiesChanged() {
+  if (!editing_capabilities_changed_callback_.is_null()) {
+    editing_capabilities_changed_callback_.Run();
+  }
 }
 
 WebContentsView::~WebContentsView() {
@@ -333,6 +572,10 @@ WebContentsView* WebContentsView::FromWebContents(
   return data->get();
 }
 
+content::WebContents* WebContentsView::GetWebContents() const {
+  return web_contents();
+}
+
 void WebContentsView::SetClient(WebContentsViewClient* client) {
   if (client_) {
     DCHECK_EQ(client_->view_, this);
@@ -343,6 +586,31 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
     DCHECK(!client_->view_);
     client_->view_ = this;
   }
+
+  compositor_->SetViewportSize(GetBoundsPix().size());
+  compositor_->SetDeviceScaleFactor(
+      GetScreenInfo().deviceScaleFactor);
+  root_layer_->SetBounds(GetBoundsDip().size());
+  compositor_->SetVisibility(IsVisible());
+
+  CursorChanged();
+  TouchSelectionChanged();
+}
+
+bool WebContentsView::IsVisible() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->IsVisible();
+}
+
+bool WebContentsView::HasFocus() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->HasFocus();
 }
 
 gfx::Rect WebContentsView::GetBoundsPix() const {
@@ -522,6 +790,50 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
   rvh->DragTargetDrop(location, screen_location, key_modifiers);
 
   return current_drag_op_;
+}
+
+Compositor* WebContentsView::GetCompositor() const {
+  return compositor_.get();
+}
+
+CompositorFrameHandle* WebContentsView::GetCompositorFrameHandle() const {
+  return current_compositor_frame_.get();
+}
+
+void WebContentsView::DidCommitCompositorFrame() {
+  DCHECK(!received_surface_ids_.empty());
+
+  while (!received_surface_ids_.empty()) {
+    uint32_t surface_id = received_surface_ids_.front();
+    received_surface_ids_.pop();
+
+    compositor_->DidSwapCompositorFrame(
+        surface_id,
+        std::move(previous_compositor_frames_));
+  }
+}
+
+void WebContentsView::WasResized() {
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetViewportSize(GetBoundsPix().size());
+  root_layer_->SetBounds(GetBoundsDip().size());
+}
+
+void WebContentsView::VisibilityChanged() {
+  bool visible = IsVisible();
+
+  compositor_->SetVisibility(visible);
+
+  if (!visible) {
+    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
+    //  trigger eviction of the frontbuffer from a CompositorClient callback.
+    // XXX: Also this isn't really necessary for eviction - after all, the LTH
+    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
+    //  This callback is really to notify the toolkit layer that the
+    //  frontbuffer is being dropped
+    current_compositor_frame_ = nullptr;
+    client_->EvictCurrentFrame();
+  }
 }
 
 } // namespace oxide

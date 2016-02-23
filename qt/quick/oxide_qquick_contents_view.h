@@ -21,6 +21,7 @@
 #include <QPointer>
 #include <QtGlobal>
 
+#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 
 QT_BEGIN_NAMESPACE
@@ -33,9 +34,12 @@ class QKeyEvent;
 class QMouseEvent;
 class QQmlComponent;
 class QQuickItem;
+class QSGNode;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
+
+class OxideQQuickTouchSelectionController;
 
 namespace oxide {
 namespace qquick {
@@ -44,6 +48,11 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
  public:
   ContentsView(QQuickItem* item);
   ~ContentsView() override;
+
+  void set_touch_selection_controller(
+      OxideQQuickTouchSelectionController* controller) {
+    touch_selection_controller_ = controller;
+  }
 
   void handleKeyPressEvent(QKeyEvent* event);
   void handleKeyReleaseEvent(QKeyEvent* event);
@@ -60,6 +69,8 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
   void handleDragLeaveEvent(QDragLeaveEvent* event);
   void handleDropEvent(QDropEvent* event);
 
+  QSGNode* updatePaintNode(QSGNode* old_node);
+
   // XXX(chrisccoulson): Remove these UI component accessors from here in
   //  future. Instead, we should have an auxilliary UI client class. There'll
   //  be a WebView impl of this for the custom UI component APIs, and also an
@@ -75,22 +86,39 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
   }
 
  private:
+  friend class UpdatePaintNodeScope;
+
   void handleKeyEvent(QKeyEvent* event);
   void handleMouseEvent(QMouseEvent* event);
   void handleHoverEvent(QHoverEvent* event);
 
+  void didUpdatePaintNode();
+
   // oxide::qt::ContentsViewProxyClient implementation
   QScreen* GetScreen() const override;
+  bool IsVisible() const override;
+  bool HasFocus() const override;
   QRect GetBoundsPix() const override;
+  void ScheduleUpdate() override;
+  void EvictCurrentFrame() override;
+  void UpdateCursor(const QCursor& cursor) override;
   oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
       oxide::qt::WebContextMenuProxyClient* client) override;
   oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
       oxide::qt::WebPopupMenuProxyClient* client) override;
+  oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
+  void TouchSelectionChanged(bool active, const QRectF& bounds) override;
 
   QPointer<QQuickItem> item_;
+  QPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
   QPointer<QQmlComponent> context_menu_;
   QPointer<QQmlComponent> popup_menu_;
+  QPointer<QQmlComponent> touch_handle_;
+
+  bool received_new_compositor_frame_;
+  bool frame_evicted_;
+  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
 
   Q_DISABLE_COPY(ContentsView)
 };

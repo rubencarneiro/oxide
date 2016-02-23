@@ -22,6 +22,7 @@
 #include "base/macros.h"
 
 #include <QPointer>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "qt/core/browser/oxide_qt_event_utils.h"
@@ -39,15 +40,14 @@ class WebContents;
 namespace oxide {
 namespace qt {
 
+class CompositorFrameHandle;
 class ContentsViewProxyClient;
 
 class ContentsView : public ContentsViewProxy,
                      public oxide::WebContentsViewClient {
  public:
-  ContentsView(
-      ContentsViewProxyClient* client,
-      QObject* native_view,
-      const base::Callback<float(void)>& location_bar_content_offset_getter);
+  ContentsView(ContentsViewProxyClient* client,
+               QObject* native_view);
   ~ContentsView() override;
 
   static ContentsView* FromWebContents(content::WebContents* contents);
@@ -57,11 +57,15 @@ class ContentsView : public ContentsViewProxy,
   // TODO: Get rid
   ContentsViewProxyClient* client() const { return client_; }
 
- private:
   float GetDeviceScaleFactor() const;
+  int GetLocationBarContentOffsetPix() const;
+
+ private:
   float GetLocationBarContentOffsetDip();
 
   // ContentsViewProxy implementation
+  QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
+  void didCommitCompositorFrame() override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleHoverEvent(QHoverEvent* event,
@@ -76,23 +80,27 @@ class ContentsView : public ContentsViewProxy,
 
   // oxide::WebContentsViewClient implementation
   blink::WebScreenInfo GetScreenInfo() const override;
+  bool IsVisible() const override;
+  bool HasFocus() const override;
   gfx::Rect GetBoundsPix() const override;
+  void SwapCompositorFrame() override;
+  void EvictCurrentFrame() override;
+  void UpdateCursor(const content::WebCursor& cursor) override;
   oxide::WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params) override;
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  void TouchSelectionChanged(bool active,
+                             const gfx::RectF& bounds) const override;
 
   ContentsViewProxyClient* client_;
 
   QPointer<QObject> native_view_;
 
-  // TODO: This is because location bar control is currently part of webview.
-  //  We should split location bar control in to its own component, and also
-  //  make the transform in WebContentsView instead. Then we can remove this
-  //  hack
-  base::Callback<float(void)> location_bar_content_offset_getter_;
-
   UITouchEventFactory touch_event_factory_;
+
+  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsView);
 };

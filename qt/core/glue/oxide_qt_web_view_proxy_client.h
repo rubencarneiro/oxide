@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
-#include <QRectF>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
@@ -35,7 +34,6 @@ class OxideQNewViewRequest;
 class OxideQPermissionRequest;
 
 QT_BEGIN_NAMESPACE
-class QCursor;
 class QKeyEvent;
 class QObject;
 class QString;
@@ -47,7 +45,6 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
-class TouchHandleDrawableProxy;
 class WebFrameProxy;
 
 enum FrameMetadataChangeFlags {
@@ -70,7 +67,6 @@ class WebViewProxyClient {
   virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
-  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void WebProcessStatusChanged() = 0;
 
@@ -86,12 +82,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual void TouchSelectionChanged(bool active, QRectF bounds) = 0;
-
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
-
-  virtual bool IsVisible() const = 0;
-  virtual bool HasFocus() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,
@@ -106,8 +97,6 @@ class WebViewProxyClient {
 
   virtual bool CanCreateWindows() const = 0;
 
-  virtual void UpdateCursor(const QCursor& cursor) = 0;
-
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
 
@@ -121,8 +110,6 @@ class WebViewProxyClient {
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
-  virtual void ScheduleUpdate() = 0;
-  virtual void EvictCurrentFrame() = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
@@ -140,7 +127,7 @@ class WebViewProxyClient {
   virtual void CloseRequested() = 0;
 
   virtual void TargetURLChanged() = 0;
-  
+
   virtual void OnEditingCapabilitiesChanged() = 0;
 };
 

@@ -41,15 +41,6 @@ class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderViewHost;
 class WebContents;
-class WebCursor;
-}
-
-namespace gfx {
-class RectF;
-}
-
-namespace ui {
-class TouchHandleDrawable;
 }
 
 namespace oxide {
@@ -60,9 +51,6 @@ class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
-class TouchHandleDrawableDelegate;
-class WebContextMenu;
-class WebPopupMenu;
 class WebView;
 
 // A class for customizing the behaviour of WebView
@@ -70,10 +58,6 @@ class WebView;
 class WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
-
-  virtual bool IsVisible() const = 0;
-
-  virtual bool HasFocus() const = 0;
 
   // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
   virtual JavaScriptDialog* CreateJavaScriptDialog(
@@ -153,29 +137,13 @@ class WebViewClient : public ScriptMessageTarget {
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params);
-
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
-
   virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
                                     WindowOpenDisposition disposition,
                                     scoped_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 
-  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
-  virtual void TouchSelectionChanged(bool active,
-                                     const gfx::RectF& bounds) const;
-
-  virtual void SwapCompositorFrame() = 0;
-
-  virtual void EvictCurrentFrame();
-
   virtual InputMethodContext* GetInputMethodContext() const;
-
-  virtual void UpdateCursor(const content::WebCursor& cursor);
 
   // TODO(chrisccoulson): Get rid of |old| and add |changed_flags|
   virtual void SecurityStatusChanged(const SecurityStatus& old);

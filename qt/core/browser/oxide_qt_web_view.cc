@@ -23,10 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include <QCursor>
 #include <QGuiApplication>
 #include <QInputEvent>
-#include <QPixmap>
 #include <QScreen>
 #include <QString>
 #include <QtDebug>
@@ -34,24 +32,18 @@
 
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/memory/ref_counted.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
-#include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
-#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "third_party/WebKit/public/web/WebDragOperation.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
-#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
-#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -74,8 +66,6 @@
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
-#include "shared/browser/compositor/oxide_compositor_frame_data.h"
-#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_fullscreen_helper.h"
@@ -97,8 +87,6 @@
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
-#include "oxide_qt_skutils.h"
-#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_preferences.h"
@@ -111,6 +99,8 @@ using oxide::FullscreenHelper;
 using oxide::PermissionRequestDispatcher;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
 namespace {
 
@@ -144,105 +134,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
   }
 
   return OxideQLoadEvent::ErrorDomainInternal;
-}
-
-inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
-  Qt::CursorShape cs = Qt::ArrowCursor;
-  switch (type) {
-  case blink::WebCursorInfo::TypeCross:
-    cs = Qt::CrossCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeHand:
-    cs = Qt::PointingHandCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeCell:
-  case blink::WebCursorInfo::TypeIBeam:
-    cs = Qt::IBeamCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeWait:
-    cs = Qt::WaitCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeHelp:
-    cs = Qt::WhatsThisCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeEastResize:
-  case blink::WebCursorInfo::TypeWestResize:
-  case blink::WebCursorInfo::TypeEastWestResize:
-    cs = Qt::SizeHorCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthResize:
-  case blink::WebCursorInfo::TypeSouthResize:
-  case blink::WebCursorInfo::TypeNorthSouthResize:
-    cs = Qt::SizeVerCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthEastResize:
-  case blink::WebCursorInfo::TypeSouthWestResize:
-    cs = Qt::SizeBDiagCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthWestResize:
-  case blink::WebCursorInfo::TypeSouthEastResize:
-    cs = Qt::SizeFDiagCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthEastSouthWestResize:
-  case blink::WebCursorInfo::TypeNorthWestSouthEastResize:
-  case blink::WebCursorInfo::TypeMove:
-    cs = Qt::SizeAllCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeColumnResize:
-    cs = Qt::SplitHCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeRowResize:
-    cs = Qt::SplitVCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeMiddlePanning:
-  case blink::WebCursorInfo::TypeEastPanning:
-  case blink::WebCursorInfo::TypeNorthPanning:
-  case blink::WebCursorInfo::TypeNorthEastPanning:
-  case blink::WebCursorInfo::TypeNorthWestPanning:
-  case blink::WebCursorInfo::TypeSouthPanning:
-  case blink::WebCursorInfo::TypeSouthEastPanning:
-  case blink::WebCursorInfo::TypeSouthWestPanning:
-  case blink::WebCursorInfo::TypeWestPanning:
-  case blink::WebCursorInfo::TypeGrab:
-  case blink::WebCursorInfo::TypeGrabbing:
-    cs = Qt::ClosedHandCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeProgress:
-    cs = Qt::BusyCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNoDrop:
-  case blink::WebCursorInfo::TypeNotAllowed:
-    cs = Qt::ForbiddenCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeCopy:
-  case blink::WebCursorInfo::TypeContextMenu:
-  case blink::WebCursorInfo::TypeVerticalText:
-  case blink::WebCursorInfo::TypeAlias:
-  case blink::WebCursorInfo::TypeZoomIn:
-  case blink::WebCursorInfo::TypeZoomOut:
-  case blink::WebCursorInfo::TypeCustom:
-  case blink::WebCursorInfo::TypePointer:
-  case blink::WebCursorInfo::TypeNone:
-  default:
-    break;
-  }
-
-  return QCursor(cs);
 }
 
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
@@ -344,78 +235,12 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 
 }
 
-class CompositorFrameHandleImpl : public CompositorFrameHandle {
- public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            int location_bar_content_offset)
-      : frame_(frame) {
-    if (frame_.get()) {
-      rect_ = QRect(0, location_bar_content_offset,
-                    frame_->data()->size_in_pixels.width(),
-                    frame_->data()->size_in_pixels.height());
-    }
-  }
-
-  virtual ~CompositorFrameHandleImpl() {}
-
-  CompositorFrameHandle::Type GetType() final {
-    if (!frame_.get()) {
-      return CompositorFrameHandle::TYPE_INVALID;
-    }
-    if (frame_->data()->gl_frame_data) {
-      DCHECK_NE(frame_->data()->gl_frame_data->type,
-                oxide::GLFrameData::Type::INVALID);
-      if (frame_->data()->gl_frame_data->type ==
-          oxide::GLFrameData::Type::TEXTURE) {
-        return CompositorFrameHandle::TYPE_ACCELERATED;
-      }
-      return CompositorFrameHandle::TYPE_IMAGE;
-    }
-    if (frame_->data()->software_frame_data) {
-      return CompositorFrameHandle::TYPE_SOFTWARE;
-    }
-
-    NOTREACHED();
-    return CompositorFrameHandle::TYPE_INVALID;
-  }
-
-  const QRect& GetRect() const final {
-    return rect_;
-  }
-
-  QImage GetSoftwareFrame() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
-    return QImage(
-        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
-        frame_->data()->size_in_pixels.width(),
-        frame_->data()->size_in_pixels.height(),
-        QImage::Format_ARGB32);
-  }
-
-  unsigned int GetAcceleratedFrameTexture() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->data()->gl_frame_data->resource.texture;
-  }
-
-  EGLImageKHR GetImageFrame() final {
-    return frame_->data()->gl_frame_data->resource.egl_image;
-  }
-
- private:
-  scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QRect rect_;
-};
-
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
                  QObject* handle,
                  OxideQSecurityStatus* security_status)
     : input_method_context_(new InputMethodContext(this)),
-      contents_view_(
-          new ContentsView(view_client,
-                           handle,
-                           base::Bind(&WebView::GetLocationBarContentOffsetDip,
-                                      base::Unretained(this)))),
+      contents_view_(new ContentsView(view_client, handle)),
       client_(client),
       security_status_(security_status),
       frame_tree_torn_down_(false) {
@@ -473,16 +298,18 @@ void WebView::EnsurePreferences() {
       OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
+bool WebView::HasFocus() const {
+  if (!web_view_) {
+    // XXX: Can be called when constructing |web_view_|
+    return false;
+  }
+
+  return oxide::WebContentsView::FromWebContents(
+      web_view_->GetWebContents())->HasFocus();
+}
+
 void WebView::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
-}
-
-bool WebView::IsVisible() const {
-  return client_->IsVisible();
-}
-
-bool WebView::HasFocus() const {
-  return client_->HasFocus();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -817,51 +644,8 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   return picker;
 }
 
-ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
-  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
-  drawable->SetProxy(client_->CreateTouchHandleDrawable());
-  return drawable;
-}
-
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
-
-void WebView::TouchSelectionChanged(bool active,
-                                    const gfx::RectF& bounds) const {
-  const float dpr = GetDeviceScaleFactor();
-  QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
-              bounds.width() * dpr, bounds.height() * dpr);
-  client_->TouchSelectionChanged(active, rect);
-}
-
-void WebView::SwapCompositorFrame() {
-  compositor_frame_.reset();
-  client_->ScheduleUpdate();
-}
-
-void WebView::EvictCurrentFrame() {
-  compositor_frame_.reset();
-  client_->EvictCurrentFrame();
-}
-
 oxide::InputMethodContext* WebView::GetInputMethodContext() const {
   return input_method_context_.get();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage cursor_image = QImageFromSkBitmap(cursor_info.custom_image);
-    if (cursor_image.isNull()) {
-      return;
-    }
-
-    QPixmap cursor_pixmap = QPixmap::fromImage(cursor_image);
-    client_->UpdateCursor(QCursor(cursor_pixmap));
-  } else {
-    client_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
 }
 
 void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
@@ -1194,22 +978,6 @@ QSize WebView::compositorFrameViewportSizePix() {
   return QSize(size.width(), size.height());
 }
 
-QSharedPointer<CompositorFrameHandle> WebView::compositorFrameHandle() {
-  if (!compositor_frame_) {
-    compositor_frame_ =
-        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
-          web_view_->GetCompositorFrameHandle(),
-          web_view_->compositor_frame_metadata().device_scale_factor *
-            web_view_->compositor_frame_metadata().location_bar_content_translation.y()));
-  }
-
-  return compositor_frame_;
-}
-
-void WebView::didCommitCompositorFrame() {
-  web_view_->DidCommitCompositorFrame();
-}
-
 void WebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
   web_view_->SetCanTemporarilyDisplayInsecureContent(allow);
 }
@@ -1335,7 +1103,7 @@ QUrl WebView::targetUrl() const {
 
 EditCapabilityFlags WebView::editFlags() const {
   EditCapabilityFlags capabilities = NO_CAPABILITY;
-  int flags = web_view_->GetEditFlags();
+  blink::WebContextMenuData::EditFlags flags = web_view_->GetEditFlags();
   if (flags & blink::WebContextMenuData::CanUndo) {
     capabilities |= UNDO_CAPABILITY;
   }

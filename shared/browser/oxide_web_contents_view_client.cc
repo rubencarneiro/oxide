@@ -29,9 +29,6 @@ WebContentsViewClient::WebContentsViewClient()
     : view_(nullptr) {}
 
 WebContentsViewClient::~WebContentsViewClient() {
-  if (view_) {
-    view_->SetClient(nullptr);
-  }
   DCHECK(!view_);
 }
 
@@ -47,6 +44,8 @@ gfx::Rect WebContentsViewClient::GetBoundsDip() const {
   return gfx::Rect(x, y, width, height);
 }
 
+void WebContentsViewClient::UpdateCursor(const content::WebCursor& cursor) {}
+
 WebContextMenu* WebContentsViewClient::CreateContextMenu(
     content::RenderFrameHost* rfh,
     const content::ContextMenuParams& params) {
@@ -59,5 +58,15 @@ WebPopupMenu* WebContentsViewClient::CreatePopupMenu(
   NOTIMPLEMENTED();
   return nullptr;
 }
+
+ui::TouchHandleDrawable*
+WebContentsViewClient::CreateTouchHandleDrawable() const {
+  NOTIMPLEMENTED();
+  return nullptr;
+}
+
+void WebContentsViewClient::TouchSelectionChanged(
+    bool active,
+    const gfx::RectF& bounds) const {}
 
 } // namespace oxide

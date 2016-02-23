@@ -84,8 +84,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   QDateTime getNavigationEntryTimestamp(int index) const;
 
  private:
-  friend class UpdatePaintNodeScope;
-
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
   // oxide::qt::WebViewProxyClient implementation
@@ -96,7 +94,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
       oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
-  oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void WebProcessStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
@@ -108,10 +105,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void NavigationEntryCommitted() override;
   void NavigationListPruned(bool from_front, int count) override;
   void NavigationEntryChanged(int index) override;
-  void TouchSelectionChanged(bool active, QRectF bounds) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
-  bool IsVisible() const override;
-  bool HasFocus() const override;
   void AddMessageToConsole(int level,
                            const QString& message,
                            int line_no,
@@ -120,7 +114,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void WebPreferencesReplaced() override;
   void FrameRemoved(QObject* frame) override;
   bool CanCreateWindows() const override;
-  void UpdateCursor(const QCursor& cursor) override;
   void NavigationRequested(OxideQNavigationRequest* request) override;
   void NewViewRequested(OxideQNewViewRequest* request) override;
   void RequestGeolocationPermission(
@@ -129,12 +122,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
       OxideQMediaAccessPermissionRequest* request) override;
   void RequestNotificationPermission(
       OxideQPermissionRequest* request) override;
-
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;
-  void ScheduleUpdate() override;
-  void EvictCurrentFrame() override;
   void SetInputMethodEnabled(bool enabled) override;
   void DownloadRequested(
       const OxideQDownloadRequest& download_request) override;
@@ -169,8 +159,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  void didUpdatePaintNode();
-
   void screenChanged(QScreen* screen);
   void screenChangedHelper(QScreen* screen);
   void windowChangedHelper(QQuickWindow* window);
@@ -199,10 +187,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   QQmlComponent* prompt_dialog_;
   QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
-
-  bool received_new_compositor_frame_;
-  bool frame_evicted_;
-  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
 
   bool using_old_load_event_signal_;
 

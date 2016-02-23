@@ -22,12 +22,10 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ref_counted.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
-#include "cc/layers/layer.h"
-#include "cc/layers/layer_settings.h"
-#include "cc/layers/solid_color_layer.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_context.h"
@@ -55,19 +53,14 @@
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
-#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/window_open_disposition.h"
 #include "ui/events/event.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/shell_dialogs/selected_file_info.h"
-#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
-#include "shared/browser/compositor/oxide_compositor.h"
-#include "shared/browser/compositor/oxide_compositor_frame_data.h"
-#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/input/oxide_ime_bridge.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -146,20 +139,9 @@ void CreateHelpers(content::WebContents* contents,
   FullscreenHelper::CreateForWebContents(contents);
 }
 
-bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
-                                 const cc::CompositorFrameMetadata& current) {
-  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
-    return true;
-  }
-  if (old.location_bar_content_translation.y() !=
-      current.location_bar_content_translation.y()) {
-    return true;
-  }
-  return false;
-}
-
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
 base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 
@@ -218,8 +200,6 @@ WebView::WebView(WebViewClient* client,
                  WebContentsViewClient* view_client)
     : client_(client),
       web_contents_helper_(nullptr),
-      compositor_(Compositor::Create(this)),
-      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_pix_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
@@ -228,17 +208,6 @@ WebView::WebView(WebViewClient* client,
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 
-  root_layer_->SetIsDrawable(true);
-  root_layer_->SetBackgroundColor(SK_ColorWHITE);
-  root_layer_->SetBounds(view_client->GetBoundsDip().size());
-
-  compositor_->SetRootLayer(root_layer_);
-  compositor_->SetViewportSize(view_client->GetBoundsPix().size());
-  compositor_->SetVisibility(IsVisible());
-  compositor_->SetDeviceScaleFactor(
-      view_client->GetScreenInfo().deviceScaleFactor);
-
-  CompositorObserver::Observe(compositor_.get());
   InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
@@ -265,8 +234,13 @@ void WebView::CommonInit(scoped_ptr<content::WebContents> contents,
   registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
                  content::NotificationService::AllBrowserContextsAndSources());
 
-  WebContentsView::FromWebContents(
-      web_contents_.get())->SetClient(view_client);
+  WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
+  view->SetClient(view_client);
+  view->set_editing_capabilities_changed_callback(
+      base::Bind(&WebView::EditingCapabilitiesChanged,
+                 base::Unretained(this)));
+
+  CompositorObserver::Observe(view->GetCompositor());
 
   DCHECK(std::find(g_all_web_views.Get().begin(),
                    g_all_web_views.Get().end(),
@@ -304,6 +278,31 @@ gfx::Rect WebView::GetViewBoundsPix() const {
 
 gfx::Size WebView::GetViewSizeDip() const {
   return GetViewBoundsDip().size();
+}
+
+gfx::Size WebView::GetViewSizePix() const {
+  return GetViewBoundsPix().size();
+}
+
+gfx::Rect WebView::GetViewBoundsDip() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->GetBoundsDip();
+}
+
+bool WebView::IsFullscreen() const {
+  if (!web_contents_) {
+    // We're called in the constructor via GetViewSizeDip
+    return false;
+  }
+
+  return FullscreenHelper::FromWebContents(web_contents_.get())->IsFullscreen();
+}
+
+bool WebView::IsVisible() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->IsVisible();
+}
+
+bool WebView::HasFocus() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->HasFocus();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -414,167 +413,9 @@ void WebView::MaybeCancelFullscreenMode() {
   web_contents_->ExitFullscreen(false);
 }
 
-size_t WebView::GetScriptMessageHandlerCount() const {
-  return client_->GetScriptMessageHandlerCount();
-}
-
-const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
-    size_t index) const {
-  return client_->GetScriptMessageHandlerAt(index);
-}
-
-void WebView::InputPanelVisibilityChanged() {
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::CompositorDidCommit() {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  pending_compositor_frame_metadata_ = rwhv->compositor_frame_metadata();
-}
-
-void WebView::CompositorSwapFrame(CompositorFrameHandle* handle) {
-  received_surface_ids_.push(handle->data()->surface_id);
-
-  if (current_compositor_frame_.get()) {
-    previous_compositor_frames_.push_back(current_compositor_frame_);
-  }
-  current_compositor_frame_ = handle;
-
-  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
-  compositor_frame_metadata_ = pending_compositor_frame_metadata_;
-
-  if (IsFullscreen()) {
-    // Ensure that the location bar is always hidden in fullscreen. This
-    // is required because fullscreen RenderWidgets don't have a mechanism
-    // to control the location bar height
-    compositor_frame_metadata_.location_bar_content_translation =
-        gfx::Vector2dF();
-    compositor_frame_metadata_.location_bar_offset =
-        gfx::Vector2dF(0.0f, -GetLocationBarHeightDip());
-  }
-
-  // TODO(chrisccoulson): Merge these
-  client_->FrameMetadataUpdated(old);
-  client_->SwapCompositorFrame();
-
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    ui::TouchSelectionController* controller = rwhv->selection_controller();
-    // If the location bar offset changes while a touch selection is active,
-    // the bounding rect and the position of the handles need to be updated.
-    if ((controller->active_status() !=
-         ui::TouchSelectionController::INACTIVE) &&
-        HasLocationBarOffsetChanged(old, compositor_frame_metadata_)) {
-      TouchSelectionChanged();
-      // XXX: hack to ensure the position of the handles is updated.
-      controller->SetTemporarilyHidden(true);
-      controller->SetTemporarilyHidden(false);
-    }
-  }
-}
-
-void WebView::WebPreferencesDestroyed() {
-  client_->WebPreferencesDestroyed();
-}
-
-void WebView::Observe(int type,
-                      const content::NotificationSource& source,
-                      const content::NotificationDetails& details) {
-  if (content::Source<content::NavigationController>(source).ptr() !=
-      &GetWebContents()->GetController()) {
-    return;
-  }
-  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
-    content::PrunedDetails* pruned_details =
-        content::Details<content::PrunedDetails>(details).ptr();
-    client_->NavigationListPruned(pruned_details->from_front,
-                                  pruned_details->count);
-  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
-    int index =
-        content::Details<content::EntryChangedDetails>(details).ptr()->index;
-    client_->NavigationEntryChanged(index);
-  }
-}
-
-Compositor* WebView::GetCompositor() const {
-  return compositor_.get();
-}
-
-void WebView::AttachLayer(scoped_refptr<cc::Layer> layer) {
-  DCHECK(layer.get());
-  root_layer_->InsertChild(layer, 0);
-  root_layer_->SetIsDrawable(false);
-}
-
-void WebView::DetachLayer(scoped_refptr<cc::Layer> layer) {
-  DCHECK(layer.get());
-  DCHECK_EQ(layer->parent(), root_layer_.get());
-  layer->RemoveFromParent();
-  if (root_layer_->children().size() == 0) {
-    root_layer_->SetIsDrawable(true);
-  }
-}
-
-void WebView::CursorChanged() {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  client_->UpdateCursor(rwhv->current_cursor());
-}
-
-gfx::Size WebView::GetViewSizePix() const {
-  return GetViewBoundsPix().size();
-}
-
-gfx::Rect WebView::GetViewBoundsDip() const {
-  return WebContentsView::FromWebContents(web_contents_.get())->GetBoundsDip();
-}
-
-bool WebView::HasFocus(const RenderWidgetHostView* view) const {
-  if (!HasFocus()) {
-    return false;
-  }
-
-  return view == GetRenderWidgetHostView();
-}
-
-bool WebView::IsFullscreen() const {
-  if (!web_contents_) {
-    // We're called in the constructor via GetViewSizeDip
-    return false;
-  }
-
-  return FullscreenHelper::FromWebContents(web_contents_.get())->IsFullscreen();
-}
-
-ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
-  return client_->CreateTouchHandleDrawable();
-}
-
-void WebView::TouchSelectionChanged() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  ui::TouchSelectionController* controller = rwhv->selection_controller();
-  bool active =
-      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
-
-  gfx::RectF bounds = controller->GetRectBetweenBounds();
-  bounds.Offset(0, GetLocationBarContentOffsetDip());
-
-  client_->TouchSelectionChanged(active, bounds);
-}
-
 void WebView::EditingCapabilitiesChanged() {
-  int flags = blink::WebContextMenuData::CanDoNone;
+  blink::WebContextMenuData::EditFlags flags =
+      blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
     edit_flags_ = flags;
@@ -606,6 +447,61 @@ void WebView::EditingCapabilitiesChanged() {
   if (flags != edit_flags_) {
     edit_flags_ = flags;
     client_->OnEditingCapabilitiesChanged();
+  }
+}
+
+size_t WebView::GetScriptMessageHandlerCount() const {
+  return client_->GetScriptMessageHandlerCount();
+}
+
+const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
+    size_t index) const {
+  return client_->GetScriptMessageHandlerAt(index);
+}
+
+void WebView::InputPanelVisibilityChanged() {
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebView::CompositorWillRequestSwapFrame() {
+  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  compositor_frame_metadata_ =
+      WebContentsView::FromWebContents(web_contents_.get())
+        ->committed_frame_metadata();
+
+  if (IsFullscreen()) {
+    // Ensure that the location bar is always hidden in fullscreen. This
+    // is required because fullscreen RenderWidgets don't have a mechanism
+    // to control the location bar height
+    compositor_frame_metadata_.location_bar_content_translation =
+        gfx::Vector2dF();
+    compositor_frame_metadata_.location_bar_offset =
+        gfx::Vector2dF(0.0f, -GetLocationBarHeightDip());
+  }
+
+  client_->FrameMetadataUpdated(old);
+}
+
+void WebView::WebPreferencesDestroyed() {
+  client_->WebPreferencesDestroyed();
+}
+
+void WebView::Observe(int type,
+                      const content::NotificationSource& source,
+                      const content::NotificationDetails& details) {
+  if (content::Source<content::NavigationController>(source).ptr() !=
+      &GetWebContents()->GetController()) {
+    return;
+  }
+  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
+    content::PrunedDetails* pruned_details =
+        content::Details<content::PrunedDetails>(details).ptr();
+    client_->NavigationListPruned(pruned_details->from_front,
+                                  pruned_details->count);
+  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
+    int index =
+        content::Details<content::EntryChangedDetails>(details).ptr()->index;
+    client_->NavigationEntryChanged(index);
   }
 }
 
@@ -1002,7 +898,6 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   if (old_host && old_host->GetWidget()->GetView()) {
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
-    rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
@@ -1013,29 +908,10 @@ void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
   if (new_host->GetWidget()->GetView()) {
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
-    rwhv->SetContainer(this);
     rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
-
-    // For the initial view, we need to sync its visibility and focus state
-    // with us. For subsequent views, RFHM does this for us
-    if (!old_host) {
-      if (IsVisible()) {
-        rwhv->Show();
-      } else {
-        rwhv->Hide();
-      }
-
-      if (HasFocus()) {
-        rwhv->Focus();
-      } else {
-        rwhv->Blur();
-      }
-    }
   }
 
   InitializeTopControlsForHost(new_host, !old_host);
-
-  EditingCapabilitiesChanged();
 }
 
 void WebView::DidStartLoading() {
@@ -1151,78 +1027,19 @@ void WebView::NavigationEntryCommitted(
 }
 
 void WebView::DidShowFullscreenWidget(int routing_id) {
-  content::RenderWidgetHost* rwh =
-      content::RenderWidgetHost::FromID(
-          web_contents_->GetRenderProcessHost()->GetID(),
-          routing_id);
-  DCHECK(rwh);
-
-  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
-
-  web_contents_->GetRenderWidgetHostView()->Hide();
-
-  if (!IsFullscreen()) {
-    // If the application didn't grant us fullscreen, schedule a task to cancel
-    // the fullscreen. We do this as we'll have a fullscreen view that the
-    // application can't get rid of.
-    // We do this asynchronously to avoid a UAF in
-    // WebContentsImpl::ShowCreatedWidget
-    // See https://launchpad.net/bugs/1510973
-    base::MessageLoop::current()->PostTask(
-        FROM_HERE,
-        base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
-  }
-}
-
-void WebView::DidDestroyFullscreenWidget(int routing_id) {
-  DCHECK(!web_contents_->GetFullscreenRenderWidgetHostView());
-
-  content::RenderWidgetHostView* orig_rwhv =
-      web_contents_->GetRenderWidgetHostView();
-  if (!orig_rwhv) {
+  if (IsFullscreen()) {
     return;
   }
 
-  content::RenderWidgetHost* orig_rwh = orig_rwhv->GetRenderWidgetHost();
-  orig_rwh->WasResized();
-  content::RenderWidgetHostImpl::From(orig_rwh)->SendScreenRects();
-
-  if (IsVisible()) {
-    orig_rwhv->Show();
-  }
-
-  if (HasFocus()) {
-    orig_rwhv->Focus();
-  } else {
-    static_cast<RenderWidgetHostView*>(orig_rwhv)->Blur();
-  }
-}
-
-void WebView::DidAttachInterstitialPage() {
-  DCHECK(!interstitial_rwh_id_.IsValid());
-
-  content::RenderWidgetHost* rwh =
-      web_contents_->GetInterstitialPage()
-        ->GetMainFrame()
-        ->GetRenderViewHost()
-        ->GetWidget();
-  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
-
-  interstitial_rwh_id_ = RenderWidgetHostID(rwh);
-}
-
-void WebView::DidDetachInterstitialPage() {
-  if (!interstitial_rwh_id_.IsValid()) {
-    return;
-  }
-
-  content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
-  interstitial_rwh_id_ = RenderWidgetHostID();
-  if (!rwh) {
-    return;
-  }
-
-  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+  // If the application didn't grant us fullscreen, schedule a task to cancel
+  // the fullscreen. We do this as we'll have a fullscreen view that the
+  // application can't get rid of.
+  // We do this asynchronously to avoid a UAF in
+  // WebContentsImpl::ShowCreatedWidget
+  // See https://launchpad.net/bugs/1510973
+  base::MessageLoop::current()->PostTask(
+      FROM_HERE,
+      base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
 }
 
 void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
@@ -1266,7 +1083,7 @@ WebView::WebView(const CommonParams& common_params,
   content::WebContents::CreateParams content_params(context.get());
   content_params.initial_size =
       common_params.view_client->GetBoundsDip().size();
-  content_params.initially_hidden = !IsVisible();
+  content_params.initially_hidden = !common_params.view_client->IsVisible();
 
   scoped_ptr<content::WebContents> contents(
       content::WebContents::Create(content_params));
@@ -1307,7 +1124,6 @@ WebView::WebView(const CommonParams& common_params,
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetContainer(this);
     rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
 
     rwhv->SetSize(GetViewSizeDip());
@@ -1347,25 +1163,12 @@ WebView::~WebView() {
       static_cast<RenderWidgetHostView*>(
         web_contents_->GetRenderWidgetHostView());
   if (rwhv) {
-    rwhv->SetContainer(nullptr);
     rwhv->ime_bridge()->SetContext(nullptr);
   }
 
-  RenderWidgetHostView* fullscreen_rwhv =
-      static_cast<RenderWidgetHostView*>(
-        web_contents_->GetFullscreenRenderWidgetHostView());
-  if (fullscreen_rwhv) {
-    fullscreen_rwhv->SetContainer(nullptr);
-  }
-
-  if (interstitial_rwh_id_.IsValid()) {
-    content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
-    if (rwh) {
-      static_cast<RenderWidgetHostView*>(
-          rwh->GetView())->SetContainer(nullptr);
-    }
-    interstitial_rwh_id_ = RenderWidgetHostID();
-  }
+  WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
+  view->SetClient(nullptr);
+  view->set_editing_capabilities_changed_callback(base::Closure());
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
@@ -1517,9 +1320,7 @@ bool WebView::IsLoading() const {
 }
 
 void WebView::WasResized() {
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-  compositor_->SetViewportSize(GetViewSizePix());
-  root_layer_->SetBounds(GetViewSizeDip());
+  WebContentsView::FromWebContents(web_contents_.get())->WasResized();
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
@@ -1542,22 +1343,12 @@ void WebView::ScreenUpdated() {
 }
 
 void WebView::VisibilityChanged() {
-  bool visible = IsVisible();
+  WebContentsView::FromWebContents(web_contents_.get())->VisibilityChanged();
 
-  compositor_->SetVisibility(visible);
-
-  if (visible) {
+  if (IsVisible()) {
     web_contents_->WasShown();
   } else {
     web_contents_->WasHidden();
-    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
-    //  trigger eviction of the frontbuffer from a CompositorClient callback.
-    // XXX: Also this isn't really necessary for eviction - after all, the LTH
-    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
-    //  This callback is really to notify the toolkit layer that the
-    //  frontbuffer is being dropped
-    current_compositor_frame_ = nullptr;
-    client_->EvictCurrentFrame();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
@@ -1846,33 +1637,8 @@ void WebView::HttpAuthenticationRequested(
   client_->HttpAuthenticationRequested(login_delegate);
 }
 
-CompositorFrameHandle* WebView::GetCompositorFrameHandle() const {
-  return current_compositor_frame_.get();
-}
-
-void WebView::DidCommitCompositorFrame() {
-  DCHECK(!received_surface_ids_.empty());
-
-  while (!received_surface_ids_.empty()) {
-    uint32_t surface_id = received_surface_ids_.front();
-    received_surface_ids_.pop();
-
-    compositor_->DidSwapCompositorFrame(
-        surface_id,
-        std::move(previous_compositor_frames_));
-  }
-}
-
 blink::WebScreenInfo WebView::GetScreenInfo() const {
   return WebContentsView::FromWebContents(web_contents_.get())->GetScreenInfo();
-}
-
-bool WebView::IsVisible() const {
-  return client_->IsVisible();
-}
-
-bool WebView::HasFocus() const {
-  return client_->HasFocus();
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -1898,7 +1664,7 @@ bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
 }
 
-int WebView::GetEditFlags() const {
+blink::WebContextMenuData::EditFlags WebView::GetEditFlags() const {
   return edit_flags_;
 }
 

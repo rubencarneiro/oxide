@@ -21,7 +21,6 @@
 #include <QKeyEvent>
 #include <QList>
 #include <QPointer>
-#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "base/macros.h"
@@ -53,7 +52,6 @@ class WebView;
 
 namespace qt {
 
-class CompositorFrameHandle;
 class ContentsView;
 class ContentsViewProxy;
 class ContentsViewProxyClient;
@@ -109,11 +107,10 @@ class WebView : public InputMethodContextClient,
   void EnsurePreferences();
 
   // InputMethodContextClient implementation
+  bool HasFocus() const override;
   void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebViewClient implementation
-  bool IsVisible() const override;
-  bool HasFocus() const override;
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type) override;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
@@ -167,13 +164,7 @@ class WebView : public InputMethodContextClient,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(bool active,
-                             const gfx::RectF& bounds) const override;
-  void SwapCompositorFrame() override;
-  void EvictCurrentFrame() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
-  void UpdateCursor(const content::WebCursor& cursor) override;
   void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
@@ -265,9 +256,6 @@ class WebView : public InputMethodContextClient,
   QSize compositorFrameContentSizePix() override;
   QSize compositorFrameViewportSizePix() override;
 
-  QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
-  void didCommitCompositorFrame() override;
-
   void setCanTemporarilyDisplayInsecureContent(bool allow) override;
   void setCanTemporarilyRunInsecureContent(bool allow) override;;
 
@@ -307,8 +295,6 @@ class WebView : public InputMethodContextClient,
 
   QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;
-
-  QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   bool frame_tree_torn_down_;
 

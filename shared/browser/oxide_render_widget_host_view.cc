@@ -133,6 +133,18 @@ void RequireCallback(cc::SurfaceManager* manager,
   surface->AddDestructionDependency(sequence);
 }
 
+bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
+                                 const cc::CompositorFrameMetadata& current) {
+  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
+    return true;
+  }
+  if (old.location_bar_content_translation.y() !=
+      current.location_bar_content_translation.y()) {
+    return true;
+  }
+  return false;
+}
+
 } // namespace
 
 void RenderWidgetHostView::OnTextInputStateChanged(
@@ -266,7 +278,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
                      1.0f / device_scale_factor));
 
-  compositor_frame_metadata_ = frame->metadata;
+  cc::CompositorFrameMetadata metadata = frame->metadata;
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -311,6 +323,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
                                             ack_callback);
   }
 
+  last_submitted_frame_metadata_ = metadata;
   last_frame_size_dip_ = frame_size_dip;
 
   if (layer_.get()) {
@@ -323,15 +336,15 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   bool shrink =
-      compositor_frame_metadata_.location_bar_offset.y() == 0.0f &&
-      compositor_frame_metadata_.location_bar_content_translation.y() > 0.0f;
+      metadata.location_bar_offset.y() == 0.0f &&
+      metadata.location_bar_content_translation.y() > 0.0f;
   if (shrink != top_controls_shrink_blink_size_) {
     top_controls_shrink_blink_size_ = shrink;
     host_->WasResized();
   }
 
-  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
-  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
@@ -340,7 +353,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
   }
 
-  const cc::ViewportSelection& selection = compositor_frame_metadata_.selection;
+  const cc::ViewportSelection& selection = metadata.selection;
   selection_controller_->OnSelectionEditable(selection.is_editable);
   selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
   selection_controller_->OnSelectionBoundsChanged(
@@ -538,7 +551,28 @@ bool RenderWidgetHostView::LockMouse() {
 void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::CompositorDidCommit() {
+  committed_frame_metadata_ = last_submitted_frame_metadata_;
   RunAckCallbacks(cc::SurfaceDrawStatus::DRAWN);
+}
+
+void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
+  cc::CompositorFrameMetadata old = displayed_frame_metadata_;
+  displayed_frame_metadata_ = committed_frame_metadata_;
+
+  if (!container_) {
+    return;
+  }
+
+  // If the location bar offset changes while a touch selection is active,
+  // the bounding rect and the position of the handles need to be updated.
+  if ((selection_controller_->active_status() !=
+          ui::TouchSelectionController::INACTIVE) &&
+      HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
+    container_->TouchSelectionChanged();
+    // XXX: hack to ensure the position of the handles is updated.
+    selection_controller_->SetTemporarilyHidden(true);
+    selection_controller_->SetTemporarilyHidden(false);
+  }
 }
 
 void RenderWidgetHostView::OnGestureEvent(

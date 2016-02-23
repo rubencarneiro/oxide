@@ -23,8 +23,6 @@
 #include <QImage>
 #include <QList>
 #include <QPoint>
-#include <QRect>
-#include <QSharedPointer>
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
@@ -33,8 +31,6 @@
 #include <QVariant>
 
 #include "qt/core/glue/oxide_qt_proxy_base.h"
-
-typedef void* EGLImageKHR;
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -100,33 +96,6 @@ enum EditingCommands {
   EDITING_COMMAND_PASTE,
   EDITING_COMMAND_ERASE,
   EDITING_COMMAND_SELECT_ALL
-};
-
-class CompositorFrameHandle {
- public:
-  virtual ~CompositorFrameHandle() {}
-
-  enum Type {
-    TYPE_INVALID,
-    TYPE_SOFTWARE,
-    TYPE_ACCELERATED,
-    TYPE_IMAGE
-  };
-
-  virtual Type GetType() = 0;
-  virtual const QRect& GetRect() const = 0;
-
-  virtual QImage GetSoftwareFrame() = 0;
-  virtual unsigned int GetAcceleratedFrameTexture() = 0;
-  virtual EGLImageKHR GetImageFrame() = 0;
-};
-
-struct FindInPageState {
-  int request_id;
-  QString text;
-  bool case_sensitive;
-  int current;
-  int count;
 };
 
 class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
@@ -207,9 +176,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual QPoint compositorFrameScrollOffsetPix() = 0;
   virtual QSize compositorFrameContentSizePix() = 0;
   virtual QSize compositorFrameViewportSizePix() = 0;
-
-  virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
-  virtual void didCommitCompositorFrame() = 0;
 
   virtual void setCanTemporarilyDisplayInsecureContent(bool allow) = 0;
   virtual void setCanTemporarilyRunInsecureContent(bool allow) = 0;;

@@ -105,17 +105,6 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
   return true;
 }
 
-WebContextMenu* WebViewClient::CreateContextMenu(
-    content::RenderFrameHost* rfh,
-    const content::ContextMenuParams& params) {
-  return nullptr;
-}
-
-WebPopupMenu* WebViewClient::CreatePopupMenu(
-    content::RenderFrameHost* rfh) {
-  return nullptr;
-}
-
 WebView* WebViewClient::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
@@ -129,20 +118,9 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
   return nullptr;
 }
 
-ui::TouchHandleDrawable* WebViewClient::CreateTouchHandleDrawable() const {
-  return nullptr;
-}
-
-void WebViewClient::TouchSelectionChanged(bool active,
-                                          const gfx::RectF& bounds) const {}
-
-void WebViewClient::EvictCurrentFrame() {}
-
 InputMethodContext* WebViewClient::GetInputMethodContext() const {
   return nullptr;
 }
-
-void WebViewClient::UpdateCursor(const content::WebCursor& cursor) {}
 
 void WebViewClient::SecurityStatusChanged(const SecurityStatus& old) {}
 

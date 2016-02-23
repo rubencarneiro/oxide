@@ -23,13 +23,30 @@
 #include <QQuickWindow>
 #include <QTouchEvent>
 
-#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 
+#include "oxide_qquick_accelerated_frame_node.h"
+#include "oxide_qquick_image_frame_node.h"
+#include "oxide_qquick_software_frame_node.h"
+#include "oxide_qquick_touch_handle_drawable.h"
 #include "oxide_qquick_web_context_menu.h"
 #include "oxide_qquick_web_popup_menu.h"
 
 namespace oxide {
 namespace qquick {
+
+class UpdatePaintNodeScope {
+ public:
+  UpdatePaintNodeScope(ContentsView* view)
+      : view_(view) {}
+
+  ~UpdatePaintNodeScope() {
+    view_->didUpdatePaintNode();
+  }
+
+ private:
+  ContentsView* view_;
+};
 
 void ContentsView::handleKeyEvent(QKeyEvent* event) {
   if (!proxy()) {
@@ -58,12 +75,28 @@ void ContentsView::handleHoverEvent(QHoverEvent* event) {
                             (window_pos + item_->window()->position()).toPoint());
 }
 
+void ContentsView::didUpdatePaintNode() {
+  if (received_new_compositor_frame_) {
+    received_new_compositor_frame_ = false;
+    proxy()->didCommitCompositorFrame();
+  }
+}
+
 QScreen* ContentsView::GetScreen() const {
   if (!item_->window()) {
     return nullptr;
   }
 
   return item_->window()->screen();
+}
+
+bool ContentsView::IsVisible() const {
+  return item_->isVisible();
+}
+
+bool ContentsView::HasFocus() const {
+  return item_->hasActiveFocus() &&
+      (item_->window() ? item_->window()->isActive() : false);
 }
 
 QRect ContentsView::GetBoundsPix() const {
@@ -77,6 +110,24 @@ QRect ContentsView::GetBoundsPix() const {
                qRound(item_->width()), qRound(item_->height()));
 }
 
+void ContentsView::ScheduleUpdate() {
+  frame_evicted_ = false;
+  received_new_compositor_frame_ = true;
+
+  item_->update();
+}
+
+void ContentsView::EvictCurrentFrame() {
+  frame_evicted_ = true;
+  received_new_compositor_frame_ = false;
+
+  item_->update();
+}
+
+void ContentsView::UpdateCursor(const QCursor& cursor) {
+  item_->setCursor(cursor);
+}
+
 oxide::qt::WebContextMenuProxy* ContentsView::CreateWebContextMenu(
     oxide::qt::WebContextMenuProxyClient* client) {
   return new WebContextMenu(item_, context_menu_, client);
@@ -87,8 +138,23 @@ oxide::qt::WebPopupMenuProxy* ContentsView::CreateWebPopupMenu(
   return new WebPopupMenu(item_, popup_menu_, client);
 }
 
+oxide::qt::TouchHandleDrawableProxy*
+ContentsView::CreateTouchHandleDrawable() {
+  return new TouchHandleDrawable(item_, touch_selection_controller_);
+}
+
+void ContentsView::TouchSelectionChanged(bool active, const QRectF& bounds) {
+  if (touch_selection_controller_) {
+    touch_selection_controller_->onTouchSelectionChanged(active, bounds);
+  }
+}
+
 ContentsView::ContentsView(QQuickItem* item)
-    : item_(item) {}
+    : item_(item),
+      received_new_compositor_frame_(false),
+      frame_evicted_(false),
+      last_composited_frame_type_(
+          oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
 
 ContentsView::~ContentsView() {}
 
@@ -175,6 +241,92 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   }
 
   proxy()->handleDropEvent(event);
+}
+
+QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
+  UpdatePaintNodeScope scope(this);
+
+  oxide::qt::CompositorFrameHandle::Type type =
+      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
+  QSharedPointer<oxide::qt::CompositorFrameHandle> handle;
+
+  if (proxy()) {
+    handle = proxy()->compositorFrameHandle();
+    type = handle->GetType();
+  }
+
+  Q_ASSERT(!received_new_compositor_frame_ ||
+           (received_new_compositor_frame_ && !frame_evicted_));
+
+  if (type != last_composited_frame_type_) {
+    delete old_node;
+    old_node = nullptr;
+  }
+
+  last_composited_frame_type_ = type;
+
+  if (frame_evicted_) {
+    delete old_node;
+    return nullptr;
+  }
+
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+    AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(old_node);
+    if (!node) {
+      node = new AcceleratedFrameNode(item_);
+    }
+
+    if (received_new_compositor_frame_ || !old_node) {
+      node->updateNode(handle);
+    }
+
+    return node;
+  }
+
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
+    ImageFrameNode* node = static_cast<ImageFrameNode *>(old_node);
+    if (!node) {
+      node = new ImageFrameNode();
+    }
+
+    if (received_new_compositor_frame_ || !old_node) {
+      node->updateNode(handle);
+    }
+
+    return node;
+  }
+
+  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+    SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(old_node);
+    if (!node) {
+      node = new SoftwareFrameNode(item_);
+    }
+
+    if (received_new_compositor_frame_ || !old_node) {
+      node->updateNode(handle);
+    }
+
+    return node;
+  }
+
+  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+
+  SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(old_node);
+  if (!node) {
+    node = new SoftwareFrameNode(item_);
+  }
+
+  QRectF rect(QPointF(0, 0), QSizeF(item_->width(), item_->height()));
+
+  if (!old_node || rect != node->rect()) {
+    QImage blank(qRound(rect.width()),
+                 qRound(rect.height()),
+                 QImage::Format_ARGB32);
+    blank.fill(Qt::white);
+    node->setImage(blank);
+  }
+
+  return node;
 }
 
 } // namespace qquick
