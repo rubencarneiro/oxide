@@ -45,6 +45,7 @@ void TouchEventState::MarkAllTouchPointsInactive() {
   for (size_t i = 0; i < pointer_count_; ++i) {
     touch_points_[i].active = false;
   }
+  active_touch_point_count_ = 0;
 }
 
 void TouchEventState::RemoveInactiveTouchPoints() {
