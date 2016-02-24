@@ -33,6 +33,7 @@
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
@@ -75,6 +76,7 @@ class WebContentsView : public content::WebContentsViewOxide,
                         public CompositorClient,
                         public CompositorObserver,
                         public DragSourceClient,
+                        public InputMethodContextObserver,
                         public RenderWidgetHostViewContainer {
  public:
   ~WebContentsView();
@@ -130,6 +132,8 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   void WasResized();
   void VisibilityChanged();
+  void FocusChanged();
+  void ScreenUpdated();
 
  private:
   WebContentsView(content::WebContents* web_contents);
@@ -147,6 +151,9 @@ class WebContentsView : public content::WebContentsViewOxide,
   // Return the current RWH, or interstitial RWH if there is one. If a
   // fullscreen RWH is displayed, it will return this
   content::RenderWidgetHost* GetRenderWidgetHost() const;
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeScrollFocusedEditableNodeIntoView();
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -210,6 +217,9 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
+
+  // InputMethodContextObserver implementation
+  void InputPanelVisibilityChanged() override;
 
   // RenderWidgetHostViewContainer implementation
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;

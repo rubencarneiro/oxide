@@ -26,7 +26,6 @@
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -55,12 +54,10 @@ namespace qt {
 class ContentsView;
 class ContentsViewProxy;
 class ContentsViewProxyClient;
-class InputMethodContext;
 class WebContext;
 class WebViewProxyClient;
 
-class WebView : public InputMethodContextClient,
-                public oxide::WebViewClient,
+class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::CertificateErrorDispatcherClient,
@@ -105,10 +102,6 @@ class WebView : public InputMethodContextClient,
   void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
-
-  // InputMethodContextClient implementation
-  bool HasFocus() const override;
-  void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebViewClient implementation
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
@@ -164,7 +157,6 @@ class WebView : public InputMethodContextClient,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
-  oxide::InputMethodContext* GetInputMethodContext() const override;
   void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
@@ -218,15 +210,6 @@ class WebView : public InputMethodContextClient,
   QObject* rootFrame() const override;
 
   QObject* context() const override;
-
-  void wasResized() override;
-  void screenUpdated() override;
-  void visibilityChanged() override;
-
-  void handleFocusEvent(QFocusEvent* event) override;
-  void handleInputMethodEvent(QInputMethodEvent* event) override;
-
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 
   void goBack() override;
   void goForward() override;
@@ -283,9 +266,6 @@ class WebView : public InputMethodContextClient,
   EditCapabilityFlags editFlags() const override;
 
   void teardownFrameTree() override;
-
-  // This must outlive |web_view_|
-  scoped_ptr<InputMethodContext> input_method_context_;
 
   scoped_ptr<ContentsView> contents_view_;
 

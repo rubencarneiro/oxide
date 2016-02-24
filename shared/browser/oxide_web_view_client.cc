@@ -118,10 +118,6 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
   return nullptr;
 }
 
-InputMethodContext* WebViewClient::GetInputMethodContext() const {
-  return nullptr;
-}
-
 void WebViewClient::SecurityStatusChanged(const SecurityStatus& old) {}
 
 void WebViewClient::ContentBlocked() {}

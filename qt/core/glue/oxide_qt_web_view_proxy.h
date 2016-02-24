@@ -26,16 +26,9 @@
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
-#include <Qt>
 #include <QUrl>
-#include <QVariant>
 
 #include "qt/core/glue/oxide_qt_proxy_base.h"
-
-QT_BEGIN_NAMESPACE
-class QFocusEvent;
-class QInputMethodEvent;
-QT_END_NAMESPACE
 
 class OxideQFindController;
 class OxideQNewViewRequest;
@@ -139,15 +132,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual QObject* rootFrame() const = 0;
 
   virtual QObject* context() const = 0;
-
-  virtual void wasResized() = 0;
-  virtual void screenUpdated() = 0;
-  virtual void visibilityChanged() = 0;
-
-  virtual void handleFocusEvent(QFocusEvent* event) = 0;
-  virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
-
-  virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 
   virtual void goBack() = 0;
   virtual void goForward() = 0;

@@ -37,6 +37,7 @@
 #include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 
+#include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
@@ -245,6 +246,22 @@ void ContentsView::didCommitCompositorFrame() {
   view()->DidCommitCompositorFrame();
 }
 
+void ContentsView::wasResized() {
+  view()->WasResized();
+}
+
+void ContentsView::visibilityChanged() {
+  view()->VisibilityChanged();
+}
+
+void ContentsView::screenUpdated() {
+  view()->ScreenUpdated();
+}
+
+QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
+  return input_method_context_->Query(query);
+}
+
 void ContentsView::handleKeyEvent(QKeyEvent* event) {
   content::NativeWebKeyboardEvent e(MakeNativeWebKeyboardEvent(event, false));
   view()->HandleKeyEvent(e);
@@ -253,6 +270,18 @@ void ContentsView::handleKeyEvent(QKeyEvent* event) {
   if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
     view()->HandleKeyEvent(MakeNativeWebKeyboardEvent(event, true));
   }
+
+  event->accept();
+}
+
+void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
+  input_method_context_->HandleEvent(event);
+  event->accept();
+}
+
+void ContentsView::handleFocusEvent(QFocusEvent* event) {
+  input_method_context_->FocusChanged(event);
+  view()->FocusChanged();
 
   event->accept();
 }
@@ -273,15 +302,13 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleHoverEvent(QHoverEvent* event,
-                                    const QPoint& window_pos,
-                                    const QPoint& global_pos) {
-  view()->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        window_pos,
-                        global_pos,
-                        GetDeviceScaleFactor(),
-                        GetLocationBarContentOffsetDip()));
+void ContentsView::handleWheelEvent(QWheelEvent* event,
+                                    const QPoint& window_pos) {
+  view()->HandleWheelEvent(
+      MakeWebMouseWheelEvent(event,
+                             window_pos,
+                             GetDeviceScaleFactor(),
+                             GetLocationBarContentOffsetDip()));
   event->accept();
 }
 
@@ -299,13 +326,15 @@ void ContentsView::handleTouchEvent(QTouchEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleWheelEvent(QWheelEvent* event,
-                                    const QPoint& window_pos) {
-  view()->HandleWheelEvent(
-      MakeWebMouseWheelEvent(event,
-                             window_pos,
-                             GetDeviceScaleFactor(),
-                             GetLocationBarContentOffsetDip()));
+void ContentsView::handleHoverEvent(QHoverEvent* event,
+                                    const QPoint& window_pos,
+                                    const QPoint& global_pos) {
+  view()->HandleMouseEvent(
+      MakeWebMouseEvent(event,
+                        window_pos,
+                        global_pos,
+                        GetDeviceScaleFactor(),
+                        GetLocationBarContentOffsetDip()));
   event->accept();
 }
 
@@ -372,6 +401,10 @@ blink::WebScreenInfo ContentsView::GetScreenInfo() const {
   }
 
   return GetWebScreenInfoFromQScreen(screen);
+}
+
+void ContentsView::SetInputMethodEnabled(bool enabled) {
+  client_->SetInputMethodEnabled(enabled);
 }
 
 bool ContentsView::IsVisible() const {
@@ -446,10 +479,15 @@ void ContentsView::TouchSelectionChanged(bool active,
   client_->TouchSelectionChanged(active, rect);
 }
 
+oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {
+  return input_method_context_.get();
+}
+
 ContentsView::ContentsView(ContentsViewProxyClient* client,
                            QObject* native_view)
     : client_(client),
-      native_view_(native_view) {
+      native_view_(native_view),
+      input_method_context_(new InputMethodContext(this)) {
   DCHECK(!client_->proxy_);
   client_->proxy_ = this;
 }
@@ -457,6 +495,7 @@ ContentsView::ContentsView(ContentsViewProxyClient* client,
 ContentsView::~ContentsView() {
   DCHECK_EQ(client_->proxy_, this);
   client_->proxy_ = nullptr;
+  input_method_context_->DetachClient();
 }
 
 // static

@@ -410,12 +410,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
 
-  Q_PRIVATE_SLOT(d_func(), void screenChanged(QScreen*));
-  Q_PRIVATE_SLOT(d_func(), void windowChangedHelper(QQuickWindow*));
-
-  Q_PRIVATE_SLOT(d_func(), void screenGeometryChanged(const QRect&));
-  Q_PRIVATE_SLOT(d_func(), void screenOrientationChanged(Qt::ScreenOrientation));
-
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };
 

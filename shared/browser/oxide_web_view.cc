@@ -62,7 +62,6 @@
 #include "url/url_constants.h"
 
 #include "shared/browser/input/oxide_ime_bridge.h"
-#include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
@@ -196,8 +195,7 @@ WebViewIterator WebView::GetAllWebViews() {
   return WebViewIterator(g_all_web_views.Get());
 }
 
-WebView::WebView(WebViewClient* client,
-                 WebContentsViewClient* view_client)
+WebView::WebView(WebViewClient* client)
     : client_(client),
       web_contents_helper_(nullptr),
       blocked_content_(CONTENT_TYPE_NONE),
@@ -207,8 +205,6 @@ WebView::WebView(WebViewClient* client,
       edit_flags_(blink::WebContextMenuData::CanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
-
-  InputMethodContextObserver::Observe(client_->GetInputMethodContext());
 }
 
 void WebView::CommonInit(scoped_ptr<content::WebContents> contents,
@@ -280,10 +276,6 @@ gfx::Size WebView::GetViewSizeDip() const {
   return GetViewBoundsDip().size();
 }
 
-gfx::Size WebView::GetViewSizePix() const {
-  return GetViewBoundsPix().size();
-}
-
 gfx::Rect WebView::GetViewBoundsDip() const {
   return WebContentsView::FromWebContents(web_contents_.get())->GetBoundsDip();
 }
@@ -295,14 +287,6 @@ bool WebView::IsFullscreen() const {
   }
 
   return FullscreenHelper::FromWebContents(web_contents_.get())->IsFullscreen();
-}
-
-bool WebView::IsVisible() const {
-  return WebContentsView::FromWebContents(web_contents_.get())->IsVisible();
-}
-
-bool WebView::HasFocus() const {
-  return WebContentsView::FromWebContents(web_contents_.get())->HasFocus();
 }
 
 void WebView::DispatchLoadFailed(const GURL& validated_url,
@@ -340,42 +324,6 @@ void WebView::OnDidBlockRunningInsecureContent() {
   blocked_content_ |= CONTENT_TYPE_MIXED_SCRIPT;
 
   client_->ContentBlocked();
-}
-
-bool WebView::ShouldScrollFocusedEditableNodeIntoView() {
-  if (!HasFocus()) {
-    return false;
-  }
-
-  if (!IsVisible()) {
-    return false;
-  }
-
-  if (!client_->GetInputMethodContext() ||
-      !client_->GetInputMethodContext()->IsInputPanelVisible()) {
-    return false;
-  }
-
-  if (!GetRenderWidgetHostView() ||
-      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
-    return false;
-  }
-
-  return true;
-}
-
-void WebView::MaybeScrollFocusedEditableNodeIntoView() {
-  if (!ShouldScrollFocusedEditableNodeIntoView()) {
-    return;
-  }
-
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  content::RenderWidgetHostImpl::From(host)
-      ->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
 float WebView::GetFrameMetadataScaleToPix() {
@@ -457,10 +405,6 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
   return client_->GetScriptMessageHandlerAt(index);
-}
-
-void WebView::InputPanelVisibilityChanged() {
-  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::CompositorWillRequestSwapFrame() {
@@ -895,20 +839,8 @@ void WebView::RenderProcessGone(base::TerminationStatus status) {
 
 void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
                                     content::RenderViewHost* new_host) {
-  if (old_host && old_host->GetWidget()->GetView()) {
-    RenderWidgetHostView* rwhv =
-        static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
-    rwhv->ime_bridge()->SetContext(nullptr);
-  }
-
   if (!new_host) {
     return;
-  }
-
-  if (new_host->GetWidget()->GetView()) {
-    RenderWidgetHostView* rwhv =
-        static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
-    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
   }
 
   InitializeTopControlsForHost(new_host, !old_host);
@@ -1073,7 +1005,7 @@ void WebView::ClipboardDataChanged() {
 
 WebView::WebView(const CommonParams& common_params,
                  const CreateParams& create_params)
-    : WebView(common_params.client, common_params.view_client) {
+    : WebView(common_params.client) {
   CHECK(create_params.context) << "Didn't specify a BrowserContext";
 
   scoped_refptr<BrowserContext> context = create_params.incognito ?
@@ -1106,7 +1038,7 @@ WebView::WebView(const CommonParams& common_params,
 
 WebView::WebView(const CommonParams& common_params,
                  scoped_ptr<content::WebContents> contents)
-    : WebView(common_params.client, common_params.view_client) {
+    : WebView(common_params.client) {
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<
          "Specified WebContents doesn't have a BrowserContext";
@@ -1120,28 +1052,6 @@ WebView::WebView(const CommonParams& common_params,
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
     InitializeTopControlsForHost(rvh, true);
-  }
-
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
-
-    rwhv->SetSize(GetViewSizeDip());
-    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
-        ->SendScreenRects();
-    GetRenderWidgetHost()->WasResized();
-
-    if (HasFocus()) {
-      rwhv->Focus();
-    } else {
-      rwhv->Blur();
-    }
-  }
-
-  if (IsVisible()) {
-    web_contents_->WasShown();
-  } else {
-    web_contents_->WasHidden();
   }
 
   // Update SSL Status
@@ -1158,13 +1068,6 @@ WebView::~WebView() {
                   g_all_web_views.Get().end(),
                   this),
       g_all_web_views.Get().end());
-
-  RenderWidgetHostView* rwhv =
-      static_cast<RenderWidgetHostView*>(
-        web_contents_->GetRenderWidgetHostView());
-  if (rwhv) {
-    rwhv->ime_bridge()->SetContext(nullptr);
-  }
 
   WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
   view->SetClient(nullptr);
@@ -1317,56 +1220,6 @@ bool WebView::IsIncognito() const {
 
 bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
-}
-
-void WebView::WasResized() {
-  WebContentsView::FromWebContents(web_contents_.get())->WasResized();
-
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetSize(GetViewSizeDip());
-    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
-        ->SendScreenRects();
-    GetRenderWidgetHost()->WasResized();
-  }
-
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::ScreenUpdated() {
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
-}
-
-void WebView::VisibilityChanged() {
-  WebContentsView::FromWebContents(web_contents_.get())->VisibilityChanged();
-
-  if (IsVisible()) {
-    web_contents_->WasShown();
-  } else {
-    web_contents_->WasHidden();
-  }
-
-  MaybeScrollFocusedEditableNodeIntoView();
-}
-
-void WebView::FocusChanged() {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
-
-  if (HasFocus()) {
-    rwhv->Focus();
-  } else {
-    rwhv->Blur();
-  }
-
-  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebView::UpdateWebPreferences() {

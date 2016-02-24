@@ -41,7 +41,6 @@
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
-#include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/oxide_browser_platform_integration_observer.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
@@ -102,7 +101,6 @@ class WebViewIterator final {
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
 class WebView : public ScriptMessageTarget,
-                private InputMethodContextObserver,
                 private CompositorObserver,
                 private WebPreferencesObserver,
                 private content::NotificationObserver,
@@ -176,10 +174,6 @@ class WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
-  void WasResized();
-  void ScreenUpdated();
-  void VisibilityChanged();
-  void FocusChanged();
   void UpdateWebPreferences();
 
   BrowserContext* GetBrowserContext() const;
@@ -263,8 +257,7 @@ class WebView : public ScriptMessageTarget,
   blink::WebContextMenuData::EditFlags GetEditFlags() const;
 
  private:
-  WebView(WebViewClient* client,
-          WebContentsViewClient* view_client);
+  WebView(WebViewClient* client);
 
   void CommonInit(scoped_ptr<content::WebContents> contents,
                   WebContentsViewClient* view_client);
@@ -275,13 +268,9 @@ class WebView : public ScriptMessageTarget,
 
   gfx::Rect GetViewBoundsPix() const;
   gfx::Size GetViewSizeDip() const;
-  gfx::Size GetViewSizePix() const;
   gfx::Rect GetViewBoundsDip() const;
 
   bool IsFullscreen() const;
-
-  bool IsVisible() const;
-  bool HasFocus() const;
 
   void DispatchLoadFailed(const GURL& validated_url,
                           int error_code,
@@ -290,9 +279,6 @@ class WebView : public ScriptMessageTarget,
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
-
-  bool ShouldScrollFocusedEditableNodeIntoView();
-  void MaybeScrollFocusedEditableNodeIntoView();
 
   float GetFrameMetadataScaleToPix();
 
@@ -310,8 +296,6 @@ class WebView : public ScriptMessageTarget,
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
-  // InputMethodContextObserver implementation
-  void InputPanelVisibilityChanged() override;
 
   // CompositorObserver implementation
   void CompositorWillRequestSwapFrame() final;

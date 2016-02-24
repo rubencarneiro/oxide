@@ -47,7 +47,6 @@ namespace oxide {
 
 class CertificateError;
 class FilePicker;
-class InputMethodContext;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class SecurityStatus;
@@ -142,8 +141,6 @@ class WebViewClient : public ScriptMessageTarget {
                                     scoped_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
-
-  virtual InputMethodContext* GetInputMethodContext() const;
 
   // TODO(chrisccoulson): Get rid of |old| and add |changed_flags|
   virtual void SecurityStatusChanged(const SecurityStatus& old);

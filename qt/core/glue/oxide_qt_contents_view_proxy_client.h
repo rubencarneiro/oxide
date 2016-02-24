@@ -57,6 +57,8 @@ class ContentsViewProxyClient {
 
   virtual void UpdateCursor(const QCursor& cursor) = 0;
 
+  virtual void SetInputMethodEnabled(bool enabled) = 0;
+
   virtual WebContextMenuProxy* CreateWebContextMenu(
       WebContextMenuProxyClient* client) = 0;
   virtual WebPopupMenuProxy* CreateWebPopupMenu(

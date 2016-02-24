@@ -20,11 +20,13 @@
 
 #include "base/callback.h"
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 
 #include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 
+#include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 #include "shared/browser/oxide_web_contents_view_client.h"
@@ -42,8 +44,10 @@ namespace qt {
 
 class CompositorFrameHandle;
 class ContentsViewProxyClient;
+class InputMethodContext;
 
 class ContentsView : public ContentsViewProxy,
+                     public InputMethodContextClient,
                      public oxide::WebContentsViewClient {
  public:
   ContentsView(ContentsViewProxyClient* client,
@@ -66,17 +70,26 @@ class ContentsView : public ContentsViewProxy,
   // ContentsViewProxy implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
+  void wasResized() override;
+  void visibilityChanged() override;
+  void screenUpdated() override;
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void handleKeyEvent(QKeyEvent* event) override;
+  void handleInputMethodEvent(QInputMethodEvent* event) override;
+  void handleFocusEvent(QFocusEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
+  void handleWheelEvent(QWheelEvent* event, const QPoint& window_pos) override;
+  void handleTouchEvent(QTouchEvent* event) override;
   void handleHoverEvent(QHoverEvent* event,
                         const QPoint& window_pos,
                         const QPoint& global_pos) override;
-  void handleTouchEvent(QTouchEvent* event) override;
-  void handleWheelEvent(QWheelEvent* event, const QPoint& window_pos) override;
   void handleDragEnterEvent(QDragEnterEvent* event) override;
   void handleDragMoveEvent(QDragMoveEvent* event) override;
   void handleDragLeaveEvent(QDragLeaveEvent* event) override;
   void handleDropEvent(QDropEvent* event) override;
+
+  // InputMethodContextClient implementation
+  void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebContentsViewClient implementation
   blink::WebScreenInfo GetScreenInfo() const override;
@@ -93,6 +106,7 @@ class ContentsView : public ContentsViewProxy,
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(bool active,
                              const gfx::RectF& bounds) const override;
+  oxide::InputMethodContext* GetInputMethodContext() const override;
 
   ContentsViewProxyClient* client_;
 
@@ -101,6 +115,8 @@ class ContentsView : public ContentsViewProxy,
   UITouchEventFactory touch_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
+
+  scoped_ptr<InputMethodContext> input_method_context_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsView);
 };

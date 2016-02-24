@@ -111,8 +111,6 @@ class WebViewProxyClient {
 
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
-  virtual void SetInputMethodEnabled(bool enabled) = 0;
-
   virtual void DownloadRequested(
       const OxideQDownloadRequest& download_request) = 0;
 

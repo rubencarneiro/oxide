@@ -62,7 +62,6 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -239,8 +238,7 @@ WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
                  QObject* handle,
                  OxideQSecurityStatus* security_status)
-    : input_method_context_(new InputMethodContext(this)),
-      contents_view_(new ContentsView(view_client, handle)),
+    : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
       security_status_(security_status),
       frame_tree_torn_down_(false) {
@@ -296,20 +294,6 @@ void WebView::EnsurePreferences() {
   OxideQWebPreferences* p = new OxideQWebPreferences(handle());
   web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
-}
-
-bool WebView::HasFocus() const {
-  if (!web_view_) {
-    // XXX: Can be called when constructing |web_view_|
-    return false;
-  }
-
-  return oxide::WebContentsView::FromWebContents(
-      web_view_->GetWebContents())->HasFocus();
-}
-
-void WebView::SetInputMethodEnabled(bool enabled) {
-  client_->SetInputMethodEnabled(enabled);
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -644,10 +628,6 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   return picker;
 }
 
-oxide::InputMethodContext* WebView::GetInputMethodContext() const {
-  return input_method_context_.get();
-}
-
 void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
   OxideQSecurityStatusPrivate::get(security_status_)->Update(old);
 }
@@ -823,34 +803,6 @@ QObject* WebView::context() const {
   }
 
   return c->handle();
-}
-
-void WebView::wasResized() {
-  web_view_->WasResized();
-}
-
-void WebView::screenUpdated() {
-  web_view_->ScreenUpdated();
-}
-
-void WebView::visibilityChanged() {
-  web_view_->VisibilityChanged();
-}
-
-void WebView::handleFocusEvent(QFocusEvent* event) {
-  input_method_context_->FocusChanged(event);
-  web_view_->FocusChanged();
-
-  event->accept();
-}
-
-void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
-  input_method_context_->HandleEvent(event);
-  event->accept();
-}
-
-QVariant WebView::inputMethodQuery(Qt::InputMethodQuery query) const {
-  return input_method_context_->Query(query);
 }
 
 void WebView::goBack() {
@@ -1225,8 +1177,6 @@ WebView::~WebView() {
   CertificateErrorDispatcher::FromWebContents(contents)->set_client(nullptr);
   FullscreenHelper::FromWebContents(contents)->set_client(nullptr);
   DCHECK(frame_tree_torn_down_);
-
-  input_method_context_->DetachClient();
 
   oxide::PermissionRequestDispatcher::FromWebContents(
       contents)->set_client(nullptr);

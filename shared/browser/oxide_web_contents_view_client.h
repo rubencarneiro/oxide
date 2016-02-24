@@ -38,6 +38,7 @@ class TouchHandleDrawable;
 
 namespace oxide {
 
+class InputMethodContext;
 class WebContentsView;
 class WebContextMenu;
 class WebPopupMenu;
@@ -72,6 +73,7 @@ class WebContentsViewClient {
   virtual void TouchSelectionChanged(bool active,
                                      const gfx::RectF& bounds) const;
 
+  virtual InputMethodContext* GetInputMethodContext() const;
 
  protected:
   WebContentsViewClient();

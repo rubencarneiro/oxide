@@ -42,6 +42,7 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
@@ -116,6 +117,42 @@ content::RenderWidgetHost* WebContentsView::GetRenderWidgetHost() const {
   }
 
   return rwhv->GetRenderWidgetHost();
+}
+
+bool WebContentsView::ShouldScrollFocusedEditableNodeIntoView() {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  if (!IsVisible()) {
+    return false;
+  }
+
+  if (!client_->GetInputMethodContext() ||
+      !client_->GetInputMethodContext()->IsInputPanelVisible()) {
+    return false;
+  }
+
+  if (!GetRenderWidgetHostView() ||
+      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
+    return false;
+  }
+
+  return true;
+}
+
+void WebContentsView::MaybeScrollFocusedEditableNodeIntoView() {
+  if (!ShouldScrollFocusedEditableNodeIntoView()) {
+    return;
+  }
+
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl::From(host)
+      ->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -301,6 +338,7 @@ void WebContentsView::RenderViewHostChanged(
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
     rwhv->SetContainer(nullptr);
+    rwhv->ime_bridge()->SetContext(nullptr);
   }
 
   if (!new_host) {
@@ -311,6 +349,7 @@ void WebContentsView::RenderViewHostChanged(
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
     rwhv->SetContainer(this);
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
 
     // For the initial view, we need to sync its visibility and focus state
     // with us. For subsequent views, RFHM does this for us
@@ -442,6 +481,10 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   web_contents()->SystemDragEnded();
 
   drag_source_.reset();
+}
+
+void WebContentsView::InputPanelVisibilityChanged() {
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebContentsView::AttachLayer(scoped_refptr<cc::Layer> layer) {
@@ -579,20 +622,23 @@ content::WebContents* WebContentsView::GetWebContents() const {
 void WebContentsView::SetClient(WebContentsViewClient* client) {
   if (client_) {
     DCHECK_EQ(client_->view_, this);
+    InputMethodContextObserver::Observe(nullptr);
     client_->view_ = nullptr;
   }
   client_ = client;
   if (client_) {
     DCHECK(!client_->view_);
     client_->view_ = this;
+    InputMethodContextObserver::Observe(client_->GetInputMethodContext());
   }
 
-  compositor_->SetViewportSize(GetBoundsPix().size());
-  compositor_->SetDeviceScaleFactor(
-      GetScreenInfo().deviceScaleFactor);
-  root_layer_->SetBounds(GetBoundsDip().size());
-  compositor_->SetVisibility(IsVisible());
+  // Update view from client
+  WasResized();
+  VisibilityChanged();
+  FocusChanged();
+  ScreenUpdated();
 
+  // Update client from view
   CursorChanged();
   TouchSelectionChanged();
 }
@@ -653,7 +699,9 @@ gfx::Rect WebContentsView::GetBoundsDip() const {
 
 blink::WebScreenInfo WebContentsView::GetScreenInfo() const {
   if (!client_) {
-    return blink::WebScreenInfo();
+    blink::WebScreenInfo result;
+    content::RenderWidgetHostViewBase::GetDefaultScreenInfo(&result);
+    return result;
   }
 
   return client_->GetScreenInfo();
@@ -817,6 +865,16 @@ void WebContentsView::WasResized() {
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
   compositor_->SetViewportSize(GetBoundsPix().size());
   root_layer_->SetBounds(GetBoundsDip().size());
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetSize(GetViewBoundsDip().size());
+    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
+        ->SendScreenRects();
+    GetRenderWidgetHost()->WasResized();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
 }
 
 void WebContentsView::VisibilityChanged() {
@@ -834,6 +892,38 @@ void WebContentsView::VisibilityChanged() {
     current_compositor_frame_ = nullptr;
     client_->EvictCurrentFrame();
   }
+
+  if (IsVisible()) {
+    web_contents()->WasShown();
+  } else {
+    web_contents()->WasHidden();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::FocusChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  if (HasFocus()) {
+    rwhv->Focus();
+  } else {
+    rwhv->Blur();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::ScreenUpdated() {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
 }
 
 } // namespace oxide

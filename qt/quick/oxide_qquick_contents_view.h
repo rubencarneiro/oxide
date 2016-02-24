@@ -18,7 +18,9 @@
 #ifndef _OXIDE_QQUICK_CONTENTS_VIEW_H_
 #define _OXIDE_QQUICK_CONTENTS_VIEW_H_
 
+#include <QObject>
 #include <QPointer>
+#include <QQuickItem>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
@@ -34,6 +36,8 @@ class QKeyEvent;
 class QMouseEvent;
 class QQmlComponent;
 class QQuickItem;
+class QQuickWindow;
+class QScreen;
 class QSGNode;
 class QTouchEvent;
 class QWheelEvent;
@@ -44,7 +48,10 @@ class OxideQQuickTouchSelectionController;
 namespace oxide {
 namespace qquick {
 
-class ContentsView : public oxide::qt::ContentsViewProxyClient {
+class ContentsView : public QObject,
+                     public oxide::qt::ContentsViewProxyClient {
+  Q_OBJECT
+
  public:
   ContentsView(QQuickItem* item);
   ~ContentsView() override;
@@ -54,8 +61,14 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
     touch_selection_controller_ = controller;
   }
 
+  QVariant inputMethodQuery(Qt::InputMethodQuery query) const;
+
+  void handleItemChange(QQuickItem::ItemChange change);
   void handleKeyPressEvent(QKeyEvent* event);
   void handleKeyReleaseEvent(QKeyEvent* event);
+  void handleInputMethodEvent(QInputMethodEvent* event);
+  void handleFocusInEvent(QFocusEvent* event);
+  void handleFocusOutEvent(QFocusEvent* event);
   void handleMousePressEvent(QMouseEvent* event);
   void handleMouseMoveEvent(QMouseEvent* event);
   void handleMouseReleaseEvent(QMouseEvent* event);
@@ -68,6 +81,7 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
   void handleDragMoveEvent(QDragMoveEvent* event);
   void handleDragLeaveEvent(QDragLeaveEvent* event);
   void handleDropEvent(QDropEvent* event);
+  void handleGeometryChanged();
 
   QSGNode* updatePaintNode(QSGNode* old_node);
 
@@ -85,12 +99,21 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
     popup_menu_ = popup_menu;
   }
 
+ private Q_SLOTS:
+  void windowChanged(QQuickWindow* window);
+  void screenChanged(QScreen* screen);
+  void screenGeometryChanged(const QRect& geometry);
+  void screenOrientationChanged(Qt::ScreenOrientation orientation);
+
  private:
   friend class UpdatePaintNodeScope;
+
+  void screenChangedHelper(QScreen* screen);
 
   void handleKeyEvent(QKeyEvent* event);
   void handleMouseEvent(QMouseEvent* event);
   void handleHoverEvent(QHoverEvent* event);
+  void handleFocusEvent(QFocusEvent* event);
 
   void didUpdatePaintNode();
 
@@ -102,6 +125,7 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
   void ScheduleUpdate() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const QCursor& cursor) override;
+  void SetInputMethodEnabled(bool enabled) override;
   oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
       oxide::qt::WebContextMenuProxyClient* client) override;
   oxide::qt::WebPopupMenuProxy* CreateWebPopupMenu(
@@ -111,6 +135,9 @@ class ContentsView : public oxide::qt::ContentsViewProxyClient {
 
   QPointer<QQuickItem> item_;
   QPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
+
+  QPointer<QQuickWindow> window_;
+  QPointer<QScreen> screen_;
 
   QPointer<QQmlComponent> context_menu_;
   QPointer<QQmlComponent> popup_menu_;

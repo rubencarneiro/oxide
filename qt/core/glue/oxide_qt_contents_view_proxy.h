@@ -18,7 +18,9 @@
 #ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_H_
 #define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_H_
 
+#include <Qt>
 #include <QtGlobal>
+#include <QVariant>
 
 typedef void* EGLImageKHR;
 
@@ -27,7 +29,9 @@ class QDragEnterEvent;
 class QDragLeaveEvent;
 class QDragMoveEvent;
 class QDropEvent;
+class QFocusEvent;
 class QHoverEvent;
+class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QRect;
@@ -64,14 +68,22 @@ class ContentsViewProxy {
   virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
   virtual void didCommitCompositorFrame() = 0;
 
+  virtual void wasResized() = 0;
+  virtual void visibilityChanged() = 0;
+  virtual void screenUpdated() = 0;
+
+  virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
+
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
+  virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
+  virtual void handleFocusEvent(QFocusEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
+  virtual void handleWheelEvent(QWheelEvent* event,
+                                const QPoint& window_pos) = 0;
+  virtual void handleTouchEvent(QTouchEvent* event) = 0;
   virtual void handleHoverEvent(QHoverEvent* event,
                                 const QPoint& window_pos,
                                 const QPoint& global_pos) = 0;
-  virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPoint& window_pos) = 0;
   virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
   virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;
   virtual void handleDragLeaveEvent(QDragLeaveEvent* event) = 0;

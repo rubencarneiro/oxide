@@ -21,7 +21,6 @@
 #include <QByteArray>
 #include <QEvent>
 #include <QFlags>
-#include <QGuiApplication>
 #include <QHoverEvent>
 #include <QImage>
 #include <QKeyEvent>
@@ -32,7 +31,6 @@
 #include <QQuickWindow>
 #include <QRect>
 #include <QRectF>
-#include <QScreen>
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
@@ -479,13 +477,6 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
   }
 }
 
-void OxideQQuickWebViewPrivate::SetInputMethodEnabled(bool enabled) {
-  Q_Q(OxideQQuickWebView);
-
-  q->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
-  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
-}
-
 void OxideQQuickWebViewPrivate::DownloadRequested(
     const OxideQDownloadRequest& download_request) {
   Q_Q(OxideQQuickWebView);
@@ -729,79 +720,6 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextDestroyed()));
 }
 
-void OxideQQuickWebViewPrivate::screenChanged(QScreen* screen) {
-  screenChangedHelper(screen);
-
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->screenUpdated();
-}
-
-void OxideQQuickWebViewPrivate::screenChangedHelper(QScreen* screen) {
-  Q_Q(OxideQQuickWebView);
-
-  if (screen_) {
-    screen_->disconnect(q);
-  }
-  screen_ = screen;
-  if (screen_) {
-    screen_->setOrientationUpdateMask(
-        Qt::PortraitOrientation |
-        Qt::InvertedPortraitOrientation |
-        Qt::LandscapeOrientation |
-        Qt::InvertedLandscapeOrientation);
-    q->connect(screen_, SIGNAL(virtualGeometryChanged(const QRect&)),
-               SLOT(screenGeometryChanged(const QRect&)));
-    q->connect(screen_, SIGNAL(geometryChanged(const QRect&)),
-               SLOT(screenGeometryChanged(const QRect&)));
-    q->connect(screen_, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
-               SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
-    q->connect(screen_, SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
-               SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
-  }
-}
-
-void OxideQQuickWebViewPrivate::windowChangedHelper(QQuickWindow* window) {
-  Q_Q(OxideQQuickWebView);
-
-  if (window_) {
-    window_->disconnect(q);
-  }
-  window_ = window;
-  if (window_) {
-    q->connect(window_, SIGNAL(screenChanged(QScreen*)),
-               SLOT(screenChanged(QScreen*)));
-  }
-
-  screenChangedHelper(window_ ? window_->screen() : nullptr);
-
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->screenUpdated();
-  proxy_->wasResized();
-}
-
-void OxideQQuickWebViewPrivate::screenGeometryChanged(const QRect& rect) {
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->screenUpdated();
-}
-
-void OxideQQuickWebViewPrivate::screenOrientationChanged(
-    Qt::ScreenOrientation orientation) {
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->screenUpdated();
-}
-
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -1011,12 +929,7 @@ QVariant OxideQQuickWebView::inputMethodQuery(
     Qt::InputMethodQuery query) const {
   Q_D(const OxideQQuickWebView);
 
-  switch (query) {
-    case Qt::ImEnabled:
-      return (flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
-    default:
-      return d->proxy_ ? d->proxy_->inputMethodQuery(query) : QVariant();
-  }
+  return d->contents_view_->inputMethodQuery(query);
 }
 
 void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
@@ -1024,14 +937,7 @@ void OxideQQuickWebView::itemChange(QQuickItem::ItemChange change,
   Q_D(OxideQQuickWebView);
 
   QQuickItem::itemChange(change, value);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  if (change == QQuickItem::ItemVisibleHasChanged) {
-    d->proxy_->visibilityChanged();
-  }
+  d->contents_view_->handleItemChange(change);
 }
 
 void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
@@ -1062,36 +968,21 @@ void OxideQQuickWebView::inputMethodEvent(QInputMethodEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::inputMethodEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleInputMethodEvent(event);
+  d->contents_view_->handleInputMethodEvent(event);
 }
 
 void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::focusInEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleFocusEvent(event);
+  d->contents_view_->handleFocusInEvent(event);
 }
 
 void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::focusOutEvent(event);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->handleFocusEvent(event);
+  d->contents_view_->handleFocusOutEvent(event);
 }
 
 void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {
@@ -1183,10 +1074,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   Q_D(OxideQQuickWebView);
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
-
-  if (d->proxy_ && window()) {
-    d->proxy_->wasResized();
-  }
+  d->contents_view_->handleGeometryChanged();
 }
 
 QSGNode* OxideQQuickWebView::updatePaintNode(
@@ -1211,26 +1099,16 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
            QQuickItem::ItemAcceptsDrops);
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
-
-  connect(this, SIGNAL(windowChanged(QQuickWindow*)),
-          this, SLOT(windowChangedHelper(QQuickWindow*)));
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
 
-  disconnect(this, SIGNAL(windowChanged(QQuickWindow*)),
-             this, SLOT(windowChangedHelper(QQuickWindow*)));
-  if (d->window_) {
-    d->window_->disconnect(this);
+  if (d->contextHandle()) {
+    d->detachContextSignals(
+        OxideQQuickWebContextPrivate::get(
+          qobject_cast<OxideQQuickWebContext*>(d->contextHandle())));
   }
-  if (d->screen_) {
-    d->screen_->disconnect(this);
-  }
-
-  d->detachContextSignals(
-      OxideQQuickWebContextPrivate::get(
-        qobject_cast<OxideQQuickWebContext*>(d->contextHandle())));
 
   // Do this before our d_ptr is cleared, as these call back in to us
   // when they are deleted
@@ -1875,7 +1753,8 @@ QUrl OxideQQuickWebView::hoveredUrl() const {
   return d->proxy_->targetUrl();
 }
 
-OxideQQuickWebView::EditCapabilities OxideQQuickWebView::editingCapabilities() const {
+OxideQQuickWebView::EditCapabilities
+OxideQQuickWebView::editingCapabilities() const {
   Q_D(const OxideQQuickWebView);
 
   if (!d->proxy_) {

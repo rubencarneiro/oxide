@@ -69,4 +69,8 @@ void WebContentsViewClient::TouchSelectionChanged(
     bool active,
     const gfx::RectF& bounds) const {}
 
+InputMethodContext* WebContentsViewClient::GetInputMethodContext() const {
+  return nullptr;
+}
+
 } // namespace oxide

@@ -17,10 +17,11 @@
 
 #include "oxide_qquick_contents_view.h"
 
+#include <QGuiApplication>
 #include <QHoverEvent>
 #include <QPointF>
-#include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QTouchEvent>
 
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
@@ -73,6 +74,14 @@ void ContentsView::handleHoverEvent(QHoverEvent* event) {
   proxy()->handleHoverEvent(event,
                             window_pos.toPoint(),
                             (window_pos + item_->window()->position()).toPoint());
+}
+
+void ContentsView::handleFocusEvent(QFocusEvent* event) {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->handleFocusEvent(event);
 }
 
 void ContentsView::didUpdatePaintNode() {
@@ -128,6 +137,11 @@ void ContentsView::UpdateCursor(const QCursor& cursor) {
   item_->setCursor(cursor);
 }
 
+void ContentsView::SetInputMethodEnabled(bool enabled) {
+  item_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
+  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
+}
+
 oxide::qt::WebContextMenuProxy* ContentsView::CreateWebContextMenu(
     oxide::qt::WebContextMenuProxyClient* client) {
   return new WebContextMenu(item_, context_menu_, client);
@@ -154,9 +168,100 @@ ContentsView::ContentsView(QQuickItem* item)
       received_new_compositor_frame_(false),
       frame_evicted_(false),
       last_composited_frame_type_(
-          oxide::qt::CompositorFrameHandle::TYPE_INVALID) {}
+          oxide::qt::CompositorFrameHandle::TYPE_INVALID) {
+  connect(item_, SIGNAL(windowChanged(QQuickWindow*)),
+          SLOT(windowChanged(QQuickWindow*)));
+}
 
 ContentsView::~ContentsView() {}
+
+QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
+  switch (query) {
+    case Qt::ImEnabled:
+      return (item_->flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
+    default:
+      return proxy() ? proxy()->inputMethodQuery(query) : QVariant();
+  }
+}
+
+void ContentsView::handleItemChange(QQuickItem::ItemChange change) {
+  if (!proxy()) {
+    return;
+  }
+
+  if (change == QQuickItem::ItemVisibleHasChanged) {
+    proxy()->visibilityChanged();
+  }
+}
+
+void ContentsView::windowChanged(QQuickWindow* window) {
+  if (window_) {
+    window_->disconnect(this);
+  }
+  window_ = window;
+  if (window_) {
+    connect(window_, SIGNAL(screenChanged(QScreen*)),
+            SLOT(screenChanged(QScreen*)));
+  }
+
+  screenChangedHelper(window_ ? window_->screen() : nullptr);
+
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->screenUpdated();
+  proxy()->wasResized();
+}
+
+void ContentsView::screenChanged(QScreen* screen) {
+  screenChangedHelper(screen);
+
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->screenUpdated();
+}
+
+void ContentsView::screenChangedHelper(QScreen* screen) {
+  if (screen_) {
+    screen_->disconnect(this);
+  }
+  screen_ = screen;
+  if (screen_) {
+    screen_->setOrientationUpdateMask(
+        Qt::PortraitOrientation |
+        Qt::InvertedPortraitOrientation |
+        Qt::LandscapeOrientation |
+        Qt::InvertedLandscapeOrientation);
+    connect(screen_, SIGNAL(virtualGeometryChanged(const QRect&)),
+            SLOT(screenGeometryChanged(const QRect&)));
+    connect(screen_, SIGNAL(geometryChanged(const QRect&)),
+            SLOT(screenGeometryChanged(const QRect&)));
+    connect(screen_, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
+            SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
+    connect(screen_, SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
+            SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
+  }
+}
+
+void ContentsView::screenGeometryChanged(const QRect& geometry) {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->screenUpdated();
+}
+
+void ContentsView::screenOrientationChanged(
+    Qt::ScreenOrientation orientation) {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->screenUpdated();
+}
 
 void ContentsView::handleKeyPressEvent(QKeyEvent* event) {
   handleKeyEvent(event);
@@ -164,6 +269,22 @@ void ContentsView::handleKeyPressEvent(QKeyEvent* event) {
 
 void ContentsView::handleKeyReleaseEvent(QKeyEvent* event) {
   handleKeyEvent(event);
+}
+
+void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->handleInputMethodEvent(event);
+}
+
+void ContentsView::handleFocusInEvent(QFocusEvent* event) {
+  handleFocusEvent(event);
+}
+
+void ContentsView::handleFocusOutEvent(QFocusEvent* event) {
+  handleFocusEvent(event);
 }
 
 void ContentsView::handleMousePressEvent(QMouseEvent* event) {
@@ -241,6 +362,18 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   }
 
   proxy()->handleDropEvent(event);
+}
+
+void ContentsView::handleGeometryChanged() {
+  if (!proxy()) {
+    return;
+  }
+
+  if (!item_->window()) {
+    return;
+  }
+
+  proxy()->wasResized();
 }
 
 QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {

@@ -42,8 +42,6 @@ QT_BEGIN_NAMESPACE
 class QQmlComponent;
 template <typename T> class QQmlListProperty;
 class QQuickItem;
-class QQuickWindow;
-class QScreen;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -125,7 +123,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;
-  void SetInputMethodEnabled(bool enabled) override;
   void DownloadRequested(
       const OxideQDownloadRequest& download_request) override;
   void HttpAuthenticationRequested(
@@ -159,21 +156,11 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
 
-  void screenChanged(QScreen* screen);
-  void screenChangedHelper(QScreen* screen);
-  void windowChangedHelper(QQuickWindow* window);
-
-  void screenGeometryChanged(const QRect&);
-  void screenOrientationChanged(Qt::ScreenOrientation);
-
   OxideQQuickWebView* q_ptr;
 
   QScopedPointer<oxide::qquick::ContentsView> contents_view_;
 
   QScopedPointer<oxide::qt::WebViewProxy> proxy_;
-
-  QPointer<QScreen> screen_;
-  QPointer<QQuickWindow> window_;
 
   bool constructed_;
   int load_progress_;
