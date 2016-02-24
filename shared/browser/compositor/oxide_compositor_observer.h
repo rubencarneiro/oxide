@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,10 @@ class CompositorObserver {
   virtual ~CompositorObserver();
 
   virtual void CompositorDidCommit();
+
+  virtual void CompositorWillRequestSwapFrame();
+
+  virtual void CompositorDidRequestSwapFrame();
 
  protected:
   CompositorObserver();

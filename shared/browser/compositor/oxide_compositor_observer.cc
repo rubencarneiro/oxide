@@ -57,4 +57,8 @@ CompositorObserver::~CompositorObserver() {
 
 void CompositorObserver::CompositorDidCommit() {}
 
+void CompositorObserver::CompositorWillRequestSwapFrame() {}
+
+void CompositorObserver::CompositorDidRequestSwapFrame() {}
+
 } // namespace oxide

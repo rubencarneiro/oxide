@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,19 +19,22 @@
 #define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_
 
 #include <QJSValue>
+#include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_script_message_handler_proxy.h"
 #include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 
 class OxideQQuickScriptMessageHandler;
 
+namespace oxide {
+namespace qt {
+class ScriptMessageHandlerProxy;
+}
+}
+
 class OxideQQuickScriptMessageHandlerPrivate
-    : public oxide::qt::ScriptMessageHandlerProxyHandle,
-      public oxide::qt::ScriptMessageHandlerProxyClient {
+    : public oxide::qt::ScriptMessageHandlerProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageHandler)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageHandler,
-                                      oxide::qt::ScriptMessageHandlerProxyHandle)
 
  public:
   OxideQQuickScriptMessageHandlerPrivate(OxideQQuickScriptMessageHandler* q);
@@ -42,13 +45,13 @@ class OxideQQuickScriptMessageHandlerPrivate
       OxideQQuickScriptMessageHandler* message_handler);
 
  private:
-  oxide::qt::ScriptMessageHandlerProxy* proxy() const {
-    return oxide::qt::ScriptMessageHandlerProxyHandle::proxy();
-  }
-
   // oxide::qt::ScriptMessageHandlerProxyClient implementation
   bool ReceiveMessage(oxide::qt::ScriptMessageProxy* message,
                       QVariant* error) override;
+
+  OxideQQuickScriptMessageHandler* q_ptr;
+
+  QScopedPointer<oxide::qt::ScriptMessageHandlerProxy> proxy_;
 
   QJSValue callback_;
 

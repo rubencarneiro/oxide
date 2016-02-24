@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,15 +18,18 @@
 #ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 #define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 
-#include "qt/core/glue/oxide_qt_script_message_proxy.h"
+#include <QScopedPointer>
 
 class OxideQQuickScriptMessage;
 
-class OxideQQuickScriptMessagePrivate
-    : public oxide::qt::ScriptMessageProxyHandle {
+namespace oxide {
+namespace qt {
+class ScriptMessageProxy;
+}
+}
+
+class OxideQQuickScriptMessagePrivate {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessage)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessage,
-                                      oxide::qt::ScriptMessageProxyHandle)
  public:
   static OxideQQuickScriptMessage* create(oxide::qt::ScriptMessageProxy* proxy);
 
@@ -36,9 +39,9 @@ class OxideQQuickScriptMessagePrivate
   OxideQQuickScriptMessagePrivate(oxide::qt::ScriptMessageProxy* proxy,
                                   OxideQQuickScriptMessage* q);
 
-  oxide::qt::ScriptMessageProxy* proxy() const {
-    return oxide::qt::ScriptMessageProxyHandle::proxy();
-  }
+  OxideQQuickScriptMessage* q_ptr;
+
+  QScopedPointer<oxide::qt::ScriptMessageProxy> proxy_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_

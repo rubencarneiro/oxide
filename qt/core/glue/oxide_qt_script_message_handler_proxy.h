@@ -23,7 +23,11 @@
 #include <QtGlobal>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include "qt/core/glue/oxide_qt_proxy_base.h"
+
+QT_BEGIN_NAMESPACE
+class QObject;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
@@ -31,11 +35,12 @@ namespace qt {
 class ScriptMessageHandler;
 class ScriptMessageHandlerProxyClient;
 
-class Q_DECL_EXPORT ScriptMessageHandlerProxy {
-  OXIDE_Q_DECL_PROXY_FOR(ScriptMessageHandler);
+class Q_DECL_EXPORT ScriptMessageHandlerProxy
+    : public ProxyBase<ScriptMessageHandler>{
  public:
   static ScriptMessageHandlerProxy* create(
-      ScriptMessageHandlerProxyClient* client);
+      ScriptMessageHandlerProxyClient* client,
+      QObject* handle);
   virtual ~ScriptMessageHandlerProxy();
 
   virtual QString msgId() const = 0;
@@ -47,8 +52,6 @@ class Q_DECL_EXPORT ScriptMessageHandlerProxy {
   virtual void attachHandler() = 0;
   virtual void detachHandler() = 0;
 };
-
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
 
 } // namespace qt
 } // namespace oxide

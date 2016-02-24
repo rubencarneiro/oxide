@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -47,16 +47,16 @@ void ScriptMessageRequest::ReceiveErrorCallback(
 }
 
 ScriptMessageRequest::ScriptMessageRequest(
-    ScriptMessageRequestProxyClient* client)
-    : client_(client) {}
+    ScriptMessageRequestProxyClient* client,
+    QObject* handle)
+    : client_(client) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+}
 
 ScriptMessageRequest::~ScriptMessageRequest() {}
-
-// static
-ScriptMessageRequest* ScriptMessageRequest::FromProxyHandle(
-    ScriptMessageRequestProxyHandle* handle) {
-  return static_cast<ScriptMessageRequest*>(handle->proxy_.data());
-}
 
 void ScriptMessageRequest::SetRequest(
     scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req) {

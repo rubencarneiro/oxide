@@ -101,12 +101,21 @@ Compositor::Compositor(CompositorClient* client)
 void Compositor::SendSwapCompositorFrameToClient(
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
+
+  FOR_EACH_OBSERVER(CompositorObserver,
+                    observers_,
+                    CompositorWillRequestSwapFrame());
+
   // XXX: What if we are hidden?
   // XXX: Should we check that surface_id matches the last created
   //  surface?
   scoped_refptr<CompositorFrameHandle> handle =
       new CompositorFrameHandle(proxy_, std::move(frame));
   client_->CompositorSwapFrame(handle.get());
+
+  FOR_EACH_OBSERVER(CompositorObserver,
+                    observers_,
+                    CompositorDidRequestSwapFrame());
 }
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {

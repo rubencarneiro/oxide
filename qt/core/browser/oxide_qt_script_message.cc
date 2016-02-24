@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,7 @@
 namespace oxide {
 namespace qt {
 
-WebFrameProxyHandle* ScriptMessage::frame() const {
+QObject* ScriptMessage::frame() const {
   WebFrame* frame = WebFrame::FromSharedWebFrame(impl_->source_frame());
   if (!frame) {
     return nullptr;
@@ -63,11 +63,6 @@ ScriptMessage::ScriptMessage(oxide::ScriptMessage* message)
       payload_(VariantValueConverter::ToVariantValue(message->payload())) {}
 
 ScriptMessage::~ScriptMessage() {}
-
-// static
-ScriptMessage* ScriptMessage::FromProxyHandle(ScriptMessageProxyHandle* handle) {
-  return static_cast<ScriptMessage*>(handle->proxy_.data());
-}
 
 } // namespace qt
 } // namespace oxide

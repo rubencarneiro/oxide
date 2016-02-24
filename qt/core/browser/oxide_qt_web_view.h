@@ -21,14 +21,11 @@
 #include <QKeyEvent>
 #include <QList>
 #include <QPointer>
-#include <QSharedPointer>
 #include <QtGlobal>
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 
-#include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
-#include "qt/core/browser/oxide_qt_event_utils.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
 #include "shared/browser/oxide_javascript_dialog_manager.h"
@@ -54,13 +51,13 @@ class WebView;
 
 namespace qt {
 
-class CompositorFrameHandle;
-class InputMethodContext;
+class ContentsView;
+class ContentsViewProxy;
+class ContentsViewProxyClient;
 class WebContext;
 class WebViewProxyClient;
 
-class WebView : public InputMethodContextClient,
-                public oxide::WebViewClient,
+class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::CertificateErrorDispatcherClient,
@@ -68,7 +65,8 @@ class WebView : public InputMethodContextClient,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
-          QObject* native_view,
+          ContentsViewProxyClient* view_client,
+          QObject* handle,
           OxideQFindController* find_controller,
           OxideQSecurityStatus* security_status,
           WebContext* context,
@@ -77,13 +75,13 @@ class WebView : public InputMethodContextClient,
           RestoreType restore_type);
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
-      QObject* native_view,
+      ContentsViewProxyClient* view_client,
+      QObject* handle,
       OxideQFindController* find_controller,
       OxideQSecurityStatus* security_status,
       OxideQNewViewRequest* new_view_request);
   ~WebView();
 
-  static WebView* FromProxyHandle(WebViewProxyHandle* handle);
   static WebView* FromView(oxide::WebView* view);
 
   WebContext* GetContext() const;
@@ -95,21 +93,17 @@ class WebView : public InputMethodContextClient,
 
  private:
   WebView(WebViewProxyClient* client,
+          ContentsViewProxyClient* view_client,
+          QObject* handle,
           OxideQSecurityStatus* security_status);
 
-  void CommonInit(OxideQFindController* find_controller,
-                  QObject* native_view);
+  float GetLocationBarContentOffsetDip() const;
+
+  void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
 
-  // InputMethodContextClient implementation
-  void SetInputMethodEnabled(bool enabled);
-
   // oxide::WebViewClient implementation
-  blink::WebScreenInfo GetScreenInfo() const override;
-  gfx::Rect GetViewBoundsPix() const override;
-  bool IsVisible() const override;
-  bool HasFocus() const override;
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type) override;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
@@ -143,8 +137,6 @@ class WebView : public InputMethodContextClient,
                            int32_t line_no,
                            const base::string16& source_id) override;
   void WebPreferencesDestroyed() override;
-  void UnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event) override;
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
   void DownloadRequested(const GURL& url,
       const std::string& mime_type,
@@ -158,22 +150,11 @@ class WebView : public InputMethodContextClient,
   bool ShouldHandleNavigation(const GURL& url,
                               WindowOpenDisposition disposition,
                               bool user_gesture) override;
-  oxide::WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params) override;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
   oxide::WebView* CreateNewWebView(
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
       scoped_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(bool active,
-                             const gfx::RectF& bounds) const override;
-  void SwapCompositorFrame() override;
-  void EvictCurrentFrame() override;
-  oxide::InputMethodContext* GetInputMethodContext() const override;
-  void UpdateCursor(const content::WebCursor& cursor) override;
   void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
@@ -224,31 +205,9 @@ class WebView : public InputMethodContextClient,
   bool fullscreen() const override;
   void setFullscreen(bool fullscreen) override;
 
-  WebFrameProxyHandle* rootFrame() const override;
+  QObject* rootFrame() const override;
 
-  WebContextProxyHandle* context() const override;
-
-  void wasResized() override;
-  void screenUpdated() override;
-  void visibilityChanged() override;
-
-  void handleFocusEvent(QFocusEvent* event) override;
-  void handleHoverEvent(QHoverEvent* event,
-                        const QPoint& window_pos,
-                        const QPoint& global_pos) override;
-  void handleInputMethodEvent(QInputMethodEvent* event) override;
-  void handleKeyEvent(QKeyEvent* event) override;
-  void handleMouseEvent(QMouseEvent* event) override;
-  void handleTouchEvent(QTouchEvent* event) override;
-  void handleTouchUngrabEvent() override;
-  void handleWheelEvent(QWheelEvent* event,
-                        const QPoint& window_pos) override;
-  void handleDragEnterEvent(QDragEnterEvent* event) override;
-  void handleDragMoveEvent(QDragMoveEvent* event) override;
-  void handleDragLeaveEvent(QDragLeaveEvent* event) override;
-  void handleDropEvent(QDropEvent* event) override;
-
-  QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
+  QObject* context() const override;
 
   void goBack() override;
   void goForward() override;
@@ -257,7 +216,7 @@ class WebView : public InputMethodContextClient,
 
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
-  QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
+  QList<QObject*>& messageHandlers() override;
 
   int getNavigationEntryCount() const override;
   int getNavigationCurrentEntryIndex() const override;
@@ -277,9 +236,6 @@ class WebView : public InputMethodContextClient,
   QPoint compositorFrameScrollOffsetPix() override;
   QSize compositorFrameContentSizePix() override;
   QSize compositorFrameViewportSizePix() override;
-
-  QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
-  void didCommitCompositorFrame() override;
 
   void setCanTemporarilyDisplayInsecureContent(bool allow) override;
   void setCanTemporarilyRunInsecureContent(bool allow) override;;
@@ -309,19 +265,14 @@ class WebView : public InputMethodContextClient,
 
   void teardownFrameTree() override;
 
-  // This must outlive |view_|
-  scoped_ptr<InputMethodContext> input_method_context_;
+  scoped_ptr<ContentsView> contents_view_;
 
-  scoped_ptr<oxide::WebView> view_;
+  scoped_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
 
   QPointer<OxideQSecurityStatus> security_status_;
-  QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
-
-  UITouchEventFactory touch_event_factory_;
-
-  QSharedPointer<CompositorFrameHandle> compositor_frame_;
+  QList<QObject*> message_handlers_;
 
   bool frame_tree_torn_down_;
 

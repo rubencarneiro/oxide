@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -44,8 +44,6 @@ class WebFrame : public WebFrameProxy,
  public:
   WebFrame(oxide::WebFrame* frame);
 
-  static WebFrame* FromProxyHandle(WebFrameProxyHandle* handle);
-
   static WebFrame* FromSharedWebFrame(oxide::WebFrame* frame);
 
   static WebFrame* FromRenderFrameHost(content::RenderFrameHost* host);
@@ -63,22 +61,22 @@ class WebFrame : public WebFrameProxy,
   // WebFrameProxy implementation
   void setClient(WebFrameProxyClient* client) override;
   QUrl url() const override;
-  WebFrameProxyHandle* parent() const override;
-  QList<WebFrameProxyHandle*> childFrames() const override;
+  QObject* parent() const override;
+  QList<QObject*> childFrames() const override;
   bool sendMessage(const QUrl& context,
                    const QString& msg_id,
                    const QVariant& payload,
-                   ScriptMessageRequestProxyHandle* req) override;
+                   QObject* req) override;
   void sendMessageNoReply(const QUrl& context,
                           const QString& msg_id,
                           const QVariant& payload) override;
-  QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() override;
+  QList<QObject*>& messageHandlers() override;
 
   oxide::WebFrame* frame_; // This is owned in shared/
 
   WebFrameProxyClient* client_;
 
-  QList<ScriptMessageHandlerProxyHandle*> message_handlers_;
+  QList<QObject*> message_handlers_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrame);
 };

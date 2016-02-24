@@ -391,9 +391,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void mousePressEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseMoveEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
+  void touchUngrabEvent() Q_DECL_OVERRIDE;
   void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
   void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
-  void touchUngrabEvent() Q_DECL_OVERRIDE;
   void hoverEnterEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
   void hoverLeaveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
@@ -410,12 +410,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
-
-  Q_PRIVATE_SLOT(d_func(), void screenChanged(QScreen*));
-  Q_PRIVATE_SLOT(d_func(), void windowChangedHelper(QQuickWindow*));
-
-  Q_PRIVATE_SLOT(d_func(), void screenGeometryChanged(const QRect&));
-  Q_PRIVATE_SLOT(d_func(), void screenOrientationChanged(Qt::ScreenOrientation));
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

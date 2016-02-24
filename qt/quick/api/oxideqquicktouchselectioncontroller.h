@@ -33,6 +33,12 @@ class OxideQQuickTouchSelectionControllerPrivate;
 class OxideQQuickWebView;
 class OxideQQuickWebViewPrivate;
 
+namespace oxide {
+namespace qquick {
+class ContentsView;
+}
+}
+
 class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
     : public QObject {
   Q_OBJECT
@@ -70,7 +76,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
 
  private:
   friend class OxideQQuickWebViewPrivate;
-  friend class OxideQQuickWebView;
+  friend class oxide::qquick::ContentsView;
+
   Q_DECL_HIDDEN OxideQQuickTouchSelectionController(OxideQQuickWebView* view);
 
   void onTouchSelectionChanged(bool active, const QRectF& bounds);
