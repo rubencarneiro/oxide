@@ -488,6 +488,26 @@ oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {
   return input_method_context_.get();
 }
 
+void ContentsView::UnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  if (event.skip_in_browser) {
+    return;
+  }
+
+  if (event.type != blink::WebInputEvent::RawKeyDown &&
+      event.type != blink::WebInputEvent::KeyUp) {
+    return;
+  }
+
+  if (!event.os_event) {
+    return;
+  }
+  
+  DCHECK(!event.os_event->isAccepted());
+
+  client_->HandleUnhandledKeyboardEvent(event.os_event);
+}
+
 ContentsView::ContentsView(ContentsViewProxyClient* client,
                            QObject* native_view)
     : client_(client),

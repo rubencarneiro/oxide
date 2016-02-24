@@ -108,6 +108,8 @@ class ContentsView : public ContentsViewProxy,
   void TouchSelectionChanged(bool active,
                              const gfx::RectF& bounds) const override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
+  void UnhandledKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event) override;
 
   ContentsViewProxyClient* client_;
 

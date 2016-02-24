@@ -446,26 +446,6 @@ void WebView::WebPreferencesDestroyed() {
   client_->WebPreferencesReplaced();
 }
 
-void WebView::UnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {
-  if (event.skip_in_browser) {
-    return;
-  }
-
-  if (event.type != blink::WebInputEvent::RawKeyDown &&
-      event.type != blink::WebInputEvent::KeyUp) {
-    return;
-  }
-
-  if (!event.os_event) {
-    return;
-  }
-  
-  DCHECK(!event.os_event->isAccepted());
-
-  client_->HandleUnhandledKeyboardEvent(event.os_event);
-}
-
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {

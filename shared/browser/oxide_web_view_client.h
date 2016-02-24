@@ -37,7 +37,6 @@ class CompositorFrameMetadata;
 
 namespace content {
 struct ContextMenuParams;
-class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderViewHost;
 class WebContents;
@@ -114,9 +113,6 @@ class WebViewClient : public ScriptMessageTarget {
 
   // TODO(chrisccoulson): Make WebPreferences ref-counted and get rid of this
   virtual void WebPreferencesDestroyed();
-
-  virtual void UnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event);
 
   // TODO(chrisccoulson): Merge with SwapCompositorFrame
   // TODO(chrisccoulson): Get rid of |old| and replace with |changed_flags|

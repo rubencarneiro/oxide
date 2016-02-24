@@ -23,6 +23,7 @@
 
 QT_BEGIN_NAMESPACE
 class QCursor;
+class QKeyEvent;
 class QRectF;
 class QScreen;
 QT_END_NAMESPACE
@@ -66,6 +67,8 @@ class ContentsViewProxyClient {
   virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void TouchSelectionChanged(bool active, const QRectF& bounds) = 0;
+
+  virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
  protected:
   ContentsViewProxyClient() : proxy_(nullptr) {}

@@ -85,9 +85,6 @@ bool WebViewClient::AddMessageToConsole(int32_t level,
 
 void WebViewClient::WebPreferencesDestroyed() {}
 
-void WebViewClient::UnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {}
-
 void WebViewClient::FrameMetadataUpdated(
     const cc::CompositorFrameMetadata& old) {}
 

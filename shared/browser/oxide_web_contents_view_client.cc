@@ -73,4 +73,7 @@ InputMethodContext* WebContentsViewClient::GetInputMethodContext() const {
   return nullptr;
 }
 
+void WebContentsViewClient::UnhandledKeyboardEvent(
+    const content::NativeWebKeyboardEvent& event) {}
+
 } // namespace oxide

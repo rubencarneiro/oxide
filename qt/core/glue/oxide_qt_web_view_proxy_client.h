@@ -107,8 +107,6 @@ class WebViewProxyClient {
   virtual void RequestNotificationPermission(
       OxideQPermissionRequest* request) = 0;
 
-  virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
-
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
 
   virtual void DownloadRequested(

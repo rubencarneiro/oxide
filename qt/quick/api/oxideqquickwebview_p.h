@@ -120,7 +120,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
       OxideQMediaAccessPermissionRequest* request) override;
   void RequestNotificationPermission(
       OxideQPermissionRequest* request) override;
-  void HandleUnhandledKeyboardEvent(QKeyEvent *event) override;
   void FrameMetadataUpdated(
       oxide::qt::FrameMetadataChangeFlags flags) override;
   void DownloadRequested(
@@ -176,8 +175,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   QQmlComponent* file_picker_;
 
   bool using_old_load_event_signal_;
-
-  bool handling_unhandled_key_event_;
 
   struct ConstructProps;
   QScopedPointer<ConstructProps> construct_props_;

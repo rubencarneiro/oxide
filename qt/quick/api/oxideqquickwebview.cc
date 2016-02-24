@@ -130,7 +130,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       before_unload_dialog_(nullptr),
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
-      handling_unhandled_key_event_(false),
       construct_props_(new ConstructProps()),
       touch_selection_controller_(
           new OxideQQuickTouchSelectionController(view)) {
@@ -428,22 +427,6 @@ void OxideQQuickWebViewPrivate::HttpAuthenticationRequested(
   }
 
   engine->collectGarbage();
-}
-
-void OxideQQuickWebViewPrivate::HandleUnhandledKeyboardEvent(
-    QKeyEvent* event) {
-  Q_Q(OxideQQuickWebView);
-
-  QQuickWindow* w = q->window();
-  if (!w) {
-    return;
-  }
-
-  Q_ASSERT(!handling_unhandled_key_event_);
-
-  handling_unhandled_key_event_ = true;
-  w->sendEvent(q, event);
-  handling_unhandled_key_event_ = false;
 }
 
 void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
@@ -944,11 +927,6 @@ void OxideQQuickWebView::keyPressEvent(QKeyEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::keyPressEvent(event);
-
-  if (d->handling_unhandled_key_event_) {
-    return;
-  }
-
   d->contents_view_->handleKeyPressEvent(event);
 }
 
@@ -956,11 +934,6 @@ void OxideQQuickWebView::keyReleaseEvent(QKeyEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::keyReleaseEvent(event);
-
-  if (d->handling_unhandled_key_event_) {
-    return;
-  }
-
   d->contents_view_->handleKeyReleaseEvent(event);
 }
 

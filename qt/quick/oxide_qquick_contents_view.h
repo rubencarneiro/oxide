@@ -133,6 +133,7 @@ class ContentsView : public QObject,
       oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void TouchSelectionChanged(bool active, const QRectF& bounds) override;
+  void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;
   QPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
@@ -147,6 +148,8 @@ class ContentsView : public QObject,
   bool received_new_compositor_frame_;
   bool frame_evicted_;
   oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+
+  bool handling_unhandled_key_event_;
 
   Q_DISABLE_COPY(ContentsView)
 };

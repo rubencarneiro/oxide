@@ -639,7 +639,9 @@ void WebView::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  client_->UnhandledKeyboardEvent(event);
+  WebContentsView::FromWebContents(web_contents_.get())
+      ->client()
+      ->UnhandledKeyboardEvent(event);
 }
 
 void WebView::WebContentsCreated(content::WebContents* source,

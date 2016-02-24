@@ -54,6 +54,10 @@ void ContentsView::handleKeyEvent(QKeyEvent* event) {
     return;
   }
 
+  if (handling_unhandled_key_event_) {
+    return;
+  }
+
   proxy()->handleKeyEvent(event);
 }
 
@@ -163,12 +167,26 @@ void ContentsView::TouchSelectionChanged(bool active, const QRectF& bounds) {
   }
 }
 
+void ContentsView::HandleUnhandledKeyboardEvent(QKeyEvent* event) {
+  QQuickWindow* w = item_->window();
+  if (!w) {
+    return;
+  }
+
+  Q_ASSERT(!handling_unhandled_key_event_);
+
+  handling_unhandled_key_event_ = true;
+  w->sendEvent(item_, event);
+  handling_unhandled_key_event_ = false;
+}
+
 ContentsView::ContentsView(QQuickItem* item)
     : item_(item),
       received_new_compositor_frame_(false),
       frame_evicted_(false),
       last_composited_frame_type_(
-          oxide::qt::CompositorFrameHandle::TYPE_INVALID) {
+          oxide::qt::CompositorFrameHandle::TYPE_INVALID),
+      handling_unhandled_key_event_(false) {
   connect(item_, SIGNAL(windowChanged(QQuickWindow*)),
           SLOT(windowChanged(QQuickWindow*)));
 }

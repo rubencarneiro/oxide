@@ -24,6 +24,7 @@
 
 namespace content {
 struct ContextMenuParams;
+class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class WebCursor;
 }
@@ -74,6 +75,9 @@ class WebContentsViewClient {
                                      const gfx::RectF& bounds) const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
+
+  virtual void UnhandledKeyboardEvent(
+      const content::NativeWebKeyboardEvent& event);
 
  protected:
   WebContentsViewClient();

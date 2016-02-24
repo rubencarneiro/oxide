@@ -137,8 +137,6 @@ class WebView : public oxide::WebViewClient,
                            int32_t line_no,
                            const base::string16& source_id) override;
   void WebPreferencesDestroyed() override;
-  void UnhandledKeyboardEvent(
-      const content::NativeWebKeyboardEvent& event) override;
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
   void DownloadRequested(const GURL& url,
       const std::string& mime_type,
