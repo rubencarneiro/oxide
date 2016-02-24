@@ -1137,6 +1137,11 @@ void WebView::handleTouchEvent(QTouchEvent* event) {
   event->accept();
 }
 
+void WebView::handleTouchUngrabEvent() {
+  scoped_ptr<ui::TouchEvent> cancel_event(touch_event_factory_.Cancel());
+  view_->HandleTouchEvent(*cancel_event.get());
+}
+
 void WebView::handleWheelEvent(QWheelEvent* event,
                                const QPoint& window_pos) {
   view_->HandleWheelEvent(

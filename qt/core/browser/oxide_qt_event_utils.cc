@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,7 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
+#include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/vector2d_f.h"
@@ -463,7 +464,14 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
   // for a fling gesture, so we can’t use it.
-  base::TimeDelta timestamp(base::TimeTicks::Now() - base::TimeTicks());
+  base::TimeDelta timestamp = ui::EventTimeForNow();
+
+  if (event->type() == QEvent::TouchCancel) {
+    results->push_back(
+        new ui::TouchEvent(ui::ET_TOUCH_CANCELLED, gfx::Point(), 0, timestamp));
+    touch_point_content_offsets_.clear();
+    return;
+  }
 
   float scale = 1 / device_scale;
 
@@ -508,6 +516,14 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
       touch_point_content_offsets_.erase(touch_point.id());
     }
   }
+}
+
+scoped_ptr<ui::TouchEvent> UITouchEventFactory::Cancel() {
+  ScopedVector<ui::TouchEvent> events;
+  QTouchEvent cancel_event(QEvent::TouchCancel);
+  MakeEvents(&cancel_event, 0.0f, 0.0f, &events);
+  DCHECK_EQ(events.size(), 1);
+  return make_scoped_ptr(new ui::TouchEvent(events.front()));
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,

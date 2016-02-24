@@ -393,6 +393,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void mouseReleaseEvent(QMouseEvent* event) Q_DECL_OVERRIDE;
   void wheelEvent(QWheelEvent* event) Q_DECL_OVERRIDE;
   void touchEvent(QTouchEvent* event) Q_DECL_OVERRIDE;
+  void touchUngrabEvent() Q_DECL_OVERRIDE;
   void hoverEnterEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
   void hoverMoveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
   void hoverLeaveEvent(QHoverEvent* event) Q_DECL_OVERRIDE;
