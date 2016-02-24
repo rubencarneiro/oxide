@@ -890,10 +890,12 @@ void WebContentsView::VisibilityChanged() {
     //  This callback is really to notify the toolkit layer that the
     //  frontbuffer is being dropped
     current_compositor_frame_ = nullptr;
-    client_->EvictCurrentFrame();
+    if (client_) {
+      client_->EvictCurrentFrame();
+    }
   }
 
-  if (IsVisible()) {
+  if (visible) {
     web_contents()->WasShown();
   } else {
     web_contents()->WasHidden();
