@@ -300,6 +300,14 @@ void ContentsView::handleMouseReleaseEvent(QMouseEvent* event) {
   handleMouseEvent(event);
 }
 
+void ContentsView::handleTouchUngrabEvent() {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->handleTouchUngrabEvent();
+}
+
 void ContentsView::handleWheelEvent(QWheelEvent* event) {
   if (!proxy()) {
     return;

@@ -1006,6 +1006,13 @@ void OxideQQuickWebView::mouseReleaseEvent(QMouseEvent* event) {
   d->contents_view_->handleMouseReleaseEvent(event);
 }
 
+void OxideQQuickWebView::touchUngrabEvent() {
+  Q_D(OxideQQuickWebView);
+
+  QQuickItem::touchUngrabEvent();
+  d->contents_view_->handleTouchUngrabEvent();
+}
+
 void OxideQQuickWebView::wheelEvent(QWheelEvent* event) {
   Q_D(OxideQQuickWebView);
 

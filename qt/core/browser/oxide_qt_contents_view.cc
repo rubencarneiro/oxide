@@ -302,6 +302,11 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
   event->accept();
 }
 
+void ContentsView::handleTouchUngrabEvent() {
+  scoped_ptr<ui::TouchEvent> cancel_event(touch_event_factory_.Cancel());
+  view()->HandleTouchEvent(*cancel_event.get());
+}
+
 void ContentsView::handleWheelEvent(QWheelEvent* event,
                                     const QPoint& window_pos) {
   view()->HandleWheelEvent(

@@ -72,6 +72,7 @@ class ContentsView : public QObject,
   void handleMousePressEvent(QMouseEvent* event);
   void handleMouseMoveEvent(QMouseEvent* event);
   void handleMouseReleaseEvent(QMouseEvent* event);
+  void handleTouchUngrabEvent();
   void handleWheelEvent(QWheelEvent* event);
   void handleTouchEvent(QTouchEvent* event);
   void handleHoverEnterEvent(QHoverEvent* event);

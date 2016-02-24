@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,13 @@ bool TouchEventState::IsTouchIdActive(int id) const {
   }
 
   return false;
+}
+
+void TouchEventState::MarkAllTouchPointsInactive() {
+  for (size_t i = 0; i < pointer_count_; ++i) {
+    touch_points_[i].active = false;
+  }
+  active_touch_point_count_ = 0;
 }
 
 void TouchEventState::RemoveInactiveTouchPoints() {
@@ -304,10 +311,11 @@ bool TouchEventState::Update(const ui::TouchEvent& event) {
       break;
     case ui::ET_TOUCH_MOVED:
     case ui::ET_TOUCH_RELEASED:
-    case ui::ET_TOUCH_CANCELLED:
       if (!IsTouchIdActive(event.touch_id())) {
         return false;
       }
+      break;
+    case ui::ET_TOUCH_CANCELLED:
       break;
     default:
       NOTREACHED();
@@ -321,8 +329,10 @@ bool TouchEventState::Update(const ui::TouchEvent& event) {
       break;
     case ui::ET_TOUCH_RELEASED:
     case ui::ET_TOUCH_MOVED:
-    case ui::ET_TOUCH_CANCELLED:
       UpdateTouchPoint(event);
+      break;
+    case ui::ET_TOUCH_CANCELLED:
+      MarkAllTouchPointsInactive();
       break;
     default:
       NOTREACHED();

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #include <QtGlobal>
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -48,6 +49,7 @@ class UITouchEventFactory final {
                   float device_scale,
                   float location_bar_content_offset_dip,
                   ScopedVector<ui::TouchEvent>* results);
+  scoped_ptr<ui::TouchEvent> Cancel();
 
  private:
   std::map<int, double> touch_point_content_offsets_;

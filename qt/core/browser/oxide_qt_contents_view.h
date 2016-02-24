@@ -78,6 +78,7 @@ class ContentsView : public ContentsViewProxy,
   void handleInputMethodEvent(QInputMethodEvent* event) override;
   void handleFocusEvent(QFocusEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
+  void handleTouchUngrabEvent() override;
   void handleWheelEvent(QWheelEvent* event, const QPoint& window_pos) override;
   void handleTouchEvent(QTouchEvent* event) override;
   void handleHoverEvent(QHoverEvent* event,
