@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,11 @@
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
 #include <QObject>
+#include <QScopedPointer>
 #include <QSharedPointer>
 #include <QStringList>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_web_context_proxy.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 
 #include "qt/quick/api/oxideqquickwebcontext.h"
@@ -37,21 +37,25 @@ class QThread;
 QT_END_NAMESPACE
 
 namespace oxide {
+
+namespace qt {
+class WebContextProxy;
+}
+
 namespace qquick {
 namespace webcontextdelegateworker {
 class IOThreadController;
 }
 class WebContextIODelegate;
 }
+
 }
 
 class Q_DECL_EXPORT OxideQQuickWebContextPrivate
     : public QObject,
-      public oxide::qt::WebContextProxyHandle,
       public oxide::qt::WebContextProxyClient {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickWebContext)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebContext, oxide::qt::WebContextProxyHandle)
 
  public:
   ~OxideQQuickWebContextPrivate();
@@ -77,10 +81,6 @@ class Q_DECL_EXPORT OxideQQuickWebContextPrivate
 
  private:
   OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
-
-  oxide::qt::WebContextProxy* proxy() const {
-    return oxide::qt::WebContextProxyHandle::proxy();
-  }
 
   void userScriptUpdated();
   void userScriptWillBeDeleted();
@@ -108,6 +108,10 @@ class Q_DECL_EXPORT OxideQQuickWebContextPrivate
   void DestroyDefault() override;
   void DefaultAudioCaptureDeviceChanged() override;
   void DefaultVideoCaptureDeviceChanged() override;
+
+  OxideQQuickWebContext* q_ptr;
+
+  QScopedPointer<oxide::qt::WebContextProxy> proxy_;
 
   bool constructed_;
 

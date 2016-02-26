@@ -24,12 +24,13 @@
 
 #include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
-class OxideQQuickWebView;
-
 QT_BEGIN_NAMESPACE
+class QQmlComponent;
 class QQmlContext;
 class QQuickItem;
 QT_END_NAMESPACE
+
+class OxideQQuickTouchSelectionController;
 
 namespace oxide {
 namespace qquick {
@@ -39,7 +40,8 @@ class TouchHandleDrawable :
   Q_OBJECT
 
  public:
-  TouchHandleDrawable(OxideQQuickWebView* view);
+  TouchHandleDrawable(QQuickItem* parent,
+                      OxideQQuickTouchSelectionController* controller);
 
  private Q_SLOTS:
   void handleComponentChanged();
@@ -59,7 +61,9 @@ class TouchHandleDrawable :
   QRectF GetVisibleBounds() const;
   float GetDrawableHorizontalPaddingRatio() const;
 
-  QPointer<OxideQQuickWebView> view_;
+  QPointer<QQuickItem> parent_;
+  QPointer<OxideQQuickTouchSelectionController> controller_;
+
   QScopedPointer<QQmlContext> context_;
   QScopedPointer<QQuickItem> item_;
 };

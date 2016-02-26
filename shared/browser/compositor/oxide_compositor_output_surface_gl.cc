@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,39 +30,64 @@
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
-#include "oxide_compositor_thread_proxy.h"
+#include "oxide_compositor_proxy.h"
 
 namespace oxide {
 
-void CompositorOutputSurfaceGL::DetachFromDisplayClient() {
+CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
+    uint32_t surface_id,
+    scoped_refptr<cc::ContextProvider> context_provider,
+    scoped_refptr<CompositorProxy> proxy)
+    : CompositorOutputSurface(surface_id, context_provider, proxy),
+      back_buffer_(nullptr),
+      is_backbuffer_discarded_(false),
+      fbo_(0) {
+  capabilities_.uses_default_gl_framebuffer = false;
+}
+
+CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
   DCHECK(CalledOnValidThread());
 
-  DiscardBackbuffer();
-  while (!pending_buffers_.empty()) {
-    BufferData& buffer = pending_buffers_.front();
-    DiscardBuffer(&buffer);
-    pending_buffers_.pop_front();
+  for (auto& buffer : buffers_) {
+    buffer.available = true;
   }
-
-  CompositorOutputSurface::DetachFromDisplayClient();
+  DiscardBackbuffer();
 }
 
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {
   DCHECK(CalledOnValidThread());
+
   is_backbuffer_discarded_ = false;
 
-  gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
+  if (!back_buffer_) {
+    auto it = std::find_if(buffers_.begin(),
+                           buffers_.end(),
+                           [](const BufferData& buffer) {
+      return buffer.texture_id > 0 && buffer.available;
+    });
 
-  if (!back_buffer_.texture_id && !returned_buffers_.empty()) {
-    back_buffer_ = returned_buffers_.front();
-    returned_buffers_.pop();
-    DCHECK(back_buffer_.size == surface_size_);
+    if (it != buffers_.end()) {
+      back_buffer_ = &(*it);
+      back_buffer_->available = false;
+    }
   }
 
-  if (!back_buffer_.texture_id) {
-    gl->GenTextures(1, &back_buffer_.texture_id);
-    back_buffer_.size = surface_size_;
-    gl->BindTexture(GL_TEXTURE_2D, back_buffer_.texture_id);
+  if (!back_buffer_) {
+    gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
+
+    auto it = std::find_if(buffers_.begin(),
+                           buffers_.end(),
+                           [](const BufferData& buffer) {
+      return buffer.texture_id == 0U;
+    });
+    DCHECK(it != buffers_.end());
+
+    back_buffer_ = &(*it);
+    back_buffer_->available = false;
+    back_buffer_->size = surface_size_;
+
+    gl->GenTextures(1, &back_buffer_->texture_id);
+    gl->BindTexture(GL_TEXTURE_2D, back_buffer_->texture_id);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     gl->TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -78,8 +103,8 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
                    cc::GLDataFormat(format),
                    cc::GLDataType(format),
                    nullptr);
-    gl->GenMailboxCHROMIUM(back_buffer_.mailbox.name);
-    gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, back_buffer_.mailbox.name);
+    gl->GenMailboxCHROMIUM(back_buffer_->mailbox.name);
+    gl->ProduceTextureCHROMIUM(GL_TEXTURE_2D, back_buffer_->mailbox.name);
 
     GLuint64 sync_point = gl->InsertFenceSyncCHROMIUM();
     gl->ShallowFlushCHROMIUM();
@@ -89,32 +114,34 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
     gpu::SyncToken token;
     gl->GenSyncTokenCHROMIUM(sync_point, token.GetData());
 
-    proxy_->MailboxBufferCreated(back_buffer_.mailbox, sync_point);
+    proxy()->MailboxBufferCreated(back_buffer_->mailbox, sync_point);
   }
+
+  DCHECK_NE(back_buffer_->texture_id, 0U);
+  DCHECK(back_buffer_->size == surface_size_);
+  DCHECK(!back_buffer_->available);
 }
 
 void CompositorOutputSurfaceGL::DiscardBackbuffer() {
   DCHECK(CalledOnValidThread());
+
   if (is_backbuffer_discarded_) {
     return;
   }
 
   is_backbuffer_discarded_ = true;
 
-  gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
-
-  if (back_buffer_.texture_id) {
-    DiscardBuffer(&back_buffer_);
-    back_buffer_ = BufferData();
+  if (back_buffer_) {
+    back_buffer_->available = true;
+    back_buffer_ = nullptr;
   }
 
-  while (!returned_buffers_.empty()) {
-    BufferData& buffer = returned_buffers_.front();
-    DiscardBuffer(&buffer);
-    returned_buffers_.pop();
+  for (auto& buffer : buffers_) {
+    DiscardBufferIfPossible(&buffer);
   }
 
   if (fbo_) {
+    gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
     gl->BindFramebuffer(GL_FRAMEBUFFER, fbo_);
     gl->DeleteFramebuffers(1, &fbo_);
     fbo_ = 0;
@@ -139,8 +166,6 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
   DCHECK(CalledOnValidThread());
 
   EnsureBackbuffer();
-  DCHECK(back_buffer_.texture_id);
-  DCHECK(back_buffer_.size == surface_size_);
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
 
@@ -151,31 +176,30 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
   gl->FramebufferTexture2D(GL_FRAMEBUFFER,
                            GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D,
-                           back_buffer_.texture_id,
+                           back_buffer_->texture_id,
                            0);
 }
 
 void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
-  DCHECK(!back_buffer_.mailbox.IsZero());
-  DCHECK(surface_size_ == back_buffer_.size);
-  DCHECK(frame->gl_frame_data->size == back_buffer_.size);
-  DCHECK(!back_buffer_.size.IsEmpty());
+  DCHECK(back_buffer_);
+  DCHECK(!back_buffer_->mailbox.IsZero());
+  DCHECK(surface_size_ == back_buffer_->size);
+  DCHECK(frame->gl_frame_data->size == back_buffer_->size);
+  DCHECK(!back_buffer_->size.IsEmpty());
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
   gl->Flush();
 
-  CompositorFrameData data;
-  data.size_in_pixels = back_buffer_.size;
-  data.device_scale = frame->metadata.device_scale_factor;
-  data.gl_frame_data = make_scoped_ptr(new GLFrameData());
-  data.gl_frame_data->mailbox = back_buffer_.mailbox;
+  scoped_ptr<CompositorFrameData> data(new CompositorFrameData());
+  data->size_in_pixels = back_buffer_->size;
+  data->gl_frame_data = make_scoped_ptr(new GLFrameData());
+  data->gl_frame_data->mailbox = back_buffer_->mailbox;
 
-  DoSwapBuffers(&data);
+  DoSwapBuffers(std::move(data));
 
-  pending_buffers_.push_back(back_buffer_);
-  back_buffer_ = BufferData();
+  back_buffer_ = nullptr;
 }
 
 void CompositorOutputSurfaceGL::ReclaimResources(
@@ -184,46 +208,49 @@ void CompositorOutputSurfaceGL::ReclaimResources(
   DCHECK_EQ(ack.software_frame_id, 0U);
   DCHECK(!ack.gl_frame_mailbox.IsZero());
 
-  std::deque<BufferData>::iterator it;
-  for (it = pending_buffers_.begin(); it != pending_buffers_.end(); ++it) {
-    DCHECK(!it->mailbox.IsZero());
-    if (memcmp(it->mailbox.name,
-               ack.gl_frame_mailbox.name,
-               sizeof(it->mailbox.name)) == 0) {
-      break;
-    }
+  BufferData& buffer = GetBufferDataForMailbox(ack.gl_frame_mailbox);
+  DCHECK(!buffer.available);
+  buffer.available = true;
+
+  if (is_backbuffer_discarded_ || buffer.size != surface_size_) {
+    DiscardBufferIfPossible(&buffer);
   }
-
-  CHECK(it != pending_buffers_.end());
-
-  it->sync_point = 0;
-
-  if (!is_backbuffer_discarded_ && it->size == surface_size_) {
-    returned_buffers_.push(*it);
-  } else {
-    DiscardBuffer(&(*it));
-  }
-
-  pending_buffers_.erase(it);
 
   CompositorOutputSurface::ReclaimResources(ack);
 }
 
-void CompositorOutputSurfaceGL::DiscardBuffer(BufferData* buffer) {
+CompositorOutputSurfaceGL::BufferData&
+CompositorOutputSurfaceGL::GetBufferDataForMailbox(
+    const gpu::Mailbox& mailbox) {
+  auto it = std::find_if(buffers_.begin(),
+                         buffers_.end(),
+                         [&mailbox](const BufferData& buffer) {
+    return memcmp(buffer.mailbox.name,
+                  mailbox.name,
+                  sizeof(mailbox.name)) == 0;
+  });
+  DCHECK(it != buffers_.end());
+
+  return *it;
+}
+
+void CompositorOutputSurfaceGL::DiscardBufferIfPossible(BufferData* buffer) {
+  if (!buffer->available) {
+    return;
+  }
+
+  if (buffer->texture_id == 0) {
+    return;
+  }
+
+  DCHECK(!buffer->mailbox.IsZero());
+
   context_provider_->ContextGL()->DeleteTextures(1, &buffer->texture_id);
-  proxy_->MailboxBufferDestroyed(buffer->mailbox);
-}
+  proxy()->MailboxBufferDestroyed(buffer->mailbox);
 
-CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
-    uint32_t surface_id,
-    scoped_refptr<cc::ContextProvider> context_provider,
-    scoped_refptr<CompositorThreadProxy> proxy)
-    : CompositorOutputSurface(surface_id, context_provider, proxy),
-      is_backbuffer_discarded_(false),
-      fbo_(0) {
-  capabilities_.uses_default_gl_framebuffer = false;
+  buffer->texture_id = 0;
+  buffer->mailbox.SetZero();
+  buffer->size = gfx::Size();
 }
-
-CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {}
 
 } // namespace oxide

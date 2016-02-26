@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 #include "oxideqquickuserscript.h"
 #include "oxideqquickuserscript_p.h"
 
+#include "qt/core/glue/oxide_qt_user_script_proxy.h"
 #include "qt/quick/oxide_qquick_init.h"
 
 #include "oxideqquickwebcontext_p.h"
@@ -34,12 +35,9 @@ struct OxideQQuickUserScriptPrivate::ConstructProps {
   QUrl context;
 };
 
-OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickUserScript,
-                                    oxide::qt::UserScriptProxyHandle);
-
 OxideQQuickUserScriptPrivate::OxideQQuickUserScriptPrivate(
     OxideQQuickUserScript* q)
-    : oxide::qt::UserScriptProxyHandle(q),
+    : q_ptr(q),
       construct_props_(new ConstructProps()) {}
 
 void OxideQQuickUserScriptPrivate::ScriptLoadFailed() {
@@ -86,13 +84,13 @@ void OxideQQuickUserScript::componentComplete() {
   // Script loading uses Chromium's file thread
   oxide::qquick::EnsureChromiumStarted();
 
-  d->set_proxy(oxide::qt::UserScriptProxy::create(d, d->url_));
+  d->proxy_.reset(oxide::qt::UserScriptProxy::create(d, this, d->url_));
 
-  d->proxy()->setEmulateGreasemonkey(
+  d->proxy_->setEmulateGreasemonkey(
       d->construct_props_->emulate_greasemonkey);
-  d->proxy()->setMatchAllFrames(d->construct_props_->match_all_frames);
-  d->proxy()->setIncognitoEnabled(d->construct_props_->incognito_enabled);
-  d->proxy()->setContext(d->construct_props_->context);
+  d->proxy_->setMatchAllFrames(d->construct_props_->match_all_frames);
+  d->proxy_->setIncognitoEnabled(d->construct_props_->incognito_enabled);
+  d->proxy_->setContext(d->construct_props_->context);
 
   d->construct_props_.reset();
 }
@@ -117,7 +115,7 @@ QUrl OxideQQuickUserScript::url() const {
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
 
-  if (d->proxy()) {
+  if (d->proxy_) {
     qWarning() << "OxideQQuickUserScript: url is a construct-only parameter";
     return;
   }
@@ -133,11 +131,11 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     return d->construct_props_->emulate_greasemonkey;
   }
 
-  return d->proxy()->emulateGreasemonkey();
+  return d->proxy_->emulateGreasemonkey();
 }
 
 void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
@@ -147,10 +145,10 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
     return;
   }
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     d->construct_props_->emulate_greasemonkey = emulate_greasemonkey;
   } else {
-    d->proxy()->setEmulateGreasemonkey(emulate_greasemonkey);
+    d->proxy_->setEmulateGreasemonkey(emulate_greasemonkey);
   }
 
   emit scriptPropertyChanged();
@@ -159,11 +157,11 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
 bool OxideQQuickUserScript::matchAllFrames() const {
   Q_D(const OxideQQuickUserScript);
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     return d->construct_props_->match_all_frames;
   }
 
-  return d->proxy()->matchAllFrames();
+  return d->proxy_->matchAllFrames();
 }
 
 void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
@@ -173,10 +171,10 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
     return;
   }
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     d->construct_props_->match_all_frames = match_all_frames;
   } else {
-    d->proxy()->setMatchAllFrames(match_all_frames);
+    d->proxy_->setMatchAllFrames(match_all_frames);
   }
 
   emit scriptPropertyChanged();
@@ -185,11 +183,11 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
 bool OxideQQuickUserScript::incognitoEnabled() const {
   Q_D(const OxideQQuickUserScript);
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     return d->construct_props_->incognito_enabled;
   }
 
-  return d->proxy()->incognitoEnabled();
+  return d->proxy_->incognitoEnabled();
 }
 
 void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
@@ -199,10 +197,10 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
     return;
   }
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     d->construct_props_->incognito_enabled = incognito_enabled;
   } else {
-    d->proxy()->setIncognitoEnabled(incognito_enabled);
+    d->proxy_->setIncognitoEnabled(incognito_enabled);
   }
 
   emit scriptPropertyChanged();
@@ -211,11 +209,11 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
 QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     return d->construct_props_->context;
   }
 
-  return d->proxy()->context();
+  return d->proxy_->context();
 }
 
 void OxideQQuickUserScript::setContext(const QUrl& context) {
@@ -230,10 +228,10 @@ void OxideQQuickUserScript::setContext(const QUrl& context) {
     return;
   }
 
-  if (!d->proxy()) {
+  if (!d->proxy_) {
     d->construct_props_->context = context;
   } else {
-    d->proxy()->setContext(context);
+    d->proxy_->setContext(context);
   }
 
   emit scriptPropertyChanged();

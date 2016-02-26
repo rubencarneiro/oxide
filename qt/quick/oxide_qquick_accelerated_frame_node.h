@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,11 +24,10 @@
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
+class QQuickItem;
 class QSGTexture;
 class QSize;
 QT_END_NAMESPACE
-
-class OxideQQuickWebView;
 
 namespace oxide {
 
@@ -40,13 +39,13 @@ namespace qquick {
 
 class AcceleratedFrameNode final : public QSGSimpleTextureNode {
  public:
-  AcceleratedFrameNode(OxideQQuickWebView* view);
+  AcceleratedFrameNode(QQuickItem* item);
   ~AcceleratedFrameNode();
 
   void updateNode(QSharedPointer<oxide::qt::CompositorFrameHandle> handle);
 
  private:
-  OxideQQuickWebView* view_;
+  QQuickItem* item_;
 
   QSharedPointer<oxide::qt::CompositorFrameHandle> handle_;
   QScopedPointer<QSGTexture> texture_;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,19 +19,22 @@
 #define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_REQUEST_P_P_H_
 
 #include <QJSValue>
+#include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
 #include "qt/core/glue/oxide_qt_script_message_request_proxy_client.h"
 
 class OxideQQuickScriptMessageRequest;
 
+namespace oxide {
+namespace qt {
+class ScriptMessageRequestProxy;
+}
+}
+
 class OxideQQuickScriptMessageRequestPrivate
-    : public oxide::qt::ScriptMessageRequestProxyHandle,
-      public oxide::qt::ScriptMessageRequestProxyClient {
+    : public oxide::qt::ScriptMessageRequestProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickScriptMessageRequest)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
-                                      oxide::qt::ScriptMessageRequestProxyHandle);
 
  public:
   OxideQQuickScriptMessageRequestPrivate(
@@ -44,6 +47,10 @@ class OxideQQuickScriptMessageRequestPrivate
   // oxide::qt::ScriptMessageRequestProxyClient
   void ReceiveReply(const QVariant& payload) override;
   void ReceiveError(int error, const QVariant& payload) override;
+
+  OxideQQuickScriptMessageRequest* q_ptr;
+
+  QScopedPointer<oxide::qt::ScriptMessageRequestProxy> proxy_;
 
   QJSValue reply_callback;
   QJSValue error_callback;

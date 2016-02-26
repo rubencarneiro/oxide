@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,9 @@
 #ifndef _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 #define _OXIDE_QT_QUICK_API_WEB_FRAME_P_P_H_
 
-#include <memory>
+#include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_web_frame_proxy.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 
 class OxideQQuickScriptMessageHandler;
@@ -31,11 +30,14 @@ QT_BEGIN_NAMESPACE
 template <typename T> class QQmlListProperty;
 QT_END_NAMESPACE
 
-class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
-                                   public oxide::qt::WebFrameProxyClient {
+namespace oxide {
+namespace qt {
+class WebFrameProxy;
+}
+}
+
+class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebFrame)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickWebFrame,
-                                      oxide::qt::WebFrameProxyHandle)
 
  public:
   static OxideQQuickWebFrame* create(oxide::qt::WebFrameProxy* proxy);
@@ -45,10 +47,6 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
  private:
   OxideQQuickWebFramePrivate(oxide::qt::WebFrameProxy* proxy,
                              OxideQQuickWebFrame* q);
-
-  oxide::qt::WebFrameProxy* proxy() const {
-    return oxide::qt::WebFrameProxyHandle::proxy();
-  }
 
   static int childFrame_count(QQmlListProperty<OxideQQuickWebFrame>* prop);
   static OxideQQuickWebFrame* childFrame_at(
@@ -64,6 +62,10 @@ class OxideQQuickWebFramePrivate : public oxide::qt::WebFrameProxyHandle,
   void LoadCommitted() override;
   void ChildFramesChanged() override;
   void DestroyFrame() override;
+
+  OxideQQuickWebFrame* q_ptr;
+
+  QScopedPointer<oxide::qt::WebFrameProxy> proxy_;
 
   Q_DISABLE_COPY(OxideQQuickWebFramePrivate);
 };

@@ -85,8 +85,8 @@ class RenderWidgetHostView final :
     return selection_range_;
   }
 
-  const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
-    return compositor_frame_metadata_;
+  const cc::CompositorFrameMetadata& last_submitted_frame_metadata() const {
+    return last_submitted_frame_metadata_;
   }
 
   const content::WebCursor& current_cursor() const { return current_cursor_; }
@@ -178,6 +178,7 @@ class RenderWidgetHostView final :
 
   // CompositorObserver implementation
   void CompositorDidCommit() final;
+  void CompositorWillRequestSwapFrame() final;
 
   // GestureProviderClient implementation
   void OnGestureEvent(const blink::WebGestureEvent& event) final;
@@ -241,7 +242,9 @@ class RenderWidgetHostView final :
   bool is_showing_;
   gfx::Size last_size_;
 
-  cc::CompositorFrameMetadata compositor_frame_metadata_;
+  cc::CompositorFrameMetadata last_submitted_frame_metadata_;
+  cc::CompositorFrameMetadata committed_frame_metadata_;
+  cc::CompositorFrameMetadata displayed_frame_metadata_;
 
   bool top_controls_shrink_blink_size_;
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -228,14 +228,13 @@ void PopupMenuContext::cancel() {
 void WebPopupMenu::Show(const QRect& bounds,
                         const QList<oxide::qt::MenuItem>& items,
                         bool allow_multiple_selection) {
-  if (!view_) {
+  if (!parent_) {
     qWarning() << "WebPopupMenu::Show: Can't show after the view has gone";
     client_->cancel();
     return;
   }
 
-  QQmlComponent* popup_component = view_->popupMenu();
-  if (!popup_component) {
+  if (!component_) {
     qWarning() <<
         "WebPopupMenu::Show: Content requested a popup menu, but the "
         "application hasn't provided one";
@@ -246,9 +245,9 @@ void WebPopupMenu::Show(const QRect& bounds,
   PopupMenuContext* contextObject =
       new PopupMenuContext(client_, bounds, items, allow_multiple_selection);
 
-  QQmlContext* baseContext = popup_component->creationContext();
+  QQmlContext* baseContext = component_->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(view_);
+    baseContext = QQmlEngine::contextForObject(parent_);
   }
   popup_context_.reset(new QQmlContext(baseContext));
 
@@ -257,7 +256,7 @@ void WebPopupMenu::Show(const QRect& bounds,
   contextObject->setParent(popup_context_.data());
 
   popup_item_.reset(qobject_cast<QQuickItem *>(
-      popup_component->beginCreate(popup_context_.data())));
+      component_->beginCreate(popup_context_.data())));
   if (!popup_item_) {
     qWarning() <<
         "WebPopupMenu::Show: Failed to create instance of Qml popup component";
@@ -265,11 +264,17 @@ void WebPopupMenu::Show(const QRect& bounds,
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(
-      popup_item_.data());
-  popup_item_->setParentItem(view_);
+  // This is a bit hacky - not sure what we'll do here if we introduce
+  // other items that can use a ContentView and which support custom UI
+  // components
+  OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
+  if (web_view) {
+    OxideQQuickWebViewPrivate::get(web_view)
+        ->addAttachedPropertyTo(popup_item_.data());
+  }
+  popup_item_->setParentItem(parent_);
 
-  popup_component->completeCreate();
+  component_->completeCreate();
 }
 
 void WebPopupMenu::Hide() {
@@ -278,10 +283,12 @@ void WebPopupMenu::Hide() {
   }
 }
 
-WebPopupMenu::WebPopupMenu(OxideQQuickWebView* view,
+WebPopupMenu::WebPopupMenu(QQuickItem* parent,
+                           QQmlComponent* component,
                            oxide::qt::WebPopupMenuProxyClient* client)
     : client_(client),
-      view_(view) {}
+      parent_(parent),
+      component_(component) {}
 
 WebPopupMenu::~WebPopupMenu() {}
 

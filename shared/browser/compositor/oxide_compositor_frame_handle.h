@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,24 +24,27 @@
 
 namespace oxide {
 
+class Compositor;
 class CompositorFrameData;
-class CompositorThreadProxy;
+class CompositorProxy;
+class CompositorSingleThreadProxy;
 
 class CompositorFrameHandle
     : public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
-  CompositorFrameHandle(scoped_refptr<CompositorThreadProxy> proxy,
+  CompositorFrameHandle(scoped_refptr<CompositorProxy> proxy,
                         scoped_ptr<CompositorFrameData> data);
 
   CompositorFrameData* data() const { return data_.get(); }
 
  private:
-  friend class CompositorThreadProxy;
+  friend class Compositor;
+  friend class CompositorSingleThreadProxy;
   friend class base::RefCountedThreadSafe<CompositorFrameHandle>;
 
   ~CompositorFrameHandle();
 
-  scoped_refptr<CompositorThreadProxy> proxy_;
+  scoped_refptr<CompositorProxy> proxy_;
   scoped_ptr<CompositorFrameData> data_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorFrameHandle);

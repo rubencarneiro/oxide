@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,9 +22,10 @@
 #include <QtGlobal>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include "qt/core/glue/oxide_qt_proxy_base.h"
 
 QT_BEGIN_NAMESPACE
+class QObject;
 class QString;
 class QVariant;
 QT_END_NAMESPACE
@@ -32,18 +33,10 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class ScriptMessageHandlerProxy;
-class ScriptMessageRequestProxy;
 class WebFrame;
-class WebFrameProxy;
 class WebFrameProxyClient;
 
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageRequestProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
-
-class Q_DECL_EXPORT WebFrameProxy {
-  OXIDE_Q_DECL_PROXY_FOR(WebFrame);
+class Q_DECL_EXPORT WebFrameProxy : public ProxyBase<WebFrame> {
  public:
   virtual ~WebFrameProxy() {}
 
@@ -51,18 +44,18 @@ class Q_DECL_EXPORT WebFrameProxy {
 
   virtual QUrl url() const = 0;
 
-  virtual WebFrameProxyHandle* parent() const = 0;
-  virtual QList<WebFrameProxyHandle*> childFrames() const = 0;
+  virtual QObject* parent() const = 0;
+  virtual QList<QObject*> childFrames() const = 0;
 
   virtual bool sendMessage(const QUrl& context,
                            const QString& msg_id,
                            const QVariant& payload,
-                           ScriptMessageRequestProxyHandle* req) = 0;
+                           QObject* req) = 0;
   virtual void sendMessageNoReply(const QUrl& context,
                                   const QString& msg_id,
                                   const QVariant& payload) = 0;
 
-  virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
+  virtual QList<QObject*>& messageHandlers() = 0;
 };
 
 } // namespace qt

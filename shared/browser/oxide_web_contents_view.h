@@ -18,29 +18,66 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
+#include <queue>
+#include <vector>
+
+#include "base/callback.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "cc/output/compositor_frame_metadata.h"
+#include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
+#include "ui/gfx/geometry/rect.h"
+
+#include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/oxide_drag_source_client.h"
+#include "shared/browser/oxide_mouse_event_state.h"
+#include "shared/browser/oxide_render_object_id.h"
+#include "shared/browser/oxide_render_widget_host_view_container.h"
+#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
-#include "shared/browser/oxide_drag_source_client.h"
-#include "shared/browser/oxide_render_object_id.h"
+namespace blink {
+class WebMouseEvent;
+class WebMouseWheelEvent;
+}
+
+namespace cc {
+class SolidColorLayer;
+}
 
 namespace content {
+class NativeWebKeyboardEvent;
+class RenderWidgetHost;
+class WebContents;
 class WebContentsImpl;
 }
 
 namespace ui {
+class TouchEvent;
 class TouchSelectionController;
 }
 
 namespace oxide {
 
+class Compositor;
+class CompositorFrameHandle;
 class DragSource;
-class RenderWidgetHostViewContainer;
+class RenderWidgetHostView;
+class WebContentsViewClient;
+class WebPopupMenu;
 
 class WebContentsView : public content::WebContentsViewOxide,
-                        public DragSourceClient {
+                        public content::WebContentsObserver,
+                        public CompositorClient,
+                        public CompositorObserver,
+                        public DragSourceClient,
+                        public InputMethodContextObserver,
+                        public RenderWidgetHostViewContainer {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -48,7 +85,29 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   static WebContentsView* FromWebContents(content::WebContents* contents);
 
-  void SetContainer(RenderWidgetHostViewContainer* container);
+  content::WebContents* GetWebContents() const;
+
+  WebContentsViewClient* client() const { return client_; }
+
+  void SetClient(WebContentsViewClient* client);
+
+  void set_editing_capabilities_changed_callback(
+      const base::Closure& callback) {
+    editing_capabilities_changed_callback_ = callback;
+  }
+
+  bool IsVisible() const;
+  bool HasFocus() const;
+
+  gfx::Rect GetBoundsPix() const;
+  gfx::Rect GetBoundsDip() const;
+
+  blink::WebScreenInfo GetScreenInfo() const;
+
+  void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
+  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleTouchEvent(const ui::TouchEvent& event);
+  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
 
   // XXX(chrisccoulson): Make a new class for these events - we don't use
   //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
@@ -63,10 +122,38 @@ class WebContentsView : public content::WebContentsViewOxide,
   blink::WebDragOperation HandleDrop(const gfx::Point& location,
                                      int key_modifiers);
 
+  Compositor* GetCompositor() const;
+  CompositorFrameHandle* GetCompositorFrameHandle() const;
+  void DidCommitCompositorFrame();
+
+  const cc::CompositorFrameMetadata& committed_frame_metadata() const {
+    return committed_frame_metadata_;
+  }
+
+  void WasResized();
+  void VisibilityChanged();
+  void FocusChanged();
+  void ScreenUpdated();
+
  private:
   WebContentsView(content::WebContents* web_contents);
 
-  ui::TouchSelectionController* GetTouchSelectionController();
+  content::WebContentsImpl* web_contents_impl() const;
+
+  // Return the TouchSelectionController for the current RWHV, or interstitial
+  // RWHV if one is attached. Ignores fullscreen RWHVs
+  ui::TouchSelectionController* GetTouchSelectionController() const;
+
+  // Return the current RWHV, or interstitial RWHV if there is one. If a
+  // fullscreen RWHV is displayed, it will return this
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
+
+  // Return the current RWH, or interstitial RWH if there is one. If a
+  // fullscreen RWH is displayed, it will return this
+  content::RenderWidgetHost* GetRenderWidgetHost() const;
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeScrollFocusedEditableNodeIntoView();
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -111,12 +198,51 @@ class WebContentsView : public content::WebContentsViewOxide,
                      bool allow_multiple_selection) override;
   void HidePopupMenu() override;
 
+  // content::WebContentsObserver implementation
+  void RenderViewHostChanged(content::RenderViewHost* old_host,
+                             content::RenderViewHost* new_host) override;
+  void DidNavigateMainFrame(
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) override;
+  void DidShowFullscreenWidget(int routing_id) override;
+  void DidDestroyFullscreenWidget(int routing_id) override;
+  void DidAttachInterstitialPage() override;
+  void DidDetachInterstitialPage() override;
+
+  // CompositorClient implementation
+  void CompositorSwapFrame(CompositorFrameHandle* handle) override;
+
+  // CompositorObserver implementation
+  void CompositorDidCommit() override;
+
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
 
-  content::WebContentsImpl* web_contents_;
+  // InputMethodContextObserver implementation
+  void InputPanelVisibilityChanged() override;
 
-  RenderWidgetHostViewContainer* container_;
+  // RenderWidgetHostViewContainer implementation
+  void AttachLayer(scoped_refptr<cc::Layer> layer) override;
+  void DetachLayer(scoped_refptr<cc::Layer> layer) override;
+  void CursorChanged() override;
+  gfx::Size GetViewSizePix() const override;
+  gfx::Rect GetViewBoundsDip() const override;
+  bool HasFocus(const RenderWidgetHostView* view) const override;
+  bool IsFullscreen() const override;
+  float GetLocationBarHeightDip() const override;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  void TouchSelectionChanged() const override;
+  void EditingCapabilitiesChanged() override;
+
+  WebContentsViewClient* client_;
+  base::Closure editing_capabilities_changed_callback_;
+
+  scoped_ptr<Compositor> compositor_;
+  scoped_refptr<cc::SolidColorLayer> root_layer_;
+
+  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
+  std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
+  std::queue<uint32_t> received_surface_ids_;
 
   scoped_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
@@ -124,6 +250,15 @@ class WebContentsView : public content::WebContentsViewOxide,
   RenderWidgetHostID current_drag_target_;
 
   scoped_ptr<DragSource> drag_source_;
+
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
+
+  MouseEventState mouse_state_;
+  TouchEventState touch_state_;
+
+  cc::CompositorFrameMetadata committed_frame_metadata_;
+
+  RenderWidgetHostID interstitial_rwh_id_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

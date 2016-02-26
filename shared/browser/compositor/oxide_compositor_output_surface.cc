@@ -19,13 +19,47 @@
 
 #include <utility>
 
+#include "base/logging.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
 
+#include "oxide_compositor.h"
 #include "oxide_compositor_frame_data.h"
-#include "oxide_compositor_thread_proxy.h"
+#include "oxide_compositor_proxy.h"
 
 namespace oxide {
+
+CompositorOutputSurface::CompositorOutputSurface(
+    uint32_t surface_id,
+    scoped_refptr<cc::ContextProvider> context_provider,
+    scoped_refptr<CompositorProxy> proxy)
+    : cc::OutputSurface(context_provider),
+      proxy_(proxy),
+      surface_id_(surface_id) {
+  DetachFromThread();
+}
+
+CompositorOutputSurface::CompositorOutputSurface(
+    uint32_t surface_id,
+    scoped_ptr<cc::SoftwareOutputDevice> software_device,
+    scoped_refptr<CompositorProxy> proxy)
+    : cc::OutputSurface(std::move(software_device)),
+      proxy_(proxy),
+      surface_id_(surface_id) {
+  DetachFromThread();
+}
+
+void CompositorOutputSurface::DoSwapBuffers(
+    scoped_ptr<CompositorFrameData> frame) {
+  DCHECK(CalledOnValidThread());
+
+  DCHECK(frame->gl_frame_data || frame->software_frame_data);
+
+  frame->surface_id = surface_id_;
+
+  proxy_->SwapCompositorFrame(std::move(frame));
+  client_->DidSwapBuffers();
+}
 
 bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   DCHECK(CalledOnValidThread());
@@ -37,51 +71,16 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   return true;
 }
 
-void CompositorOutputSurface::DetachFromDisplayClient() {
+CompositorOutputSurface::~CompositorOutputSurface() {
   DCHECK(CalledOnValidThread());
   proxy_->SetOutputSurface(nullptr);
-  DetachFromThread();
 }
-
-CompositorOutputSurface::CompositorOutputSurface(
-    uint32_t surface_id,
-    scoped_refptr<cc::ContextProvider> context_provider,
-    scoped_refptr<CompositorThreadProxy> proxy)
-    : cc::OutputSurface(context_provider),
-      proxy_(proxy),
-      surface_id_(surface_id) {
-  DetachFromThread();
-}
-
-CompositorOutputSurface::CompositorOutputSurface(
-    uint32_t surface_id,
-    scoped_ptr<cc::SoftwareOutputDevice> software_device,
-    scoped_refptr<CompositorThreadProxy> proxy)
-    : cc::OutputSurface(std::move(software_device)),
-      proxy_(proxy),
-      surface_id_(surface_id) {
-  DetachFromThread();
-}
-
-void CompositorOutputSurface::DoSwapBuffers(CompositorFrameData* frame) {
-  DCHECK(CalledOnValidThread());
-  DCHECK(frame->gl_frame_data || frame->software_frame_data);
-
-  frame->surface_id = surface_id();
-
-  proxy_->SwapCompositorFrame(frame);
-  client_->DidSwapBuffers();
-}
-
-CompositorOutputSurface::~CompositorOutputSurface() {}
 
 void CompositorOutputSurface::DidSwapBuffers() {
-  DCHECK(CalledOnValidThread());
   client_->DidSwapBuffersComplete();
 }
 
 void CompositorOutputSurface::ReclaimResources(const CompositorFrameAck& ack) {
-  DCHECK(CalledOnValidThread());
   cc::CompositorFrameAck unused; // Not used for the GL or software renderer
   cc::OutputSurface::ReclaimResources(&unused);
 }

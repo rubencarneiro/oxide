@@ -15,34 +15,49 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_contents_native_view_data.h"
+#include "oxide_qt_proxy_base.h"
 
 #include <QObject>
+#include <QVariant>
+
+#include "base/logging.h"
 
 namespace oxide {
 namespace qt {
 
-DEFINE_WEB_CONTENTS_USER_DATA_KEY(ContentsNativeViewData);
-
-ContentsNativeViewData::ContentsNativeViewData(QObject* native_view)
-    : native_view_(native_view) {}
-
-ContentsNativeViewData::~ContentsNativeViewData() {}
-
-// static
-void ContentsNativeViewData::CreateForWebContents(
-    content::WebContents* contents,
-    QObject* native_view) {
-  DCHECK(contents);
-  DCHECK(native_view);
-  if (!FromWebContents(contents)) {
-    contents->SetUserData(UserDataKey(),
-                          new ContentsNativeViewData(native_view));
-  }
+namespace {
+const char g_ProxyPropertyName[] = "_oxide_PrivateProxyObject";
 }
 
-QObject* ContentsNativeViewData::GetNativeView() const {
-  return native_view_;
+// static
+void* ProxyBasePrivate::ProxyFromHandle(QObject* handle) {
+  if (!handle) {
+    return nullptr;
+  }
+
+  return handle->property(g_ProxyPropertyName).value<void*>();
+}
+
+ProxyBasePrivate::ProxyBasePrivate(void* proxy)
+    : proxy_(proxy) {
+  DCHECK(proxy);
+}
+
+ProxyBasePrivate::~ProxyBasePrivate() {}
+
+void ProxyBasePrivate::SetHandle(QObject* handle) {
+  if (handle == handle_) {
+    return;
+  }
+  if (handle_) {
+    DCHECK_EQ(ProxyFromHandle(handle_), proxy_);
+    handle_->setProperty(g_ProxyPropertyName, QVariant());
+  }
+  handle_ = handle;
+  if (handle_) {
+    DCHECK(!ProxyFromHandle(handle_));
+    handle_->setProperty(g_ProxyPropertyName, QVariant::fromValue(proxy_));
+  }
 }
 
 } // namespace qt

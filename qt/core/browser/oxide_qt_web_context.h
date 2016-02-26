@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -71,11 +71,10 @@ class WebContextGetter : public base::RefCountedThreadSafe<WebContextGetter> {
 class WebContext : public WebContextProxy,
                    public oxide::MediaCaptureDevicesContextClient {
  public:
-  WebContext(WebContextProxyClient* client);
+  WebContext(WebContextProxyClient* client, QObject* handle);
   ~WebContext();
 
   static WebContext* FromBrowserContext(oxide::BrowserContext* context);
-  static WebContext* FromProxyHandle(WebContextProxyHandle* handle);
 
   static WebContext* GetDefault();
   static void DestroyDefault();
@@ -112,7 +111,7 @@ class WebContext : public WebContextProxy,
   void setCachePath(const QUrl& url) override;
   QString acceptLangs() const override;
   void setAcceptLangs(const QString& langs) override;
-  QList<UserScriptProxyHandle*>& userScripts() override;
+  QList<QObject*>& userScripts() override;
   void updateUserScripts() override;
   bool isInitialized() const override;
   CookiePolicy cookiePolicy() const override;
@@ -166,7 +165,7 @@ class WebContext : public WebContextProxy,
 
   bool handling_cookie_request_;
 
-  QList<UserScriptProxyHandle*> user_scripts_;
+  QList<QObject*> user_scripts_;
 
   base::WeakPtrFactory<WebContext> weak_factory_;
 

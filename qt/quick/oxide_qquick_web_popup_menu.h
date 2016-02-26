@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,9 +23,8 @@
 
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
 
-class OxideQQuickWebView;
-
 QT_BEGIN_NAMESPACE
+class QQmlComponent;
 class QQmlContext;
 class QQuickItem;
 QT_END_NAMESPACE
@@ -40,7 +39,8 @@ namespace qquick {
 
 class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
  public:
-  WebPopupMenu(OxideQQuickWebView* view,
+  WebPopupMenu(QQuickItem* parent,
+               QQmlComponent* component,
                oxide::qt::WebPopupMenuProxyClient* client);
   ~WebPopupMenu() override;
 
@@ -52,7 +52,8 @@ class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
   void Hide() override;
 
   oxide::qt::WebPopupMenuProxyClient* client_;
-  QPointer<OxideQQuickWebView> view_;
+  QPointer<QQuickItem> parent_;
+  QPointer<QQmlComponent> component_;
   QScopedPointer<QQuickItem> popup_item_;
   QScopedPointer<QQmlContext> popup_context_;
 };

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -47,8 +47,8 @@
 #include "oxide_compositor_observer.h"
 #include "oxide_compositor_output_surface_gl.h"
 #include "oxide_compositor_output_surface_software.h"
+#include "oxide_compositor_single_thread_proxy.h"
 #include "oxide_compositor_software_output_device.h"
-#include "oxide_compositor_thread_proxy.h"
 #include "oxide_compositor_utils.h"
 
 namespace oxide {
@@ -87,31 +87,16 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 
 Compositor::Compositor(CompositorClient* client)
     : client_(client),
+      proxy_(new CompositorSingleThreadProxy(this)),
       surface_id_allocator_(
           CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
-      proxy_(new CompositorThreadProxy(this)),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create(cc::LayerSettings())),
       next_output_surface_id_(1),
-      weak_factory_(this) {
-  DCHECK(CalledOnValidThread());
-}
-
-void Compositor::SendSwapCompositorFrameToClient(
-    scoped_ptr<CompositorFrameData> frame) {
-  DCHECK(CalledOnValidThread());
-  // XXX: What if we are hidden?
-  // XXX: Should we check that surface_id matches the last created
-  //  surface?
-  scoped_refptr<CompositorFrameHandle> handle =
-      new CompositorFrameHandle(proxy_, std::move(frame));
-  client_->CompositorSwapFrame(handle.get());
-}
+      weak_factory_(this) {}
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
-  DCHECK(CalledOnValidThread());
-
   uint32_t output_surface_id = next_output_surface_id_++;
 
   scoped_refptr<cc::ContextProvider> context_provider;
@@ -143,7 +128,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
-          CompositorUtils::GetInstance()->GetTaskRunner()));
+          base::ThreadTaskRunnerHandle::Get()));
   scoped_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
@@ -196,9 +181,10 @@ void Compositor::DidFailToInitializeOutputSurface() {
 
   CHECK_LE(num_failed_recreate_attempts_, 4);
 
-  base::MessageLoop::current()->PostTask(
-      FROM_HERE, base::Bind(&Compositor::RequestNewOutputSurface,
-                            weak_factory_.GetWeakPtr()));
+  base::ThreadTaskRunnerHandle::Get()->PostTask(
+      FROM_HERE,
+      base::Bind(&Compositor::RequestNewOutputSurface,
+                 weak_factory_.GetWeakPtr()));
 }
 
 void Compositor::WillCommit() {}
@@ -214,18 +200,37 @@ void Compositor::RecordFrameTimingEvents(
     scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
+void Compositor::DidPostSwapBuffers() {}
+void Compositor::DidAbortSwapBuffers() {}
+
+void Compositor::SwapCompositorFrameFromProxy(
+    scoped_ptr<CompositorFrameData> frame) {
+  DCHECK(CalledOnValidThread());
+  FOR_EACH_OBSERVER(CompositorObserver,
+                    observers_,
+                    CompositorWillRequestSwapFrame());
+
+  // XXX: What if we are hidden?
+  // XXX: Should we check that surface_id matches the last created
+  //  surface?
+  scoped_refptr<CompositorFrameHandle> handle =
+      new CompositorFrameHandle(proxy_, std::move(frame));
+  client_->CompositorSwapFrame(handle.get());
+
+  FOR_EACH_OBSERVER(CompositorObserver,
+                    observers_,
+                    CompositorDidRequestSwapFrame());
+}
+
 // static
 scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
-  if (!client) {
-    return scoped_ptr<Compositor>();
-  }
-
+  DCHECK(client);
   return make_scoped_ptr(new Compositor(client));
 }
 
 Compositor::~Compositor() {
   FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
-  proxy_->CompositorDestroyed();
+  proxy_->ClientDestroyed();
 }
 
 bool Compositor::IsActive() const {
@@ -233,7 +238,6 @@ bool Compositor::IsActive() const {
 }
 
 void Compositor::SetVisibility(bool visible) {
-  DCHECK(CalledOnValidThread());
   if (!visible) {
     layer_tree_host_.reset();
     display_client_.reset();
@@ -252,9 +256,7 @@ void Compositor::SetVisibility(bool visible) {
     params.settings = &settings;
     params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
 
-    layer_tree_host_ = cc::LayerTreeHost::CreateThreaded(
-        CompositorUtils::GetInstance()->GetTaskRunner(),
-        &params);
+    layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
 
     layer_tree_host_->SetRootLayer(root_layer_);
     layer_tree_host_->SetVisible(true);
@@ -264,7 +266,6 @@ void Compositor::SetVisibility(bool visible) {
 }
 
 void Compositor::SetDeviceScaleFactor(float scale) {
-  DCHECK(CalledOnValidThread());
   if (scale == device_scale_factor_) {
     return;
   }
@@ -277,7 +278,6 @@ void Compositor::SetDeviceScaleFactor(float scale) {
 }
 
 void Compositor::SetViewportSize(const gfx::Size& size) {
-  DCHECK(CalledOnValidThread());
   if (size == size_) {
     return;
   }
@@ -294,8 +294,6 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
 }
 
 void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
-  DCHECK(CalledOnValidThread());
-
   root_layer_->RemoveAllChildren();
   if (layer.get()) {
     root_layer_->AddChild(layer);
@@ -304,6 +302,10 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 
 void Compositor::DidSwapCompositorFrame(uint32_t surface_id,
                                         FrameHandleVector returned_frames) {
+  for (auto& frame : returned_frames) {
+    CHECK(frame->HasOneRef());
+    DCHECK_EQ(frame->proxy_.get(), proxy_.get());
+  }
   proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 

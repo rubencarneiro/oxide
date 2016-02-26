@@ -198,7 +198,7 @@ add_custom_target(
 if(ENABLE_COMPONENT_BUILD)
   add_custom_target(
       test-package-common-component-libs
-      COMMAND ${CMAKE_COMMAND} -DFILES=${_OXIDE_INSTALL_LOCALEDIR}
+      COMMAND ${CMAKE_COMMAND} -DFILES=${CHROMIUM_LIB_DIR}
       -DMATCH_PATTERN="*${CMAKE_SHARED_LIBRARY_SUFFIX}" -DTYPE=DIRECTORY
       -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
       -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)

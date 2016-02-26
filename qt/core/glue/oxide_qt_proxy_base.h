@@ -15,14 +15,11 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_CONTENTS_NATIVE_VIEW_DATA_H_
-#define _OXIDE_QT_CORE_BROWSER_CONTENTS_NATIVE_VIEW_DATA_H_
+#ifndef _OXIDE_QT_CORE_GLUE_PROXY_BASE_H_
+#define _OXIDE_QT_CORE_GLUE_PROXY_BASE_H_
 
 #include <QPointer>
 #include <QtGlobal>
-
-#include "base/macros.h"
-#include "content/public/browser/web_contents_user_data.h"
 
 QT_BEGIN_NAMESPACE
 class QObject;
@@ -31,25 +28,45 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class ContentsNativeViewData
-    : public content::WebContentsUserData<ContentsNativeViewData> {
+class Q_DECL_EXPORT ProxyBasePrivate {
  public:
-  ~ContentsNativeViewData() override;
+  ProxyBasePrivate(void* proxy);
+  ~ProxyBasePrivate();
 
-  static void CreateForWebContents(content::WebContents* contents,
-                                   QObject* native_view);
+  QObject* handle() const { return handle_; }
 
-  QObject* GetNativeView() const;
+  void SetHandle(QObject* handle);
+
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+  static void* ProxyFromHandle(QObject* handle);
+#endif
 
  private:
-  ContentsNativeViewData(QObject* native_view);
+  void* proxy_;
+  QPointer<QObject> handle_;
+};
 
-  QPointer<QObject> native_view_;
+template <typename Impl>
+class Q_DECL_EXPORT ProxyBase {
+ public:
+  virtual ~ProxyBase() {}
 
-  DISALLOW_COPY_AND_ASSIGN(ContentsNativeViewData);
+  ProxyBase() : priv_(reinterpret_cast<void*>(this)) {}
+
+  QObject* handle() const { return priv_.handle(); }
+  void setHandle(QObject* handle) { priv_.SetHandle(handle); }
+
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+  static Impl* FromProxyHandle(QObject* handle) {
+    return reinterpret_cast<Impl*>(ProxyBasePrivate::ProxyFromHandle(handle));
+  }
+#endif
+
+ private:
+  ProxyBasePrivate priv_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_CONTENTS_NATIVE_VIEW_DATA_H_
+#endif // _OXIDE_QT_CORE_GLUE_PROXY_BASE_H_

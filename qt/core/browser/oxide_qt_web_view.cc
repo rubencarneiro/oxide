@@ -23,14 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include <QCursor>
-#include <QDragEnterEvent>
-#include <QDragMoveEvent>
-#include <QDropEvent>
 #include <QGuiApplication>
 #include <QInputEvent>
-#include <QKeyEvent>
-#include <QPixmap>
 #include <QScreen>
 #include <QString>
 #include <QtDebug>
@@ -38,25 +32,18 @@
 
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/memory/ref_counted.h"
-#include "base/memory/scoped_vector.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
-#include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebDragOperation.h"
-#include "ui/events/event.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
-#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
-#include "ui/touch_selection/touch_selection_controller.h"
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
@@ -75,11 +62,9 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/browser/input/oxide_qt_input_method_context.h"
+#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
-#include "shared/browser/compositor/oxide_compositor_frame_data.h"
-#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_fullscreen_helper.h"
@@ -94,19 +79,15 @@
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_enum_flags.h"
 
-#include "oxide_qt_contents_native_view_data.h"
-#include "oxide_qt_drag_utils.h"
+#include "oxide_qt_contents_view.h"
+#include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
-#include "oxide_qt_skutils.h"
-#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_web_context.h"
-#include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_frame.h"
-#include "oxide_qt_web_popup_menu.h"
 #include "oxide_qt_web_preferences.h"
 
 namespace oxide {
@@ -117,6 +98,8 @@ using oxide::FullscreenHelper;
 using oxide::PermissionRequestDispatcher;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
+
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
 namespace {
 
@@ -150,105 +133,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
   }
 
   return OxideQLoadEvent::ErrorDomainInternal;
-}
-
-inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
-  Qt::CursorShape cs = Qt::ArrowCursor;
-  switch (type) {
-  case blink::WebCursorInfo::TypeCross:
-    cs = Qt::CrossCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeHand:
-    cs = Qt::PointingHandCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeCell:
-  case blink::WebCursorInfo::TypeIBeam:
-    cs = Qt::IBeamCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeWait:
-    cs = Qt::WaitCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeHelp:
-    cs = Qt::WhatsThisCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeEastResize:
-  case blink::WebCursorInfo::TypeWestResize:
-  case blink::WebCursorInfo::TypeEastWestResize:
-    cs = Qt::SizeHorCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthResize:
-  case blink::WebCursorInfo::TypeSouthResize:
-  case blink::WebCursorInfo::TypeNorthSouthResize:
-    cs = Qt::SizeVerCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthEastResize:
-  case blink::WebCursorInfo::TypeSouthWestResize:
-    cs = Qt::SizeBDiagCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthWestResize:
-  case blink::WebCursorInfo::TypeSouthEastResize:
-    cs = Qt::SizeFDiagCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNorthEastSouthWestResize:
-  case blink::WebCursorInfo::TypeNorthWestSouthEastResize:
-  case blink::WebCursorInfo::TypeMove:
-    cs = Qt::SizeAllCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeColumnResize:
-    cs = Qt::SplitHCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeRowResize:
-    cs = Qt::SplitVCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeMiddlePanning:
-  case blink::WebCursorInfo::TypeEastPanning:
-  case blink::WebCursorInfo::TypeNorthPanning:
-  case blink::WebCursorInfo::TypeNorthEastPanning:
-  case blink::WebCursorInfo::TypeNorthWestPanning:
-  case blink::WebCursorInfo::TypeSouthPanning:
-  case blink::WebCursorInfo::TypeSouthEastPanning:
-  case blink::WebCursorInfo::TypeSouthWestPanning:
-  case blink::WebCursorInfo::TypeWestPanning:
-  case blink::WebCursorInfo::TypeGrab:
-  case blink::WebCursorInfo::TypeGrabbing:
-    cs = Qt::ClosedHandCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeProgress:
-    cs = Qt::BusyCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeNoDrop:
-  case blink::WebCursorInfo::TypeNotAllowed:
-    cs = Qt::ForbiddenCursor;
-    break;
-
-  case blink::WebCursorInfo::TypeCopy:
-  case blink::WebCursorInfo::TypeContextMenu:
-  case blink::WebCursorInfo::TypeVerticalText:
-  case blink::WebCursorInfo::TypeAlias:
-  case blink::WebCursorInfo::TypeZoomIn:
-  case blink::WebCursorInfo::TypeZoomOut:
-  case blink::WebCursorInfo::TypeCustom:
-  case blink::WebCursorInfo::TypePointer:
-  case blink::WebCursorInfo::TypeNone:
-  default:
-    break;
-  }
-
-  return QCursor(cs);
 }
 
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
@@ -350,77 +234,22 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 
 }
 
-class CompositorFrameHandleImpl : public CompositorFrameHandle {
- public:
-  CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            int location_bar_content_offset)
-      : frame_(frame) {
-    if (frame_.get()) {
-      rect_ = QRect(0, location_bar_content_offset,
-                    frame_->data()->size_in_pixels.width(),
-                    frame_->data()->size_in_pixels.height());
-    }
-  }
-
-  virtual ~CompositorFrameHandleImpl() {}
-
-  CompositorFrameHandle::Type GetType() final {
-    if (!frame_.get()) {
-      return CompositorFrameHandle::TYPE_INVALID;
-    }
-    if (frame_->data()->gl_frame_data) {
-      DCHECK_NE(frame_->data()->gl_frame_data->type,
-                oxide::GLFrameData::Type::INVALID);
-      if (frame_->data()->gl_frame_data->type ==
-          oxide::GLFrameData::Type::TEXTURE) {
-        return CompositorFrameHandle::TYPE_ACCELERATED;
-      }
-      return CompositorFrameHandle::TYPE_IMAGE;
-    }
-    if (frame_->data()->software_frame_data) {
-      return CompositorFrameHandle::TYPE_SOFTWARE;
-    }
-
-    NOTREACHED();
-    return CompositorFrameHandle::TYPE_INVALID;
-  }
-
-  const QRect& GetRect() const final {
-    return rect_;
-  }
-
-  QImage GetSoftwareFrame() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
-    return QImage(
-        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
-        frame_->data()->size_in_pixels.width(),
-        frame_->data()->size_in_pixels.height(),
-        QImage::Format_ARGB32);
-  }
-
-  unsigned int GetAcceleratedFrameTexture() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->data()->gl_frame_data->resource.texture;
-  }
-
-  EGLImageKHR GetImageFrame() final {
-    return frame_->data()->gl_frame_data->resource.egl_image;
-  }
-
- private:
-  scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QRect rect_;
-};
-
 WebView::WebView(WebViewProxyClient* client,
+                 ContentsViewProxyClient* view_client,
+                 QObject* handle,
                  OxideQSecurityStatus* security_status)
-    : input_method_context_(new InputMethodContext(this)),
+    : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
       security_status_(security_status),
-      frame_tree_torn_down_(false) {}
+      frame_tree_torn_down_(false) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+}
 
 float WebView::GetDeviceScaleFactor() const {
-  QScreen* screen = client_->GetScreen();
+  QScreen* screen = contents_view_->client()->GetScreen();
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }
@@ -432,9 +261,16 @@ int WebView::GetLocationBarContentOffsetPix() const {
   return locationBarContentOffsetPix();
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller,
-                         QObject* native_view) {
-  content::WebContents* contents = view_->GetWebContents();
+float WebView::GetLocationBarContentOffsetDip() const {
+  if (!web_view_) {
+    return 0.f;
+  }
+
+  return web_view_->GetLocationBarContentOffsetDip();
+}
+
+void WebView::CommonInit(OxideQFindController* find_controller) {
+  content::WebContents* contents = web_view_->GetWebContents();
 
   CertificateErrorDispatcher::FromWebContents(contents)->set_client(this);
   FullscreenHelper::FromWebContents(contents)->set_client(this);
@@ -444,51 +280,20 @@ void WebView::CommonInit(OxideQFindController* find_controller,
       contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
-  ContentsNativeViewData::CreateForWebContents(contents, native_view);
-
-  CHECK_EQ(view_->GetRootFrame()->GetChildFrames().size(), 0U);
-  WebFrame* root_frame = new WebFrame(view_->GetRootFrame());
-  view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
+  CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
+  WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
+  web_view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
   client_->CreateWebFrame(root_frame);
 }
 
 void WebView::EnsurePreferences() {
-  if (view_->GetWebPreferences()) {
+  if (web_view_->GetWebPreferences()) {
     return;
   }
 
-  OxideQWebPreferences* p = new OxideQWebPreferences(client_->GetApiHandle());
-  view_->SetWebPreferences(
+  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
+  web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
-}
-
-void WebView::SetInputMethodEnabled(bool enabled) {
-  client_->SetInputMethodEnabled(enabled);
-}
-
-blink::WebScreenInfo WebView::GetScreenInfo() const {
-  QScreen* screen = client_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-
-  return GetWebScreenInfoFromQScreen(screen);
-}
-
-gfx::Rect WebView::GetViewBoundsPix() const {
-  QRect bounds = client_->GetViewBoundsPix();
-  return gfx::Rect(bounds.x(),
-                   bounds.y(),
-                   bounds.width(),
-                   bounds.height());
-}
-
-bool WebView::IsVisible() const {
-  return client_->IsVisible();
-}
-
-bool WebView::HasFocus() const {
-  return client_->HasFocus();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -635,30 +440,10 @@ bool WebView::AddMessageToConsole(
 }
 
 void WebView::WebPreferencesDestroyed() {
-  OxideQWebPreferences* p = new OxideQWebPreferences(client_->GetApiHandle());
-  view_->SetWebPreferences(
+  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
+  web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
   client_->WebPreferencesReplaced();
-}
-
-void WebView::UnhandledKeyboardEvent(
-    const content::NativeWebKeyboardEvent& event) {
-  if (event.skip_in_browser) {
-    return;
-  }
-
-  if (event.type != blink::WebInputEvent::RawKeyDown &&
-      event.type != blink::WebInputEvent::KeyUp) {
-    return;
-  }
-
-  if (!event.os_event) {
-    return;
-  }
-  
-  DCHECK(!event.os_event->isAccepted());
-
-  client_->HandleUnhandledKeyboardEvent(event.os_event);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
@@ -667,35 +452,35 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
   FrameMetadataChangeFlags flags = FRAME_METADATA_CHANGE_NONE;
 
   if (old.root_scroll_offset.x() !=
-          view_->compositor_frame_metadata().root_scroll_offset.x() ||
+          web_view_->compositor_frame_metadata().root_scroll_offset.x() ||
       old.root_scroll_offset.y() !=
-          view_->compositor_frame_metadata().root_scroll_offset.y()) {
+          web_view_->compositor_frame_metadata().root_scroll_offset.y()) {
     flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
   }
   if (old.root_layer_size.width() !=
-          view_->compositor_frame_metadata().root_layer_size.width() ||
+          web_view_->compositor_frame_metadata().root_layer_size.width() ||
       old.root_layer_size.height() !=
-          view_->compositor_frame_metadata().root_layer_size.height()) {
+          web_view_->compositor_frame_metadata().root_layer_size.height()) {
     flags |= FRAME_METADATA_CHANGE_CONTENT;
   }
   if (old.scrollable_viewport_size.width() !=
-          view_->compositor_frame_metadata().scrollable_viewport_size.width() ||
+          web_view_->compositor_frame_metadata().scrollable_viewport_size.width() ||
       old.scrollable_viewport_size.height() !=
-          view_->compositor_frame_metadata().scrollable_viewport_size.height()) {
+          web_view_->compositor_frame_metadata().scrollable_viewport_size.height()) {
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
   if (old.location_bar_offset.y() !=
-      view_->compositor_frame_metadata().location_bar_offset.y()) {
+      web_view_->compositor_frame_metadata().location_bar_offset.y()) {
     flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
   }
   if (old.location_bar_content_translation.y() !=
-      view_->compositor_frame_metadata().location_bar_content_translation.y()) {
+      web_view_->compositor_frame_metadata().location_bar_content_translation.y()) {
     flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
   if (old.device_scale_factor !=
-          view_->compositor_frame_metadata().device_scale_factor ||
+          web_view_->compositor_frame_metadata().device_scale_factor ||
       old.page_scale_factor !=
-          view_->compositor_frame_metadata().page_scale_factor) {
+          web_view_->compositor_frame_metadata().page_scale_factor) {
     flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
     flags |= FRAME_METADATA_CHANGE_CONTENT;
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
@@ -765,20 +550,6 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebContextMenu* WebView::CreateContextMenu(
-    content::RenderFrameHost* rfh,
-    const content::ContextMenuParams& params) {
-  WebContextMenu* menu = new WebContextMenu(rfh, params);
-  menu->SetProxy(client_->CreateWebContextMenu(menu));
-  return menu;
-}
-
-oxide::WebPopupMenu* WebView::CreatePopupMenu(content::RenderFrameHost* rfh) {
-  WebPopupMenu* menu = new WebPopupMenu(rfh);
-  menu->SetProxy(client_->CreateWebPopupMenu(menu));
-  return menu;
-}
-
 oxide::WebView* WebView::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
@@ -835,53 +606,6 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   FilePicker* picker = new FilePicker(rvh);
   picker->SetProxy(client_->CreateFilePicker(picker));
   return picker;
-}
-
-ui::TouchHandleDrawable* WebView::CreateTouchHandleDrawable() const {
-  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
-  drawable->SetProxy(client_->CreateTouchHandleDrawable());
-  return drawable;
-}
-
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
-
-void WebView::TouchSelectionChanged(bool active,
-                                    const gfx::RectF& bounds) const {
-  const float dpr = GetDeviceScaleFactor();
-  QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
-              bounds.width() * dpr, bounds.height() * dpr);
-  client_->TouchSelectionChanged(active, rect);
-}
-
-void WebView::SwapCompositorFrame() {
-  compositor_frame_.reset();
-  client_->ScheduleUpdate();
-}
-
-void WebView::EvictCurrentFrame() {
-  compositor_frame_.reset();
-  client_->EvictCurrentFrame();
-}
-
-oxide::InputMethodContext* WebView::GetInputMethodContext() const {
-  return input_method_context_.get();
-}
-
-void WebView::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
-
-  cursor.GetCursorInfo(&cursor_info);
-  if (cursor.IsCustom()) {
-    QImage cursor_image = QImageFromSkBitmap(cursor_info.custom_image);
-    if (cursor_image.isNull()) {
-      return;
-    }
-
-    QPixmap cursor_pixmap = QPixmap::fromImage(cursor_image);
-    client_->UpdateCursor(QCursor(cursor_pixmap));
-  } else {
-    client_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
-  }
 }
 
 void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
@@ -954,6 +678,8 @@ void WebView::FrameCreated(oxide::WebFrame* frame) {
   frame->set_script_message_target_delegate(f);
   client_->CreateWebFrame(f);
 
+  DCHECK(f->handle());
+
   WebFrame* parent = WebFrame::FromSharedWebFrame(frame->parent());
   parent->client()->ChildFramesChanged();
 }
@@ -1000,49 +726,49 @@ void WebView::ExitFullscreenMode() {
 }
 
 QUrl WebView::url() const {
-  return QUrl(QString::fromStdString(view_->GetURL().spec()));
+  return QUrl(QString::fromStdString(web_view_->GetURL().spec()));
 }
 
 void WebView::setUrl(const QUrl& url) {
-  view_->SetURL(GURL(url.toString().toStdString()));
+  web_view_->SetURL(GURL(url.toString().toStdString()));
 }
 
 QString WebView::title() const {
-  return QString::fromStdString(view_->GetTitle());
+  return QString::fromStdString(web_view_->GetTitle());
 }
 
 QUrl WebView::favIconUrl() const {
-  return QUrl(QString::fromStdString(view_->GetFaviconURL().spec()));
+  return QUrl(QString::fromStdString(web_view_->GetFaviconURL().spec()));
 }
 
 bool WebView::canGoBack() const {
-  return view_->CanGoBack();
+  return web_view_->CanGoBack();
 }
 
 bool WebView::canGoForward() const {
-  return view_->CanGoForward();
+  return web_view_->CanGoForward();
 }
 
 bool WebView::incognito() const {
-  return view_->IsIncognito();
+  return web_view_->IsIncognito();
 }
 
 bool WebView::loading() const {
-  return view_->IsLoading();
+  return web_view_->IsLoading();
 }
 
 bool WebView::fullscreen() const {
   return FullscreenHelper::FromWebContents(
-      view_->GetWebContents())->fullscreen_granted();
+      web_view_->GetWebContents())->fullscreen_granted();
 }
 
 void WebView::setFullscreen(bool fullscreen) {
-  FullscreenHelper::FromWebContents(view_->GetWebContents())
+  FullscreenHelper::FromWebContents(web_view_->GetWebContents())
       ->SetFullscreenGranted(fullscreen);
 }
 
-WebFrameProxyHandle* WebView::rootFrame() const {
-  WebFrame* f = WebFrame::FromSharedWebFrame(view_->GetRootFrame());
+QObject* WebView::rootFrame() const {
+  WebFrame* f = WebFrame::FromSharedWebFrame(web_view_->GetRootFrame());
   if (!f) {
     return nullptr;
   }
@@ -1050,7 +776,7 @@ WebFrameProxyHandle* WebView::rootFrame() const {
   return f->handle();
 }
 
-WebContextProxyHandle* WebView::context() const {
+QObject* WebView::context() const {
   WebContext* c = GetContext();
   if (!c) {
     return nullptr;
@@ -1059,219 +785,66 @@ WebContextProxyHandle* WebView::context() const {
   return c->handle();
 }
 
-void WebView::wasResized() {
-  view_->WasResized();
-}
-
-void WebView::screenUpdated() {
-  view_->ScreenUpdated();
-}
-
-void WebView::visibilityChanged() {
-  view_->VisibilityChanged();
-}
-
-void WebView::handleFocusEvent(QFocusEvent* event) {
-  input_method_context_->FocusChanged(event);
-  view_->FocusChanged();
-
-  event->accept();
-}
-
-void WebView::handleHoverEvent(QHoverEvent* event,
-                               const QPoint& window_pos,
-                               const QPoint& global_pos) {
-  view_->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        window_pos,
-                        global_pos,
-                        GetDeviceScaleFactor(),
-                        view_->GetLocationBarContentOffsetDip()));
-  event->accept();
-}
-
-void WebView::handleInputMethodEvent(QInputMethodEvent* event) {
-  input_method_context_->HandleEvent(event);
-  event->accept();
-}
-
-void WebView::handleKeyEvent(QKeyEvent* event) {
-  content::NativeWebKeyboardEvent e(MakeNativeWebKeyboardEvent(event, false));
-  view_->HandleKeyEvent(e);
-
-  // If the event is a printable character, send a corresponding Char event
-  if (event->type() == QEvent::KeyPress && e.text[0] != 0) {
-    view_->HandleKeyEvent(MakeNativeWebKeyboardEvent(event, true));
-  }
-
-  event->accept();
-}
-
-void WebView::handleMouseEvent(QMouseEvent* event) {
-  if (!(event->button() == Qt::LeftButton ||
-        event->button() == Qt::MidButton ||
-        event->button() == Qt::RightButton ||
-        event->button() == Qt::NoButton)) {
-    event->ignore();
-    return;
-  }
-
-  view_->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        GetDeviceScaleFactor(),
-                        view_->GetLocationBarContentOffsetDip()));
-  event->accept();
-}
-
-void WebView::handleTouchEvent(QTouchEvent* event) {
-  ScopedVector<ui::TouchEvent> events;
-  touch_event_factory_.MakeEvents(event,
-                                  GetDeviceScaleFactor(),
-                                  view_->GetLocationBarContentOffsetDip(),
-                                  &events);
-
-  for (size_t i = 0; i < events.size(); ++i) {
-    view_->HandleTouchEvent(*events[i]);
-  }
-
-  event->accept();
-}
-
-void WebView::handleWheelEvent(QWheelEvent* event,
-                               const QPoint& window_pos) {
-  view_->HandleWheelEvent(
-      MakeWebMouseWheelEvent(event,
-                             window_pos,
-                             GetDeviceScaleFactor(),
-                             view_->GetLocationBarContentOffsetDip()));
-  event->accept();
-}
-
-void WebView::handleDragEnterEvent(QDragEnterEvent* event) {
-  content::DropData drop_data;
-  gfx::Point location;
-  blink::WebDragOperationsMask allowed_ops = blink::WebDragOperationNone;
-  int key_modifiers = 0;
-
-  GetDragEnterEventParams(event,
-                          GetDeviceScaleFactor(),
-                          &drop_data,
-                          &location,
-                          &allowed_ops,
-                          &key_modifiers);
-
-  WebContentsView::FromWebContents(view_->GetWebContents())
-      ->HandleDragEnter(drop_data, location, allowed_ops, key_modifiers);
-
-  event->accept();
-}
-
-void WebView::handleDragMoveEvent(QDragMoveEvent* event) {
-  gfx::Point location;
-  int key_modifiers = 0;
-
-  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
-
-  blink::WebDragOperation op =
-      WebContentsView::FromWebContents(view_->GetWebContents())
-        ->HandleDragMove(location, key_modifiers);
-
-  Qt::DropAction action;
-  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
-    event->setDropAction(action);
-    event->accept();
-  } else {
-    event->ignore();
-  }
-}
-
-void WebView::handleDragLeaveEvent(QDragLeaveEvent* event) {
-  WebContentsView::FromWebContents(view_->GetWebContents())->HandleDragLeave();
-}
-
-void WebView::handleDropEvent(QDropEvent* event) {
-  gfx::Point location;
-  int key_modifiers = 0;
-
-  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
-
-  blink::WebDragOperation op =
-      WebContentsView::FromWebContents(view_->GetWebContents())
-        ->HandleDrop(location, key_modifiers);
-
-  Qt::DropAction action;
-  if ((action = ToQtDropAction(op)) != Qt::IgnoreAction) {
-    event->setDropAction(action);
-    event->accept();
-  } else {
-    event->ignore();
-  }
-}
-
-QVariant WebView::inputMethodQuery(Qt::InputMethodQuery query) const {
-  return input_method_context_->Query(query);
-}
-
 void WebView::goBack() {
-  view_->GoBack();
+  web_view_->GoBack();
 }
 
 void WebView::goForward() {
-  view_->GoForward();
+  web_view_->GoForward();
 }
 
 void WebView::stop() {
-  view_->Stop();
+  web_view_->Stop();
 }
 
 void WebView::reload() {
-  view_->Reload();
+  web_view_->Reload();
 }
 
 void WebView::loadHtml(const QString& html, const QUrl& base_url) {
   QByteArray encoded_data = html.toUtf8().toPercentEncoding();
-  view_->LoadData(std::string(encoded_data.constData(), encoded_data.length()),
+  web_view_->LoadData(std::string(encoded_data.constData(), encoded_data.length()),
                   "text/html;charset=UTF-8",
                   GURL(base_url.toString().toStdString()));
 }
 
-QList<ScriptMessageHandlerProxyHandle*>& WebView::messageHandlers() {
+QList<QObject*>& WebView::messageHandlers() {
   return message_handlers_;
 }
 
 int WebView::getNavigationEntryCount() const {
-  return view_->GetNavigationEntryCount();
+  return web_view_->GetNavigationEntryCount();
 }
 
 int WebView::getNavigationCurrentEntryIndex() const {
-  return view_->GetNavigationCurrentEntryIndex();
+  return web_view_->GetNavigationCurrentEntryIndex();
 }
 
 void WebView::setNavigationCurrentEntryIndex(int index) {
-  view_->SetNavigationCurrentEntryIndex(index);
+  web_view_->SetNavigationCurrentEntryIndex(index);
 }
 
 int WebView::getNavigationEntryUniqueID(int index) const {
-  return view_->GetNavigationEntryUniqueID(index);
+  return web_view_->GetNavigationEntryUniqueID(index);
 }
 
 QUrl WebView::getNavigationEntryUrl(int index) const {
   return QUrl(QString::fromStdString(
-      view_->GetNavigationEntryUrl(index).spec()));
+      web_view_->GetNavigationEntryUrl(index).spec()));
 }
 
 QString WebView::getNavigationEntryTitle(int index) const {
-  return QString::fromStdString(view_->GetNavigationEntryTitle(index));
+  return QString::fromStdString(web_view_->GetNavigationEntryTitle(index));
 }
 
 QDateTime WebView::getNavigationEntryTimestamp(int index) const {
   return QDateTime::fromMSecsSinceEpoch(
-      view_->GetNavigationEntryTimestamp(index).ToJsTime());
+      web_view_->GetNavigationEntryTimestamp(index).ToJsTime());
 }
 
 QByteArray WebView::currentState() const {
   // XXX(chrisccoulson): Move the pickling in to oxide::WebView
-  std::vector<sessions::SerializedNavigationEntry> entries = view_->GetState();
+  std::vector<sessions::SerializedNavigationEntry> entries = web_view_->GetState();
   if (entries.size() == 0) {
     return QByteArray();
   }
@@ -1285,80 +858,64 @@ QByteArray WebView::currentState() const {
   for (i = entries.begin(); i != entries.end(); ++i) {
     i->WriteToPickle(max_state_size, &pickle);
   }
-  pickle.WriteInt(view_->GetNavigationCurrentEntryIndex());
+  pickle.WriteInt(web_view_->GetNavigationCurrentEntryIndex());
   return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
 }
 
 OxideQWebPreferences* WebView::preferences() {
   EnsurePreferences();
-  return static_cast<WebPreferences*>(view_->GetWebPreferences())->api_handle();
+  return static_cast<WebPreferences*>(web_view_->GetWebPreferences())->api_handle();
 }
 
 void WebView::setPreferences(OxideQWebPreferences* prefs) {
   OxideQWebPreferences* old = nullptr;
-  if (WebPreferences* o = static_cast<WebPreferences *>(view_->GetWebPreferences())) {
+  if (WebPreferences* o = static_cast<WebPreferences *>(web_view_->GetWebPreferences())) {
     old = o->api_handle();
   }
 
   if (!prefs) {
-    prefs = new OxideQWebPreferences(client_->GetApiHandle());
+    prefs = new OxideQWebPreferences(handle());
   } else if (!prefs->parent()) {
-    prefs->setParent(client_->GetApiHandle());
+    prefs->setParent(handle());
   }
 
-  view_->SetWebPreferences(
+  web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(prefs)->preferences());
 
   if (!old) {
     return;
   }
 
-  if (old->parent() == client_->GetApiHandle()) {
+  if (old->parent() == handle()) {
     delete old;
   }
 }
 
 void WebView::updateWebPreferences() {
-  view_->UpdateWebPreferences();
+  web_view_->UpdateWebPreferences();
 }
 
 QPoint WebView::compositorFrameScrollOffsetPix() {
-  gfx::Point offset = view_->GetCompositorFrameScrollOffsetPix();
+  gfx::Point offset = web_view_->GetCompositorFrameScrollOffsetPix();
   return QPoint(offset.x(), offset.y());
 }
 
 QSize WebView::compositorFrameContentSizePix() {
-  gfx::Size size = view_->GetCompositorFrameContentSizePix();
+  gfx::Size size = web_view_->GetCompositorFrameContentSizePix();
   return QSize(size.width(), size.height());
 }
 
 QSize WebView::compositorFrameViewportSizePix() {
-  gfx::Size size = view_->GetCompositorFrameViewportSizePix();
+  gfx::Size size = web_view_->GetCompositorFrameViewportSizePix();
   return QSize(size.width(), size.height());
 }
 
-QSharedPointer<CompositorFrameHandle> WebView::compositorFrameHandle() {
-  if (!compositor_frame_) {
-    compositor_frame_ =
-        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
-          view_->GetCompositorFrameHandle(),
-          view_->compositor_frame_metadata().device_scale_factor *
-            view_->compositor_frame_metadata().location_bar_content_translation.y()));
-  }
-
-  return compositor_frame_;
-}
-
-void WebView::didCommitCompositorFrame() {
-  view_->DidCommitCompositorFrame();
-}
-
 void WebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
-  view_->SetCanTemporarilyDisplayInsecureContent(allow);
+  web_view_->SetCanTemporarilyDisplayInsecureContent(allow);
 }
 
 void WebView::setCanTemporarilyRunInsecureContent(bool allow) {
-  view_->SetCanTemporarilyRunInsecureContent(allow);
+  web_view_->SetCanTemporarilyRunInsecureContent(allow);
 }
 
 ContentTypeFlags WebView::blockedContent() const {
@@ -1378,31 +935,31 @@ ContentTypeFlags WebView::blockedContent() const {
       "ContentTypeFlags and oxide::ContentType enums don't match: "
       "CONTENT_TYPE_MIXED_SCRIPT");
 
-  return static_cast<ContentTypeFlags>(view_->blocked_content());
+  return static_cast<ContentTypeFlags>(web_view_->blocked_content());
 }
 
 void WebView::prepareToClose() {
-  view_->PrepareToClose();
+  web_view_->PrepareToClose();
 }
 
 int WebView::locationBarHeight() const {
-  return view_->GetLocationBarHeightPix();
+  return web_view_->GetLocationBarHeightPix();
 }
 
 void WebView::setLocationBarHeight(int height) {
-  view_->SetLocationBarHeightPix(height);
+  web_view_->SetLocationBarHeightPix(height);
 }
 
 int WebView::locationBarOffsetPix() const {
-  return view_->GetLocationBarOffsetPix();
+  return web_view_->GetLocationBarOffsetPix();
 }
 
 int WebView::locationBarContentOffsetPix() const {
-  return view_->GetLocationBarContentOffsetPix();
+  return web_view_->GetLocationBarContentOffsetPix();
 }
 
 LocationBarMode WebView::locationBarMode() const {
-  switch (view_->location_bar_constraints()) {
+  switch (web_view_->location_bar_constraints()) {
     case blink::WebTopControlsShown:
       return LOCATION_BAR_MODE_SHOWN;
     case blink::WebTopControlsHidden:
@@ -1416,28 +973,28 @@ LocationBarMode WebView::locationBarMode() const {
 }
 
 void WebView::setLocationBarMode(LocationBarMode mode) {
-  view_->SetLocationBarConstraints(
+  web_view_->SetLocationBarConstraints(
       LocationBarModeToBlinkTopControlsState(mode));
 }
 
 bool WebView::locationBarAnimated() const {
-  return view_->location_bar_animated();
+  return web_view_->location_bar_animated();
 }
 
 void WebView::setLocationBarAnimated(bool animated) {
-  view_->set_location_bar_animated(animated);
+  web_view_->set_location_bar_animated(animated);
 }
 
 void WebView::locationBarShow(bool animate) {
-  view_->ShowLocationBar(animate);
+  web_view_->ShowLocationBar(animate);
 }
 
 void WebView::locationBarHide(bool animate) {
-  view_->HideLocationBar(animate);
+  web_view_->HideLocationBar(animate);
 }
 
 WebProcessStatus WebView::webProcessStatus() const {
-  base::TerminationStatus status = view_->GetWebContents()->GetCrashedStatus();
+  base::TerminationStatus status = web_view_->GetWebContents()->GetCrashedStatus();
   if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
     return WEB_PROCESS_RUNNING;
   } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
@@ -1450,7 +1007,7 @@ WebProcessStatus WebView::webProcessStatus() const {
 }
 
 void WebView::executeEditingCommand(EditingCommands command) const {
-  content::WebContents* contents = view_->GetWebContents();
+  content::WebContents* contents = web_view_->GetWebContents();
 
   switch (command) {
     case EDITING_COMMAND_UNDO:
@@ -1473,12 +1030,12 @@ void WebView::executeEditingCommand(EditingCommands command) const {
 }
 
 QUrl WebView::targetUrl() const {
-  return QUrl(QString::fromStdString(view_->target_url().spec()));
+  return QUrl(QString::fromStdString(web_view_->target_url().spec()));
 }
 
 EditCapabilityFlags WebView::editFlags() const {
   EditCapabilityFlags capabilities = NO_CAPABILITY;
-  int flags = view_->GetEditFlags();
+  blink::WebContextMenuData::EditFlags flags = web_view_->GetEditFlags();
   if (flags & blink::WebContextMenuData::CanUndo) {
     capabilities |= UNDO_CAPABILITY;
   }
@@ -1509,7 +1066,7 @@ void WebView::teardownFrameTree() {
   WebFrameTreeObserver::Observe(nullptr);
 
   std::deque<oxide::WebFrame*> frames;
-  WebFrameTree::FromWebContents(view_->GetWebContents())->ForEachFrame(
+  WebFrameTree::FromWebContents(web_view_->GetWebContents())->ForEachFrame(
       base::Bind(&TeardownFrameTreeForEachHelper, &frames));
   while (frames.size() > 0) {
     oxide::WebFrame* frame = frames.back();
@@ -1522,24 +1079,29 @@ void WebView::teardownFrameTree() {
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 QObject* native_view,
+                 ContentsViewProxyClient* view_client,
+                 QObject* handle,
                  OxideQFindController* find_controller,
                  OxideQSecurityStatus* security_status,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, security_status) {
-  oxide::WebView::Params params;
-  params.client = this;
-  params.context = context->GetContext();
-  params.incognito = incognito;
+    : WebView(client, view_client, handle, security_status) {
+  oxide::WebView::CommonParams common_params;
+  common_params.client = this;
+  common_params.view_client = contents_view_.get();
+
+  oxide::WebView::CreateParams create_params;
+  create_params.context = context->GetContext();
+  create_params.incognito = incognito;
 
   if (!restore_state.isEmpty()) {
     CreateRestoreEntriesFromRestoreState(restore_state,
-                                         &params.restore_entries,
-                                         &params.restore_index);
-    params.restore_type = ToNavigationControllerRestoreType(restore_type);
+                                         &create_params.restore_entries,
+                                         &create_params.restore_index);
+    create_params.restore_type =
+        ToNavigationControllerRestoreType(restore_type);
   }
 
   if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
@@ -1548,9 +1110,9 @@ WebView::WebView(WebViewProxyClient* client,
     DCHECK_EQ(context, WebContext::GetDefault());
   }
 
-  view_.reset(new oxide::WebView(params));
+  web_view_.reset(new oxide::WebView(common_params, create_params));
 
-  CommonInit(find_controller, native_view);
+  CommonInit(find_controller);
 
   EnsurePreferences();
 }
@@ -1558,7 +1120,8 @@ WebView::WebView(WebViewProxyClient* client,
 // static
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
-    QObject* native_view,
+    ContentsViewProxyClient* view_client,
+    QObject* handle,
     OxideQFindController* find_controller,
     OxideQSecurityStatus* security_status,
     OxideQNewViewRequest* new_view_request) {
@@ -1568,37 +1131,35 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, security_status);
-  new_view->view_.reset(new oxide::WebView(std::move(rd->contents), new_view));
-  rd->view = new_view->view_->AsWeakPtr();
+  WebView* new_view = new WebView(client, view_client, handle, security_status);
 
-  new_view->CommonInit(find_controller, native_view);
+  oxide::WebView::CommonParams params;
+  params.client = new_view;
+  params.view_client = new_view->contents_view_.get();
+  new_view->web_view_.reset(new oxide::WebView(params, std::move(rd->contents)));
+
+  rd->view = new_view->web_view_->AsWeakPtr();
+
+  new_view->CommonInit(find_controller);
 
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
-        new_view->view_->GetWebPreferences())->api_handle();
+        new_view->web_view_->GetWebPreferences())->api_handle();
   if (!p->parent()) {
-    p->setParent(new_view->client_->GetApiHandle());
+    p->setParent(new_view->handle());
   }
 
   return new_view;
 }
 
 WebView::~WebView() {
-  content::WebContents* contents = view_->GetWebContents();
+  content::WebContents* contents = web_view_->GetWebContents();
   CertificateErrorDispatcher::FromWebContents(contents)->set_client(nullptr);
   FullscreenHelper::FromWebContents(contents)->set_client(nullptr);
   DCHECK(frame_tree_torn_down_);
 
-  input_method_context_->DetachClient();
-
   oxide::PermissionRequestDispatcher::FromWebContents(
       contents)->set_client(nullptr);
-}
-
-// static
-WebView* WebView::FromProxyHandle(WebViewProxyHandle* handle) {
-  return static_cast<WebView*>(handle->proxy_.data());
 }
 
 // static
@@ -1607,11 +1168,11 @@ WebView* WebView::FromView(oxide::WebView* view) {
 }
 
 WebContext* WebView::GetContext() const {
-  return WebContext::FromBrowserContext(view_->GetBrowserContext());
+  return WebContext::FromBrowserContext(web_view_->GetBrowserContext());
 }
 
 const oxide::SecurityStatus& WebView::GetSecurityStatus() const {
-  return view_->security_status();
+  return web_view_->security_status();
 }
 
 } // namespace qt

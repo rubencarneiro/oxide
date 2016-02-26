@@ -25,6 +25,7 @@
 #include <QUrl>
 
 #include "base/logging.h"
+#include "base/numerics/safe_conversions.h"
 #include "base/pickle.h"
 #include "base/strings/nullable_string16.h"
 #include "base/strings/utf_string_conversions.h"
@@ -55,14 +56,14 @@ void UnpickleCustomRendererData(
   base::Pickle pickle(custom_data.constData(), custom_data.size());
   base::PickleIterator iter(pickle);
 
-  size_t size;
+  uint64_t size;
   if (!iter.ReadUInt64(&size)) {
     return;
   }
 
   std::map<base::string16, base::string16> custom_map;
 
-  for (size_t i = 0; i < size; ++i) {
+  for (uint64_t i = 0; i < size; ++i) {
     base::string16 type;
     base::string16 data;
 
@@ -140,7 +141,8 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
 
   if (drop_data.custom_data.size() > 0) {
     base::Pickle pickle;
-    pickle.WriteUInt64(drop_data.custom_data.size());
+    pickle.WriteUInt64(
+        base::checked_cast<uint64_t>(drop_data.custom_data.size()));
     for (const auto& custom_data : drop_data.custom_data) {
       pickle.WriteString16(custom_data.first);
       pickle.WriteString16(custom_data.second);
@@ -148,7 +150,7 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
     if (pickle.size() < std::numeric_limits<int>::max()) {
       mime_data->setData(kCustomRendererData,
                          QByteArray(static_cast<const char*>(pickle.data()),
-                                    static_cast<int>(pickle.size())));
+                                    base::checked_cast<int>(pickle.size())));
     }
   }
 }

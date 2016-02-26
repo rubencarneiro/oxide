@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,26 +19,30 @@
 #define _OXIDE_QT_QUICK_API_USER_SCRIPT_P_P_H_
 
 #include <QObject>
+#include <QScopedPointer>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_user_script_proxy.h"
 #include "qt/core/glue/oxide_qt_user_script_proxy_client.h"
 
 #include "qt/quick/api/oxideqquickuserscript.h"
 
-class OxideQQuickUserScriptPrivate
-    : public QObject,
-      public oxide::qt::UserScriptProxyHandle,
-      public oxide::qt::UserScriptProxyClient {
+namespace oxide {
+namespace qt {
+class UserScriptProxy;
+}
+}
+
+class OxideQQuickUserScriptPrivate : public QObject,
+                                     public oxide::qt::UserScriptProxyClient {
   Q_OBJECT
   Q_DECLARE_PUBLIC(OxideQQuickUserScript)
-  OXIDE_Q_DECL_PROXY_HANDLE_CONVERTER(OxideQQuickUserScript,
-                                      oxide::qt::UserScriptProxyHandle);
 
  public:
   ~OxideQQuickUserScriptPrivate() override;
 
   static OxideQQuickUserScriptPrivate* get(OxideQQuickUserScript* user_script);
+
+  OxideQQuickUserScript* q() const { return q_ptr; }
 
  Q_SIGNALS:
   void willBeDeleted();
@@ -49,6 +53,10 @@ class OxideQQuickUserScriptPrivate
   // oxide::qt::UserScriptProxyClient implementation
   void ScriptLoadFailed() override;
   void ScriptLoaded() override;
+
+  OxideQQuickUserScript* q_ptr;
+
+  QScopedPointer<oxide::qt::UserScriptProxy> proxy_;
 
   QUrl url_;
 

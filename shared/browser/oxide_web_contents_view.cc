@@ -20,23 +20,41 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "cc/layers/layer_settings.h"
+#include "cc/layers/solid_color_layer.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
+#include "content/public/browser/native_web_keyboard_event.h"
+#include "content/public/browser/render_widget_host.h"
+#include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 #include "third_party/skia/include/core/SkImage.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/web/WebDragOperation.h"
+#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/base/clipboard/clipboard.h"
+#include "ui/base/ime/text_input_type.h"
+#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/image/image_skia_rep.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
+#include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_frame_data.h"
+#include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/input/oxide_input_method_context.h"
+#include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_drag_source.h"
+#include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
-#include "oxide_render_widget_host_view_container.h"
 #include "oxide_screen_client.h"
+#include "oxide_web_contents_view_client.h"
+#include "oxide_web_context_menu.h"
+#include "oxide_web_popup_menu.h"
+#include "oxide_web_view.h"
 
 namespace oxide {
 
@@ -44,20 +62,37 @@ namespace {
 int kUserDataKey;
 }
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
+
 WebContentsView::WebContentsView(content::WebContents* web_contents)
-    : web_contents_(static_cast<content::WebContentsImpl*>(web_contents)),
-      container_(nullptr),
+    : content::WebContentsObserver(web_contents),
+      client_(nullptr),
+      compositor_(Compositor::Create(this)),
+      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone) {
-  web_contents_->SetUserData(&kUserDataKey,
-                             new UnownedUserData<WebContentsView>(this));
+  web_contents->SetUserData(&kUserDataKey,
+                            new UnownedUserData<WebContentsView>(this));
+
+  root_layer_->SetIsDrawable(true);
+  root_layer_->SetBackgroundColor(SK_ColorWHITE);
+
+  compositor_->SetVisibility(false);
+  compositor_->SetRootLayer(root_layer_);
+
+  CompositorObserver::Observe(compositor_.get());
 }
 
-ui::TouchSelectionController* WebContentsView::GetTouchSelectionController() {
+content::WebContentsImpl* WebContentsView::web_contents_impl() const {
+  return static_cast<content::WebContentsImpl*>(web_contents());
+}
+
+ui::TouchSelectionController*
+WebContentsView::GetTouchSelectionController() const {
   // We don't care about checking for a fullscreen view here - we're called
   // from StartDragging which is only supported in RenderViews
   content::RenderWidgetHostView* view =
-      web_contents_->GetRenderWidgetHostView();
+      web_contents()->GetRenderWidgetHostView();
   if (!view) {
     return nullptr;
   }
@@ -65,95 +100,59 @@ ui::TouchSelectionController* WebContentsView::GetTouchSelectionController() {
   return static_cast<RenderWidgetHostView*>(view)->selection_controller();
 }
 
-void WebContentsView::SetContainer(RenderWidgetHostViewContainer* container) {
-  container_ = container;
-}
-
-void WebContentsView::HandleDragEnter(
-    const content::DropData& drop_data,
-    const gfx::Point& location,
-    blink::WebDragOperationsMask allowed_ops,
-    int key_modifiers) {
-  current_drop_data_.reset(new content::DropData(drop_data));
-  current_drag_allowed_ops_ = allowed_ops;
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  current_drag_target_ = RenderWidgetHostID(rvh->GetWidget());
-
-  gfx::Point screen_location =
-      BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetCursorScreenPoint();
-  rvh->DragTargetDragEnter(*current_drop_data_,
-                           location,
-                           screen_location,
-                           current_drag_allowed_ops_,
-                           key_modifiers);
-}
-
-blink::WebDragOperation WebContentsView::HandleDragMove(
-    const gfx::Point& location,
-    int key_modifiers) {
-  if (!current_drop_data_) {
-    return blink::WebDragOperationNone;
+RenderWidgetHostView* WebContentsView::GetRenderWidgetHostView() const {
+  content::RenderWidgetHostView* rwhv =
+      web_contents()->GetFullscreenRenderWidgetHostView();
+  if (!rwhv) {
+    rwhv = web_contents()->GetRenderWidgetHostView();
   }
 
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
-    HandleDragEnter(*current_drop_data_,
-                    location,
-                    current_drag_allowed_ops_,
-                    key_modifiers);
-  }
-
-  gfx::Point screen_location =
-      BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetCursorScreenPoint();
-  rvh->DragTargetDragOver(location,
-                          screen_location,
-                          current_drag_allowed_ops_,
-                          key_modifiers);
-
-  return current_drag_op_;
+  return static_cast<RenderWidgetHostView *>(rwhv);
 }
 
-void WebContentsView::HandleDragLeave() {
-  if (!current_drop_data_) {
+content::RenderWidgetHost* WebContentsView::GetRenderWidgetHost() const {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return nullptr;
+  }
+
+  return rwhv->GetRenderWidgetHost();
+}
+
+bool WebContentsView::ShouldScrollFocusedEditableNodeIntoView() {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  if (!IsVisible()) {
+    return false;
+  }
+
+  if (!client_->GetInputMethodContext() ||
+      !client_->GetInputMethodContext()->IsInputPanelVisible()) {
+    return false;
+  }
+
+  if (!GetRenderWidgetHostView() ||
+      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
+    return false;
+  }
+
+  return true;
+}
+
+void WebContentsView::MaybeScrollFocusedEditableNodeIntoView() {
+  if (!ShouldScrollFocusedEditableNodeIntoView()) {
     return;
   }
 
-  current_drop_data_.reset();
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
     return;
   }
 
-  rvh->DragTargetDragLeave();
-}
-
-blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
-                                                    int key_modifiers) {
-  if (!current_drop_data_) {
-    return blink::WebDragOperationNone;
-  }
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
-    HandleDragEnter(*current_drop_data_,
-                    location,
-                    current_drag_allowed_ops_,
-                    key_modifiers);
-  }
-
-  gfx::Point screen_location =
-      BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetCursorScreenPoint();
-  rvh->DragTargetDrop(location, screen_location, key_modifiers);
-
-  return current_drag_op_;
+  content::RenderWidgetHostImpl::From(host)
+      ->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -169,12 +168,12 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = container_->GetViewBoundsDip();
+  *out = GetBoundsDip();
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
   content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
+      web_contents()->GetRenderWidgetHostView();
   if (rwhv) {
     rwhv->SetSize(size);
   }
@@ -182,7 +181,7 @@ void WebContentsView::SizeContents(const gfx::Size& size) {
 
 void WebContentsView::Focus() {
   content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
+      web_contents()->GetRenderWidgetHostView();
   if (!rwhv) {
     return;
   }
@@ -204,7 +203,7 @@ content::DropData* WebContentsView::GetDropData() const {
 
 gfx::Rect WebContentsView::GetViewBounds() const {
   content::RenderWidgetHostView* rwhv =
-      web_contents_->GetRenderWidgetHostView();
+      web_contents()->GetRenderWidgetHostView();
   if (rwhv) {
     return rwhv->GetViewBounds();
   }
@@ -239,7 +238,16 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
-  container_->ShowContextMenu(render_frame_host, params);
+  if (!client_) {
+    return;
+  }
+
+  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
+  if (!menu) {
+    return;
+  }
+
+  menu->Show();
 }
 
 void WebContentsView::StartDragging(
@@ -251,7 +259,7 @@ void WebContentsView::StartDragging(
   if (drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag when one is already in progress";
-    web_contents_->SystemDragEnded();
+    web_contents()->SystemDragEnded();
     return;
   }
 
@@ -260,7 +268,7 @@ void WebContentsView::StartDragging(
   if (!drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag - not supported";
-    web_contents_->SystemDragEnded();
+    web_contents()->SystemDragEnded();
     return;
   }
 
@@ -270,11 +278,11 @@ void WebContentsView::StartDragging(
     selection_controller->HideAndDisallowShowingAutomatically();
   }
 
-  float scale = container_->GetScreenInfo().deviceScaleFactor;
+  float scale = GetScreenInfo().deviceScaleFactor;
   gfx::Vector2d image_offset_pix(image_offset.x() * scale,
                                  image_offset.y() * scale);
 
-  drag_source_->StartDragging(web_contents_,
+  drag_source_->StartDragging(web_contents(),
                               drop_data,
                               allowed_ops,
                               *image.bitmap(),
@@ -294,13 +302,166 @@ void WebContentsView::ShowPopupMenu(
     const std::vector<content::MenuItem>& items,
     bool right_aligned,
     bool allow_multiple_selection) {
-  container_->ShowPopupMenu(render_frame_host,
-                            bounds, selected_item, items,
-                            allow_multiple_selection);
+  // XXX: We should do better than this
+  DCHECK(!active_popup_menu_);
+
+  if (!client_) {
+    static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->DidCancelPopupMenu();
+    return;
+  }
+
+  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
+  if (!menu) {
+    static_cast<content::RenderFrameHostImpl *>(
+        render_frame_host)->DidCancelPopupMenu();
+    return;
+  }
+
+  active_popup_menu_ = menu->GetWeakPtr();
+
+  menu->Show(bounds, items, selected_item, allow_multiple_selection);
 }
 
 void WebContentsView::HidePopupMenu() {
-  container_->HidePopupMenu();
+  if (!active_popup_menu_) {
+    return;
+  }
+
+  active_popup_menu_->Close();
+}
+
+void WebContentsView::RenderViewHostChanged(
+    content::RenderViewHost* old_host,
+    content::RenderViewHost* new_host) {
+  if (old_host && old_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
+    rwhv->SetContainer(nullptr);
+    rwhv->ime_bridge()->SetContext(nullptr);
+  }
+
+  if (!new_host) {
+    return;
+  }
+
+  if (new_host->GetWidget()->GetView()) {
+    RenderWidgetHostView* rwhv =
+        static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
+    rwhv->SetContainer(this);
+    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
+
+    // For the initial view, we need to sync its visibility and focus state
+    // with us. For subsequent views, RFHM does this for us
+    if (!old_host) {
+      if (IsVisible()) {
+        rwhv->Show();
+      } else {
+        rwhv->Hide();
+      }
+
+      if (HasFocus()) {
+        rwhv->Focus();
+      } else {
+        rwhv->Blur();
+      }
+    }
+  }
+
+  EditingCapabilitiesChanged();
+}
+
+void WebContentsView::DidNavigateMainFrame(
+    const content::LoadCommittedDetails& details,
+    const content::FrameNavigateParams& params) {
+  if (details.is_navigation_to_different_page()) {
+    RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+    if (rwhv) {
+      rwhv->ResetGestureDetection();
+    }
+
+    mouse_state_.Reset();
+  }
+}
+
+void WebContentsView::DidShowFullscreenWidget(int routing_id) {
+  content::RenderWidgetHost* rwh =
+      content::RenderWidgetHost::FromID(
+          web_contents()->GetRenderProcessHost()->GetID(),
+          routing_id);
+  DCHECK(rwh);
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+
+  web_contents()->GetRenderWidgetHostView()->Hide();
+}
+
+void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
+  DCHECK(!web_contents()->GetFullscreenRenderWidgetHostView());
+
+  RenderWidgetHostView* orig_rwhv =
+      static_cast<RenderWidgetHostView*>(
+        web_contents()->GetRenderWidgetHostView());
+  if (!orig_rwhv) {
+    return;
+  }
+
+  content::RenderWidgetHost* orig_rwh = orig_rwhv->GetRenderWidgetHost();
+  orig_rwh->WasResized();
+  content::RenderWidgetHostImpl::From(orig_rwh)->SendScreenRects();
+
+  if (IsVisible()) {
+    orig_rwhv->Show();
+  }
+
+  if (HasFocus()) {
+    orig_rwhv->Focus();
+  } else {
+    orig_rwhv->Blur();
+  }
+}
+
+void WebContentsView::DidAttachInterstitialPage() {
+  DCHECK(!interstitial_rwh_id_.IsValid());
+  DCHECK(web_contents()->GetInterstitialPage());
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  rwhv->SetContainer(this);
+  interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
+}
+
+void WebContentsView::DidDetachInterstitialPage() {
+  if (!interstitial_rwh_id_.IsValid()) {
+    return;
+  }
+
+  content::RenderWidgetHost* rwh = interstitial_rwh_id_.ToInstance();
+  interstitial_rwh_id_ = RenderWidgetHostID();
+  if (!rwh) {
+    return;
+  }
+
+  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
+}
+
+void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
+  received_surface_ids_.push(handle->data()->surface_id);
+
+  if (current_compositor_frame_.get()) {
+    previous_compositor_frames_.push_back(current_compositor_frame_);
+  }
+  current_compositor_frame_ = handle;
+
+  if (client_) {
+    client_->SwapCompositorFrame();
+  } else {
+    DidCommitCompositorFrame();
+  }
+}
+
+void WebContentsView::CompositorDidCommit() {
+  committed_frame_metadata_ =
+      GetRenderWidgetHostView()->last_submitted_frame_metadata();
 }
 
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
@@ -313,17 +474,126 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   gfx::Point view_point =
       screen_point - gfx::Vector2d(GetViewBounds().origin().x(),
                                    GetViewBounds().origin().y());
-  web_contents_->DragSourceEndedAt(view_point.x(), view_point.y(),
-                                   screen_point.x(), screen_point.y(),
-                                   operation);
+  web_contents_impl()->DragSourceEndedAt(view_point.x(), view_point.y(),
+                                         screen_point.x(), screen_point.y(),
+                                         operation);
 
-  web_contents_->SystemDragEnded();
+  web_contents()->SystemDragEnded();
 
   drag_source_.reset();
 }
 
+void WebContentsView::InputPanelVisibilityChanged() {
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::AttachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  root_layer_->InsertChild(layer, 0);
+  root_layer_->SetIsDrawable(false);
+}
+
+void WebContentsView::DetachLayer(scoped_refptr<cc::Layer> layer) {
+  DCHECK(layer.get());
+  DCHECK_EQ(layer->parent(), root_layer_.get());
+  layer->RemoveFromParent();
+  if (root_layer_->children().size() == 0) {
+    root_layer_->SetIsDrawable(true);
+  }
+}
+
+void WebContentsView::CursorChanged() {
+  if (!client_) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  client_->UpdateCursor(rwhv->current_cursor());
+}
+
+gfx::Size WebContentsView::GetViewSizePix() const {
+  return GetBoundsPix().size();
+}
+
+gfx::Rect WebContentsView::GetViewBoundsDip() const {
+  return GetBoundsDip();
+}
+
+bool WebContentsView::HasFocus(const RenderWidgetHostView* view) const {
+  if (!HasFocus()) {
+    return false;
+  }
+
+  return view == GetRenderWidgetHostView();
+}
+
+bool WebContentsView::IsFullscreen() const {
+  return FullscreenHelper::FromWebContents(web_contents())->IsFullscreen();
+}
+
+float WebContentsView::GetLocationBarHeightDip() const {
+  // TODO: Add LocationBarController class
+  WebView* view = WebView::FromWebContents(web_contents());
+  if (!view) {
+    return 0.f;
+  }
+
+  return view->GetLocationBarHeightDip();
+}
+
+ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
+  if (!client_) {
+    return nullptr;
+  }
+
+  return client_->CreateTouchHandleDrawable();
+}
+
+void WebContentsView::TouchSelectionChanged() const {
+  if (!client_) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  bool active =
+      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+
+  gfx::RectF bounds = controller->GetRectBetweenBounds();
+
+  // TODO: Add LocationBarController class
+  float offset = 0.f;
+  WebView* view = WebView::FromWebContents(web_contents());
+  if (view) {
+    offset = view->GetLocationBarContentOffsetDip();
+  }
+  bounds.Offset(0, offset);
+
+  client_->TouchSelectionChanged(active, bounds);
+}
+
+void WebContentsView::EditingCapabilitiesChanged() {
+  if (!editing_capabilities_changed_callback_.is_null()) {
+    editing_capabilities_changed_callback_.Run();
+  }
+}
+
 WebContentsView::~WebContentsView() {
-  web_contents_->RemoveUserData(&kUserDataKey);
+  if (client_) {
+    DCHECK_EQ(client_->view_, this);
+    client_->view_ = nullptr;
+  }
+  if (web_contents()) {
+    web_contents()->RemoveUserData(&kUserDataKey);
+  }
 }
 
 // static
@@ -343,6 +613,319 @@ WebContentsView* WebContentsView::FromWebContents(
   }
 
   return data->get();
+}
+
+content::WebContents* WebContentsView::GetWebContents() const {
+  return web_contents();
+}
+
+void WebContentsView::SetClient(WebContentsViewClient* client) {
+  if (client_) {
+    DCHECK_EQ(client_->view_, this);
+    InputMethodContextObserver::Observe(nullptr);
+    client_->view_ = nullptr;
+  }
+  client_ = client;
+  if (client_) {
+    DCHECK(!client_->view_);
+    client_->view_ = this;
+    InputMethodContextObserver::Observe(client_->GetInputMethodContext());
+  }
+
+  // Update view from client
+  WasResized();
+  VisibilityChanged();
+  FocusChanged();
+  ScreenUpdated();
+
+  // Update client from view
+  CursorChanged();
+  TouchSelectionChanged();
+}
+
+bool WebContentsView::IsVisible() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->IsVisible();
+}
+
+bool WebContentsView::HasFocus() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->HasFocus();
+}
+
+gfx::Rect WebContentsView::GetBoundsPix() const {
+  if (!client_) {
+    return gfx::Rect();
+  }
+
+  // If we're in fullscreen mode, return the screen size rather than the
+  // view bounds. This works around an issue where buggy Flash content
+  // expects the view to resize synchronously when it goes fullscreen, but it
+  // happens asynchronously instead.
+  // See https://launchpad.net/bugs/1510508
+  // XXX: Obviously, this means we assume that we do occupy the full screen
+  //  when the browser grants us fullscreen. If that's not the case, then
+  //  this is going to break
+  FullscreenHelper* fullscreen =
+      FullscreenHelper::FromWebContents(web_contents());
+  if (fullscreen && fullscreen->IsFullscreen()) {
+    return GetScreenInfo().rect;
+  }
+
+  return client_->GetBoundsPix();
+}
+
+gfx::Rect WebContentsView::GetBoundsDip() const {
+  if (!client_) {
+    return gfx::Rect();
+  }
+
+  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
+  gfx::Rect bounds(GetBoundsPix());
+
+  int x = std::lround(bounds.x() * scale);
+  int y = std::lround(bounds.y() * scale);
+  int width = std::lround(bounds.width() * scale);
+  int height = std::lround(bounds.height() * scale);
+
+  return gfx::Rect(x, y, width, height);
+}
+
+blink::WebScreenInfo WebContentsView::GetScreenInfo() const {
+  if (!client_) {
+    blink::WebScreenInfo result;
+    content::RenderWidgetHostViewBase::GetDefaultScreenInfo(&result);
+    return result;
+  }
+
+  return client_->GetScreenInfo();
+}
+
+void WebContentsView::HandleKeyEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  host->ForwardKeyboardEvent(event);
+}
+
+void WebContentsView::HandleMouseEvent(const blink::WebMouseEvent& event) {
+  blink::WebMouseEvent e(event);
+
+  mouse_state_.UpdateEvent(&e);
+
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  host->ForwardMouseEvent(e);
+}
+
+void WebContentsView::HandleTouchEvent(const ui::TouchEvent& event) {
+  if (!touch_state_.Update(event)) {
+    return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->HandleTouchEvent(touch_state_);
+}
+
+void WebContentsView::HandleWheelEvent(
+    const blink::WebMouseWheelEvent& event) {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  host->ForwardWheelEvent(event);
+}
+
+void WebContentsView::HandleDragEnter(
+    const content::DropData& drop_data,
+    const gfx::Point& location,
+    blink::WebDragOperationsMask allowed_ops,
+    int key_modifiers) {
+  current_drop_data_.reset(new content::DropData(drop_data));
+  current_drag_allowed_ops_ = allowed_ops;
+
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  current_drag_target_ = RenderWidgetHostID(rvh->GetWidget());
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDragEnter(*current_drop_data_,
+                           location,
+                           screen_location,
+                           current_drag_allowed_ops_,
+                           key_modifiers);
+}
+
+blink::WebDragOperation WebContentsView::HandleDragMove(
+    const gfx::Point& location,
+    int key_modifiers) {
+  if (!current_drop_data_) {
+    return blink::WebDragOperationNone;
+  }
+
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    HandleDragEnter(*current_drop_data_,
+                    location,
+                    current_drag_allowed_ops_,
+                    key_modifiers);
+  }
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDragOver(location,
+                          screen_location,
+                          current_drag_allowed_ops_,
+                          key_modifiers);
+
+  return current_drag_op_;
+}
+
+void WebContentsView::HandleDragLeave() {
+  if (!current_drop_data_) {
+    return;
+  }
+
+  current_drop_data_.reset();
+
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    return;
+  }
+
+  rvh->DragTargetDragLeave();
+}
+
+blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
+                                                    int key_modifiers) {
+  if (!current_drop_data_) {
+    return blink::WebDragOperationNone;
+  }
+
+  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
+  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+    HandleDragEnter(*current_drop_data_,
+                    location,
+                    current_drag_allowed_ops_,
+                    key_modifiers);
+  }
+
+  gfx::Point screen_location =
+      BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetCursorScreenPoint();
+  rvh->DragTargetDrop(location, screen_location, key_modifiers);
+
+  return current_drag_op_;
+}
+
+Compositor* WebContentsView::GetCompositor() const {
+  return compositor_.get();
+}
+
+CompositorFrameHandle* WebContentsView::GetCompositorFrameHandle() const {
+  return current_compositor_frame_.get();
+}
+
+void WebContentsView::DidCommitCompositorFrame() {
+  DCHECK(!received_surface_ids_.empty());
+
+  while (!received_surface_ids_.empty()) {
+    uint32_t surface_id = received_surface_ids_.front();
+    received_surface_ids_.pop();
+
+    compositor_->DidSwapCompositorFrame(
+        surface_id,
+        std::move(previous_compositor_frames_));
+  }
+}
+
+void WebContentsView::WasResized() {
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetViewportSize(GetBoundsPix().size());
+  root_layer_->SetBounds(GetBoundsDip().size());
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetSize(GetViewBoundsDip().size());
+    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
+        ->SendScreenRects();
+    GetRenderWidgetHost()->WasResized();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::VisibilityChanged() {
+  bool visible = IsVisible();
+
+  compositor_->SetVisibility(visible);
+
+  if (!visible) {
+    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
+    //  trigger eviction of the frontbuffer from a CompositorClient callback.
+    // XXX: Also this isn't really necessary for eviction - after all, the LTH
+    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
+    //  This callback is really to notify the toolkit layer that the
+    //  frontbuffer is being dropped
+    current_compositor_frame_ = nullptr;
+    if (client_) {
+      client_->EvictCurrentFrame();
+    }
+  }
+
+  if (visible) {
+    web_contents()->WasShown();
+  } else {
+    web_contents()->WasHidden();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::FocusChanged() {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  if (HasFocus()) {
+    rwhv->Focus();
+  } else {
+    rwhv->Blur();
+  }
+
+  MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::ScreenUpdated() {
+  content::RenderWidgetHost* host = GetRenderWidgetHost();
+  if (!host) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
 }
 
 } // namespace oxide

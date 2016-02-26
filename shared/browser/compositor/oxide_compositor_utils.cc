@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,9 +24,7 @@
 #include "base/memory/singleton.h"
 #include "base/single_thread_task_runner.h"
 #include "base/synchronization/waitable_event.h"
-#include "base/threading/simple_thread.h"
-#include "base/threading/thread.h"
-#include "base/threading/thread_restrictions.h"
+#include "base/thread_task_runner_handle.h"
 #include "cc/output/context_provider.h"
 #include "cc/raster/single_thread_task_graph_runner.h"
 #include "cc/surfaces/surface_id_allocator.h"
@@ -70,26 +68,20 @@ class FetchTextureResourcesTaskInfo {
   }
   const gpu::Mailbox& mailbox() const { return mailbox_; }
   uint64_t sync_point() const { return sync_point_; }
-  base::SingleThreadTaskRunner* task_runner() const {
-    return task_runner_.get();
-  }
 
  protected:
   FetchTextureResourcesTaskInfo(
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
-      base::SingleThreadTaskRunner* task_runner)
+      uint64_t sync_point)
       : command_buffer_id_(command_buffer_id),
         mailbox_(mailbox),
-        sync_point_(sync_point),
-        task_runner_(task_runner) {}
+        sync_point_(sync_point) {}
 
  private:
   gpu::CommandBufferId command_buffer_id_;
   gpu::Mailbox mailbox_;
   uint64_t sync_point_;
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 };
 
 class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
@@ -98,12 +90,10 @@ class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
-      const CompositorUtils::GetTextureFromMailboxCallback& callback,
-      base::SingleThreadTaskRunner* task_runner)
+      const CompositorUtils::GetTextureFromMailboxCallback& callback)
       : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
-                                      sync_point,
-                                      task_runner),
+                                      sync_point),
         callback_(callback),
         texture_(0) {}
   ~FetchTextureIDTaskInfo() override;
@@ -122,12 +112,10 @@ class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
-      const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
-      base::SingleThreadTaskRunner* task_runner)
+      const CompositorUtils::CreateEGLImageFromMailboxCallback& callback)
       : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
-                                      sync_point,
-                                      task_runner),
+                                      sync_point),
         callback_(callback),
         egl_image_(EGL_NO_IMAGE_KHR) {}
   ~FetchEGLImageTaskInfo() override;
@@ -158,26 +146,23 @@ class CompositorUtilsImpl : public CompositorUtils,
   // CompositorUtils implementation
   void Initialize(bool has_share_context) override;
   void Shutdown() override;
-  scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() override;
   void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
-      const CompositorUtils::GetTextureFromMailboxCallback& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
+      const CompositorUtils::GetTextureFromMailboxCallback& callback) override;
   void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
       uint64_t sync_point,
-      const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner) override;
+      const CompositorUtils::CreateEGLImageFromMailboxCallback& callback) override;
   bool CanUseGpuCompositing() const override;
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
   cc::SurfaceManager* GetSurfaceManager() const override;
   scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() override;
 
-  bool CalledOnMainOrCompositorThread() const;
+  bool CalledOnMainThread() const;
   bool CalledOnGpuThread() const;
 
  private:
@@ -207,11 +192,9 @@ class CompositorUtilsImpl : public CompositorUtils,
 
   // ThreadChecker for the thread that called Initialize()
   base::ThreadChecker main_thread_checker_;
+  scoped_refptr<base::SingleThreadTaskRunner> main_thread_task_runner_;
 
-  base::ThreadChecker compositor_thread_checker_;
   base::ThreadChecker gpu_thread_checker_;
-
-  scoped_refptr<base::SingleThreadTaskRunner> compositor_task_runner_;
 
   struct IncomingData {
     IncomingData()
@@ -233,7 +216,6 @@ class CompositorUtilsImpl : public CompositorUtils,
   } texture_resource_fetches_;
 
   struct MainData {
-    scoped_ptr<CompositorThread> compositor_thread;
     scoped_ptr<cc::SingleThreadTaskGraphRunner> task_graph_runner;
     scoped_ptr<cc::SurfaceManager> surface_manager;
   } main_unsafe_access_;
@@ -256,7 +238,7 @@ class CompositorUtilsImpl : public CompositorUtils,
 };
 
 FetchTextureResourcesTaskInfo::~FetchTextureResourcesTaskInfo() {
-  DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainOrCompositorThread());
+  DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainThread());
 }
 
 FetchTextureIDTaskInfo::~FetchTextureIDTaskInfo() {}
@@ -268,7 +250,7 @@ void FetchTextureIDTaskInfo::DoFetch() {
 }
 
 void FetchTextureIDTaskInfo::RunCallback() {
-  DCHECK(task_runner()->RunsTasksOnCurrentThread());
+  DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainThread());
   callback_.Run(texture_);
 }
 
@@ -288,28 +270,15 @@ void FetchEGLImageTaskInfo::DoFetch() {
 }
 
 void FetchEGLImageTaskInfo::RunCallback() {
-  DCHECK(task_runner()->RunsTasksOnCurrentThread());
+  DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainThread());
   callback_.Run(egl_image_);
   egl_image_ = EGL_NO_IMAGE_KHR;
-}
-
-void CompositorThread::Init() {
-  base::ThreadRestrictions::SetIOAllowed(false);
-  DCHECK(CompositorUtilsImpl::GetInstance()->CalledOnMainOrCompositorThread());
-}
-
-CompositorThread::CompositorThread()
-    : base::Thread("Oxide_CompositorThread") {}
-
-CompositorThread::~CompositorThread() {
-  Stop();
 }
 
 CompositorUtilsImpl::CompositorUtilsImpl()
     : client_id_(-1),
       has_share_context_(false) {
   main_thread_checker_.DetachFromThread();
-  compositor_thread_checker_.DetachFromThread();
   gpu_thread_checker_.DetachFromThread();
 }
 
@@ -397,14 +366,14 @@ void CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread_Locked(
 
   info->DoFetch();
 
-  info->task_runner()->PostTask(
+  main_thread_task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&CompositorUtilsImpl::SendFetchTextureResourcesResponse,
                  base::Unretained(this), id));
 }
 
 void CompositorUtilsImpl::SendFetchTextureResourcesResponse(int id) {
-  DCHECK(CalledOnMainOrCompositorThread());
+  DCHECK(main_thread_checker_.CalledOnValidThread());
 
   FetchTextureResourcesTaskInfo* info = nullptr;
   {
@@ -482,16 +451,11 @@ CompositorUtilsImpl* CompositorUtilsImpl::GetInstance() {
 }
 
 void CompositorUtilsImpl::Initialize(bool has_share_context) {
-  DCHECK(!main().compositor_thread);
-
   has_share_context_ = has_share_context;
   client_id_ =
       content::BrowserGpuChannelHostFactory::instance()->GetGpuChannelId();
 
-  main().compositor_thread.reset(new CompositorThread());
-  main().compositor_thread->Start();
-
-  compositor_task_runner_ = main().compositor_thread->task_runner();
+  main_thread_task_runner_ = base::ThreadTaskRunnerHandle::Get();
 
   main().task_graph_runner.reset(new cc::SingleThreadTaskGraphRunner());
   main().task_graph_runner->Start("CompositorTileWorker1",
@@ -514,12 +478,6 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
 }
 
 void CompositorUtilsImpl::Shutdown() {
-  DCHECK(main().compositor_thread);
-
-  // Shut down the compositor thread first, to prevent more calls in to
-  // CreateGLFrameHandle
-  main().compositor_thread.reset();
-
   main().task_graph_runner->Shutdown();
   main().task_graph_runner.reset();
 
@@ -539,10 +497,7 @@ void CompositorUtilsImpl::Shutdown() {
     event.Wait();
   }
 
-  // Because we assert that GetTextureFromMailbox / CreateEGLImageFromMailbox
-  // has to be called on the current thread or the compositor thread, at this
-  // point we're guaranteed to get no new incoming requests. It's safe to just
-  // delete any queued incoming requests without a lock
+  // The GPU thread is no longer touching this, so we don't need a lock
   while (incoming_texture_resource_fetches_.queue.size() > 0) {
     FetchTextureResourcesTaskInfo* info =
         incoming_texture_resource_fetches_.queue.front();
@@ -550,10 +505,7 @@ void CompositorUtilsImpl::Shutdown() {
     delete info;
   }
 
-  // We assert that the callback task runner passed to GetTextureFromMailbox /
-  // CreateEGLImageFromMailbox is for the current thread or the compositor
-  // thread, which means it's guaranteed to not process any more tasks. It's
-  // safe to just delete the pending requests without a lock
+  // The GPU thread is no longer touching this, so we don't need a lock
   for (auto it = texture_resource_fetches_.info_map.begin();
        it != texture_resource_fetches_.info_map.end(); ++it) {
     texture_resource_fetches_.id_allocator.FreeId(it->first);
@@ -562,23 +514,15 @@ void CompositorUtilsImpl::Shutdown() {
   texture_resource_fetches_.info_map.clear();
 }
 
-scoped_refptr<base::SingleThreadTaskRunner>
-CompositorUtilsImpl::GetTaskRunner() {
-  return compositor_task_runner_;
-}
-
 void CompositorUtilsImpl::GetTextureFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
     uint64_t sync_point,
-    const CompositorUtils::GetTextureFromMailboxCallback& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
+    const CompositorUtils::GetTextureFromMailboxCallback& callback) {
+  DCHECK(main_thread_checker_.CalledOnValidThread());
   DCHECK(context_provider);
   DCHECK(!callback.is_null());
   DCHECK(!mailbox.IsZero());
-  DCHECK(task_runner);
-
-  DCHECK(CalledOnMainOrCompositorThread());
 
   FetchTextureIDTaskInfo* info =
       new FetchTextureIDTaskInfo(
@@ -586,8 +530,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
-        callback,
-        task_runner.get());
+        callback);
 
   base::AutoLock lock(incoming_texture_resource_fetches_.lock);
   DCHECK(incoming_texture_resource_fetches_.can_queue);
@@ -609,14 +552,11 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
     uint64_t sync_point,
-    const CompositorUtils::CreateEGLImageFromMailboxCallback& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
+    const CompositorUtils::CreateEGLImageFromMailboxCallback& callback) {
+  DCHECK(main_thread_checker_.CalledOnValidThread());
   DCHECK(context_provider);
   DCHECK(!callback.is_null());
   DCHECK(!mailbox.IsZero());
-  DCHECK(task_runner);
-
-  DCHECK(CalledOnMainOrCompositorThread());
 
   FetchEGLImageTaskInfo* info =
       new FetchEGLImageTaskInfo(
@@ -624,8 +564,7 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
-        callback,
-        task_runner.get());
+        callback);
 
   base::AutoLock lock(incoming_texture_resource_fetches_.lock);
   DCHECK(incoming_texture_resource_fetches_.can_queue);
@@ -680,9 +619,8 @@ CompositorUtilsImpl::CreateSurfaceIdAllocator() {
   return allocator;
 }
 
-bool CompositorUtilsImpl::CalledOnMainOrCompositorThread() const {
-  return main_thread_checker_.CalledOnValidThread() ||
-         compositor_thread_checker_.CalledOnValidThread();
+bool CompositorUtilsImpl::CalledOnMainThread() const {
+  return main_thread_checker_.CalledOnValidThread();
 }
 
 bool CompositorUtilsImpl::CalledOnGpuThread() const {

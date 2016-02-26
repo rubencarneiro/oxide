@@ -23,11 +23,16 @@
 #include <GLES2/gl2.h>
 
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "cc/resources/shared_bitmap.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
+
+namespace base {
+class RefCountedMemory;
+}
 
 namespace oxide {
 
@@ -58,9 +63,7 @@ class SoftwareFrameData {
 
   unsigned id;
   gfx::Rect damage_rect;
-  cc::SharedBitmapId bitmap_id;
-
-  uint8_t* pixels;
+  scoped_refptr<base::RefCountedMemory> pixels;
 };
 
 class CompositorFrameData {
@@ -76,7 +79,6 @@ class CompositorFrameData {
   uint32_t surface_id;
 
   gfx::Size size_in_pixels;
-  float device_scale;
 
   scoped_ptr<GLFrameData> gl_frame_data;
   scoped_ptr<SoftwareFrameData> software_frame_data;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,7 @@
 #include <QtDebug>
 #include <QVariant>
 
-OXIDE_Q_IMPL_PROXY_HANDLE_CONVERTER(OxideQQuickScriptMessageRequest,
-                                    oxide::qt::ScriptMessageRequestProxyHandle);
+#include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
 
 void OxideQQuickScriptMessageRequestPrivate::ReceiveReply(
     const QVariant& payload) {
@@ -54,8 +53,8 @@ void OxideQQuickScriptMessageRequestPrivate::ReceiveError(
 
 OxideQQuickScriptMessageRequestPrivate::OxideQQuickScriptMessageRequestPrivate(
     OxideQQuickScriptMessageRequest* q)
-    : oxide::qt::ScriptMessageRequestProxyHandle(
-        oxide::qt::ScriptMessageRequestProxy::create(this), q) {}
+    : q_ptr(q),
+      proxy_(oxide::qt::ScriptMessageRequestProxy::create(this, q)) {}
 
 // static
 OxideQQuickScriptMessageRequestPrivate* OxideQQuickScriptMessageRequestPrivate::get(

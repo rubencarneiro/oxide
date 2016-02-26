@@ -48,6 +48,7 @@ set(OXIDE_QUICKLIB_SRCS
     oxide_qquick_alert_dialog.cc
     oxide_qquick_before_unload_dialog.cc
     oxide_qquick_confirm_dialog.cc
+    oxide_qquick_contents_view.cc
     oxide_qquick_file_picker.cc
     oxide_qquick_image_frame_node.cc
     oxide_qquick_init.cc

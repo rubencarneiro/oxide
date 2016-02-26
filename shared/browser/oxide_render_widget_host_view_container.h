@@ -31,11 +31,6 @@ namespace cc {
 class Layer;
 }
 
-namespace content {
-struct ContextMenuParams;
-class RenderFrameHost;
-}
-
 namespace gfx {
 class Rect;
 }
@@ -75,16 +70,6 @@ class RenderWidgetHostViewContainer {
   virtual bool IsFullscreen() const = 0;
 
   virtual float GetLocationBarHeightDip() const = 0;
-
-  virtual void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                               const content::ContextMenuParams& params) = 0;
-
-  virtual void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                             const gfx::Rect& bounds,
-                             int selected_item,
-                             const std::vector<content::MenuItem>& items,
-                             bool allow_multiple_selection) = 0;
-  virtual void HidePopupMenu() = 0;
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
