@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,25 +25,23 @@
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
+#include "oxide_compositor_proxy.h"
 #include "oxide_compositor_software_output_device.h"
-#include "oxide_compositor_thread_proxy.h"
 
 namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
-  CompositorFrameData data;
-  data.device_scale = frame->metadata.device_scale_factor;
-  data.software_frame_data = make_scoped_ptr(new SoftwareFrameData());
+  scoped_ptr<CompositorFrameData> data(new CompositorFrameData());
+  data->software_frame_data = make_scoped_ptr(new SoftwareFrameData());
 
   static_cast<CompositorSoftwareOutputDevice*>(software_device())
-      ->PopulateFrameDataForSwap(&data);
+      ->PopulateFrameDataForSwap(data.get());
 
-  DoSwapBuffers(&data);
+  DoSwapBuffers(std::move(data));
 }
 
 void CompositorOutputSurfaceSoftware::ReclaimResources(
     const CompositorFrameAck& ack) {
-  DCHECK(CalledOnValidThread());
   DCHECK_GT(ack.software_frame_id, 0U);
   DCHECK(ack.gl_frame_mailbox.IsZero());
 
@@ -55,8 +53,10 @@ void CompositorOutputSurfaceSoftware::ReclaimResources(
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
-    scoped_refptr<CompositorThreadProxy> proxy)
-    : CompositorOutputSurface(surface_id, std::move(software_device), proxy) {}
+    scoped_refptr<CompositorProxy> proxy)
+    : CompositorOutputSurface(surface_id,
+                              std::move(software_device),
+                              proxy) {}
 
 CompositorOutputSurfaceSoftware::~CompositorOutputSurfaceSoftware() {}
 

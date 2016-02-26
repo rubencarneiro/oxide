@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,24 +21,22 @@
 #include <deque>
 #include <queue>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "base/memory/linked_ptr.h"
-#include "base/threading/non_thread_safe.h"
+#include "base/memory/ref_counted.h"
 #include "cc/output/software_output_device.h"
+#include "third_party/skia/include/core/SkRegion.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
-namespace cc {
-class SharedBitmap;
+namespace base {
+class RefCountedMemory;
 }
 
 namespace oxide {
 
 class CompositorFrameData;
 
-class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice,
-                                       public base::NonThreadSafe {
+class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice {
  public:
   CompositorSoftwareOutputDevice();
   ~CompositorSoftwareOutputDevice();
@@ -47,6 +45,16 @@ class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice,
   void ReclaimResources(unsigned id);
 
  private:
+  struct BufferData {
+    BufferData() : id(0), available(true) {}
+
+    unsigned id;
+    bool available;
+    scoped_refptr<base::RefCountedMemory> pixels;
+    gfx::Size size;
+    SkRegion outdated_region;
+  };
+
   // cc::SoftwareOutputDevice implementation
   void Resize(const gfx::Size& pixel_size, float scale_factor) override;
   SkCanvas* BeginPaint(const gfx::Rect& damage_rect) override;
@@ -55,37 +63,17 @@ class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice,
   void EnsureBackbuffer() override;
 
   // =========
+  BufferData* GetBufferById(unsigned id);
+  BufferData* GetLastPaintedBuffer();
   unsigned GetNextId();
+  void DiscardBuffer(BufferData* buffer);
 
-  struct OutputFrameData {
-    OutputFrameData() : id(0) {}
+  unsigned next_buffer_id_;
+  unsigned last_painted_buffer_id_;
 
-    unsigned id;
-    linked_ptr<cc::SharedBitmap> bitmap;
-    gfx::Size size;
-  };
+  BufferData* back_buffer_;
+  std::array<BufferData, 2> buffers_;
 
-  unsigned next_frame_id_;
-
-  OutputFrameData backing_frame_;
-  OutputFrameData previous_frame_;
-  std::deque<OutputFrameData> pending_frames_;
-  std::queue<OutputFrameData> returned_frames_;
-
-  struct DamageData {
-    DamageData() : id(0) {}
-    DamageData(unsigned id, const gfx::Rect& damage)
-        : id(id), damage(damage) {}
-
-    unsigned id;
-    gfx::Rect damage;
-  };
-
-  // We keep track of damage rects, so that when we recycle an old buffer
-  // we can calculate the outdated region to copy from the previous buffer
-  std::deque<DamageData> previous_damage_rects_;
-
-  bool in_paint_;
   bool is_backbuffer_discarded_;
  
   DISALLOW_COPY_AND_ASSIGN(CompositorSoftwareOutputDevice);

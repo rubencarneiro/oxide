@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,8 +26,8 @@
 #include <queue>
 
 #include "base/macros.h"
-#include "base/memory/linked_ptr.h"
-#include "base/synchronization/lock.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/threading/non_thread_safe.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -38,13 +38,13 @@ namespace oxide {
 class CompositorFrameData;
 
 // This class maintains a map of mailbox names to actual GPU buffers on
-// behalf of CompositorThreadProxy
-class MailboxBufferMap {
+// behalf of CompositorProxy
+class MailboxBufferMap : public base::NonThreadSafe {
  public:
   MailboxBufferMap(CompositingMode mode);
   ~MailboxBufferMap();
 
-  typedef std::queue<linked_ptr<CompositorFrameData>> DelayedFrameQueue;
+  typedef std::queue<scoped_ptr<CompositorFrameData>> DelayedFrameQueue;
 
   // Sets the output surface ID. This is used to reject new additions
   // from an older surface, if they arrive after the surface has changed
@@ -88,13 +88,11 @@ class MailboxBufferMap {
  private:
   struct MailboxBufferData;
 
-  void AddMapping(const gpu::Mailbox& mailbox,
+  bool AddMapping(const gpu::Mailbox& mailbox,
                   const MailboxBufferData& data,
                   DelayedFrameQueue* ready_frames);
 
   CompositingMode mode_;
-
-  base::Lock lock_;
 
   uint32_t surface_id_;
 

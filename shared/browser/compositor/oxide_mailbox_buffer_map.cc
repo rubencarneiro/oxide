@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,23 +28,31 @@
 
 namespace oxide {
 
-void MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
+bool MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
                                   const MailboxBufferData& data,
                                   DelayedFrameQueue* ready_frames) {
-  lock_.AssertAcquired();
+  DCHECK(CalledOnValidThread());
+  DCHECK(map_.find(mailbox) == map_.end());
 
-  map_[mailbox] = data;
+  bool added = false;
+  if (data.surface_id == surface_id_) {
+    added = true;
+    map_[mailbox] = data;
+  }
 
   while (!delayed_frames_.empty()) {
-    const linked_ptr<CompositorFrameData>& frame = delayed_frames_.front();
-    if (map_.find(frame->gl_frame_data->mailbox) == map_.end() &&
-        frame->surface_id == surface_id_) {
+    scoped_ptr<CompositorFrameData>& frame = delayed_frames_.front();
+    DCHECK_EQ(frame->surface_id, surface_id_);
+
+    if (map_.find(frame->gl_frame_data->mailbox) == map_.end()) {
       break;
     }
 
-    ready_frames->push(frame);
+    ready_frames->push(std::move(frame));
     delayed_frames_.pop();
   }
+
+  return added;
 }
 
 MailboxBufferMap::MailboxBufferMap(CompositingMode mode)
@@ -54,15 +62,12 @@ MailboxBufferMap::MailboxBufferMap(CompositingMode mode)
 MailboxBufferMap::~MailboxBufferMap() {}
 
 void MailboxBufferMap::SetOutputSurfaceID(uint32_t surface_id) {
-  base::AutoLock lock(lock_);
+  DCHECK(CalledOnValidThread());
 
   surface_id_ = surface_id;
 
   for (auto it = map_.begin(); it != map_.end(); ) {
-    if (it->second.surface_id == surface_id) {
-      ++it;
-      continue;
-    }
+    DCHECK_NE(it->second.surface_id, surface_id);
 
     if (mode_ == COMPOSITING_MODE_TEXTURE) {
       auto e = it++;
@@ -98,21 +103,11 @@ bool MailboxBufferMap::AddTextureMapping(
   DCHECK_EQ(mode_, COMPOSITING_MODE_TEXTURE);
   DCHECK_NE(texture, 0U);
 
-  base::AutoLock lock(lock_);
-
-  if (surface_id != surface_id_) {
-    return false;
-  }
-
-  DCHECK(map_.find(mailbox) == map_.end());
-
   MailboxBufferData data;
   data.surface_id = surface_id;
   data.data.texture = texture;
 
-  AddMapping(mailbox, data, ready_frames);
-
-  return true;
+  return AddMapping(mailbox, data, ready_frames);
 }
 
 bool MailboxBufferMap::AddEGLImageMapping(
@@ -123,27 +118,17 @@ bool MailboxBufferMap::AddEGLImageMapping(
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
   DCHECK_NE(egl_image, EGL_NO_IMAGE_KHR);
 
-  base::AutoLock lock(lock_);
-
-  if (surface_id != surface_id_) {
-    return false;
-  }
-
-  DCHECK(map_.find(mailbox) == map_.end());
-
   MailboxBufferData data;
   data.surface_id = surface_id;
   data.data.image.live = true;
   data.data.image.ref_count = 0;
   data.data.image.egl_image = egl_image;
 
-  AddMapping(mailbox, data, ready_frames);
-
-  return true;
+  return AddMapping(mailbox, data, ready_frames);
 }
 
 void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
-  base::AutoLock lock(lock_);
+  DCHECK(CalledOnValidThread());
 
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     map_.erase(mailbox);
@@ -167,9 +152,9 @@ void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
 
 GLuint MailboxBufferMap::ConsumeTextureFromMailbox(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
   DCHECK_EQ(mode_, COMPOSITING_MODE_TEXTURE);
 
-  base::AutoLock lock(lock_);
   auto it = map_.find(mailbox);
   if (it == map_.end()) {
     return 0;
@@ -180,9 +165,9 @@ GLuint MailboxBufferMap::ConsumeTextureFromMailbox(
 
 EGLImageKHR MailboxBufferMap::ConsumeEGLImageFromMailbox(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
 
-  base::AutoLock lock(lock_);
   auto it = map_.find(mailbox);
   if (it == map_.end() || !it->second.data.image.live) {
     return EGL_NO_IMAGE_KHR;
@@ -194,13 +179,13 @@ EGLImageKHR MailboxBufferMap::ConsumeEGLImageFromMailbox(
 
 void MailboxBufferMap::ReclaimMailboxBufferResources(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
+
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     return;
   }
 
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
-
-  base::AutoLock lock(lock_);
 
   auto it = map_.find(mailbox);
   DCHECK(it != map_.end());
@@ -218,25 +203,24 @@ void MailboxBufferMap::ReclaimMailboxBufferResources(
 }
 
 bool MailboxBufferMap::CanBeginFrameSwap(CompositorFrameData* frame) {
+  DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
 
-  base::AutoLock lock(lock_);
+  if (frame->surface_id != surface_id_) {
+    return false;
+  }
 
   if (!delayed_frames_.empty()) {
     scoped_ptr<CompositorFrameData> frame_copy =
         CompositorFrameData::AllocFrom(frame);
-    delayed_frames_.push(make_linked_ptr(frame_copy.release()));
+    delayed_frames_.push(std::move(frame_copy));
     return false;
-  }
-
-  if (frame->surface_id != surface_id_) {
-    return true;
   }
 
   if (map_.find(frame->gl_frame_data->mailbox) == map_.end()) {
     scoped_ptr<CompositorFrameData> frame_copy =
         CompositorFrameData::AllocFrom(frame);
-    delayed_frames_.push(make_linked_ptr(frame_copy.release()));
+    delayed_frames_.push(std::move(frame_copy));
     return false;
   }
 

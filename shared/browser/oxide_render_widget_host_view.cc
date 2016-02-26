@@ -133,18 +133,6 @@ void RequireCallback(cc::SurfaceManager* manager,
   surface->AddDestructionDependency(sequence);
 }
 
-void DrawCallback(const cc::SurfaceFactory::DrawCallback& callback,
-                  cc::SurfaceDrawStatus status) {
-  if (content::BrowserThread::CurrentlyOn(content::BrowserThread::UI)) {
-    callback.Run(status);
-  } else {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::UI,
-        FROM_HERE,
-        base::Bind(&DrawCallback, callback, status));
-  }
-}
-
 bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
                                  const cc::CompositorFrameMetadata& current) {
   if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
@@ -330,11 +318,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
-    cc::SurfaceFactory::DrawCallback wrapped_ack_callback =
-        base::Bind(&DrawCallback, ack_callback);
     surface_factory_->SubmitCompositorFrame(surface_id_,
                                             std::move(frame),
-                                            wrapped_ack_callback);
+                                            ack_callback);
   }
 
   last_submitted_frame_metadata_ = metadata;

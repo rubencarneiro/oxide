@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/compositor/oxide_compositor_output_surface.h"
@@ -32,8 +30,8 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
   CompositorOutputSurfaceSoftware(
       uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
-      scoped_refptr<CompositorThreadProxy> proxy);
-  ~CompositorOutputSurfaceSoftware();
+      scoped_refptr<CompositorProxy> proxy);
+  ~CompositorOutputSurfaceSoftware() override;
 
  private:
   // cc::OutputSurface implementation

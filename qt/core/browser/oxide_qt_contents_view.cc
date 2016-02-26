@@ -29,6 +29,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/ref_counted_memory.h"
 #include "base/memory/scoped_vector.h"
 #include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
@@ -199,7 +200,7 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
   QImage GetSoftwareFrame() final {
     DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
     return QImage(
-        static_cast<uchar *>(frame_->data()->software_frame_data->pixels),
+        frame_->data()->software_frame_data->pixels->front(),
         frame_->data()->size_in_pixels.width(),
         frame_->data()->size_in_pixels.height(),
         QImage::Format_ARGB32);
