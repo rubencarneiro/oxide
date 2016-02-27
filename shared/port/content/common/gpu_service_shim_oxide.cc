@@ -57,9 +57,12 @@ bool IsCurrentlyOnGpuThread() {
 
 }
 
-gpu::gles2::GLES2Decoder* GetGLES2Decoder(int32_t client_id,
-                                          int32_t route_id) {
+gpu::gles2::GLES2Decoder* GetGLES2Decoder(
+    gpu::CommandBufferId command_buffer_id) {
   DCHECK(IsCurrentlyOnGpuThread());
+
+  int32_t client_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() >> 32);
+  int32_t route_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() & 0x00000000FFFFFFFF);
 
   content::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);

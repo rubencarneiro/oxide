@@ -34,13 +34,6 @@ class NetworkDelegate final : public net::NetworkDelegate {
                          const net::CompletionCallback& callback,
                          GURL* new_url) final;
 
-  void OnResolveProxy(const GURL& url,
-                      int load_flags,
-                      const net::ProxyService& proxy_service,
-                      net::ProxyInfo* result) final;
-
-  void OnProxyFallback(const net::ProxyServer& bad_proxy, int net_error) final;
-
   int OnBeforeSendHeaders(net::URLRequest* request,
                           const net::CompletionCallback& callback,
                           net::HttpRequestHeaders* headers) final;

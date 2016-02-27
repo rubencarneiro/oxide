@@ -28,7 +28,7 @@ class AccessTokenStore : public content::AccessTokenStore
   AccessTokenStore();
 
   virtual void LoadAccessTokens(
-      const LoadAccessTokensCallbackType& callback) override;
+      const LoadAccessTokensCallback& callback) override;
   virtual void SaveAccessToken(
       const GURL& server_url, const base::string16& access_token) override;
 
