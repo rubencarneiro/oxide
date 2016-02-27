@@ -460,8 +460,11 @@ void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
 }
 
 void WebContentsView::CompositorDidCommit() {
+  // XXX: Not sure if the behaviour here when there's no view is correct
   committed_frame_metadata_ =
-      GetRenderWidgetHostView()->last_submitted_frame_metadata();
+      GetRenderWidgetHostView() ?
+        GetRenderWidgetHostView()->last_submitted_frame_metadata()
+        : cc::CompositorFrameMetadata();
 }
 
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
