@@ -22,6 +22,7 @@
 #include <QRect>
 #include <QScreen>
 #include <QString>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
@@ -51,27 +52,19 @@ blink::WebScreenOrientationType GetOrientationTypeFromScreenOrientation(
 }
 
 float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
-  // For some reason, the Ubuntu QPA plugin doesn't override
-  // QScreen::devicePixelRatio. However, applications using the Ubuntu
-  // SDK use something called "grid units". The relationship between
-  // grid units and device pixels is set by the "GRID_UNIT_PX" environment
-  // variable. On a screen with a DPR of 1.0f, GRID_UNIT_PX is set to 8, and
-  // 1 grid unit == 8 device pixels.
-  // If we are using the Ubuntu backend, we use GRID_UNIT_PX to derive the
-  // device pixel ratio, else we get it from QScreen::devicePixelRatio.
-  // XXX: There are 2 scenarios where this is completely broken:
-  //      1) Any apps not using the Ubuntu SDK but running with the Ubuntu
-  //         QPA plugin. In this case, we derive a DPR from GRID_UNIT_PX if
-  //         set, and the application probably uses QScreen::devicePixelRatio,
-  //         which is always 1.0f
-  //      2) Any apps using the Ubuntu SDK but not running with the Ubuntu
-  //         QPA plugin. In this case, we get the DPR from
-  //         QScreen::devicePixelRatio, and the application uses GRID_UNIX_PX
-  //         if set
-  //      I think it would be better if the Ubuntu QPA plugin did override
-  //      QScreen::devicePixelRatio (it could still get that from GRID_UNIT_PX),
-  //      and the Ubuntu SDK used this to convert between grid units and device
-  //      pixels, then we could just use QScreen::devicePixelRatio here
+  // Because it only supports integer scale factors, the Ubuntu QPA plugin
+  // doesn't use the default Qt devicePixelRatio but a custom scaling system
+  // based on grid units. The relationship between grid units and device pixels
+  // is set by the "GRID_UNIT_PX" environment variable. On a screen with a scale
+  // factor of 1, GRID_UNIT_PX is set to 8, and 1 grid unit == 8 device pixels.
+  // If the Ubuntu backend is used, we retrieve scale factors from the QPA
+  // plugin. For old versions that don't expose these factors, we deduce the
+  // scale factor by reading the "GRID_UNIT_PX" environment variable.
+  //
+  // XXX: This is broken for apps not using the Ubuntu SDK but running with the
+  //      Ubuntu QPA plugin. In this case, the scaling is applied even though
+  //      it's unlikely to be expected. A workaround is to have
+  //      "OXIDE_FORCE_DPR" set.
 
   // Allow an override for testing
   {
@@ -85,6 +78,15 @@ float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
 
   QString platform = QGuiApplication::platformName();
   if (platform.startsWith("ubuntu") || platform == "mirserver") {
+
+    QPlatformNativeInterface* interface =
+        QGuiApplication::platformNativeInterface();
+    void* data =
+        interface->nativeResourceForScreen(QByteArray("scale"), screen);
+    if (data) {
+      return *reinterpret_cast<float*>(data);
+    }
+
     QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
     bool ok;
     float scale = grid_unit_px.toFloat(&ok);
