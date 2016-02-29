@@ -46,10 +46,10 @@ float GetUbuntuScale() {
   return scale / 8;
 }
 
-float GetEnvironmentScaleOverride() {
-  QByteArray device_scale(qgetenv("OXIDE_DEVICE_SCALE"));
+float GetEnvironmentScaleFactor() {
+  QByteArray scale_factor(qgetenv("OXIDE_SCALE_FACTOR"));
   bool ok;
-  float scale = device_scale.toFloat(&ok);
+  float scale = scale_factor.toFloat(&ok);
   if (!ok) {
     return 1.f;
   }
@@ -57,8 +57,19 @@ float GetEnvironmentScaleOverride() {
   return scale;
 }
 
+float GetEnvironmentForceScaleFactor(bool *ok) {
+  QByteArray force_scale_factor(qgetenv("OXIDE_FORCE_SCALE_FACTOR"));
+  return force_scale_factor.toFloat(ok);
+}
+
 float GetExtraDeviceScaleForScreen(QScreen* screen) {
-  return GetUbuntuScale() * GetEnvironmentScaleOverride();
+  bool force;
+  float force_scale = GetEnvironmentForceScaleFactor(&force);
+  if (force) {
+    return force_scale / screen->devicePixelRatio();
+  }
+
+  return GetUbuntuScale() * GetEnvironmentScaleFactor();
 }
 
 }
