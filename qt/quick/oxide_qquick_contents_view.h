@@ -122,7 +122,7 @@ class ContentsView : public QObject,
   QScreen* GetScreen() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
-  QRect GetBoundsPix() const override;
+  QRect GetBounds() const override;
   void ScheduleUpdate() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const QCursor& cursor) override;

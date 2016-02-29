@@ -769,20 +769,20 @@ void OxideQQuickWebViewPrivate::setLocationBarAnimated(bool animated) {
   }
 }
 
-int OxideQQuickWebViewPrivate::locationBarOffsetPix() {
+int OxideQQuickWebViewPrivate::locationBarOffset() {
   if (!proxy_) {
     return 0;
   }
 
-  return proxy_->locationBarOffsetPix();
+  return proxy_->locationBarOffset();
 }
 
-int OxideQQuickWebViewPrivate::locationBarContentOffsetPix() {
+int OxideQQuickWebViewPrivate::locationBarContentOffset() {
   if (!proxy_) {
     return 0;
   }
 
-  return proxy_->locationBarContentOffsetPix();
+  return proxy_->locationBarContentOffset();
 }
 
 void OxideQQuickWebViewPrivate::locationBarShow(bool animate) {
@@ -1324,7 +1324,7 @@ qreal OxideQQuickWebView::viewportWidth() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameViewportSizePix().width();
+      d)->proxy_->compositorFrameViewportSize().width();
 }
 
 qreal OxideQQuickWebView::viewportHeight() const {
@@ -1335,7 +1335,7 @@ qreal OxideQQuickWebView::viewportHeight() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameViewportSizePix().height();
+      d)->proxy_->compositorFrameViewportSize().height();
 }
 
 qreal OxideQQuickWebView::contentWidth() const {
@@ -1346,7 +1346,7 @@ qreal OxideQQuickWebView::contentWidth() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameContentSizePix().width();
+      d)->proxy_->compositorFrameContentSize().width();
 }
 
 qreal OxideQQuickWebView::contentHeight() const {
@@ -1357,7 +1357,7 @@ qreal OxideQQuickWebView::contentHeight() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameContentSizePix().height();
+      d)->proxy_->compositorFrameContentSize().height();
 }
 
 qreal OxideQQuickWebView::contentX() const {
@@ -1368,7 +1368,7 @@ qreal OxideQQuickWebView::contentX() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameScrollOffsetPix().x();
+      d)->proxy_->compositorFrameScrollOffset().x();
 }
 
 qreal OxideQQuickWebView::contentY() const {
@@ -1379,7 +1379,7 @@ qreal OxideQQuickWebView::contentY() const {
   }
 
   return const_cast<OxideQQuickWebViewPrivate*>(
-      d)->proxy_->compositorFrameScrollOffsetPix().y();
+      d)->proxy_->compositorFrameScrollOffset().y();
 }
 
 QQmlComponent* OxideQQuickWebView::contextMenu() const {

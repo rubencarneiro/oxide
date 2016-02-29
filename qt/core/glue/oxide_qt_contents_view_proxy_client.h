@@ -51,7 +51,7 @@ class ContentsViewProxyClient {
 
   virtual bool HasFocus() const = 0;
 
-  virtual QRect GetBoundsPix() const = 0;
+  virtual QRect GetBounds() const = 0;
 
   virtual void ScheduleUpdate() = 0;
   virtual void EvictCurrentFrame() = 0;

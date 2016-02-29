@@ -17,8 +17,6 @@
 
 #include "oxide_web_contents_view_client.h"
 
-#include <cmath>
-
 #include "base/logging.h"
 
 #include "oxide_web_contents_view.h"
@@ -30,18 +28,6 @@ WebContentsViewClient::WebContentsViewClient()
 
 WebContentsViewClient::~WebContentsViewClient() {
   DCHECK(!view_);
-}
-
-gfx::Rect WebContentsViewClient::GetBoundsDip() const {
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  gfx::Rect bounds(GetBoundsPix());
-
-  int x = std::lround(bounds.x() * scale);
-  int y = std::lround(bounds.y() * scale);
-  int width = std::lround(bounds.width() * scale);
-  int height = std::lround(bounds.height() * scale);
-
-  return gfx::Rect(x, y, width, height);
 }
 
 void WebContentsViewClient::UpdateCursor(const content::WebCursor& cursor) {}

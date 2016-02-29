@@ -36,8 +36,8 @@ class DragSource : public oxide::DragSource {
   void StartDragging(content::WebContents* contents,
                      const content::DropData& drop_data,
                      blink::WebDragOperationsMask allowed_ops,
-                     const SkBitmap& bitmap,
-                     const gfx::Vector2d& image_offset_pix) override;
+                     const gfx::ImageSkia& image,
+                     const gfx::Vector2d& image_offset) override;
 
   base::WeakPtrFactory<DragSource> weak_ptr_factory_;
 

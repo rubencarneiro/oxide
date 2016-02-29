@@ -29,15 +29,15 @@
 
 namespace oxide {
 
-FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size_dip) {
+FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size) {
 #if defined(ENABLE_HYBRIS)
   if (HybrisUtils::HasDeviceProperties()) {
     // Ubuntu on phones and tablets currently uses an Android kernel and EGL
     // stack. If we detect these, assume we are a phone or tablet. The screen
     // size check here is basically the same as Chrome for Android, where
     // a minimum DIP width of less than 600 is a phone
-    if (std::min(primary_screen_size_dip.width(),
-                 primary_screen_size_dip.height()) >= 600) {
+    if (std::min(primary_screen_size.width(),
+                 primary_screen_size.height()) >= 600) {
       return FORM_FACTOR_TABLET;
     }
 

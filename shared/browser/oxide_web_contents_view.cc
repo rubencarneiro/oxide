@@ -152,7 +152,7 @@ void WebContentsView::MaybeScrollFocusedEditableNodeIntoView() {
   }
 
   content::RenderWidgetHostImpl::From(host)
-      ->ScrollFocusedEditableNodeIntoRect(GetViewBoundsDip());
+      ->ScrollFocusedEditableNodeIntoRect(GetBounds());
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -168,7 +168,7 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {
-  *out = GetBoundsDip();
+  *out = GetBounds();
 }
 
 void WebContentsView::SizeContents(const gfx::Size& size) {
@@ -202,13 +202,7 @@ content::DropData* WebContentsView::GetDropData() const {
 }
 
 gfx::Rect WebContentsView::GetViewBounds() const {
-  content::RenderWidgetHostView* rwhv =
-      web_contents()->GetRenderWidgetHostView();
-  if (rwhv) {
-    return rwhv->GetViewBounds();
-  }
-
-  return gfx::Rect();
+  return GetBounds();
 }
 
 void WebContentsView::CreateView(const gfx::Size& initial_size,
@@ -278,15 +272,18 @@ void WebContentsView::StartDragging(
     selection_controller->HideAndDisallowShowingAutomatically();
   }
 
-  float scale = GetScreenInfo().deviceScaleFactor;
-  gfx::Vector2d image_offset_pix(image_offset.x() * scale,
-                                 image_offset.y() * scale);
+  // As our implementation of gfx::Screen::GetDisplayNearestWindow always
+  // returns an invalid display, the passed in image isn't quite correct.
+  // Recreate it with the correct scale and dimenstions
+  gfx::ImageSkia new_image =
+      gfx::ImageSkia(gfx::ImageSkiaRep(image.GetRepresentation(1).sk_bitmap(),
+                                       GetScreenInfo().deviceScaleFactor));
 
   drag_source_->StartDragging(web_contents(),
                               drop_data,
                               allowed_ops,
-                              *image.bitmap(),
-                              image_offset_pix);
+                              new_image,
+                              image_offset);
 }
 
 void WebContentsView::UpdateDragCursor(blink::WebDragOperation operation) {
@@ -472,8 +469,8 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
         ->GetScreenClient()
         ->GetCursorScreenPoint();
   gfx::Point view_point =
-      screen_point - gfx::Vector2d(GetViewBounds().origin().x(),
-                                   GetViewBounds().origin().y());
+      screen_point - gfx::Vector2d(GetBounds().origin().x(),
+                                   GetBounds().origin().y());
   web_contents_impl()->DragSourceEndedAt(view_point.x(), view_point.y(),
                                          screen_point.x(), screen_point.y(),
                                          operation);
@@ -515,12 +512,8 @@ void WebContentsView::CursorChanged() {
   client_->UpdateCursor(rwhv->current_cursor());
 }
 
-gfx::Size WebContentsView::GetViewSizePix() const {
-  return GetBoundsPix().size();
-}
-
-gfx::Rect WebContentsView::GetViewBoundsDip() const {
-  return GetBoundsDip();
+gfx::Size WebContentsView::GetViewSizeInPixels() const {
+  return GetSizeInPixels();
 }
 
 bool WebContentsView::HasFocus(const RenderWidgetHostView* view) const {
@@ -535,14 +528,14 @@ bool WebContentsView::IsFullscreen() const {
   return FullscreenHelper::FromWebContents(web_contents())->IsFullscreen();
 }
 
-float WebContentsView::GetLocationBarHeightDip() const {
+float WebContentsView::GetLocationBarHeight() const {
   // TODO: Add LocationBarController class
   WebView* view = WebView::FromWebContents(web_contents());
   if (!view) {
     return 0.f;
   }
 
-  return view->GetLocationBarHeightDip();
+  return view->GetLocationBarHeight();
 }
 
 ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
@@ -573,7 +566,7 @@ void WebContentsView::TouchSelectionChanged() const {
   float offset = 0.f;
   WebView* view = WebView::FromWebContents(web_contents());
   if (view) {
-    offset = view->GetLocationBarContentOffsetDip();
+    offset = view->GetLocationBarContentOffset();
   }
   bounds.Offset(0, offset);
 
@@ -659,7 +652,12 @@ bool WebContentsView::HasFocus() const {
   return client_->HasFocus();
 }
 
-gfx::Rect WebContentsView::GetBoundsPix() const {
+gfx::Size WebContentsView::GetSizeInPixels() const {
+  return gfx::ScaleToRoundedSize(GetBounds().size(),
+                                 GetScreenInfo().deviceScaleFactor);
+}
+
+gfx::Rect WebContentsView::GetBounds() const {
   if (!client_) {
     return gfx::Rect();
   }
@@ -678,23 +676,7 @@ gfx::Rect WebContentsView::GetBoundsPix() const {
     return GetScreenInfo().rect;
   }
 
-  return client_->GetBoundsPix();
-}
-
-gfx::Rect WebContentsView::GetBoundsDip() const {
-  if (!client_) {
-    return gfx::Rect();
-  }
-
-  float scale = 1.0f / GetScreenInfo().deviceScaleFactor;
-  gfx::Rect bounds(GetBoundsPix());
-
-  int x = std::lround(bounds.x() * scale);
-  int y = std::lround(bounds.y() * scale);
-  int width = std::lround(bounds.width() * scale);
-  int height = std::lround(bounds.height() * scale);
-
-  return gfx::Rect(x, y, width, height);
+  return client_->GetBounds();
 }
 
 blink::WebScreenInfo WebContentsView::GetScreenInfo() const {
@@ -863,12 +845,12 @@ void WebContentsView::DidCommitCompositorFrame() {
 
 void WebContentsView::WasResized() {
   compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-  compositor_->SetViewportSize(GetBoundsPix().size());
-  root_layer_->SetBounds(GetBoundsDip().size());
+  compositor_->SetViewportSize(GetSizeInPixels());
+  root_layer_->SetBounds(GetBounds().size());
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv) {
-    rwhv->SetSize(GetViewBoundsDip().size());
+    rwhv->SetSize(GetBounds().size());
     content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
         ->SendScreenRects();
     GetRenderWidgetHost()->WasResized();

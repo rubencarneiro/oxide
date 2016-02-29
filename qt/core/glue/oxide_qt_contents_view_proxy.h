@@ -34,6 +34,8 @@ class QHoverEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
+class QPoint;
+class QPointF;
 class QRect;
 class QTouchEvent;
 class QWheelEvent;
@@ -80,10 +82,10 @@ class ContentsViewProxy {
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchUngrabEvent() = 0;
   virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPoint& window_pos) = 0;
+                                const QPointF& window_pos) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
   virtual void handleHoverEvent(QHoverEvent* event,
-                                const QPoint& window_pos,
+                                const QPointF& window_pos,
                                 const QPoint& global_pos) = 0;
   virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
   virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;

@@ -211,7 +211,7 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return container_->GetViewSizePix();
+  return container_->GetViewSizeInPixels();
 }
 
 bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
@@ -227,7 +227,7 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
     return 0.0f;
   }
 
-  return container_->GetLocationBarHeightDip();
+  return container_->GetLocationBarHeight();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -534,7 +534,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   if (!container_) {
     bounds = gfx::Rect(last_size_);
   } else {
-    bounds = container_->GetViewBoundsDip();
+    bounds = container_->GetViewBounds();
   }
 
   if (DoTopControlsShrinkBlinkSize()) {

@@ -20,14 +20,13 @@
 
 #include "third_party/WebKit/public/web/WebDragOperation.h"
 
-class SkBitmap;
-
 namespace content {
 class DropData;
 class WebContents;
 }
 
 namespace gfx {
+class ImageSkia;
 class Vector2d;
 }
 
@@ -42,8 +41,8 @@ class DragSource {
   virtual void StartDragging(content::WebContents* contents,
                              const content::DropData& drop_data,
                              blink::WebDragOperationsMask allowed_ops,
-                             const SkBitmap& bitmap,
-                             const gfx::Vector2d& image_offset_pix) = 0;
+                             const gfx::ImageSkia& image,
+                             const gfx::Vector2d& image_offset) = 0;
 
  protected:
   DragSource(DragSourceClient* client) : client_(client) {}

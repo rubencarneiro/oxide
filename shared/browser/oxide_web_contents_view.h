@@ -30,6 +30,7 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
@@ -99,8 +100,8 @@ class WebContentsView : public content::WebContentsViewOxide,
   bool IsVisible() const;
   bool HasFocus() const;
 
-  gfx::Rect GetBoundsPix() const;
-  gfx::Rect GetBoundsDip() const;
+  gfx::Size GetSizeInPixels() const;
+  gfx::Rect GetBounds() const;
 
   blink::WebScreenInfo GetScreenInfo() const;
 
@@ -225,11 +226,10 @@ class WebContentsView : public content::WebContentsViewOxide,
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;
   void DetachLayer(scoped_refptr<cc::Layer> layer) override;
   void CursorChanged() override;
-  gfx::Size GetViewSizePix() const override;
-  gfx::Rect GetViewBoundsDip() const override;
+  gfx::Size GetViewSizeInPixels() const override;
   bool HasFocus(const RenderWidgetHostView* view) const override;
   bool IsFullscreen() const override;
-  float GetLocationBarHeightDip() const override;
+  float GetLocationBarHeight() const override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged() const override;
   void EditingCapabilitiesChanged() override;

@@ -33,6 +33,7 @@
 
 QT_BEGIN_NAMESPACE
 class QObject;
+class QScreen;
 QT_END_NAMESPACE
 
 namespace content {
@@ -58,15 +59,14 @@ class ContentsView : public ContentsViewProxy,
 
   QObject* native_view() const { return native_view_; }
 
+  QScreen* GetScreen() const;
+
   // TODO: Get rid
   ContentsViewProxyClient* client() const { return client_; }
 
-  float GetDeviceScaleFactor() const;
-  int GetLocationBarContentOffsetPix() const;
+  float GetLocationBarContentOffset() const;
 
  private:
-  float GetLocationBarContentOffsetDip();
-
   // ContentsViewProxy implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
@@ -79,10 +79,11 @@ class ContentsView : public ContentsViewProxy,
   void handleFocusEvent(QFocusEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchUngrabEvent() override;
-  void handleWheelEvent(QWheelEvent* event, const QPoint& window_pos) override;
+  void handleWheelEvent(QWheelEvent* event,
+                        const QPointF& window_pos) override;
   void handleTouchEvent(QTouchEvent* event) override;
   void handleHoverEvent(QHoverEvent* event,
-                        const QPoint& window_pos,
+                        const QPointF& window_pos,
                         const QPoint& global_pos) override;
   void handleDragEnterEvent(QDragEnterEvent* event) override;
   void handleDragMoveEvent(QDragMoveEvent* event) override;
@@ -96,7 +97,7 @@ class ContentsView : public ContentsViewProxy,
   blink::WebScreenInfo GetScreenInfo() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
-  gfx::Rect GetBoundsPix() const override;
+  gfx::Rect GetBounds() const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const content::WebCursor& cursor) override;

@@ -157,9 +157,9 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual void updateWebPreferences() = 0;
 
-  virtual QPoint compositorFrameScrollOffsetPix() = 0;
-  virtual QSize compositorFrameContentSizePix() = 0;
-  virtual QSize compositorFrameViewportSizePix() = 0;
+  virtual QPoint compositorFrameScrollOffset() = 0;
+  virtual QSize compositorFrameContentSize() = 0;
+  virtual QSize compositorFrameViewportSize() = 0;
 
   virtual void setCanTemporarilyDisplayInsecureContent(bool allow) = 0;
   virtual void setCanTemporarilyRunInsecureContent(bool allow) = 0;;
@@ -170,8 +170,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual int locationBarHeight() const = 0;
   virtual void setLocationBarHeight(int height) = 0;
-  virtual int locationBarOffsetPix() const = 0;
-  virtual int locationBarContentOffsetPix() const = 0;
+  virtual int locationBarOffset() const = 0;
+  virtual int locationBarContentOffset() const = 0;
   virtual LocationBarMode locationBarMode() const = 0;
   virtual void setLocationBarMode(LocationBarMode mode) = 0;
   virtual bool locationBarAnimated() const = 0;

@@ -28,10 +28,13 @@
 #include "base/message_loop/message_loop.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "ui/gfx/geometry/vector2d.h"
+#include "ui/gfx/image/image_skia.h"
+#include "ui/gfx/image/image_skia_rep.h"
 
 #include "shared/browser/oxide_drag_source_client.h"
 
 #include "oxide_qt_contents_view.h"
+#include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_skutils.h"
 
@@ -41,8 +44,8 @@ namespace qt {
 void DragSource::StartDragging(content::WebContents* contents,
                                const content::DropData& drop_data,
                                blink::WebDragOperationsMask allowed_ops,
-                               const SkBitmap& bitmap,
-                               const gfx::Vector2d& image_offset_pix) {
+                               const gfx::ImageSkia& image,
+                               const gfx::Vector2d& image_offset) {
   ContentsView* view = ContentsView::FromWebContents(contents);
   if (!view) {
     client()->EndDrag(blink::WebDragOperationNone);
@@ -50,15 +53,22 @@ void DragSource::StartDragging(content::WebContents* contents,
   }
 
   DCHECK(view->native_view());
+  DCHECK(view->GetScreen());
 
   QPointer<QDrag> drag = new QDrag(view->native_view());
   drag->setMimeData(new QMimeData());
 
-  drag->setHotSpot(QPoint(image_offset_pix.x(), image_offset_pix.y()));
+  drag->setHotSpot(QPoint(image_offset.x(), image_offset.y()));
+
+  float dpr = DpiUtils::GetScaleFactorForScreen(view->GetScreen());
+
+  gfx::ImageSkiaRep image_rep = image.GetRepresentation(dpr);
+  const SkBitmap& bitmap = image_rep.sk_bitmap();
 
   QPixmap pixmap;
   if (!bitmap.drawsNothing()) {
     QImage image = QImageFromSkBitmap(bitmap);
+    image.setDevicePixelRatio(dpr);
     if (!image.isNull()) {
       pixmap = QPixmap::fromImage(image);
     }
