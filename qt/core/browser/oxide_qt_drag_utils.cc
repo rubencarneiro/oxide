@@ -213,7 +213,7 @@ void GetDropEventParams(QDropEvent* event,
                         int* key_modifiers) {
   *location =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
-  *location += gfx::Vector2d(0, -location_bar_content_offset);
+  *location -= gfx::Vector2d(0, location_bar_content_offset);
 
   Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
   if (modifiers & Qt::ShiftModifier) {

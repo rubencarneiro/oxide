@@ -36,7 +36,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QPoint;
 class QPointF;
-class QRect;
+class QRectF;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -56,7 +56,8 @@ class CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
-  virtual const QRect& GetRect() const = 0;
+  virtual const QRectF& GetRect() const = 0;
+  virtual const QSize& GetSizeInPixels() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual unsigned int GetAcceleratedFrameTexture() = 0;

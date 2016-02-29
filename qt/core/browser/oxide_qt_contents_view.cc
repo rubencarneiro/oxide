@@ -163,72 +163,97 @@ inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            int location_bar_content_offset)
-      : frame_(frame) {
-    if (frame_.get()) {
-      rect_ = QRect(0, location_bar_content_offset,
-                    frame_->data()->size_in_pixels.width(),
-                    frame_->data()->size_in_pixels.height());
-    }
-  }
+                            float location_bar_content_offset,
+                            QScreen* screen);
+  ~CompositorFrameHandleImpl() override {}
 
-  virtual ~CompositorFrameHandleImpl() {}
-
-  CompositorFrameHandle::Type GetType() final {
-    if (!frame_.get()) {
-      return CompositorFrameHandle::TYPE_INVALID;
-    }
-    if (frame_->data()->gl_frame_data) {
-      DCHECK_NE(frame_->data()->gl_frame_data->type,
-                oxide::GLFrameData::Type::INVALID);
-      if (frame_->data()->gl_frame_data->type ==
-          oxide::GLFrameData::Type::TEXTURE) {
-        return CompositorFrameHandle::TYPE_ACCELERATED;
-      }
-      return CompositorFrameHandle::TYPE_IMAGE;
-    }
-    if (frame_->data()->software_frame_data) {
-      return CompositorFrameHandle::TYPE_SOFTWARE;
-    }
-
-    NOTREACHED();
-    return CompositorFrameHandle::TYPE_INVALID;
-  }
-
-  const QRect& GetRect() const final {
-    return rect_;
-  }
-
-  QImage GetSoftwareFrame() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
-    return QImage(
-        frame_->data()->software_frame_data->pixels->front(),
-        frame_->data()->size_in_pixels.width(),
-        frame_->data()->size_in_pixels.height(),
-        QImage::Format_ARGB32);
-  }
-
-  unsigned int GetAcceleratedFrameTexture() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->data()->gl_frame_data->resource.texture;
-  }
-
-  EGLImageKHR GetImageFrame() final {
-    return frame_->data()->gl_frame_data->resource.egl_image;
-  }
+  CompositorFrameHandle::Type GetType() override;
+  const QRectF& GetRect() const override;
+  const QSize& GetSizeInPixels() const override;
+  QImage GetSoftwareFrame() override;
+  unsigned int GetAcceleratedFrameTexture() override;
+  EGLImageKHR GetImageFrame() override;
 
  private:
   scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QRect rect_;
+  QRectF rect_;
+  QSize size_in_pixels_;
 };
+
+CompositorFrameHandleImpl::CompositorFrameHandleImpl(
+    oxide::CompositorFrameHandle* frame,
+    float location_bar_content_offset,
+    QScreen* screen)
+    : frame_(frame) {
+  if (!frame_) {
+    return;
+  }
+
+  size_in_pixels_ = QSize(frame->data()->size_in_pixels.width(),
+                          frame->data()->size_in_pixels.height());
+
+  gfx::RectF rect =
+      gfx::ScaleRect(gfx::RectF(gfx::SizeF(ToChromium(size_in_pixels_))),
+                     1 / frame->data()->device_scale);
+  rect += gfx::Vector2dF(0, location_bar_content_offset);
+
+  rect_ = ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, screen));
+}
+
+CompositorFrameHandle::Type CompositorFrameHandleImpl::GetType() {
+  if (!frame_.get()) {
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+  if (frame_->data()->gl_frame_data) {
+    DCHECK_NE(frame_->data()->gl_frame_data->type,
+              oxide::GLFrameData::Type::INVALID);
+    if (frame_->data()->gl_frame_data->type ==
+        oxide::GLFrameData::Type::TEXTURE) {
+      return CompositorFrameHandle::TYPE_ACCELERATED;
+    }
+    return CompositorFrameHandle::TYPE_IMAGE;
+  }
+  if (frame_->data()->software_frame_data) {
+    return CompositorFrameHandle::TYPE_SOFTWARE;
+  }
+
+  NOTREACHED();
+  return CompositorFrameHandle::TYPE_INVALID;
+}
+
+const QRectF& CompositorFrameHandleImpl::GetRect() const {
+  return rect_;
+}
+
+const QSize& CompositorFrameHandleImpl::GetSizeInPixels() const {
+  return size_in_pixels_;
+}
+
+QImage CompositorFrameHandleImpl::GetSoftwareFrame() {
+  DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+  return QImage(
+      frame_->data()->software_frame_data->pixels->front(),
+      frame_->data()->size_in_pixels.width(),
+      frame_->data()->size_in_pixels.height(),
+      QImage::Format_ARGB32);
+}
+
+unsigned int CompositorFrameHandleImpl::GetAcceleratedFrameTexture() {
+  DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+  return frame_->data()->gl_frame_data->resource.texture;
+}
+
+EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
+  return frame_->data()->gl_frame_data->resource.egl_image;
+}
 
 QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
   if (!compositor_frame_) {
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
           view()->GetCompositorFrameHandle(),
-          view()->committed_frame_metadata().device_scale_factor *
-            view()->committed_frame_metadata().location_bar_content_translation.y()));
+          view()->committed_frame_metadata().location_bar_content_translation.y(),
+          GetScreen()));
   }
 
   return compositor_frame_;

@@ -492,8 +492,8 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
         DpiUtils::ConvertQtPixelsToChromium(gfx::PointF(touch_point.pos().x(),
                                                         touch_point.pos().y()),
                                             screen);
-    location +=
-        gfx::Vector2dF(0, -touch_point_content_offsets_[touch_point.id()]);
+    location -=
+        gfx::Vector2dF(0, touch_point_content_offsets_[touch_point.id()]);
 
     ui::TouchEvent* ui_event = new ui::TouchEvent(
         QTouchPointStateToEventType(touch_point.state()),

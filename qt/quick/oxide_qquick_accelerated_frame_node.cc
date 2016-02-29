@@ -44,7 +44,7 @@ void AcceleratedFrameNode::updateNode(
 
   texture_.reset(item_->window()->createTextureFromId(
       handle_->GetAcceleratedFrameTexture(),
-      handle_->GetRect().size(),
+      handle_->GetSizeInPixels(),
       QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
 }
