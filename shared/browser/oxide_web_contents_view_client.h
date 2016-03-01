@@ -54,9 +54,6 @@ class WebContentsViewClient {
 
   virtual bool HasFocus() const = 0;
 
-  // Use floats here due to the way scaling works on Ubuntu/Mir, which means
-  // we might get non-integer bounds. Having a float allows us to accurately
-  // scale up to physical pixels without a loss of information
   virtual gfx::RectF GetBounds() const = 0;
 
   virtual void SwapCompositorFrame() = 0;

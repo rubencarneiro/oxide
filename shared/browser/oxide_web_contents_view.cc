@@ -171,7 +171,9 @@ gfx::RectF WebContentsView::GetBoundsF() const {
   //  this is going to break
   FullscreenHelper* fullscreen =
       FullscreenHelper::FromWebContents(web_contents());
-  if (fullscreen && fullscreen->IsFullscreen()) {
+  if (fullscreen &&
+      fullscreen->IsFullscreen() &&
+      web_contents()->GetFullscreenRenderWidgetHostView()) {
     return gfx::RectF(GetScreenInfo().rect);
   }
 
