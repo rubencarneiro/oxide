@@ -22,6 +22,7 @@
 #include <QRect>
 #include <QScreen>
 #include <QString>
+#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "ui/gfx/geometry/rect_f.h"
 
@@ -30,10 +31,18 @@ namespace qt {
 
 namespace {
 
-float GetUbuntuScale() {
+float GetUbuntuScale(QScreen* screen) {
   QString platform = QGuiApplication::platformName();
   if (!platform.startsWith("ubuntu") && platform != "mirserver") {
     return 1.f;
+  }
+
+  QPlatformNativeInterface* interface =
+      QGuiApplication::platformNativeInterface();
+  void* data =
+      interface->nativeResourceForScreen(QByteArray("scale"), screen);
+  if (data) {
+    return *reinterpret_cast<float*>(data);
   }
 
   QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
@@ -69,7 +78,7 @@ float GetExtraDeviceScaleForScreen(QScreen* screen) {
     return force_scale / screen->devicePixelRatio();
   }
 
-  return GetUbuntuScale() * GetEnvironmentScaleFactor();
+  return GetUbuntuScale(screen) * GetEnvironmentScaleFactor();
 }
 
 }

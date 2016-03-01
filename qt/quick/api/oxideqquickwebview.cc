@@ -1412,7 +1412,7 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
     return;
   }
 
-  d->contents_view_->popupMenu();
+  d->contents_view_->setPopupMenu(popup_menu);
   emit popupMenuChanged();
 }
 
