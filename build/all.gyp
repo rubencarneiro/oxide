@@ -22,15 +22,7 @@
       'dependencies': [
         '<@(oxide_lib_target)',
         '<@(oxide_renderer_target)',
-        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
-      ],
-      'conditions': [
-        ['enable_chromedriver_build==1', {
-            'dependencies': [
-              '<(DEPTH)/chrome/chrome.gyp:chromedriver',
-            ],
-          }
-        ]
+        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
       ]
     }
   ]
