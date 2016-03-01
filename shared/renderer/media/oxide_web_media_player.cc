@@ -58,13 +58,6 @@ using blink::WebTimeRanges;
 using blink::WebURL;
 using media::VideoFrame;
 
-namespace {
-
-// Prefix for histograms related to Encrypted Media Extensions.
-const char* kMediaEme = "Media.EME.";
-
-}  // namespace
-
 namespace oxide {
 
 WebMediaPlayer::WebMediaPlayer(
@@ -421,7 +414,7 @@ void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned ch
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayer::OnHidden() {
+void WebMediaPlayer::OnHidden(bool must_suspend) {
   // RendererMediaPlayerManager will not call SuspendAndReleaseResources() if we
   // were already in the paused state; thus notify the MediaWebContentsObserver
   // that we've been hidden so any lingering MediaSessions are released.
@@ -683,196 +676,6 @@ void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
     delegate_->DidPause(delegate_id_,
                         !pending_seek_ || currentTime() >= duration());
   }
-}
-
-// The following EME related code is copied from WebMediaPlayerImpl.
-// TODO(xhwang): Remove duplicate code between WebMediaPlayer and
-// WebMediaPlayerImpl.
-
-// Convert a WebString to ASCII, falling back on an empty string in the case
-// of a non-ASCII string.
-static std::string ToASCIIOrEmpty(const blink::WebString& string) {
-  return base::IsStringASCII(string) ? string.utf8()
-                                     : std::string();
-}
-
-// Helper functions to report media EME related stats to UMA. They follow the
-// convention of more commonly used macros UMA_HISTOGRAM_ENUMERATION and
-// UMA_HISTOGRAM_COUNTS. The reason that we cannot use those macros directly is
-// that UMA_* macros require the names to be constant throughout the process'
-// lifetime.
-
-static void EmeUMAHistogramEnumeration(const std::string& key_system,
-                                       const std::string& method,
-                                       int sample,
-                                       int boundary_value) {
-  base::LinearHistogram::FactoryGet(
-      kMediaEme + media::GetKeySystemNameForUMA(key_system) + "." + method,
-      1, boundary_value, boundary_value + 1,
-      base::Histogram::kUmaTargetedHistogramFlag)->Add(sample);
-}
-
-// Helper enum for reporting generateKeyRequest/addKey histograms.
-enum MediaKeyException {
-  kUnknownResultId,
-  kSuccess,
-  kKeySystemNotSupported,
-  kInvalidPlayerState,
-  kMaxMediaKeyException
-};
-
-static MediaKeyException MediaKeyExceptionForUMA(
-    WebMediaPlayer::MediaKeyException e) {
-  switch (e) {
-    case WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported:
-      return kKeySystemNotSupported;
-    case WebMediaPlayer::MediaKeyExceptionInvalidPlayerState:
-      return kInvalidPlayerState;
-    case WebMediaPlayer::MediaKeyExceptionNoError:
-      return kSuccess;
-    default:
-      return kUnknownResultId;
-  }
-}
-
-// Helper for converting |key_system| name and exception |e| to a pair of enum
-// values from above, for reporting to UMA.
-static void ReportMediaKeyExceptionToUMA(const std::string& method,
-                                         const std::string& key_system,
-                                         WebMediaPlayer::MediaKeyException e) {
-  MediaKeyException result_id = MediaKeyExceptionForUMA(e);
-  DCHECK_NE(result_id, kUnknownResultId) << e;
-  EmeUMAHistogramEnumeration(
-      key_system, method, result_id, kMaxMediaKeyException);
-}
-
-bool WebMediaPlayer::IsKeySystemSupported(
-    const std::string& key_system) {
-  // TODO
-  return player_type_ == MEDIA_PLAYER_TYPE_MEDIA_SOURCE &&
-         media::PrefixedIsSupportedConcreteKeySystem(key_system);
-}
-
-WebMediaPlayer::MediaKeyException WebMediaPlayer::generateKeyRequest(
-    const WebString& key_system,
-    const unsigned char* init_data,
-    unsigned init_data_length) {
-  DVLOG(1) << "generateKeyRequest: " << base::string16(key_system) << ": "
-           << std::string(reinterpret_cast<const char*>(init_data),
-                          static_cast<size_t>(init_data_length));
-
-  std::string ascii_key_system =
-      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
-
-  WebMediaPlayer::MediaKeyException e =
-      GenerateKeyRequestInternal(ascii_key_system, init_data, init_data_length);
-  ReportMediaKeyExceptionToUMA("generateKeyRequest", ascii_key_system, e);
-  return e;
-}
-
-// Guess the type of |init_data|. This is only used to handle some corner cases
-// so we keep it as simple as possible without breaking major use cases.
-/*
-static std::string GuessInitDataType(const unsigned char* init_data,
-                                     unsigned init_data_length) {
-  // Most WebM files use KeyId of 16 bytes. MP4 init data are always >16 bytes.
-  if (init_data_length == 16)
-    return "video/webm";
-
-  return "video/mp4";
-}
-*/
-
-// TODO(xhwang): Report an error when there is encrypted stream but EME is
-// not enabled. Currently the player just doesn't start and waits for
-// ever.
-WebMediaPlayer::MediaKeyException
-WebMediaPlayer::GenerateKeyRequestInternal(
-    const std::string& key_system,
-    const unsigned char* init_data,
-    unsigned init_data_length) {
-  NOTIMPLEMENTED();
-  return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
-}
-
-WebMediaPlayer::MediaKeyException WebMediaPlayer::addKey(
-    const WebString& key_system,
-    const unsigned char* key,
-    unsigned key_length,
-    const unsigned char* init_data,
-    unsigned init_data_length,
-    const WebString& session_id) {
-  DVLOG(1) << "addKey: " << base::string16(key_system) << ": "
-           << std::string(reinterpret_cast<const char*>(key),
-                          static_cast<size_t>(key_length)) << ", "
-           << std::string(reinterpret_cast<const char*>(init_data),
-                          static_cast<size_t>(init_data_length)) << " ["
-           << base::string16(session_id) << "]";
-
-  std::string ascii_key_system =
-      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
-  std::string ascii_session_id = ToASCIIOrEmpty(session_id);
-
-  WebMediaPlayer::MediaKeyException e = AddKeyInternal(ascii_key_system,
-                                                       key,
-                                                       key_length,
-                                                       init_data,
-                                                       init_data_length,
-                                                       ascii_session_id);
-  ReportMediaKeyExceptionToUMA("addKey", ascii_key_system, e);
-  return e;
-}
-
-WebMediaPlayer::MediaKeyException WebMediaPlayer::AddKeyInternal(
-    const std::string& key_system,
-    const unsigned char* key,
-    unsigned key_length,
-    const unsigned char* init_data,
-    unsigned init_data_length,
-    const std::string& session_id) {
-  DCHECK(key);
-  DCHECK_GT(key_length, 0u);
-
-  if (!IsKeySystemSupported(key_system)) {
-    return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
-  }
-  if (current_key_system_.empty() || key_system != current_key_system_) {
-    return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
-  }
-  return WebMediaPlayer::MediaKeyExceptionNoError;
-}
-
-WebMediaPlayer::MediaKeyException WebMediaPlayer::cancelKeyRequest(
-    const WebString& key_system,
-    const WebString& session_id) {
-  DVLOG(1) << "cancelKeyRequest: " << base::string16(key_system) << ": "
-           << " [" << base::string16(session_id) << "]";
-
-  std::string ascii_key_system =
-      media::GetUnprefixedKeySystemName(ToASCIIOrEmpty(key_system));
-  std::string ascii_session_id = ToASCIIOrEmpty(session_id);
-
-  WebMediaPlayer::MediaKeyException e =
-      CancelKeyRequestInternal(ascii_key_system, ascii_session_id);
-  ReportMediaKeyExceptionToUMA("cancelKeyRequest", ascii_key_system, e);
-  return e;
-}
-
-WebMediaPlayer::MediaKeyException
-WebMediaPlayer::CancelKeyRequestInternal(const std::string& key_system,
-                                                const std::string& session_id) {
-  if (!IsKeySystemSupported(key_system)) {
-    return WebMediaPlayer::MediaKeyExceptionKeySystemNotSupported;
-  }
-  if (current_key_system_.empty() || key_system != current_key_system_) {
-    return WebMediaPlayer::MediaKeyExceptionInvalidPlayerState;
-  }
-  return WebMediaPlayer::MediaKeyExceptionNoError;
-}
-
-void WebMediaPlayer::setContentDecryptionModule(
-    blink::WebContentDecryptionModule* cdm) {
-  NOTIMPLEMENTED();
 }
 
 void WebMediaPlayer::enterFullscreen() {
