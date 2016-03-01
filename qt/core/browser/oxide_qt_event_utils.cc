@@ -36,6 +36,9 @@
 
 #include "shared/browser/oxide_event_utils.h"
 
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
+
 namespace oxide {
 namespace qt {
 
@@ -458,8 +461,8 @@ UITouchEventFactory::UITouchEventFactory() {}
 UITouchEventFactory::~UITouchEventFactory() {}
 
 void UITouchEventFactory::MakeEvents(QTouchEvent* event,
-                                     float device_scale,
-                                     float location_bar_content_offset_dip,
+                                     QScreen* screen,
+                                     float location_bar_content_offset,
                                      ScopedVector<ui::TouchEvent>* results) {
   // The event’s timestamp is not guaranteed to have the same origin as the
   // internal timedelta used by chromium to calculate speed and displacement
@@ -473,8 +476,6 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
     return;
   }
 
-  float scale = 1 / device_scale;
-
   for (int i = 0; i < event->touchPoints().size(); ++i) {
     const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
 
@@ -484,15 +485,15 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
 
     if (touch_point.state() == Qt::TouchPointPressed) {
       touch_point_content_offsets_[touch_point.id()] =
-          location_bar_content_offset_dip;
+          location_bar_content_offset;
     }
 
     gfx::PointF location =
-        gfx::ScalePoint(gfx::PointF(touch_point.pos().x(),
-                                    touch_point.pos().y()),
-                        scale);
-    location +=
-        gfx::Vector2dF(0, -touch_point_content_offsets_[touch_point.id()]);
+        DpiUtils::ConvertQtPixelsToChromium(gfx::PointF(touch_point.pos().x(),
+                                                        touch_point.pos().y()),
+                                            screen);
+    location -=
+        gfx::Vector2dF(0, touch_point_content_offsets_[touch_point.id()]);
 
     ui::TouchEvent* ui_event = new ui::TouchEvent(
         QTouchPointStateToEventType(touch_point.state()),
@@ -504,9 +505,9 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
         0.0f,
         float(touch_point.pressure()));
     gfx::PointF root_location =
-        gfx::ScalePoint(gfx::PointF(touch_point.screenPos().x(),
-                                    touch_point.screenPos().y()),
-                        scale);
+        DpiUtils::ConvertQtPixelsToChromium(
+          ToChromium(touch_point.screenPos()),
+          screen);
     ui_event->set_root_location(
         gfx::Point(root_location.x(), root_location.y()));
 
@@ -521,7 +522,7 @@ void UITouchEventFactory::MakeEvents(QTouchEvent* event,
 scoped_ptr<ui::TouchEvent> UITouchEventFactory::Cancel() {
   ScopedVector<ui::TouchEvent> events;
   QTouchEvent cancel_event(QEvent::TouchCancel);
-  MakeEvents(&cancel_event, 0.0f, 0.0f, &events);
+  MakeEvents(&cancel_event, nullptr, 0.0f, &events);
   DCHECK_EQ(events.size(), 1);
   return make_scoped_ptr(new ui::TouchEvent(events.front()));
 }
@@ -584,22 +585,29 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 }
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
-                                       float device_scale,
-                                       float location_bar_content_offset_dip) {
+                                       QScreen* screen,
+                                       float location_bar_content_offset) {
   blink::WebMouseEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QMouseEventStateToWebEventModifiers(event);
 
-  result.x = qRound(event->x() / device_scale);
-  result.y = qRound((event->y() / device_scale) -
-                    location_bar_content_offset_dip);
+  gfx::Point pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
+  result.x = pos.x();
+  result.y = std::floor(pos.y() - location_bar_content_offset);
 
-  result.windowX = qRound(event->windowPos().x() / device_scale);
-  result.windowY = qRound(event->windowPos().y() / device_scale);
+  gfx::PointF window_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->windowPos()),
+                                          screen);
+  result.windowX = std::floor(window_pos.x());
+  result.windowY = std::floor(window_pos.y());
 
-  result.globalX = qRound(event->globalX() / device_scale);
-  result.globalY = qRound(event->globalY() / device_scale);
+  gfx::Point global_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
+                                          screen);
+  result.globalX = global_pos.x();
+  result.globalY = global_pos.y();
 
   result.clickCount = 0;
 
@@ -648,9 +656,9 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 }
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
-                                                 const QPoint& window_pos,
-                                                 float device_scale,
-                                                 float location_bar_content_offset_dip) {
+                                                 const QPointF& window_pos,
+                                                 QScreen* screen,
+                                                 float location_bar_content_offset) {
   blink::WebMouseWheelEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
@@ -669,14 +677,21 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.type = blink::WebInputEvent::MouseWheel;
   result.button = blink::WebMouseEvent::ButtonNone;
 
-  result.x = qRound(event->x() / device_scale);
-  result.y = qRound((event->y() / device_scale) - location_bar_content_offset_dip);
+  gfx::Point pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
+  result.x = pos.x();
+  result.y = std::floor(pos.y() - location_bar_content_offset);
 
-  result.windowX = qRound(window_pos.x() / device_scale);
-  result.windowY = qRound(window_pos.y() / device_scale);
+  gfx::PointF converted_window_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
+  result.windowX = std::floor(converted_window_pos.x());
+  result.windowY = std::floor(converted_window_pos.y());
 
-  result.globalX = qRound(event->globalX() / device_scale);
-  result.globalY = qRound(event->globalY() / device_scale);
+  gfx::Point global_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
+                                          screen);
+  result.globalX = global_pos.x();
+  result.globalY = global_pos.y();
 
   // See comment in third_party/WebKit/Source/web/gtk/WebInputEventFactory.cpp
   static const float scrollbarPixelsPerTick = 160.0f / 3.0f;
@@ -694,24 +709,29 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
 
 blink::WebMouseEvent MakeWebMouseEvent(
     QHoverEvent* event,
-    const QPoint& window_pos,
+    const QPointF& window_pos,
     const QPoint& global_pos,
-    float device_scale,
-    float location_bar_content_offset_dip) {
+    QScreen* screen,
+    float location_bar_content_offset) {
   blink::WebMouseEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QInputEventStateToWebEventModifiers(event);
 
-  result.x = qRound(event->pos().x() / device_scale);
-  result.y = qRound((event->pos().y() / device_scale) -
-                    location_bar_content_offset_dip);
+  gfx::Point pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
+  result.x = pos.x();
+  result.y = std::floor(pos.y() - location_bar_content_offset);
 
-  result.windowX = qRound(window_pos.x() / device_scale);
-  result.windowY = qRound(window_pos.x() / device_scale);
+  gfx::PointF converted_window_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
+  result.windowX = std::floor(converted_window_pos.x());
+  result.windowY = std::floor(converted_window_pos.y());
 
-  result.globalX = qRound(global_pos.x() / device_scale);
-  result.globalY = qRound(global_pos.y() / device_scale);
+  gfx::Point converted_global_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(global_pos), screen);
+  result.globalX = converted_global_pos.x();
+  result.globalY = converted_global_pos.y();
 
   result.clickCount = 0;
 

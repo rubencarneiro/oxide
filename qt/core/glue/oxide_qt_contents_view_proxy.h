@@ -34,7 +34,9 @@ class QHoverEvent;
 class QInputMethodEvent;
 class QKeyEvent;
 class QMouseEvent;
-class QRect;
+class QPoint;
+class QPointF;
+class QRectF;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -54,7 +56,8 @@ class CompositorFrameHandle {
   };
 
   virtual Type GetType() = 0;
-  virtual const QRect& GetRect() const = 0;
+  virtual const QRectF& GetRect() const = 0;
+  virtual const QSize& GetSizeInPixels() const = 0;
 
   virtual QImage GetSoftwareFrame() = 0;
   virtual unsigned int GetAcceleratedFrameTexture() = 0;
@@ -80,10 +83,10 @@ class ContentsViewProxy {
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchUngrabEvent() = 0;
   virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPoint& window_pos) = 0;
+                                const QPointF& window_pos) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
   virtual void handleHoverEvent(QHoverEvent* event,
-                                const QPoint& window_pos,
+                                const QPointF& window_pos,
                                 const QPoint& global_pos) = 0;
   virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
   virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;

@@ -79,6 +79,7 @@ class CompositorFrameData {
   uint32_t surface_id;
 
   gfx::Size size_in_pixels;
+  float device_scale;
 
   scoped_ptr<GLFrameData> gl_frame_data;
   scoped_ptr<SoftwareFrameData> software_frame_data;

@@ -76,7 +76,7 @@ void ContentsView::handleHoverEvent(QHoverEvent* event) {
 
   QPointF window_pos = item_->mapToScene(event->posF());
   proxy()->handleHoverEvent(event,
-                            window_pos.toPoint(),
+                            window_pos,
                             (window_pos + item_->window()->position()).toPoint());
 }
 
@@ -112,7 +112,7 @@ bool ContentsView::HasFocus() const {
       (item_->window() ? item_->window()->isActive() : false);
 }
 
-QRect ContentsView::GetBoundsPix() const {
+QRect ContentsView::GetBounds() const {
   if (!item_->window()) {
     return QRect();
   }
@@ -332,7 +332,7 @@ void ContentsView::handleWheelEvent(QWheelEvent* event) {
   }
 
   QPointF window_pos = item_->mapToScene(event->posF());
-  proxy()->handleWheelEvent(event, window_pos.toPoint());
+  proxy()->handleWheelEvent(event, window_pos);
 }
 
 void ContentsView::handleTouchEvent(QTouchEvent* event) {

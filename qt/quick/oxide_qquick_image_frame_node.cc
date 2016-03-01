@@ -44,7 +44,7 @@ QSize ImageFrameNode::textureSize() const {
     return QSize();
   }
 
-  return handle_->GetRect().size();
+  return handle_->GetSizeInPixels();
 }
 
 bool ImageFrameNode::hasAlphaChannel() const {

@@ -27,7 +27,7 @@ class Size;
 
 namespace oxide {
 
-FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size_dip);
+FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size);
 
 } // namespace oxide
 

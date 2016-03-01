@@ -67,8 +67,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void setLocationBarMode(oxide::qt::LocationBarMode mode);
   bool locationBarAnimated() const;
   void setLocationBarAnimated(bool animated);
-  int locationBarOffsetPix();
-  int locationBarContentOffsetPix();
+  int locationBarOffset();
+  int locationBarContentOffset();
   void locationBarShow(bool animate);
   void locationBarHide(bool animate);
 

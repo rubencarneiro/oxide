@@ -20,6 +20,8 @@
 
 #include <QObject>
 #include <QtGlobal>
+#include <QtGui/qpa/qplatformnativeinterface.h>
+#include <QtGui/qpa/qplatformscreen.h>
 
 #include "base/macros.h"
 #include "base/synchronization/lock.h"
@@ -40,6 +42,7 @@ class ScreenClient : public QObject,
  private Q_SLOTS:
   void OnScreenGeometryChanged(const QRect& geometry);
   void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
+  void OnScreenPropertyChanged(QPlatformScreen* screen, const QString& propertyName);
 
  private:
   void UpdatePrimaryDisplay();

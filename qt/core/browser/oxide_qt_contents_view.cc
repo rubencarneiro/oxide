@@ -45,10 +45,12 @@
 #include "shared/browser/oxide_web_contents_view.h"
 #include "shared/browser/oxide_web_view.h"
 
+#include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_skutils.h"
 #include "oxide_qt_touch_handle_drawable.h"
+#include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
 
@@ -161,74 +163,88 @@ inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            int location_bar_content_offset)
-      : frame_(frame) {
-    if (frame_.get()) {
-      rect_ = QRect(0, location_bar_content_offset,
-                    frame_->data()->size_in_pixels.width(),
-                    frame_->data()->size_in_pixels.height());
-    }
-  }
+                            float location_bar_content_offset,
+                            QScreen* screen);
+  ~CompositorFrameHandleImpl() override {}
 
-  virtual ~CompositorFrameHandleImpl() {}
-
-  CompositorFrameHandle::Type GetType() final {
-    if (!frame_.get()) {
-      return CompositorFrameHandle::TYPE_INVALID;
-    }
-    if (frame_->data()->gl_frame_data) {
-      DCHECK_NE(frame_->data()->gl_frame_data->type,
-                oxide::GLFrameData::Type::INVALID);
-      if (frame_->data()->gl_frame_data->type ==
-          oxide::GLFrameData::Type::TEXTURE) {
-        return CompositorFrameHandle::TYPE_ACCELERATED;
-      }
-      return CompositorFrameHandle::TYPE_IMAGE;
-    }
-    if (frame_->data()->software_frame_data) {
-      return CompositorFrameHandle::TYPE_SOFTWARE;
-    }
-
-    NOTREACHED();
-    return CompositorFrameHandle::TYPE_INVALID;
-  }
-
-  const QRect& GetRect() const final {
-    return rect_;
-  }
-
-  QImage GetSoftwareFrame() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
-    return QImage(
-        frame_->data()->software_frame_data->pixels->front(),
-        frame_->data()->size_in_pixels.width(),
-        frame_->data()->size_in_pixels.height(),
-        QImage::Format_ARGB32);
-  }
-
-  unsigned int GetAcceleratedFrameTexture() final {
-    DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
-    return frame_->data()->gl_frame_data->resource.texture;
-  }
-
-  EGLImageKHR GetImageFrame() final {
-    return frame_->data()->gl_frame_data->resource.egl_image;
-  }
+  CompositorFrameHandle::Type GetType() override;
+  const QRectF& GetRect() const override;
+  const QSize& GetSizeInPixels() const override;
+  QImage GetSoftwareFrame() override;
+  unsigned int GetAcceleratedFrameTexture() override;
+  EGLImageKHR GetImageFrame() override;
 
  private:
   scoped_refptr<oxide::CompositorFrameHandle> frame_;
-  QRect rect_;
+  QRectF rect_;
+  QSize size_in_pixels_;
 };
 
-float ContentsView::GetLocationBarContentOffsetDip() {
-  // XXX: Stop using WebView here
-  oxide::WebView* web_view =
-      oxide::WebView::FromWebContents(view()->GetWebContents());
-  if (!web_view) {
-    return 0.f;
+CompositorFrameHandleImpl::CompositorFrameHandleImpl(
+    oxide::CompositorFrameHandle* frame,
+    float location_bar_content_offset,
+    QScreen* screen)
+    : frame_(frame) {
+  if (!frame_) {
+    return;
   }
 
-  return web_view->GetLocationBarContentOffsetDip();
+  size_in_pixels_ = QSize(frame->data()->size_in_pixels.width(),
+                          frame->data()->size_in_pixels.height());
+
+  gfx::RectF rect =
+      gfx::ScaleRect(gfx::RectF(gfx::SizeF(ToChromium(size_in_pixels_))),
+                     1 / frame->data()->device_scale);
+  rect += gfx::Vector2dF(0, location_bar_content_offset);
+
+  rect_ = ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, screen));
+}
+
+CompositorFrameHandle::Type CompositorFrameHandleImpl::GetType() {
+  if (!frame_.get()) {
+    return CompositorFrameHandle::TYPE_INVALID;
+  }
+  if (frame_->data()->gl_frame_data) {
+    DCHECK_NE(frame_->data()->gl_frame_data->type,
+              oxide::GLFrameData::Type::INVALID);
+    if (frame_->data()->gl_frame_data->type ==
+        oxide::GLFrameData::Type::TEXTURE) {
+      return CompositorFrameHandle::TYPE_ACCELERATED;
+    }
+    return CompositorFrameHandle::TYPE_IMAGE;
+  }
+  if (frame_->data()->software_frame_data) {
+    return CompositorFrameHandle::TYPE_SOFTWARE;
+  }
+
+  NOTREACHED();
+  return CompositorFrameHandle::TYPE_INVALID;
+}
+
+const QRectF& CompositorFrameHandleImpl::GetRect() const {
+  return rect_;
+}
+
+const QSize& CompositorFrameHandleImpl::GetSizeInPixels() const {
+  return size_in_pixels_;
+}
+
+QImage CompositorFrameHandleImpl::GetSoftwareFrame() {
+  DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
+  return QImage(
+      frame_->data()->software_frame_data->pixels->front(),
+      frame_->data()->size_in_pixels.width(),
+      frame_->data()->size_in_pixels.height(),
+      QImage::Format_ARGB32);
+}
+
+unsigned int CompositorFrameHandleImpl::GetAcceleratedFrameTexture() {
+  DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_ACCELERATED);
+  return frame_->data()->gl_frame_data->resource.texture;
+}
+
+EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
+  return frame_->data()->gl_frame_data->resource.egl_image;
 }
 
 QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
@@ -236,8 +252,8 @@ QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
           view()->GetCompositorFrameHandle(),
-          view()->committed_frame_metadata().device_scale_factor *
-            view()->committed_frame_metadata().location_bar_content_translation.y()));
+          view()->committed_frame_metadata().location_bar_content_translation.y(),
+          GetScreen()));
   }
 
   return compositor_frame_;
@@ -298,8 +314,8 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
 
   view()->HandleMouseEvent(
       MakeWebMouseEvent(event,
-                        GetDeviceScaleFactor(),
-                        GetLocationBarContentOffsetDip()));
+                        GetScreen(),
+                        GetLocationBarContentOffset()));
   event->accept();
 }
 
@@ -309,20 +325,20 @@ void ContentsView::handleTouchUngrabEvent() {
 }
 
 void ContentsView::handleWheelEvent(QWheelEvent* event,
-                                    const QPoint& window_pos) {
+                                    const QPointF& window_pos) {
   view()->HandleWheelEvent(
       MakeWebMouseWheelEvent(event,
                              window_pos,
-                             GetDeviceScaleFactor(),
-                             GetLocationBarContentOffsetDip()));
+                             GetScreen(),
+                             GetLocationBarContentOffset()));
   event->accept();
 }
 
 void ContentsView::handleTouchEvent(QTouchEvent* event) {
   ScopedVector<ui::TouchEvent> events;
   touch_event_factory_.MakeEvents(event,
-                                  GetDeviceScaleFactor(),
-                                  GetLocationBarContentOffsetDip(),
+                                  GetScreen(),
+                                  GetLocationBarContentOffset(),
                                   &events);
 
   for (size_t i = 0; i < events.size(); ++i) {
@@ -333,14 +349,14 @@ void ContentsView::handleTouchEvent(QTouchEvent* event) {
 }
 
 void ContentsView::handleHoverEvent(QHoverEvent* event,
-                                    const QPoint& window_pos,
+                                    const QPointF& window_pos,
                                     const QPoint& global_pos) {
   view()->HandleMouseEvent(
       MakeWebMouseEvent(event,
                         window_pos,
                         global_pos,
-                        GetDeviceScaleFactor(),
-                        GetLocationBarContentOffsetDip()));
+                        GetScreen(),
+                        GetLocationBarContentOffset()));
   event->accept();
 }
 
@@ -351,7 +367,8 @@ void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
   int key_modifiers = 0;
 
   GetDragEnterEventParams(event,
-                          GetDeviceScaleFactor(),
+                          GetScreen(),
+                          GetLocationBarContentOffset(),
                           &drop_data,
                           &location,
                           &allowed_ops,
@@ -366,7 +383,10 @@ void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
   gfx::Point location;
   int key_modifiers = 0;
 
-  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+  GetDropEventParams(event,
+                     GetScreen(),
+                     GetLocationBarContentOffset(),
+                     &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDragMove(location, key_modifiers);
 
@@ -387,7 +407,10 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   gfx::Point location;
   int key_modifiers = 0;
 
-  GetDropEventParams(event, GetDeviceScaleFactor(), &location, &key_modifiers);
+  GetDropEventParams(event,
+                     GetScreen(),
+                     GetLocationBarContentOffset(),
+                     &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDrop(location, key_modifiers);
 
@@ -409,6 +432,17 @@ blink::WebScreenInfo ContentsView::GetScreenInfo() const {
   return GetWebScreenInfoFromQScreen(screen);
 }
 
+float ContentsView::GetLocationBarContentOffset() const {
+  // XXX: Stop using WebView here
+  oxide::WebView* web_view =
+      oxide::WebView::FromWebContents(view()->GetWebContents());
+  if (!web_view) {
+    return 0.f;
+  }
+
+  return web_view->GetLocationBarContentOffset();
+}
+
 void ContentsView::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
 }
@@ -421,12 +455,11 @@ bool ContentsView::HasFocus() const {
   return client_->HasFocus();
 }
 
-gfx::Rect ContentsView::GetBoundsPix() const {
-  QRect bounds = client_->GetBoundsPix();
-  return gfx::Rect(bounds.x(),
-                   bounds.y(),
-                   bounds.width(),
-                   bounds.height());
+gfx::RectF ContentsView::GetBounds() const {
+  QRect bounds = client_->GetBounds();
+  return DpiUtils::ConvertQtPixelsToChromium(
+      gfx::RectF(ToChromium(bounds)),
+      GetScreen());
 }
 
 void ContentsView::SwapCompositorFrame() {
@@ -479,10 +512,11 @@ ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
 
 void ContentsView::TouchSelectionChanged(bool active,
                                          const gfx::RectF& bounds) const {
-  const float dpr = GetDeviceScaleFactor();
-  QRectF rect(bounds.x() * dpr, bounds.y() * dpr,
-              bounds.width() * dpr, bounds.height() * dpr);
-  client_->TouchSelectionChanged(active, rect);
+  gfx::RectF scaled_bounds =
+      DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen());
+  client_->TouchSelectionChanged(
+      active,
+      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())));
 }
 
 oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {
@@ -535,24 +569,13 @@ ContentsView* ContentsView::FromWebContents(content::WebContents* contents) {
   return static_cast<ContentsView*>(view->client());
 }
 
-float ContentsView::GetDeviceScaleFactor() const {
+QScreen* ContentsView::GetScreen() const {
   QScreen* screen = client_->GetScreen();
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }
 
-  return GetDeviceScaleFactorFromQScreen(screen);
-}
-
-int ContentsView::GetLocationBarContentOffsetPix() const {
-  // XXX: Stop using WebView here
-  oxide::WebView* web_view =
-      oxide::WebView::FromWebContents(view()->GetWebContents());
-  if (!web_view) {
-    return 0;
-  }
-
-  return web_view->GetLocationBarContentOffsetPix();
+  return screen;
 }
 
 } // namespace qt

@@ -56,9 +56,9 @@ class RenderWidgetHostViewContainer {
 
   virtual void CursorChanged() = 0;
 
-  virtual gfx::Size GetViewSizePix() const = 0;
+  virtual gfx::Size GetViewSizeInPixels() const = 0;
 
-  virtual gfx::Rect GetViewBoundsDip() const = 0;
+  virtual gfx::Rect GetViewBounds() const = 0;
 
   // TODO(chrisccoulson): Return a gfx::Display here
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
@@ -69,7 +69,7 @@ class RenderWidgetHostViewContainer {
 
   virtual bool IsFullscreen() const = 0;
 
-  virtual float GetLocationBarHeightDip() const = 0;
+  virtual float GetLocationBarHeight() const = 0;
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
