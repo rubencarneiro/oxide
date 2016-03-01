@@ -88,16 +88,11 @@ class WebView : public oxide::WebViewClient,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
-  float GetDeviceScaleFactor() const;
-  int GetLocationBarContentOffsetPix() const;
-
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
           QObject* handle,
           OxideQSecurityStatus* security_status);
-
-  float GetLocationBarContentOffsetDip() const;
 
   void CommonInit(OxideQFindController* find_controller);
 
@@ -233,9 +228,9 @@ class WebView : public oxide::WebViewClient,
 
   void updateWebPreferences() override;
 
-  QPoint compositorFrameScrollOffsetPix() override;
-  QSize compositorFrameContentSizePix() override;
-  QSize compositorFrameViewportSizePix() override;
+  QPoint compositorFrameScrollOffset() override;
+  QSize compositorFrameContentSize() override;
+  QSize compositorFrameViewportSize() override;
 
   void setCanTemporarilyDisplayInsecureContent(bool allow) override;
   void setCanTemporarilyRunInsecureContent(bool allow) override;;
@@ -246,8 +241,8 @@ class WebView : public oxide::WebViewClient,
 
   int locationBarHeight() const override;
   void setLocationBarHeight(int height) override;
-  int locationBarOffsetPix() const override;
-  int locationBarContentOffsetPix() const override;
+  int locationBarOffset() const override;
+  int locationBarContentOffset() const override;
   LocationBarMode locationBarMode() const override;
   void setLocationBarMode(LocationBarMode mode) override;
   bool locationBarAnimated() const override;

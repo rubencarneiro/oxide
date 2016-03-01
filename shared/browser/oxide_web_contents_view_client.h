@@ -20,7 +20,6 @@
 
 #include "base/macros.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
-#include "ui/gfx/geometry/rect.h"
 
 namespace content {
 struct ContextMenuParams;
@@ -55,9 +54,7 @@ class WebContentsViewClient {
 
   virtual bool HasFocus() const = 0;
 
-  virtual gfx::Rect GetBoundsPix() const = 0;
-
-  gfx::Rect GetBoundsDip() const;
+  virtual gfx::RectF GetBounds() const = 0;
 
   virtual void SwapCompositorFrame() = 0;
   virtual void EvictCurrentFrame() = 0;

@@ -373,7 +373,7 @@ BrowserProcessMain::StartParams::StartParams(StartParams&& other)
 #endif
       gl_implementation(std::move(other.gl_implementation)),
       process_model(std::move(other.process_model)),
-      primary_screen_size_dip(std::move(other.primary_screen_size_dip)) {}
+      primary_screen_size(std::move(other.primary_screen_size)) {}
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
@@ -414,7 +414,7 @@ void BrowserProcessMainImpl::Start(StartParams params) {
                         params.gl_implementation);
 
   FormFactor form_factor =
-      DetectFormFactorHint(params.primary_screen_size_dip);
+      DetectFormFactorHint(params.primary_screen_size);
   base::CommandLine::ForCurrentProcess()
       ->AppendSwitchASCII(switches::kFormFactor,
                           GetFormFactorHintCommandLine(form_factor));

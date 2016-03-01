@@ -111,14 +111,14 @@ void OxideQQuickLocationBarController::setAnimated(bool animated) {
 qreal OxideQQuickLocationBarController::offset() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->locationBarOffsetPix();
+  return OxideQQuickWebViewPrivate::get(d->view)->locationBarOffset();
 }
 
 qreal OxideQQuickLocationBarController::contentOffset() const {
   Q_D(const OxideQQuickLocationBarController);
 
   return OxideQQuickWebViewPrivate::get(
-      d->view)->locationBarContentOffsetPix();
+      d->view)->locationBarContentOffset();
 }
 
 void OxideQQuickLocationBarController::show(bool animate) {

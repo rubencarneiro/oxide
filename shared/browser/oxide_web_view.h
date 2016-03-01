@@ -196,21 +196,19 @@ class WebView : public ScriptMessageTarget,
     return compositor_frame_metadata_;
   }
 
-  gfx::Point GetCompositorFrameScrollOffsetPix();
-  gfx::Size GetCompositorFrameContentSizePix();
-  gfx::Size GetCompositorFrameViewportSizePix();
+  gfx::Point GetCompositorFrameScrollOffset();
+  gfx::Size GetCompositorFrameContentSize();
+  gfx::Size GetCompositorFrameViewportSize();
 
-  int GetLocationBarOffsetPix() const;
-  int GetLocationBarContentOffsetPix() const;
-  float GetLocationBarContentOffsetDip() const;
+  float GetLocationBarOffset() const;
+  float GetLocationBarContentOffset() const;
 
   const SecurityStatus& security_status() const { return security_status_; }
 
   ContentType blocked_content() const { return blocked_content_; }
 
-  float GetLocationBarHeightDip() const;
-  int GetLocationBarHeightPix() const;
-  void SetLocationBarHeightPix(int height);
+  float GetLocationBarHeight() const;
+  void SetLocationBarHeight(float height);
 
   blink::WebTopControlsState location_bar_constraints() const {
     return location_bar_constraints_;
@@ -266,7 +264,6 @@ class WebView : public ScriptMessageTarget,
   content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHost* GetRenderWidgetHost() const;
 
-  gfx::Rect GetViewBoundsPix() const;
   gfx::Size GetViewSizeDip() const;
   gfx::Rect GetViewBoundsDip() const;
 
@@ -279,8 +276,6 @@ class WebView : public ScriptMessageTarget,
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
-
-  float GetFrameMetadataScaleToPix();
 
   void InitializeTopControlsForHost(content::RenderViewHost* rvh,
                                     bool initial_host);
@@ -442,7 +437,7 @@ class WebView : public ScriptMessageTarget,
 
   SecurityStatus security_status_;
 
-  int location_bar_height_pix_;
+  int location_bar_height_;
   blink::WebTopControlsState location_bar_constraints_;
   bool location_bar_animated_;
 

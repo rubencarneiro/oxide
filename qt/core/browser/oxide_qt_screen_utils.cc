@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,10 +22,12 @@
 #include <QRect>
 #include <QScreen>
 #include <QString>
-#include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
+
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
@@ -51,72 +53,30 @@ blink::WebScreenOrientationType GetOrientationTypeFromScreenOrientation(
 
 }
 
-float GetDeviceScaleFactorFromQScreen(QScreen* screen) {
-  // Because it only supports integer scale factors, the Ubuntu QPA plugin
-  // doesn't use the default Qt devicePixelRatio but a custom scaling system
-  // based on grid units. The relationship between grid units and device pixels
-  // is set by the "GRID_UNIT_PX" environment variable. On a screen with a scale
-  // factor of 1, GRID_UNIT_PX is set to 8, and 1 grid unit == 8 device pixels.
-  // If the Ubuntu backend is used, we retrieve scale factors from the QPA
-  // plugin. For old versions that don't expose these factors, we deduce the
-  // scale factor by reading the "GRID_UNIT_PX" environment variable.
-  //
-  // XXX: This is broken for apps not using the Ubuntu SDK but running with the
-  //      Ubuntu QPA plugin. In this case, the scaling is applied even though
-  //      it's unlikely to be expected. A workaround is to have
-  //      "OXIDE_FORCE_DPR" set.
-
-  // Allow an override for testing
-  {
-    QByteArray force_dpr(qgetenv("OXIDE_FORCE_DPR"));
-    bool ok;
-    float scale = force_dpr.toFloat(&ok);
-    if (ok) {
-      return scale;
-    }
-  }
-
-  QString platform = QGuiApplication::platformName();
-  if (platform.startsWith("ubuntu") || platform == "mirserver") {
-
-    QPlatformNativeInterface* interface =
-        QGuiApplication::platformNativeInterface();
-    void* data =
-        interface->nativeResourceForScreen(QByteArray("scale"), screen);
-    if (data) {
-      return *reinterpret_cast<float*>(data);
-    }
-
-    QByteArray grid_unit_px(qgetenv("GRID_UNIT_PX"));
-    bool ok;
-    float scale = grid_unit_px.toFloat(&ok);
-    if (ok) {
-      return scale / 8;
-    }
-  }
-
-  return float(screen->devicePixelRatio());
-}
-
 blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   blink::WebScreenInfo result;
 
   result.depth = 24;
   result.depthPerComponent = 8; // XXX: Copied the GTK impl here
   result.isMonochrome = result.depth == 1;
-  result.deviceScaleFactor = GetDeviceScaleFactorFromQScreen(screen);
+  result.deviceScaleFactor = DpiUtils::GetScaleFactorForScreen(screen);
 
-  QRect rect = screen->geometry();
+  gfx::Rect rect =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(screen->geometry()),
+                                          screen);
   result.rect = blink::WebRect(rect.x(),
                                rect.y(),
                                rect.width(),
                                rect.height());
 
-  QRect availableRect = screen->availableGeometry();
-  result.availableRect = blink::WebRect(availableRect.x(),
-                                        availableRect.y(),
-                                        availableRect.width(),
-                                        availableRect.height());
+  gfx::Rect available_rect =
+      DpiUtils::ConvertQtPixelsToChromium(
+        ToChromium(screen->availableGeometry()),
+        screen);
+  result.availableRect = blink::WebRect(available_rect.x(),
+                                        available_rect.y(),
+                                        available_rect.width(),
+                                        available_rect.height());
 
   result.orientationType =
       GetOrientationTypeFromScreenOrientation(screen->orientation());

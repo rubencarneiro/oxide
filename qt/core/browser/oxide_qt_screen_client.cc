@@ -27,7 +27,9 @@
 #include "ui/gfx/display.h"
 #include "ui/gfx/geometry/rect.h"
 
+#include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_screen_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
@@ -57,19 +59,15 @@ void ScreenClient::UpdatePrimaryDisplay() {
   primary_display_.set_id(0);
   primary_display_.set_touch_support(gfx::Display::TOUCH_SUPPORT_UNKNOWN);
   primary_display_.set_device_scale_factor(
-      GetDeviceScaleFactorFromQScreen(screen));
+      DpiUtils::GetScaleFactorForScreen(screen));
 
-  QRect rect = screen->geometry();
-  primary_display_.set_bounds(gfx::Rect(rect.x(),
-                                        rect.y(),
-                                        rect.width(),
-                                        rect.height()));
-
-  QRect work_area = screen->availableGeometry();
-  primary_display_.set_work_area(gfx::Rect(work_area.x(),
-                                           work_area.y(),
-                                           work_area.width(),
-                                           work_area.height()));
+  primary_display_.set_bounds(
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(screen->geometry()),
+                                          screen));
+  primary_display_.set_work_area(
+      DpiUtils::ConvertQtPixelsToChromium(
+        ToChromium(screen->availableGeometry()),
+        screen));
 
   primary_display_.SetRotationAsDegree(
       screen->angleBetween(screen->nativeOrientation(),

@@ -34,7 +34,8 @@ SoftwareFrameData::SoftwareFrameData()
 SoftwareFrameData::~SoftwareFrameData() {}
 
 CompositorFrameData::CompositorFrameData()
-    : surface_id(0) {}
+    : surface_id(0),
+      device_scale(1.f) {}
 
 CompositorFrameData::~CompositorFrameData() {}
 
@@ -42,6 +43,7 @@ CompositorFrameData::CompositorFrameData(CompositorFrameData&& other)
     : CompositorFrameData() {
   std::swap(surface_id, other.surface_id);
   std::swap(size_in_pixels, other.size_in_pixels);
+  std::swap(device_scale, other.device_scale);
   std::swap(gl_frame_data, other.gl_frame_data);
   std::swap(software_frame_data, other.software_frame_data);
 }

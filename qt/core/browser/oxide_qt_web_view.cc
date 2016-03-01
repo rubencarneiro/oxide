@@ -80,12 +80,14 @@
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_contents_view.h"
+#include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
 #include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
+#include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
 #include "oxide_qt_web_preferences.h"
@@ -246,27 +248,6 @@ WebView::WebView(WebViewProxyClient* client,
   DCHECK(handle);
 
   setHandle(handle);
-}
-
-float WebView::GetDeviceScaleFactor() const {
-  QScreen* screen = contents_view_->client()->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-
-  return GetDeviceScaleFactorFromQScreen(screen);
-}
-
-int WebView::GetLocationBarContentOffsetPix() const {
-  return locationBarContentOffsetPix();
-}
-
-float WebView::GetLocationBarContentOffsetDip() const {
-  if (!web_view_) {
-    return 0.f;
-  }
-
-  return web_view_->GetLocationBarContentOffsetDip();
 }
 
 void WebView::CommonInit(OxideQFindController* find_controller) {
@@ -895,19 +876,22 @@ void WebView::updateWebPreferences() {
   web_view_->UpdateWebPreferences();
 }
 
-QPoint WebView::compositorFrameScrollOffsetPix() {
-  gfx::Point offset = web_view_->GetCompositorFrameScrollOffsetPix();
-  return QPoint(offset.x(), offset.y());
+QPoint WebView::compositorFrameScrollOffset() {
+  return ToQt(DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetCompositorFrameScrollOffset(),
+      contents_view_->GetScreen()));
 }
 
-QSize WebView::compositorFrameContentSizePix() {
-  gfx::Size size = web_view_->GetCompositorFrameContentSizePix();
-  return QSize(size.width(), size.height());
+QSize WebView::compositorFrameContentSize() {
+  return ToQt(DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetCompositorFrameContentSize(),
+      contents_view_->GetScreen()));
 }
 
-QSize WebView::compositorFrameViewportSizePix() {
-  gfx::Size size = web_view_->GetCompositorFrameViewportSizePix();
-  return QSize(size.width(), size.height());
+QSize WebView::compositorFrameViewportSize() {
+  return ToQt(DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetCompositorFrameViewportSize(),
+      contents_view_->GetScreen()));
 }
 
 void WebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
@@ -943,19 +927,24 @@ void WebView::prepareToClose() {
 }
 
 int WebView::locationBarHeight() const {
-  return web_view_->GetLocationBarHeightPix();
+  return DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetLocationBarHeight(), contents_view_->GetScreen());
 }
 
 void WebView::setLocationBarHeight(int height) {
-  web_view_->SetLocationBarHeightPix(height);
+  web_view_->SetLocationBarHeight(
+      DpiUtils::ConvertQtPixelsToChromium(height,
+                                          contents_view_->GetScreen()));
 }
 
-int WebView::locationBarOffsetPix() const {
-  return web_view_->GetLocationBarOffsetPix();
+int WebView::locationBarOffset() const {
+  return DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetLocationBarOffset(), contents_view_->GetScreen());
 }
 
-int WebView::locationBarContentOffsetPix() const {
-  return web_view_->GetLocationBarContentOffsetPix();
+int WebView::locationBarContentOffset() const {
+  return DpiUtils::ConvertChromiumPixelsToQt(
+      web_view_->GetLocationBarContentOffset(), contents_view_->GetScreen());
 }
 
 LocationBarMode WebView::locationBarMode() const {

@@ -27,6 +27,7 @@ QT_BEGIN_NAMESPACE
 class QDragEnterEvent;
 class QDropEvent;
 class QMimeData;
+class QScreen;
 QT_END_NAMESPACE
 
 namespace content {
@@ -47,14 +48,16 @@ Qt::DropActions ToQtDropActions(blink::WebDragOperationsMask mask);
 blink::WebDragOperation ToWebDragOperation(Qt::DropAction action);
 
 void GetDragEnterEventParams(QDragEnterEvent* event,
-                             float device_scale,
+                             QScreen* screen,
+                             float location_bar_content_offset,
                              content::DropData* drop_data,
                              gfx::Point* location,
                              blink::WebDragOperationsMask* allowed_ops,
                              int* key_modifiers);
 
 void GetDropEventParams(QDropEvent* event,
-                        float device_scale,
+                        QScreen* screen,
+                        float location_bar_content_offset,
                         gfx::Point* location,
                         int* key_modifiers);
 

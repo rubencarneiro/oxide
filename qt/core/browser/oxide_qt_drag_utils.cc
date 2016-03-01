@@ -33,8 +33,12 @@
 #include "url/gurl.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/vector2d.h"
 
 #include "shared/common/oxide_enum_flags.h"
+
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
@@ -189,7 +193,8 @@ blink::WebDragOperation ToWebDragOperation(Qt::DropAction action) {
 }
 
 void GetDragEnterEventParams(QDragEnterEvent* event,
-                             float device_scale,
+                             QScreen* screen,
+                             float location_bar_content_offset,
                              content::DropData* drop_data,
                              gfx::Point* location,
                              blink::WebDragOperationsMask* allowed_ops,
@@ -197,16 +202,18 @@ void GetDragEnterEventParams(QDragEnterEvent* event,
   ToDropData(event->mimeData(), drop_data);
   *allowed_ops = ToWebDragOperations(event->possibleActions());
 
-  GetDropEventParams(event, device_scale, location, key_modifiers);
+  GetDropEventParams(event, screen, location_bar_content_offset,
+                     location, key_modifiers);
 }
 
 void GetDropEventParams(QDropEvent* event,
-                        float device_scale,
+                        QScreen* screen,
+                        float location_bar_content_offset,
                         gfx::Point* location,
                         int* key_modifiers) {
-  *location = gfx::ScaleToRoundedPoint(gfx::Point(event->pos().x(),
-                                                  event->pos().y()),
-                                       1 / device_scale);
+  *location =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
+  *location -= gfx::Vector2d(0, location_bar_content_offset);
 
   Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
   if (modifiers & Qt::ShiftModifier) {
