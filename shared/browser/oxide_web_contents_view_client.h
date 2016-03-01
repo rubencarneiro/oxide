@@ -20,7 +20,6 @@
 
 #include "base/macros.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
-#include "ui/gfx/geometry/rect.h"
 
 namespace content {
 struct ContextMenuParams;
@@ -55,7 +54,10 @@ class WebContentsViewClient {
 
   virtual bool HasFocus() const = 0;
 
-  virtual gfx::Rect GetBounds() const = 0;
+  // Use floats here due to the way scaling works on Ubuntu/Mir, which means
+  // we might get non-integer bounds. Having a float allows us to accurately
+  // scale up to physical pixels without a loss of information
+  virtual gfx::RectF GetBounds() const = 0;
 
   virtual void SwapCompositorFrame() = 0;
   virtual void EvictCurrentFrame() = 0;

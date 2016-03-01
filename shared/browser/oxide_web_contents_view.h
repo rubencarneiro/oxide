@@ -30,6 +30,7 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositor_client.h"
@@ -155,6 +156,8 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   bool ShouldScrollFocusedEditableNodeIntoView();
   void MaybeScrollFocusedEditableNodeIntoView();
+
+  gfx::RectF GetBoundsF() const;
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;

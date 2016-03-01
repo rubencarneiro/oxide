@@ -34,7 +34,8 @@
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/ime/text_input_type.h"
-#include "ui/gfx/geometry/rect_f.h"
+#include "ui/gfx/geometry/rect_conversions.h"
+#include "ui/gfx/geometry/size_conversions.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/image/image_skia_rep.h"
 #include "ui/touch_selection/touch_selection_controller.h"
@@ -153,6 +154,28 @@ void WebContentsView::MaybeScrollFocusedEditableNodeIntoView() {
 
   content::RenderWidgetHostImpl::From(host)
       ->ScrollFocusedEditableNodeIntoRect(GetBounds());
+}
+
+gfx::RectF WebContentsView::GetBoundsF() const {
+  if (!client_) {
+    return gfx::RectF();
+  }
+
+  // If we're in fullscreen mode, return the screen size rather than the
+  // view bounds. This works around an issue where buggy Flash content
+  // expects the view to resize synchronously when it goes fullscreen, but it
+  // happens asynchronously instead.
+  // See https://launchpad.net/bugs/1510508
+  // XXX: Obviously, this means we assume that we do occupy the full screen
+  //  when the browser grants us fullscreen. If that's not the case, then
+  //  this is going to break
+  FullscreenHelper* fullscreen =
+      FullscreenHelper::FromWebContents(web_contents());
+  if (fullscreen && fullscreen->IsFullscreen()) {
+    return gfx::RectF(GetScreenInfo().rect);
+  }
+
+  return client_->GetBounds();
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -656,30 +679,12 @@ bool WebContentsView::HasFocus() const {
 }
 
 gfx::Size WebContentsView::GetSizeInPixels() const {
-  return gfx::ScaleToRoundedSize(GetBounds().size(),
-                                 GetScreenInfo().deviceScaleFactor);
+  return gfx::ToRoundedSize(
+      gfx::ScaleSize(GetBoundsF().size(), GetScreenInfo().deviceScaleFactor));
 }
 
 gfx::Rect WebContentsView::GetBounds() const {
-  if (!client_) {
-    return gfx::Rect();
-  }
-
-  // If we're in fullscreen mode, return the screen size rather than the
-  // view bounds. This works around an issue where buggy Flash content
-  // expects the view to resize synchronously when it goes fullscreen, but it
-  // happens asynchronously instead.
-  // See https://launchpad.net/bugs/1510508
-  // XXX: Obviously, this means we assume that we do occupy the full screen
-  //  when the browser grants us fullscreen. If that's not the case, then
-  //  this is going to break
-  FullscreenHelper* fullscreen =
-      FullscreenHelper::FromWebContents(web_contents());
-  if (fullscreen && fullscreen->IsFullscreen()) {
-    return GetScreenInfo().rect;
-  }
-
-  return client_->GetBounds();
+  return gfx::ToEnclosingRect(GetBoundsF());
 }
 
 blink::WebScreenInfo WebContentsView::GetScreenInfo() const {

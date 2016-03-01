@@ -97,7 +97,7 @@ class ContentsView : public ContentsViewProxy,
   blink::WebScreenInfo GetScreenInfo() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
-  gfx::Rect GetBounds() const override;
+  gfx::RectF GetBounds() const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const content::WebCursor& cursor) override;

@@ -455,9 +455,11 @@ bool ContentsView::HasFocus() const {
   return client_->HasFocus();
 }
 
-gfx::Rect ContentsView::GetBounds() const {
+gfx::RectF ContentsView::GetBounds() const {
   QRect bounds = client_->GetBounds();
-  return DpiUtils::ConvertQtPixelsToChromium(ToChromium(bounds), GetScreen());
+  return DpiUtils::ConvertQtPixelsToChromium(
+      gfx::RectF(ToChromium(bounds)),
+      GetScreen());
 }
 
 void ContentsView::SwapCompositorFrame() {

@@ -1007,7 +1007,7 @@ WebView::WebView(const CommonParams& common_params,
 
   content::WebContents::CreateParams content_params(context.get());
   content_params.initial_size =
-      common_params.view_client->GetBounds().size();
+      gfx::ToEnclosingRect(common_params.view_client->GetBounds()).size();
   content_params.initially_hidden = !common_params.view_client->IsVisible();
 
   scoped_ptr<content::WebContents> contents(
