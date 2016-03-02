@@ -76,6 +76,11 @@ size_t RefCountedPixelMemory::size() const {
   return size_;
 }
 
+CompositorSoftwareOutputDevice::BufferData::BufferData()
+    : id(0), available(true) {}
+
+CompositorSoftwareOutputDevice::BufferData::~BufferData() {}
+
 void CompositorSoftwareOutputDevice::Resize(const gfx::Size& pixel_size,
                                             float scale_factor) {
   if (pixel_size == viewport_pixel_size_ && scale_factor == scale_factor_) {
