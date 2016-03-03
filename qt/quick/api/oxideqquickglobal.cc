@@ -24,7 +24,7 @@
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqmediacapturedevices.h"
 
-#include "oxideqquickwebcontext_p.h"
+#include "oxideqquickwebcontext.h"
 
 namespace {
 

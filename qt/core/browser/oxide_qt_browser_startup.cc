@@ -32,7 +32,9 @@
 #include "qt/core/app/oxide_qt_platform_delegate.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
+#include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_screen_utils.h"
+#include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 
 using oxide::BrowserProcessMain;
@@ -180,11 +182,9 @@ void BrowserStartup::EnsureChromiumStarted() {
   }
 
   QScreen* primary_screen = QGuiApplication::primaryScreen();
-  QSize primary_screen_size = primary_screen->size();
-  params.primary_screen_size_dip =
-      gfx::ScaleToRoundedSize(
-          gfx::Size(primary_screen_size.width(), primary_screen_size.height()),
-          1 / GetDeviceScaleFactorFromQScreen(primary_screen));
+  params.primary_screen_size =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(primary_screen->size()),
+                                          primary_screen);
 
   oxide::BrowserProcessMain::GetInstance()->Start(std::move(params));
 

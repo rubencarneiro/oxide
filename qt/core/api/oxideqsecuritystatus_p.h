@@ -20,6 +20,7 @@
 
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 
 QT_BEGIN_NAMESPACE
@@ -36,11 +37,13 @@ class WebView;
 class OxideQSecurityStatus;
 class OxideQSslCertificate;
 
-class OxideQSecurityStatusPrivate final {
+class OXIDE_QTCORE_EXPORT OxideQSecurityStatusPrivate final {
   Q_DECLARE_PUBLIC(OxideQSecurityStatus)
 
  public:
   ~OxideQSecurityStatusPrivate();
+
+  static OxideQSecurityStatus* Create();
 
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 

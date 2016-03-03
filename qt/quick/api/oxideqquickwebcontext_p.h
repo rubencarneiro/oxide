@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,197 +15,117 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
-#define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
+#ifndef _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
+#define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
 #include <QObject>
-#include <QQmlListProperty>
-#include <QQmlParserStatus>
-#include <QString>
+#include <QScopedPointer>
+#include <QSharedPointer>
 #include <QStringList>
 #include <QtGlobal>
-#include <QtQml>
-#include <QUrl>
-#include <QVariantList>
 
-class OxideQQuickCookieManager;
+#include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
+
+#include "qt/quick/api/oxideqquickwebcontext.h"
+
 class OxideQQuickWebContextDelegateWorker;
 class OxideQQuickUserScript;
-class OxideQQuickWebContextPrivate;
 
-class Q_DECL_EXPORT OxideQQuickWebContext : public QObject,
-                                            public QQmlParserStatus {
+QT_BEGIN_NAMESPACE
+template <typename T> class QQmlListProperty;
+class QThread;
+QT_END_NAMESPACE
+
+namespace oxide {
+
+namespace qt {
+class WebContextProxy;
+}
+
+namespace qquick {
+namespace webcontextdelegateworker {
+class IOThreadController;
+}
+class WebContextIODelegate;
+}
+
+}
+
+class Q_DECL_EXPORT OxideQQuickWebContextPrivate
+    : public QObject,
+      public oxide::qt::WebContextProxyClient {
   Q_OBJECT
-  Q_PROPERTY(QString product READ product WRITE setProduct NOTIFY productChanged)
-  Q_PROPERTY(QString userAgent READ userAgent WRITE setUserAgent NOTIFY userAgentChanged)
-
-  Q_PROPERTY(QUrl dataPath READ dataPath WRITE setDataPath NOTIFY dataPathChanged)
-  Q_PROPERTY(QUrl cachePath READ cachePath WRITE setCachePath NOTIFY cachePathChanged)
-
-  Q_PROPERTY(QString acceptLangs READ acceptLangs WRITE setAcceptLangs NOTIFY acceptLangsChanged)
-
-  Q_PROPERTY(QQmlListProperty<OxideQQuickUserScript> userScripts READ userScripts NOTIFY userScriptsChanged)
-
-  Q_PROPERTY(CookiePolicy cookiePolicy READ cookiePolicy WRITE setCookiePolicy NOTIFY cookiePolicyChanged)
-  Q_PROPERTY(SessionCookieMode sessionCookieMode READ sessionCookieMode WRITE setSessionCookieMode NOTIFY sessionCookieModeChanged)
-
-  Q_PROPERTY(bool popupBlockerEnabled READ popupBlockerEnabled WRITE setPopupBlockerEnabled NOTIFY popupBlockerEnabledChanged)
-
-  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* networkRequestDelegate READ networkRequestDelegate WRITE setNetworkRequestDelegate NOTIFY networkRequestDelegateChanged)
-  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate READ storageAccessPermissionDelegate WRITE setStorageAccessPermissionDelegate NOTIFY storageAccessPermissionDelegateChanged)
-  Q_PROPERTY(OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate READ userAgentOverrideDelegate WRITE setUserAgentOverrideDelegate NOTIFY userAgentOverrideDelegateChanged)
-
-  Q_PROPERTY(bool devtoolsEnabled READ devtoolsEnabled WRITE setDevtoolsEnabled NOTIFY devtoolsEnabledChanged)
-  Q_PROPERTY(int devtoolsPort READ devtoolsPort WRITE setDevtoolsPort NOTIFY devtoolsPortChanged)
-  Q_PROPERTY(QString devtoolsIp READ devtoolsBindIp WRITE setDevtoolsBindIp NOTIFY devtoolsBindIpChanged)
-
-  Q_PROPERTY(OxideQQuickCookieManager* cookieManager READ cookieManager CONSTANT)
-
-  Q_PROPERTY(QStringList hostMappingRules READ hostMappingRules WRITE setHostMappingRules NOTIFY hostMappingRulesChanged REVISION 1)
-
-  Q_PROPERTY(QStringList allowedExtraUrlSchemes READ allowedExtraUrlSchemes WRITE setAllowedExtraUrlSchemes NOTIFY allowedExtraUrlSchemesChanged REVISION 1)
-
-  // maxCacheSizeHint is a soft limit, expressed in MB
-  Q_PROPERTY(int maxCacheSizeHint READ maxCacheSizeHint WRITE setMaxCacheSizeHint NOTIFY maxCacheSizeHintChanged REVISION 2)
-
-  Q_PROPERTY(QString defaultAudioCaptureDeviceId READ defaultAudioCaptureDeviceId WRITE setDefaultAudioCaptureDeviceId NOTIFY defaultAudioCaptureDeviceIdChanged REVISION 3)
-  Q_PROPERTY(QString defaultVideoCaptureDeviceId READ defaultVideoCaptureDeviceId WRITE setDefaultVideoCaptureDeviceId NOTIFY defaultVideoCaptureDeviceIdChanged REVISION 3)
-
-  Q_PROPERTY(QVariantList userAgentOverrides READ userAgentOverrides WRITE setUserAgentOverrides NOTIFY userAgentOverridesChanged REVISION 3)
-
-  Q_PROPERTY(bool doNotTrackEnabled READ doNotTrack WRITE setDoNotTrack NOTIFY doNotTrackEnabledChanged REVISION 3)
-
-  Q_ENUMS(CookiePolicy)
-  Q_ENUMS(SessionCookieMode)
-
-  Q_DECLARE_PRIVATE(OxideQQuickWebContext)
-  Q_DISABLE_COPY(OxideQQuickWebContext)
-
-  Q_INTERFACES(QQmlParserStatus)
+  Q_DECLARE_PUBLIC(OxideQQuickWebContext)
 
  public:
+  ~OxideQQuickWebContextPrivate();
 
-  enum CookiePolicy {
-    CookiePolicyAllowAll,
-    CookiePolicyBlockAll,
-    CookiePolicyBlockThirdParty
-  };
+  bool isConstructed() const { return constructed_; }
 
-  enum SessionCookieMode {
-    SessionCookieModeEphemeral,
-    SessionCookieModePersistent,
-    SessionCookieModeRestored
-  };
+  void delegateWorkerDestroyed(OxideQQuickWebContextDelegateWorker* worker);
 
-  OxideQQuickWebContext(QObject* parent = nullptr);
-  virtual ~OxideQQuickWebContext();
+  static OxideQQuickWebContextPrivate* get(OxideQQuickWebContext* context);
 
-  void classBegin();
-  void componentComplete();
+  void clearTemporarySavedPermissionStatuses();
 
-  static OxideQQuickWebContext* defaultContext(bool create);
-
-  QString product() const;
-  void setProduct(const QString& product);
-
-  QString userAgent() const;
-  void setUserAgent(const QString& user_agent);
-
-  QUrl dataPath() const;
-  void setDataPath(const QUrl& data_url);
-
-  QUrl cachePath() const;
-  void setCachePath(const QUrl& cache_url);
-
-  QString acceptLangs() const;
-  void setAcceptLangs(const QString& accept_langs);
-
-  QQmlListProperty<OxideQQuickUserScript> userScripts();
-  Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
-  Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
-
-  CookiePolicy cookiePolicy() const;
-  void setCookiePolicy(CookiePolicy policy);
-
-  SessionCookieMode sessionCookieMode() const;
-  void setSessionCookieMode(SessionCookieMode mode);
-
-  bool popupBlockerEnabled() const;
-  void setPopupBlockerEnabled(bool enabled);
-
-  OxideQQuickWebContextDelegateWorker* networkRequestDelegate() const;
-  void setNetworkRequestDelegate(OxideQQuickWebContextDelegateWorker* delegate);
-
-  OxideQQuickWebContextDelegateWorker* storageAccessPermissionDelegate() const;
-  void setStorageAccessPermissionDelegate(OxideQQuickWebContextDelegateWorker* delegate);
-
-  OxideQQuickWebContextDelegateWorker* userAgentOverrideDelegate() const;
-  void setUserAgentOverrideDelegate(OxideQQuickWebContextDelegateWorker* delegate);
-
-  bool devtoolsEnabled() const;
-  void setDevtoolsEnabled(bool enabled);
-
-  int devtoolsPort() const;
-  void setDevtoolsPort(int port);
-
-  QString devtoolsBindIp() const;
-  void setDevtoolsBindIp(const QString& bindIp);
-
-  OxideQQuickCookieManager* cookieManager() const;
-
-  QStringList hostMappingRules() const;
-  void setHostMappingRules(const QStringList& rules);
-
-  QStringList allowedExtraUrlSchemes() const;
-  void setAllowedExtraUrlSchemes(const QStringList& schemes);
-
-  int maxCacheSizeHint() const;
-  void setMaxCacheSizeHint(int size);
-
-  QString defaultAudioCaptureDeviceId() const;
-  void setDefaultAudioCaptureDeviceId(const QString& id);
-
-  QString defaultVideoCaptureDeviceId() const;
-  void setDefaultVideoCaptureDeviceId(const QString& id);
-
-  QVariantList userAgentOverrides() const;
-  void setUserAgentOverrides(const QVariantList& overrides);
-
-  bool doNotTrack() const;
-  void setDoNotTrack(bool dnt);
+  // XXX(chrisccoulson): Add CookieManager proxy and remove these
+  bool isInitialized() const;
+  int setCookies(const QUrl& url,
+                 const QList<QNetworkCookie>& cookies);
+  int getCookies(const QUrl& url);
+  int getAllCookies();
+  int deleteAllCookies();
 
  Q_SIGNALS:
-  void productChanged();
-  void userAgentChanged();
-  void dataPathChanged();
-  void cachePathChanged();
-  void acceptLangsChanged();
-  void userScriptsChanged();
-  void cookiePolicyChanged();
-  void sessionCookieModeChanged();
-  void popupBlockerEnabledChanged();
-  void networkRequestDelegateChanged();
-  void storageAccessPermissionDelegateChanged();
-  void userAgentOverrideDelegateChanged();
-  void devtoolsEnabledChanged();
-  void devtoolsPortChanged();
-  void devtoolsBindIpChanged();
-  Q_REVISION(1) void hostMappingRulesChanged();
-  Q_REVISION(1) void allowedExtraUrlSchemesChanged();
-  Q_REVISION(2) void maxCacheSizeHintChanged();
-  Q_REVISION(3) void defaultAudioCaptureDeviceIdChanged();
-  Q_REVISION(3) void defaultVideoCaptureDeviceIdChanged();
-  Q_REVISION(3) void userAgentOverridesChanged();
-  Q_REVISION(3) void doNotTrackEnabledChanged();
+  void constructed();
 
  private:
-  Q_PRIVATE_SLOT(d_func(), void userScriptUpdated());
-  Q_PRIVATE_SLOT(d_func(), void userScriptWillBeDeleted());
+  OxideQQuickWebContextPrivate(OxideQQuickWebContext* q);
 
- private:
-  QScopedPointer<OxideQQuickWebContextPrivate> d_ptr;
+  void userScriptUpdated();
+  void userScriptWillBeDeleted();
+
+  void detachUserScriptSignals(OxideQQuickUserScript* script);
+
+  static void userScript_append(QQmlListProperty<OxideQQuickUserScript>* prop,
+                                OxideQQuickUserScript* user_script);
+  static int userScript_count(QQmlListProperty<OxideQQuickUserScript>* prop);
+  static OxideQQuickUserScript* userScript_at(
+      QQmlListProperty<OxideQQuickUserScript>* prop,
+      int index);
+  static void userScript_clear(QQmlListProperty<OxideQQuickUserScript>* prop);
+
+  bool prepareToAttachDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
+  void detachedDelegateWorker(OxideQQuickWebContextDelegateWorker* delegate);
+
+  // oxide::qt::WebContextProxyClient implementation
+  void CookiesSet(int request_id,
+                  const QList<QNetworkCookie>& failed_cookies) override;
+  void CookiesRetrieved(int request_id,
+                        const QList<QNetworkCookie>& cookies) override;
+  void CookiesDeleted(int request_id, int num_deleted) override;
+  QNetworkAccessManager* GetCustomNetworkAccessManager() override;
+  void DestroyDefault() override;
+  void DefaultAudioCaptureDeviceChanged() override;
+  void DefaultVideoCaptureDeviceChanged() override;
+
+  OxideQQuickWebContext* q_ptr;
+
+  QScopedPointer<oxide::qt::WebContextProxy> proxy_;
+
+  bool constructed_;
+
+  QSharedPointer<oxide::qquick::WebContextIODelegate> io_;
+
+  OxideQQuickWebContextDelegateWorker* network_request_delegate_;
+  OxideQQuickWebContextDelegateWorker* unused_storage_access_permission_delegate_;
+  OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
+
+  mutable OxideQQuickCookieManager* cookie_manager_;
+
+  QStringList allowed_extra_url_schemes_;
+
+  Q_DISABLE_COPY(OxideQQuickWebContextPrivate);
 };
 
-QML_DECLARE_TYPE(OxideQQuickWebContext)
-
-#endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_H_
+#endif // _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_

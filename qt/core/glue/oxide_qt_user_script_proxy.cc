@@ -24,8 +24,9 @@ namespace qt {
 
 // static
 UserScriptProxy* UserScriptProxy::create(UserScriptProxyClient* client,
+                                         QObject* handle,
                                          const QUrl& url) {
-  return new UserScript(client, url);
+  return new UserScript(client, handle, url);
 }
 
 UserScriptProxy::~UserScriptProxy() {}

@@ -24,9 +24,8 @@
 #include <QQmlEngine>
 #include <QQuickItem>
 
-#include "qt/quick/api/oxideqquicktouchselectioncontroller_p.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -193,7 +192,7 @@ float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
 }
 
 void TouchHandleDrawable::instantiateComponent() {
-  if (view_.isNull()) {
+  if (!parent_) {
     qWarning() <<
         "TouchHandleDrawable: "
         "Can't instantiate after the view has gone";
@@ -202,7 +201,7 @@ void TouchHandleDrawable::instantiateComponent() {
 
   TouchHandleDrawableContext* contextObject =
       new TouchHandleDrawableContext();
-  QQmlComponent* component = view_->touchSelectionController()->handle();
+  QQmlComponent* component = controller_->handle();
   if (!component) {
     qWarning() <<
         "TouchHandleDrawable: Content requested a touch handle "
@@ -213,7 +212,7 @@ void TouchHandleDrawable::instantiateComponent() {
 
   QQmlContext* baseContext = component->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(view_.data());
+    baseContext = QQmlEngine::contextForObject(parent_);
   }
   context_.reset(new QQmlContext(baseContext));
 
@@ -230,20 +229,26 @@ void TouchHandleDrawable::instantiateComponent() {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(
-      view_.data())->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(view_.data());
+  // This is a bit hacky - not sure what we'll do here if we introduce
+  // other items that can use a ContentView and which support custom UI
+  // components
+  OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
+  if (web_view) {
+    OxideQQuickWebViewPrivate::get(web_view)
+        ->addAttachedPropertyTo(item_.data());
+  }
+  item_->setParentItem(parent_);
   component->completeCreate();
 }
 
-TouchHandleDrawable::TouchHandleDrawable(OxideQQuickWebView* view)
-    : view_(view) {
+TouchHandleDrawable::TouchHandleDrawable(
+    QQuickItem* parent,
+    OxideQQuickTouchSelectionController* controller)
+    : parent_(parent),
+      controller_(controller) {
   instantiateComponent();
 
-  if (view) {
-    connect(view->touchSelectionController(), SIGNAL(handleChanged()),
-            SLOT(handleComponentChanged()));
-  }
+  connect(controller, SIGNAL(handleChanged()), SLOT(handleComponentChanged()));
 }
 
 void TouchHandleDrawable::handleComponentChanged() {

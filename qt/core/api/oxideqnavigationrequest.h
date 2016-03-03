@@ -15,17 +15,27 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_NAVIGATION_REQUEST
-#define OXIDE_Q_NAVIGATION_REQUEST
+#ifndef OXIDE_QTCORE_NAVIGATION_REQUEST
+#define OXIDE_QTCORE_NAVIGATION_REQUEST
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QtGlobal>
-#include <QUrl>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QtGlobal>
+#include <QtCore/QUrl>
+
+#include <OxideQtCore/oxideqglobal.h>
+
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+namespace oxide {
+namespace qt {
+class WebView;
+}
+}
+#endif
 
 class OxideQNavigationRequestPrivate;
 
-class Q_DECL_EXPORT OxideQNavigationRequest Q_DECL_FINAL : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQNavigationRequest : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
@@ -54,10 +64,7 @@ class Q_DECL_EXPORT OxideQNavigationRequest Q_DECL_FINAL : public QObject {
     ActionReject = 0xFF
   };
 
-  ~OxideQNavigationRequest();
-  Q_DECL_HIDDEN OxideQNavigationRequest(const QUrl& url,
-                                        Disposition disposition,
-                                        bool user_gesture);
+  ~OxideQNavigationRequest() Q_DECL_OVERRIDE;
 
   QUrl url() const;
   Disposition disposition() const;
@@ -70,7 +77,14 @@ class Q_DECL_EXPORT OxideQNavigationRequest Q_DECL_FINAL : public QObject {
   void actionChanged();
 
  private:
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+  friend class oxide::qt::WebView;
+#endif
+  Q_DECL_HIDDEN OxideQNavigationRequest(const QUrl& url,
+                                        Disposition disposition,
+                                        bool user_gesture);
+
   QScopedPointer<OxideQNavigationRequestPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_NAVIGATION_REQUEST
+#endif // OXIDE_QTCORE_NAVIGATION_REQUEST

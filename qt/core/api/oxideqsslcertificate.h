@@ -15,20 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_SSL_CERTIFICATE
-#define OXIDE_Q_SSL_CERTIFICATE
+#ifndef OXIDE_QTCORE_SSL_CERTIFICATE
+#define OXIDE_QTCORE_SSL_CERTIFICATE
 
-#include <QDateTime>
-#include <QMetaType>
-#include <QSharedDataPointer>
-#include <QString>
-#include <QStringList>
-#include <QtGlobal>
-#include <QVariant>
+#include <QtCore/QDateTime>
+#include <QtCore/QMetaType>
+#include <QtCore/QSharedDataPointer>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QtGlobal>
+#include <QtCore/QVariant>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQSslCertificateData;
 
-class Q_DECL_EXPORT OxideQSslCertificate {
+class OXIDE_QTCORE_EXPORT OxideQSslCertificate {
   Q_GADGET
 
   Q_PROPERTY(QString serialNumber READ serialNumber CONSTANT)
@@ -95,4 +97,4 @@ class Q_DECL_EXPORT OxideQSslCertificate {
 
 Q_DECLARE_METATYPE(OxideQSslCertificate)
 
-#endif // OXIDE_Q_SSL_CERTIFICATE
+#endif // OXIDE_QTCORE_SSL_CERTIFICATE

@@ -26,13 +26,11 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
-#include "gpu/config/gpu_info_collector.h"
 #include "media/audio/audio_manager.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/screen.h"
-#include "ui/gfx/screen_type_delegate.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
@@ -54,20 +52,18 @@
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_gpu_info_collector_linux.h"
+#include "oxide_hybris_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_lifecycle_observer.h"
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
 #include "oxide_render_process_initializer.h"
+#include "oxide_screen_client.h"
 #include "oxide_web_contents_view.h"
 
 namespace oxide {
 
 namespace {
-
-blink::WebScreenInfo DefaultScreenInfoGetter() {
-  return BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
-}
 
 scoped_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
     scoped_ptr<media::VideoCaptureDeviceFactory> delegate) {
@@ -81,6 +77,22 @@ ui::Clipboard* CreateClipboard() {
 
 scoped_ptr<base::MessagePump> CreateUIMessagePump() {
   return BrowserPlatformIntegration::GetInstance()->CreateUIMessagePump();
+}
+
+bool CanUseSharedGLContext() {
+  if (!HybrisUtils::IsUsingAndroidEGL()) {
+    return true;
+  }
+
+  if (content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
+          gpu::USE_VIRTUALIZED_GL_CONTEXTS)) {
+    // Virtualized contexts on Android generally work around share group bugs.
+    // Don't use the application provided share group if virtualized contexts
+    // are to be used for this driver
+    return false;
+  }
+
+  return true;
 }
 
 class ScopedBindGLESAPI {
@@ -144,27 +156,27 @@ class Screen : public gfx::Screen {
   Screen() {}
 
   gfx::Point GetCursorScreenPoint() final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Point();
   }
 
   gfx::NativeWindow GetWindowUnderCursor() final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return nullptr;
   }
 
   gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return nullptr;
   }
 
   int GetNumDisplays() const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return 1;
   }
 
   std::vector<gfx::Display> GetAllDisplays() const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return std::vector<gfx::Display>();
   }
 
@@ -173,43 +185,36 @@ class Screen : public gfx::Screen {
     //  is the NativeView for the corresponding RenderWidgetHostView. It would
     //  be nice to find a way to cleverly map this to the associated RWHV and
     //  get the correct display
-    return GetPrimaryDisplay();
+    return gfx::Display();
   }
 
   gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Display();
   }
 
   gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
     return gfx::Display();
   }
 
   gfx::Display GetPrimaryDisplay() const final {
-    blink::WebScreenInfo info(
-        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo());
-
-    gfx::Display display;
-    display.set_bounds(info.rect);
-    display.set_work_area(info.availableRect);
-    display.set_device_scale_factor(info.deviceScaleFactor);
-
-    return display;
+    return BrowserPlatformIntegration::GetInstance()
+        ->GetScreenClient()
+        ->GetPrimaryDisplay();
   }
 
   void AddObserver(gfx::DisplayObserver* observer) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
   }
   void RemoveObserver(gfx::DisplayObserver* observer) final {
-    NOTIMPLEMENTED();
+    NOTREACHED();
   }
 };
 
 } // namespace
 
 void BrowserMainParts::PreEarlyInitialization() {
-  content::SetDefaultScreenInfoGetterOxide(DefaultScreenInfoGetter);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
   media::SetVideoCaptureDeviceFactoryOverrideFactory(
@@ -241,15 +246,19 @@ int BrowserMainParts::PreCreateThreads() {
     gfx::GLSurface::InitializeOneOff();
   }
 
-  // In between now and PreMainMessageLoopRun, Chromium runs code that starts
-  // the GPU thread, so we need to decide now whether to use a share context.
-  // Note that this decision is based on basic graphics info only
-  if (!content::GpuDataManagerImpl::GetInstance()->IsDriverBugWorkaroundActive(
-          gpu::USE_VIRTUALIZED_GL_CONTEXTS) ||
-      gfx::GetGLImplementation() == gfx::kGLImplementationDesktopGL) {
-    // Virtualized contexts generally work around share group bugs. Don't
-    // use the application provided share group if virtualized contexts are
-    // to be used for this driver
+  primary_screen_.reset(new Screen());
+  gfx::Screen::SetScreenInstance(primary_screen_.get());
+
+  io_thread_.reset(new IOThread());
+
+  return 0;
+}
+
+void BrowserMainParts::PreMainMessageLoopRun() {
+  media::AudioManager::SetGlobalAppName(
+      BrowserPlatformIntegration::GetInstance()->GetApplicationName());
+
+  if (CanUseSharedGLContext()) {
     scoped_refptr<GLContextDependent> share_context =
         BrowserPlatformIntegration::GetInstance()->GetGLShareContext();
     if (share_context) {
@@ -264,37 +273,8 @@ int BrowserMainParts::PreCreateThreads() {
     }
   }
 
-  primary_screen_.reset(new Screen());
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE,
-                                 primary_screen_.get());
-
-  io_thread_.reset(new IOThread());
-
-  return 0;
-}
-
-void BrowserMainParts::PreMainMessageLoopRun() {
-  media::AudioManager::SetGlobalAppName(
-      BrowserPlatformIntegration::GetInstance()->GetApplicationName());
-
-  // With in-process GPU, nothing calls CollectContextGraphicsInfo, so we do
-  // this now. Note that this will have no effect on driver bug workarounds
-  // (those are added to the command line from the basic info found in
-  // GpuDataManager::Initialize)
-  gpu::GPUInfo gpu_info;
-  gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
-  switch (rv) {
-    case gpu::kCollectInfoFatalFailure:
-      LOG(ERROR) << "gpu::CollectContextGraphicsInfo failed";
-      break;
-    case gpu::kCollectInfoNone:
-      NOTREACHED();
-      break;
-    default:
-      break;
-  }
-
-  content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
+  // Collect all graphics info. This also starts the GPU service
+  content::GpuDataManager::GetInstance()->RequestCompleteGpuInfoIfNeeded();
 
   CompositorUtils::GetInstance()->Initialize(gl_share_context_.get());
   net::NetModule::SetResourceProvider(NetResourceProvider);
@@ -318,7 +298,7 @@ void BrowserMainParts::PostDestroyThreads() {
     BrowserContext::AssertNoContextsExist();
   }
 
-  gfx::Screen::SetScreenInstance(gfx::SCREEN_TYPE_NATIVE, nullptr);
+  gfx::Screen::SetScreenInstance(nullptr);
   io_thread_.reset();
 
   content::oxide_gpu_shim::SetGLShareGroup(nullptr);

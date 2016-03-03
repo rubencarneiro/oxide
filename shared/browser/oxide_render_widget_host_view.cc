@@ -23,14 +23,16 @@
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
-#include "cc/layers/delegated_frame_provider.h"
-#include "cc/layers/delegated_renderer_layer.h"
 #include "cc/layers/layer_settings.h"
+#include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/output/viewport_selection_bound.h"
 #include "cc/quads/render_pass.h"
+#include "cc/surfaces/surface.h"
+#include "cc/surfaces/surface_id_allocator.h"
+#include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/browser_thread.h"
@@ -48,6 +50,7 @@
 #include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
+#include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 
 #include "oxide_browser_platform_integration.h"
@@ -110,6 +113,36 @@ ui::SelectionBound ConvertSelectionBound(
   if (ui_bound.type() != ui::SelectionBound::EMPTY)
     ui_bound.SetEdge(bound.edge_top, bound.edge_bottom);
   return ui_bound;
+}
+
+void SatisfyCallback(cc::SurfaceManager* manager,
+                     cc::SurfaceSequence sequence) {
+  std::vector<uint32_t> sequences;
+  sequences.push_back(sequence.sequence);
+  manager->DidSatisfySequences(sequence.id_namespace, &sequences);
+}
+
+void RequireCallback(cc::SurfaceManager* manager,
+                     cc::SurfaceId id,
+                     cc::SurfaceSequence sequence) {
+  cc::Surface* surface = manager->GetSurfaceForId(id);
+  if (!surface) {
+    LOG(ERROR) << "Attempting to require callback on nonexistent surface";
+    return;
+  }
+  surface->AddDestructionDependency(sequence);
+}
+
+bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
+                                 const cc::CompositorFrameMetadata& current) {
+  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
+    return true;
+  }
+  if (old.location_bar_content_translation.y() !=
+      current.location_bar_content_translation.y()) {
+    return true;
+  }
+  return false;
 }
 
 } // namespace
@@ -178,7 +211,7 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
     return gfx::Size();
   }
 
-  return container_->GetViewSizePix();
+  return container_->GetViewSizeInPixels();
 }
 
 bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
@@ -194,7 +227,7 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
     return 0.0f;
   }
 
-  return container_->GetLocationBarHeightDip();
+  return container_->GetLocationBarHeight();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
@@ -210,8 +243,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  scoped_ptr<cc::DelegatedFrameData> frame_data =
-      std::move(frame->delegated_frame_data);
+  cc::DelegatedFrameData* frame_data = frame->delegated_frame_data.get();
 
   if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
@@ -220,23 +252,18 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   }
 
   if (output_surface_id != last_output_surface_id_) {
-    resource_collection_->SetClient(nullptr);
-    if (resource_collection_->LoseAllResources()) {
+    DestroyDelegatedContent();
+    surface_factory_.reset();
+    if (!surface_returned_resources_.empty()) {
       SendReturnedDelegatedResources();
     }
-    resource_collection_ = new cc::DelegatedFrameResourceCollection();
-    resource_collection_->SetClient(this);
-
-    DestroyDelegatedContent();
-
-    // XXX(chrisccoulson): Should we clear ack_callbacks_ here as well?
-
     last_output_surface_id_ = output_surface_id;
   }
 
   base::Closure ack_callback =
       base::Bind(&RenderWidgetHostView::SendDelegatedFrameAck,
-                 AsWeakPtr(), output_surface_id);
+                 weak_ptr_factory_.GetWeakPtr(),
+                 output_surface_id);
   ack_callbacks_.push(ack_callback);
 
   float device_scale_factor = frame->metadata.device_scale_factor;
@@ -251,29 +278,52 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
                      1.0f / device_scale_factor));
 
+  cc::CompositorFrameMetadata metadata = frame->metadata;
+
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
   } else {
-    if (!frame_provider_.get() ||
-        frame_size != frame_provider_->frame_size() ||
-        frame_size_dip != last_frame_size_dip_) {
-      DetachLayer();
+    cc::SurfaceManager* manager =
+        CompositorUtils::GetInstance()->GetSurfaceManager();
+    if (!surface_factory_) {
+      DCHECK(manager);
+      surface_factory_ =
+          make_scoped_ptr(new cc::SurfaceFactory(manager, this));
+    }
 
-      frame_provider_ = new cc::DelegatedFrameProvider(resource_collection_,
-                                                       std::move(frame_data));
-      layer_ = cc::DelegatedRendererLayer::Create(cc::LayerSettings(),
-                                                  frame_provider_);
+    if (surface_id_.is_null() ||
+        frame_size_dip != last_frame_size_dip_) {
+      DestroyDelegatedContent();
+
+      surface_id_ = id_allocator_->GenerateId();
+      DCHECK(!surface_id_.is_null());
+      surface_factory_->Create(surface_id_);
+
+      layer_ =
+          cc::SurfaceLayer::Create(cc::LayerSettings(),
+                                   base::Bind(&SatisfyCallback,
+                                              base::Unretained(manager)),
+                                   base::Bind(&RequireCallback,
+                                              base::Unretained(manager)));
+      DCHECK(layer_);
+      layer_->SetSurfaceId(surface_id_, device_scale_factor, frame_size);
+      layer_->SetBounds(frame_size_dip);
       layer_->SetIsDrawable(true);
       layer_->SetContentsOpaque(true);
-      layer_->SetBounds(frame_size_dip);
       layer_->SetHideLayerAndSubtree(!is_showing_);
 
       AttachLayer();
-    } else {
-      frame_provider_->SetFrameData(std::move(frame_data));
     }
+
+    cc::SurfaceFactory::DrawCallback ack_callback =
+        base::Bind(&RenderWidgetHostView::RunAckCallbacks,
+                   weak_ptr_factory_.GetWeakPtr());
+    surface_factory_->SubmitCompositorFrame(surface_id_,
+                                            std::move(frame),
+                                            ack_callback);
   }
 
+  last_submitted_frame_metadata_ = metadata;
   last_frame_size_dip_ = frame_size_dip;
 
   if (layer_.get()) {
@@ -285,27 +335,25 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RendererFrameEvictor::GetInstance()->AddFrame(this, is_showing_);
   }
 
-  compositor_frame_metadata_ = frame->metadata;
-
   bool shrink =
-      compositor_frame_metadata_.location_bar_offset.y() == 0.0f &&
-      compositor_frame_metadata_.location_bar_content_translation.y() > 0.0f;
+      metadata.location_bar_offset.y() == 0.0f &&
+      metadata.location_bar_content_translation.y() > 0.0f;
   if (shrink != top_controls_shrink_blink_size_) {
     top_controls_shrink_blink_size_ = shrink;
     host_->WasResized();
   }
 
-  bool has_mobile_viewport = HasMobileViewport(compositor_frame_metadata_);
-  bool has_fixed_page_scale = HasFixedPageScale(compositor_frame_metadata_);
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
   Compositor* compositor = container_ ? container_->GetCompositor() : nullptr;
   if (!compositor || !compositor->IsActive()) {
-    RunAckCallbacks();
+    RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
   }
 
-  const cc::ViewportSelection& selection = compositor_frame_metadata_.selection;
+  const cc::ViewportSelection& selection = metadata.selection;
   selection_controller_->OnSelectionEditable(selection.is_editable);
   selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
   selection_controller_->OnSelectionBoundsChanged(
@@ -376,6 +424,8 @@ void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
 }
 
 void RenderWidgetHostView::Destroy() {
+  DestroyDelegatedContent();
+  surface_factory_.reset();
   host_ = nullptr;
   delete this;
 }
@@ -409,8 +459,7 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
   if (!container_) {
-    *result =
-        BrowserPlatformIntegration::GetInstance()->GetDefaultScreenInfo();
+    RenderWidgetHostViewOxide::GetDefaultScreenInfo(result);
     return;
   }
 
@@ -485,7 +534,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   if (!container_) {
     bounds = gfx::Rect(last_size_);
   } else {
-    bounds = container_->GetViewBoundsDip();
+    bounds = container_->GetViewBounds();
   }
 
   if (DoTopControlsShrinkBlinkSize()) {
@@ -502,7 +551,28 @@ bool RenderWidgetHostView::LockMouse() {
 void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::CompositorDidCommit() {
-  RunAckCallbacks();
+  committed_frame_metadata_ = last_submitted_frame_metadata_;
+  RunAckCallbacks(cc::SurfaceDrawStatus::DRAWN);
+}
+
+void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
+  cc::CompositorFrameMetadata old = displayed_frame_metadata_;
+  displayed_frame_metadata_ = committed_frame_metadata_;
+
+  if (!container_) {
+    return;
+  }
+
+  // If the location bar offset changes while a touch selection is active,
+  // the bounding rect and the position of the handles need to be updated.
+  if ((selection_controller_->active_status() !=
+          ui::TouchSelectionController::INACTIVE) &&
+      HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
+    container_->TouchSelectionChanged();
+    // XXX: hack to ensure the position of the handles is updated.
+    selection_controller_->SetTemporarilyHidden(true);
+    selection_controller_->SetTemporarilyHidden(false);
+  }
 }
 
 void RenderWidgetHostView::OnGestureEvent(
@@ -580,11 +650,21 @@ void RenderWidgetHostView::EvictCurrentFrame() {
   DestroyDelegatedContent();
 }
 
-void RenderWidgetHostView::UnusedResourcesAreAvailable() {
+void RenderWidgetHostView::ReturnResources(
+    const cc::ReturnedResourceArray& resources) {
+  if (resources.empty()) {
+    return;
+  }
+  std::copy(resources.begin(), resources.end(),
+            std::back_inserter(surface_returned_resources_));
   if (ack_callbacks_.empty()) {
     SendReturnedDelegatedResources();
   }
 }
+
+void RenderWidgetHostView::SetBeginFrameSource(
+    cc::SurfaceId surface_id,
+    cc::BeginFrameSource* begin_frame_source) {}
 
 bool RenderWidgetHostView::SupportsAnimation() const {
   return false;
@@ -653,13 +733,17 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  frame_provider_ = nullptr;
+  if (!surface_id_.is_null()) {
+    DCHECK(surface_factory_.get());
+    surface_factory_->Destroy(surface_id_);
+    surface_id_ = cc::SurfaceId();
+  }
   layer_ = nullptr;
 }
 
 void RenderWidgetHostView::SendDelegatedFrameAck(uint32_t surface_id) {
   cc::CompositorFrameAck ack;
-  resource_collection_->TakeUnusedResourcesForChildCompositor(&ack.resources);
+  ack.resources.swap(surface_returned_resources_);
 
   content::RenderWidgetHostImpl::SendSwapCompositorFrameAck(
       host_->GetRoutingID(),
@@ -669,10 +753,11 @@ void RenderWidgetHostView::SendDelegatedFrameAck(uint32_t surface_id) {
 }
 
 void RenderWidgetHostView::SendReturnedDelegatedResources() {
-  cc::CompositorFrameAck ack;
-  resource_collection_->TakeUnusedResourcesForChildCompositor(&ack.resources);
+  DCHECK(host_);
 
-  DCHECK(!ack.resources.empty());
+  cc::CompositorFrameAck ack;
+  DCHECK(!surface_returned_resources_.empty());
+  ack.resources.swap(surface_returned_resources_);
 
   content::RenderWidgetHostImpl::SendReclaimCompositorResources(
       host_->GetRoutingID(),
@@ -681,7 +766,7 @@ void RenderWidgetHostView::SendReturnedDelegatedResources() {
       ack);
 }
 
-void RenderWidgetHostView::RunAckCallbacks() {
+void RenderWidgetHostView::RunAckCallbacks(cc::SurfaceDrawStatus status) {
   while (!ack_callbacks_.empty()) {
     ack_callbacks_.front().Run();
     ack_callbacks_.pop();
@@ -714,17 +799,18 @@ RenderWidgetHostView::RenderWidgetHostView(
     content::RenderWidgetHostImpl* host)
     : host_(host),
       container_(nullptr),
-      resource_collection_(new cc::DelegatedFrameResourceCollection()),
+      id_allocator_(
+          CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
       last_output_surface_id_(0),
       frame_is_evicted_(true),
       ime_bridge_(this),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
       top_controls_shrink_blink_size_(false),
-      gesture_provider_(GestureProvider::Create(this)) {
+      gesture_provider_(GestureProvider::Create(this)),
+      weak_ptr_factory_(this) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
-  resource_collection_->SetClient(this);
   host_->SetView(this);
 
   gesture_provider_->SetDoubleTapSupportForPageEnabled(false);
@@ -741,8 +827,9 @@ RenderWidgetHostView::RenderWidgetHostView(
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
-  resource_collection_->SetClient(nullptr);
-  SetContainer(nullptr);
+  DCHECK(!layer_);
+  DCHECK(!surface_factory_);
+  DCHECK(surface_id_.is_null());
 }
 
 void RenderWidgetHostView::SetContainer(
@@ -789,7 +876,7 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
   }
 
   host_->ForwardTouchEventWithLatencyInfo(
-      MakeWebTouchEvent(event, rv.did_generate_scroll),
+      MakeWebTouchEvent(event, rv.moved_beyond_slop_region),
       ui::LatencyInfo());
 }
 
@@ -856,7 +943,7 @@ void RenderWidgetHostView::Hide() {
     RendererFrameEvictor::GetInstance()->UnlockFrame(this);
   }
 
-  RunAckCallbacks();
+  RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
 
   if (!host_ || host_->is_hidden()) {
     return;

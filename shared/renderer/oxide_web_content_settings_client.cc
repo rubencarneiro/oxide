@@ -54,7 +54,6 @@ bool WebContentSettingsClient::OnMessageReceived(const IPC::Message& message) {
 
 bool WebContentSettingsClient::allowDisplayingInsecureContent(
     bool enabled_per_settings,
-    const blink::WebSecurityOrigin& origin,
     const blink::WebURL& url) {
   if (enabled_per_settings ||
       can_display_insecure_content_ ||

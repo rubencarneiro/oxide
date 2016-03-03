@@ -19,11 +19,9 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <QRect>
-#include <QRectF>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
 
 class OxideQCertificateError;
 class OxideQDownloadRequest;
@@ -36,10 +34,8 @@ class OxideQNewViewRequest;
 class OxideQPermissionRequest;
 
 QT_BEGIN_NAMESPACE
-class QCursor;
 class QKeyEvent;
 class QObject;
-class QScreen;
 class QString;
 QT_END_NAMESPACE
 
@@ -49,12 +45,7 @@ namespace qt {
 class FilePickerProxy;
 class FilePickerProxyClient;
 class JavaScriptDialogProxy;
-class TouchHandleDrawableProxy;
-class WebContextMenuProxy;
-class WebContextMenuProxyClient;
 class WebFrameProxy;
-class WebPopupMenuProxy;
-class WebPopupMenuProxyClient;
 
 enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_NONE = 0,
@@ -66,25 +57,16 @@ enum FrameMetadataChangeFlags {
   FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
 };
 
-OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
-
 class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
 
-  virtual QObject* GetApiHandle() = 0;
-
-  virtual WebContextMenuProxy* CreateWebContextMenu(
-      WebContextMenuProxyClient* client) = 0;
-  virtual WebPopupMenuProxy* CreateWebPopupMenu(
-      WebPopupMenuProxyClient* client) = 0;
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
       JavaScriptDialogProxyClient::Type type,
       JavaScriptDialogProxyClient* client) = 0;
   virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
       JavaScriptDialogProxyClient* client) = 0;
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
-  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void WebProcessStatusChanged() = 0;
 
@@ -100,14 +82,7 @@ class WebViewProxyClient {
   virtual void NavigationListPruned(bool from_front, int count) = 0;
   virtual void NavigationEntryChanged(int index) = 0;
 
-  virtual void TouchSelectionChanged(bool active, QRectF bounds) = 0;
-
   virtual void CreateWebFrame(WebFrameProxy* proxy) = 0;
-
-  virtual QScreen* GetScreen() const = 0;
-  virtual QRect GetViewBoundsPix() const = 0;
-  virtual bool IsVisible() const = 0;
-  virtual bool HasFocus() const = 0;
 
   virtual void AddMessageToConsole(int level,
                                    const QString& message,
@@ -118,11 +93,9 @@ class WebViewProxyClient {
 
   virtual void WebPreferencesReplaced() = 0;
 
-  virtual void FrameRemoved(WebFrameProxyHandle* frame) = 0;
+  virtual void FrameRemoved(QObject* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;
-
-  virtual void UpdateCursor(const QCursor& cursor) = 0;
 
   virtual void NavigationRequested(OxideQNavigationRequest* request) = 0;
   virtual void NewViewRequested(OxideQNewViewRequest* request) = 0;
@@ -134,13 +107,7 @@ class WebViewProxyClient {
   virtual void RequestNotificationPermission(
       OxideQPermissionRequest* request) = 0;
 
-  virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
-
   virtual void FrameMetadataUpdated(FrameMetadataChangeFlags flags) = 0;
-  virtual void ScheduleUpdate() = 0;
-  virtual void EvictCurrentFrame() = 0;
-
-  virtual void SetInputMethodEnabled(bool enabled) = 0;
 
   virtual void DownloadRequested(
       const OxideQDownloadRequest& download_request) = 0;
@@ -156,7 +123,7 @@ class WebViewProxyClient {
   virtual void CloseRequested() = 0;
 
   virtual void TargetURLChanged() = 0;
-  
+
   virtual void OnEditingCapabilitiesChanged() = 0;
 };
 

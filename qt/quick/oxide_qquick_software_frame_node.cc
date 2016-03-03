@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,17 +19,17 @@
 
 #include <QImage>
 #include <QPoint>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QRect>
 
-#include "qt/core/glue/oxide_qt_web_view_proxy.h"
-#include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 
 namespace oxide {
 namespace qquick {
 
-SoftwareFrameNode::SoftwareFrameNode(OxideQQuickWebView* view)
-    : view_(view) {}
+SoftwareFrameNode::SoftwareFrameNode(QQuickItem* item)
+    : item_(item) {}
 
 void SoftwareFrameNode::updateNode(
     QSharedPointer<oxide::qt::CompositorFrameHandle> handle) {
@@ -37,7 +37,7 @@ void SoftwareFrameNode::updateNode(
 
   setRect(handle_->GetRect());
 
-  texture_.reset(view_->window()->createTextureFromImage(
+  texture_.reset(item_->window()->createTextureFromImage(
       handle_->GetSoftwareFrame(),
       QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
@@ -48,7 +48,7 @@ void SoftwareFrameNode::setImage(const QImage& image) {
 
   setRect(QRect(QPoint(0, 0), image.size()));
 
-  texture_.reset(view_->window()->createTextureFromImage(
+  texture_.reset(item_->window()->createTextureFromImage(
       image, QQuickWindow::TextureHasAlphaChannel));
   setTexture(texture_.data());
 }

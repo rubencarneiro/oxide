@@ -19,6 +19,7 @@
 #include "gpu/command_buffer/common/mailbox.h"
 #include "media/base/demuxer_stream.h"
 #include "media/base/media_keys.h"
+#include "media/blink/webmediaplayer_delegate.h"
 #include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayer.h"
 #include "third_party/WebKit/public/platform/WebSize.h"
@@ -45,7 +46,6 @@ struct MailboxHolder;
 
 namespace media {
 class MediaLog;
-class WebMediaPlayerDelegate;
 }
 
 namespace oxide {
@@ -53,7 +53,8 @@ class RendererMediaPlayerManager;
 class WebContentDecryptionModuleImpl;
 
 class WebMediaPlayer : public blink::WebMediaPlayer,
-                       public content::RenderFrameObserver {
+                       public content::RenderFrameObserver,
+                       public NON_EXPORTED_BASE(media::WebMediaPlayerDelegate::Observer){
  public:
   WebMediaPlayer(blink::WebFrame* frame,
                         blink::WebMediaPlayerClient* client,
@@ -189,6 +190,13 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   void setContentDecryptionModule(
       blink::WebContentDecryptionModule* cdm);
 
+  // WebMediaPlayerDelegate::Observer implementation.
+  void OnHidden() override;
+  void OnShown() override;
+  void OnPlay() override;
+  void OnPause() override;
+  void OnVolumeMultiplierUpdate(double multiplier) override;
+
  protected:
   // Helper method to update the playing state.
   void UpdatePlayingState(bool is_playing_);
@@ -220,7 +228,12 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
 
   blink::WebMediaPlayerClient* const client_;
 
+  // WebMediaPlayer notifies the |delegate_| of playback state changes using
+  // |delegate_id_|; an id provided after registering with the delegate.  The
+  // WebMediaPlayer may also receive directives (play, pause) from the delegate
+  // via the WebMediaPlayerDelegate::Observer interface after registration.
   base::WeakPtr<media::WebMediaPlayerDelegate> delegate_;
+  int delegate_id_;
 
   // Save the list of buffered time ranges.
   blink::WebTimeRanges buffered_;

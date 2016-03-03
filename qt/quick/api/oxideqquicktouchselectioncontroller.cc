@@ -15,9 +15,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquicktouchselectioncontroller_p.h"
+#include "oxideqquicktouchselectioncontroller.h"
 
-#include "oxideqquickwebview_p_p.h"
+#include "oxideqquickwebview_p.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;

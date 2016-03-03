@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,11 +26,16 @@
 #include "base/observer_list.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
+#include "cc/trees/layer_tree_host_single_thread_client.h"
 #include "ui/gfx/geometry/size.h"
+
+#include "shared/browser/compositor/oxide_compositor_proxy.h"
 
 namespace cc {
 class Layer;
 class LayerTreeHost;
+class OnscreenDisplayClient;
+class SurfaceIdAllocator;
 }
 
 namespace gfx {
@@ -43,15 +48,16 @@ class CompositorClient;
 class CompositorFrameData;
 class CompositorFrameHandle;
 class CompositorObserver;
-class CompositorThreadProxy;
 
-class Compositor final : public cc::LayerTreeHostClient,
-                         public base::NonThreadSafe  {
+class Compositor : public cc::LayerTreeHostClient,
+                   public cc::LayerTreeHostSingleThreadClient,
+                   public CompositorProxyClient,
+                   public base::NonThreadSafe {
  public:
-  typedef std::vector<scoped_refptr<CompositorFrameHandle> > FrameHandleVector;
+  typedef std::vector<scoped_refptr<CompositorFrameHandle>> FrameHandleVector;
 
   static scoped_ptr<Compositor> Create(CompositorClient* client);
-  ~Compositor();
+  ~Compositor() override;
 
   bool IsActive() const;
 
@@ -65,11 +71,8 @@ class Compositor final : public cc::LayerTreeHostClient,
 
  private:
   friend class CompositorObserver;
-  friend class CompositorThreadProxy;
 
   Compositor(CompositorClient* client);
-
-  void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
 
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
@@ -77,29 +80,44 @@ class Compositor final : public cc::LayerTreeHostClient,
   void RemoveObserver(CompositorObserver* observer);
 
   // cc::LayerTreeHostClient implementation
-  void WillBeginMainFrame() final;
-  void BeginMainFrame(const cc::BeginFrameArgs& args) final;
-  void BeginMainFrameNotExpectedSoon() final;
-  void DidBeginMainFrame() final;
-  void UpdateLayerTreeHost() final;
+  void WillBeginMainFrame() override;
+  void BeginMainFrame(const cc::BeginFrameArgs& args) override;
+  void BeginMainFrameNotExpectedSoon() override;
+  void DidBeginMainFrame() override;
+  void UpdateLayerTreeHost() override;
   void ApplyViewportDeltas(const gfx::Vector2dF& inner_delta,
                            const gfx::Vector2dF& outer_delta,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
-                           float top_controls_delta) final;
-  void RequestNewOutputSurface() final;
-  void DidInitializeOutputSurface() final;
-  void DidFailToInitializeOutputSurface() final;
-  void WillCommit() final;
-  void DidCommit() final;
-  void DidCommitAndDrawFrame() final;
-  void DidCompleteSwapBuffers() final;
+                           float top_controls_delta) override;
+  void RequestNewOutputSurface() override;
+  void DidInitializeOutputSurface() override;
+  void DidFailToInitializeOutputSurface() override;
+  void WillCommit() override;
+  void DidCommit() override;
+  void DidCommitAndDrawFrame() override;
+  void DidCompleteSwapBuffers() override;
   void RecordFrameTimingEvents(
       scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
       scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) override;
-  void DidCompletePageScaleAnimation() final;
+  void DidCompletePageScaleAnimation() override;
 
+  // cc::LayerTreeHostSingleThreadClient implementation
+  void DidPostSwapBuffers() override;
+  void DidAbortSwapBuffers() override;
+
+  // CompositorProxyClient
+  void SwapCompositorFrameFromProxy(scoped_ptr<CompositorFrameData> frame);
+  
   CompositorClient* client_;
+
+  scoped_refptr<CompositorProxy> proxy_;
+
+  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+
+  scoped_ptr<cc::OnscreenDisplayClient> display_client_;
+
+  scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
 
   int num_failed_recreate_attempts_;
 
@@ -107,9 +125,6 @@ class Compositor final : public cc::LayerTreeHostClient,
   float device_scale_factor_;
 
   scoped_refptr<cc::Layer> root_layer_;
-
-  scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
-  scoped_refptr<CompositorThreadProxy> proxy_;
 
   uint32_t next_output_surface_id_;
 

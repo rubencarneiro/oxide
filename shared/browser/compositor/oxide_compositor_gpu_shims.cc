@@ -17,6 +17,7 @@
 
 #include "oxide_compositor_gpu_shims.h"
 
+#include "base/lazy_instance.h"
 #include "base/single_thread_task_runner.h"
 #include "content/common/gpu/gpu_channel_manager.h"
 #include "content/gpu/gpu_child_thread.h"
@@ -33,6 +34,42 @@
 #include "shared/port/content/common/gpu_service_shim_oxide.h"
 
 namespace oxide {
+
+class SyncPointWaiter {
+ public:
+  SyncPointWaiter();
+  ~SyncPointWaiter();
+
+  bool Wait(gpu::SyncPointClientState* release_state,
+            uint64_t release_count,
+            const base::Closure& wait_complete_callback);
+
+ private:
+  scoped_ptr<gpu::SyncPointClient> sync_point_client_;
+};
+
+namespace {
+
+base::LazyInstance<SyncPointWaiter> g_sync_point_waiter =
+    LAZY_INSTANCE_INITIALIZER;
+
+}
+
+SyncPointWaiter::SyncPointWaiter()
+    : sync_point_client_(
+        content::GpuChildThread::GetChannelManager()
+          ->sync_point_manager()
+          ->CreateSyncPointClientWaiter()) {}
+
+SyncPointWaiter::~SyncPointWaiter() {}
+
+bool SyncPointWaiter::Wait(gpu::SyncPointClientState* release_state,
+                           uint64_t release_count,
+                           const base::Closure& wait_complete_callback) {
+  return sync_point_client_->WaitOutOfOrder(release_state,
+                                            release_count,
+                                            wait_complete_callback);
+}
 
 class ScopedTextureBinder {
  public:
@@ -94,18 +131,34 @@ scoped_refptr<base::SingleThreadTaskRunner> GpuUtils::GetTaskRunner() {
 }
 
 // static
-bool GpuUtils::IsSyncPointRetired(uint32_t sync_point) {
-  return content::GpuChildThread::GetChannelManager()
-      ->sync_point_manager()
-      ->IsSyncPointRetired(sync_point);
+bool GpuUtils::IsSyncPointRetired(gpu::CommandBufferId command_buffer_id,
+                                  uint64_t sync_point) {
+  scoped_refptr<gpu::SyncPointClientState> client_state =
+      content::GpuChildThread::GetChannelManager()
+        ->sync_point_manager()
+        ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
+                                  command_buffer_id);
+  if (!client_state) {
+    return true;
+  }
+
+  return client_state->IsFenceSyncReleased(sync_point);
 }
 
 // static
-void GpuUtils::AddSyncPointCallback(uint32_t sync_point,
-                                    const base::Closure& callback) {
-  content::GpuChildThread::GetChannelManager()
-      ->sync_point_manager()
-      ->AddSyncPointCallback(sync_point, callback);
+bool GpuUtils::WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
+                                uint64_t sync_point,
+                                const base::Closure& callback) {
+  scoped_refptr<gpu::SyncPointClientState> client_state =
+      content::GpuChildThread::GetChannelManager()
+        ->sync_point_manager()
+        ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
+                                  command_buffer_id);
+  DCHECK(client_state);
+
+  return g_sync_point_waiter.Get().Wait(client_state.get(),
+                                        sync_point,
+                                        callback);
 }
 
 // static
@@ -121,11 +174,10 @@ EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
 }
 
 // static
-GLuint GpuUtils::GetTextureFromMailbox(const CommandBufferID& command_buffer,
+GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
                                        const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(
-        command_buffer.client_id, command_buffer.route_id);
+      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return 0;
   }
@@ -141,11 +193,10 @@ GLuint GpuUtils::GetTextureFromMailbox(const CommandBufferID& command_buffer,
 
 // static
 EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
-    const CommandBufferID& command_buffer,
+    gpu::CommandBufferId command_buffer,
     const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(
-        command_buffer.client_id, command_buffer.route_id);
+      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return EGL_NO_IMAGE_KHR;
   }

@@ -174,7 +174,7 @@ blink::WebGestureEvent MakeWebGestureEvent(
 }
 
 blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
-                                       bool may_cause_scrolling) {
+                                       bool moved_beyond_slop_region) {
   blink::WebTouchEvent result;
 
   result.timeStampSeconds =
@@ -201,7 +201,7 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
   }
 
   result.cancelable = result.type != blink::WebInputEvent::TouchCancel;
-  result.causesScrollingIfUncanceled = may_cause_scrolling;
+  result.movedBeyondSlopRegion = moved_beyond_slop_region;
 
   result.touchesLength = std::min(
       event.GetPointerCount(),

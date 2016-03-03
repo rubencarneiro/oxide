@@ -26,8 +26,9 @@ namespace oxide {
 namespace qt {
 
 // static
-WebContextProxy* WebContextProxy::create(WebContextProxyClient* client) {
-  return new WebContext(client);
+WebContextProxy* WebContextProxy::create(WebContextProxyClient* client,
+                                         QObject* handle) {
+  return new WebContext(client, handle);
 }
 
 // static
@@ -44,7 +45,7 @@ bool WebContextProxy::checkIPAddress(const QString& address) {
 WebContextProxy::~WebContextProxy() {}
 
 //static
-WebContextProxyHandle* WebContextProxy::defaultContext() {
+QObject* WebContextProxy::defaultContext() {
   WebContext* context = WebContext::GetDefault();
   if (!context) {
     return nullptr;

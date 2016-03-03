@@ -37,12 +37,12 @@ class OxideQNavigationRequestPrivate {
   OxideQNavigationRequest::Action action_;
 };
 
-OxideQNavigationRequest::~OxideQNavigationRequest() {}
-
 OxideQNavigationRequest::OxideQNavigationRequest(const QUrl& url,
                                                  Disposition disposition,
                                                  bool user_gesture) :
     d_ptr(new OxideQNavigationRequestPrivate(url, disposition, user_gesture)) {}
+
+OxideQNavigationRequest::~OxideQNavigationRequest() {}
 
 QUrl OxideQNavigationRequest::url() const {
   Q_D(const OxideQNavigationRequest);

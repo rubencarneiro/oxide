@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,12 @@
 #include <utility>
 
 #include "oxide_compositor_frame_data.h"
-#include "oxide_compositor_thread_proxy.h"
+#include "oxide_compositor_proxy.h"
 
 namespace oxide {
 
 CompositorFrameHandle::CompositorFrameHandle(
-    scoped_refptr<CompositorThreadProxy> proxy,
+    scoped_refptr<CompositorProxy> proxy,
     scoped_ptr<CompositorFrameData> data)
     : proxy_(proxy),
       data_(std::move(data)) {}

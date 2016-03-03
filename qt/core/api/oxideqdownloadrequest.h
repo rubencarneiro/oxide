@@ -15,19 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_DOWNLOAD_REQUEST
-#define OXIDE_Q_DOWNLOAD_REQUEST
+#ifndef OXIDE_QTCORE_DOWNLOAD_REQUEST
+#define OXIDE_QTCORE_DOWNLOAD_REQUEST
 
-#include <QMetaType>
-#include <QSharedDataPointer>
-#include <QString>
-#include <QStringList>
-#include <QtGlobal>
-#include <QUrl>
+#include <QtCore/QMetaType>
+#include <QtCore/QSharedDataPointer>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QtGlobal>
+#include <QtCore/QUrl>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQDownloadRequestData;
 
-class Q_DECL_EXPORT OxideQDownloadRequest {
+class OXIDE_QTCORE_EXPORT OxideQDownloadRequest {
   Q_GADGET
 
   Q_PROPERTY(QUrl url READ url CONSTANT)
@@ -69,4 +71,4 @@ class Q_DECL_EXPORT OxideQDownloadRequest {
 
 Q_DECLARE_METATYPE(OxideQDownloadRequest)
 
-#endif // OXIDE_Q_DOWNLOAD_REQUEST
+#endif // OXIDE_QTCORE_DOWNLOAD_REQUEST

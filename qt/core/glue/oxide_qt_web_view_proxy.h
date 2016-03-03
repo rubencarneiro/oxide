@@ -23,28 +23,12 @@
 #include <QImage>
 #include <QList>
 #include <QPoint>
-#include <QRect>
-#include <QSharedPointer>
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
-#include <Qt>
 #include <QUrl>
-#include <QVariant>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
-
-typedef void* EGLImageKHR;
-
-QT_BEGIN_NAMESPACE
-class QFocusEvent;
-class QHoverEvent;
-class QInputMethodEvent;
-class QKeyEvent;
-class QMouseEvent;
-class QTouchEvent;
-class QWheelEvent;
-QT_END_NAMESPACE
+#include "qt/core/glue/oxide_qt_proxy_base.h"
 
 class OxideQFindController;
 class OxideQNewViewRequest;
@@ -55,6 +39,7 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
+class ContentsViewProxyClient;
 class ScriptMessageHandlerProxy;
 class WebContextProxy;
 class WebFrameProxy;
@@ -106,57 +91,26 @@ enum EditingCommands {
   EDITING_COMMAND_SELECT_ALL
 };
 
-class CompositorFrameHandle {
+class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
  public:
-  virtual ~CompositorFrameHandle() {}
-
-  enum Type {
-    TYPE_INVALID,
-    TYPE_SOFTWARE,
-    TYPE_ACCELERATED,
-    TYPE_IMAGE
-  };
-
-  virtual Type GetType() = 0;
-  virtual const QRect& GetRect() const = 0;
-
-  virtual QImage GetSoftwareFrame() = 0;
-  virtual unsigned int GetAcceleratedFrameTexture() = 0;
-  virtual EGLImageKHR GetImageFrame() = 0;
-};
-
-struct FindInPageState {
-  int request_id;
-  QString text;
-  bool case_sensitive;
-  int current;
-  int count;
-};
-
-OXIDE_Q_DECL_PROXY_HANDLE(ScriptMessageHandlerProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebContextProxy);
-OXIDE_Q_DECL_PROXY_HANDLE(WebFrameProxy);
-
-class Q_DECL_EXPORT WebViewProxy {
-  OXIDE_Q_DECL_PROXY_FOR(WebView);
- public:
+  static WebViewProxy* create(
+      WebViewProxyClient* client, // Must outlive returned proxy
+      ContentsViewProxyClient* view_client, // Must outlive returned proxy
+      QObject* handle,
+      OxideQFindController* find_controller, // Returned proxy must outlive this
+      OxideQSecurityStatus* security_status, // Returned proxy must outlive this
+      QObject* context,
+      bool incognito,
+      const QByteArray& restore_state,
+      RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
-                              OxideQFindController* find_controller,
-                              OxideQSecurityStatus* security_status,
-                              WebContextProxyHandle* context,
-                              bool incognito,
-                              const QByteArray& restore_state,
-                              RestoreType restore_type);
-  static WebViewProxy* create(WebViewProxyClient* client,
+                              ContentsViewProxyClient* view_client,
+                              QObject* handle,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request);
 
   virtual ~WebViewProxy();
-
-  static void createHelpers(
-      QScopedPointer<OxideQFindController>* find_controller,
-      QScopedPointer<OxideQSecurityStatus>* security_status);
 
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;
@@ -175,26 +129,9 @@ class Q_DECL_EXPORT WebViewProxy {
   virtual bool fullscreen() const = 0;
   virtual void setFullscreen(bool fullscreen) = 0;
 
-  virtual WebFrameProxyHandle* rootFrame() const = 0;
+  virtual QObject* rootFrame() const = 0;
 
-  virtual WebContextProxyHandle* context() const = 0;
-
-  virtual void wasResized() = 0;
-  virtual void screenUpdated() = 0;
-  virtual void visibilityChanged() = 0;
-
-  virtual void handleFocusEvent(QFocusEvent* event) = 0;
-  virtual void handleHoverEvent(QHoverEvent* event,
-                                const QPoint& window_pos,
-                                const QPoint& global_pos) = 0;
-  virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
-  virtual void handleKeyEvent(QKeyEvent* event) = 0;
-  virtual void handleMouseEvent(QMouseEvent* event) = 0;
-  virtual void handleTouchEvent(QTouchEvent* event) = 0;
-  virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPoint& window_pos) = 0;
-
-  virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
+  virtual QObject* context() const = 0;
 
   virtual void goBack() = 0;
   virtual void goForward() = 0;
@@ -203,7 +140,7 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
-  virtual QList<ScriptMessageHandlerProxyHandle*>& messageHandlers() = 0;
+  virtual QList<QObject*>& messageHandlers() = 0;
 
   virtual int getNavigationEntryCount() const = 0;
   virtual int getNavigationCurrentEntryIndex() const = 0;
@@ -220,12 +157,9 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void updateWebPreferences() = 0;
 
-  virtual QPoint compositorFrameScrollOffsetPix() = 0;
-  virtual QSize compositorFrameContentSizePix() = 0;
-  virtual QSize compositorFrameViewportSizePix() = 0;
-
-  virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
-  virtual void didCommitCompositorFrame() = 0;
+  virtual QPoint compositorFrameScrollOffset() = 0;
+  virtual QSize compositorFrameContentSize() = 0;
+  virtual QSize compositorFrameViewportSize() = 0;
 
   virtual void setCanTemporarilyDisplayInsecureContent(bool allow) = 0;
   virtual void setCanTemporarilyRunInsecureContent(bool allow) = 0;;
@@ -236,8 +170,8 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual int locationBarHeight() const = 0;
   virtual void setLocationBarHeight(int height) = 0;
-  virtual int locationBarOffsetPix() const = 0;
-  virtual int locationBarContentOffsetPix() const = 0;
+  virtual int locationBarOffset() const = 0;
+  virtual int locationBarContentOffset() const = 0;
   virtual LocationBarMode locationBarMode() const = 0;
   virtual void setLocationBarMode(LocationBarMode mode) = 0;
   virtual bool locationBarAnimated() const = 0;
@@ -255,8 +189,6 @@ class Q_DECL_EXPORT WebViewProxy {
 
   virtual void teardownFrameTree() = 0;
 };
-
-OXIDE_Q_DECL_PROXY_HANDLE(WebViewProxy);
 
 } // namespace qt
 } // namespace oxide

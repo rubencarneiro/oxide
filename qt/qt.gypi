@@ -16,15 +16,18 @@
 
 {
   'variables': {
-    'oxide_subprocess_path': '<(oxide_subprocess_dir)/<(oxide_renderer_name)',
-    'oxide_all_targets': [
-      '../qt/core/core.gyp:<(oxide_core_name)',
-      '../qt/renderer/renderer.gyp:<(oxide_renderer_name)',
+    'oxide_lib_target': [
+      '../qt/core/core.gyp:<(oxide_lib)',
     ],
-    'oxide_build': 'qt',
+    'oxide_renderer_target': [
+      '../qt/renderer/renderer.gyp:<(oxide_renderer)',
+    ],
   },
   'target_defaults': {
     'defines': [
+      # XXX(chrisccoulson): Rename this to OXIDE_PLATFORM_QT and automatically
+      #  add it in build/common.gypi based on oxide_build, or remove if
+      #  possible - it's only used in one place
       'OXIDE_BUILD_QT',
     ],
   },

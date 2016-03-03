@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,9 +18,14 @@
 #ifndef _OXIDE_QT_CORE_GLUE_USER_SCRIPT_PROXY_H_
 #define _OXIDE_QT_CORE_GLUE_USER_SCRIPT_PROXY_H_
 
+#include <QtGlobal>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_proxy_handle.h"
+#include "qt/core/glue/oxide_qt_proxy_base.h"
+
+QT_BEGIN_NAMESPACE
+class QObject;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
@@ -28,11 +33,10 @@ namespace qt {
 class UserScript;
 class UserScriptProxyClient;
 
-class Q_DECL_EXPORT UserScriptProxy {
-  OXIDE_Q_DECL_PROXY_FOR(UserScript);
-
+class Q_DECL_EXPORT UserScriptProxy : public ProxyBase<UserScript> {
  public:
   static UserScriptProxy* create(UserScriptProxyClient* client,
+                                 QObject* handle,
                                  const QUrl& url);
   virtual ~UserScriptProxy();
 
@@ -48,8 +52,6 @@ class Q_DECL_EXPORT UserScriptProxy {
   virtual QUrl context() const = 0;
   virtual void setContext(const QUrl& context) = 0;
 };
-
-OXIDE_Q_DECL_PROXY_HANDLE(UserScriptProxy);
 
 } // namespace qt
 } // namespace oxide

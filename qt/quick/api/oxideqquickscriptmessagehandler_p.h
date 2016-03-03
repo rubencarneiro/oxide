@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,55 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_
-#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_
 
 #include <QJSValue>
-#include <QList>
-#include <QObject>
-#include <QQmlParserStatus>
 #include <QScopedPointer>
-#include <QString>
 #include <QtGlobal>
-#include <QtQml>
-#include <QUrl>
 
-class OxideQQuickScriptMessageHandlerPrivate;
+#include "qt/core/glue/oxide_qt_script_message_handler_proxy_client.h"
 
-class Q_DECL_EXPORT OxideQQuickScriptMessageHandler : public QObject,
-                                                      public QQmlParserStatus {
-  Q_OBJECT
-  Q_PROPERTY(QString msgId READ msgId WRITE setMsgId NOTIFY msgIdChanged)
-  Q_PROPERTY(QList<QUrl> contexts READ contexts WRITE setContexts NOTIFY contextsChanged)
-  Q_PROPERTY(QJSValue callback READ callback WRITE setCallback NOTIFY callbackChanged)
+class OxideQQuickScriptMessageHandler;
 
-  Q_DECLARE_PRIVATE(OxideQQuickScriptMessageHandler)
+namespace oxide {
+namespace qt {
+class ScriptMessageHandlerProxy;
+}
+}
+
+class OxideQQuickScriptMessageHandlerPrivate
+    : public oxide::qt::ScriptMessageHandlerProxyClient {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessageHandler)
 
  public:
-  OxideQQuickScriptMessageHandler(QObject* parent = nullptr);
-  virtual ~OxideQQuickScriptMessageHandler();
+  OxideQQuickScriptMessageHandlerPrivate(OxideQQuickScriptMessageHandler* q);
 
-  QString msgId() const;
-  void setMsgId(const QString& id);
+  bool isActive();
 
-  QList<QUrl> contexts() const;
-  void setContexts(const QList<QUrl>& contexts);
-
-  QJSValue callback() const;
-  void setCallback(const QJSValue& callback);
-
-  void classBegin();
-  void componentComplete();
-
- Q_SIGNALS:
-  void msgIdChanged();
-  void contextsChanged();
-  void callbackChanged();
+  static OxideQQuickScriptMessageHandlerPrivate* get(
+      OxideQQuickScriptMessageHandler* message_handler);
 
  private:
-  QScopedPointer<OxideQQuickScriptMessageHandlerPrivate> d_ptr;
+  // oxide::qt::ScriptMessageHandlerProxyClient implementation
+  bool ReceiveMessage(oxide::qt::ScriptMessageProxy* message,
+                      QVariant* error) override;
+
+  OxideQQuickScriptMessageHandler* q_ptr;
+
+  QScopedPointer<oxide::qt::ScriptMessageHandlerProxy> proxy_;
+
+  QJSValue callback_;
+
+  Q_DISABLE_COPY(OxideQQuickScriptMessageHandlerPrivate);
 };
 
-QML_DECLARE_TYPE(OxideQQuickScriptMessageHandler)
-
-#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_HANDLER_P_P_H_

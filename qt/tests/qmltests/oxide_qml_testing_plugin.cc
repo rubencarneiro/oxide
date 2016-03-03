@@ -35,8 +35,8 @@
 #include <QtQml>
 #include <QVariant>
 
+#include "qt/quick/api/oxideqquickwebcontext.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
-#include "qt/quick/api/oxideqquickwebcontext_p_p.h"
 
 namespace {
 

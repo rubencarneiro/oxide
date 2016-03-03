@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -92,16 +92,16 @@ void ScriptMessageHandler::detachHandler() {
 }
 
 ScriptMessageHandler::ScriptMessageHandler(
-    ScriptMessageHandlerProxyClient* client)
-    : client_(client) {}
+    ScriptMessageHandlerProxyClient* client,
+    QObject* handle)
+    : client_(client) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+}
 
 ScriptMessageHandler::~ScriptMessageHandler() {}
-
-// static
-ScriptMessageHandler* ScriptMessageHandler::FromProxyHandle(
-    ScriptMessageHandlerProxyHandle* handle) {
-  return static_cast<ScriptMessageHandler*>(handle->proxy_.data());
-}
 
 } // namespace qt
 } // namespace oxide

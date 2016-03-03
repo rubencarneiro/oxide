@@ -19,18 +19,13 @@
 #define _OXIDE_SHARED_BROWSER_MESSAGE_PUMP_H_
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/message_loop/message_loop.h"
 #include "base/message_loop/message_pump.h"
 
-namespace base {
-class RunLoop;
-}
+#include "shared/browser/oxide_platform_run_loop.h"
 
 namespace oxide {
 
-class MessagePump : public base::MessagePump,
-                    public base::MessageLoop::TaskObserver {
+class MessagePump : public base::MessagePump {
  public:
   static MessagePump* Get();
 
@@ -43,13 +38,7 @@ class MessagePump : public base::MessagePump,
  private:
   virtual void OnStart() = 0;
 
-  // base::MessageLoop::TaskObserver implementation
-  void WillProcessTask(const base::PendingTask& pending_task) override;
-  void DidProcessTask(const base::PendingTask& pending_task) override;
-
-  scoped_ptr<base::RunLoop> run_loop_;
-
-  int task_depth_;
+  PlatformRunLoop run_loop_;
 
   DISALLOW_COPY_AND_ASSIGN(MessagePump);
 };

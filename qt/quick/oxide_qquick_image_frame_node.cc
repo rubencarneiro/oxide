@@ -20,7 +20,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
-#include "qt/core/glue/oxide_qt_web_view_proxy.h"
+#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 
 namespace oxide {
 namespace qquick {
@@ -44,7 +44,7 @@ QSize ImageFrameNode::textureSize() const {
     return QSize();
   }
 
-  return handle_->GetRect().size();
+  return handle_->GetSizeInPixels();
 }
 
 bool ImageFrameNode::hasAlphaChannel() const {

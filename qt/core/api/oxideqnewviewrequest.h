@@ -15,18 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_NEW_VIEW_REQUEST
-#define OXIDE_Q_NEW_VIEW_REQUEST
+#ifndef OXIDE_QTCORE_NEW_VIEW_REQUEST
+#define OXIDE_QTCORE_NEW_VIEW_REQUEST
 
-#include <QObject>
-#include <QRect>
-#include <QRectF>
-#include <QScopedPointer>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QRect>
+#include <QtCore/QRectF>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtCore/oxideqglobal.h>
+
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+namespace oxide {
+namespace qt {
+class WebView;
+}
+}
+#endif
 
 class OxideQNewViewRequestPrivate;
 
-class Q_DECL_EXPORT OxideQNewViewRequest Q_DECL_FINAL : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQNewViewRequest : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(QRectF position READ positionF CONSTANT)
@@ -47,16 +57,20 @@ class Q_DECL_EXPORT OxideQNewViewRequest Q_DECL_FINAL : public QObject {
     DispositionNewWindow
   };
 
-  Q_DECL_HIDDEN OxideQNewViewRequest(const QRect& position,
-                                     Disposition disposition);
-  ~OxideQNewViewRequest();
+  ~OxideQNewViewRequest() Q_DECL_OVERRIDE;
 
   QRect position() const;
   QRectF positionF() const;
   Disposition disposition() const;
 
  private:
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+  friend class oxide::qt::WebView;
+#endif
+  Q_DECL_HIDDEN OxideQNewViewRequest(const QRect& position,
+                                     Disposition disposition);
+
   QScopedPointer<OxideQNewViewRequestPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_NEW_VIEW_REQUEST
+#endif // OXIDE_QTCORE_NEW_VIEW_REQUEST

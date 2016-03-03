@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,49 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_H_
-#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_H_
+#ifndef _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
+#define _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_
 
-#include <QObject>
 #include <QScopedPointer>
-#include <QString>
-#include <QtGlobal>
-#include <QUrl>
-#include <QVariant>
 
-QT_BEGIN_NAMESPACE
-class QString;
-QT_END_NAMESPACE
+class OxideQQuickScriptMessage;
 
-class OxideQQuickScriptMessagePrivate;
-class OxideQQuickWebFrame;
+namespace oxide {
+namespace qt {
+class ScriptMessageProxy;
+}
+}
 
-class Q_DECL_EXPORT OxideQQuickScriptMessage : public QObject {
-  Q_OBJECT
-  Q_PROPERTY(OxideQQuickWebFrame* frame READ frame CONSTANT)
-  Q_PROPERTY(QUrl context READ context CONSTANT)
-  Q_PROPERTY(QString id READ msgId CONSTANT)
-  Q_PROPERTY(QVariant args READ payload CONSTANT)
-  Q_PROPERTY(QVariant payload READ payload CONSTANT)
-
-  Q_DECLARE_PRIVATE(OxideQQuickScriptMessage)
-  Q_DISABLE_COPY(OxideQQuickScriptMessage)
-
+class OxideQQuickScriptMessagePrivate {
+  Q_DECLARE_PUBLIC(OxideQQuickScriptMessage)
  public:
-  virtual ~OxideQQuickScriptMessage();
+  static OxideQQuickScriptMessage* create(oxide::qt::ScriptMessageProxy* proxy);
 
-  OxideQQuickWebFrame* frame() const;
-  QUrl context() const;
-  QString msgId() const;
-  QVariant payload() const;
-
-  Q_INVOKABLE void reply(const QVariant& payload);
-  Q_INVOKABLE void error(const QVariant& payload);
+  static OxideQQuickScriptMessagePrivate* get(OxideQQuickScriptMessage* q);
 
  private:
-  OxideQQuickScriptMessage();
+  OxideQQuickScriptMessagePrivate(oxide::qt::ScriptMessageProxy* proxy,
+                                  OxideQQuickScriptMessage* q);
 
-  QScopedPointer<OxideQQuickScriptMessagePrivate> d_ptr;
+  OxideQQuickScriptMessage* q_ptr;
+
+  QScopedPointer<oxide::qt::ScriptMessageProxy> proxy_;
 };
 
-#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_H_
+#endif // _OXIDE_QT_QUICK_API_SCRIPT_MESSAGE_P_P_H_

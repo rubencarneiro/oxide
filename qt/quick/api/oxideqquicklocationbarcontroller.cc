@@ -15,10 +15,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicklocationbarcontroller.h"
 
+#include "oxideqquickwebview.h"
 #include "oxideqquickwebview_p.h"
-#include "oxideqquickwebview_p_p.h"
 
 class OxideQQuickLocationBarControllerPrivate {
  public:
@@ -111,14 +111,14 @@ void OxideQQuickLocationBarController::setAnimated(bool animated) {
 qreal OxideQQuickLocationBarController::offset() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->locationBarOffsetPix();
+  return OxideQQuickWebViewPrivate::get(d->view)->locationBarOffset();
 }
 
 qreal OxideQQuickLocationBarController::contentOffset() const {
   Q_D(const OxideQQuickLocationBarController);
 
   return OxideQQuickWebViewPrivate::get(
-      d->view)->locationBarContentOffsetPix();
+      d->view)->locationBarContentOffset();
 }
 
 void OxideQQuickLocationBarController::show(bool animate) {

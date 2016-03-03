@@ -18,8 +18,6 @@
 #include "oxide_qt_web_view_proxy.h"
 
 #include "base/logging.h"
-#include "qt/core/api/oxideqfindcontroller.h"
-#include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/browser/oxide_qt_web_context.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
@@ -28,15 +26,19 @@ namespace qt {
 
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
+                                   ContentsViewProxyClient* view_client,
+                                   QObject* handle,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
-                                   WebContextProxyHandle* context,
+                                   QObject* context,
                                    bool incognito,
                                    const QByteArray& restore_state,
                                    RestoreType restore_type) {
   CHECK(context);
 
   return new WebView(client,
+                     view_client,
+                     handle,
                      find_controller,
                      security_status,
                      WebContext::FromProxyHandle(context),
@@ -47,24 +49,20 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
+                                   ContentsViewProxyClient* view_client,
+                                   QObject* handle,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
                                    OxideQNewViewRequest* new_view_request) {
   return WebView::CreateFromNewViewRequest(client,
+                                           view_client,
+                                           handle,
                                            find_controller,
                                            security_status,
                                            new_view_request);
 }
 
 WebViewProxy::~WebViewProxy() {}
-
-// static
-void WebViewProxy::createHelpers(
-    QScopedPointer<OxideQFindController>* find_controller,
-    QScopedPointer<OxideQSecurityStatus>* security_status) {
-  find_controller->reset(new OxideQFindController());
-  security_status->reset(new OxideQSecurityStatus());
-}
 
 } // namespace qt
 } // namespace oxide

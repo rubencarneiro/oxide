@@ -31,11 +31,6 @@ namespace cc {
 class Layer;
 }
 
-namespace content {
-struct ContextMenuParams;
-class RenderFrameHost;
-}
-
 namespace gfx {
 class Rect;
 }
@@ -61,10 +56,11 @@ class RenderWidgetHostViewContainer {
 
   virtual void CursorChanged() = 0;
 
-  virtual gfx::Size GetViewSizePix() const = 0;
+  virtual gfx::Size GetViewSizeInPixels() const = 0;
 
-  virtual gfx::Rect GetViewBoundsDip() const = 0;
+  virtual gfx::Rect GetViewBounds() const = 0;
 
+  // TODO(chrisccoulson): Return a gfx::Display here
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
   virtual bool HasFocus(const RenderWidgetHostView* view) const = 0;
@@ -73,17 +69,7 @@ class RenderWidgetHostViewContainer {
 
   virtual bool IsFullscreen() const = 0;
 
-  virtual float GetLocationBarHeightDip() const = 0;
-
-  virtual void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                               const content::ContextMenuParams& params) = 0;
-
-  virtual void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                             const gfx::Rect& bounds,
-                             int selected_item,
-                             const std::vector<content::MenuItem>& items,
-                             bool allow_multiple_selection) = 0;
-  virtual void HidePopupMenu() = 0;
+  virtual float GetLocationBarHeight() const = 0;
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 

@@ -15,22 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_MEDIA_CAPTURE_DEVICES
-#define OXIDE_Q_MEDIA_CAPTURE_DEVICES
+#ifndef OXIDE_QTCORE_MEDIA_CAPTURE_DEVICES
+#define OXIDE_QTCORE_MEDIA_CAPTURE_DEVICES
 
-#include <QList>
-#include <QObject>
-#include <QScopedPointer>
-#include <QSharedDataPointer>
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QList>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QSharedDataPointer>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQAudioCaptureDeviceData;
 class OxideQMediaCaptureDevices;
 class OxideQMediaCaptureDevicesPrivate;
 class OxideQVideoCaptureDeviceData;
 
-class Q_DECL_EXPORT OxideQAudioCaptureDevice {
+class OXIDE_QTCORE_EXPORT OxideQAudioCaptureDevice {
  public:
   OxideQAudioCaptureDevice(const OxideQAudioCaptureDevice& other);
   ~OxideQAudioCaptureDevice();
@@ -48,7 +50,7 @@ class Q_DECL_EXPORT OxideQAudioCaptureDevice {
   QSharedDataPointer<OxideQAudioCaptureDeviceData> d;
 };
 
-class Q_DECL_EXPORT OxideQVideoCaptureDevice {
+class OXIDE_QTCORE_EXPORT OxideQVideoCaptureDevice {
  public:
   enum Position {
     PositionUnspecified,
@@ -75,7 +77,7 @@ class Q_DECL_EXPORT OxideQVideoCaptureDevice {
   QSharedDataPointer<OxideQVideoCaptureDeviceData> d;
 };
 
-class Q_DECL_EXPORT OxideQMediaCaptureDevices : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQMediaCaptureDevices : public QObject {
   Q_OBJECT
 
   Q_DISABLE_COPY(OxideQMediaCaptureDevices)
@@ -98,4 +100,4 @@ class Q_DECL_EXPORT OxideQMediaCaptureDevices : public QObject {
   QScopedPointer<OxideQMediaCaptureDevicesPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_MEDIA_CAPTURE_DEVICES
+#endif // OXIDE_QTCORE_MEDIA_CAPTURE_DEVICES

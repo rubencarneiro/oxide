@@ -47,6 +47,43 @@ int GetTimeIntervalMilliseconds(const base::TimeTicks& from) {
 
 } // namespace
 
+class MessagePump::RecursionHandler {
+ public:
+  RecursionHandler(RunState** state);
+  ~RecursionHandler();
+
+ private:
+  RunState*& state() { return *state_; }
+
+  RunState** state_;
+  RunState* last_state_;
+  RunState this_state_;
+  PlatformRunLoop run_loop_;
+};
+
+MessagePump::RecursionHandler::RecursionHandler(RunState** s)
+    : state_(s),
+      last_state_(nullptr) {
+  if (state()->running_task) {
+    this_state_.delegate = state()->delegate;
+    last_state_ = state();
+    state() = &this_state_;
+    run_loop_.Enter();
+  }
+
+  state()->running_task = true;
+}
+
+MessagePump::RecursionHandler::~RecursionHandler() {
+  DCHECK(state()->running_task);
+  state()->running_task = false;
+
+  if (last_state_) {
+    DCHECK_EQ(state(), &this_state_);
+    state() = last_state_;
+  }
+}
+
 void MessagePump::PostWorkEvent() {
   QCoreApplication::postEvent(this, new QEvent(GetChromiumEventType()));
 }
@@ -62,6 +99,11 @@ void MessagePump::CancelTimer() {
 
 void MessagePump::RunOneTask() {
   DCHECK(state_);
+
+  // Ensure we handle re-entry without a corresponding call to Run() (so we
+  // don't have a nested RunLoop for this invocation yet). This likely means
+  // we've been re-entered as a result of an external nested QEventLoop
+  RecursionHandler recursion_handler(&state_);
 
   bool did_work = state_->delegate->DoWork();
   if (state_->should_quit) {
@@ -101,6 +143,7 @@ void MessagePump::Run(base::MessagePump::Delegate* delegate) {
 
   event_loop.exec();
 
+  DCHECK_EQ(state_, &state);
   state_ = last_state;
 }
 

@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "content/common/content_export.h"
+#include "gpu/command_buffer/common/command_buffer_id.h"
 
 namespace gfx {
 class GLShareGroup;
@@ -35,8 +36,8 @@ class GLES2Decoder;
 namespace content {
 namespace oxide_gpu_shim {
 
-CONTENT_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(int32_t client_id,
-                                                         int32_t route_id);
+CONTENT_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(
+    gpu::CommandBufferId command_buffer_id);
 
 gfx::GLShareGroup* GetGLShareGroup();
 CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);

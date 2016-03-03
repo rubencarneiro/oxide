@@ -22,6 +22,8 @@
 
 #include "qt/core/browser/oxide_qt_web_preferences.h"
 
+#include "oxideqglobal_p.h"
+
 OxideQWebPreferencesPrivate::OxideQWebPreferencesPrivate(
     OxideQWebPreferences* q)
     : preferences_(q) {}
@@ -189,7 +191,9 @@ void OxideQWebPreferences::setMinimumFontSize(unsigned size) {
   } \
 \
   void OxideQWebPreferences::setter(bool val) { \
-    qWarning() << #getter " is deprecated and has no effect"; \
+    WARN_DEPRECATED_API_USAGE() << \
+        "OxideQWebPreferences: " << #getter << \
+        " is deprecated and has no effect"; \
   }
 
 BOOLEAN_PREF_IMPL(remoteFontsEnabled, setRemoteFontsEnabled, REMOTE_FONTS_ENABLED)

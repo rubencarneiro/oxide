@@ -21,6 +21,7 @@
 #include "content/public/browser/location_provider.h"
 
 #include "oxide_browser_platform_integration_observer.h"
+#include "oxide_drag_source.h"
 
 namespace oxide {
 
@@ -85,6 +86,11 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
   return kDefaultApplicationName;
 }
 
+scoped_ptr<DragSource> BrowserPlatformIntegration::CreateDragSource(
+    DragSourceClient* client) {
+  return nullptr;
+}
+
 void BrowserPlatformIntegration::AddObserver(
     BrowserPlatformIntegrationObserver* observer) {
   observers_.AddObserver(observer);
@@ -105,6 +111,10 @@ void BrowserPlatformIntegration::NotifyClipboardDataChanged() {
   FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
                     observers_,
                     ClipboardDataChanged());
+}
+
+void BrowserPlatformIntegration::CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
 }
 
 } // namespace oxide

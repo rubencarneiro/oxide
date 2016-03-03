@@ -31,7 +31,6 @@ class SurfaceFactoryOzoneOxide : public SurfaceFactoryOzone {
   bool LoadEGLGLES2Bindings(
       AddGLLibraryCallback add_gl_library,
       SetGLGetProcAddressProcCallback set_gl_get_proc_address) override;
-  const int32_t* GetEGLSurfaceProperties(const int32_t* desired_list) override;
 };
 
 } // namespace ui

@@ -31,6 +31,10 @@
 
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
 
+#include "oxide_qt_contents_view.h"
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
+
 namespace oxide {
 namespace qt {
 
@@ -83,8 +87,14 @@ void WebPopupMenu::Show(const gfx::Rect& bounds,
     qitems.append(qitem);
   }
 
-  proxy_->Show(QRect(bounds.x(), bounds.y(), bounds.width(), bounds.height()),
-               qitems, allow_multiple_selection);
+  ContentsView* view = ContentsView::FromWebContents(web_contents());
+
+  gfx::Rect rect = bounds;
+  rect += gfx::Vector2d(0, view->GetLocationBarContentOffset());
+  
+  proxy_->Show(
+      ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, view->GetScreen())),
+      qitems, allow_multiple_selection);
 }
 
 void WebPopupMenu::Hide() {

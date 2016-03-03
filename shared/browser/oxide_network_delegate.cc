@@ -50,14 +50,6 @@ int NetworkDelegate::OnBeforeURLRequest(
   return delegate->OnBeforeURLRequest(request, callback, new_url);
 }
 
-void NetworkDelegate::OnResolveProxy(const GURL& url,
-                                     int load_flags,
-                                     const net::ProxyService& proxy_service,
-                                     net::ProxyInfo* result) {}
-
-void NetworkDelegate::OnProxyFallback(const net::ProxyServer& bad_proxy,
-                                      int net_error) {}
-
 int NetworkDelegate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::CompletionCallback& callback,

@@ -85,12 +85,13 @@ class ResourceDispatcherHostDelegate
       content::AppCacheService* appcache_service,
       content::ResourceType resource_type,
       ScopedVector<content::ResourceThrottle>* throttles) override;
-  bool HandleExternalProtocol(const GURL& url,
-                              int child_id,
-                              int route_id,
-                              bool is_main_frame,
-                              ui::PageTransition page_transition,
-                              bool has_user_gesture) override;
+  bool HandleExternalProtocol(
+      const GURL& url,
+      int child_id,
+      const content::ResourceRequestInfo::WebContentsGetter& web_contents_getter,
+      bool is_main_frame,
+      ui::PageTransition page_transition,
+      bool has_user_gesture) override;
 
   content::ResourceDispatcherHostLoginDelegate* CreateLoginDelegate(
       net::AuthChallengeInfo* auth_info,

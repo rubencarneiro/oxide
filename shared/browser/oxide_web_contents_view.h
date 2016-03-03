@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,18 +18,68 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
+#include <queue>
+#include <vector>
+
+#include "base/callback.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
+#include "base/memory/weak_ptr.h"
+#include "cc/output/compositor_frame_metadata.h"
+#include "content/public/browser/web_contents_observer.h"
+#include "content/public/common/drop_data.h"
+#include "ui/gfx/geometry/rect.h"
+#include "ui/gfx/geometry/rect_f.h"
+#include "ui/gfx/geometry/size.h"
+
+#include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/oxide_drag_source_client.h"
+#include "shared/browser/oxide_mouse_event_state.h"
+#include "shared/browser/oxide_render_object_id.h"
+#include "shared/browser/oxide_render_widget_host_view_container.h"
+#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
+namespace blink {
+class WebMouseEvent;
+class WebMouseWheelEvent;
+}
+
+namespace cc {
+class SolidColorLayer;
+}
+
 namespace content {
+class NativeWebKeyboardEvent;
+class RenderWidgetHost;
 class WebContents;
+class WebContentsImpl;
+}
+
+namespace ui {
+class TouchEvent;
+class TouchSelectionController;
 }
 
 namespace oxide {
 
-class RenderWidgetHostViewContainer;
+class Compositor;
+class CompositorFrameHandle;
+class DragSource;
+class RenderWidgetHostView;
+class WebContentsViewClient;
+class WebPopupMenu;
 
-class WebContentsView final : public content::WebContentsViewOxide {
+class WebContentsView : public content::WebContentsViewOxide,
+                        public content::WebContentsObserver,
+                        public CompositorClient,
+                        public CompositorObserver,
+                        public DragSourceClient,
+                        public InputMethodContextObserver,
+                        public RenderWidgetHostViewContainer {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -37,49 +87,111 @@ class WebContentsView final : public content::WebContentsViewOxide {
 
   static WebContentsView* FromWebContents(content::WebContents* contents);
 
-  void SetContainer(RenderWidgetHostViewContainer* container);
+  content::WebContents* GetWebContents() const;
 
-  // content::WebContentsView
-  gfx::NativeView GetNativeView() const final;
-  gfx::NativeView GetContentNativeView() const final;
-  gfx::NativeWindow GetTopLevelNativeWindow() const final;
+  WebContentsViewClient* client() const { return client_; }
 
-  void GetContainerBounds(gfx::Rect* out) const final;
+  void SetClient(WebContentsViewClient* client);
 
-  void SizeContents(const gfx::Size& size) final;
+  void set_editing_capabilities_changed_callback(
+      const base::Closure& callback) {
+    editing_capabilities_changed_callback_ = callback;
+  }
 
-  void Focus() final;
-  void SetInitialFocus() final;
-  void StoreFocus() final;
-  void RestoreFocus() final;
+  bool IsVisible() const;
+  bool HasFocus() const;
 
-  content::DropData* GetDropData() const final;
+  gfx::Size GetSizeInPixels() const;
+  gfx::Rect GetBounds() const;
 
-  gfx::Rect GetViewBounds() const final;
+  blink::WebScreenInfo GetScreenInfo() const;
 
+  void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
+  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleTouchEvent(const ui::TouchEvent& event);
+  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
+
+  // XXX(chrisccoulson): Make a new class for these events - we don't use
+  //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
+  //  don't think we want
+  void HandleDragEnter(const content::DropData& drop_data,
+                       const gfx::Point& location,
+                       blink::WebDragOperationsMask allowed_ops,
+                       int key_modifiers);
+  blink::WebDragOperation HandleDragMove(const gfx::Point& location,
+                                         int key_modifiers);
+  void HandleDragLeave();
+  blink::WebDragOperation HandleDrop(const gfx::Point& location,
+                                     int key_modifiers);
+
+  Compositor* GetCompositor() const;
+  CompositorFrameHandle* GetCompositorFrameHandle() const;
+  void DidCommitCompositorFrame();
+
+  const cc::CompositorFrameMetadata& committed_frame_metadata() const {
+    return committed_frame_metadata_;
+  }
+
+  void WasResized();
+  void VisibilityChanged();
+  void FocusChanged();
+  void ScreenUpdated();
+
+ private:
+  WebContentsView(content::WebContents* web_contents);
+
+  content::WebContentsImpl* web_contents_impl() const;
+
+  // Return the TouchSelectionController for the current RWHV, or interstitial
+  // RWHV if one is attached. Ignores fullscreen RWHVs
+  ui::TouchSelectionController* GetTouchSelectionController() const;
+
+  // Return the current RWHV, or interstitial RWHV if there is one. If a
+  // fullscreen RWHV is displayed, it will return this
+  RenderWidgetHostView* GetRenderWidgetHostView() const;
+
+  // Return the current RWH, or interstitial RWH if there is one. If a
+  // fullscreen RWH is displayed, it will return this
+  content::RenderWidgetHost* GetRenderWidgetHost() const;
+
+  bool ShouldScrollFocusedEditableNodeIntoView();
+  void MaybeScrollFocusedEditableNodeIntoView();
+
+  gfx::RectF GetBoundsF() const;
+
+  // content::WebContentsView implementation
+  gfx::NativeView GetNativeView() const override;
+  gfx::NativeView GetContentNativeView() const override;
+  gfx::NativeWindow GetTopLevelNativeWindow() const override;
+  void GetContainerBounds(gfx::Rect* out) const override;
+  void SizeContents(const gfx::Size& size) override;
+  void Focus() override;
+  void SetInitialFocus() override;
+  void StoreFocus() override;
+  void RestoreFocus() override;
+  content::DropData* GetDropData() const override;
+  gfx::Rect GetViewBounds() const override;
   void CreateView(const gfx::Size& initial_size,
-                  gfx::NativeView context) final;
+                  gfx::NativeView context) override;
   content::RenderWidgetHostViewBase* CreateViewForWidget(
       content::RenderWidgetHost* render_widget_host,
-      bool is_guest_view_hack) final;
+      bool is_guest_view_hack) override;
   content::RenderWidgetHostViewBase* CreateViewForPopupWidget(
-      content::RenderWidgetHost* render_widget_host) final;
+      content::RenderWidgetHost* render_widget_host) override;
+  void SetPageTitle(const base::string16& title) override;
+  void RenderViewCreated(content::RenderViewHost* host) override;
+  void RenderViewSwappedIn(content::RenderViewHost* host) override;
+  void SetOverscrollControllerEnabled(bool enabled) override;
 
-  void SetPageTitle(const base::string16& title) final;
-
-  void RenderViewCreated(content::RenderViewHost* host) final;
-  void RenderViewSwappedIn(content::RenderViewHost* host) final;
-
-  void SetOverscrollControllerEnabled(bool enabled) final;
-
-  // content::RenderViewHostDelegateView
+  // content::RenderViewHostDelegateView implementation
   void ShowContextMenu(content::RenderFrameHost* render_frame_host,
-                       const content::ContextMenuParams& params) final;
+                       const content::ContextMenuParams& params) override;
   void StartDragging(const content::DropData& drop_data,
                      blink::WebDragOperationsMask allowed_ops,
                      const gfx::ImageSkia& image,
                      const gfx::Vector2d& image_offset,
-                     const content::DragEventSourceInfo& event_info) final;
+                     const content::DragEventSourceInfo& event_info) override;
+  void UpdateDragCursor(blink::WebDragOperation operation) override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,
@@ -87,17 +199,71 @@ class WebContentsView final : public content::WebContentsViewOxide {
                      int selected_item,
                      const std::vector<content::MenuItem>& items,
                      bool right_aligned,
-                     bool allow_multiple_selection) final;
-  void HidePopupMenu() final;
+                     bool allow_multiple_selection) override;
+  void HidePopupMenu() override;
 
- private:
-  WebContentsView(content::WebContents* web_contents);
+  // content::WebContentsObserver implementation
+  void RenderViewHostChanged(content::RenderViewHost* old_host,
+                             content::RenderViewHost* new_host) override;
+  void DidNavigateMainFrame(
+      const content::LoadCommittedDetails& details,
+      const content::FrameNavigateParams& params) override;
+  void DidShowFullscreenWidget(int routing_id) override;
+  void DidDestroyFullscreenWidget(int routing_id) override;
+  void DidAttachInterstitialPage() override;
+  void DidDetachInterstitialPage() override;
 
-  content::WebContents* web_contents_;
+  // CompositorClient implementation
+  void CompositorSwapFrame(CompositorFrameHandle* handle) override;
 
-  RenderWidgetHostViewContainer* container_;
+  // CompositorObserver implementation
+  void CompositorDidCommit() override;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebContentsView);
+  // DragSourceClient implementaion
+  void EndDrag(blink::WebDragOperation operation) override;
+
+  // InputMethodContextObserver implementation
+  void InputPanelVisibilityChanged() override;
+
+  // RenderWidgetHostViewContainer implementation
+  void AttachLayer(scoped_refptr<cc::Layer> layer) override;
+  void DetachLayer(scoped_refptr<cc::Layer> layer) override;
+  void CursorChanged() override;
+  gfx::Size GetViewSizeInPixels() const override;
+  bool HasFocus(const RenderWidgetHostView* view) const override;
+  bool IsFullscreen() const override;
+  float GetLocationBarHeight() const override;
+  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  void TouchSelectionChanged() const override;
+  void EditingCapabilitiesChanged() override;
+
+  WebContentsViewClient* client_;
+  base::Closure editing_capabilities_changed_callback_;
+
+  scoped_ptr<Compositor> compositor_;
+  scoped_refptr<cc::SolidColorLayer> root_layer_;
+
+  scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
+  std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
+  std::queue<uint32_t> received_surface_ids_;
+
+  scoped_ptr<content::DropData> current_drop_data_;
+  blink::WebDragOperationsMask current_drag_allowed_ops_;
+  blink::WebDragOperation current_drag_op_;
+  RenderWidgetHostID current_drag_target_;
+
+  scoped_ptr<DragSource> drag_source_;
+
+  base::WeakPtr<WebPopupMenu> active_popup_menu_;
+
+  MouseEventState mouse_state_;
+  TouchEventState touch_state_;
+
+  cc::CompositorFrameMetadata committed_frame_metadata_;
+
+  RenderWidgetHostID interstitial_rwh_id_;
+
+  DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };
 
 } // namespace oxide

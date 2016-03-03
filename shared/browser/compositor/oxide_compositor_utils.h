@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,8 @@ class SingleThreadTaskRunner;
 
 namespace cc {
 class ContextProvider;
+class SurfaceIdAllocator;
+class SurfaceManager;
 class TaskGraphRunner;
 }
 
@@ -52,54 +54,43 @@ class CompositorUtils {
 
   // Initialize the CompositorUtils instance by starting up a compositor thread
   // and starting the GPU service thread if it's not already running.
-  // Initialization is not thread-safe - this call should complete before any
-  // other threads use this class
   virtual void Initialize(bool has_share_context) = 0;
 
   // Shutdown the CompositorUtils instance. This must be called before the GPU
-  // service thread is shut down and must be called on the same thread that
-  // called Initialize()
+  // service thread is shut down.
   virtual void Shutdown() = 0;
-
-  // Return the task runner for the compositor thread. Can be called on any
-  // thread
-  virtual scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() = 0;
 
   typedef base::Callback<void(GLuint)> GetTextureFromMailboxCallback;
 
   // Asynchronously get the real texture from the GPU service thread, using
   // the specified |context_provider| and |mailbox| after |sync_point| has
   // expired.
-  // This must be called on the same thread that called Initialize() ot the
-  // compositor thread. |task_runner| must be for either of these threads as
-  // well
   virtual void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
-      const GetTextureFromMailboxCallback& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
+      uint64_t sync_point,
+      const GetTextureFromMailboxCallback& callback) = 0;
 
   typedef base::Callback<void(EGLImageKHR)> CreateEGLImageFromMailboxCallback;
 
   // Asynchronously create an EGLImage backed by the texture represented by
   // the specified |mailbox| on the GPU service thread after |sync_point|
   // has expired.
-  // This must be called on the same thread that called Initialize() ot the
-  // compositor thread. |task_runner| must be for either of these threads as
-  // well
   virtual void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint32_t sync_point,
-      const CreateEGLImageFromMailboxCallback& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner) = 0;
+      uint64_t sync_point,
+      const CreateEGLImageFromMailboxCallback& callback) = 0;
 
   virtual bool CanUseGpuCompositing() const = 0;
 
   virtual CompositingMode GetCompositingMode() const = 0;
 
   virtual cc::TaskGraphRunner* GetTaskGraphRunner() const = 0;
+
+  virtual cc::SurfaceManager* GetSurfaceManager() const = 0;
+
+  virtual scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() = 0;
 
  protected:
   virtual ~CompositorUtils();

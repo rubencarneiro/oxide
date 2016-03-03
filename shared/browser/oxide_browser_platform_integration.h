@@ -24,7 +24,7 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "device/vibration/vibration_manager_impl.h"
 
 class GURL;
 
@@ -39,8 +39,11 @@ class Clipboard;
 namespace oxide {
 
 class BrowserPlatformIntegrationObserver;
+class DragSource;
+class DragSourceClient;
 class GLContextDependent;
 class MessagePump;
+class ScreenClient;
 
 // An abstract interface allowing toolkit-independent code to integrate with
 // toolkit-specific features
@@ -76,8 +79,9 @@ class BrowserPlatformIntegration {
   // Called on the UI thread
   virtual intptr_t GetNativeDisplay() = 0;
 
-  // Return information about the default screen. Can be called on any thread
-  virtual blink::WebScreenInfo GetDefaultScreenInfo() = 0;
+  // Get the ScreenClient implementation. Can be called on any thread
+  // FIXME(chrisccoulson): Make this UI thread only
+  virtual ScreenClient* GetScreenClient() = 0;
 
   // Return the shared GL context provided by the application, if one exists.
   // This will be used for sharing resources between the webview and UI
@@ -102,8 +106,21 @@ class BrowserPlatformIntegration {
   // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();
 
+  // Time limit, in milliseconds, to distinguish between aggregate or just
+  // successive mouse click events. 
+  virtual int GetClickInterval() = 0;
+
   // Get the application name. Can be called on any thread
   virtual std::string GetApplicationName();
+
+  // Create a new DragSource implementation. Ownership of |client| is not
+  // transferred, and |client| will outlive the returned DragSource.
+  // Called on the UI thread
+  virtual scoped_ptr<DragSource> CreateDragSource(DragSourceClient* client);
+
+  // Get the proper vibration manager factory
+  virtual void CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request);
 
  protected:
   BrowserPlatformIntegration();

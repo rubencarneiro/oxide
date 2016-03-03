@@ -24,8 +24,9 @@ namespace qt {
 
 // static
 ScriptMessageRequestProxy* ScriptMessageRequestProxy::create(
-    ScriptMessageRequestProxyClient* client) {
-  return new ScriptMessageRequest(client);
+    ScriptMessageRequestProxyClient* client,
+    QObject* handle) {
+  return new ScriptMessageRequest(client, handle);
 }
 
 ScriptMessageRequestProxy::~ScriptMessageRequestProxy() {}

@@ -23,10 +23,12 @@
 #include <QtGlobal>
 #include <QVariant>
 
+#include "qt/quick/api/oxideqquickglobal.h"
+
 class OxideQQuickGlobalPrivate;
 class OxideQQuickWebContext;
 
-class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
+class OXIDE_QTQUICK_EXPORT OxideQQuickGlobal : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(ProcessModel processModel READ processModel WRITE setProcessModel NOTIFY processModelChanged)
@@ -53,7 +55,7 @@ class Q_DECL_EXPORT OxideQQuickGlobal : public QObject {
   };
 
   OxideQQuickGlobal();
-  virtual ~OxideQQuickGlobal();
+  ~OxideQQuickGlobal() Q_DECL_OVERRIDE;
 
   ProcessModel processModel() const;
   void setProcessModel(ProcessModel model);

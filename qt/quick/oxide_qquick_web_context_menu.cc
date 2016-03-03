@@ -28,8 +28,8 @@
 
 #include "qt/core/glue/oxide_qt_web_context_menu_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/quick/api/oxideqquickwebview_p_p.h"
 
 namespace oxide {
 namespace qquick {
@@ -251,14 +251,13 @@ void ContextMenuContext::close() {
 } // namespace
 
 void WebContextMenu::Show() {
-  if (!view_) {
+  if (!parent_) {
     qWarning() << "WebContextMenu::Show: Can't show after the view has gone";
     client_->cancel();
     return;
   }
 
-  QQmlComponent* component = view_->contextMenu();
-  if (!component) {
+  if (!component_) {
     qWarning() <<
         "WebContextMenu::Show: Content requested a context menu, but the "
         "application hasn't provided one";
@@ -268,9 +267,9 @@ void WebContextMenu::Show() {
 
   ContextMenuContext* contextObject = new ContextMenuContext(client_);
 
-  QQmlContext* baseContext = component->creationContext();
+  QQmlContext* baseContext = component_->creationContext();
   if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(view_);
+    baseContext = QQmlEngine::contextForObject(parent_);
   }
   context_.reset(new QQmlContext(baseContext));
 
@@ -279,7 +278,7 @@ void WebContextMenu::Show() {
   contextObject->setParent(context_.data());
 
   item_.reset(qobject_cast<QQuickItem*>(
-      component->beginCreate(context_.data())));
+      component_->beginCreate(context_.data())));
   if (!item_) {
     qWarning() <<
         "WebContextMenu::Show: Failed to create instance of Qml context menu component";
@@ -287,10 +286,17 @@ void WebContextMenu::Show() {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(view_)->addAttachedPropertyTo(item_.data());
-  item_->setParentItem(view_);
+  // This is a bit hacky - not sure what we'll do here if we introduce
+  // other items that can use a ContentView and which support custom UI
+  // components
+  OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
+  if (web_view) {
+    OxideQQuickWebViewPrivate::get(web_view)
+        ->addAttachedPropertyTo(item_.data());
+  }
+  item_->setParentItem(parent_);
 
-  component->completeCreate();
+  component_->completeCreate();
 }
 
 void WebContextMenu::Hide() {
@@ -299,10 +305,12 @@ void WebContextMenu::Hide() {
   }
 }
 
-WebContextMenu::WebContextMenu(OxideQQuickWebView* view,
+WebContextMenu::WebContextMenu(QQuickItem* parent,
+                               QQmlComponent* component,
                                oxide::qt::WebContextMenuProxyClient* client)
     : client_(client),
-      view_(view) {}
+      parent_(parent),
+      component_(component) {}
 
 WebContextMenu::~WebContextMenu() {}
 

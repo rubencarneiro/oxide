@@ -21,17 +21,21 @@
 #include <QtGlobal>
 #include <QString>
 
+#include "qt/core/api/oxideqglobal.h"
+
 namespace oxide {
 namespace qt {
 class FindController;
 }
 }
 
-class OxideQFindControllerPrivate {
+class OXIDE_QTCORE_EXPORT OxideQFindControllerPrivate {
   Q_DECLARE_PUBLIC(OxideQFindController)
 
  public:
   ~OxideQFindControllerPrivate();
+
+  static OxideQFindController* Create();
 
   static OxideQFindControllerPrivate* get(OxideQFindController* q);
 

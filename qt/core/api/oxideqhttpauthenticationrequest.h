@@ -15,24 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_HTTP_AUTHENTICATION_REQUEST
-#define OXIDE_Q_HTTP_AUTHENTICATION_REQUEST
+#ifndef OXIDE_QTCORE_HTTP_AUTHENTICATION_REQUEST
+#define OXIDE_QTCORE_HTTP_AUTHENTICATION_REQUEST
 
-#include <QObject>
-#include <QScopedPointer>
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QObject>
+#include <QtCore/QScopedPointer>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
+
+#include <OxideQtCore/oxideqglobal.h>
 
 class OxideQHttpAuthenticationRequestPrivate;
 
-namespace oxide {
-namespace qt {
-class WebView;
-}
-class ResourceDispatcherHostLoginDelegate;
-}
-
-class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
+class OXIDE_QTCORE_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString host READ host CONSTANT)
   Q_PROPERTY(QString realm READ realm CONSTANT)
@@ -41,7 +36,7 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   Q_DISABLE_COPY(OxideQHttpAuthenticationRequest)
 
  public:
-  ~OxideQHttpAuthenticationRequest();
+  ~OxideQHttpAuthenticationRequest() Q_DECL_OVERRIDE;
 
   QString host() const;
   QString realm() const;
@@ -53,10 +48,9 @@ class Q_DECL_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   void cancelled() const;
 
  private:
-  Q_DECL_HIDDEN OxideQHttpAuthenticationRequest(
-      oxide::ResourceDispatcherHostLoginDelegate* login_delegate);
+  Q_DECL_HIDDEN OxideQHttpAuthenticationRequest();
 
   QScopedPointer<OxideQHttpAuthenticationRequestPrivate> d_ptr;
 };
 
-#endif // OXIDE_Q_HTTP_AUTHENTICATION_REQUEST
+#endif // OXIDE_QTCORE_HTTP_AUTHENTICATION_REQUEST

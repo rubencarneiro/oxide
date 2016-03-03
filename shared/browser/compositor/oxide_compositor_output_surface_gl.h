@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@
 #include <deque>
 #include <queue>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/size.h"
@@ -35,12 +34,11 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   CompositorOutputSurfaceGL(
       uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
-      scoped_refptr<CompositorThreadProxy> proxy);
+      scoped_refptr<CompositorProxy> proxy);
   ~CompositorOutputSurfaceGL();
 
  private:
   // cc::OutputSurface implementation
-  void DetachFromClient() override;
   void EnsureBackbuffer() override;
   void DiscardBackbuffer() override;
   void Reshape(const gfx::Size& size,
@@ -53,19 +51,19 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   void ReclaimResources(const CompositorFrameAck& ack) override;
 
   struct BufferData {
-    BufferData() : texture_id(0), sync_point(0) {}
+    BufferData() : texture_id(0), available(true) {}
 
     uint32_t texture_id;
     gpu::Mailbox mailbox;
     gfx::Size size;
-    uint32_t sync_point;
+    bool available;
   };
 
-  void DiscardBuffer(BufferData* buffer);
+  BufferData& GetBufferDataForMailbox(const gpu::Mailbox& mailbox);
+  void DiscardBufferIfPossible(BufferData* buffer);
 
-  BufferData back_buffer_;
-  std::deque<BufferData> pending_buffers_;
-  std::queue<BufferData> returned_buffers_;
+  BufferData* back_buffer_;
+  std::array<BufferData, 2> buffers_;
 
   bool is_backbuffer_discarded_;
   uint32_t fbo_;

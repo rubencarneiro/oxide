@@ -24,6 +24,8 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/quick/api/oxideqquickglobal.h"
+
 QT_BEGIN_NAMESPACE
 class QString;
 class QVariant;
@@ -31,7 +33,7 @@ QT_END_NAMESPACE
 
 class OxideQQuickWebContextDelegateWorkerPrivate;
 
-class Q_DECL_EXPORT OxideQQuickWebContextDelegateWorker :
+class OXIDE_QTQUICK_EXPORT OxideQQuickWebContextDelegateWorker :
     public QObject,
     public QQmlParserStatus {
   Q_OBJECT

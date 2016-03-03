@@ -20,7 +20,8 @@
       'target_name': 'All',
       'type': 'none',
       'dependencies': [
-        '<@(oxide_all_targets)',
+        '<@(oxide_lib_target)',
+        '<@(oxide_renderer_target)',
         '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
       ],
       'conditions': [

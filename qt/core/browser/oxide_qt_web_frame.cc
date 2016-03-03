@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -70,7 +70,7 @@ QUrl WebFrame::url() const {
   return QUrl(QString::fromStdString(frame_->GetURL().spec()));
 }
 
-WebFrameProxyHandle* WebFrame::parent() const {
+QObject* WebFrame::parent() const {
   WebFrame* parent = WebFrame::FromSharedWebFrame(frame_->parent());
   if (!parent) {
     return nullptr;
@@ -79,8 +79,8 @@ WebFrameProxyHandle* WebFrame::parent() const {
   return parent->handle();
 }
 
-QList<WebFrameProxyHandle*> WebFrame::childFrames() const {
-  QList<WebFrameProxyHandle*> rv;
+QList<QObject*> WebFrame::childFrames() const {
+  QList<QObject*> rv;
 
   const std::vector<oxide::WebFrame*>& children = frame_->GetChildFrames();
   for (auto c : children) {
@@ -100,7 +100,7 @@ QList<WebFrameProxyHandle*> WebFrame::childFrames() const {
 bool WebFrame::sendMessage(const QUrl& context,
                            const QString& msg_id,
                            const QVariant& payload,
-                           ScriptMessageRequestProxyHandle* req) {
+                           QObject* req) {
   scoped_ptr<base::Value> payload_value(
       VariantValueConverter::FromVariantValue(payload));
 
@@ -126,7 +126,7 @@ void WebFrame::sendMessageNoReply(const QUrl& context,
       VariantValueConverter::FromVariantValue(payload));
 }
 
-QList<ScriptMessageHandlerProxyHandle*>& WebFrame::messageHandlers() {
+QList<QObject*>& WebFrame::messageHandlers() {
   return message_handlers_;
 }
 
@@ -139,11 +139,6 @@ WebFrame::WebFrame(oxide::WebFrame* frame)
       std::make_pair(reinterpret_cast<uintptr_t>(frame),
                      this));
   DCHECK(rv.second);
-}
-
-// static
-WebFrame* WebFrame::FromProxyHandle(WebFrameProxyHandle* handle) {
-  return static_cast<WebFrame*>(handle->proxy_.data());
 }
 
 // static

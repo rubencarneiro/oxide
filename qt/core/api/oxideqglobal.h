@@ -15,17 +15,23 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_Q_GLOBAL
-#define OXIDE_Q_GLOBAL
+#ifndef OXIDE_QTCORE_GLOBAL
+#define OXIDE_QTCORE_GLOBAL
 
-#include <QString>
-#include <QtGlobal>
+#include <QtCore/QString>
+#include <QtCore/QtGlobal>
 
 QT_BEGIN_NAMESPACE
 class QThread;
 QT_END_NAMESPACE
 
-enum Q_DECL_EXPORT OxideProcessModel {
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+# define OXIDE_QTCORE_EXPORT Q_DECL_EXPORT
+#else
+# define OXIDE_QTCORE_EXPORT Q_DECL_IMPORT
+#endif
+
+enum OXIDE_QTCORE_EXPORT OxideProcessModel {
   OxideProcessModelMultiProcess, // Uses the default multiprocess model
   OxideProcessModelSingleProcess,
 
@@ -40,15 +46,15 @@ enum Q_DECL_EXPORT OxideProcessModel {
   OxideProcessModelSitePerProcess
 };
 
-Q_DECL_EXPORT QString oxideGetNSSDbPath();
-Q_DECL_EXPORT void oxideSetNSSDbPath(const QString& path);
+OXIDE_QTCORE_EXPORT QString oxideGetNSSDbPath();
+OXIDE_QTCORE_EXPORT void oxideSetNSSDbPath(const QString& path);
 
-Q_DECL_EXPORT QThread* oxideGetIOThread();
+OXIDE_QTCORE_EXPORT QThread* oxideGetIOThread();
 
-Q_DECL_EXPORT OxideProcessModel oxideGetProcessModel();
-Q_DECL_EXPORT void oxideSetProcessModel(OxideProcessModel model);
+OXIDE_QTCORE_EXPORT OxideProcessModel oxideGetProcessModel();
+OXIDE_QTCORE_EXPORT void oxideSetProcessModel(OxideProcessModel model);
 
-Q_DECL_EXPORT size_t oxideGetMaxRendererProcessCount();
-Q_DECL_EXPORT void oxideSetMaxRendererProcessCount(size_t count);
+OXIDE_QTCORE_EXPORT size_t oxideGetMaxRendererProcessCount();
+OXIDE_QTCORE_EXPORT void oxideSetMaxRendererProcessCount(size_t count);
 
-#endif // OXIDE_Q_GLOBAL
+#endif // OXIDE_QTCORe_GLOBAL

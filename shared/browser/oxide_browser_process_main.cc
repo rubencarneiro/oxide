@@ -232,6 +232,15 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // We don't want the GPU shader cache (see https://launchpad.net/bugs/1430478)
   command_line->AppendSwitch(switches::kDisableGpuShaderDiskCache);
 
+  // We can't start the GPU thread before
+  // BrowserMainParts::PreMainMessageLoopRun, as we set the share context there.
+  // We can't set it earlier, because that depends on GpuDataManager which is
+  // initialized in BrowserMainLoop::PreCreateThreads, after the call in to
+  // BrowserMainParts::PreCreateThreads.
+  // Without this flag, the GPU thread gets started in
+  // BrowserMainLoop::BrowserThreadsStarted
+  command_line->AppendSwitch(switches::kDisableGpuEarlyInit);
+
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 
@@ -256,6 +265,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
     command_line->AppendSwitch(switches::kNoSandbox);
   } else {
+    // See https://launchpad.net/bugs/1447311
+    command_line->AppendSwitch(switches::kDisableNamespaceSandbox);
+
     if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
       command_line->AppendSwitch(switches::kDisableSetuidSandbox);
     }
@@ -370,7 +382,7 @@ BrowserProcessMain::StartParams::StartParams(StartParams&& other)
 #endif
       gl_implementation(std::move(other.gl_implementation)),
       process_model(std::move(other.process_model)),
-      primary_screen_size_dip(std::move(other.primary_screen_size_dip)) {}
+      primary_screen_size(std::move(other.primary_screen_size)) {}
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
@@ -411,7 +423,7 @@ void BrowserProcessMainImpl::Start(StartParams params) {
                         params.gl_implementation);
 
   FormFactor form_factor =
-      DetectFormFactorHint(params.primary_screen_size_dip);
+      DetectFormFactorHint(params.primary_screen_size);
   base::CommandLine::ForCurrentProcess()
       ->AppendSwitchASCII(switches::kFormFactor,
                           GetFormFactorHintCommandLine(form_factor));

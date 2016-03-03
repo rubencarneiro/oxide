@@ -145,9 +145,11 @@ const std::vector<content::PepperPluginInfo>::const_iterator FindNewestPlugin(
       plugins.end(),
       [](const content::PepperPluginInfo& x,
          const content::PepperPluginInfo& y) {
-        Version version_x(x.version);
+        base::Version version_x(x.version);
+        base::Version version_y(y.version);
         DCHECK(version_x.IsValid());
-        return version_x.IsOlderThan(y.version);
+        DCHECK(version_y.IsValid());
+        return version_x < version_y;
       });
 }
 #endif

@@ -17,16 +17,21 @@
 
 #include "oxide_qt_touch_handle_drawable.h"
 
+#include <QPointF>
+
+#include "ui/gfx/geometry/point_f.h"
+#include "ui/gfx/geometry/vector2d_f.h"
+
 #include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
-#include "oxide_qt_web_view.h"
-
-#include <QPointF>
+#include "oxide_qt_contents_view.h"
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
 
-TouchHandleDrawable::TouchHandleDrawable(const WebView* view)
+TouchHandleDrawable::TouchHandleDrawable(const ContentsView* view)
     : view_(view) {}
 
 TouchHandleDrawable::~TouchHandleDrawable() {}
@@ -69,9 +74,11 @@ void TouchHandleDrawable::SetOrientation(
 
 void TouchHandleDrawable::SetOrigin(const gfx::PointF& origin) {
   if (proxy_) {
-    const float dpr = view_->GetDeviceScaleFactor();
-    const int y_offset = view_->GetLocationBarContentOffsetPix();
-    proxy_->SetOrigin(QPointF(origin.x() * dpr, origin.y() * dpr + y_offset));
+    gfx::PointF o = origin;
+    o += gfx::Vector2dF(0, view_->GetLocationBarContentOffset());
+    gfx::PointF scaled_origin =
+        DpiUtils::ConvertChromiumPixelsToQt(o, view_->GetScreen());
+    proxy_->SetOrigin(ToQt(scaled_origin));
   }
 }
 
@@ -86,11 +93,13 @@ gfx::RectF TouchHandleDrawable::GetVisibleBounds() const {
     return gfx::RectF();
   }
 
-  const float dpr = view_->GetDeviceScaleFactor();
-  const int y_offset = view_->GetLocationBarContentOffsetPix();
-  QRectF bounds = proxy_->GetVisibleBounds();
-  return gfx::RectF(bounds.x() / dpr, (bounds.y() - y_offset) / dpr,
-                    bounds.width() / dpr, bounds.height() / dpr);
+  gfx::RectF bounds =
+      DpiUtils::ConvertQtPixelsToChromium(
+        ToChromium(proxy_->GetVisibleBounds()),
+        view_->GetScreen());
+  bounds += gfx::Vector2dF(0, -view_->GetLocationBarContentOffset());
+
+  return bounds;
 }
 
 float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {

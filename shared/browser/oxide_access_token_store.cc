@@ -26,12 +26,12 @@ namespace oxide {
 AccessTokenStore::AccessTokenStore() {}
 
 void AccessTokenStore::LoadAccessTokens(
-    const LoadAccessTokensCallbackType& callback) {
+    const LoadAccessTokensCallback& callback) {
   NOTIMPLEMENTED();
-  AccessTokenStore::AccessTokenSet set;
+  AccessTokenStore::AccessTokenMap map;
   net::URLRequestContextGetter* context =
       IOThread::instance()->GetSystemURLRequestContext();
-  callback.Run(set, context);
+  callback.Run(map, context);
 }
 
 void AccessTokenStore::SaveAccessToken(

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -45,8 +45,8 @@
 #include "net/url_request/url_request.h"
 #include "url/gurl.h"
 
-#include "qt/core/api/oxideqnetworkcallbackevents.h"
 #include "qt/core/api/oxideqnetworkcallbackevents_p.h"
+#include "qt/core/api/oxideqnetworkcallbackevents_p_p.h"
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.h"
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
@@ -415,11 +415,17 @@ void WebContext::DeletedCookiesCallback(int request_id,
   client_->CookiesDeleted(request_id, num_deleted);
 }
 
-WebContext::WebContext(WebContextProxyClient* client)
+WebContext::WebContext(WebContextProxyClient* client,
+                       QObject* handle)
     : client_(client),
       construct_props_(new ConstructProperties()),
       handling_cookie_request_(false),
       weak_factory_(this) {
+  DCHECK(client);
+  DCHECK(handle);
+
+  setHandle(handle);
+
   delegate_ = new BrowserContextDelegate(weak_factory_.GetWeakPtr());
 
   static_assert(
@@ -475,11 +481,6 @@ WebContext* WebContext::FromBrowserContext(oxide::BrowserContext* context) {
   }
 
   return delegate->context();
-}
-
-// static
-WebContext* WebContext::FromProxyHandle(WebContextProxyHandle* handle) {
-  return static_cast<WebContext*>(handle->proxy_.data());
 }
 
 // static
@@ -695,7 +696,7 @@ void WebContext::setAcceptLangs(const QString& langs) {
   }
 }
 
-QList<UserScriptProxyHandle*>& WebContext::userScripts() {
+QList<QObject*>& WebContext::userScripts() {
   return user_scripts_;
 }
 
@@ -834,11 +835,12 @@ int WebContext::setCookies(const QUrl& url,
         std::string(cookie.value().constData()),
         std::string(cookie.domain().toUtf8().constData()),
         std::string(cookie.path().toUtf8().constData()),
+        base::Time(),
         expiry,
+        base::Time(),
         cookie.isSecure(),
         cookie.isHttpOnly(),
-        false, // first_party
-        false, // enforce_prefixes
+        false, // same_site
         false, // enforce_strict_secure
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieSetCallback,

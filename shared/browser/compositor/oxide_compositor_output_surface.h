@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "cc/output/output_surface.h"
 
@@ -32,37 +33,38 @@ namespace oxide {
 
 class CompositorFrameAck;
 class CompositorFrameData;
-class CompositorThreadProxy;
+class CompositorProxy;
 
 class CompositorOutputSurface : public cc::OutputSurface,
                                 public base::NonThreadSafe {
  public:
   virtual ~CompositorOutputSurface();
 
-  uint32_t surface_id() const { return surface_id_; }
-
   void DidSwapBuffers();
   virtual void ReclaimResources(const CompositorFrameAck& ack);
+
+  uint32_t surface_id() const { return surface_id_; }
 
  protected:
   CompositorOutputSurface(
       uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
-      scoped_refptr<CompositorThreadProxy> proxy);
+      scoped_refptr<CompositorProxy> proxy);
   CompositorOutputSurface(
       uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
-      scoped_refptr<CompositorThreadProxy> proxy);
+      scoped_refptr<CompositorProxy> proxy);
 
-  scoped_refptr<CompositorThreadProxy> proxy_;
-
-  void DoSwapBuffers(CompositorFrameData* frame);
+  void DoSwapBuffers(scoped_ptr<CompositorFrameData> frame);
 
   // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client) override;
-  void DetachFromClient() override;
+  bool BindToClient(cc::OutputSurfaceClient* client);
+
+  CompositorProxy* proxy() const { return proxy_.get(); }
 
  private:
+  scoped_refptr<CompositorProxy> proxy_;
+
   uint32_t surface_id_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurface);

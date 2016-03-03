@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
 #include <QtGlobal>
 
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -32,6 +33,8 @@ class QHoverEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QPoint;
+class QPointF;
+class QScreen;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
@@ -45,9 +48,10 @@ class UITouchEventFactory final {
   ~UITouchEventFactory();
 
   void MakeEvents(QTouchEvent* event,
-                  float device_scale,
-                  float location_bar_content_offset_dip,
+                  QScreen* screen,
+                  float location_bar_content_offset,
                   ScopedVector<ui::TouchEvent>* results);
+  scoped_ptr<ui::TouchEvent> Cancel();
 
  private:
   std::map<int, double> touch_point_content_offsets_;
@@ -59,21 +63,21 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
                                                            bool is_char);
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
-                                       float device_scale,
-                                       float location_bar_content_offset_dip);
+                                       QScreen* screen,
+                                       float location_bar_content_offset);
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
-    const QPoint& window_pos,
-    float device_scale,
-    float location_bar_content_offset_dip);
+    const QPointF& window_pos,
+    QScreen* screen,
+    float location_bar_content_offset);
 
 blink::WebMouseEvent MakeWebMouseEvent(
     QHoverEvent* event,
-    const QPoint& window_pos,
+    const QPointF& window_pos,
     const QPoint& global_pos,
-    float device_scale,
-    float location_bar_content_offset_dip);
+    QScreen* screen,
+    float location_bar_content_offset);
 
 } // namespace qt
 } // namespace oxide

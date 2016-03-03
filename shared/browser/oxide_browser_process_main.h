@@ -63,7 +63,7 @@ class BrowserProcessMain {
 #endif
     gfx::GLImplementation gl_implementation;
     ProcessModel process_model;
-    gfx::Size primary_screen_size_dip;
+    gfx::Size primary_screen_size;
   };
 
   virtual ~BrowserProcessMain();

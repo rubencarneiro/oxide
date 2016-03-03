@@ -32,6 +32,11 @@ OxideQFindControllerPrivate::OxideQFindControllerPrivate(
 OxideQFindControllerPrivate::~OxideQFindControllerPrivate() {}
 
 // static
+OxideQFindController* OxideQFindControllerPrivate::Create() {
+  return new OxideQFindController();
+}
+
+// static
 OxideQFindControllerPrivate* OxideQFindControllerPrivate::get(
     OxideQFindController* q) {
   return q->d_func();

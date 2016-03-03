@@ -21,8 +21,8 @@
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QPointer>
-#include <QScreen>
 #include <QString>
 #include <QThread>
 #include <QTouchDevice>
@@ -41,9 +41,11 @@
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
 #include "oxide_qt_clipboard.h"
+#include "oxide_qt_drag_source.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
-#include "oxide_qt_screen_utils.h"
+#include "oxide_qt_screen_client.h"
+#include "oxide_qt_vibration_manager.h"
 
 namespace oxide {
 namespace qt {
@@ -85,16 +87,6 @@ void BrowserPlatformIntegration::OnClipboardDataChanged() {
   NotifyClipboardDataChanged();
 }
 
-void BrowserPlatformIntegration::OnScreenGeometryChanged(
-    const QRect& geometry) {
-  UpdateDefaultScreenInfo();
-}
-
-void BrowserPlatformIntegration::OnScreenOrientationChanged(
-    Qt::ScreenOrientation orientation) {
-  UpdateDefaultScreenInfo();
-}
-
 void BrowserPlatformIntegration::UpdateApplicationState() {
   ApplicationState state = CalculateApplicationState(suspended_);
   if (state == state_) {
@@ -104,12 +96,6 @@ void BrowserPlatformIntegration::UpdateApplicationState() {
   state_ = state;
 
   NotifyApplicationStateChanged();
-}
-
-void BrowserPlatformIntegration::UpdateDefaultScreenInfo() {
-  base::AutoLock lock(default_screen_info_lock_);
-  default_screen_info_ =
-      GetWebScreenInfoFromQScreen(QGuiApplication::primaryScreen());
 }
 
 bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
@@ -144,9 +130,8 @@ intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
                                    QGuiApplication::primaryScreen()));
 }
 
-blink::WebScreenInfo BrowserPlatformIntegration::GetDefaultScreenInfo() {
-  base::AutoLock lock(default_screen_info_lock_);
-  return default_screen_info_;
+oxide::ScreenClient* BrowserPlatformIntegration::GetScreenClient() {
+  return screen_client_.get();
 }
 
 oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
@@ -194,8 +179,17 @@ BrowserPlatformIntegration::GetApplicationState() {
   return state_;
 }
 
+int BrowserPlatformIntegration::GetClickInterval() {
+  return qApp->styleHints()->mouseDoubleClickInterval();
+}
+
 std::string BrowserPlatformIntegration::GetApplicationName() {
   return application_name_;
+}
+
+scoped_ptr<oxide::DragSource> BrowserPlatformIntegration::CreateDragSource(
+    oxide::DragSourceClient* client) {
+  return make_scoped_ptr(new DragSource(client));
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
@@ -211,24 +205,8 @@ bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {
 BrowserPlatformIntegration::BrowserPlatformIntegration()
     : application_name_(qApp->applicationName().toStdString()),
       suspended_(false),
-      state_(CalculateApplicationState(false)) {
-  QScreen* primary_screen = QGuiApplication::primaryScreen();
-  primary_screen->setOrientationUpdateMask(Qt::LandscapeOrientation |
-                                           Qt::PortraitOrientation |
-                                           Qt::InvertedLandscapeOrientation |
-                                           Qt::InvertedPortraitOrientation);
-  connect(primary_screen, SIGNAL(virtualGeometryChanged(const QRect&)),
-          SLOT(OnScreenGeometryChanged(const QRect&)));
-  connect(primary_screen, SIGNAL(geometryChanged(const QRect&)),
-          SLOT(OnScreenGeometryChanged(const QRect&)));
-  connect(primary_screen, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
-          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
-  connect(primary_screen,
-          SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
-          SLOT(OnScreenOrientationChanged(Qt::ScreenOrientation)));
-
-  UpdateDefaultScreenInfo();
-
+      state_(CalculateApplicationState(false)),
+      screen_client_(new ScreenClient()) {
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
   connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
@@ -240,6 +218,11 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
 
 BrowserPlatformIntegration::~BrowserPlatformIntegration() {
   qApp->removeEventFilter(this);
+}
+
+void BrowserPlatformIntegration::CreateVibrationManager(
+      mojo::InterfaceRequest<device::VibrationManager> request) {
+  VibrationManager::Create(std::move(request));
 }
 
 QThread* GetIOQThread() {

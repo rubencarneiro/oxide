@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_frame_data.h"
 
+#include "base/memory/ref_counted_memory.h"
+
 namespace oxide {
 
 GLFrameData::GLFrameData()
@@ -27,14 +29,13 @@ GLFrameData::GLFrameData()
 GLFrameData::~GLFrameData() {}
 
 SoftwareFrameData::SoftwareFrameData()
-    : id(0),
-      pixels(nullptr) {}
+    : id(0) {}
 
 SoftwareFrameData::~SoftwareFrameData() {}
 
 CompositorFrameData::CompositorFrameData()
     : surface_id(0),
-      device_scale(0.f) {}
+      device_scale(1.f) {}
 
 CompositorFrameData::~CompositorFrameData() {}
 

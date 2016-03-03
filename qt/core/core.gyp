@@ -17,15 +17,17 @@
 {
   'targets': [
     {
-      'target_name': '<(oxide_core_name)',
+      'target_name': '<(oxide_lib)',
       'type': 'shared_library',
-      'product_extension': 'so.<(oxide_core_so_version)',
+      'product_extension': '<(oxide_lib_suffix)',
       'defines': [
+        'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
       ],
       'dependencies': [
         '../build/system.gyp:Qt5Core',
         '../build/system.gyp:Qt5Core-private',
+        '../build/system.gyp:Qt5Feedback',
         '../build/system.gyp:Qt5Gui',
         '../build/system.gyp:Qt5Gui-private',
         '../build/system.gyp:Qt5Network',
@@ -34,6 +36,8 @@
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/content/content.gyp:content_browser',
         '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/device/vibration/vibration.gyp:device_vibration',
+        '<(DEPTH)/device/vibration/vibration.gyp:device_vibration_mojo_bindings',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
@@ -51,10 +55,11 @@
       'include_dirs': [
         '../..',
         '<(INTERMEDIATE_DIR)',
-        '<(DEPTH)'
+        'api/includes',
+        '<(DEPTH)',
       ],
       'ldflags': [
-        '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)',
+        '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
       ],
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
@@ -62,7 +67,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqhttpauthenticationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqloadevent.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqmediacapturedevices.cc',
-        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxideqnetworkcallbackevents_p.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnavigationrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqnewviewrequest.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqpermissionrequest.cc',
@@ -72,6 +77,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_screen_client.cc',
         'api/oxideqcertificateerror.cc',
         'api/oxideqcertificateerror.h',
         'api/oxideqcertificateerror_p.h',
@@ -89,8 +95,8 @@
         'api/oxideqmediacapturedevices.h',
         'api/oxideqmediacapturedevices_p.h',
         'api/oxideqnetworkcallbackevents.cc',
-        'api/oxideqnetworkcallbackevents.h',
         'api/oxideqnetworkcallbackevents_p.h',
+        'api/oxideqnetworkcallbackevents_p_p.h',
         'api/oxideqnavigationrequest.cc',
         'api/oxideqnavigationrequest.h',
         'api/oxideqnewviewrequest.cc',
@@ -126,6 +132,14 @@
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
         'browser/oxide_qt_clipboard.cc',
         'browser/oxide_qt_clipboard.h',
+        'browser/oxide_qt_contents_view.cc',
+        'browser/oxide_qt_contents_view.h',
+        'browser/oxide_qt_dpi_utils.cc',
+        'browser/oxide_qt_dpi_utils.h',
+        'browser/oxide_qt_drag_source.cc',
+        'browser/oxide_qt_drag_source.h',
+        'browser/oxide_qt_drag_utils.cc',
+        'browser/oxide_qt_drag_utils.h',
         'browser/oxide_qt_event_utils.cc',
         'browser/oxide_qt_event_utils.h',
         'browser/oxide_qt_file_picker.cc',
@@ -138,6 +152,8 @@
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
+        'browser/oxide_qt_screen_client.cc',
+        'browser/oxide_qt_screen_client.h',
         'browser/oxide_qt_screen_utils.cc',
         'browser/oxide_qt_screen_utils.h',
         'browser/oxide_qt_script_message.cc',
@@ -150,12 +166,15 @@
         'browser/oxide_qt_skutils.h',
         'browser/oxide_qt_touch_handle_drawable.cc',
         'browser/oxide_qt_touch_handle_drawable.h',
+        'browser/oxide_qt_type_conversions.h',
         'browser/oxide_qt_url_request_delegated_job.cc',
         'browser/oxide_qt_url_request_delegated_job.h',
         'browser/oxide_qt_user_script.cc',
         'browser/oxide_qt_user_script.h',
         'browser/oxide_qt_variant_value_converter.cc',
         'browser/oxide_qt_variant_value_converter.h',
+        'browser/oxide_qt_vibration_manager.cc',
+        'browser/oxide_qt_vibration_manager.h',
         'browser/oxide_qt_web_context.cc',
         'browser/oxide_qt_web_context.h',
         'browser/oxide_qt_web_context_menu.cc',
@@ -168,13 +187,16 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
+        'glue/oxide_qt_contents_view_proxy.h'
+        'glue/oxide_qt_contents_view_proxy_client.h'
         'glue/oxide_qt_file_picker_proxy.h',
         'glue/oxide_qt_file_picker_proxy_client.h',
         'glue/oxide_qt_init.cc',
         'glue/oxide_qt_init.h',
         'glue/oxide_qt_javascript_dialog_proxy.h',
         'glue/oxide_qt_javascript_dialog_proxy_client.h',
-        'glue/oxide_qt_proxy_handle.h',
+        'glue/oxide_qt_proxy_base.cc',
+        'glue/oxide_qt_proxy_base.h',
         'glue/oxide_qt_script_message_handler_proxy.cc',
         'glue/oxide_qt_script_message_handler_proxy.h',
         'glue/oxide_qt_script_message_handler_proxy_client.h',
@@ -228,8 +250,8 @@
           'includes': [ 'moc.gypi' ]
         },
         {
-          'action_name': 'moc_oxideqnetworkcallbackevents.cc',
-          'moc_input': 'api/oxideqnetworkcallbackevents.h',
+          'action_name': 'moc_oxideqnetworkcallbackevents_p.cc',
+          'moc_input': 'api/oxideqnetworkcallbackevents_p.h',
           'includes': [ 'moc.gypi' ],
         },
         {
@@ -278,6 +300,11 @@
           'includes': [ 'moc.gypi' ]
         },
         {
+          'action_name': 'moc_oxide_qt_screen_client.cc',
+          'moc_input': 'browser/oxide_qt_screen_client.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
           'action_name': 'oxide_qt_clipboard.moc',
           'moc_input': 'browser/oxide_qt_clipboard.cc',
           'includes': [ 'moc.gypi' ]
@@ -296,7 +323,7 @@
       'conditions': [
         ['component=="shared_library"', {
           'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_subprocess_dir)/lib',
+            '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)/lib',
           ],
         }],
       ],
