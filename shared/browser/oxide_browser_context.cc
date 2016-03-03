@@ -734,6 +734,7 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   // Make sure that the cookie store is properly created
   io_data->Init();
 
+  content::BrowserContext::Initialize(this, io_data->GetPath());
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
