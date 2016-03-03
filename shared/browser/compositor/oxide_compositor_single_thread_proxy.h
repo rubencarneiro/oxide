@@ -45,6 +45,7 @@ class CompositorSingleThreadProxy : public CompositorProxy,
                                          EGLImageKHR egl_image);
 
   void DidCompleteGLFrame(scoped_ptr<CompositorFrameData> frame);
+  void ContinueSwapGLFrame(scoped_ptr<CompositorFrameData> frame);
 
   // CompositorProxy implementation
   void SetOutputSurface(CompositorOutputSurface* output_surface) override;
@@ -61,6 +62,9 @@ class CompositorSingleThreadProxy : public CompositorProxy,
   CompositorOutputSurface* output_surface_;
 
   MailboxBufferMap mailbox_buffer_map_;
+
+  int frames_waiting_for_completion_;
+  int mailbox_resource_fetches_in_progress_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorSingleThreadProxy);
 };

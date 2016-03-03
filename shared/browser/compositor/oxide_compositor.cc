@@ -21,6 +21,7 @@
 
 #include "base/logging.h"
 #include "base/thread_task_runner_handle.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/layers/layer.h"
 #include "cc/layers/layer_settings.h"
 #include "cc/output/context_provider.h"
@@ -94,6 +95,7 @@ Compositor::Compositor(CompositorClient* client)
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create(cc::LayerSettings())),
       next_output_surface_id_(1),
+      pending_swaps_(0),
       weak_factory_(this) {}
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
@@ -213,6 +215,11 @@ void Compositor::SwapCompositorFrameFromProxy(
   // XXX: What if we are hidden?
   // XXX: Should we check that surface_id matches the last created
   //  surface?
+  TRACE_EVENT_ASYNC_BEGIN1("cc", "oxide::Compositor:pending_swaps",
+                           this,
+                           "pending_swaps", pending_swaps_);
+  ++pending_swaps_;
+
   scoped_refptr<CompositorFrameHandle> handle =
       new CompositorFrameHandle(proxy_, std::move(frame));
   client_->CompositorSwapFrame(handle.get());
@@ -302,6 +309,11 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
 
 void Compositor::DidSwapCompositorFrame(uint32_t surface_id,
                                         FrameHandleVector returned_frames) {
+  TRACE_EVENT_ASYNC_END1("cc", "oxide::Compositor:pending_swaps",
+                         this,
+                         "pending_swaps", pending_swaps_);
+  --pending_swaps_;
+
   for (auto& frame : returned_frames) {
     CHECK(frame->HasOneRef());
     DCHECK_EQ(frame->proxy_.get(), proxy_.get());
