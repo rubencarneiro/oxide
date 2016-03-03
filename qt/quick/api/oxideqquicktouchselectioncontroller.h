@@ -48,7 +48,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   Q_PROPERTY(bool active READ active NOTIFY activeChanged)
   Q_PROPERTY(QQmlComponent* handle READ handle WRITE setHandle NOTIFY handleChanged)
   Q_PROPERTY(QRectF bounds READ bounds NOTIFY boundsChanged)
-  Q_PROPERTY(bool handleDragInProgress READ handleDragInProgress NOTIFY handleDragInProgressChanged)
+  Q_PROPERTY(bool handleDragInProgress READ handleDragInProgress NOTIFY handleDragInProgressChanged REVISION 1)
 
   Q_DISABLE_COPY(OxideQQuickTouchSelectionController)
   Q_DECLARE_PRIVATE(OxideQQuickTouchSelectionController)
@@ -76,7 +76,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   void activeChanged();
   void handleChanged();
   void boundsChanged();
-  void handleDragInProgressChanged();
+  Q_REVISION(1) void handleDragInProgressChanged();
 
  private:
   friend class OxideQQuickWebViewPrivate;
