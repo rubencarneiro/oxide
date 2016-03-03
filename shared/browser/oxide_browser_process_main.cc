@@ -232,6 +232,15 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   // We don't want the GPU shader cache (see https://launchpad.net/bugs/1430478)
   command_line->AppendSwitch(switches::kDisableGpuShaderDiskCache);
 
+  // We can't start the GPU thread before
+  // BrowserMainParts::PreMainMessageLoopRun, as we set the share context there.
+  // We can't set it earlier, because that depends on GpuDataManager which is
+  // initialized in BrowserMainLoop::PreCreateThreads, after the call in to
+  // BrowserMainParts::PreCreateThreads.
+  // Without this flag, the GPU thread gets started in
+  // BrowserMainLoop::BrowserThreadsStarted
+  command_line->AppendSwitch(switches::kDisableGpuEarlyInit);
+
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
 

@@ -591,13 +591,13 @@ CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
     return COMPOSITING_MODE_SOFTWARE;
   }
 
-  if (has_share_context_) {
-    return COMPOSITING_MODE_TEXTURE;
-  }
-
   if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2 &&
       GpuUtils::CanUseEGLImage()) {
     return COMPOSITING_MODE_EGLIMAGE;
+  }
+
+  if (has_share_context_) {
+    return COMPOSITING_MODE_TEXTURE;
   }
 
   return COMPOSITING_MODE_SOFTWARE;
