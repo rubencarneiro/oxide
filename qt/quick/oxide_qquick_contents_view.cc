@@ -161,9 +161,14 @@ ContentsView::CreateTouchHandleDrawable() {
   return new TouchHandleDrawable(item_, touch_selection_controller_);
 }
 
-void ContentsView::TouchSelectionChanged(bool active, const QRectF& bounds) {
+void ContentsView::TouchSelectionChanged(bool active,
+                                         const QRectF& bounds,
+                                         bool handle_drag_in_progress) {
   if (touch_selection_controller_) {
-    touch_selection_controller_->onTouchSelectionChanged(active, bounds);
+    touch_selection_controller_->onTouchSelectionChanged(
+        active,
+        bounds,
+        handle_drag_in_progress);
   }
 }
 

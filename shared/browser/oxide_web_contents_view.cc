@@ -574,7 +574,8 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
   return client_->CreateTouchHandleDrawable();
 }
 
-void WebContentsView::TouchSelectionChanged() const {
+void WebContentsView::TouchSelectionChanged(
+    bool handle_drag_in_progress) const {
   if (!client_) {
     return;
   }
@@ -598,7 +599,7 @@ void WebContentsView::TouchSelectionChanged() const {
   }
   bounds.Offset(0, offset);
 
-  client_->TouchSelectionChanged(active, bounds);
+  client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
 }
 
 void WebContentsView::EditingCapabilitiesChanged() {
@@ -661,7 +662,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 bool WebContentsView::IsVisible() const {

@@ -234,7 +234,7 @@ class WebContentsView : public content::WebContentsViewOxide,
   bool IsFullscreen() const override;
   float GetLocationBarHeight() const override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged() const override;
+  void TouchSelectionChanged(bool handle_drag_in_progress) const override;
   void EditingCapabilitiesChanged() override;
 
   WebContentsViewClient* client_;

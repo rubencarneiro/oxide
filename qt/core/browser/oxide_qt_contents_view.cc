@@ -511,12 +511,14 @@ ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
 }
 
 void ContentsView::TouchSelectionChanged(bool active,
-                                         const gfx::RectF& bounds) const {
+                                         const gfx::RectF& bounds,
+                                         bool handle_drag_in_progress) const {
   gfx::RectF scaled_bounds =
       DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen());
   client_->TouchSelectionChanged(
       active,
-      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())));
+      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
+      handle_drag_in_progress);
 }
 
 oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {

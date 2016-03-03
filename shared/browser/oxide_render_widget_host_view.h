@@ -251,6 +251,7 @@ class RenderWidgetHostView final :
   scoped_ptr<GestureProvider> gesture_provider_;
 
   scoped_ptr<ui::TouchSelectionController> selection_controller_;
+  bool handle_drag_in_progress_;
 
   base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;
 

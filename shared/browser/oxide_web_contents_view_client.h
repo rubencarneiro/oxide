@@ -69,7 +69,8 @@ class WebContentsViewClient {
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
   virtual void TouchSelectionChanged(bool active,
-                                     const gfx::RectF& bounds) const;
+                                     const gfx::RectF& bounds,
+                                     bool handle_drag_in_progress) const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

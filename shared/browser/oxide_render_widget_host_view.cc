@@ -568,7 +568,7 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   if ((selection_controller_->active_status() !=
           ui::TouchSelectionController::INACTIVE) &&
       HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    container_->TouchSelectionChanged();
+    container_->TouchSelectionChanged(handle_drag_in_progress_);
     // XXX: hack to ensure the position of the handles is updated.
     selection_controller_->SetTemporarilyHidden(true);
     selection_controller_->SetTemporarilyHidden(false);
@@ -701,8 +701,20 @@ void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
 }
 
 void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
+  switch (event) {
+    case ui::SELECTION_HANDLE_DRAG_STARTED:
+    case ui::INSERTION_HANDLE_DRAG_STARTED:
+      handle_drag_in_progress_ = true;
+      break;
+    case ui::SELECTION_HANDLE_DRAG_STOPPED:
+    case ui::INSERTION_HANDLE_DRAG_STOPPED:
+      handle_drag_in_progress_ = false;
+      break;
+    default:
+      break;
+  }
   if (container_) {
-    container_->TouchSelectionChanged();
+    container_->TouchSelectionChanged(handle_drag_in_progress_);
   }
 }
 
@@ -808,6 +820,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       is_showing_(!host->is_hidden()),
       top_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)),
+      handle_drag_in_progress_(false),
       weak_ptr_factory_(this) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
