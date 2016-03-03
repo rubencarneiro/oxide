@@ -819,7 +819,7 @@ RenderWidgetHostView::RenderWidgetHostView(
   // default values from ui/events/gesture_detection/gesture_configuration.cc
   tsc_config.max_tap_duration = base::TimeDelta::FromMilliseconds(150);
   tsc_config.tap_slop = 15;
-  tsc_config.enable_adaptive_handle_orientation = false;
+  tsc_config.enable_adaptive_handle_orientation = true;
   tsc_config.show_on_tap_for_empty_editable = true;
   tsc_config.enable_longpress_drag_selection = false;
   selection_controller_.reset(
