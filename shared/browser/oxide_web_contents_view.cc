@@ -403,6 +403,8 @@ void WebContentsView::DidNavigateMainFrame(
     }
 
     mouse_state_.Reset();
+
+    TouchSelectionChanged();
   }
 }
 
