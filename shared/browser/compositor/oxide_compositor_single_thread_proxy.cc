@@ -22,6 +22,7 @@
 #include "base/logging.h"
 #include "base/memory/linked_ptr.h"
 #include "base/single_thread_task_runner.h"
+#include "base/trace_event/trace_event.h"
 #include "cc/output/context_provider.h"
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
@@ -42,6 +43,14 @@ void CompositorSingleThreadProxy::GetTextureFromMailboxResponse(
     GLuint texture) {
   DCHECK(CalledOnValidThread());
 
+  TRACE_EVENT_ASYNC_END1(
+      "cc",
+      "oxide::CompositorSingleThreadProxy:mailbox_resource_fetches_in_progress",
+      this,
+      "mailbox_resource_fetches_in_progress",
+      mailbox_resource_fetches_in_progress_);
+  --mailbox_resource_fetches_in_progress_;
+
   if (texture == 0) {
     // FIXME: This just causes the compositor to hang
     return;
@@ -57,7 +66,7 @@ void CompositorSingleThreadProxy::GetTextureFromMailboxResponse(
   while (!ready_frames.empty()) {
     scoped_ptr<CompositorFrameData> frame = std::move(ready_frames.front());
     ready_frames.pop();
-    DidCompleteGLFrame(std::move(frame));
+    ContinueSwapGLFrame(std::move(frame));
   }
 }
 
@@ -66,6 +75,14 @@ void CompositorSingleThreadProxy::CreateEGLImageFromMailboxResponse(
     const gpu::Mailbox& mailbox,
     EGLImageKHR egl_image) {
   DCHECK(CalledOnValidThread());
+
+  TRACE_EVENT_ASYNC_END1(
+      "cc",
+      "oxide::CompositorSingleThreadProxy:mailbox_resource_fetches_in_progress",
+      this,
+      "mailbox_resource_fetches_in_progress",
+      mailbox_resource_fetches_in_progress_);
+  --mailbox_resource_fetches_in_progress_;
 
   if (egl_image == EGL_NO_IMAGE_KHR) {
     // FIXME: This just causes the compositor to hang
@@ -88,11 +105,23 @@ void CompositorSingleThreadProxy::CreateEGLImageFromMailboxResponse(
   while (!ready_frames.empty()) {
     scoped_ptr<CompositorFrameData> frame = std::move(ready_frames.front());
     ready_frames.pop();
-    DidCompleteGLFrame(std::move(frame));
+    ContinueSwapGLFrame(std::move(frame));
   }
 }
 
 void CompositorSingleThreadProxy::DidCompleteGLFrame(
+    scoped_ptr<CompositorFrameData> frame) {
+  TRACE_EVENT_ASYNC_END1(
+      "cc",
+      "oxide::CompositorSingleThreadProxy:frames_waiting_for_completion",
+      this,
+      "frames_waiting_for_completion", frames_waiting_for_completion_);
+  --frames_waiting_for_completion_;
+
+  ContinueSwapGLFrame(std::move(frame));
+}
+
+void CompositorSingleThreadProxy::ContinueSwapGLFrame(
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
@@ -149,6 +178,14 @@ void CompositorSingleThreadProxy::MailboxBufferCreated(
     uint64_t sync_point) {
   DCHECK(CalledOnValidThread());
 
+  TRACE_EVENT_ASYNC_BEGIN1(
+      "cc",
+      "oxide::CompositorSingleThreadProxy:mailbox_resource_fetches_in_progress",
+      this,
+      "mailbox_resource_fetches_in_progress",
+      mailbox_resource_fetches_in_progress_);
+  ++mailbox_resource_fetches_in_progress_;
+
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     CompositorUtils::GetInstance()->GetTextureFromMailbox(
         output_surface_->context_provider(),
@@ -179,11 +216,19 @@ void CompositorSingleThreadProxy::MailboxBufferDestroyed(
 void CompositorSingleThreadProxy::SwapCompositorFrame(
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
+  TRACE_EVENT0("cc", "oxide::CompositorSingleThreadProxy::SwapCompositorFrame");
 
   switch (mode_) {
     case COMPOSITING_MODE_TEXTURE:
     case COMPOSITING_MODE_EGLIMAGE: {
       DCHECK(frame->gl_frame_data);
+
+      TRACE_EVENT_ASYNC_BEGIN1(
+          "cc",
+          "oxide::CompositorSingleThreadProxy:frames_waiting_for_completion",
+          this,
+          "frames_waiting_for_completion", frames_waiting_for_completion_);
+      ++frames_waiting_for_completion_;
 
       cc::ContextProvider* context_provider =
           output_surface_->context_provider();
@@ -265,7 +310,9 @@ CompositorSingleThreadProxy::CompositorSingleThreadProxy(
     : CompositorProxy(client),
       mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
       output_surface_(nullptr),
-      mailbox_buffer_map_(mode_) {}
+      mailbox_buffer_map_(mode_),
+      frames_waiting_for_completion_(0),
+      mailbox_resource_fetches_in_progress_(0) {}
 
 CompositorSingleThreadProxy::~CompositorSingleThreadProxy() {}
 

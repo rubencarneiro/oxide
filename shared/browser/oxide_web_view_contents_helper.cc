@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -86,6 +86,14 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
   renderer_prefs->enable_do_not_track = context_->GetDoNotTrack();
+
+  // Hardcoded selection colors to match the current Ambiance theme from the
+  // Ubuntu UI Toolkit (https://bazaar.launchpad.net/~ubuntu-sdk-team/ubuntu-ui-toolkit/trunk/view/head:/src/Ubuntu/Components/Themes/Ambiance/1.3/Palette.qml)
+  // TODO: connect to the theme engine
+  renderer_prefs->active_selection_bg_color = 0xFFCFECF7;
+  renderer_prefs->active_selection_fg_color = 0xFF5D5D5D;
+  renderer_prefs->inactive_selection_bg_color = 0xFFCFECF7;
+  renderer_prefs->inactive_selection_fg_color = 0xFF5D5D5D;
 
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (rvh) {
