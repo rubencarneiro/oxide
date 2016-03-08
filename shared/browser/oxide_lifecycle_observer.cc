@@ -22,7 +22,6 @@
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/storage_partition.h"
-#include "net/cookies/cookie_monster.h"
 #include "net/cookies/cookie_store.h"
 
 #include "oxide_browser_context.h"
@@ -34,7 +33,7 @@ namespace {
 
 void FlushCookiesOnIOThread(scoped_refptr<net::CookieStore> cookie_store) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  cookie_store->GetCookieMonster()->FlushStore(base::Closure());
+  cookie_store->FlushStore(base::Closure());
 }
 
 void FlushStoragePartition(content::StoragePartition* partition) {
