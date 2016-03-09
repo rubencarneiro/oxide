@@ -33,7 +33,6 @@
 class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
-class OxideQTouchSelectionController;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -186,6 +185,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual QUrl targetUrl() const = 0;
 
   virtual EditCapabilityFlags editFlags() const = 0;
+
+  virtual void hideTouchSelectionController() const = 0;
 
   virtual void teardownFrameTree() = 0;
 };

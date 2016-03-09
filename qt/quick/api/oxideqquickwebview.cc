@@ -1745,6 +1745,16 @@ OxideQQuickWebView::editingCapabilities() const {
   return static_cast<EditCapabilities>(flags);
 }
 
+void OxideQQuickWebView::hideTouchSelectionController() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return;
+  }
+
+  d->proxy_->hideTouchSelectionController();
+}
+
 // static
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {

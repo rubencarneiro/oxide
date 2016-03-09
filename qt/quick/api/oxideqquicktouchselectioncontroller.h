@@ -56,6 +56,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
  public:
   ~OxideQQuickTouchSelectionController() Q_DECL_OVERRIDE;
 
+  Q_REVISION(1) Q_INVOKABLE void hide() const;
+
   enum HandleOrientation {
     HandleOrientationLeft,
     HandleOrientationCenter,

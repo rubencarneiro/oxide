@@ -48,6 +48,12 @@ OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
 
 OxideQQuickTouchSelectionController::~OxideQQuickTouchSelectionController() {}
 
+void OxideQQuickTouchSelectionController::hide() const {
+  Q_D(const OxideQQuickTouchSelectionController);
+
+  d->view->hideTouchSelectionController();
+}
+
 bool OxideQQuickTouchSelectionController::active() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
