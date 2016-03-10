@@ -391,7 +391,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -418,7 +418,7 @@ void WebContentsView::DidShowFullscreenWidget(int routing_id) {
 
   web_contents()->GetRenderWidgetHostView()->Hide();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
@@ -445,7 +445,7 @@ void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
     orig_rwhv->Blur();
   }
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -456,7 +456,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   rwhv->SetContainer(this);
   interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -472,7 +472,7 @@ void WebContentsView::DidDetachInterstitialPage() {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
