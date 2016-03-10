@@ -130,6 +130,8 @@ class Compositor : public cc::LayerTreeHostClient,
 
   base::ObserverList<CompositorObserver> observers_;
 
+  int pending_swaps_;
+
   base::WeakPtrFactory<Compositor> weak_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(Compositor);

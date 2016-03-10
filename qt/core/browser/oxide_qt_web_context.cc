@@ -40,7 +40,7 @@
 #include "net/base/net_errors.h"
 #include "net/base/static_cookie_policy.h"
 #include "net/cookies/canonical_cookie.h"
-#include "net/cookies/cookie_monster.h"
+#include "net/cookies/cookie_store.h"
 #include "net/http/http_response_headers.h"
 #include "net/url_request/url_request.h"
 #include "url/gurl.h"
@@ -829,7 +829,7 @@ int WebContext::setCookies(const QUrl& url,
 
     ctxt->remaining++;
 
-    cookie_store->GetCookieMonster()->SetCookieWithDetailsAsync(
+    cookie_store->SetCookieWithDetailsAsync(
         GURL(url.toString().toStdString()),
         std::string(cookie.name().constData()),
         std::string(cookie.value().constData()),
@@ -863,7 +863,7 @@ int WebContext::getCookies(const QUrl& url) {
   base::AutoReset<bool> f(&handling_cookie_request_, true);
 
   scoped_refptr<net::CookieStore> store = context_->GetCookieStore();
-  store->GetCookieMonster()->GetAllCookiesForURLAsync(
+  store->GetAllCookiesForURLAsync(
       GURL(url.toString().toStdString()),
       base::Bind(&WebContext::GotCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
@@ -876,7 +876,7 @@ int WebContext::getAllCookies() {
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);
 
-  context_->GetCookieStore()->GetCookieMonster()->GetAllCookiesAsync(
+  context_->GetCookieStore()->GetAllCookiesAsync(
       base::Bind(&WebContext::GotCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
 
@@ -888,7 +888,7 @@ int WebContext::deleteAllCookies() {
 
   base::AutoReset<bool> f(&handling_cookie_request_, true);
 
-  context_->GetCookieStore()->GetCookieMonster()->DeleteAllAsync(
+  context_->GetCookieStore()->DeleteAllAsync(
       base::Bind(&WebContext::DeletedCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
 

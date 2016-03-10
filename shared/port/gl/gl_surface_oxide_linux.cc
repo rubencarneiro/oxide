@@ -19,6 +19,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "base/sys_info.h"
 #include "ui/gl/egl_util.h"
 #include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_implementation.h"
@@ -195,6 +196,7 @@ class OxideSurfacelessEGL : public SurfacelessEGL {
  public:
   OxideSurfacelessEGL(const gfx::Size& size);
 
+  bool Initialize() override;
   EGLConfig GetConfig() override;
 };
 
@@ -202,11 +204,20 @@ class OxidePbufferGLSurfaceEGL : public PbufferGLSurfaceEGL {
  public:
   OxidePbufferGLSurfaceEGL(const gfx::Size& size);
 
+  bool Initialize() override;
   EGLConfig GetConfig() override;
 };
 
 OxideSurfacelessEGL::OxideSurfacelessEGL(const gfx::Size& size)
     : SurfacelessEGL(size) {}
+
+bool OxideSurfacelessEGL::Initialize() {
+  GLSurface::Format format = SURFACE_DEFAULT;
+  if (base::SysInfo::IsLowEndDevice()) {
+    format = SURFACE_RGB565;
+  }
+  return SurfacelessEGL::Initialize(format);
+}
 
 EGLConfig OxideSurfacelessEGL::GetConfig() {
   if (!config_) {
@@ -217,6 +228,14 @@ EGLConfig OxideSurfacelessEGL::GetConfig() {
 
 OxidePbufferGLSurfaceEGL::OxidePbufferGLSurfaceEGL(const gfx::Size& size)
     : PbufferGLSurfaceEGL(size) {}
+
+bool OxidePbufferGLSurfaceEGL::Initialize() {
+  GLSurface::Format format = SURFACE_DEFAULT;
+  if (base::SysInfo::IsLowEndDevice()) {
+    format = SURFACE_RGB565;
+  }
+  return PbufferGLSurfaceEGL::Initialize(format);
+}
 
 EGLConfig OxidePbufferGLSurfaceEGL::GetConfig() {
   if (!config_) {
@@ -266,13 +285,12 @@ scoped_refptr<GLSurface> GLSurface::CreateViewGLSurface(
 }
 
 scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
-    const gfx::Size& size,
-    GLSurface::Format format) {
+    const gfx::Size& size) {
   switch (GetGLImplementation()) {
     case kGLImplementationDesktopGL: {
       scoped_refptr<GLSurface> surface(
           new UnmappedNativeViewGLSurfaceGLX(size));
-      if (!surface->Initialize(format)) {
+      if (!surface->Initialize()) {
         return nullptr;
       }
 
@@ -287,7 +305,7 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
       } else {
         surface = new OxidePbufferGLSurfaceEGL(size);
       }
-      if (!surface->Initialize(format)) {
+      if (!surface->Initialize()) {
         return nullptr;
       }
 
@@ -296,8 +314,8 @@ scoped_refptr<GLSurface> GLSurface::CreateOffscreenGLSurface(
 
     case kGLImplementationOSMesaGL: {
       scoped_refptr<GLSurface> surface(
-          new GLSurfaceOSMesa(gfx::OSMesaSurfaceFormatBGRA, size));
-      if (!surface->Initialize(format)) {
+          new GLSurfaceOSMesa(GLSurface::SURFACE_OSMESA_BGRA, size));
+      if (!surface->Initialize()) {
         return nullptr;
       }
 
