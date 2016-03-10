@@ -292,9 +292,12 @@ Module {
     Component {
         name: "OxideQQuickTouchSelectionController"
         prototype: "QObject"
-        exports: ["TouchSelectionController 1.12"]
+        exports: [
+            "TouchSelectionController 1.12",
+            "TouchSelectionController 1.14"
+        ]
         isCreatable: false
-        exportMetaObjectRevisions: [0]
+        exportMetaObjectRevisions: [0, 1]
         Enum {
             name: "HandleOrientation"
             values: {
@@ -307,6 +310,9 @@ Module {
         Property { name: "active"; type: "bool"; isReadonly: true }
         Property { name: "handle"; type: "QQmlComponent"; isPointer: true }
         Property { name: "bounds"; type: "QRectF"; isReadonly: true }
+        Property { name: "handleDragInProgress"; revision: 1; type: "bool"; isReadonly: true }
+        Signal { name: "handleDragInProgressChanged"; revision: 1 }
+        Method { name: "hide"; revision: 1 }
     }
     Component {
         name: "OxideQQuickUserScript"
