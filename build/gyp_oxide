@@ -42,9 +42,6 @@ sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
 sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
-## Needed to build chrome driver and as one of its deps pulls remoting.gyp or one of its deps
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'remoting', 'tools', 'build'))
-
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
 
 def additional_include_files(args=[]):
