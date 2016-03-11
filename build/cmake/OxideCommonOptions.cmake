@@ -30,7 +30,6 @@ option(ENABLE_PROPRIETARY_CODECS "Enable support for MP3, H.264 and AAC" OFF)
 option(ENABLE_PLUGINS
        "Enable support for PPAPI plugins. Only Flash is supported right now"
        ON)
-option(ENABLE_CHROMEDRIVER "Build the chromedriver binary" OFF)
 option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
 option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
 option(ENABLE_HYBRIS "Enable code that uses libhybris" ON)

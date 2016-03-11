@@ -31,9 +31,9 @@ namespace oxide {
 
 namespace {
 
-void FlushCookiesOnIOThread(scoped_refptr<net::CookieStore> cookie_store) {
+void FlushCookiesOnIOThread(BrowserContextIOData* context) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  cookie_store->FlushStore(base::Closure());
+  context->GetCookieStore()->FlushStore(base::Closure());
 }
 
 void FlushStoragePartition(content::StoragePartition* partition) {
@@ -44,7 +44,7 @@ void FlushBrowserContext(BrowserContext* context) {
   content::BrowserThread::PostTask(
       content::BrowserThread::IO,
       FROM_HERE,
-      base::Bind(&FlushCookiesOnIOThread, context->GetCookieStore()));
+      base::Bind(&FlushCookiesOnIOThread, context->GetIOData()));
   content::BrowserContext::ForEachStoragePartition(
       context, base::Bind(&FlushStoragePartition));
 }

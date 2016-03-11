@@ -534,6 +534,11 @@ UserAgentSettingsIOData* BrowserContextIOData::GetUserAgentSettings() const {
   return GetSharedData().user_agent_settings.get();
 }
 
+scoped_refptr<net::CookieStore> BrowserContextIOData::GetCookieStore() const {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
+  return cookie_store_;
+}
+
 class BrowserContextImpl;
 
 class OTRBrowserContextImpl : public BrowserContext {
@@ -881,16 +886,15 @@ content::ResourceContext* BrowserContext::GetResourceContext() {
   return io_data()->GetResourceContext();
 }
 
-scoped_refptr<net::CookieStore> BrowserContext::GetCookieStore() {
-  DCHECK(CalledOnValidThread());
-  return io_data()->cookie_store_;
-}
-
-
 TemporarySavedPermissionContext*
 BrowserContext::GetTemporarySavedPermissionContext() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetTemporarySavedPermissionContext();
+}
+
+BrowserContextIOData* BrowserContext::GetIOData() const {
+  DCHECK(CalledOnValidThread());
+  return io_data_;
 }
 
 bool BrowserContext::GetDoNotTrack() const {

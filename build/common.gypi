@@ -35,7 +35,6 @@
     'use_libpci': 1,
     'use_ozone': 1,
     'toolkit_views': 0,
-    'remoting': 0,
     'enable_basic_printing': 0,
     'enable_print_preview': 0,
     'variables': {

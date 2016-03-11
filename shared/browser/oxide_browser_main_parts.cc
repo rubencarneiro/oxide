@@ -26,6 +26,7 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
+#include "gpu/config/gpu_info_collector.h"
 #include "media/audio/audio_manager.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -273,8 +274,25 @@ void BrowserMainParts::PreMainMessageLoopRun() {
     }
   }
 
-  // Collect all graphics info. This also starts the GPU service
-  content::GpuDataManager::GetInstance()->RequestCompleteGpuInfoIfNeeded();
+  // Collect all graphics info. Ideally we would do this with
+  // GpuDataManager::RequestCompleteGpuInfoIfNeeded, which would also start
+  // the GPU service. However, we need this to complete synchronously so that
+  // GpuDataManagerImpl::CanUseGpuBrowserCompositor returns the correct
+  // result when the first WebContents is created.
+  // XXX: This needs to be fixed when we have an external GPU service
+  gpu::GPUInfo gpu_info;
+  gpu::CollectInfoResult rv = gpu::CollectContextGraphicsInfo(&gpu_info);
+  switch (rv) {
+    case gpu::kCollectInfoFatalFailure:
+      LOG(ERROR) << "gpu::CollectContextGraphicsInfo failed";
+      break;
+    case gpu::kCollectInfoNone:
+      NOTREACHED();
+      break;
+    default:
+      break;
+  }
+  content::GpuDataManagerImpl::GetInstance()->UpdateGpuInfo(gpu_info);
 
   CompositorUtils::GetInstance()->Initialize(gl_share_context_.get());
   net::NetModule::SetResourceProvider(NetResourceProvider);

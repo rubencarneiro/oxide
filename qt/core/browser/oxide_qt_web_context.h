@@ -88,13 +88,11 @@ class WebContext : public WebContextProxy,
 
   void UpdateUserScripts();
 
-  void CookieSetCallback(const scoped_refptr<SetCookiesContext>& context,
-                         const QNetworkCookie& cookie,
-                         bool success);
-  void DeliverCookiesSet(const scoped_refptr<SetCookiesContext>& ctxt);
-  void GotCookiesCallback(int request_id,
+  void SetCookiesCallback(int request_id,
+                          const QList<QNetworkCookie>& failed);
+  void GetCookiesCallback(int request_id,
                           const net::CookieList& cookies);
-  void DeletedCookiesCallback(int request_id, int num_deleted);
+  void DeleteCookiesCallback(int request_id, int num_deleted);
   void SetAllowedExtraURLSchemes(const std::set<std::string>& schemes);
 
   // WebContextProxy implementation
@@ -163,9 +161,10 @@ class WebContext : public WebContextProxy,
   class BrowserContextDelegate;
   scoped_refptr<BrowserContextDelegate> delegate_;
 
-  bool handling_cookie_request_;
-
   QList<QObject*> user_scripts_;
+
+  class CookieStoreProxy;
+  scoped_refptr<CookieStoreProxy> cookie_store_proxy_;
 
   base::WeakPtrFactory<WebContext> weak_factory_;
 
