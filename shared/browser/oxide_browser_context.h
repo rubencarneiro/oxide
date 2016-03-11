@@ -107,6 +107,8 @@ class BrowserContextIOData {
 
   UserAgentSettingsIOData* GetUserAgentSettings() const;
 
+  scoped_refptr<net::CookieStore> GetCookieStore() const;
+
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
 
@@ -223,11 +225,11 @@ class BrowserContext
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
 
-  scoped_refptr<net::CookieStore> GetCookieStore();
-
   // XXX: This will be going away
   // (see the comment in oxide_temporary_saved_permission_context.h)
   TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
+
+  BrowserContextIOData* GetIOData() const;
 
  protected:
   friend class BrowserContextDestroyer; // for destructor

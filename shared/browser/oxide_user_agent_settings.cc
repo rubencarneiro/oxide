@@ -135,8 +135,7 @@ UserAgentSettings::UserAgentSettings(BrowserContext* context)
       user_agent_string_is_default_(true),
       legacy_user_agent_override_enabled_(false) {
   UserAgentSettingsIOData* io_data =
-      BrowserContextIOData::FromResourceContext(
-        context_->GetResourceContext())->GetUserAgentSettings();
+      context_->GetIOData()->GetUserAgentSettings();
   io_data->user_agent_ = content::BuildUserAgentFromProduct(product_);
 }
 
@@ -189,10 +188,7 @@ BrowserContextKeyedServiceFactory* UserAgentSettings::GetFactory() {
 std::string UserAgentSettings::GetUserAgent() const {
   DCHECK(CalledOnValidThread());
 
-  return BrowserContextIOData::FromResourceContext(
-      context_->GetResourceContext())
-        ->GetUserAgentSettings()
-        ->user_agent_;
+  return context_->GetIOData()->GetUserAgentSettings()->user_agent_;
 }
 
 void UserAgentSettings::SetUserAgent(const std::string& user_agent) {
@@ -200,8 +196,7 @@ void UserAgentSettings::SetUserAgent(const std::string& user_agent) {
 
   {
     UserAgentSettingsIOData* io_data =
-        BrowserContextIOData::FromResourceContext(
-          context_->GetResourceContext())->GetUserAgentSettings();
+        context_->GetIOData()->GetUserAgentSettings();
     base::AutoLock lock(io_data->lock_);
     io_data->user_agent_ = user_agent.empty() ?
         content::BuildUserAgentFromProduct(product_) :
@@ -235,18 +230,14 @@ void UserAgentSettings::SetProduct(const std::string& product) {
 std::string UserAgentSettings::GetAcceptLangs() const {
   DCHECK(CalledOnValidThread());
 
-  return BrowserContextIOData::FromResourceContext(
-      context_->GetResourceContext())
-        ->GetUserAgentSettings()
-        ->accept_langs_;
+  return context_->GetIOData()->GetUserAgentSettings()->accept_langs_;
 }
 
 void UserAgentSettings::SetAcceptLangs(const std::string& accept_langs) {
   DCHECK(CalledOnValidThread());
 
   UserAgentSettingsIOData* io_data =
-      BrowserContextIOData::FromResourceContext(
-        context_->GetResourceContext())->GetUserAgentSettings();
+      context_->GetIOData()->GetUserAgentSettings();
   base::AutoLock lock(io_data->lock_);
   io_data->accept_langs_ = accept_langs;
 }
@@ -262,10 +253,9 @@ void UserAgentSettings::SetUserAgentOverrides(
   DCHECK(CalledOnValidThread());
 
   user_agent_overrides_ = overrides;
-
+ 
   UserAgentSettingsIOData* io_data =
-      BrowserContextIOData::FromResourceContext(
-        context_->GetResourceContext())->GetUserAgentSettings();
+      context_->GetIOData()->GetUserAgentSettings();
   io_data->user_agent_override_set_.SetOverrides(overrides);
 
   HostSet hosts = GetHostSet();
@@ -278,8 +268,7 @@ std::string UserAgentSettings::GetUserAgentForURL(const GURL& url) {
   DCHECK(CalledOnValidThread());
 
   UserAgentSettingsIOData* io_data =
-      BrowserContextIOData::FromResourceContext(
-        context_->GetResourceContext())->GetUserAgentSettings();
+      context_->GetIOData()->GetUserAgentSettings();
 
   std::string override_ua =
       io_data->user_agent_override_set_.GetOverrideForURL(url);

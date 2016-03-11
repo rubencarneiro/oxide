@@ -40,8 +40,9 @@ int32_t GetRestrictions(int render_process_id,
   content::RenderProcessHost* render_process_host =
       content::RenderProcessHost::FromID(render_process_id);
   if (render_process_host) {
-    io_data = BrowserContextIOData::FromResourceContext(
-      render_process_host->GetBrowserContext()->GetResourceContext());
+    io_data =
+        BrowserContext::FromContent(render_process_host->GetBrowserContext())
+          ->GetIOData();
   }
 
   if (!io_data) {
