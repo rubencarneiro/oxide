@@ -107,7 +107,7 @@ class BrowserContextIOData {
 
   UserAgentSettingsIOData* GetUserAgentSettings() const;
 
-  scoped_refptr<net::CookieStore> GetCookieStore() const;
+  net::CookieStore* GetCookieStore() const;
 
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
@@ -135,7 +135,7 @@ class BrowserContextIOData {
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
-  scoped_refptr<net::CookieStore> cookie_store_;
+  scoped_ptr<net::CookieStore> cookie_store_;
 
   scoped_ptr<net::HostMappingRules> host_mapping_rules_;
 

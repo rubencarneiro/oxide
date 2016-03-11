@@ -188,8 +188,7 @@ class RenderWidgetHostView final :
 
   // cc::SurfaceFactoryClient implementation
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
-  void SetBeginFrameSource(cc::SurfaceId surface_id,
-                           cc::BeginFrameSource* begin_frame_source) override;
+  void SetBeginFrameSource(cc::BeginFrameSource* begin_frame_source) override;
 
   // ui::TouchSelectionControllerClient implementation
   bool SupportsAnimation() const override;

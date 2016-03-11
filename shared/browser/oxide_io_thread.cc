@@ -144,7 +144,8 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   storage->set_http_server_properties(
       scoped_ptr<net::HttpServerProperties>(
         new net::HttpServerPropertiesImpl()));
-  storage->set_cookie_store(new net::CookieMonster(nullptr, nullptr));
+  storage->set_cookie_store(
+      make_scoped_ptr(new net::CookieMonster(nullptr, nullptr)));
   storage->set_transport_security_state(
       make_scoped_ptr(new net::TransportSecurityState()));
 

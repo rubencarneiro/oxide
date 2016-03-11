@@ -663,7 +663,6 @@ void RenderWidgetHostView::ReturnResources(
 }
 
 void RenderWidgetHostView::SetBeginFrameSource(
-    cc::SurfaceId surface_id,
     cc::BeginFrameSource* begin_frame_source) {}
 
 bool RenderWidgetHostView::SupportsAnimation() const {

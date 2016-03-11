@@ -245,7 +245,6 @@
         '<(DEPTH)/ipc/ipc.gyp:ipc',
         '<(DEPTH)/media/media.gyp:media',
         '<(DEPTH)/mojo/mojo_base.gyp:mojo_common_lib',
-        '<(DEPTH)/mojo/mojo_base.gyp:mojo_environment_chromium',
         '<(DEPTH)/mojo/mojo_edk.gyp:mojo_system_impl',
         '<(DEPTH)/mojo/mojo_public.gyp:mojo_cpp_bindings',
         '<(DEPTH)/net/net.gyp:net',
