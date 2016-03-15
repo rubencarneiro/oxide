@@ -18,15 +18,11 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_EVENT_UTILS_H_
 #define _OXIDE_QT_CORE_BROWSER_EVENT_UTILS_H_
 
-#include <map>
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-#include "base/memory/scoped_vector.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "ui/events/event.h"
 
 QT_BEGIN_NAMESPACE
 class QHoverEvent;
@@ -35,29 +31,11 @@ class QMouseEvent;
 class QPoint;
 class QPointF;
 class QScreen;
-class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
-
-class UITouchEventFactory final {
- public:
-  UITouchEventFactory();
-  ~UITouchEventFactory();
-
-  void MakeEvents(QTouchEvent* event,
-                  QScreen* screen,
-                  float location_bar_content_offset,
-                  ScopedVector<ui::TouchEvent>* results);
-  scoped_ptr<ui::TouchEvent> Cancel();
-
- private:
-  std::map<int, double> touch_point_content_offsets_;
-
-  DISALLOW_COPY_AND_ASSIGN(UITouchEventFactory);
-};
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
                                                            bool is_char);
