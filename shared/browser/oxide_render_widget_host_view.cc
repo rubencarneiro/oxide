@@ -23,7 +23,6 @@
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
-#include "cc/layers/layer_settings.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
@@ -300,8 +299,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       surface_factory_->Create(surface_id_);
 
       layer_ =
-          cc::SurfaceLayer::Create(cc::LayerSettings(),
-                                   base::Bind(&SatisfyCallback,
+          cc::SurfaceLayer::Create(base::Bind(&SatisfyCallback,
                                               base::Unretained(manager)),
                                    base::Bind(&RequireCallback,
                                               base::Unretained(manager)));

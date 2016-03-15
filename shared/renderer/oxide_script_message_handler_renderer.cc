@@ -25,7 +25,6 @@
 #include "base/values.h"
 #include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
-#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 
 #include "oxide_script_message_impl_renderer.h"
 #include "oxide_script_message_manager.h"
@@ -60,7 +59,8 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
 
   v8::TryCatch try_catch;
   {
-    blink::WebScopedMicrotaskSuppression mts;
+    v8::MicrotasksScope microtasks(manager_->isolate(),
+                                   v8::MicrotasksScope::kDoNotRunMicrotasks);
     manager_->frame()->GetWebFrame()->callFunctionEvenIfScriptDisabled(
         function, manager_->GetV8Context()->Global(), arraysize(argv), argv);
   }

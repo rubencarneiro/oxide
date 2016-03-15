@@ -23,7 +23,6 @@
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/child/v8_value_converter.h"
-#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 
 #include "shared/common/oxide_script_message_request.h"
 
