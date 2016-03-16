@@ -17,9 +17,16 @@
 
 #include "oxide_input_method_context.h"
 
+#include "base/logging.h"
+
+#include "oxide_ime_bridge_impl.h"
 #include "oxide_input_method_context_observer.h"
 
 namespace oxide {
+
+ImeBridge* InputMethodContext::ime_bridge() const {
+  return ime_bridge_;
+}
 
 void InputMethodContext::NotifyInputPanelVisibilityChanged() {
   FOR_EACH_OBSERVER(InputMethodContextObserver,
@@ -27,8 +34,12 @@ void InputMethodContext::NotifyInputPanelVisibilityChanged() {
                     InputPanelVisibilityChanged());
 }
 
-void InputMethodContext::SetImeBridge(ImeBridge* bridge) {
+void InputMethodContext::SetImeBridge(ImeBridgeImpl* bridge) {
   ime_bridge_ = bridge;
+
+  if (in_destruction_) {
+    return;
+  }
 
   CancelComposition();
 
@@ -48,12 +59,20 @@ void InputMethodContext::RemoveObserver(InputMethodContextObserver* observer) {
 }
 
 InputMethodContext::InputMethodContext()
-    : ime_bridge_(nullptr) {}
+    : in_destruction_(false),
+      ime_bridge_(nullptr) {}
 
 InputMethodContext::~InputMethodContext() {
+  in_destruction_ = true;
+
   FOR_EACH_OBSERVER(InputMethodContextObserver,
                     observers_,
                     OnInputMethodContextDestruction());
+
+  if (ime_bridge_) {
+    ime_bridge_->SetContext(nullptr);
+    DCHECK(!ime_bridge_);
+  }
 }
 
 bool InputMethodContext::IsInputPanelVisible() const {

@@ -15,7 +15,6 @@
 #include "base/time/time.h"
 #include "base/threading/thread_checker.h"
 #include "content/public/renderer/render_frame_observer.h"
-#include "media/cdm/proxy_decryptor.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "media/base/demuxer_stream.h"
 #include "media/base/media_keys.h"
@@ -173,25 +172,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   // Detach the player from its manager.
   void Detach();
 
-  MediaKeyException generateKeyRequest(
-      const blink::WebString& key_system,
-      const unsigned char* init_data,
-      unsigned init_data_length);
-  MediaKeyException addKey(
-      const blink::WebString& key_system,
-      const unsigned char* key,
-      unsigned key_length,
-      const unsigned char* init_data,
-      unsigned init_data_length,
-      const blink::WebString& session_id);
-  MediaKeyException cancelKeyRequest(
-      const blink::WebString& key_system,
-      const blink::WebString& session_id);
-  void setContentDecryptionModule(
-      blink::WebContentDecryptionModule* cdm);
-
   // WebMediaPlayerDelegate::Observer implementation.
-  void OnHidden() override;
+  void OnHidden(bool must_suspend) override;
   void OnShown() override;
   void OnPlay() override;
   void OnPause() override;
@@ -208,21 +190,6 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
  private:
   void Pause(bool is_media_related_action);
   void DidLoadMediaInfo(MediaInfoLoader::Status status);
-  bool IsKeySystemSupported(const std::string& key_system);
-
-  // Actually do the work for generateKeyRequest/addKey so they can easily
-  // report results to UMA.
-  MediaKeyException GenerateKeyRequestInternal(const std::string& key_system,
-                                               const unsigned char* init_data,
-                                               unsigned init_data_length);
-  MediaKeyException AddKeyInternal(const std::string& key_system,
-                                   const unsigned char* key,
-                                   unsigned key_length,
-                                   const unsigned char* init_data,
-                                   unsigned init_data_length,
-                                   const std::string& session_id);
-  MediaKeyException CancelKeyRequestInternal(const std::string& key_system,
-                                             const std::string& session_id);
 
   blink::WebFrame* const frame_;
 
@@ -314,10 +281,6 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   // The currently selected key system. Empty string means that no key system
   // has been selected.
   std::string current_key_system_;
-
-  // Temporary for EME v0.1. In the future the init data type should be passed
-  // through GenerateKeyRequest() directly from WebKit.
-  std::string init_data_type_;
 
   // NOTE: Weak pointers must be invalidated before all other member variables.
   base::WeakPtrFactory<WebMediaPlayer> weak_factory_;

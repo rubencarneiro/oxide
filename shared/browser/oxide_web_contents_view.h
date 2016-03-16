@@ -40,7 +40,6 @@
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
-#include "shared/browser/oxide_touch_event_state.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace blink {
@@ -60,7 +59,7 @@ class WebContentsImpl;
 }
 
 namespace ui {
-class TouchEvent;
+class MotionEvent;
 class TouchSelectionController;
 }
 
@@ -108,7 +107,7 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
-  void HandleTouchEvent(const ui::TouchEvent& event);
+  void HandleMotionEvent(const ui::MotionEvent& event);
   void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
 
   // XXX(chrisccoulson): Make a new class for these events - we don't use
@@ -257,7 +256,6 @@ class WebContentsView : public content::WebContentsViewOxide,
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
   MouseEventState mouse_state_;
-  TouchEventState touch_state_;
 
   cc::CompositorFrameMetadata committed_frame_metadata_;
 

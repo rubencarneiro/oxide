@@ -44,7 +44,7 @@ class InputMethodContext {
   virtual void FocusedNodeChanged();
 
  protected:
-  ImeBridge* ime_bridge() const { return ime_bridge_; }
+  ImeBridge* ime_bridge() const;
 
   void NotifyInputPanelVisibilityChanged();
 
@@ -52,12 +52,14 @@ class InputMethodContext {
   friend class ImeBridgeImpl;
   friend class InputMethodContextObserver;
 
-  void SetImeBridge(ImeBridge* bridge);
+  void SetImeBridge(ImeBridgeImpl* bridge);
 
   void AddObserver(InputMethodContextObserver* observer);
   void RemoveObserver(InputMethodContextObserver* observer);
 
-  ImeBridge* ime_bridge_;
+  bool in_destruction_;
+
+  ImeBridgeImpl* ime_bridge_;
 
   base::ObserverList<InputMethodContextObserver> observers_;
 

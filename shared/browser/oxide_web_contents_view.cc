@@ -730,17 +730,13 @@ void WebContentsView::HandleMouseEvent(const blink::WebMouseEvent& event) {
   host->ForwardMouseEvent(e);
 }
 
-void WebContentsView::HandleTouchEvent(const ui::TouchEvent& event) {
-  if (!touch_state_.Update(event)) {
-    return;
-  }
-
+void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
     return;
   }
 
-  rwhv->HandleTouchEvent(touch_state_);
+  rwhv->HandleTouchEvent(event);
 }
 
 void WebContentsView::HandleWheelEvent(

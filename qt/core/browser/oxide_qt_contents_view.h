@@ -27,7 +27,7 @@
 #include <QtGlobal>
 
 #include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
-#include "qt/core/browser/oxide_qt_event_utils.h"
+#include "qt/core/browser/oxide_qt_motion_event_factory.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 #include "shared/browser/oxide_web_contents_view_client.h"
 
@@ -116,7 +116,7 @@ class ContentsView : public ContentsViewProxy,
 
   QPointer<QObject> native_view_;
 
-  UITouchEventFactory touch_event_factory_;
+  MotionEventFactory motion_event_factory_;
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
 

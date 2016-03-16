@@ -152,6 +152,8 @@
         'browser/oxide_qt_location_provider.h',
         'browser/oxide_qt_message_pump.cc',
         'browser/oxide_qt_message_pump.h',
+        'browser/oxide_qt_motion_event_factory.cc',
+        'browser/oxide_qt_motion_event_factory.h',
         'browser/oxide_qt_screen_client.cc',
         'browser/oxide_qt_screen_client.h',
         'browser/oxide_qt_screen_utils.cc',

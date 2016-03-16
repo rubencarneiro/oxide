@@ -24,15 +24,12 @@
 #include <QMouseEvent>
 #include <QPoint>
 #include <Qt>
-#include <QTouchEvent>
 #include <QWheelEvent>
 
 #include "base/logging.h"
 #include "base/time/time.h"
-#include "ui/events/event_utils.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
-#include "ui/gfx/geometry/vector2d_f.h"
 
 #include "shared/browser/oxide_event_utils.h"
 
@@ -440,91 +437,6 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
-ui::EventType QTouchPointStateToEventType(Qt::TouchPointState state) {
-  switch (state) {
-    case Qt::TouchPointPressed:
-      return ui::ET_TOUCH_PRESSED;
-    case Qt::TouchPointMoved:
-      return ui::ET_TOUCH_MOVED;
-    case Qt::TouchPointReleased:
-      return ui::ET_TOUCH_RELEASED;
-    default:
-      NOTREACHED();
-      return ui::ET_UNKNOWN;
-  }
-}
-
-}
-
-UITouchEventFactory::UITouchEventFactory() {}
-
-UITouchEventFactory::~UITouchEventFactory() {}
-
-void UITouchEventFactory::MakeEvents(QTouchEvent* event,
-                                     QScreen* screen,
-                                     float location_bar_content_offset,
-                                     ScopedVector<ui::TouchEvent>* results) {
-  // The event’s timestamp is not guaranteed to have the same origin as the
-  // internal timedelta used by chromium to calculate speed and displacement
-  // for a fling gesture, so we can’t use it.
-  base::TimeDelta timestamp = ui::EventTimeForNow();
-
-  if (event->type() == QEvent::TouchCancel) {
-    results->push_back(
-        new ui::TouchEvent(ui::ET_TOUCH_CANCELLED, gfx::Point(), 0, timestamp));
-    touch_point_content_offsets_.clear();
-    return;
-  }
-
-  for (int i = 0; i < event->touchPoints().size(); ++i) {
-    const QTouchEvent::TouchPoint& touch_point = event->touchPoints().at(i);
-
-    if (touch_point.state() == Qt::TouchPointStationary) {
-      continue;
-    }
-
-    if (touch_point.state() == Qt::TouchPointPressed) {
-      touch_point_content_offsets_[touch_point.id()] =
-          location_bar_content_offset;
-    }
-
-    gfx::PointF location =
-        DpiUtils::ConvertQtPixelsToChromium(gfx::PointF(touch_point.pos().x(),
-                                                        touch_point.pos().y()),
-                                            screen);
-    location -=
-        gfx::Vector2dF(0, touch_point_content_offsets_[touch_point.id()]);
-
-    ui::TouchEvent* ui_event = new ui::TouchEvent(
-        QTouchPointStateToEventType(touch_point.state()),
-        gfx::Point(location.x(), location.y()),
-        0,
-        touch_point.id(),
-        timestamp,
-        0.0f, 0.0f,
-        0.0f,
-        float(touch_point.pressure()));
-    gfx::PointF root_location =
-        DpiUtils::ConvertQtPixelsToChromium(
-          ToChromium(touch_point.screenPos()),
-          screen);
-    ui_event->set_root_location(
-        gfx::Point(root_location.x(), root_location.y()));
-
-    results->push_back(ui_event);
-
-    if (touch_point.state() == Qt::TouchPointReleased) {
-      touch_point_content_offsets_.erase(touch_point.id());
-    }
-  }
-}
-
-scoped_ptr<ui::TouchEvent> UITouchEventFactory::Cancel() {
-  ScopedVector<ui::TouchEvent> events;
-  QTouchEvent cancel_event(QEvent::TouchCancel);
-  MakeEvents(&cancel_event, nullptr, 0.0f, &events);
-  DCHECK_EQ(events.size(), 1);
-  return make_scoped_ptr(new ui::TouchEvent(events.front()));
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,

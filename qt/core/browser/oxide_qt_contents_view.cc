@@ -35,7 +35,7 @@
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/common/drop_data.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
-#include "ui/events/event.h"
+#include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/point.h"
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
@@ -47,6 +47,7 @@
 
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
+#include "oxide_qt_event_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_skutils.h"
 #include "oxide_qt_touch_handle_drawable.h"
@@ -320,8 +321,8 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
 }
 
 void ContentsView::handleTouchUngrabEvent() {
-  scoped_ptr<ui::TouchEvent> cancel_event(touch_event_factory_.Cancel());
-  view()->HandleTouchEvent(*cancel_event.get());
+  scoped_ptr<ui::MotionEvent> cancel_event = motion_event_factory_.Cancel();
+  view()->HandleMotionEvent(*cancel_event.get());
 }
 
 void ContentsView::handleWheelEvent(QWheelEvent* event,
@@ -335,14 +336,14 @@ void ContentsView::handleWheelEvent(QWheelEvent* event,
 }
 
 void ContentsView::handleTouchEvent(QTouchEvent* event) {
-  ScopedVector<ui::TouchEvent> events;
-  touch_event_factory_.MakeEvents(event,
-                                  GetScreen(),
-                                  GetLocationBarContentOffset(),
-                                  &events);
+  MotionEventFactory::ResultVector events;
+  motion_event_factory_.MakeMotionEvents(event,
+                                         GetScreen(),
+                                         GetLocationBarContentOffset(),
+                                         &events);
 
-  for (size_t i = 0; i < events.size(); ++i) {
-    view()->HandleTouchEvent(*events[i]);
+  for (const auto& e : events) {
+    view()->HandleMotionEvent(*e.get());
   }
 
   event->accept();
