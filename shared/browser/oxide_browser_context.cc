@@ -408,7 +408,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   DCHECK(cookie_store_.get());
-  storage->set_cookie_store(cookie_store_.get());
+  context->set_cookie_store(cookie_store_.get());
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -534,9 +534,9 @@ UserAgentSettingsIOData* BrowserContextIOData::GetUserAgentSettings() const {
   return GetSharedData().user_agent_settings.get();
 }
 
-scoped_refptr<net::CookieStore> BrowserContextIOData::GetCookieStore() const {
+net::CookieStore* BrowserContextIOData::GetCookieStore() const {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  return cookie_store_;
+  return cookie_store_.get();
 }
 
 class BrowserContextImpl;
@@ -739,6 +739,7 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   // Make sure that the cookie store is properly created
   io_data->Init();
 
+  content::BrowserContext::Initialize(this, io_data->GetPath());
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 

@@ -46,7 +46,8 @@ class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice {
 
  private:
   struct BufferData {
-    BufferData() : id(0), available(true) {}
+    BufferData();
+    ~BufferData();
 
     unsigned id;
     bool available;

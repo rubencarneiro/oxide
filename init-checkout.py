@@ -46,7 +46,7 @@ from utils import (
 )
 
 DEPOT_TOOLS_GIT_URL = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
-DEPOT_TOOLS_GIT_REV = "c1ae89ecd635abfea2d94e5b49c7d92f49f28f22"
+DEPOT_TOOLS_GIT_REV = "f04a6e6c14cb8862d8974c0eef8b52adfed96afe"
 DEPOT_TOOLS_OLD_PATH = os.path.join(TOPSRCDIR, "chromium", "depot_tools")
 
 CHROMIUM_GCLIENT_SPEC_TEMPLATE = (

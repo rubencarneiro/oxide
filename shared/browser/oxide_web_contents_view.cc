@@ -20,7 +20,6 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "cc/layers/layer_settings.h"
 #include "cc/layers/solid_color_layer.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
@@ -69,7 +68,7 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
       client_(nullptr),
       compositor_(Compositor::Create(this)),
-      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
+      root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone) {
   web_contents->SetUserData(&kUserDataKey,

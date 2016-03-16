@@ -31,7 +31,6 @@
 #include "third_party/WebKit/public/platform/WebURLRequest.h"
 #include "third_party/WebKit/public/web/WebDataSource.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
-#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "third_party/WebKit/public/web/WebScriptSource.h"
 #include "url/gurl.h"
 #include "v8/include/v8.h"
@@ -142,7 +141,8 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
 
   v8::TryCatch try_catch;
   {
-    blink::WebScopedMicrotaskSuppression mts;
+    v8::MicrotasksScope microtasks(isolate,
+                                   v8::MicrotasksScope::kDoNotRunMicrotasks);
 
     v8::Local<v8::Function> function(script->Run().As<v8::Function>());
     if (try_catch.HasCaught()) {

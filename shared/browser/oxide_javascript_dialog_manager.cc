@@ -109,7 +109,6 @@ void JavaScriptDialogManager::RunJavaScriptDialog(
 
 void JavaScriptDialogManager::RunBeforeUnloadDialog(
     content::WebContents* web_contents,
-    const base::string16& message_text,
     bool is_reload,
     const DialogClosedCallback& callback) {
   WebView* webview = WebView::FromWebContents(web_contents);
@@ -125,7 +124,6 @@ void JavaScriptDialogManager::RunBeforeUnloadDialog(
   }
 
   dialog->web_contents_ = web_contents;
-  dialog->message_text_ = message_text;
   dialog->is_reload_ = is_reload;
   dialog->is_before_unload_dialog_ = true;
   dialog->callback_ = callback;

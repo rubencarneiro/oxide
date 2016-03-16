@@ -194,7 +194,7 @@ class WebContext::CookieStoreProxy
   void DeleteAllCookies(const base::Callback<void(int)>& callback);
 
  private:
-  scoped_refptr<net::CookieStore> GetCookieStore() const;
+  net::CookieStore* GetCookieStore() const;
 
   void GetCookiesOnIOThread(
       const QUrl& url,
@@ -246,8 +246,7 @@ class WebContext::CookieStoreProxy
   bool in_set_cookies_;
 };
 
-scoped_refptr<net::CookieStore>
-WebContext::CookieStoreProxy::GetCookieStore() const {
+net::CookieStore* WebContext::CookieStoreProxy::GetCookieStore() const {
   base::AutoLock lock(context_lock_);
 
   if (!context_) {
@@ -261,7 +260,7 @@ void WebContext::CookieStoreProxy::GetCookiesOnIOThread(
     const QUrl& url,
     const base::Callback<void(const net::CookieList&)>& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  net::CookieStore* cookie_store = GetCookieStore();
   if (!cookie_store) {
     GetCookiesCallback(callback, task_runner, net::CookieList());
     return;
@@ -292,7 +291,7 @@ void WebContext::CookieStoreProxy::DeliverCookiesGotOnOwnerThread(
 void WebContext::CookieStoreProxy::GetAllCookiesOnIOThread(
     const base::Callback<void(const net::CookieList&)>& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  net::CookieStore* cookie_store = GetCookieStore();
   if (!cookie_store) {
     GetCookiesCallback(callback, task_runner, net::CookieList());
     return;
@@ -313,7 +312,7 @@ void WebContext::CookieStoreProxy::SetCookiesOnIOThread(
   scoped_refptr<SetCookiesContext> ctxt =
       new SetCookiesContext(callback, task_runner);
 
-  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  net::CookieStore* cookie_store = GetCookieStore();
   if (!cookie_store) {
     ctxt->failed = cookies;
     DeliverCookiesSet(ctxt.get());
@@ -391,7 +390,7 @@ void WebContext::CookieStoreProxy::DeliverCookiesSetOnOwnerThread(
 void WebContext::CookieStoreProxy::DeleteAllCookiesOnIOThread(
     const base::Callback<void(int)>& callback,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  scoped_refptr<net::CookieStore> cookie_store = GetCookieStore();
+  net::CookieStore* cookie_store = GetCookieStore();
   if (!cookie_store) {
     DeleteAllCookiesCallback(callback, task_runner, 0);
     return;

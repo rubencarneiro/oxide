@@ -23,7 +23,6 @@
 #include "base/thread_task_runner_handle.h"
 #include "base/trace_event/trace_event.h"
 #include "cc/layers/layer.h"
-#include "cc/layers/layer_settings.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/renderer_settings.h"
 #include "cc/scheduler/begin_frame_source.h"
@@ -93,7 +92,7 @@ Compositor::Compositor(CompositorClient* client)
           CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
       num_failed_recreate_attempts_(0),
       device_scale_factor_(1.0f),
-      root_layer_(cc::Layer::Create(cc::LayerSettings())),
+      root_layer_(cc::Layer::Create()),
       next_output_surface_id_(1),
       pending_swaps_(0),
       weak_factory_(this) {}
