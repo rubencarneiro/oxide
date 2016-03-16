@@ -41,6 +41,7 @@
 #include "net/base/net_errors.h"
 #include "net/base/static_cookie_policy.h"
 #include "net/cookies/canonical_cookie.h"
+#include "net/cookies/cookie_constants.h"
 #include "net/cookies/cookie_store.h"
 #include "net/http/http_response_headers.h"
 #include "net/url_request/url_request.h"
@@ -345,7 +346,7 @@ void WebContext::CookieStoreProxy::SetCookiesOnIOThread(
         base::Time(),
         cookie.isSecure(),
         cookie.isHttpOnly(),
-        false, // same_site
+        net::CookieSameSite::DEFAULT_MODE,
         false, // enforce_strict_secure
         net::COOKIE_PRIORITY_DEFAULT,
         base::Bind(&WebContext::CookieStoreProxy::SetCookieCallback,
