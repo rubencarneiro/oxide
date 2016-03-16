@@ -23,12 +23,14 @@
 #include <QRect>
 #include <QRectF>
 #include <QSize>
+#include <QSizeF>
 
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/gfx/geometry/size_f.h"
 
 namespace oxide {
 namespace qt {
@@ -76,6 +78,11 @@ inline gfx::Size ToChromium(const QSize& size) {
 
 inline QSize ToQt(const gfx::Size& size) {
   return QSize(size.width(), size.height());
+}
+
+// gfx::SizeF <-> QSizeF
+inline gfx::SizeF ToChromium(const QSizeF& size) {
+  return gfx::SizeF(size.width(), size.height());
 }
 
 } // namespace qt

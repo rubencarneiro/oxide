@@ -122,6 +122,12 @@ gfx::Size DpiUtils::ConvertQtPixelsToChromium(const gfx::Size& size,
 }
 
 // static
+gfx::SizeF DpiUtils::ConvertQtPixelsToChromium(const gfx::SizeF& size,
+                                               QScreen* screen) {
+  return gfx::ScaleSize(size, 1 / GetExtraDeviceScaleForScreen(screen));
+}
+
+// static
 float DpiUtils::ConvertQtPixelsToChromium(float value, QScreen* screen) {
   return value / GetExtraDeviceScaleForScreen(screen);
 }

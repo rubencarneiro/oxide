@@ -25,6 +25,7 @@
 #include "base/time/time.h"
 
 #include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
@@ -98,16 +99,18 @@ int MotionEventFactory::UpdateTouchPoint(
   PointerProperties& props = touch_points_[index];
   DCHECK_EQ(props.platform_id, touch_point.id());
 
-  QPointF pos = touch_point.pos();
-  props.x = DpiUtils::ConvertQtPixelsToChromium(pos.x(), screen);
-  props.y =
-      DpiUtils::ConvertQtPixelsToChromium(pos.y(), screen) -
-          props.location_bar_content_offset;
+  gfx::PointF pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(touch_point.pos()),
+                                          screen);
+  props.x = pos.x();
+  props.y = pos.y() - props.location_bar_content_offset;
 
   // Not sure if screenPos is correct here
-  QPointF screen_pos = touch_point.screenPos();
-  props.raw_x = DpiUtils::ConvertQtPixelsToChromium(screen_pos.x(), screen);
-  props.raw_y = DpiUtils::ConvertQtPixelsToChromium(screen_pos.y(), screen);
+  gfx::PointF screen_pos =
+      DpiUtils::ConvertQtPixelsToChromium(ToChromium(touch_point.screenPos()),
+                                          screen);
+  props.raw_x = screen_pos.x();
+  props.raw_y = screen_pos.y();
 
   props.pressure = touch_point.pressure();
 

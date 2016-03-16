@@ -26,6 +26,7 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/gfx/geometry/size_f.h"
 
 QT_BEGIN_NAMESPACE
 class QScreen;
@@ -69,6 +70,8 @@ class DpiUtils {
                                                QScreen* screen);
   static gfx::Size ConvertQtPixelsToChromium(const gfx::Size& size,
                                              QScreen* screen);
+  static gfx::SizeF ConvertQtPixelsToChromium(const gfx::SizeF& size,
+                                              QScreen* screen);
   static float ConvertQtPixelsToChromium(float value, QScreen* screen);
 
 
