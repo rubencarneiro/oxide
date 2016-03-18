@@ -267,6 +267,7 @@
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection',
         '<(DEPTH)/url/url.gyp:url_lib',
+        '<(DEPTH)/url/ipc/url_ipc.gyp:url_ipc',
         '<(DEPTH)/v8/tools/gyp/v8.gyp:v8',
         '../build/system.gyp:gdkpixbuf',
         '../build/system.gyp:libnotify',
