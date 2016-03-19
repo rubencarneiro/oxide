@@ -382,9 +382,6 @@ void RenderWidgetHostView::InitAsFullscreen(
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
 
-void RenderWidgetHostView::MovePluginWindows(
-    const std::vector<content::WebPluginGeometry>& moves) {}
-
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   if (cursor.IsEqual(web_cursor_)) {
     return;
