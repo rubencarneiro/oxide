@@ -414,7 +414,7 @@ void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned ch
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayer::OnHidden(bool must_suspend) {
+void WebMediaPlayer::OnHidden() {
   // RendererMediaPlayerManager will not call SuspendAndReleaseResources() if we
   // were already in the paused state; thus notify the MediaWebContentsObserver
   // that we've been hidden so any lingering MediaSessions are released.
@@ -423,6 +423,12 @@ void WebMediaPlayer::OnHidden(bool must_suspend) {
 }
 
 void WebMediaPlayer::OnShown() {}
+
+void WebMediaPlayer::OnSuspendRequested(bool must_suspend) {
+  if (must_suspend && delegate_) {
+    delegate_->PlayerGone(delegate_id_);
+  }
+}
 
 void WebMediaPlayer::OnPlay() {
   play();
