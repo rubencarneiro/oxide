@@ -32,6 +32,7 @@
 #include "media/base/bind_to_current_loop.h"
 #include "media/base/media_keys.h"
 #include "media/base/media_switches.h"
+#include "media/base/timestamp_constants.h"
 #include "media/base/video_frame.h"
 #include "net/base/mime_util.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayerClient.h"
