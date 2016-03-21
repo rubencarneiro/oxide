@@ -121,8 +121,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   bool didLoadingProgress();
 
   // Internal states of loading and network.
-  blink::WebMediaPlayer::NetworkState networkState() const;
-  blink::WebMediaPlayer::ReadyState readyState() const;
+  blink::WebMediaPlayer::NetworkState getNetworkState() const;
+  blink::WebMediaPlayer::ReadyState getReadyState() const;
 
   bool hasSingleSecurityOrigin() const;
   bool didPassCORSAccessCheck() const;

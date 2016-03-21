@@ -310,11 +310,11 @@ WebSize WebMediaPlayer::naturalSize() const {
   return natural_size_;
 }
 
-WebMediaPlayer::NetworkState WebMediaPlayer::networkState() const {
+WebMediaPlayer::NetworkState WebMediaPlayer::getNetworkState() const {
   return network_state_;
 }
 
-WebMediaPlayer::ReadyState WebMediaPlayer::readyState() const {
+WebMediaPlayer::ReadyState WebMediaPlayer::getReadyState() const {
   return ready_state_;
 }
 
