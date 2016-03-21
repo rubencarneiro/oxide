@@ -254,8 +254,6 @@ class WebView : public ScriptMessageTarget,
 
   blink::WebContextMenuData::EditFlags GetEditFlags() const;
 
-  void HideTouchSelectionController() const;
-
  private:
   WebView(WebViewClient* client);
 

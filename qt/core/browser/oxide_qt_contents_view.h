@@ -89,6 +89,7 @@ class ContentsView : public ContentsViewProxy,
   void handleDragMoveEvent(QDragMoveEvent* event) override;
   void handleDragLeaveEvent(QDragLeaveEvent* event) override;
   void handleDropEvent(QDropEvent* event) override;
+  void hideTouchSelectionController() override;
 
   // InputMethodContextClient implementation
   void SetInputMethodEnabled(bool enabled);

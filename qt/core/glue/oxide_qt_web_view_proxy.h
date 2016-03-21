@@ -186,8 +186,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual EditCapabilityFlags editFlags() const = 0;
 
-  virtual void hideTouchSelectionController() const = 0;
-
   virtual void teardownFrameTree() = 0;
 };
 

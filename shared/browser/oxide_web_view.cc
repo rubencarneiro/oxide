@@ -1504,15 +1504,5 @@ blink::WebContextMenuData::EditFlags WebView::GetEditFlags() const {
   return edit_flags_;
 }
 
-void WebView::HideTouchSelectionController() const {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-
-  if (!rwhv) {
-    return;
-  }
-
-  rwhv->selection_controller()->HideAndDisallowShowingAutomatically();
-}
-
 } // namespace oxide
 

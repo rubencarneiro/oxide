@@ -60,7 +60,6 @@
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
-#include "oxideqquicktouchselectioncontroller.h"
 #include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebframe.h"
@@ -130,12 +129,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       before_unload_dialog_(nullptr),
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
-      construct_props_(new ConstructProps()),
-      touch_selection_controller_(
-          new OxideQQuickTouchSelectionController(view)) {
-  contents_view_->set_touch_selection_controller(
-      touch_selection_controller_.data());
-}
+      construct_props_(new ConstructProps()) {}
 
 oxide::qt::JavaScriptDialogProxy*
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
@@ -1745,16 +1739,6 @@ OxideQQuickWebView::editingCapabilities() const {
   return static_cast<EditCapabilities>(flags);
 }
 
-void OxideQQuickWebView::hideTouchSelectionController() const {
-  Q_D(const OxideQQuickWebView);
-
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->hideTouchSelectionController();
-}
-
 // static
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {
@@ -1888,7 +1872,7 @@ OxideQFindController* OxideQQuickWebView::findController() const {
 OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
   Q_D(OxideQQuickWebView);
 
-  return d->touch_selection_controller_.data();
+  return d->contents_view_->touchSelectionController();
 }
 
 #include "moc_oxideqquickwebview.cpp"

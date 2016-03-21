@@ -1049,10 +1049,6 @@ EditCapabilityFlags WebView::editFlags() const {
   return capabilities;
 }
 
-void WebView::hideTouchSelectionController() const {
-  web_view_->HideTouchSelectionController();
-}
-
 void WebView::teardownFrameTree() {
   DCHECK(!frame_tree_torn_down_);
 

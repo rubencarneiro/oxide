@@ -423,6 +423,10 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   }
 }
 
+void ContentsView::hideTouchSelectionController() {
+  view()->HideTouchSelectionController();
+}
+
 blink::WebScreenInfo ContentsView::GetScreenInfo() const {
   QScreen* screen = client_->GetScreen();
   if (!screen) {

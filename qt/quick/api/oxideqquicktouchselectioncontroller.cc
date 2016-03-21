@@ -17,6 +17,8 @@
 
 #include "oxideqquicktouchselectioncontroller.h"
 
+#include "qt/quick/oxide_qquick_contents_view.h"
+
 #include "oxideqquickwebview_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -31,7 +33,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
       , active(false)
       , handle_drag_in_progress(false) {}
 
-  OxideQQuickWebView* view;
+  oxide::qquick::ContentsView* view;
   QQmlComponent* handle;
   bool active;
   QRectF bounds;
@@ -39,7 +41,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
-    OxideQQuickWebView* view)
+    oxide::qquick::ContentsView* view)
     : d_ptr(new OxideQQuickTouchSelectionControllerPrivate()) {
   Q_D(OxideQQuickTouchSelectionController);
 

@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QQuickItem>
+#include <QScopedPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
@@ -55,11 +56,6 @@ class ContentsView : public QObject,
  public:
   ContentsView(QQuickItem* item);
   ~ContentsView() override;
-
-  void set_touch_selection_controller(
-      OxideQQuickTouchSelectionController* controller) {
-    touch_selection_controller_ = controller;
-  }
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const;
 
@@ -100,6 +96,12 @@ class ContentsView : public QObject,
     popup_menu_ = popup_menu;
   }
 
+  OxideQQuickTouchSelectionController* touchSelectionController() const {
+    return touch_selection_controller_.data();
+  }
+
+  void hideTouchSelectionController() const;
+
  private Q_SLOTS:
   void windowChanged(QQuickWindow* window);
   void screenChanged(QScreen* screen);
@@ -138,7 +140,7 @@ class ContentsView : public QObject,
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;
-  QPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
+  QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
   QPointer<QQuickWindow> window_;
   QPointer<QScreen> screen_;

@@ -306,8 +306,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
 
   EditCapabilities editingCapabilities() const;
 
-  void hideTouchSelectionController() const;
-
  public Q_SLOTS:
   void goBack();
   void goForward();

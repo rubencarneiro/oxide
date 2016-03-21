@@ -158,7 +158,7 @@ oxide::qt::WebPopupMenuProxy* ContentsView::CreateWebPopupMenu(
 
 oxide::qt::TouchHandleDrawableProxy*
 ContentsView::CreateTouchHandleDrawable() {
-  return new TouchHandleDrawable(item_, touch_selection_controller_);
+  return new TouchHandleDrawable(item_, touch_selection_controller_.data());
 }
 
 void ContentsView::TouchSelectionChanged(bool active,
@@ -187,6 +187,8 @@ void ContentsView::HandleUnhandledKeyboardEvent(QKeyEvent* event) {
 
 ContentsView::ContentsView(QQuickItem* item)
     : item_(item),
+      touch_selection_controller_(
+          new OxideQQuickTouchSelectionController(this)),
       received_new_compositor_frame_(false),
       frame_evicted_(false),
       last_composited_frame_type_(
@@ -491,6 +493,14 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
   }
 
   return node;
+}
+
+void ContentsView::hideTouchSelectionController() const {
+  if (!proxy()) {
+    return;
+  }
+
+  proxy()->hideTouchSelectionController();
 }
 
 } // namespace qquick

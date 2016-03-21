@@ -90,10 +90,7 @@ content::WebContentsImpl* WebContentsView::web_contents_impl() const {
 
 ui::TouchSelectionController*
 WebContentsView::GetTouchSelectionController() const {
-  // We don't care about checking for a fullscreen view here - we're called
-  // from StartDragging which is only supported in RenderViews
-  content::RenderWidgetHostView* view =
-      web_contents()->GetRenderWidgetHostView();
+  content::RenderWidgetHostView* view = GetRenderWidgetHostView();
   if (!view) {
     return nullptr;
   }
@@ -291,11 +288,7 @@ void WebContentsView::StartDragging(
     return;
   }
 
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
+  HideTouchSelectionController();
 
   // As our implementation of gfx::Screen::GetDisplayNearestWindow always
   // returns an invalid display, the passed in image isn't quite correct.
@@ -928,6 +921,14 @@ void WebContentsView::ScreenUpdated() {
   }
 
   content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
+}
+
+void WebContentsView::HideTouchSelectionController() {
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
 }
 
 } // namespace oxide

@@ -137,6 +137,8 @@ class WebContentsView : public content::WebContentsViewOxide,
   void FocusChanged();
   void ScreenUpdated();
 
+  void HideTouchSelectionController();
+
  private:
   WebContentsView(content::WebContents* web_contents);
 
