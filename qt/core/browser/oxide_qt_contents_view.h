@@ -89,6 +89,7 @@ class ContentsView : public ContentsViewProxy,
   void handleDragMoveEvent(QDragMoveEvent* event) override;
   void handleDragLeaveEvent(QDragLeaveEvent* event) override;
   void handleDropEvent(QDropEvent* event) override;
+  void hideTouchSelectionController() override;
 
   // InputMethodContextClient implementation
   void SetInputMethodEnabled(bool enabled);
@@ -107,7 +108,8 @@ class ContentsView : public ContentsViewProxy,
   oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(bool active,
-                             const gfx::RectF& bounds) const override;
+                             const gfx::RectF& bounds,
+                             bool handle_drag_in_progress) const override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;

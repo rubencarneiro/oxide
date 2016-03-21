@@ -66,7 +66,9 @@ class ContentsViewProxyClient {
       WebPopupMenuProxyClient* client) = 0;
   virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
-  virtual void TouchSelectionChanged(bool active, const QRectF& bounds) = 0;
+  virtual void TouchSelectionChanged(bool active,
+                                     const QRectF& bounds,
+                                     bool handle_drag_in_progress) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

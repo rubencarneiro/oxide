@@ -17,6 +17,8 @@
 
 #include "oxideqquicktouchselectioncontroller.h"
 
+#include "qt/quick/oxide_qquick_contents_view.h"
+
 #include "oxideqquickwebview_p.h"
 
 QT_BEGIN_NAMESPACE
@@ -28,16 +30,18 @@ class OxideQQuickTouchSelectionControllerPrivate {
   OxideQQuickTouchSelectionControllerPrivate()
       : view(nullptr)
       , handle(nullptr)
-      , active(false) {}
+      , active(false)
+      , handle_drag_in_progress(false) {}
 
-  OxideQQuickWebView* view;
+  oxide::qquick::ContentsView* view;
   QQmlComponent* handle;
   bool active;
   QRectF bounds;
+  bool handle_drag_in_progress;
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
-    OxideQQuickWebView* view)
+    oxide::qquick::ContentsView* view)
     : d_ptr(new OxideQQuickTouchSelectionControllerPrivate()) {
   Q_D(OxideQQuickTouchSelectionController);
 
@@ -45,6 +49,12 @@ OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
 }
 
 OxideQQuickTouchSelectionController::~OxideQQuickTouchSelectionController() {}
+
+void OxideQQuickTouchSelectionController::hide() const {
+  Q_D(const OxideQQuickTouchSelectionController);
+
+  d->view->hideTouchSelectionController();
+}
 
 bool OxideQQuickTouchSelectionController::active() const {
   Q_D(const OxideQQuickTouchSelectionController);
@@ -75,9 +85,16 @@ const QRectF& OxideQQuickTouchSelectionController::bounds() const {
   return d->bounds;
 }
 
+bool OxideQQuickTouchSelectionController::handleDragInProgress() const {
+  Q_D(const OxideQQuickTouchSelectionController);
+
+  return d->handle_drag_in_progress;
+}
+
 void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
     bool active,
-    const QRectF& bounds) {
+    const QRectF& bounds,
+    bool handle_drag_in_progress) {
   Q_D(OxideQQuickTouchSelectionController);
 
   if (active != d->active) {
@@ -88,5 +105,10 @@ void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
   if (bounds != d->bounds) {
     d->bounds = bounds;
     Q_EMIT boundsChanged();
+  }
+
+  if (handle_drag_in_progress != d->handle_drag_in_progress) {
+    d->handle_drag_in_progress = handle_drag_in_progress;
+    Q_EMIT handleDragInProgressChanged();
   }
 }

@@ -89,10 +89,7 @@ content::WebContentsImpl* WebContentsView::web_contents_impl() const {
 
 ui::TouchSelectionController*
 WebContentsView::GetTouchSelectionController() const {
-  // We don't care about checking for a fullscreen view here - we're called
-  // from StartDragging which is only supported in RenderViews
-  content::RenderWidgetHostView* view =
-      web_contents()->GetRenderWidgetHostView();
+  content::RenderWidgetHostView* view = GetRenderWidgetHostView();
   if (!view) {
     return nullptr;
   }
@@ -307,11 +304,7 @@ void WebContentsView::StartDragging(
     return;
   }
 
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
+  HideTouchSelectionController();
 
   // As our implementation of gfx::Screen::GetDisplayNearestWindow always
   // returns an invalid display, the passed in image isn't quite correct.
@@ -407,7 +400,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -434,7 +427,7 @@ void WebContentsView::DidShowFullscreenWidget(int routing_id) {
 
   web_contents()->GetRenderWidgetHostView()->Hide();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
@@ -461,7 +454,7 @@ void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
     orig_rwhv->Blur();
   }
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -472,7 +465,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   rwhv->SetContainer(this);
   interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -488,7 +481,7 @@ void WebContentsView::DidDetachInterstitialPage() {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
@@ -599,7 +592,8 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
   return client_->CreateTouchHandleDrawable();
 }
 
-void WebContentsView::TouchSelectionChanged() const {
+void WebContentsView::TouchSelectionChanged(
+    bool handle_drag_in_progress) const {
   if (!client_) {
     return;
   }
@@ -623,7 +617,7 @@ void WebContentsView::TouchSelectionChanged() const {
   }
   bounds.Offset(0, offset);
 
-  client_->TouchSelectionChanged(active, bounds);
+  client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
 }
 
 void WebContentsView::EditingCapabilitiesChanged() {
@@ -686,7 +680,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 bool WebContentsView::IsVisible() const {
@@ -944,6 +938,14 @@ void WebContentsView::ScreenUpdated() {
   }
 
   content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
+}
+
+void WebContentsView::HideTouchSelectionController() {
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
 }
 
 } // namespace oxide
