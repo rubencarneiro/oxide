@@ -160,8 +160,16 @@ gfx::RectF WebContentsView::GetBoundsF() const {
     return gfx::RectF();
   }
 
-  // If we're in fullscreen mode, return the screen size rather than the
-  // view bounds. This works around an issue where buggy Flash content
+  if (ViewSizeShouldBeScreenSize()) {
+    return gfx::RectF(GetScreenInfo().rect);
+  }
+
+  return client_->GetBounds();
+}
+
+bool WebContentsView::ViewSizeShouldBeScreenSize() const {
+  // If we're in fullscreen mode, we force the view bounds to be based on the
+  // screen size. This works around an issue where buggy Flash content
   // expects the view to resize synchronously when it goes fullscreen, but it
   // happens asynchronously instead.
   // See https://launchpad.net/bugs/1510508
@@ -170,13 +178,22 @@ gfx::RectF WebContentsView::GetBoundsF() const {
   //  this is going to break
   FullscreenHelper* fullscreen =
       FullscreenHelper::FromWebContents(web_contents());
-  if (fullscreen &&
-      fullscreen->IsFullscreen() &&
-      web_contents()->GetFullscreenRenderWidgetHostView()) {
-    return gfx::RectF(GetScreenInfo().rect);
+  if (!fullscreen) {
+    return false;
   }
 
-  return client_->GetBounds();
+  if (!fullscreen->IsFullscreen()) {
+    // We're not in fullscreen
+    return false;
+  }
+
+  if (!web_contents()->GetFullscreenRenderWidgetHostView()) {
+    // Only do this for fullscreen widgets. We don't do this for the HTML5
+    // fullscreen API
+    return false;
+  }
+
+  return true;
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -916,6 +933,11 @@ void WebContentsView::FocusChanged() {
 }
 
 void WebContentsView::ScreenUpdated() {
+  if (ViewSizeShouldBeScreenSize()) {
+    // See https://launchpad.net/bugs/1558792
+    WasResized();
+  }
+
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;

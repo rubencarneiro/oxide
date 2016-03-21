@@ -158,6 +158,8 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   gfx::RectF GetBoundsF() const;
 
+  bool ViewSizeShouldBeScreenSize() const;
+
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
   gfx::NativeView GetContentNativeView() const override;
