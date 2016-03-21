@@ -202,7 +202,7 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 7>(uri, 1, 12, "WebView");
 
     qmlRegisterUncreatableType<OxideQQuickTouchSelectionController, 1>(
-        uri, 1, 14, "TouchSelectionController",
+        uri, 1, 15, "TouchSelectionController",
         "TouchSelectionController is accessed via "
         "WebView.touchSelectionController");
   }

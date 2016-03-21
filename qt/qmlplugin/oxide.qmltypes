@@ -294,7 +294,7 @@ Module {
         prototype: "QObject"
         exports: [
             "TouchSelectionController 1.12",
-            "TouchSelectionController 1.14"
+            "TouchSelectionController 1.15"
         ]
         isCreatable: false
         exportMetaObjectRevisions: [0, 1]
