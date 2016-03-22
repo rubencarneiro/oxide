@@ -32,6 +32,7 @@
 #include "media/base/bind_to_current_loop.h"
 #include "media/base/media_keys.h"
 #include "media/base/media_switches.h"
+#include "media/base/timestamp_constants.h"
 #include "media/base/video_frame.h"
 #include "net/base/mime_util.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayerClient.h"
@@ -310,11 +311,11 @@ WebSize WebMediaPlayer::naturalSize() const {
   return natural_size_;
 }
 
-WebMediaPlayer::NetworkState WebMediaPlayer::networkState() const {
+WebMediaPlayer::NetworkState WebMediaPlayer::getNetworkState() const {
   return network_state_;
 }
 
-WebMediaPlayer::ReadyState WebMediaPlayer::readyState() const {
+WebMediaPlayer::ReadyState WebMediaPlayer::getReadyState() const {
   return ready_state_;
 }
 
@@ -414,7 +415,7 @@ void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned ch
   NOTIMPLEMENTED();
 }
 
-void WebMediaPlayer::OnHidden(bool must_suspend) {
+void WebMediaPlayer::OnHidden() {
   // RendererMediaPlayerManager will not call SuspendAndReleaseResources() if we
   // were already in the paused state; thus notify the MediaWebContentsObserver
   // that we've been hidden so any lingering MediaSessions are released.
@@ -423,6 +424,12 @@ void WebMediaPlayer::OnHidden(bool must_suspend) {
 }
 
 void WebMediaPlayer::OnShown() {}
+
+void WebMediaPlayer::OnSuspendRequested(bool must_suspend) {
+  if (must_suspend && delegate_) {
+    delegate_->PlayerGone(delegate_id_);
+  }
+}
 
 void WebMediaPlayer::OnPlay() {
   play();

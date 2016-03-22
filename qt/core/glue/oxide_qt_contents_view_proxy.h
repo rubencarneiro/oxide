@@ -92,6 +92,8 @@ class ContentsViewProxy {
   virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;
   virtual void handleDragLeaveEvent(QDragLeaveEvent* event) = 0;
   virtual void handleDropEvent(QDropEvent* event) = 0;
+
+  virtual void hideTouchSelectionController() = 0;
 };
 
 } // namespace qt

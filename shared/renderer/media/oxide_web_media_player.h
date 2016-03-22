@@ -121,8 +121,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   bool didLoadingProgress();
 
   // Internal states of loading and network.
-  blink::WebMediaPlayer::NetworkState networkState() const;
-  blink::WebMediaPlayer::ReadyState readyState() const;
+  blink::WebMediaPlayer::NetworkState getNetworkState() const;
+  blink::WebMediaPlayer::ReadyState getReadyState() const;
 
   bool hasSingleSecurityOrigin() const;
   bool didPassCORSAccessCheck() const;
@@ -173,8 +173,9 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   void Detach();
 
   // WebMediaPlayerDelegate::Observer implementation.
-  void OnHidden(bool must_suspend) override;
+  void OnHidden() override;
   void OnShown() override;
+  void OnSuspendRequested(bool must_suspend) override;
   void OnPlay() override;
   void OnPause() override;
   void OnVolumeMultiplierUpdate(double multiplier) override;

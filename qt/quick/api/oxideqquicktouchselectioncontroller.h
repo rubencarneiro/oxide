@@ -48,12 +48,15 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   Q_PROPERTY(bool active READ active NOTIFY activeChanged)
   Q_PROPERTY(QQmlComponent* handle READ handle WRITE setHandle NOTIFY handleChanged)
   Q_PROPERTY(QRectF bounds READ bounds NOTIFY boundsChanged)
+  Q_PROPERTY(bool handleDragInProgress READ handleDragInProgress NOTIFY handleDragInProgressChanged REVISION 1)
 
   Q_DISABLE_COPY(OxideQQuickTouchSelectionController)
   Q_DECLARE_PRIVATE(OxideQQuickTouchSelectionController)
 
  public:
   ~OxideQQuickTouchSelectionController() Q_DECL_OVERRIDE;
+
+  Q_REVISION(1) Q_INVOKABLE void hide() const;
 
   enum HandleOrientation {
     HandleOrientationLeft,
@@ -69,18 +72,24 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
 
   const QRectF& bounds() const;
 
+  bool handleDragInProgress() const;
+
  Q_SIGNALS:
   void activeChanged();
   void handleChanged();
   void boundsChanged();
+  Q_REVISION(1) void handleDragInProgressChanged();
 
  private:
   friend class OxideQQuickWebViewPrivate;
   friend class oxide::qquick::ContentsView;
 
-  Q_DECL_HIDDEN OxideQQuickTouchSelectionController(OxideQQuickWebView* view);
+  Q_DECL_HIDDEN OxideQQuickTouchSelectionController(
+      oxide::qquick::ContentsView* view);
 
-  void onTouchSelectionChanged(bool active, const QRectF& bounds);
+  void onTouchSelectionChanged(bool active,
+                               const QRectF& bounds,
+                               bool handle_drag_in_progress);
 
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;
 };

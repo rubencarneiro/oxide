@@ -137,7 +137,7 @@ void BrowserMediaPlayerManager::GetCookies(
     return;
   }
 
-  scoped_refptr<net::CookieStore> cookie_store = browser_context->GetCookieStore();
+  net::CookieStore* cookie_store = browser_context->GetCookieStore();
   net::CookieOptions cookie_options;
 
   cookie_options.set_include_httponly();
