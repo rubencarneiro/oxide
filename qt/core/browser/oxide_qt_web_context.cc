@@ -165,311 +165,14 @@ struct WebContext::ConstructProperties {
 
 class SetCookiesContext : public base::RefCounted<SetCookiesContext> {
  public:
-  SetCookiesContext(
-      const base::Callback<void(const QList<QNetworkCookie>&)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner)
-      : callback(callback), task_runner(task_runner), remaining(0) {}
+  SetCookiesContext(int request_id)
+      : request_id(request_id),
+        remaining(0) {}
 
-  base::Callback<void(const QList<QNetworkCookie>&)> callback;
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner;
+  int request_id;
   int remaining;
   QList<QNetworkCookie> failed;
 };
-
-class WebContext::CookieStoreProxy
-    : public base::RefCountedThreadSafe<CookieStoreProxy> {
- public:
-  CookieStoreProxy();
-  ~CookieStoreProxy();
-
-  void SetContext(BrowserContextIOData* context);
-
-  void GetCookies(const QUrl& url,
-                  const base::Callback<void(const net::CookieList&)>& callback);
-  void GetAllCookies(const base::Callback<void(const net::CookieList&)>& callback);
-  void SetCookies(const QUrl& url,
-                  const QList<QNetworkCookie>& cookies,
-                  const base::Callback<void(const QList<QNetworkCookie>&)>& callback);
-
-  void DeleteAllCookies(const base::Callback<void(int)>& callback);
-
- private:
-  net::CookieStore* GetCookieStore() const;
-
-  void GetCookiesOnIOThread(
-      const QUrl& url,
-      const base::Callback<void(const net::CookieList&)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner);
-  void GetCookiesCallback(
-      const base::Callback<void(const net::CookieList&)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-      const net::CookieList& cookies);
-  void DeliverCookiesGotOnOwnerThread(
-      const base::Callback<void(const net::CookieList&)>& callback,
-      const net::CookieList& cookies);
-
-  void GetAllCookiesOnIOThread(
-      const base::Callback<void(const net::CookieList&)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner);
-
-  void SetCookiesOnIOThread(
-      const QUrl& url,
-      const QList<QNetworkCookie>& cookies,
-      const base::Callback<void(const QList<QNetworkCookie>&)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner);
-  void SetCookieCallback(scoped_refptr<SetCookiesContext> context,
-                         const QNetworkCookie& cookie,
-                         bool success);
-  void DeliverCookiesSet(SetCookiesContext* ctxt);
-  void DeliverCookiesSetOnOwnerThread(
-      const base::Callback<void(const QList<QNetworkCookie>&)>& callback,
-      const QList<QNetworkCookie>& failed);
-
-  void DeleteAllCookiesOnIOThread(
-      const base::Callback<void(int)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner);
-  void DeleteAllCookiesCallback(
-      const base::Callback<void(int)>& callback,
-      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-      int num_deleted);
-  void DeliverCookiesDeletedOnOwnerThread(
-      const base::Callback<void(int)>& callback,
-      int num_deleted);
-
-  mutable base::Lock context_lock_;
-
-  // Access is guaranteed to be safe on the IO thread, as this pointer is
-  // cleared on the UI thread before BrowserContextIOData is scheduled for
-  // deletion on the IO thread
-  BrowserContextIOData* context_;
-
-  bool in_set_cookies_;
-};
-
-net::CookieStore* WebContext::CookieStoreProxy::GetCookieStore() const {
-  base::AutoLock lock(context_lock_);
-
-  if (!context_) {
-    return nullptr;
-  }
-
-  return context_->GetCookieStore();
-}
-
-void WebContext::CookieStoreProxy::GetCookiesOnIOThread(
-    const QUrl& url,
-    const base::Callback<void(const net::CookieList&)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  net::CookieStore* cookie_store = GetCookieStore();
-  if (!cookie_store) {
-    GetCookiesCallback(callback, task_runner, net::CookieList());
-    return;
-  }
-
-  cookie_store->GetAllCookiesForURLAsync(
-      GURL(url.toString().toStdString()),
-      base::Bind(&WebContext::CookieStoreProxy::GetCookiesCallback,
-                 this, callback, task_runner));
-}
-
-void WebContext::CookieStoreProxy::GetCookiesCallback(
-    const base::Callback<void(const net::CookieList&)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-    const net::CookieList& cookies) {
-  task_runner->PostTask(
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::DeliverCookiesGotOnOwnerThread,
-                 this, callback, cookies));
-}
-
-void WebContext::CookieStoreProxy::DeliverCookiesGotOnOwnerThread(
-    const base::Callback<void(const net::CookieList&)>& callback,
-    const net::CookieList& cookies) {
-  callback.Run(cookies);
-}
-
-void WebContext::CookieStoreProxy::GetAllCookiesOnIOThread(
-    const base::Callback<void(const net::CookieList&)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  net::CookieStore* cookie_store = GetCookieStore();
-  if (!cookie_store) {
-    GetCookiesCallback(callback, task_runner, net::CookieList());
-    return;
-  }
-
-  cookie_store->GetAllCookiesAsync(
-      base::Bind(&WebContext::CookieStoreProxy::GetCookiesCallback,
-                 this, callback, task_runner));
-}
-
-void WebContext::CookieStoreProxy::SetCookiesOnIOThread(
-    const QUrl& url,
-    const QList<QNetworkCookie>& cookies,
-    const base::Callback<void(const QList<QNetworkCookie>&)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  base::AutoReset<bool> in_set_cookies(&in_set_cookies_, true);
-
-  scoped_refptr<SetCookiesContext> ctxt =
-      new SetCookiesContext(callback, task_runner);
-
-  net::CookieStore* cookie_store = GetCookieStore();
-  if (!cookie_store) {
-    ctxt->failed = cookies;
-    DeliverCookiesSet(ctxt.get());
-    return;
-  }
-
-  for (int i = 0; i < cookies.size(); ++i) {
-    const QNetworkCookie& cookie = cookies.at(i);
-
-    if (cookie.name().isEmpty()) {
-      ctxt->failed.push_back(cookie);
-      continue;
-    }
-
-    base::Time expiry;
-    if (cookie.expirationDate().isValid()) {
-      expiry = base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch());
-    }
-
-    ctxt->remaining++;
-
-    cookie_store->SetCookieWithDetailsAsync(
-        GURL(url.toString().toStdString()),
-        std::string(cookie.name().constData()),
-        std::string(cookie.value().constData()),
-        std::string(cookie.domain().toUtf8().constData()),
-        std::string(cookie.path().toUtf8().constData()),
-        base::Time(),
-        expiry,
-        base::Time(),
-        cookie.isSecure(),
-        cookie.isHttpOnly(),
-        false, // same_site
-        false, // enforce_strict_secure
-        net::COOKIE_PRIORITY_DEFAULT,
-        base::Bind(&WebContext::CookieStoreProxy::SetCookieCallback,
-                   this, ctxt, cookie));
-  }
-
-  if (ctxt->remaining == 0) {
-    DeliverCookiesSet(ctxt.get());
-  }
-}
-
-void WebContext::CookieStoreProxy::SetCookieCallback(
-    scoped_refptr<SetCookiesContext> ctxt,
-    const QNetworkCookie& cookie,
-    bool success) {
-  DCHECK_GT(ctxt->remaining, 0);
-
-  if (!success) {
-    ctxt->failed.push_back(cookie);
-  }
-
-  if (--ctxt->remaining > 0 || in_set_cookies_) {
-    return;
-  }
-
-  DeliverCookiesSet(ctxt.get());
-}
-
-void WebContext::CookieStoreProxy::DeliverCookiesSet(SetCookiesContext* ctxt) {
-  ctxt->task_runner->PostTask(
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::DeliverCookiesSetOnOwnerThread,
-                 this, ctxt->callback, ctxt->failed));
-}
-
-void WebContext::CookieStoreProxy::DeliverCookiesSetOnOwnerThread(
-    const base::Callback<void(const QList<QNetworkCookie>&)>& callback,
-    const QList<QNetworkCookie>& failed) {
-  callback.Run(failed);
-}
-
-void WebContext::CookieStoreProxy::DeleteAllCookiesOnIOThread(
-    const base::Callback<void(int)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner) {
-  net::CookieStore* cookie_store = GetCookieStore();
-  if (!cookie_store) {
-    DeleteAllCookiesCallback(callback, task_runner, 0);
-    return;
-  }
-
-  cookie_store->DeleteAllAsync(
-      base::Bind(&WebContext::CookieStoreProxy::DeleteAllCookiesCallback,
-                 this, callback, task_runner));
-}
-
-void WebContext::CookieStoreProxy::DeleteAllCookiesCallback(
-    const base::Callback<void(int)>& callback,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-    int num_deleted) {
-  task_runner->PostTask(
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::DeliverCookiesDeletedOnOwnerThread,
-                 this, callback, num_deleted));
-}
-
-void WebContext::CookieStoreProxy::DeliverCookiesDeletedOnOwnerThread(
-    const base::Callback<void(int)>& callback,
-    int num_deleted) {
-  callback.Run(num_deleted);
-}
-
-WebContext::CookieStoreProxy::CookieStoreProxy()
-    : context_(nullptr),
-      in_set_cookies_(false) {}
-
-WebContext::CookieStoreProxy::~CookieStoreProxy() {}
-
-void WebContext::CookieStoreProxy::SetContext(BrowserContextIOData* context) {
-  base::AutoLock lock(context_lock_);
-  context_ = context;
-}
-
-void WebContext::CookieStoreProxy::GetCookies(
-    const QUrl& url,
-    const base::Callback<void(const net::CookieList&)>& callback) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::GetCookiesOnIOThread,
-                 this, url, callback,
-                 base::ThreadTaskRunnerHandle::Get()));
-}
-
-void WebContext::CookieStoreProxy::GetAllCookies(
-    const base::Callback<void(const net::CookieList&)>& callback) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::GetAllCookiesOnIOThread,
-                 this, callback,
-                 base::ThreadTaskRunnerHandle::Get()));
-}
-
-void WebContext::CookieStoreProxy::SetCookies(
-    const QUrl& url,
-    const QList<QNetworkCookie>& cookies,
-    const base::Callback<void(const QList<QNetworkCookie>&)>& callback) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::SetCookiesOnIOThread,
-                 this, url, cookies, callback,
-                 base::ThreadTaskRunnerHandle::Get()));
-}
-
-void WebContext::CookieStoreProxy::DeleteAllCookies(
-    const base::Callback<void(int)>& callback) {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::IO,
-      FROM_HERE,
-      base::Bind(&WebContext::CookieStoreProxy::DeleteAllCookiesOnIOThread,
-                 this, callback,
-                 base::ThreadTaskRunnerHandle::Get()));
-}
 
 QSharedPointer<WebContextProxyClient::IOClient>
 WebContext::BrowserContextDelegate::GetIOClient() {
@@ -654,9 +357,25 @@ void WebContext::UpdateUserScripts() {
       ->SerializeUserScriptsAndSendUpdates(scripts);
 }
 
-void WebContext::SetCookiesCallback(int request_id,
-                                    const QList<QNetworkCookie>& failed) {
-  client_->CookiesSet(request_id, failed);
+void WebContext::SetCookieCallback(scoped_refptr<SetCookiesContext> ctxt,
+                                   const QNetworkCookie& cookie,
+                                   bool success) {
+  DCHECK_GT(ctxt->remaining, 0);
+
+  if (!success) {
+    ctxt->failed.push_back(cookie);
+  }
+
+  if (--ctxt->remaining > 0) {
+    return;
+  }
+
+  DeliverSetCookiesResponse(ctxt);
+}
+
+void WebContext::DeliverSetCookiesResponse(
+    scoped_refptr<SetCookiesContext> ctxt) {
+  client_->CookiesSet(ctxt->request_id, ctxt->failed);
 }
 
 void WebContext::GetCookiesCallback(int request_id,
@@ -683,8 +402,7 @@ void WebContext::GetCookiesCallback(int request_id,
   client_->CookiesRetrieved(request_id, qcookies);
 }
 
-void WebContext::DeleteCookiesCallback(int request_id,
-                                       int num_deleted) {
+void WebContext::DeleteCookiesCallback(int request_id, int num_deleted) {
   client_->CookiesDeleted(request_id, num_deleted);
 }
 
@@ -692,7 +410,6 @@ WebContext::WebContext(WebContextProxyClient* client,
                        QObject* handle)
     : client_(client),
       construct_props_(new ConstructProperties()),
-      cookie_store_proxy_(new CookieStoreProxy()),
       weak_factory_(this) {
   DCHECK(client);
   DCHECK(handle);
@@ -743,8 +460,6 @@ WebContext::~WebContext() {
     context_->SetDelegate(nullptr);
     MediaCaptureDevicesContext::Get(context_.get())->set_client(nullptr);
   }
-
-  cookie_store_proxy_->SetContext(nullptr);
 }
 
 // static
@@ -836,8 +551,6 @@ oxide::BrowserContext* WebContext::GetContext() {
   devtools->SetEnabled(construct_props_->devtools_enabled);
 
   context_->SetDelegate(delegate_.get());
-
-  cookie_store_proxy_->SetContext(context_->GetIOData());
 
   construct_props_.reset();
 
@@ -1086,10 +799,48 @@ int WebContext::setCookies(const QUrl& url,
                            const QList<QNetworkCookie>& cookies) {
   int request_id = GetNextCookieRequestId();
 
-  cookie_store_proxy_->SetCookies(
-      url, cookies,
-      base::Bind(&WebContext::SetCookiesCallback,
-                 weak_factory_.GetWeakPtr(), request_id));
+  net::CookieStore* cookie_store = context_->GetCookieStore();
+  scoped_refptr<SetCookiesContext> ctxt = new SetCookiesContext(request_id);
+  
+  for (int i = 0; i < cookies.size(); ++i) {
+    const QNetworkCookie& cookie = cookies.at(i);
+
+    if (cookie.name().isEmpty()) {
+      ctxt->failed.push_back(cookie);
+      continue;
+    }
+
+    base::Time expiry;
+    if (cookie.expirationDate().isValid()) {
+      expiry = base::Time::FromJsTime(cookie.expirationDate().toMSecsSinceEpoch());
+    }
+
+    ctxt->remaining++;
+
+    cookie_store->SetCookieWithDetailsAsync(
+        GURL(url.toString().toStdString()),
+        std::string(cookie.name().constData()),
+        std::string(cookie.value().constData()),
+        std::string(cookie.domain().toUtf8().constData()),
+        std::string(cookie.path().toUtf8().constData()),
+        base::Time(),
+        expiry,
+        base::Time(),
+        cookie.isSecure(),
+        cookie.isHttpOnly(),
+        false, // same_site
+        false, // enforce_strict_secure
+        net::COOKIE_PRIORITY_DEFAULT,
+        base::Bind(&WebContext::SetCookieCallback,
+                   weak_factory_.GetWeakPtr(), ctxt, cookie));
+  }
+
+  if (ctxt->remaining == 0) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE,
+        base::Bind(&WebContext::DeliverSetCookiesResponse,
+                   weak_factory_.GetWeakPtr(), ctxt));
+  }
 
   return request_id;
 }
@@ -1097,8 +848,8 @@ int WebContext::setCookies(const QUrl& url,
 int WebContext::getCookies(const QUrl& url) {
   int request_id = GetNextCookieRequestId();
 
-  cookie_store_proxy_->GetCookies(
-      url,
+  context_->GetCookieStore()->GetAllCookiesForURLAsync(
+      GURL(url.toString().toStdString()),
       base::Bind(&WebContext::GetCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
 
@@ -1108,7 +859,7 @@ int WebContext::getCookies(const QUrl& url) {
 int WebContext::getAllCookies() {
   int request_id = GetNextCookieRequestId();
 
-  cookie_store_proxy_->GetAllCookies(
+  context_->GetCookieStore()->GetAllCookiesAsync(
       base::Bind(&WebContext::GetCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
 
@@ -1118,10 +869,9 @@ int WebContext::getAllCookies() {
 int WebContext::deleteAllCookies() {
   int request_id = GetNextCookieRequestId();
 
-  cookie_store_proxy_->DeleteAllCookies(
+  context_->GetCookieStore()->DeleteAllAsync(
       base::Bind(&WebContext::DeleteCookiesCallback,
                  weak_factory_.GetWeakPtr(), request_id));
-
 
   return request_id;
 }

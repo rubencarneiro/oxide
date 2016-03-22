@@ -60,6 +60,7 @@ class BrowserContextImpl;
 class BrowserContextObserver;
 class BrowserContextSharedData;
 class BrowserContextSharedIOData;
+class CookieStoreUIProxy;
 class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
@@ -225,6 +226,8 @@ class BrowserContext
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
 
+  net::CookieStore* GetCookieStore() const;
+
   // XXX: This will be going away
   // (see the comment in oxide_temporary_saved_permission_context.h)
   TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
@@ -271,6 +274,8 @@ class BrowserContext
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   scoped_ptr<PermissionManager> permission_manager_;
+
+  scoped_ptr<CookieStoreUIProxy> cookie_store_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContext);
 };
