@@ -1,5 +1,6 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
+// Copyright (C) 2015 The Qt Company Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,12 +22,9 @@
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlError>
-#include <QQmlNetworkAccessManagerFactory>
 #include <QQuickView>
 #include <QString>
 #include <QStringList>
@@ -47,105 +45,19 @@
 
 #include "qt/core/api/oxideqglobal.h"
 
-class TestNetworkAccessManager : public QNetworkAccessManager {
- public:
-  TestNetworkAccessManager(const QDir& test_dir, QObject* parent)
-      : QNetworkAccessManager(parent),
-        test_dir_(test_dir) {}
-  virtual ~TestNetworkAccessManager() {}
+#include "quick_test_compat.h"
+#include "test_nam_factory.h"
 
-  QNetworkReply* createRequest(QNetworkAccessManager::Operation op,
-                               const QNetworkRequest& req,
-                               QIODevice* outgoing_data) final;
-
- private:
-  QDir test_dir_;
-};
-
-QNetworkReply* TestNetworkAccessManager::createRequest(
-    QNetworkAccessManager::Operation op,
-    const QNetworkRequest& req,
-    QIODevice* outgoing_data) {
-  if (req.url().scheme() == QLatin1String("test")) {
-    if (!req.url().host().isEmpty()) {
-      return nullptr;
-    }
-
-    QUrl redirect;
-    redirect.setScheme(QLatin1String("file"));
-
-    QFileInfo fi(test_dir_, req.url().path().mid(1));
-    redirect.setPath(fi.filePath());
-
-    QNetworkRequest r(req);
-    r.setUrl(redirect);
-
-    return QNetworkAccessManager::createRequest(op, r, outgoing_data);
-  }
-
-  return QNetworkAccessManager::createRequest(op, req, outgoing_data);
-}
-
-class TestNetworkAccessManagerFactory : public QQmlNetworkAccessManagerFactory {
- public:
-  TestNetworkAccessManagerFactory(const QDir& test_dir)
-      : test_dir_(test_dir) {}
-  virtual ~TestNetworkAccessManagerFactory() {}
-
-  QNetworkAccessManager* create(QObject* parent) final {
-    return new TestNetworkAccessManager(test_dir_, parent);
-  }
-
- private:
-  QDir test_dir_;
-};
-
-// We don't use quick_test_main() here for running the qmltest binary as we want to
-// be able to have a per-test datadir. However, some of quick_test_main() is
-// duplicated here because we still use other bits of the QtQuickTest module
-
-class QTestRootObject : public QObject
-{
-  Q_OBJECT
-  Q_PROPERTY(bool windowShown READ windowShown NOTIFY windowShownChanged)
-  Q_PROPERTY(bool hasTestCase READ hasTestCase WRITE setHasTestCase NOTIFY hasTestCaseChanged)
-
- public:
-  QTestRootObject(QObject* parent = 0)
-      : QObject(parent),
-        has_quit_(false), window_shown_(false), has_test_case_(false) {}
-
-  static QTestRootObject* instance() {
-    static QPointer<QTestRootObject> object = new QTestRootObject();
-    Q_ASSERT(object);
-    return object;
-  }
-
-  bool has_quit_:1;
-  bool hasTestCase() const { return has_test_case_; }
-  void setHasTestCase(bool value) { has_test_case_ = value; emit hasTestCaseChanged(); }
-
-  bool windowShown() const { return window_shown_; }
-  void setWindowShown(bool value) { window_shown_ = value; emit windowShownChanged(); }
-
-  void init() { setWindowShown(false); setHasTestCase(false); has_quit_ = false; }
-
- Q_SIGNALS:
-  void windowShownChanged();
-  void hasTestCaseChanged();
-
- private Q_SLOTS:
-  void quit() { has_quit_ = true; }
-
- private:
-  bool window_shown_:1;
-  bool has_test_case_:1;
-};
+// We don't use quick_test_main() here for running the qmltest binary as we
+// want to be able to have a per-test datadir. However, some of
+// quick_test_main() is duplicated here because we still use other bits of the
+// QtQuickTest module
 
 static QObject* GetTestRootObject(QQmlEngine* engine, QJSEngine* js_engine)
 {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
+
   return QTestRootObject::instance();
 }
 
@@ -355,7 +267,7 @@ int main(int argc, char** argv) {
     view.setObjectName(fi.baseName());
     view.setTitle(view.objectName());
 
-    QTestRootObject::instance()->init();
+    QTestRootObject::instance()->reset();
 
     QString path = fi.absoluteFilePath();
     view.setSource(QUrl::fromLocalFile(path));
@@ -369,21 +281,35 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    if (!QTestRootObject::instance()->has_quit_) {
+    if (!QTestRootObject::instance()->hasQuit()) {
       view.setFramePosition(QPoint(50, 50));
       if (view.size().isEmpty()) {
-        qWarning().nospace() << "Test '" << QDir::toNativeSeparators(path) <<
-                                "' has invalid size " << view.size() <<
-                                ", resizing.";
+        qWarning().nospace() <<
+            "Test '" << QDir::toNativeSeparators(path) << "' has invalid "
+            "size " << view.size() << ", resizing.";
         view.resize(200, 200);
       }
-      view.show();
+      view.show(); 
+      if (!QTest::qWaitForWindowExposed(&view)) {
+        qWarning().nospace() <<
+            "Test '" << QDir::toNativeSeparators(path) << "' window not "
+            "exposed after show().";
+      }
       view.requestActivate();
-      QTest::qWaitForWindowExposed(&view);
+      if (!QTest::qWaitForWindowActive(&view)) {
+        qWarning().nospace() <<
+            "Test '" << QDir::toNativeSeparators(path) << "' window not active "
+            "after requestActivate().";
+      }
       if (view.isExposed()) {
         QTestRootObject::instance()->setWindowShown(true);
+      } else {
+        qWarning().nospace() <<
+            "Test '" << QDir::toNativeSeparators(path) << "' window was never "
+            "exposed! If the test case was expecting windowShown, it will "
+            "hang.";
       }
-      if (!QTestRootObject::instance()->has_quit_ &&
+      if (!QTestRootObject::instance()->hasQuit() &&
           QTestRootObject::instance()->hasTestCase()) {
         event_loop.exec();
       }
@@ -393,5 +319,3 @@ int main(int argc, char** argv) {
   QuickTestResult::setProgramName(nullptr);
   return QuickTestResult::exitCode();
 }
-
-#include "main.moc"

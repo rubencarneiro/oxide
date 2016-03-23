@@ -77,7 +77,10 @@ add_custom_target(
     DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
 
 set(QML_TEST qmltest)
-set(QML_TEST_SRCS main.cc)
+set(QML_TEST_SRCS
+    main.cc
+    quick_test_compat.cc
+    test_nam_factory.cc)
 
 add_executable(${QML_TEST} ${QML_TEST_SRCS})
 target_link_libraries(${QML_TEST}
