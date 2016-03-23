@@ -258,6 +258,9 @@ class WebView : public oxide::WebViewClient,
 
   EditCapabilityFlags editFlags() const override;
 
+  qreal zoomFactor() const override;
+  void setZoomFactor(qreal factor) override;
+
   void teardownFrameTree() override;
 
   scoped_ptr<ContentsView> contents_view_;

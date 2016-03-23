@@ -34,7 +34,6 @@
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
-#include <QtQml>
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
@@ -1737,6 +1736,31 @@ OxideQQuickWebView::editingCapabilities() const {
 
   oxide::qt::EditCapabilityFlags flags = d->proxy_->editFlags();
   return static_cast<EditCapabilities>(flags);
+}
+
+qreal OxideQQuickWebView::zoomFactor() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return 1.0;
+  }
+
+  return d->proxy_->zoomFactor();
+}
+
+void OxideQQuickWebView::setZoomFactor(qreal factor) {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return;
+  }
+
+  qreal old_factor = zoomFactor();
+  d->proxy_->setZoomFactor(factor);
+
+  if (!qFuzzyCompare(old_factor, zoomFactor())) {
+    emit zoomFactorChanged();
+  }
 }
 
 // static
