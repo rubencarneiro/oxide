@@ -16,6 +16,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(AutoGenerateHelper)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Qml REQUIRED)
@@ -97,42 +99,47 @@ set_target_properties(
     RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR}
     AUTOMOC TRUE)
 
-function(add_qml_test)
-  cmake_parse_arguments(_ARGS "SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
-  if(NOT _ARGS_NAME)
-    message(FATAL_ERROR "You must specify NAME when calling add_qml_test")
+function(make_qml_test_config)
+  cmake_parse_arguments(_ARGS "" "OUTPUT;TEST_DIR" "" "${ARGN}")
+
+  if(NOT DEFINED _ARGS_TEST_DIR)
+    message(FATAL_ERROR "Missing option TEST_DIR")
   endif()
-  if(NOT _ARGS_TEST_DIR)
-    message(FATAL_ERROR "You must specify DATA_DIR when calling add_qml_test")
-  endif()
-  if(NOT _ARGS_SERVER_DIR)
-    set(_ARGS_SERVER_DIR ${_ARGS_TEST_DIR})
+  if(NOT DEFINED _ARGS_OUTPUT)
+    message(FATAL_ERROR "Missing option OUTPUT")
   endif()
 
-  set(TEST_COMMAND
+  set(QML_TEST_EXEC $<TARGET_FILE:${QML_TEST}>)
+  set(INPUT_DIR ${_ARGS_TEST_DIR})
+  set(QT_PLUGIN_PATH ${OXIDE_QTPLUGIN_OUTPUT_DIR})
+  set(SERVER_DIR ${_ARGS_TEST_DIR})
+  auto_generate_file(OUTPUT ${_ARGS_OUTPUT}
+                     INPUT ${CMAKE_CURRENT_SOURCE_DIR}/qml-test.conf.in
+                     VARS QML_TEST_EXEC INPUT_DIR QT_PLUGIN_PATH SERVER_DIR)
+endfunction()
+
+function(add_qml_test)
+  cmake_parse_arguments(_ARGS "" "NAME;TEST_DIR" "" "${ARGN}")
+
+  if(NOT DEFINED _ARGS_TEST_DIR)
+    message(FATAL_ERROR "Missing option TEST_DIR")
+  endif()
+  if(NOT DEFINED _ARGS_NAME)
+    message(FATAL_ERROR "Missing option NAME")
+  endif()
+
+  set(_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/${_ARGS_NAME}.conf)
+
+  make_qml_test_config(OUTPUT ${_CONFIG} TEST_DIR ${_ARGS_TEST_DIR})
+
+  set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
-      --server-dir ${_ARGS_SERVER_DIR}
-      --server-config 8080
-      --server-config "4443:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTest")
-
-  if(_ARGS_SSL_TESTS)
-    list(APPEND TEST_COMMAND
-         --server-config "4444:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestExpired"
-         --server-config "4445:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestSelfSigned"
-         --server-config "4446:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestBadIdentity")
-  endif()
-
-  list(APPEND TEST_COMMAND --
-       $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
-       -input ${_ARGS_TEST_DIR}
-       -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR}
-       -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
-
-  add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
+      --config ${_CONFIG})
+  add_test(NAME ${_ARGS_NAME} COMMAND ${_COMMAND})
 endfunction()
 
 add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
 add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
 add_qml_test(NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
-add_qml_test(NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl SSL_TESTS)
+add_qml_test(NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl)

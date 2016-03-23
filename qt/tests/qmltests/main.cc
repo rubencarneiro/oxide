@@ -213,38 +213,44 @@ static QString stripQuotes(const QString& in) {
 }
 
 int main(int argc, char** argv) {
-  QStringList imports;
-  QStringList library_paths;
+  QString plugin_path;
   QString test_path;
   QByteArray name;
+  QString data_dir;
 
   int index = 1;
   int outargc = 1;
   while (index < argc) {
     char* arg = argv[index];
-    if (QLatin1String(arg) == QLatin1String("-import") && (index + 1) < argc) {
-      imports.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-input") && (index + 1) < argc) {
+    if (QLatin1String(arg) == QLatin1String("--input") && (index + 1) < argc) {
       if (!test_path.isEmpty()) {
-        qFatal("Can only specify -input once");
+        qFatal("Can only specify --input once");
       }
       test_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-name") && (index + 1) < argc) {
+    } else if (QLatin1String(arg) == QLatin1String("--name") && (index + 1) < argc) {
       if (!name.isEmpty()) {
-        qFatal("Can only specify -name once");
+        qFatal("Can only specify --name once");
       }
       name = stripQuotes(QString::fromLatin1(argv[index + 1])).toLatin1();
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-add-library-path") && (index + 1) < argc) {
-      library_paths.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
+    } else if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
+      if (!plugin_path.isEmpty()) {
+        qFatal("Can only specify --qt-plugin-path once");
+      }
+      plugin_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("-nss-db-path") && (index + 1) < argc) {
+    } else if (QLatin1String(arg) == QLatin1String("--nss-db-path") && (index + 1) < argc) {
       if (!oxideGetNSSDbPath().isEmpty()) {
-        qFatal("Can only specify -nss-db-path once");
+        qFatal("Can only specify --nss-db-path once");
       }
       oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
+      index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--tmpdir") && (index + 1) < argc) {
+      if (!data_dir.isEmpty()) {
+        qFatal("Can only specify --tmpdir once");
+      }
+      data_dir = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
@@ -268,8 +274,8 @@ int main(int argc, char** argv) {
   QSGContext::setSharedOpenGLContext(&context);
 #endif
 
-  for (int i = 0; i < library_paths.size(); ++i) {
-    app.addLibraryPath(library_paths[i]);
+  if (!plugin_path.isEmpty()) {
+    app.addLibraryPath(plugin_path);
   }
 
   QuickTestResult::setCurrentAppname(argv[0]);
@@ -280,7 +286,6 @@ int main(int argc, char** argv) {
     test_path = QDir::currentPath();
   }
 
-  QString data_dir(qgetenv("OXIDE_RUNTESTS_TMPDIR"));
   if (data_dir.isEmpty()) {
     data_dir = QDir::currentPath();
   }
@@ -332,10 +337,6 @@ int main(int argc, char** argv) {
                    QTestRootObject::instance(), SLOT(quit()));
   QObject::connect(view.engine(), SIGNAL(quit()),
                    &event_loop, SLOT(quit()));
-
-  for (QStringList::iterator it = imports.begin(); it != imports.end(); ++it) {
-    view.engine()->addImportPath(*it);
-  }
 
   for (QStringList::iterator it = files.begin(); it != files.end(); ++it) {
     const QFileInfo fi(*it);

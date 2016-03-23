@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,5 +16,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-add_subdirectory(mock)
-add_subdirectory(qmltests)
+if(NOT DEFINED __INPUT OR NOT DEFINED __OUTPUT)
+  message(FATAL_ERROR "Required arguments are missing")
+endif()
+
+configure_file(${__INPUT} ${__OUTPUT} @ONLY)
