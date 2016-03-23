@@ -1763,6 +1763,26 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
   }
 }
 
+qreal OxideQQuickWebView::minimumZoomFactor() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return 1.0;
+  }
+
+  return d->proxy_->minimumZoomFactor();
+}
+
+qreal OxideQQuickWebView::maximumZoomFactor() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return 1.0;
+  }
+
+  return d->proxy_->maximumZoomFactor();
+}
+
 // static
 OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {

@@ -1067,6 +1067,14 @@ void WebView::setZoomFactor(qreal factor) {
       content::ZoomFactorToZoomLevel(static_cast<double>(factor)));
 }
 
+qreal WebView::minimumZoomFactor() const {
+  return content::kMinimumZoomFactor;
+}
+
+qreal WebView::maximumZoomFactor() const {
+  return content::kMaximumZoomFactor;
+}
+
 void WebView::teardownFrameTree() {
   DCHECK(!frame_tree_torn_down_);
 

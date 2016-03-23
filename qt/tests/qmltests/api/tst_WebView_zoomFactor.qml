@@ -39,16 +39,24 @@ TestWebView {
       verify_zoomFactor(1.0);
       compare(spy.count, 0);
 
-      var goodValues = [1.5, 2.0, 3.7, 4.873, 5.0, 0.25, 0.9, 0.5, 1.0];
-      for (var i in goodValues) {
-        var value = goodValues[i];
-        webView.zoomFactor = value;
+      verify(webView.minimumZoomFactor < 1.0);
+      verify(webView.minimumZoomFactor > 0.0);
+
+      verify(webView.maximumZoomFactor > 1.0);
+
+      for (var i = webView.minimumZoomFactor;
+           i <= webView.maximumZoomFactor;
+           i += 0.1) {
+        webView.zoomFactor = i;
         compare(spy.count, 1);
-        verify_zoomFactor(value);
+        verify_zoomFactor(i);
         spy.clear();
       }
+      webView.zoomFactor = 1.0;
+      spy.clear();
 
-      var badValues = [0.1, 0.0, -1.0, 5.1, 100.0];
+      var badValues = [0.0, webView.minimumZoomFactor - 0.01,
+                       -1.0, webView.maximumZoomFactor + 0.01];
       for (var i in badValues) {
         var value = badValues[i];
         webView.zoomFactor = value;

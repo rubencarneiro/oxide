@@ -260,6 +260,8 @@ class WebView : public oxide::WebViewClient,
 
   qreal zoomFactor() const override;
   void setZoomFactor(qreal factor) override;
+  qreal minimumZoomFactor() const override;
+  qreal maximumZoomFactor() const override;
 
   void teardownFrameTree() override;
 

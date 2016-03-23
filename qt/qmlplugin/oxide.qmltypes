@@ -655,6 +655,8 @@ Module {
         }
         Property { name: "editingCapabilities"; revision: 7; type: "EditCapabilities"; isReadonly: true }
         Property { name: "zoomFactor"; revision: 8; type: "double" }
+        Property { name: "minimumZoomFactor"; revision: 8; type: "double"; isReadonly: true }
+        Property { name: "maximumZoomFactor"; revision: 8; type: "double"; isReadonly: true }
         Signal { name: "loadingStateChanged"; revision: 1 }
         Signal {
             name: "loadEvent"

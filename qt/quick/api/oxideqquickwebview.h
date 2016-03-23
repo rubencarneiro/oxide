@@ -135,6 +135,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(EditCapabilities editingCapabilities READ editingCapabilities NOTIFY editingCapabilitiesChanged REVISION 7)
 
   Q_PROPERTY(qreal zoomFactor READ zoomFactor WRITE setZoomFactor NOTIFY zoomFactorChanged REVISION 8)
+  Q_PROPERTY(qreal minimumZoomFactor READ minimumZoomFactor CONSTANT REVISION 8)
+  Q_PROPERTY(qreal maximumZoomFactor READ maximumZoomFactor CONSTANT REVISION 8)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -310,6 +312,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
 
   qreal zoomFactor() const;
   void setZoomFactor(qreal factor);
+  qreal minimumZoomFactor() const;
+  qreal maximumZoomFactor() const;
 
  public Q_SLOTS:
   void goBack();
