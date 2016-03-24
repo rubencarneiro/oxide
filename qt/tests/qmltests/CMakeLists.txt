@@ -25,22 +25,7 @@ find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickTest REQUIRED)
 find_package(Qt5Test REQUIRED)
 
-set(QML_PLUGIN qmloxidetestingplugin)
 set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
-
-set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
-
-add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-target_link_libraries(${QML_PLUGIN}
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Test
-    ${OXIDE_QUICKLIB})
-set_target_properties(
-    ${QML_PLUGIN} PROPERTIES
-    AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
 
 foreach(f
     qmldir
@@ -59,26 +44,10 @@ foreach(f
       DEPENDS ${QML_PLUGIN})
 endforeach()
 
-add_custom_target(
-    mkdir_${QML_PLUGIN}.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack)
-add_custom_target(
-    copy_${QML_PLUGIN}_qmldir.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${CMAKE_CURRENT_SOURCE_DIR}/qmldir.hack
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/qmldir
-    DEPENDS mkdir_${QML_PLUGIN}.hack)
-add_custom_target(
-    copy_${QML_PLUGIN}_plugin.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:${QML_PLUGIN}>
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
-    DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
-
 set(QML_TEST qmltest)
 set(QML_TEST_SRCS
     main.cc
+    qml_test_support.cc
     quick_test_compat.cc
     test_nam_factory.cc)
 
@@ -90,7 +59,8 @@ target_link_libraries(${QML_TEST}
     Qt5::Quick
     Qt5::QuickTest
     Qt5::Test
-    ${OXIDE_LIB})
+    ${OXIDE_LIB}
+    ${OXIDE_QUICKLIB})
 target_include_directories(
     ${QML_TEST} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}

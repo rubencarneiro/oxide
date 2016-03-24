@@ -45,6 +45,7 @@
 
 #include "qt/core/api/oxideqglobal.h"
 
+#include "qml_test_support.h"
 #include "quick_test_compat.h"
 #include "test_nam_factory.h"
 
@@ -59,6 +60,13 @@ static QObject* GetTestRootObject(QQmlEngine* engine, QJSEngine* js_engine)
   Q_UNUSED(js_engine);
 
   return QTestRootObject::instance();
+}
+
+static QObject* GetUtils(QQmlEngine* engine, QJSEngine* js_engine) {
+  Q_UNUSED(engine);
+  Q_UNUSED(js_engine);
+
+  return new OxideTestingUtils();
 }
 
 static void HandleCompileErrors(const QFileInfo& fi, QQuickView* view) {
@@ -233,6 +241,14 @@ int main(int argc, char** argv) {
 
   qmlRegisterSingletonType<QTestRootObject>(
       "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
+
+  qmlRegisterSingletonType<OxideTestingUtils>(
+      "Oxide.testsupport", 1, 0, "Utils", GetUtils);
+  qmlRegisterUncreatableType<DestructionObserver>(
+      "Oxide.testsupport", 1, 0, "DestructionObserver",
+      "Create this with Utils.createDestructionObserver()");
+  qmlRegisterType<ExternalProtocolHandler>(
+      "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
 
   QEventLoop event_loop;
 
