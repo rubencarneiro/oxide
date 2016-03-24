@@ -18,7 +18,7 @@
 .pragma library
 // JS resources can't import the module it belongs too, apparently. So we
 // ship the plugin in another module to work around it
-.import Oxide.testsupport 1.0 as OxideTesting
+.import Oxide.testsupport.hack 1.0 as OxideTesting
 
 function waitFor(predicate, timeout, gcDuringWait) {
   timeout = timeout || 5000;

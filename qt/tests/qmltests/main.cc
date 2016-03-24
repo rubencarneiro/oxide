@@ -250,6 +250,9 @@ int main(int argc, char** argv) {
   qmlRegisterType<ExternalProtocolHandler>(
       "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
 
+  qmlRegisterSingletonType<OxideTestingUtils>(
+      "Oxide.testsupport.hack", 1, 0, "Utils", GetUtils);
+
   QEventLoop event_loop;
 
   TestNetworkAccessManagerFactory nam_factory(test_dir);

@@ -25,8 +25,16 @@ find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickTest REQUIRED)
 find_package(Qt5Test REQUIRED)
 
-set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
+set(QML_SUPPORT_MODULE_NAME Oxide/testsupport)
+set(QML_SUPPORT_MODULE_DIR ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_SUPPORT_MODULE_NAME})
 
+add_custom_command(
+    OUTPUT ${QML_SUPPORT_MODULE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${QML_SUPPORT_MODULE_DIR})
+add_custom_target(
+    make_testsupport_dir ALL
+    DEPENDS ${QML_SUPPORT_MODULE_DIR})
+    
 foreach(f
     qmldir
     ScriptMessageTestHandler.qml
@@ -36,12 +44,14 @@ foreach(f
     TestUtilsSlave.js
     TestWebContext.qml
     TestWebView.qml)
+  add_custom_command(
+      OUTPUT ${QML_SUPPORT_MODULE_DIR}/${f}
+      COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/${f} ${QML_SUPPORT_MODULE_DIR}/${f}
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${f} ${QML_SUPPORT_MODULE_DIR})
   add_custom_target(
-      copy_${QML_PLUGIN}_${f} ALL
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/${f}
-        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}
-      DEPENDS ${QML_PLUGIN})
+      copy_testsupport_file_${f} ALL
+      DEPENDS ${QML_SUPPORT_MODULE_DIR}/${f})
 endforeach()
 
 set(QML_TEST qmltest)
