@@ -448,7 +448,6 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.ssl_config_service = context->ssl_config_service();
   session_params.http_auth_handler_factory =
       context->http_auth_handler_factory();
-  session_params.network_delegate = context->network_delegate();
   session_params.http_server_properties =
       context->http_server_properties();
   session_params.net_log = context->net_log();
