@@ -106,11 +106,11 @@ class WebContextTestSupport : public QObject {
   QPointer<OxideQQuickWebContext> context_;
 };
 
-class OxideTestingUtils : public QObject {
+class TestSupport : public QObject {
   Q_OBJECT
 
  public:
-  OxideTestingUtils();
+  TestSupport();
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object);
 

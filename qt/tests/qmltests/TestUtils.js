@@ -25,7 +25,7 @@ function waitFor(predicate, timeout, gcDuringWait) {
   var end = Date.now() + timeout;
   var i = Date.now();
   while (i < end && !predicate()) {
-    OxideTesting.Utils.wait(50);
+    OxideTesting.TestSupport.wait(50);
     if (gcDuringWait) gc();
     i = Date.now();
   }

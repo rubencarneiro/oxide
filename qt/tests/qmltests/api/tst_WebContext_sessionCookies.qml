@@ -19,11 +19,11 @@ TestCase {
 
   function _deleteWebView(webView) {
     var context = webView.context;
-    Utils.destroyQObjectNow(webView);
-    Utils.destroyQObjectNow(context);
+    TestSupport.destroyQObjectNow(webView);
+    TestSupport.destroyQObjectNow(context);
     // XXX: Hack to ensure that the cookie store lock gets released before
     // starting the next test
-    qtest_results.wait(200);
+    TestSupport.wait(200);
   }
 
   function _clear(webView) {

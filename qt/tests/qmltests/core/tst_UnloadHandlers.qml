@@ -43,7 +43,7 @@ Column {
       webView2.url = "http://testsuite/empty.html";
       verify(webView2.waitForLoadSucceeded());
 
-      Utils.destroyQObjectNow(webView1);
+      TestSupport.destroyQObjectNow(webView1);
 
       compare(webView2.getTestApi().evaluateCode("window.localStorage.getItem(\"oxide-shutdown-foo\");", false), "baaa");
     }

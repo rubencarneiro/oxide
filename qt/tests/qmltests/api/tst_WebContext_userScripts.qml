@@ -36,7 +36,7 @@ TestWebView {
 
     function test_WebContext_userScripts1_add_unowned() {
       var script = userScript.createObject(null, {});
-      var scriptHelper = Utils.createQObjectTestHelper(script);
+      var scriptHelper = TestSupport.createQObjectTestHelper(script);
       webView.context.addUserScript(script);
 
       compare(spy.count, 1, "Should have had a signal");
@@ -56,7 +56,7 @@ TestWebView {
     function test_WebContext_userScripts2_add_already_owned() {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {});
-      var scriptHelper = Utils.createQObjectTestHelper(script);
+      var scriptHelper = TestSupport.createQObjectTestHelper(script);
       otherContext.addUserScript(script);
       compare(scriptHelper.parent, otherContext,
               "UserScript should be owned by the other context");
@@ -80,7 +80,7 @@ TestWebView {
     function test_WebContext_userScripts3_deleted_by_someone_else() {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {});
-      var scriptHelper = Utils.createQObjectTestHelper(script);
+      var scriptHelper = TestSupport.createQObjectTestHelper(script);
       otherContext.addUserScript(script);
       compare(scriptHelper.parent, otherContext,
               "UserScript should be owned by the other context");
@@ -93,7 +93,7 @@ TestWebView {
       compare(scriptHelper.parent, otherContext,
               "UserScript should still be owned by the other context");
 
-      Utils.destroyQObjectNow(otherContext);
+      TestSupport.destroyQObjectNow(otherContext);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.context.userScripts.length, 1, "Unexpected number of user scripts");
@@ -103,7 +103,7 @@ TestWebView {
     function test_WebContext_userScripts4_readd_unowned() {
       var otherContext = webContext.createObject(null, {});
       var script = userScript.createObject(null, {});
-      var scriptHelper = Utils.createQObjectTestHelper(script);
+      var scriptHelper = TestSupport.createQObjectTestHelper(script);
       otherContext.addUserScript(script);
 
       webView.context.addUserScript(script);

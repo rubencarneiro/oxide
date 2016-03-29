@@ -179,9 +179,9 @@ void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
       ->clearTemporarySavedPermissionStatuses();
 }
 
-OxideTestingUtils::OxideTestingUtils() {}
+TestSupport::TestSupport() {}
 
-QObject* OxideTestingUtils::qObjectParent(QObject* object) {
+QObject* TestSupport::qObjectParent(QObject* object) {
   if (!object) {
     return nullptr;
   }
@@ -189,7 +189,7 @@ QObject* OxideTestingUtils::qObjectParent(QObject* object) {
   return object->parent();
 }
 
-void OxideTestingUtils::destroyQObjectNow(QObject* object) {
+void TestSupport::destroyQObjectNow(QObject* object) {
   if (!object) {
     return;
   }
@@ -197,7 +197,7 @@ void OxideTestingUtils::destroyQObjectNow(QObject* object) {
   delete object;
 }
 
-QObjectTestHelper* OxideTestingUtils::createQObjectTestHelper(QObject* object) {
+QObjectTestHelper* TestSupport::createQObjectTestHelper(QObject* object) {
   if (!object) {
     return nullptr;
   }
@@ -205,7 +205,7 @@ QObjectTestHelper* OxideTestingUtils::createQObjectTestHelper(QObject* object) {
   return new QObjectTestHelper(object);
 }
 
-WebContextTestSupport* OxideTestingUtils::createWebContextTestSupport(
+WebContextTestSupport* TestSupport::createWebContextTestSupport(
     OxideQQuickWebContext* context) {
   if (!context) {
     qWarning() << "NULL WebContext";
@@ -215,22 +215,22 @@ WebContextTestSupport* OxideTestingUtils::createWebContextTestSupport(
   return new WebContextTestSupport(context);
 }
 
-QVariant OxideTestingUtils::getAppProperty(const QString& property) {
+QVariant TestSupport::getAppProperty(const QString& property) {
   return QCoreApplication::instance()->property(property.toStdString().c_str());
 }
 
-void OxideTestingUtils::setAppProperty(const QString& property,
-                                       const QVariant& value) {
+void TestSupport::setAppProperty(const QString& property,
+                                 const QVariant& value) {
   QCoreApplication::instance()->setProperty(property.toStdString().c_str(),
                                             value);
 }
 
-void OxideTestingUtils::removeAppProperty(const QString& property) {
+void TestSupport::removeAppProperty(const QString& property) {
   QCoreApplication::instance()->setProperty(property.toStdString().c_str(),
                                             QVariant());
 }
 
-void OxideTestingUtils::killWebProcesses(uint signal) {
+void TestSupport::killWebProcesses(uint signal) {
   Q_FOREACH (pid_t descendant, getDescendantProcesses(getpid())) {
     QProcess ps;
     ps.start(QString("ps fhp %1").arg(descendant));
@@ -246,6 +246,6 @@ void OxideTestingUtils::killWebProcesses(uint signal) {
   }
 }
 
-void OxideTestingUtils::wait(int ms) {
+void TestSupport::wait(int ms) {
   QTest::qWait(ms);
 }

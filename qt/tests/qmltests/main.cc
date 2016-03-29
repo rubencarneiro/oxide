@@ -62,11 +62,11 @@ static QObject* GetTestRootObject(QQmlEngine* engine, QJSEngine* js_engine)
   return QTestRootObject::instance();
 }
 
-static QObject* GetUtils(QQmlEngine* engine, QJSEngine* js_engine) {
+static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
-  return new OxideTestingUtils();
+  return new TestSupport();
 }
 
 static QObject* GetClipboardTestUtils(QQmlEngine* engine,
@@ -250,8 +250,8 @@ int main(int argc, char** argv) {
   qmlRegisterSingletonType<QTestRootObject>(
       "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
 
-  qmlRegisterSingletonType<OxideTestingUtils>(
-      "Oxide.testsupport", 1, 0, "Utils", GetUtils);
+  qmlRegisterSingletonType<TestSupport>(
+      "Oxide.testsupport", 1, 0, "TestSupport", GetTestSupport);
   qmlRegisterSingletonType<ClipboardTestUtils>(
       "Oxide.testsupport", 1, 0, "ClipboardTestUtils", GetClipboardTestUtils);
   qmlRegisterUncreatableType<QObjectTestHelper>(
@@ -263,8 +263,8 @@ int main(int argc, char** argv) {
       "Oxide.testsupport", 1, 0, "WebContextTestSupport",
       "Create this with Utils.createWebContextTestSupport()");
 
-  qmlRegisterSingletonType<OxideTestingUtils>(
-      "Oxide.testsupport.hack", 1, 0, "Utils", GetUtils);
+  qmlRegisterSingletonType<TestSupport>(
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
 
   QEventLoop event_loop;
 

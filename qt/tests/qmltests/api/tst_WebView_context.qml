@@ -60,7 +60,7 @@ TestCase {
     spy.target = v;
     spy.signalName = "contextChanged";
 
-    Utils.destroyQObjectNow(c);
+    TestSupport.destroyQObjectNow(c);
     verify(!v.context);
     compare(spy.count, 1);
   }

@@ -52,7 +52,7 @@ TestWebView {
 
       while (requests.length > 0) {
         var req = requests.pop();
-        Utils.destroyQObjectNow(req);
+        TestSupport.destroyQObjectNow(req);
       }
     }
   }

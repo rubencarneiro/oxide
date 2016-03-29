@@ -32,7 +32,7 @@ Item {
       webView.getTestApi().evaluateCode("document.cookie = \"foo=bar\"", false);
       compare(webView.getTestApi().evaluateCode("document.cookie", false), "foo=bar");
 
-      var webViewHelper = Utils.createQObjectTestHelper(webView);
+      var webViewHelper = TestSupport.createQObjectTestHelper(webView);
       webView.destroy();
       TestUtils.waitFor(function() { return webViewHelper.destroyed; });
 

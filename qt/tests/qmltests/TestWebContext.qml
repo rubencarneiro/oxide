@@ -8,7 +8,7 @@ WebContext {
 
   dataPath: persistent ? QMLTEST_DATADIR : ""
 
-  property var qtest_contextTestSupport: Utils.createWebContextTestSupport(this)
+  property var qtest_contextTestSupport: TestSupport.createWebContextTestSupport(this)
 
   userScripts: [
     UserScript {

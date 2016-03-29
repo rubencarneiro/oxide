@@ -26,7 +26,7 @@ TestWebView {
              "Timed out waiting for successful load");
       compare(webView.webProcessStatus, WebView.WebProcessRunning);
 
-      Utils.killWebProcesses(data.signal);
+      TestSupport.killWebProcesses(data.signal);
       tryCompare(webView, "webProcessStatus", data.status);
 
       webView.reload();

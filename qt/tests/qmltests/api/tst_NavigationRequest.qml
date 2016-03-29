@@ -186,7 +186,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       if (data.disposition == NavigationRequest.DispositionCurrentTab) {
         verify(webView.waitForLoadStopped());
       } else {
-        Utils.wait(100);
+        TestSupport.wait(100);
       }
 
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");
