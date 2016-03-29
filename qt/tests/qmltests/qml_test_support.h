@@ -26,6 +26,7 @@
 #include <signal.h>
 
 class OxideQQuickWebContext;
+class OxideQQuickWebView;
 
 class ExternalProtocolHandler : public QObject,
                                 public QQmlParserStatus {
@@ -106,6 +107,18 @@ class WebContextTestSupport : public QObject {
   QPointer<OxideQQuickWebContext> context_;
 };
 
+class WebViewTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  WebViewTestSupport(OxideQQuickWebView* view);
+
+  Q_INVOKABLE void killWebProcess(bool crash);
+
+ private:
+  QPointer<OxideQQuickWebView> view_;
+};
+
 class TestSupport : public QObject {
   Q_OBJECT
 
@@ -121,12 +134,13 @@ class TestSupport : public QObject {
   Q_INVOKABLE WebContextTestSupport* createWebContextTestSupport(
       OxideQQuickWebContext* context);
 
+  Q_INVOKABLE WebViewTestSupport* createWebViewTestSupport(
+      OxideQQuickWebView* view);
+
   Q_INVOKABLE QVariant getAppProperty(const QString& property);
   Q_INVOKABLE void setAppProperty(const QString& property,
                                   const QVariant& value);
   Q_INVOKABLE void removeAppProperty(const QString& property);
-
-  Q_INVOKABLE void killWebProcesses(uint signal=SIGKILL);
 
   Q_INVOKABLE void wait(int ms);
 };

@@ -256,12 +256,15 @@ int main(int argc, char** argv) {
       "Oxide.testsupport", 1, 0, "ClipboardTestUtils", GetClipboardTestUtils);
   qmlRegisterUncreatableType<QObjectTestHelper>(
       "Oxide.testsupport", 1, 0, "QObjectTestHelper",
-      "Create this with Utils.createQObjectTestHelper()");
+      "Create this with TestSupport.createQObjectTestHelper()");
   qmlRegisterType<ExternalProtocolHandler>(
       "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
   qmlRegisterUncreatableType<WebContextTestSupport>(
       "Oxide.testsupport", 1, 0, "WebContextTestSupport",
-      "Create this with Utils.createWebContextTestSupport()");
+      "Create this with TestSupport.createWebContextTestSupport()");
+  qmlRegisterUncreatableType<WebViewTestSupport>(
+      "Oxide.testsupport", 1, 0, "WebViewTestSupport",
+      "Create this with TestSupport.createWebViewTestSupport()");
 
   qmlRegisterSingletonType<TestSupport>(
       "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);

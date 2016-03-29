@@ -94,6 +94,12 @@ WebView {
 
   context: TestWebContext {}
 
+  property QtObject qtest_webViewTestSupport: TestSupport.createWebViewTestSupport(this)
+
+  function killWebProcess(crash) {
+    qtest_webViewTestSupport.killWebProcess(crash);
+  }
+
   Connections {
     onFrameRemoved: {
       delete webView.qtest_testApiHosts[frame];

@@ -9,14 +9,20 @@ TestWebView {
   width: 200
   height: 200
 
+  SignalSpy {
+    id: spy
+    target: webView
+    signalName: "webProcessStatusChanged"
+  }
+
   TestCase {
     name: "WebView_webProcessStatus"
     when: windowShown
 
     function test_WebView_webProcessStatus_data() {
       return [
-        { signal: 9, status: WebView.WebProcessKilled },
-        { signal: 11, status: WebView.WebProcessCrashed }
+        { crash: false, status: WebView.WebProcessKilled },
+        { crash: true, status: WebView.WebProcessCrashed }
       ];
     }
 
@@ -26,13 +32,18 @@ TestWebView {
              "Timed out waiting for successful load");
       compare(webView.webProcessStatus, WebView.WebProcessRunning);
 
-      TestSupport.killWebProcesses(data.signal);
+      spy.clear();
+
+      webView.killWebProcess(data.crash);
+      spy.wait();
+
       tryCompare(webView, "webProcessStatus", data.status);
 
       webView.reload();
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       compare(webView.webProcessStatus, WebView.WebProcessRunning);
+      compare(spy.count, 2);
     }
   }
 }

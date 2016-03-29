@@ -838,6 +838,14 @@ QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
   return proxy_->getNavigationEntryTimestamp(index);
 }
 
+void OxideQQuickWebViewPrivate::killWebProcess(bool crash) {
+  if (!proxy_) {
+    return;
+  }
+
+  proxy_->killWebProcess(crash);
+}
+
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   Q_D(OxideQQuickWebView);
 

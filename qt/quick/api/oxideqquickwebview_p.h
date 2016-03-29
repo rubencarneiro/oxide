@@ -81,6 +81,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   QString getNavigationEntryTitle(int index) const;
   QDateTime getNavigationEntryTimestamp(int index) const;
 
+  void killWebProcess(bool crash);
+
  private:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 

@@ -17,9 +17,6 @@
 
 #include "qml_test_support.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QDesktopServices>
@@ -27,7 +24,6 @@
 #include <QLatin1String>
 #include <QList>
 #include <QQmlContext>
-#include <QProcess>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -36,32 +32,8 @@
 
 #include "qt/quick/api/oxideqquickwebcontext.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
-
-namespace {
-
-QList<pid_t> getChildProcesses(pid_t pid) {
-  QProcess pgrep;
-  pgrep.start(QString("pgrep --parent %1").arg(pid));
-  pgrep.waitForFinished();
-  QList<QByteArray> output = pgrep.readAllStandardOutput().split('\n');
-  QList<pid_t> children;
-  Q_FOREACH (const QByteArray& child, output) {
-    if (!child.isEmpty()) {
-      children.append(child.toInt());
-    }
-  }
-  return children;
-}
-
-QList<pid_t> getDescendantProcesses(pid_t pid) {
-  QList<pid_t> descendants = getChildProcesses(pid);
-  Q_FOREACH (pid_t descendant, descendants) {
-    descendants << getDescendantProcesses(descendant);
-  }
-  return descendants;
-}
-
-} // namespace
+#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 ExternalProtocolHandler::ExternalProtocolHandler()
     : locked_(false) {}
@@ -179,6 +151,18 @@ void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
       ->clearTemporarySavedPermissionStatuses();
 }
 
+WebViewTestSupport::WebViewTestSupport(OxideQQuickWebView* view)
+    : view_(view) {}
+
+void WebViewTestSupport::killWebProcess(bool crash) {
+  if (!view_) {
+    qWarning() << "Associated view has already been deleted";
+    return;
+  }
+
+  OxideQQuickWebViewPrivate::get(view_)->killWebProcess(crash);
+}
+
 TestSupport::TestSupport() {}
 
 QObject* TestSupport::qObjectParent(QObject* object) {
@@ -215,6 +199,15 @@ WebContextTestSupport* TestSupport::createWebContextTestSupport(
   return new WebContextTestSupport(context);
 }
 
+WebViewTestSupport* TestSupport::createWebViewTestSupport(
+    OxideQQuickWebView* view) {
+  if (!view) {
+    return nullptr;
+  }
+
+  return new WebViewTestSupport(view);
+}
+
 QVariant TestSupport::getAppProperty(const QString& property) {
   return QCoreApplication::instance()->property(property.toStdString().c_str());
 }
@@ -228,22 +221,6 @@ void TestSupport::setAppProperty(const QString& property,
 void TestSupport::removeAppProperty(const QString& property) {
   QCoreApplication::instance()->setProperty(property.toStdString().c_str(),
                                             QVariant());
-}
-
-void TestSupport::killWebProcesses(uint signal) {
-  Q_FOREACH (pid_t descendant, getDescendantProcesses(getpid())) {
-    QProcess ps;
-    ps.start(QString("ps fhp %1").arg(descendant));
-    ps.waitForFinished();
-    QString output = ps.readAllStandardOutput();
-    if (output.contains("oxide-renderer") &&
-        output.contains("--type=renderer")) {
-      QProcess kill;
-      kill.start(QString("kill -%1 %2")
-          .arg(QString::number(signal), QString::number(descendant)));
-      kill.waitForFinished();
-    }
-  }
 }
 
 void TestSupport::wait(int ms) {
