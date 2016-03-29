@@ -109,8 +109,7 @@ class Runner(object):
                   "--name", test_name,
                   "--qt-plugin-path", config["qt_plugin_path"],
                   "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
-                  "--tmpdir", tmpdir,
-                  "--input", config["input"] ]
+                  "--tmpdir", tmpdir ]
     self._p = TestProcess(test_args)
     self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
 

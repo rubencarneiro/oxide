@@ -141,28 +141,17 @@ static QString stripQuotes(const QString& in) {
 }
 
 int main(int argc, char** argv) {
+  QString test_name(QLatin1String(QML_TEST_NAME));
+  QString test_path(QLatin1String(QML_TEST_PATH));
+
   QString plugin_path;
-  QString test_path;
-  QByteArray name;
   QString data_dir;
 
   int index = 1;
   int outargc = 1;
   while (index < argc) {
     char* arg = argv[index];
-    if (QLatin1String(arg) == QLatin1String("--input") && (index + 1) < argc) {
-      if (!test_path.isEmpty()) {
-        qFatal("Can only specify --input once");
-      }
-      test_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--name") && (index + 1) < argc) {
-      if (!name.isEmpty()) {
-        qFatal("Can only specify --name once");
-      }
-      name = stripQuotes(QString::fromLatin1(argv[index + 1])).toLatin1();
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
+    if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
       if (!plugin_path.isEmpty()) {
         qFatal("Can only specify --qt-plugin-path once");
       }
@@ -207,11 +196,11 @@ int main(int argc, char** argv) {
   }
 
   QuickTestResult::setCurrentAppname(argv[0]);
-  QuickTestResult::setProgramName(name.constData());
+  QuickTestResult::setProgramName(test_name.toLatin1().constData());
   QuickTestResult::parseArgs(outargc, argv);
 
-  if (test_path.isEmpty()) {
-    test_path = QDir::currentPath();
+  if (!QFile::exists(test_path)) {
+    test_path = QCoreApplication::applicationDirPath();
   }
 
   if (data_dir.isEmpty()) {
@@ -228,7 +217,8 @@ int main(int argc, char** argv) {
       qFatal("Test file '%s' does not end with '.qml'", qPrintable(test_path));
     }
     files.append(test_path);
-  } else if (test_path_info.isDir()) {
+  } else {
+    Q_ASSERT(test_path_info.isDir());
     test_dir.cd(test_path);
     Q_ASSERT(test_path_info.isDir());
     const QStringList filters(QStringLiteral("tst_*.qml"));
@@ -243,8 +233,6 @@ int main(int argc, char** argv) {
       qFatal("Directory '%s' does not contain any test files",
              qPrintable(test_path));
     }
-  } else {
-    qFatal("Test file '%s' does not exist", qPrintable(test_path));
   }
 
   qmlRegisterSingletonType<QTestRootObject>(

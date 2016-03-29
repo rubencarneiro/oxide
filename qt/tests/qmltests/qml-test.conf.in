@@ -1,4 +1,3 @@
 exec: @QML_TEST_EXEC@
-input: @INPUT_DIR@
 qt_plugin_path: @QT_PLUGIN_PATH@
 server_dir: @SERVER_DIR@
