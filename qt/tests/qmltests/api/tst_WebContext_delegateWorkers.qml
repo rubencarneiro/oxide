@@ -58,11 +58,11 @@ TestWebView {
       context[data.prop] = d;
       compare(spy.count, 1, "Shouldn't have had another signal");
 
-      var dobs = Utils.createDestructionObserver(d);
+      var helper = Utils.createQObjectTestHelper(d);
 
       context[data.prop] = null;
       compare(spy.count, 2, "Expected a signal");
-      verify(dobs.destroyed, "Delegate should have been destroyed");
+      verify(helper.destroyed, "Delegate should have been destroyed");
     }
 
     function test_WebContext_delegateWorkers2_assign_already_in_use_data() {
@@ -134,13 +134,13 @@ TestWebView {
       compare(context.storageAccessPermissionDelegate, d);
       compare(Utils.qObjectParent(d), context);
 
-      var dobs = Utils.createDestructionObserver(d);
+      var helper = Utils.createQObjectTestHelper(d);
 
       context.storageAccessPermissionDelegate = null;
 
       compare(context.networkRequestDelegate, null);
       compare(context.storageAccessPermissionDelegate, null);
-      verify(dobs.destroyed);
+      verify(helper.destroyed);
     }
   }
 }

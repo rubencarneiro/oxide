@@ -39,7 +39,7 @@ TestWebView {
       webView.url = "http://testsuite/tst_WebView_editingCapabilities.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
-      Utils.clearClipboard();
+      ClipboardTestUtils.clearClipboard();
       editingCapabilitiesSpy.clear();
     }
 
@@ -119,12 +119,12 @@ TestWebView {
       focus_textarea();
       compare(webView.editingCapabilities, WebView.SelectAllCapability);
 
-      Utils.copyToClipboard("text/plain", "foo bar baz");
+      ClipboardTestUtils.copyToClipboard("text/plain", "foo bar baz");
       editingCapabilitiesSpy.wait();
       compare(webView.editingCapabilities,
               WebView.PasteCapability | WebView.SelectAllCapability);
 
-      Utils.clearClipboard();
+      ClipboardTestUtils.clearClipboard();
       editingCapabilitiesSpy.wait();
       compare(webView.editingCapabilities, WebView.SelectAllCapability);
     }

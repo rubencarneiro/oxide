@@ -69,6 +69,14 @@ static QObject* GetUtils(QQmlEngine* engine, QJSEngine* js_engine) {
   return new OxideTestingUtils();
 }
 
+static QObject* GetClipboardTestUtils(QQmlEngine* engine,
+                                      QJSEngine* js_engine) {
+  Q_UNUSED(engine);
+  Q_UNUSED(js_engine);
+
+  return new ClipboardTestUtils();
+}
+
 static void HandleCompileErrors(const QFileInfo& fi, QQuickView* view) {
   const QList<QQmlError> errors = view->errors();
 
@@ -244,11 +252,16 @@ int main(int argc, char** argv) {
 
   qmlRegisterSingletonType<OxideTestingUtils>(
       "Oxide.testsupport", 1, 0, "Utils", GetUtils);
-  qmlRegisterUncreatableType<DestructionObserver>(
-      "Oxide.testsupport", 1, 0, "DestructionObserver",
-      "Create this with Utils.createDestructionObserver()");
+  qmlRegisterSingletonType<ClipboardTestUtils>(
+      "Oxide.testsupport", 1, 0, "ClipboardTestUtils", GetClipboardTestUtils);
+  qmlRegisterUncreatableType<QObjectTestHelper>(
+      "Oxide.testsupport", 1, 0, "QObjectTestHelper",
+      "Create this with Utils.createQObjectTestHelper()");
   qmlRegisterType<ExternalProtocolHandler>(
       "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
+  qmlRegisterUncreatableType<WebContextTestSupport>(
+      "Oxide.testsupport", 1, 0, "WebContextTestSupport",
+      "Create this with Utils.createWebContextTestSupport()");
 
   qmlRegisterSingletonType<OxideTestingUtils>(
       "Oxide.testsupport.hack", 1, 0, "Utils", GetUtils);

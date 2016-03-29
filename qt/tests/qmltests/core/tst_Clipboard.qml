@@ -60,7 +60,7 @@ TestWebView {
     when: windowShown
 
     function setup() {
-      Utils.clearClipboard();
+      ClipboardTestUtils.clearClipboard();
     }
 
     function test_paste_data() {
@@ -74,7 +74,7 @@ TestWebView {
     function test_paste(data) {
       var isImage = (data.mimeType.indexOf("image/") === 0)
 
-      Utils.copyToClipboard(data.mimeType, data.content);
+      ClipboardTestUtils.copyToClipboard(data.mimeType, data.content);
 
       webView.url = "http://testsuite/tst_Clipboard.html";
 
@@ -120,7 +120,7 @@ TestWebView {
       keyPress("c", Qt.ControlModifier)
 
       verify(TestUtils.waitFor(function() {
-        var current_content = Utils.getFromClipboard(
+        var current_content = ClipboardTestUtils.getFromClipboard(
             "text/plain");
         return current_content === data_content
       }));

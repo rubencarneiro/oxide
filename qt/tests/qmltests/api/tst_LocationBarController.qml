@@ -156,21 +156,6 @@ Item {
     name: "LocationBarController"
     when: windowShown
 
-    TestResult { id: testResult }
-
-    function deleteWebView(webview) {
-      var obs = Utils.createDestructionObserver(webview);
-      webview.destroy();
-      var end = Date.now() + 5000;
-      var i = Date.now();
-      while (i < end && !obs.destroyed) {
-        testResult.wait(50);
-        gc();
-        i = Date.now();
-      }
-      verify(obs.destroyed);
-    }
-
     function init() {
       spy.target = null;
       spy.signalName = "";
@@ -194,7 +179,7 @@ Item {
       compare(webView.locationBarController.contentOffset, 0,
               "Default contentOffset should be 0");
 
-      deleteWebView(webView);
+      Utils.destroyQObjectNow(webView);
     }
 
     // Ensure that height cannot be set to an invalid value, and verify the
@@ -360,7 +345,7 @@ Item {
                locationBarSpy.lastAnimationDuration < 250);
       }
 
-      deleteWebView(webView);
+      Utils.destroyQObjectNow(webView);
     }
 
     function test_LocationBarController5_on_show_data() {

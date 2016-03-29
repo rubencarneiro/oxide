@@ -94,25 +94,89 @@ void ExternalProtocolHandler::setScheme(const QString& scheme) {
   Q_EMIT schemeChanged();
 }
 
-void DestructionObserver::onDestroyed() {
+ClipboardTestUtils::ClipboardTestUtils() {}
+
+void ClipboardTestUtils::copyToClipboard(const QString& mimeType,
+                                         const QString& data) {
+  QMimeData * mime_data = new QMimeData();
+  if (mimeType.startsWith("image/")) {
+    mime_data->setData(mimeType, QByteArray::fromBase64(data.toUtf8()));
+  } else {
+    mime_data->setData(mimeType, data.toUtf8());
+  }
+  QGuiApplication::clipboard()->setMimeData(mime_data);
+}
+
+QString ClipboardTestUtils::getFromClipboard(const QString& mimeType) {
+  const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
+  if (mime_data->hasFormat(mimeType)) {
+    return QString(mime_data->data(mimeType));
+  }
+  return QString();
+}
+
+void ClipboardTestUtils::clearClipboard() {
+  QGuiApplication::clipboard()->clear();
+}
+
+bool QObjectTestHelper::eventFilter(QObject* watched, QEvent* event) {
+  if (event->type() == QEvent::ChildRemoved &&
+      static_cast<QChildEvent*>(event)->child() == object_) {
+    Q_ASSERT(watched == parent_);
+    parent_ = nullptr;
+    Q_EMIT parentChanged();
+  } else if (event->type() == QEvent::ChildAdded &&
+             static_cast<QChildEvent*>(event)->child() == object_) {
+    Q_ASSERT(!parent_);
+    parent_ = object_->parent();
+    Q_EMIT parentChanged();
+  }
+}
+
+void QObjectTestHelper::onDestroyed() {
   Q_ASSERT(!destroyed_);
 
   destroyed_ = true;
   Q_EMIT destroyedChanged();
 }
 
-DestructionObserver::DestructionObserver(QObject* object)
-    : destroyed_(false) {
-  connect(object, SIGNAL(destroyed()),
-          this, SLOT(onDestroyed()));
+QObjectTestHelper::QObjectTestHelper(QObject* object)
+    : object_(object),
+      parent_(object ? object->parent() : nullptr),
+      destroyed_(false) {
+  Q_ASSERT(object);
+
+  connect(object, SIGNAL(destroyed()), this, SLOT(onDestroyed()));
+  QCoreApplication::instance()->installEventFilter(this);
 }
 
-DestructionObserver::~DestructionObserver() {
-  disconnect(this, SLOT(onDestroyed()));
+QObjectTestHelper::~QObjectTestHelper() {
+  QCoreApplication::instance()->removeEventFilter(this);
 }
 
-bool DestructionObserver::destroyed() const {
+bool QObjectTestHelper::destroyed() const {
   return destroyed_;
+}
+
+QObject* QObjectTestHelper::parent() const {
+  if (destroyed_) {
+    return nullptr;
+  }
+
+  return parent_;
+}
+
+WebContextTestSupport::WebContextTestSupport(OxideQQuickWebContext* context)
+    : context_(context) {}
+
+void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
+  if (!context_) {
+    qWarning() << "Associated context has already been deleted";
+    return;
+  }
+
+  OxideQQuickWebContextPrivate::get(context_)
+      ->clearTemporarySavedPermissionStatuses();
 }
 
 OxideTestingUtils::OxideTestingUtils() {}
@@ -133,13 +197,22 @@ void OxideTestingUtils::destroyQObjectNow(QObject* object) {
   delete object;
 }
 
-DestructionObserver* OxideTestingUtils::createDestructionObserver(
-    QObject* object) {
+QObjectTestHelper* OxideTestingUtils::createQObjectTestHelper(QObject* object) {
   if (!object) {
     return nullptr;
   }
 
-  return new DestructionObserver(object);
+  return new QObjectTestHelper(object);
+}
+
+WebContextTestSupport* OxideTestingUtils::createWebContextTestSupport(
+    OxideQQuickWebContext* context) {
+  if (!context) {
+    qWarning() << "NULL WebContext";
+    return nullptr;
+  }
+
+  return new WebContextTestSupport(context);
 }
 
 QVariant OxideTestingUtils::getAppProperty(const QString& property) {
@@ -171,35 +244,6 @@ void OxideTestingUtils::killWebProcesses(uint signal) {
       kill.waitForFinished();
     }
   }
-}
-
-void OxideTestingUtils::copyToClipboard(const QString& mimeType,
-                                        const QString& data) {
-  QMimeData * mime_data = new QMimeData();
-  if (mimeType.startsWith("image/")) {
-    mime_data->setData(mimeType, QByteArray::fromBase64(data.toUtf8()));
-  } else {
-    mime_data->setData(mimeType, data.toUtf8());
-  }
-  QGuiApplication::clipboard()->setMimeData(mime_data);
-}
-
-QString OxideTestingUtils::getFromClipboard(const QString& mimeType) {
-  const QMimeData * mime_data = QGuiApplication::clipboard()->mimeData();
-  if (mime_data->hasFormat(mimeType)) {
-    return QString(mime_data->data(mimeType));
-  }
-  return QString();
-}
-
-void OxideTestingUtils::clearClipboard() {
-  QGuiApplication::clipboard()->clear();
-}
-
-void OxideTestingUtils::clearTemporarySavedPermissionStatuses(
-    OxideQQuickWebContext* context) {
-  OxideQQuickWebContextPrivate::get(context)
-      ->clearTemporarySavedPermissionStatuses();
 }
 
 void OxideTestingUtils::wait(int ms) {

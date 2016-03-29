@@ -19,6 +19,7 @@
 #define _OXIDE_QT_TESTS_QMLTEST_QML_TEST_SUPPORT_H_
 
 #include <QObject>
+#include <QPointer>
 #include <QQmlParserStatus>
 #include <QString>
 #include <QVariant>
@@ -50,24 +51,59 @@ class ExternalProtocolHandler : public QObject,
   QString scheme_;
 };
 
-class DestructionObserver : public QObject {
+class ClipboardTestUtils : public QObject {
   Q_OBJECT
-  Q_PROPERTY(bool destroyed READ destroyed NOTIFY destroyedChanged)
 
  public:
-  DestructionObserver(QObject* object);
-  ~DestructionObserver() override;
+  ClipboardTestUtils();
+
+  Q_INVOKABLE void copyToClipboard(const QString& mimeType,
+                                   const QString& data);
+
+  Q_INVOKABLE QString getFromClipboard(const QString& mimeType);
+
+  Q_INVOKABLE void clearClipboard();
+};
+
+class QObjectTestHelper : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool destroyed READ destroyed NOTIFY destroyedChanged)
+  Q_PROPERTY(QObject* parent READ parent NOTIFY parentChanged)
+
+ public:
+  QObjectTestHelper(QObject* object);
+  ~QObjectTestHelper() override;
 
   bool destroyed() const;
 
+  QObject* parent() const;
+
+ private:
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
  Q_SIGNALS:
   void destroyedChanged();
+  void parentChanged();
 
  private Q_SLOTS:
   void onDestroyed();
 
  private:
+  QPointer<QObject> object_;
+  QPointer<QObject> parent_;
   bool destroyed_;
+};
+
+class WebContextTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  WebContextTestSupport(OxideQQuickWebContext* context);
+
+  Q_INVOKABLE void clearTemporarySavedPermissionStatuses();
+
+ private:
+  QPointer<OxideQQuickWebContext> context_;
 };
 
 class OxideTestingUtils : public QObject {
@@ -80,7 +116,10 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE void destroyQObjectNow(QObject* object);
 
-  Q_INVOKABLE DestructionObserver* createDestructionObserver(QObject* object);
+  Q_INVOKABLE QObjectTestHelper* createQObjectTestHelper(QObject* object);
+
+  Q_INVOKABLE WebContextTestSupport* createWebContextTestSupport(
+      OxideQQuickWebContext* context);
 
   Q_INVOKABLE QVariant getAppProperty(const QString& property);
   Q_INVOKABLE void setAppProperty(const QString& property,
@@ -89,14 +128,7 @@ class OxideTestingUtils : public QObject {
 
   Q_INVOKABLE void killWebProcesses(uint signal=SIGKILL);
 
-  Q_INVOKABLE void copyToClipboard(const QString& mimeType,
-                                   const QString& data);
-  Q_INVOKABLE QString getFromClipboard(const QString& mimeType);
-  Q_INVOKABLE void clearClipboard();
-
-  Q_INVOKABLE void clearTemporarySavedPermissionStatuses(
-      OxideQQuickWebContext* context);
-
   Q_INVOKABLE void wait(int ms);
 };
+
 #endif // _OXIDE_QT_TESTS_QMLTEST_QML_TEST_SUPPORT_H_

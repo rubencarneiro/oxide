@@ -51,11 +51,10 @@ TestWebView {
       verify(webView.preferences, "No default preferences");
       compare(spy.count, 0,
               "Constructing the default shouldn't have caused a signal");
-      compare(Utils.qObjectParent(webView.preferences), webView,
-              "WebView should own its default preferences");
 
-      var destructionObserver = Utils.createDestructionObserver(
-          webView.preferences);
+      var prefHelper = Utils.createQObjectTestHelper(webView.preferences);
+      compare(prefHelper.parent, webView, "WebView should own its default preferences");
+
       var newPrefs = webPreferencesFactory.createObject(null, {});
       webView.preferences = newPrefs;
 
@@ -65,7 +64,7 @@ TestWebView {
               "Should have a new preference object");
       compare(Utils.qObjectParent(webView.preferences), webView,
               "WebView should own the new preferences");
-      verify(destructionObserver.destroyed,
+      verify(prefHelper.destroyed,
              "The default preference object should have been destroyed");
     }
 
@@ -81,12 +80,11 @@ TestWebView {
               "Assigning a new preference object should have caused a signal");
       compare(webView.preferences, webview2.preferences,
               "Wrong preference object");
+
       compare(Utils.qObjectParent(webView.preferences), webview2,
               "WebView shouldn't have adopted preferences");
 
       var oldSetting = webView.preferences.javascriptEnabled = !webView.preferences.javascriptEnabled;
-      var destructionObserver = Utils.createDestructionObserver(
-          webView.preferences);
       Utils.destroyQObjectNow(webview2);
 
       compare(spy.count, 2, "Preferences should have been destroyed");

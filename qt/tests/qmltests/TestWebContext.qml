@@ -8,6 +8,8 @@ WebContext {
 
   dataPath: persistent ? QMLTEST_DATADIR : ""
 
+  property var qtest_contextTestSupport: Utils.createWebContextTestSupport(this)
+
   userScripts: [
     UserScript {
       context: "oxide://testutils/"
@@ -53,7 +55,7 @@ WebContext {
   }
 
   function clearTemporarySavedPermissionStatuses() {
-    Utils.clearTemporarySavedPermissionStatuses(this);
+    qtest_contextTestSupport.clearTemporarySavedPermissionStatuses();
   }
 
   property var qtest_UserScriptFactory: Component {

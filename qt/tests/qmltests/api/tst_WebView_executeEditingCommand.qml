@@ -47,23 +47,23 @@ TestWebView {
 
     function test_WebView_executeEditingCommand_cut() {
       webView.executeEditingCommand(WebView.EditingCommandSelectAll);
-      Utils.clearClipboard();
+      ClipboardTestUtils.clearClipboard();
       webView.executeEditingCommand(WebView.EditingCommandCut);
       compare_textarea_value("");
-      compare(Utils.getFromClipboard("text/plain"), "lorem ipsum");
+      compare(ClipboardTestUtils.getFromClipboard("text/plain"), "lorem ipsum");
     }
 
     function test_WebView_executeEditingCommand_copy() {
       webView.executeEditingCommand(WebView.EditingCommandSelectAll);
-      Utils.clearClipboard();
+      ClipboardTestUtils.clearClipboard();
       webView.executeEditingCommand(WebView.EditingCommandCopy);
       compare_textarea_value("lorem ipsum");
-      compare(Utils.getFromClipboard("text/plain"), "lorem ipsum");
+      compare(ClipboardTestUtils.getFromClipboard("text/plain"), "lorem ipsum");
     }
 
     function test_WebView_executeEditingCommand_paste() {
       webView.executeEditingCommand(WebView.EditingCommandSelectAll);
-      Utils.copyToClipboard("text/plain", "foo bar baz");
+      ClipboardTestUtils.copyToClipboard("text/plain", "foo bar baz");
       webView.executeEditingCommand(WebView.EditingCommandPaste);
       compare_textarea_value("foo bar baz");
     }
