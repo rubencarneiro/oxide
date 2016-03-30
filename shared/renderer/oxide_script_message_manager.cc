@@ -29,7 +29,6 @@
 #include "content/public/child/v8_value_converter.h"
 #include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
-#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/common/oxide_constants.h"
@@ -121,7 +120,8 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
 
   v8::Local<v8::Script> script(v8::Script::Compile(wrapped_src));
 
-  blink::WebScopedMicrotaskSuppression mts;
+  v8::MicrotasksScope microstasks(isolate,
+                                  v8::MicrotasksScope::kDoNotRunMicrotasks);
 
   v8::TryCatch try_catch;
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());

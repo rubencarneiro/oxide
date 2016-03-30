@@ -17,10 +17,10 @@
 
 #include "oxide_renderer_user_agent_settings.h"
 
-#include "content/public/common/content_constants.h"
 #include "content/public/renderer/render_thread.h"
 #include "ipc/ipc_message_macros.h"
 #include "url/gurl.h"
+#include "url/url_constants.h"
 
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_user_agent.h"
@@ -47,19 +47,18 @@ RendererUserAgentSettings::GetLegacyUserAgentOverrideForURLFromBrowser(
 
   // URL's longer than kMaxURLChars can't be serialized.
   // Strip query if we are above the max number of chars
-  if (u.spec().size() > content::kMaxURLChars &&
-      u.has_query()) {
+  if (u.spec().size() > url::kMaxURLChars && u.has_query()) {
     GURL::Replacements rep;
     rep.ClearQuery();
     u = u.ReplaceComponents(rep);
   }
 
   // If we are still over, just send the origin
-  if (u.spec().size() > content::kMaxURLChars) {
+  if (u.spec().size() > url::kMaxURLChars) {
     u = u.GetOrigin();
   }
 
-  if (u.spec().size() > content::kMaxURLChars) {
+  if (u.spec().size() > url::kMaxURLChars) {
     return std::string();
   }
 

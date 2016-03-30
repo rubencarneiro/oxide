@@ -21,7 +21,6 @@
 #include "content/public/child/v8_value_converter.h"
 #include "content/public/renderer/render_frame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
-#include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -41,7 +40,8 @@ void ScriptMessageRequestImplRenderer::DispatchResponse(
     v8::Local<v8::Value> argv[]) {
   v8::TryCatch try_catch;
   {
-    blink::WebScopedMicrotaskSuppression mts;
+    v8::MicrotasksScope microtasks(manager()->isolate(),
+                                   v8::MicrotasksScope::kDoNotRunMicrotasks);
     manager()->frame()->GetWebFrame()->callFunctionEvenIfScriptDisabled(
         function, GetHandle(), argc, argv);
   }

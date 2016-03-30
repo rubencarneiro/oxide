@@ -33,7 +33,6 @@
 class OxideQFindController;
 class OxideQNewViewRequest;
 class OxideQSecurityStatus;
-class OxideQTouchSelectionController;
 class OxideQWebPreferences;
 
 namespace oxide {

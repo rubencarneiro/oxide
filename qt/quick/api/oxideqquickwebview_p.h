@@ -34,7 +34,6 @@
 class OxideQNewViewRequest;
 class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
-class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
@@ -182,8 +181,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   QScopedPointer<ConstructProps> construct_props_;
 
   QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
-
-  QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

@@ -20,7 +20,6 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
-#include "cc/layers/layer_settings.h"
 #include "cc/layers/solid_color_layer.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/browser/web_contents/web_contents_impl.h"
@@ -69,7 +68,7 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
       client_(nullptr),
       compositor_(Compositor::Create(this)),
-      root_layer_(cc::SolidColorLayer::Create(cc::LayerSettings())),
+      root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone) {
   web_contents->SetUserData(&kUserDataKey,
@@ -90,10 +89,7 @@ content::WebContentsImpl* WebContentsView::web_contents_impl() const {
 
 ui::TouchSelectionController*
 WebContentsView::GetTouchSelectionController() const {
-  // We don't care about checking for a fullscreen view here - we're called
-  // from StartDragging which is only supported in RenderViews
-  content::RenderWidgetHostView* view =
-      web_contents()->GetRenderWidgetHostView();
+  content::RenderWidgetHostView* view = GetRenderWidgetHostView();
   if (!view) {
     return nullptr;
   }
@@ -161,8 +157,16 @@ gfx::RectF WebContentsView::GetBoundsF() const {
     return gfx::RectF();
   }
 
-  // If we're in fullscreen mode, return the screen size rather than the
-  // view bounds. This works around an issue where buggy Flash content
+  if (ViewSizeShouldBeScreenSize()) {
+    return gfx::RectF(GetScreenInfo().rect);
+  }
+
+  return client_->GetBounds();
+}
+
+bool WebContentsView::ViewSizeShouldBeScreenSize() const {
+  // If we're in fullscreen mode, we force the view bounds to be based on the
+  // screen size. This works around an issue where buggy Flash content
   // expects the view to resize synchronously when it goes fullscreen, but it
   // happens asynchronously instead.
   // See https://launchpad.net/bugs/1510508
@@ -171,13 +175,22 @@ gfx::RectF WebContentsView::GetBoundsF() const {
   //  this is going to break
   FullscreenHelper* fullscreen =
       FullscreenHelper::FromWebContents(web_contents());
-  if (fullscreen &&
-      fullscreen->IsFullscreen() &&
-      web_contents()->GetFullscreenRenderWidgetHostView()) {
-    return gfx::RectF(GetScreenInfo().rect);
+  if (!fullscreen) {
+    return false;
   }
 
-  return client_->GetBounds();
+  if (!fullscreen->IsFullscreen()) {
+    // We're not in fullscreen
+    return false;
+  }
+
+  if (!web_contents()->GetFullscreenRenderWidgetHostView()) {
+    // Only do this for fullscreen widgets. We don't do this for the HTML5
+    // fullscreen API
+    return false;
+  }
+
+  return true;
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -291,11 +304,7 @@ void WebContentsView::StartDragging(
     return;
   }
 
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
+  HideTouchSelectionController();
 
   // As our implementation of gfx::Screen::GetDisplayNearestWindow always
   // returns an invalid display, the passed in image isn't quite correct.
@@ -391,7 +400,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -418,7 +427,7 @@ void WebContentsView::DidShowFullscreenWidget(int routing_id) {
 
   web_contents()->GetRenderWidgetHostView()->Hide();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
@@ -445,7 +454,7 @@ void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
     orig_rwhv->Blur();
   }
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -456,7 +465,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   rwhv->SetContainer(this);
   interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -472,7 +481,7 @@ void WebContentsView::DidDetachInterstitialPage() {
 
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
@@ -583,7 +592,8 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
   return client_->CreateTouchHandleDrawable();
 }
 
-void WebContentsView::TouchSelectionChanged() const {
+void WebContentsView::TouchSelectionChanged(
+    bool handle_drag_in_progress) const {
   if (!client_) {
     return;
   }
@@ -607,7 +617,7 @@ void WebContentsView::TouchSelectionChanged() const {
   }
   bounds.Offset(0, offset);
 
-  client_->TouchSelectionChanged(active, bounds);
+  client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
 }
 
 void WebContentsView::EditingCapabilitiesChanged() {
@@ -670,7 +680,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged();
-  TouchSelectionChanged();
+  TouchSelectionChanged(false);
 }
 
 bool WebContentsView::IsVisible() const {
@@ -917,12 +927,25 @@ void WebContentsView::FocusChanged() {
 }
 
 void WebContentsView::ScreenUpdated() {
+  if (ViewSizeShouldBeScreenSize()) {
+    // See https://launchpad.net/bugs/1558792
+    WasResized();
+  }
+
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
   }
 
   content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
+}
+
+void WebContentsView::HideTouchSelectionController() {
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
 }
 
 } // namespace oxide

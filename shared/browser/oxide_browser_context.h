@@ -60,6 +60,7 @@ class BrowserContextImpl;
 class BrowserContextObserver;
 class BrowserContextSharedData;
 class BrowserContextSharedIOData;
+class CookieStoreUIProxy;
 class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
@@ -107,7 +108,7 @@ class BrowserContextIOData {
 
   UserAgentSettingsIOData* GetUserAgentSettings() const;
 
-  scoped_refptr<net::CookieStore> GetCookieStore() const;
+  net::CookieStore* GetCookieStore() const;
 
  protected:
   friend class BrowserContextImpl; // For GetSharedData()
@@ -135,7 +136,7 @@ class BrowserContextIOData {
 
   scoped_ptr<URLRequestContext> main_request_context_;
   scoped_ptr<ResourceContext> resource_context_;
-  scoped_refptr<net::CookieStore> cookie_store_;
+  scoped_ptr<net::CookieStore> cookie_store_;
 
   scoped_ptr<net::HostMappingRules> host_mapping_rules_;
 
@@ -225,6 +226,8 @@ class BrowserContext
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
 
+  net::CookieStore* GetCookieStore() const;
+
   // XXX: This will be going away
   // (see the comment in oxide_temporary_saved_permission_context.h)
   TemporarySavedPermissionContext* GetTemporarySavedPermissionContext() const;
@@ -271,6 +274,8 @@ class BrowserContext
 
   scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   scoped_ptr<PermissionManager> permission_manager_;
+
+  scoped_ptr<CookieStoreUIProxy> cookie_store_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContext);
 };

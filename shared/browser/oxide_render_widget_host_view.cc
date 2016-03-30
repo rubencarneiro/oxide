@@ -23,7 +23,6 @@
 #include "base/command_line.h"
 #include "base/logging.h"
 #include "base/memory/scoped_vector.h"
-#include "cc/layers/layer_settings.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
@@ -300,8 +299,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
       surface_factory_->Create(surface_id_);
 
       layer_ =
-          cc::SurfaceLayer::Create(cc::LayerSettings(),
-                                   base::Bind(&SatisfyCallback,
+          cc::SurfaceLayer::Create(base::Bind(&SatisfyCallback,
                                               base::Unretained(manager)),
                                    base::Bind(&RequireCallback,
                                               base::Unretained(manager)));
@@ -383,9 +381,6 @@ void RenderWidgetHostView::InitAsFullscreen(
     content::RenderWidgetHostView* reference_host_view) {
   NOTREACHED() << "Fullscreen RenderWidgetHostView's are not supported";
 }
-
-void RenderWidgetHostView::MovePluginWindows(
-    const std::vector<content::WebPluginGeometry>& moves) {}
 
 void RenderWidgetHostView::UpdateCursor(const content::WebCursor& cursor) {
   if (cursor.IsEqual(web_cursor_)) {
@@ -568,7 +563,7 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   if ((selection_controller_->active_status() !=
           ui::TouchSelectionController::INACTIVE) &&
       HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    container_->TouchSelectionChanged();
+    container_->TouchSelectionChanged(handle_drag_in_progress_);
     // XXX: hack to ensure the position of the handles is updated.
     selection_controller_->SetTemporarilyHidden(true);
     selection_controller_->SetTemporarilyHidden(false);
@@ -663,7 +658,6 @@ void RenderWidgetHostView::ReturnResources(
 }
 
 void RenderWidgetHostView::SetBeginFrameSource(
-    cc::SurfaceId surface_id,
     cc::BeginFrameSource* begin_frame_source) {}
 
 bool RenderWidgetHostView::SupportsAnimation() const {
@@ -701,8 +695,20 @@ void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
 }
 
 void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
+  switch (event) {
+    case ui::SELECTION_HANDLE_DRAG_STARTED:
+    case ui::INSERTION_HANDLE_DRAG_STARTED:
+      handle_drag_in_progress_ = true;
+      break;
+    case ui::SELECTION_HANDLE_DRAG_STOPPED:
+    case ui::INSERTION_HANDLE_DRAG_STOPPED:
+      handle_drag_in_progress_ = false;
+      break;
+    default:
+      break;
+  }
   if (container_) {
-    container_->TouchSelectionChanged();
+    container_->TouchSelectionChanged(handle_drag_in_progress_);
   }
 }
 
@@ -808,6 +814,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       is_showing_(!host->is_hidden()),
       top_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)),
+      handle_drag_in_progress_(false),
       weak_ptr_factory_(this) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
@@ -819,8 +826,7 @@ RenderWidgetHostView::RenderWidgetHostView(
   // default values from ui/events/gesture_detection/gesture_configuration.cc
   tsc_config.max_tap_duration = base::TimeDelta::FromMilliseconds(150);
   tsc_config.tap_slop = 15;
-  tsc_config.enable_adaptive_handle_orientation = false;
-  tsc_config.show_on_tap_for_empty_editable = true;
+  tsc_config.enable_adaptive_handle_orientation = true;
   tsc_config.enable_longpress_drag_selection = false;
   selection_controller_.reset(
       new ui::TouchSelectionController(this, tsc_config));

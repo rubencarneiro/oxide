@@ -66,6 +66,7 @@
 #include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_cookie_store_ui_proxy.h"
 #include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
@@ -281,6 +282,11 @@ class OTRBrowserContextIODataImpl : public BrowserContextIOData {
 };
 
 void BrowserContextIOData::Init() {
+  // FIXME(chrisccoulson): net::CookieStore is not thread-safe - we need to be
+  //  creating this on the IO thread. Whilst this is sort-of ok for now (we
+  //  guarantee that there are no concurrent accesses here), it will break
+  //  if net::CookieMonster is modified to assert that it's only accessed on
+  //  a single thread
   DCHECK(!cookie_store_.get());
 
   base::FilePath cookie_path;
@@ -408,7 +414,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   context->set_http_server_properties(http_server_properties_->GetWeakPtr());
 
   DCHECK(cookie_store_.get());
-  storage->set_cookie_store(cookie_store_.get());
+  context->set_cookie_store(cookie_store_.get());
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -442,7 +448,6 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.ssl_config_service = context->ssl_config_service();
   session_params.http_auth_handler_factory =
       context->http_auth_handler_factory();
-  session_params.network_delegate = context->network_delegate();
   session_params.http_server_properties =
       context->http_server_properties();
   session_params.net_log = context->net_log();
@@ -534,9 +539,9 @@ UserAgentSettingsIOData* BrowserContextIOData::GetUserAgentSettings() const {
   return GetSharedData().user_agent_settings.get();
 }
 
-scoped_refptr<net::CookieStore> BrowserContextIOData::GetCookieStore() const {
+net::CookieStore* BrowserContextIOData::GetCookieStore() const {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  return cookie_store_;
+  return cookie_store_.get();
 }
 
 class BrowserContextImpl;
@@ -738,7 +743,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 
   // Make sure that the cookie store is properly created
   io_data->Init();
+  cookie_store_.reset(new CookieStoreUIProxy(io_data->cookie_store_.get()));
 
+  content::BrowserContext::Initialize(this, io_data->GetPath());
   content::BrowserContext::EnsureResourceContextInitialized(this);
 }
 
@@ -883,6 +890,10 @@ const std::vector<std::string>& BrowserContext::GetHostMappingRules() const {
 content::ResourceContext* BrowserContext::GetResourceContext() {
   DCHECK(CalledOnValidThread());
   return io_data()->GetResourceContext();
+}
+
+net::CookieStore* BrowserContext::GetCookieStore() const {
+  return cookie_store_.get();
 }
 
 TemporarySavedPermissionContext*

@@ -136,6 +136,8 @@ class WebContentsView : public content::WebContentsViewOxide,
   void FocusChanged();
   void ScreenUpdated();
 
+  void HideTouchSelectionController();
+
  private:
   WebContentsView(content::WebContents* web_contents);
 
@@ -157,6 +159,8 @@ class WebContentsView : public content::WebContentsViewOxide,
   void MaybeScrollFocusedEditableNodeIntoView();
 
   gfx::RectF GetBoundsF() const;
+
+  bool ViewSizeShouldBeScreenSize() const;
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -233,7 +237,7 @@ class WebContentsView : public content::WebContentsViewOxide,
   bool IsFullscreen() const override;
   float GetLocationBarHeight() const override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged() const override;
+  void TouchSelectionChanged(bool handle_drag_in_progress) const override;
   void EditingCapabilitiesChanged() override;
 
   WebContentsViewClient* client_;

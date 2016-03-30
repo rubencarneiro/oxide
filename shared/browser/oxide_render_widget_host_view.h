@@ -133,8 +133,6 @@ class RenderWidgetHostView final :
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(
       content::RenderWidgetHostView* reference_host_view) final;
-  void MovePluginWindows(
-      const std::vector<content::WebPluginGeometry>& moves) final;
   void UpdateCursor(const content::WebCursor& cursor) final;
   void SetIsLoading(bool is_loading) final;
   void ImeCancelComposition() final;
@@ -188,8 +186,7 @@ class RenderWidgetHostView final :
 
   // cc::SurfaceFactoryClient implementation
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
-  void SetBeginFrameSource(cc::SurfaceId surface_id,
-                           cc::BeginFrameSource* begin_frame_source) override;
+  void SetBeginFrameSource(cc::BeginFrameSource* begin_frame_source) override;
 
   // ui::TouchSelectionControllerClient implementation
   bool SupportsAnimation() const override;
@@ -251,6 +248,7 @@ class RenderWidgetHostView final :
   scoped_ptr<GestureProvider> gesture_provider_;
 
   scoped_ptr<ui::TouchSelectionController> selection_controller_;
+  bool handle_drag_in_progress_;
 
   base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;
 
