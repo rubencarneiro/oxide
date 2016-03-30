@@ -101,12 +101,13 @@ class Runner(object):
 
     for server in SERVER_CONFIGS:
       server = TestHTTPServer(server["port"],
-                              config["server_dir"],
+                              config["http_server_dir"],
                               os.path.join(TOPSRCDIR, server["sslcert"]) if "sslcert" in server else None)
       self._event_loop.add_reader(server, server.handle_event)
 
     test_args = [ config["exec"],
                   "--name", test_name,
+                  "--qml-import-path", config["qml_import_path"],
                   "--qt-plugin-path", config["qt_plugin_path"],
                   "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
                   "--tmpdir", tmpdir ]

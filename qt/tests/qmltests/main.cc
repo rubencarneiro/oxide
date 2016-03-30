@@ -145,13 +145,20 @@ int main(int argc, char** argv) {
   QString test_path(QLatin1String(QML_TEST_PATH));
 
   QString plugin_path;
+  QString import_path;
   QString data_dir;
 
   int index = 1;
   int outargc = 1;
   while (index < argc) {
     char* arg = argv[index];
-    if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
+    if (QLatin1String(arg) == QLatin1String("--qml-import-path") && (index + 1) < argc) {
+      if (!import_path.isEmpty()) {
+        qFatal("Can only specify --qml-import-path once");
+      }
+      import_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
+      index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
       if (!plugin_path.isEmpty()) {
         qFatal("Can only specify --qt-plugin-path once");
       }
@@ -262,6 +269,10 @@ int main(int argc, char** argv) {
   TestNetworkAccessManagerFactory nam_factory(test_dir);
   QQmlEngine engine;
   engine.setNetworkAccessManagerFactory(&nam_factory);
+
+  if (!import_path.isEmpty()) {
+    engine.addImportPath(import_path);
+  }
 
   QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
