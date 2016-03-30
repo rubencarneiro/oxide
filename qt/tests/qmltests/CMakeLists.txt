@@ -97,7 +97,7 @@ function(add_qml_test)
       ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
   set_target_properties(${_ARGS_EXEC} PROPERTIES AUTOMOC TRUE)
 
-  set(_CONFIG ${CMAKE_CURRENT_BINARY_DIR}/${_ARGS_NAME}.conf)
+  set(_CONFIG ${OXIDE_OUTPUT_DIR}/test_configs/${_ARGS_NAME}.conf)
 
   set(QML_TEST_EXEC $<TARGET_FILE:${_ARGS_EXEC}>)
   set(QT_PLUGIN_PATH ${OXIDE_QTPLUGIN_OUTPUT_DIR})
