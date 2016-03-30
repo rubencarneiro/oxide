@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
@@ -32,7 +32,7 @@ TestWebView {
       // Check that the renderer doesn’t crash. If it does,
       // it might not be right away, so give it some time.
       for (var i = 0; i < 5; ++i) {
-        Utils.wait(500);
+        TestSupport.wait(500);
         // Calling into the test API will raise an exception
         // if the renderer process has crashed.
         webView.getTestApi().documentURI;

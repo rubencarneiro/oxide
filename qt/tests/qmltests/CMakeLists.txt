@@ -16,6 +16,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(AutoGenerateHelper)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 find_package(Qt5Qml REQUIRED)
@@ -23,23 +25,17 @@ find_package(Qt5Quick REQUIRED)
 find_package(Qt5QuickTest REQUIRED)
 find_package(Qt5Test REQUIRED)
 
-set(QML_PLUGIN qmloxidetestingplugin)
-set(QML_PLUGIN_MODULE_NAME com/canonical/Oxide/Testing)
+set(QML_SUPPORT_MODULE_NAME Oxide/testsupport)
+set(QML_SUPPORT_IMPORT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(QML_SUPPORT_MODULE_DIR ${QML_SUPPORT_IMPORT_DIR}/${QML_SUPPORT_MODULE_NAME})
 
-set(QML_PLUGIN_SRCS oxide_qml_testing_plugin.cc)
-
-add_library(${QML_PLUGIN} MODULE ${QML_PLUGIN_SRCS})
-target_link_libraries(${QML_PLUGIN}
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Test
-    ${OXIDE_QUICKLIB})
-set_target_properties(
-    ${QML_PLUGIN} PROPERTIES
-    AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME})
-
+add_custom_command(
+    OUTPUT ${QML_SUPPORT_MODULE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${QML_SUPPORT_MODULE_DIR})
+add_custom_target(
+    make_testsupport_dir ALL
+    DEPENDS ${QML_SUPPORT_MODULE_DIR})
+    
 foreach(f
     qmldir
     ScriptMessageTestHandler.qml
@@ -49,90 +45,92 @@ foreach(f
     TestUtilsSlave.js
     TestWebContext.qml
     TestWebView.qml)
+  add_custom_command(
+      OUTPUT ${QML_SUPPORT_MODULE_DIR}/${f}
+      COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/${f} ${QML_SUPPORT_MODULE_DIR}/${f}
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${f} ${QML_SUPPORT_MODULE_DIR})
   add_custom_target(
-      copy_${QML_PLUGIN}_${f} ALL
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/${f}
-        ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}
-      DEPENDS ${QML_PLUGIN})
+      copy_testsupport_file_${f} ALL
+      DEPENDS ${QML_SUPPORT_MODULE_DIR}/${f})
 endforeach()
 
-add_custom_target(
-    mkdir_${QML_PLUGIN}.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack)
-add_custom_target(
-    copy_${QML_PLUGIN}_qmldir.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      ${CMAKE_CURRENT_SOURCE_DIR}/qmldir.hack
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/qmldir
-    DEPENDS mkdir_${QML_PLUGIN}.hack)
-add_custom_target(
-    copy_${QML_PLUGIN}_plugin.hack ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-      $<TARGET_FILE:${QML_PLUGIN}>
-      ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${QML_PLUGIN_MODULE_NAME}/hack/
-    DEPENDS ${QML_PLUGIN} mkdir_${QML_PLUGIN}.hack)
+set(QML_TEST_SHARED qmltestshared)
+set(QML_TEST_SHARED_SRCS
+    qml_test_support.cc
+    quick_test_compat.cc
+    test_nam_factory.cc)
 
-set(QML_TEST qmltest)
-set(QML_TEST_SRCS main.cc)
-
-add_executable(${QML_TEST} ${QML_TEST_SRCS})
-target_link_libraries(${QML_TEST}
+add_library(${QML_TEST_SHARED} STATIC ${QML_TEST_SHARED_SRCS})
+target_link_libraries(
+    ${QML_TEST_SHARED}
     Qt5::Core
     Qt5::Gui
     Qt5::Qml
-    Qt5::Quick
-    Qt5::QuickTest
     Qt5::Test
-    ${OXIDE_LIB})
-target_include_directories(
-    ${QML_TEST} PRIVATE
-    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-    ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
-    ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
-set_target_properties(
-    ${QML_TEST} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${OXIDE_BIN_OUTPUT_DIR}
-    AUTOMOC TRUE)
+    ${OXIDE_LIB}
+    ${OXIDE_QUICKLIB})
+set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
+
+set(QML_TEST_SRCS main.cc)
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "SSL_TESTS" "NAME;TEST_DIR;SERVER_DIR" "" ${ARGN})
-  if(NOT _ARGS_NAME)
-    message(FATAL_ERROR "You must specify NAME when calling add_qml_test")
+  cmake_parse_arguments(_ARGS "" "EXEC;NAME;TEST_DIR" "" "${ARGN}")
+
+  if(NOT DEFINED _ARGS_EXEC)
+    message(FATAL_ERROR "Missing option EXEC")
   endif()
-  if(NOT _ARGS_TEST_DIR)
-    message(FATAL_ERROR "You must specify DATA_DIR when calling add_qml_test")
-  endif()
-  if(NOT _ARGS_SERVER_DIR)
-    set(_ARGS_SERVER_DIR ${_ARGS_TEST_DIR})
+  if(NOT DEFINED _ARGS_NAME)
+    message(FATAL_ERROR "Missing option NAME")
   endif()
 
-  set(TEST_COMMAND
+  if(NOT DEFINED _ARGS_TEST_DIR)
+    set(_ARGS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
+
+  add_executable(${_ARGS_EXEC} ${QML_TEST_SRCS})
+  target_compile_definitions(
+      ${_ARGS_EXEC} PRIVATE
+      -DQML_TEST_NAME="${_ARGS_NAME}"
+      -DQML_TEST_PATH="${_ARGS_TEST_DIR}")
+  target_link_libraries(
+      ${_ARGS_EXEC}
+      ${QML_TEST_SHARED}
+      Qt5::Core
+      Qt5::Gui
+      Qt5::Qml
+      Qt5::Quick
+      Qt5::QuickTest
+      Qt5::Test
+      ${OXIDE_LIB})
+  target_include_directories(
+      ${_ARGS_EXEC} PRIVATE
+      ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+      ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+      ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
+      ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
+  set_target_properties(${_ARGS_EXEC} PROPERTIES AUTOMOC TRUE)
+
+  set(_CONFIG ${OXIDE_OUTPUT_DIR}/test_configs/${_ARGS_NAME}.conf)
+
+  set(QML_TEST_EXEC $<TARGET_FILE:${_ARGS_EXEC}>)
+  set(QT_PLUGIN_PATH ${OXIDE_MOCK_QTPLUGIN_DIR})
+  set(HTTP_SERVER_DIR ${_ARGS_TEST_DIR})
+  set(QML_IMPORT_PATH ${QML_SUPPORT_IMPORT_DIR})
+
+  auto_generate_file(
+      OUTPUT ${_CONFIG}
+      INPUT ${CMAKE_CURRENT_SOURCE_DIR}/qml-test.conf.in
+      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH)
+
+  set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
       ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
-      --server-dir ${_ARGS_SERVER_DIR}
-      --server-config 8080
-      --server-config "4443:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTest")
-
-  if(_ARGS_SSL_TESTS)
-    list(APPEND TEST_COMMAND
-         --server-config "4444:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestExpired"
-         --server-config "4445:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestSelfSigned"
-         --server-config "4446:${CMAKE_SOURCE_DIR}/qt/tests/ssldata/OxideTestBadIdentity")
-  endif()
-
-  list(APPEND TEST_COMMAND --
-       $<TARGET_FILE:${QML_TEST}> -name ${_ARGS_NAME}
-       -input ${_ARGS_TEST_DIR}
-       -add-library-path ${OXIDE_QTPLUGIN_OUTPUT_DIR}
-       -nss-db-path ${CMAKE_SOURCE_DIR}/qt/tests/ssldata/nss)
-
-  add_test(NAME ${_ARGS_NAME} COMMAND ${TEST_COMMAND})
+      --config ${_CONFIG})
+  add_test(NAME ${_ARGS_NAME} COMMAND ${_COMMAND})
 endfunction()
 
-add_qml_test(NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
-add_qml_test(NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
-add_qml_test(NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
-add_qml_test(NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl SSL_TESTS)
+add_qml_test(EXEC qmltest_api NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
+add_qml_test(EXEC qmltest_core NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
+add_qml_test(EXEC qmltest_crash NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
+add_qml_test(EXEC qmltest_ssl NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl)

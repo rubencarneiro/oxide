@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.5
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 Item {
   id: top
@@ -156,21 +156,6 @@ Item {
     name: "LocationBarController"
     when: windowShown
 
-    TestResult { id: testResult }
-
-    function deleteWebView(webview) {
-      var obs = Utils.createDestructionObserver(webview);
-      webview.destroy();
-      var end = Date.now() + 5000;
-      var i = Date.now();
-      while (i < end && !obs.destroyed) {
-        testResult.wait(50);
-        gc();
-        i = Date.now();
-      }
-      verify(obs.destroyed);
-    }
-
     function init() {
       spy.target = null;
       spy.signalName = "";
@@ -194,7 +179,7 @@ Item {
       compare(webView.locationBarController.contentOffset, 0,
               "Default contentOffset should be 0");
 
-      deleteWebView(webView);
+      TestSupport.destroyQObjectNow(webView);
     }
 
     // Ensure that height cannot be set to an invalid value, and verify the
@@ -247,7 +232,7 @@ Item {
       compare(spy.count, 1);
       compare(webView.locationBarController.mode, LocationBarController.ModeShown);
 
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -260,7 +245,7 @@ Item {
       compare(spy.count, 2);
       compare(webView.locationBarController.mode, LocationBarController.ModeHidden);
 
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -275,7 +260,7 @@ Item {
 
       webView.locationBarController.show(true);
 
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -286,7 +271,7 @@ Item {
 
       webView.locationBarController.hide(true);
 
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -360,7 +345,7 @@ Item {
                locationBarSpy.lastAnimationDuration < 250);
       }
 
-      deleteWebView(webView);
+      TestSupport.destroyQObjectNow(webView);
     }
 
     function test_LocationBarController5_on_show_data() {
@@ -395,7 +380,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.show(data.animated);
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -405,7 +390,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -457,7 +442,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.hide(data.animated);
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);
@@ -467,7 +452,7 @@ Item {
       compare(locationBarSpy.animationCount, 0);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
-      Utils.wait(500);
+      TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.unbalancedSignalsReceived);

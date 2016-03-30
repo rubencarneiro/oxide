@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
@@ -34,7 +34,7 @@ TestWebView {
     }
 
     function test_geolocation_get(data) {
-      Utils.setAppProperty("_oxide_geo_testcase", data.testcase);
+      TestSupport.setAppProperty("_oxide_geo_testcase", data.testcase);
       webView.url = "https://testsuite/tst_geolocation_get.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -42,7 +42,7 @@ TestWebView {
     }
 
     function test_geolocation_watch() {
-      Utils.removeAppProperty("_oxide_geo_testcase");
+      TestSupport.removeAppProperty("_oxide_geo_testcase");
       webView.url = "https://testsuite/tst_geolocation_watch.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");

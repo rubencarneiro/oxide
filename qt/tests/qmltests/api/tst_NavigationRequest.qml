@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 // FIXME: Test navigations in a subwindow (ie, one opened with window.open() and with
 // window.opener pointing to its parent - we should only get onNavigationRequest
@@ -186,7 +186,7 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       if (data.disposition == NavigationRequest.DispositionCurrentTab) {
         verify(webView.waitForLoadStopped());
       } else {
-        Utils.wait(100);
+        TestSupport.wait(100);
       }
 
       compare(newViewSpy.count, 0, "Shouldn't have called onNewViewRequested for rejected navigation");

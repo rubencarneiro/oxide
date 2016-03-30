@@ -18,14 +18,14 @@
 .pragma library
 // JS resources can't import the module it belongs too, apparently. So we
 // ship the plugin in another module to work around it
-.import com.canonical.Oxide.Testing.hack 1.0 as OxideTesting
+.import Oxide.testsupport.hack 1.0 as OxideTesting
 
 function waitFor(predicate, timeout, gcDuringWait) {
   timeout = timeout || 5000;
   var end = Date.now() + timeout;
   var i = Date.now();
   while (i < end && !predicate()) {
-    OxideTesting.Utils.wait(50);
+    OxideTesting.TestSupport.wait(50);
     if (gcDuringWait) gc();
     i = Date.now();
   }

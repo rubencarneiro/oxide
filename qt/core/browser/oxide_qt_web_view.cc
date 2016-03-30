@@ -20,6 +20,7 @@
 #include <deque>
 #include <limits>
 #include <memory>
+#include <signal.h>
 #include <utility>
 #include <vector>
 
@@ -33,10 +34,13 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/pickle.h"
+#include "base/process/process.h"
+#include "base/process/process_handle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
@@ -1065,6 +1069,26 @@ void WebView::teardownFrameTree() {
   }
 
   frame_tree_torn_down_ = true;
+}
+
+void WebView::killWebProcess(bool crash) {
+  content::RenderProcessHost* host =
+      web_view_->GetWebContents()->GetRenderProcessHost();
+  if (!host) {
+    return;
+  }
+
+  base::ProcessHandle handle = host->GetHandle();
+  if (handle == base::kNullProcessHandle) {
+    return;
+  }
+
+  if (!crash) {
+    base::Process process = base::Process::Open(handle);
+    process.Terminate(0, false);
+  } else if (kill(handle, SIGSEGV) != 0) {
+    LOG(WARNING) << "Unable to crash process " << handle;
+  }
 }
 
 WebView::WebView(WebViewProxyClient* client,

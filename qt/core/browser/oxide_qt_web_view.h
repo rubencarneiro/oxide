@@ -260,6 +260,8 @@ class WebView : public oxide::WebViewClient,
 
   void teardownFrameTree() override;
 
+  void killWebProcess(bool crash) override;
+
   scoped_ptr<ContentsView> contents_view_;
 
   scoped_ptr<oxide::WebView> web_view_;
