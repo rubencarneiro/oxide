@@ -71,12 +71,20 @@ def load_config(filename):
   with open(filename, "r") as fd:
     return yaml.load(fd.read());
 
+def get_debugger_args(options):
+  if not options.debug:
+    return None
+
+  return ["gdb", "--args"]
+
 class Options(OptionParser):
   def __init__(self):
     OptionParser.__init__(self)
 
     self.add_option("--config", dest="config",
                     help="Path to the test configuration file")
+    self.add_option("--debug", dest="debug", action="store_true",
+                    help="Run the test in a debugger (only supported is GDB)")
 
 class Runner(object):
   def __init__(self):
@@ -90,13 +98,14 @@ class Runner(object):
       print("Missing --config option", file=sys.stderr)
       sys.exit(1)
 
-    test_name = os.path.splitext(os.path.basename(opts.config))[0]
     config = load_config(opts.config)
 
-    with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
-      return self._run_with_tmpdir(tmpdir, test_name, config, args)
+    debugger_args = get_debugger_args(opts)
 
-  def _run_with_tmpdir(self, tmpdir, test_name, config, args):
+    with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
+      return self._run_with_tmpdir(tmpdir, config, debugger_args, args)
+
+  def _run_with_tmpdir(self, tmpdir, config, debugger_args, extra_args):
     os.environ["OXIDE_TESTING_MODE"] = "1"
 
     for server in SERVER_CONFIGS:
@@ -105,13 +114,18 @@ class Runner(object):
                               os.path.join(TOPSRCDIR, server["sslcert"]) if "sslcert" in server else None)
       self._event_loop.add_reader(server, server.handle_event)
 
-    test_args = [ config["exec"],
-                  "--name", test_name,
-                  "--qml-import-path", config["qml_import_path"],
-                  "--qt-plugin-path", config["qt_plugin_path"],
-                  "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
-                  "--tmpdir", tmpdir ]
-    test_args.extend(args)
+    test_args = []
+    if debugger_args:
+      test_args.extend(debugger_args)
+
+    test_args.extend(
+        [ config["exec"],
+          "--qml-import-path", config["qml_import_path"],
+          "--qt-plugin-path", config["qt_plugin_path"],
+          "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
+          "--tmpdir", tmpdir ])
+
+    test_args.extend(extra_args)
 
     self._p = TestProcess(test_args)
     self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
