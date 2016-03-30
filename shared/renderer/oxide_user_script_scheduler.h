@@ -30,24 +30,22 @@ class WebFrame;
 
 namespace oxide {
 
-class UserScriptScheduler final : public content::RenderViewObserver {
+class UserScriptScheduler : public content::RenderViewObserver {
  public:
   UserScriptScheduler(content::RenderView* render_view);
 
-  void DidFinishDocumentLoad(blink::WebLocalFrame* frame) final;
-  void DidFinishLoad(blink::WebLocalFrame* frame) final;
-  void DidCreateDocumentElement(blink::WebLocalFrame* frame) final;
-
-  void FrameDetached(blink::WebFrame* frame) final;
-
  private:
   void DoIdleInject();
+
+  // content::RenderViewObserver implementation
+  void DidFinishLoad(blink::WebLocalFrame* frame) override;
+  void FrameDetached(blink::WebFrame* frame) override;
 
   bool idle_posted_;
   std::set<blink::WebLocalFrame *> pending_idle_frames_;
   base::WeakPtrFactory<UserScriptScheduler> weak_factory_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(UserScriptScheduler);
+  DISALLOW_COPY_AND_ASSIGN(UserScriptScheduler);
 };
 
 } // namespace oxide
