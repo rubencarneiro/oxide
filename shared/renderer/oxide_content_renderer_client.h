@@ -29,7 +29,7 @@ class RendererMediaPlayerManager;
 
 class RendererUserAgentSettings;
 
-class ContentRendererClient final : public content::ContentRendererClient {
+class ContentRendererClient : public content::ContentRendererClient {
  public:
   ContentRendererClient();
   ~ContentRendererClient();
@@ -38,21 +38,23 @@ class ContentRendererClient final : public content::ContentRendererClient {
 
  private:
   // content::ContentRendererClient implementation
-  void RenderThreadStarted() final;
-  void RenderFrameCreated(content::RenderFrame* render_frame) final;
-  void RenderViewCreated(content::RenderView* render_view) final;
-  std::string GetUserAgentOverrideForURL(const GURL& url) final;
+  void RenderThreadStarted() override;
+  void RenderFrameCreated(content::RenderFrame* render_frame) override;
+  void RenderViewCreated(content::RenderView* render_view) override;
   void AddImageContextMenuProperties(
       const blink::WebURLResponse& response,
-      std::map<std::string, std::string>* properties) final;
+      std::map<std::string, std::string>* properties) override;
+  void RunScriptsAtDocumentStart(content::RenderFrame* render_frame) override;
+  void RunScriptsAtDocumentEnd(content::RenderFrame* render_frame) override;
 #if defined(ENABLE_MEDIAHUB)
   blink::WebMediaPlayer* OverrideWebMediaPlayer(
       blink::WebFrame* frame,
       blink::WebMediaPlayerClient* client,
       base::WeakPtr<media::WebMediaPlayerDelegate> delegate,
-      media::MediaLog* media_log) final;
+      media::MediaLog* media_log) override;
 #endif
-  void OverrideCompositorSettings(cc::LayerTreeSettings* settings) final;
+  void OverrideCompositorSettings(cc::LayerTreeSettings* settings) override;
+  std::string GetUserAgentOverrideForURL(const GURL& url) override;
 
   scoped_ptr<RendererUserAgentSettings> user_agent_settings_;
 
