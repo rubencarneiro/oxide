@@ -94,9 +94,9 @@ class Runner(object):
     config = load_config(opts.config)
 
     with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
-      return self._run_with_tmpdir(tmpdir, test_name, config)
+      return self._run_with_tmpdir(tmpdir, test_name, config, args)
 
-  def _run_with_tmpdir(self, tmpdir, test_name, config):
+  def _run_with_tmpdir(self, tmpdir, test_name, config, args):
     os.environ["OXIDE_TESTING_MODE"] = "1"
 
     for server in SERVER_CONFIGS:
@@ -111,6 +111,8 @@ class Runner(object):
                   "--qt-plugin-path", config["qt_plugin_path"],
                   "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
                   "--tmpdir", tmpdir ]
+    test_args.extend(args)
+
     self._p = TestProcess(test_args)
     self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
 

@@ -148,6 +148,8 @@ int main(int argc, char** argv) {
   QString import_path;
   QString data_dir;
 
+  QStringList test_file_names;
+
   int index = 1;
   int outargc = 1;
   while (index < argc) {
@@ -175,6 +177,9 @@ int main(int argc, char** argv) {
         qFatal("Can only specify --tmpdir once");
       }
       data_dir = stripQuotes(QString::fromLatin1(argv[index + 1]));
+      index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
+      test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
@@ -219,15 +224,32 @@ int main(int argc, char** argv) {
 
   QFileInfo test_path_info(test_path);
   if (test_path_info.isFile()) {
+    if (!test_file_names.isEmpty()) {
+      qFatal("--file option is invalid for this test");
+    }
     test_dir = test_path_info.dir();
     if (!test_path.endsWith(".qml")) {
       qFatal("Test file '%s' does not end with '.qml'", qPrintable(test_path));
     }
     files.append(test_path);
+  } else if (!test_file_names.isEmpty()) {
+    Q_ASSERT(test_path_info.isDir());
+    test_dir.cd(test_path);
+
+    for (const auto& file_name : test_file_names) {
+      if (!file_name.endsWith(".qml")) {
+        qFatal("Test file '%s' does not end with '.qml'", qPrintable(file_name));
+      }
+      QFileInfo file_info(test_dir, file_name);
+      if (!file_info.isFile()) {
+        qFatal("Test file '%s' does not exist", qPrintable(file_name));
+      }
+      files.append(file_info.absoluteFilePath());
+    }
   } else {
     Q_ASSERT(test_path_info.isDir());
     test_dir.cd(test_path);
-    Q_ASSERT(test_path_info.isDir());
+
     const QStringList filters(QStringLiteral("tst_*.qml"));
     QDirIterator iter(test_path, filters, QDir::Files,
                       QDirIterator::Subdirectories |
