@@ -54,11 +54,24 @@ foreach(f
       DEPENDS ${QML_SUPPORT_MODULE_DIR}/${f})
 endforeach()
 
-set(QML_TEST_SRCS
-    main.cc
+set(QML_TEST_SHARED qmltestshared)
+set(QML_TEST_SHARED_SRCS
     qml_test_support.cc
     quick_test_compat.cc
     test_nam_factory.cc)
+
+add_library(${QML_TEST_SHARED} STATIC ${QML_TEST_SHARED_SRCS})
+target_link_libraries(
+    ${QML_TEST_SHARED}
+    Qt5::Core
+    Qt5::Gui
+    Qt5::Qml
+    Qt5::Test
+    ${OXIDE_LIB}
+    ${OXIDE_QUICKLIB})
+set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
+
+set(QML_TEST_SRCS main.cc)
 
 function(add_qml_test)
   cmake_parse_arguments(_ARGS "" "EXEC;NAME;TEST_DIR" "" "${ARGN}")
@@ -81,14 +94,14 @@ function(add_qml_test)
       -DQML_TEST_PATH="${_ARGS_TEST_DIR}")
   target_link_libraries(
       ${_ARGS_EXEC}
+      ${QML_TEST_SHARED}
       Qt5::Core
       Qt5::Gui
       Qt5::Qml
       Qt5::Quick
       Qt5::QuickTest
       Qt5::Test
-      ${OXIDE_LIB}
-      ${OXIDE_QUICKLIB})
+      ${OXIDE_LIB})
   target_include_directories(
       ${_ARGS_EXEC} PRIVATE
       ${Qt5Core_PRIVATE_INCLUDE_DIRS}
