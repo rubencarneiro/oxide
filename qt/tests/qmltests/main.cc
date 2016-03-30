@@ -208,7 +208,8 @@ int main(int argc, char** argv) {
   }
 
   QuickTestResult::setCurrentAppname(argv[0]);
-  QuickTestResult::setProgramName(test_name.toLatin1().constData());
+  QByteArray test_name_ba = test_name.toUtf8();
+  QuickTestResult::setProgramName(test_name_ba.constData());
   QuickTestResult::parseArgs(outargc, argv);
 
   if (!QFile::exists(test_path)) {
