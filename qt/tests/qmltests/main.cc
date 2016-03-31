@@ -77,6 +77,11 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
   return new ClipboardTestUtils();
 }
 
+QJSValue BuildTestConstants(QJSEngine* engine) {
+  QJSValue constants = engine->newObject();
+  return constants;
+}
+
 static void HandleCompileErrors(const QFileInfo& fi, QQuickView* view) {
   const QList<QQmlError> errors = view->errors();
 
@@ -296,6 +301,10 @@ int main(int argc, char** argv) {
   if (!import_path.isEmpty()) {
     engine.addImportPath(import_path);
   }
+
+  engine.rootContext()->setContextProperty(
+      "TestConstants",
+      QVariant::fromValue(BuildTestConstants(&engine)));
 
   QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
