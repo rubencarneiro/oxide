@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
@@ -53,7 +53,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1, "Should have one handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
-      compare(Utils.qObjectParent(handler), webView,
+      compare(TestSupport.qObjectParent(handler), webView,
               "Message handler should be owned by the view");
 
       handler = null;
@@ -72,7 +72,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1, "Should have one handler now");
       compare(webView.messageHandlers[0], handler,
               "Got the wrong handler back");
-      compare(Utils.qObjectParent(handler), webView,
+      compare(TestSupport.qObjectParent(handler), webView,
               "Message handler should be owned by the view");
 
       handler = null;
@@ -95,7 +95,7 @@ TestWebView {
               "Should still have a handler on the other view");
       compare(webView.messageHandlers.length, 0,
               "Should have no handlers on our view");
-      compare(Utils.qObjectParent(handler), otherView,
+      compare(TestSupport.qObjectParent(handler), otherView,
               "Incorrect parent");
 
       webView.removeMessageHandler(handler);
@@ -111,7 +111,7 @@ TestWebView {
               "Frame should still have a handler");
       compare(webView.messageHandlers.length, 0,
               "View should not have adopted message handler");
-      compare(Utils.qObjectParent(handler), frame,
+      compare(TestSupport.qObjectParent(handler), frame,
               "Incorrect parent");
     }
 
@@ -122,7 +122,7 @@ TestWebView {
       compare(webView.messageHandlers.length, 1,
               "WebView should have a handler");
 
-      Utils.destroyQObjectNow(handler);
+      TestSupport.destroyQObjectNow(handler);
 
       compare(spy.count, 2, "Should have had a signal");
       compare(webView.messageHandlers.length, 0,

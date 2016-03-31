@@ -1,12 +1,14 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.3
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 WebContext {
   property bool persistent: true
 
   dataPath: persistent ? QMLTEST_DATADIR : ""
+
+  property var qtest_contextTestSupport: TestSupport.createWebContextTestSupport(this)
 
   userScripts: [
     UserScript {
@@ -53,7 +55,7 @@ WebContext {
   }
 
   function clearTemporarySavedPermissionStatuses() {
-    Utils.clearTemporarySavedPermissionStatuses(this);
+    qtest_contextTestSupport.clearTemporarySavedPermissionStatuses();
   }
 
   property var qtest_UserScriptFactory: Component {

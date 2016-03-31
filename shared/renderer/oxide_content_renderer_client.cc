@@ -111,16 +111,6 @@ void ContentRendererClient::RenderViewCreated(
   }
 }
 
-std::string ContentRendererClient::GetUserAgentOverrideForURL(
-    const GURL& url) {
-  if (url.scheme() == content::kChromeUIScheme) {
-    return content::BuildUserAgentFromProduct(
-        base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
-  }
-
-  return user_agent_settings_->GetUserAgentOverrideForURL(url);
-}
-
 void ContentRendererClient::AddImageContextMenuProperties(
     const blink::WebURLResponse& response,
     std::map<std::string, std::string>* properties) {
@@ -128,6 +118,22 @@ void ContentRendererClient::AddImageContextMenuProperties(
   // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
   (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
       response.mimeType().utf8();
+}
+
+void ContentRendererClient::RunScriptsAtDocumentStart(
+    content::RenderFrame* render_frame) {
+  if (!render_frame->GetWebFrame()) {
+    return;
+  }
+
+  UserScriptSlave::GetInstance()->InjectScripts(render_frame->GetWebFrame(),
+                                                UserScript::DOCUMENT_START);
+}
+
+void ContentRendererClient::RunScriptsAtDocumentEnd(
+    content::RenderFrame* render_frame) {
+  UserScriptSlave::GetInstance()->InjectScripts(render_frame->GetWebFrame(),
+                                                UserScript::DOCUMENT_END);
 }
 
 #if defined(ENABLE_MEDIAHUB)
@@ -168,6 +174,16 @@ void ContentRendererClient::OverrideCompositorSettings(
   }
 
   settings->use_external_begin_frame_source = false;
+}
+
+std::string ContentRendererClient::GetUserAgentOverrideForURL(
+    const GURL& url) {
+  if (url.scheme() == content::kChromeUIScheme) {
+    return content::BuildUserAgentFromProduct(
+        base::StringPrintf("Chrome/%s", CHROME_VERSION_STRING));
+  }
+
+  return user_agent_settings_->GetUserAgentOverrideForURL(url);
 }
 
 ContentRendererClient::ContentRendererClient() {}

@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestWebView {
   id: top
@@ -52,17 +52,17 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(Utils.qObjectParent(d), context,
+      compare(TestSupport.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
 
       context[data.prop] = d;
       compare(spy.count, 1, "Shouldn't have had another signal");
 
-      var dobs = Utils.createDestructionObserver(d);
+      var helper = TestSupport.createQObjectTestHelper(d);
 
       context[data.prop] = null;
       compare(spy.count, 2, "Expected a signal");
-      verify(dobs.destroyed, "Delegate should have been destroyed");
+      verify(helper.destroyed, "Delegate should have been destroyed");
     }
 
     function test_WebContext_delegateWorkers2_assign_already_in_use_data() {
@@ -77,7 +77,7 @@ TestWebView {
       context[data.prop] = d;
       compare(spy.count, 0, "Shouldn't have had a signal");
       compare(context[data.prop], null, "Unexpected value");
-      compare(Utils.qObjectParent(d), context2,
+      compare(TestSupport.qObjectParent(d), context2,
               "Shouldn't have been reparented");
 
       context2[data.prop] = null;
@@ -94,7 +94,7 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(Utils.qObjectParent(d), context,
+      compare(TestSupport.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
     }
 
@@ -110,10 +110,10 @@ TestWebView {
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(Utils.qObjectParent(d), context,
+      compare(TestSupport.qObjectParent(d), context,
               "Delegate should be parented to the WebContext");
 
-      Utils.destroyQObjectNow(d);
+      TestSupport.destroyQObjectNow(d);
       
       compare(spy.count, 2, "Expected a signal");
       compare(context[data.prop], null, "Value should have been cleared");
@@ -126,21 +126,21 @@ TestWebView {
 
       compare(context.networkRequestDelegate, d);
       compare(context.storageAccessPermissionDelegate, d);
-      compare(Utils.qObjectParent(d), context);
+      compare(TestSupport.qObjectParent(d), context);
 
       context.networkRequestDelegate = null;
 
       compare(context.networkRequestDelegate, null);
       compare(context.storageAccessPermissionDelegate, d);
-      compare(Utils.qObjectParent(d), context);
+      compare(TestSupport.qObjectParent(d), context);
 
-      var dobs = Utils.createDestructionObserver(d);
+      var helper = TestSupport.createQObjectTestHelper(d);
 
       context.storageAccessPermissionDelegate = null;
 
       compare(context.networkRequestDelegate, null);
       compare(context.storageAccessPermissionDelegate, null);
-      verify(dobs.destroyed);
+      verify(helper.destroyed);
     }
   }
 }
