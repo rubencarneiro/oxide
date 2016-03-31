@@ -66,7 +66,7 @@ static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
-  return new TestSupport();
+  return TestSupport::instance();
 }
 
 static QObject* GetClipboardTestUtils(QQmlEngine* engine,
@@ -325,6 +325,7 @@ int main(int argc, char** argv) {
     view.setTitle(view.objectName());
 
     QTestRootObject::instance()->reset();
+    TestSupport::instance()->reset();
 
     QString path = fi.absoluteFilePath();
     view.setSource(QUrl::fromLocalFile(path));
@@ -367,7 +368,8 @@ int main(int argc, char** argv) {
             "hang.";
       }
       if (!QTestRootObject::instance()->hasQuit() &&
-          QTestRootObject::instance()->hasTestCase()) {
+          QTestRootObject::instance()->hasTestCase() &&
+          !TestSupport::instance()->skipTestCase()) {
         event_loop.exec();
       }
     }
