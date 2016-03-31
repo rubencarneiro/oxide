@@ -69,6 +69,13 @@ static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   return TestSupport::instance();
 }
 
+static QObject* GetTestSupportHack(QQmlEngine* engine, QJSEngine* js_engine) {
+  Q_UNUSED(engine);
+  Q_UNUSED(js_engine);
+
+  return new TestSupport();
+}
+
 static QObject* GetClipboardTestUtils(QQmlEngine* engine,
                                       QJSEngine* js_engine) {
   Q_UNUSED(engine);
@@ -290,7 +297,7 @@ int main(int argc, char** argv) {
       "Create this with TestSupport.createWebViewTestSupport()");
 
   qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupportHack);
 
   QEventLoop event_loop;
 

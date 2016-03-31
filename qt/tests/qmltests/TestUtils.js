@@ -17,7 +17,9 @@
 
 .pragma library
 // JS resources can't import the module it belongs too, apparently. So we
-// ship the plugin in another module to work around it
+// ship the plugin in another module to work around it.
+// Note that this file will get a *separate* instance of the TestSupport
+// singleton
 .import Oxide.testsupport.hack 1.0 as OxideTesting
 
 function waitFor(predicate, timeout, gcDuringWait) {
