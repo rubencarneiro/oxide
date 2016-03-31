@@ -41,6 +41,7 @@ foreach(f
     ScriptMessageTestHandler.qml
     ScriptMessageTestUtils.js
     ScriptMessageTestUtilsUserScript.js
+    SkippableTestCase.qml
     TestUtils.js
     TestUtilsSlave.js
     TestWebContext.qml

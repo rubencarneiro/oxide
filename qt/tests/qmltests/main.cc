@@ -367,11 +367,20 @@ int main(int argc, char** argv) {
             "exposed! If the test case was expecting windowShown, it will "
             "hang.";
       }
-      if (!QTestRootObject::instance()->hasQuit() &&
-          QTestRootObject::instance()->hasTestCase() &&
-          !TestSupport::instance()->skipTestCase()) {
-        event_loop.exec();
+
+      if (QTestRootObject::instance()->hasQuit()) {
+        continue;
       }
+
+      if (!QTestRootObject::instance()->hasTestCase()) {
+        continue;
+      }
+
+      if (TestSupport::instance()->skipTestCase()) {
+        continue;
+      }
+
+      event_loop.exec();
     }
   }
 
