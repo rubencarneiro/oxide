@@ -66,7 +66,7 @@ static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
-  return new TestSupport();
+  return TestSupport::instance();
 }
 
 static QObject* GetClipboardTestUtils(QQmlEngine* engine,
@@ -75,6 +75,11 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
   Q_UNUSED(js_engine);
 
   return new ClipboardTestUtils();
+}
+
+QJSValue BuildTestConstants(QJSEngine* engine) {
+  QJSValue constants = engine->newObject();
+  return constants;
 }
 
 static void HandleCompileErrors(const QFileInfo& fi, QQuickView* view) {
@@ -297,6 +302,10 @@ int main(int argc, char** argv) {
     engine.addImportPath(import_path);
   }
 
+  engine.rootContext()->setContextProperty(
+      "TestConstants",
+      QVariant::fromValue(BuildTestConstants(&engine)));
+
   QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
                 Qt::WindowTitleHint | Qt::WindowMinMaxButtonsHint |
@@ -325,6 +334,7 @@ int main(int argc, char** argv) {
     view.setTitle(view.objectName());
 
     QTestRootObject::instance()->reset();
+    TestSupport::instance()->reset();
 
     QString path = fi.absoluteFilePath();
     view.setSource(QUrl::fromLocalFile(path));
@@ -366,10 +376,20 @@ int main(int argc, char** argv) {
             "exposed! If the test case was expecting windowShown, it will "
             "hang.";
       }
-      if (!QTestRootObject::instance()->hasQuit() &&
-          QTestRootObject::instance()->hasTestCase()) {
-        event_loop.exec();
+
+      if (QTestRootObject::instance()->hasQuit()) {
+        continue;
       }
+
+      if (!QTestRootObject::instance()->hasTestCase()) {
+        continue;
+      }
+
+      if (TestSupport::instance()->skipTestCase()) {
+        continue;
+      }
+
+      event_loop.exec();
     }
   }
 

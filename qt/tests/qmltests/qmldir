@@ -1,6 +1,7 @@
 module Oxide.testsupport
+ScriptMessageTestHandler 1.0 ScriptMessageTestHandler.qml
+ScriptMessageTestUtils 1.0 ScriptMessageTestUtils.js
+SkippableTestCase 1.0 SkippableTestCase.qml
+TestUtils 1.0 TestUtils.js
 TestWebContext 1.0 TestWebContext.qml
 TestWebView 1.0 TestWebView.qml
-TestUtils 1.0 TestUtils.js
-ScriptMessageTestUtils 1.0 ScriptMessageTestUtils.js
-ScriptMessageTestHandler 1.0 ScriptMessageTestHandler.qml
