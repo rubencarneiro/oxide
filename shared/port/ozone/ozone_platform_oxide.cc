@@ -76,10 +76,6 @@ class OzonePlatformOxide : public OzonePlatform {
     return scoped_ptr<NativeDisplayDelegate>();
   }
 
-  base::ScopedFD OpenClientNativePixmapDevice() const final {
-    return base::ScopedFD();
-  }
-
  private:
   void InitializeUI() final {}
   void InitializeGPU() final {}
