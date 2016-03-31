@@ -192,6 +192,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual qreal maximumZoomFactor() const = 0;
 
   virtual void teardownFrameTree() = 0;
+
+  virtual void killWebProcess(bool crash) = 0;
 };
 
 } // namespace qt

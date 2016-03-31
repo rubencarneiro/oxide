@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
@@ -143,6 +143,7 @@ TestWebView {
       }
 
       cancelSpy.target = webView.lastGeolocationRequest;
+      verify(!webView.lastGeolocationRequest.isCancelled);
 
       webView.clearLoadEventCounters();
       webView.getTestApi().evaluateCode(
@@ -163,12 +164,15 @@ TestWebView {
       }
 
       cancelSpy.target = webView.lastGeolocationRequest;
+      verify(!webView.lastGeolocationRequest.isCancelled);
 
       webView.clearLoadEventCounters();
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
           "window.location = \"http://testsuite/empty.html\";", false);
  
-      cancelSpy.wait();
+      if (!webView.lastGeolocationRequest.isCancelled) {
+        cancelSpy.wait();
+      }
 
       compare(cancelSpy.count, 1) << "Pending request should have been cancelled";
       verify(webView.lastGeolocationRequest.isCancelled);
@@ -184,12 +188,16 @@ TestWebView {
       }
 
       cancelSpy.target = webView.lastGeolocationRequest;
+      verify(!webView.lastGeolocationRequest.isCancelled);
 
       webView.getTestApi().evaluateCode("
 var f = document.getElementsByTagName(\"iframe\")[0];
-f.parentElement.removeChild(f);", true);
+f.parentElement.removeChild(f);
+delete f;", true);
 
-      cancelSpy.wait();
+      if (!webView.lastGeolocationRequest.isCancelled) {
+        cancelSpy.wait();
+      }
 
       compare(cancelSpy.count, 1) << "Pending request should have been cancelled";
       verify(webView.lastGeolocationRequest.isCancelled);

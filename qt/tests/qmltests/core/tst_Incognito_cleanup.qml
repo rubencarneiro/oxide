@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtTest 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 Item {
   id: top
@@ -32,9 +32,9 @@ Item {
       webView.getTestApi().evaluateCode("document.cookie = \"foo=bar\"", false);
       compare(webView.getTestApi().evaluateCode("document.cookie", false), "foo=bar");
 
-      var obs = Utils.createDestructionObserver(webView);
+      var webViewHelper = TestSupport.createQObjectTestHelper(webView);
       webView.destroy();
-      TestUtils.waitFor(function() { return obs.destroyed; });
+      TestUtils.waitFor(function() { return webViewHelper.destroyed; });
 
       webView = webViewFactory.createObject(top, {});
       webView.url = "http://testsuite/empty.html";

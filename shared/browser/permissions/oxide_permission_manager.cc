@@ -184,7 +184,7 @@ int PermissionManager::RequestPermission(
   RequestData* request_data = new RequestData(render_frame_host);
   int request_id = requests_.Add(request_data);
 
-  request_data->request_id = dispatcher->RequestPermission(
+  int dispatch_request_id = dispatcher->RequestPermission(
       permission,
       render_frame_host,
       requesting_origin,
@@ -195,8 +195,14 @@ int PermissionManager::RequestPermission(
                  requesting_origin,
                  embedding_origin,
                  callback));
-  DCHECK_NE(request_data->request_id, -1);
+  DCHECK_NE(dispatch_request_id, -1);
 
+  request_data = requests_.Lookup(request_id);
+  if (!request_data) {
+    return kNoPendingOperation;
+  }
+
+  request_data->request_id = dispatch_request_id;
   return request_id;
 }
 

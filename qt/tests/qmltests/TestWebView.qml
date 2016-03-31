@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.11
-import com.canonical.Oxide.Testing 1.0 as Testing
+import Oxide.testsupport 1.0
 import "TestUtils.js" as TestUtils
 
 WebView {
@@ -93,6 +93,12 @@ WebView {
   property int qtest_expectedLoadsCommittedCount: 0
 
   context: TestWebContext {}
+
+  property QtObject qtest_webViewTestSupport: TestSupport.createWebViewTestSupport(this)
+
+  function killWebProcess(crash) {
+    qtest_webViewTestSupport.killWebProcess(crash);
+  }
 
   Connections {
     onFrameRemoved: {

@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 Column {
   WebPreferences {
@@ -43,9 +43,7 @@ Column {
       webView2.url = "http://testsuite/empty.html";
       verify(webView2.waitForLoadSucceeded());
 
-      var obs = Utils.createDestructionObserver(webView1);
-      webView1.destroy(0);
-      TestUtils.waitFor(function() { return obs.destroyed; });
+      TestSupport.destroyQObjectNow(webView1);
 
       compare(webView2.getTestApi().evaluateCode("window.localStorage.getItem(\"oxide-shutdown-foo\");", false), "baaa");
     }

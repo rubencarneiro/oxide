@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestCase {
   id: test
@@ -60,7 +60,7 @@ TestCase {
     spy.target = v;
     spy.signalName = "contextChanged";
 
-    Utils.destroyQObjectNow(c);
+    TestSupport.destroyQObjectNow(c);
     verify(!v.context);
     compare(spy.count, 1);
   }

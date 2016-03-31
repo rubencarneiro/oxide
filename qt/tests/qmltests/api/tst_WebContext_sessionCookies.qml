@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 TestCase {
   id: test
@@ -19,11 +19,11 @@ TestCase {
 
   function _deleteWebView(webView) {
     var context = webView.context;
-    Utils.destroyQObjectNow(webView);
-    Utils.destroyQObjectNow(context);
+    TestSupport.destroyQObjectNow(webView);
+    TestSupport.destroyQObjectNow(context);
     // XXX: Hack to ensure that the cookie store lock gets released before
     // starting the next test
-    qtest_results.wait(200);
+    TestSupport.wait(200);
   }
 
   function _clear(webView) {

@@ -49,11 +49,6 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     idle_posted_(false),
     weak_factory_(this) {}
 
-void UserScriptScheduler::DidFinishDocumentLoad(blink::WebLocalFrame* frame) {
-  UserScriptSlave::GetInstance()->InjectScripts(frame,
-                                                UserScript::DOCUMENT_END);
-}
-
 void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
   pending_idle_frames_.insert(frame);
 
@@ -67,11 +62,6 @@ void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
       FROM_HERE,
       base::Bind(&UserScriptScheduler::DoIdleInject,
                  weak_factory_.GetWeakPtr()));
-}
-
-void UserScriptScheduler::DidCreateDocumentElement(blink::WebLocalFrame* frame) {
-  UserScriptSlave::GetInstance()->InjectScripts(frame,
-                                                UserScript::DOCUMENT_START);
 }
 
 void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {

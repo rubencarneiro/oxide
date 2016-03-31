@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtTest 1.0
 import com.canonical.Oxide 1.0
-import com.canonical.Oxide.Testing 1.0
+import Oxide.testsupport 1.0
 
 Column {
   id: column
@@ -58,7 +58,6 @@ Column {
       webView.url = "http://testsuite/tst_bug1324909_2.html";
       verify(webView.waitForLoadSucceeded());
 
-      console.log(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).documentURI);
       compare(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
           "return document.getElementById(\"useragent\").innerHTML;", true),
           "Foo");
