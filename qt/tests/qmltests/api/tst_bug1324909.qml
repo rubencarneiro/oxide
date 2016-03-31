@@ -49,6 +49,8 @@ Column {
       spy.wait();
       verify(created != null);
 
+      TestUtils.waitFor(function() { return created.loading == false; });
+
       compare(created.getTestApi().evaluateCode(
           "return document.getElementById(\"useragent\").innerHTML;", true),
           "Foo");

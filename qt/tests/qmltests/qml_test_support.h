@@ -121,9 +121,17 @@ class WebViewTestSupport : public QObject {
 
 class TestSupport : public QObject {
   Q_OBJECT
+  Q_PROPERTY(bool skipTestCase READ skipTestCase WRITE setSkipTestCase NOTIFY skipTestCaseChanged)
 
  public:
   TestSupport();
+
+  static TestSupport* instance();
+
+  bool skipTestCase() const;
+  void setSkipTestCase(bool skip);
+
+  void reset();
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object);
 
@@ -143,6 +151,12 @@ class TestSupport : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property);
 
   Q_INVOKABLE void wait(int ms);
+
+ Q_SIGNALS:
+  void skipTestCaseChanged();
+
+ private:
+  bool skip_test_case_;
 };
 
 #endif // _OXIDE_QT_TESTS_QMLTEST_QML_TEST_SUPPORT_H_
