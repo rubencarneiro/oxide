@@ -133,5 +133,5 @@ endfunction()
 
 add_qml_test(EXEC qmltest_api NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
 add_qml_test(EXEC qmltest_core NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
+add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform)
 add_qml_test(EXEC qmltest_crash NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
-add_qml_test(EXEC qmltest_ssl NAME qml-ssl-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ssl)
