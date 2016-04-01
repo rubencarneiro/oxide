@@ -649,16 +649,6 @@ net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   return GetStoragePartition(this, nullptr)->GetURLRequestContext();
 }
 
-net::URLRequestContextGetter*
-BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
-  DCHECK(CalledOnValidThread());
-
-  content::RenderProcessHost* host =
-      content::RenderProcessHost::FromID(renderer_child_id);
-
-  return host->GetStoragePartition()->GetURLRequestContext();
-}
-
 net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
   DCHECK(CalledOnValidThread());
   return GetRequestContext();

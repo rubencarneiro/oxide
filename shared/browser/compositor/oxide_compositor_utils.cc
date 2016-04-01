@@ -33,6 +33,7 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
 #include "gpu/command_buffer/common/command_buffer_id.h"
+#include "gpu/ipc/client/gpu_channel_host.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_switches.h"
 
@@ -465,7 +466,7 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
 
   content::CauseForGpuLaunch cause =
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
-  scoped_refptr<content::GpuChannelHost> gpu_channel_host(
+  scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (gpu_channel_host.get()) {
     GpuUtils::GetTaskRunner()->PostTask(

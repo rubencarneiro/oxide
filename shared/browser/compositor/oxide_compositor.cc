@@ -34,10 +34,11 @@
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
-#include "content/common/gpu/client/gpu_channel_host.h"
 #include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
 #include "content/common/gpu_process_launch_causes.h"
 #include "content/common/host_shared_bitmap_manager.h"
+#include "gpu/command_buffer/common/gles2_cmd_utils.h"
+#include "gpu/ipc/client/gpu_channel_host.h"
 #include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
 #include "url/gurl.h"
 
@@ -64,23 +65,31 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 
   content::CauseForGpuLaunch cause =
       content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
-  scoped_refptr<content::GpuChannelHost> gpu_channel_host(
+  scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (!gpu_channel_host.get()) {
     return scoped_ptr<WGC3DCBI>();
   }
 
-  blink::WebGraphicsContext3D::Attributes attrs;
-  attrs.shareResources = true;
-  attrs.depth = false;
-  attrs.stencil = false;
-  attrs.antialias = false;
-  attrs.noAutomaticFlushes = true;
+  gpu::gles2::ContextCreationAttribHelper attrs;
+  attrs.alpha_size = -1;
+  attrs.depth_size = 0;
+  attrs.stencil_size = 0;
+  attrs.samples = 0;
+  attrs.sample_buffers = 0;
+  attrs.bind_generates_resource = false;
+  attrs.lose_context_when_out_of_memory = true;
 
-  return make_scoped_ptr(WGC3DCBI::CreateOffscreenContext(
-      gpu_channel_host.get(), attrs, false, GURL(),
-      content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
-      nullptr));
+  return make_scoped_ptr(
+      WGC3DCBI::CreateOffscreenContext(
+          gpu_channel_host.get(),
+          attrs,
+          gfx::PreferIntegratedGpu,
+          true, // share_resources
+          false, // automatic_flushes
+          GURL(),
+          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
+          nullptr)); // share_context
 }
 
 } // namespace
