@@ -162,9 +162,9 @@ QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
   }
 
   QObject* context = component.create(engine->rootContext());
-  QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
+  QQmlEngine::setObjectOwnership(context, QQmlEngine::CppOwnership);
 
-  return object;
+  return context;
 }
 
 static QString stripQuotes(const QString& in) {
