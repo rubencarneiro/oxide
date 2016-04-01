@@ -4,10 +4,6 @@ import com.canonical.Oxide 1.3
 import Oxide.testsupport 1.0
 
 WebContext {
-  property bool persistent: true
-
-  dataPath: persistent ? QMLTEST_DATADIR : ""
-
   property var qtest_contextTestSupport: TestSupport.createWebContextTestSupport(this)
 
   userScripts: [

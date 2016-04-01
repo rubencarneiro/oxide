@@ -12,12 +12,19 @@ TestWebView {
   property var workerTestType: ""
   property var workerMessages: []
 
-  context.networkRequestDelegate: WebContextDelegateWorker {
+  WebContextDelegateWorker {
+    id: worker
+
     source: Qt.resolvedUrl("tst_NetworkCallbackEvents.js")
 
     onMessage: {
       webView.workerMessages.push(message);
     }
+  }
+
+  Component.onCompleted: {
+    context.networkRequestDelegate = worker;
+    context.userAgent = "Oxide Test";
   }
 
   onWorkerTestTypeChanged: {
@@ -29,8 +36,6 @@ TestWebView {
   onLoadEvent: {
     loadEvents.push({ url: event.url, type: event.type, originalUrl: event.originalUrl });
   }
-
-  context.userAgent: "Oxide Test"
 
   TestCase {
     id: test

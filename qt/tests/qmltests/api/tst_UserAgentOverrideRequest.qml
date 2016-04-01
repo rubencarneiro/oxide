@@ -6,11 +6,15 @@ import Oxide.testsupport 1.0
 TestWebView {
   id: webView
 
-  context.userAgentOverrideDelegate: WebContextDelegateWorker {
+  WebContextDelegateWorker {
+    id: worker
     source: Qt.resolvedUrl("tst_UserAgentOverrideRequest.js");
   }
 
-  context.userAgent: "Oxide Test"
+  Component.onCompleted: {
+    context.userAgentOverrideDelegate = worker;
+    context.userAgent = "Oxide Test";
+  }
 
   TestCase {
     id: test

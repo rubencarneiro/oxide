@@ -23,17 +23,11 @@ Item {
     signalName: "certificateChanged"
   }
 
-  TestWebContext {
-    id: context
-  }
-
   Component {
     id: webViewFactory
     TestWebView {
       width: 200
       height: 200
-
-      context: context
 
       preferences.canRunInsecureContent: true
 

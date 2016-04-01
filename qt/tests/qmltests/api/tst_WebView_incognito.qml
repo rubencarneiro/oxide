@@ -5,16 +5,10 @@ import Oxide.testsupport 1.0
 Column {
   focus: true
 
-  // XXX: Property assignment to work around https://launchpad.net/bugs/1292593
-  TestWebContext {
-    id: context
-  }
-
   TestWebView {
     id: webView1
     width: 200
     height: 200
-    context: context
   }
 
   TestWebView {
@@ -22,7 +16,6 @@ Column {
     width: 200
     height: 200
     incognito: true
-    context: context
   }
 
   SignalSpy {

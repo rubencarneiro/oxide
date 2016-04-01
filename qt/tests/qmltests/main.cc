@@ -89,59 +89,82 @@ QJSValue BuildTestConstants(QJSEngine* engine) {
   return constants;
 }
 
-static void HandleCompileErrors(const QFileInfo& fi, QQuickView* view) {
-  const QList<QQmlError> errors = view->errors();
-
+static void RecordCompileError(const QString& source,
+                               const QList<QQmlError>& errors,
+                               QQmlEngine* engine) {
   QuickTestResult results;
-  results.setTestCaseName(fi.baseName());
+  results.setTestCaseName(source);
   results.startLogging();
   results.setFunctionName(QLatin1String("compile"));
 
   QString message;
   QTextStream str(&message);
-  str << "\n  " << QDir::toNativeSeparators(fi.absoluteFilePath()) << " produced "
-      << errors.size() << " error(s):\n";
-  for (QList<QQmlError>::const_iterator it = errors.begin();
-       it != errors.end(); ++it) {
-    const QQmlError& e = *it;
+
+  str << "\n  " << source << " produced " << errors.size() << " error(s):\n";
+
+  for (const auto& error : errors) {
     str << "    ";
-    if (e.url().isLocalFile()) {
-      str << QDir::toNativeSeparators(e.url().toLocalFile());
+    if (error.url().isLocalFile()) {
+      str << QDir::toNativeSeparators(error.url().toLocalFile());
     } else {
-      str << e.url().toString();
+      str << error.url().toString();
     }
-    if (e.line() > 0) {
-      str << ':' << e.line() << ',' << e.column();
+    if (error.line() > 0) {
+      str << ':' << error.line() << ',' << error.column();
     }
-    str << ": " << e.description() << '\n';
+    str << ": " << error.description() << '\n';
   }
 
   str << "  Working directory: "
       << QDir::toNativeSeparators(QDir::current().absolutePath()) << '\n';
-  if (QQmlEngine *engine = view->engine()) {
-    const QStringList import_paths = engine->importPathList();
-    str << "  View: " << view->metaObject()->className() << ", import paths:\n";
-    for (QStringList::const_iterator it = import_paths.begin();
-         it != import_paths.end(); ++it) {
-      str << "    '" << QDir::toNativeSeparators(*it) << "'\n";
-    }
-    const QStringList plugin_paths = engine->pluginPathList();
-    str << "  Plugin paths:\n";
-    for (QStringList::const_iterator it = plugin_paths.begin();
-         it != plugin_paths.end(); ++it) {
-      str << "    '" << QDir::toNativeSeparators(*it) << "'\n";
-    }
+
+  const QStringList& import_paths = engine->importPathList();
+  str << "  Import paths:\n";
+  for (const auto& import_path : import_paths) {
+    str << "    '" << QDir::toNativeSeparators(import_path) << "'\n";
+  }
+
+  const QStringList& plugin_paths = engine->pluginPathList();
+  str << "  Plugin paths:\n";
+  for (const auto& plugin_path : plugin_paths) {
+    str << "    '" << QDir::toNativeSeparators(plugin_path) << "'\n";
   }
 
   qWarning("%s", qPrintable(message));
 
   results.fail(errors.at(0).description(),
-               errors.at(0).url(), errors.at(0).line());
+               errors.at(0).url(),
+               errors.at(0).line());
   results.finishTestData();
   results.finishTestDataCleanup();
   results.finishTestFunction();
   results.setFunctionName(QString());
   results.stopLogging();
+}
+
+static void RecordCompileError(const QFileInfo& fi, QQuickView* view) {
+  RecordCompileError(fi.baseName(), view->errors(), view->engine());
+}
+
+QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
+  QString component_data("import Oxide.testsupport 1.0\nTestWebContext {\n");
+  component_data.append("  dataPath: \"");
+  component_data.append(data_url.toString());
+  component_data.append("\"\n}");
+
+  QQmlComponent component(engine);
+  component.setData(component_data.toUtf8(), QUrl());
+
+  if (!component.isReady()) {
+    RecordCompileError(QString(), component.errors(), engine);
+    qFatal("Failed to create component for TestWebContext. It's not possible "
+           "to run the tests!");
+  }
+
+  QObject* context = component.create(engine->rootContext());
+  QQmlEngine::setObjectOwnership(context, QQmlEngine::CppOwnership);
+
+  return context;
 }
 
 static QString stripQuotes(const QString& in) {
@@ -158,7 +181,7 @@ int main(int argc, char** argv) {
 
   QString plugin_path;
   QString import_path;
-  QString data_dir;
+  QString tmp_path;
 
   QStringList test_file_names;
 
@@ -185,10 +208,10 @@ int main(int argc, char** argv) {
       oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
     } else if (QLatin1String(arg) == QLatin1String("--tmpdir") && (index + 1) < argc) {
-      if (!data_dir.isEmpty()) {
+      if (!tmp_path.isEmpty()) {
         qFatal("Can only specify --tmpdir once");
       }
-      data_dir = stripQuotes(QString::fromLatin1(argv[index + 1]));
+      tmp_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
     } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
       test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
@@ -228,8 +251,8 @@ int main(int argc, char** argv) {
     test_path = QCoreApplication::applicationDirPath();
   }
 
-  if (data_dir.isEmpty()) {
-    data_dir = QDir::currentPath();
+  if (tmp_path.isEmpty()) {
+    tmp_path = QDir::currentPath();
   }
 
   QDir test_dir;
@@ -301,7 +324,9 @@ int main(int argc, char** argv) {
 
   QEventLoop event_loop;
 
+  // |num_factory| should outlive |engine|
   TestNetworkAccessManagerFactory nam_factory(test_dir);
+
   QQmlEngine engine;
   engine.setNetworkAccessManagerFactory(&nam_factory);
 
@@ -310,7 +335,7 @@ int main(int argc, char** argv) {
   }
 
   engine.rootContext()->setContextProperty(
-      "TestConstants",
+      QStringLiteral("TestConstants"),
       QVariant::fromValue(BuildTestConstants(&engine)));
 
   QQuickView view(&engine, nullptr);
@@ -329,13 +354,21 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    QDir dir(data_dir);
+    QDir tmp_dir(tmp_path);
     if (files.size() > 1) {
-      dir = data_dir + QDir::separator() + fi.baseName();
+      tmp_dir = tmp_path + QDir::separator() + fi.baseName();
     }
+    
     view.rootContext()->setContextProperty(
-        QStringLiteral("QMLTEST_DATADIR"),
-        QUrl::fromLocalFile(dir.absolutePath()));
+        QStringLiteral("QMLTEST_TMPDIR"),
+        QUrl::fromLocalFile(tmp_dir.absolutePath()));
+
+    QScopedPointer<QObject> test_web_context(
+        CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
+                             &engine));
+    view.rootContext()->setContextProperty(
+        QStringLiteral("SingletonTestWebContext"),
+        test_web_context.data());
 
     view.setObjectName(fi.baseName());
     view.setTitle(view.objectName());
@@ -351,7 +384,7 @@ int main(int argc, char** argv) {
     }
 
     if (view.status() == QQuickView::Error) {
-      HandleCompileErrors(fi, &view);
+      RecordCompileError(fi, &view);
       continue;
     }
 

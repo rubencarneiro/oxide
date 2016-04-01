@@ -17,9 +17,7 @@ TestWebView {
 
   Component {
     id: webViewComponent
-    TestWebView {
-      context: TestWebContext { persistent: false }
-    }
+    TestWebView {}
   }
 
   TestCase {
