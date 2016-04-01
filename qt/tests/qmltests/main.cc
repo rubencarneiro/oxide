@@ -334,9 +334,10 @@ int main(int argc, char** argv) {
     engine.addImportPath(import_path);
   }
 
+  QJSValue test_constants = BuildTestConstants(&engine);
   engine.rootContext()->setContextProperty(
       QStringLiteral("TestConstants"),
-      QVariant::fromValue(BuildTestConstants(&engine)));
+      QVariant::fromValue(test_constants));
 
   QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
@@ -358,10 +359,10 @@ int main(int argc, char** argv) {
     if (files.size() > 1) {
       tmp_dir = tmp_path + QDir::separator() + fi.baseName();
     }
-    
-    view.rootContext()->setContextProperty(
-        QStringLiteral("QMLTEST_TMPDIR"),
-        QUrl::fromLocalFile(tmp_dir.absolutePath()));
+
+    test_constants.setProperty(
+        QStringLiteral("TMPDIR"),
+        engine.toScriptValue(QUrl::fromLocalFile(tmp_dir.absolutePath())));
 
     QScopedPointer<QObject> test_web_context(
         CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
