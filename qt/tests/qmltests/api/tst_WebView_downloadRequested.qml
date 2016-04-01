@@ -16,9 +16,12 @@ TestWebView {
   property string latestReferrer: ""
   property string latestUserAgent: ""
 
-  context.userAgentOverrideDelegate: WebContextDelegateWorker {
+  WebContextDelegateWorker {
+    id: worker
     source: Qt.resolvedUrl("tst_WebView_downloadRequested.js");
   }
+
+  Component.onCompleted: context.userAgentOverrideDelegate = worker
 
   onDownloadRequested: {
     latestDownloadUrl = request.url;

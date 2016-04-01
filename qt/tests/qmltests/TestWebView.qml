@@ -92,7 +92,7 @@ WebView {
   property int qtest_expectedLoadsStoppedCount: 0
   property int qtest_expectedLoadsCommittedCount: 0
 
-  context: TestWebContext {}
+  context: SingletonTestWebContext
 
   property QtObject qtest_webViewTestSupport: TestSupport.createWebViewTestSupport(this)
 

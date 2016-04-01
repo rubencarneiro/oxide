@@ -18,15 +18,10 @@ Column {
 
   property var created: null
 
-  TestWebContext {
-    id: context
-  }
-
   TestWebView {
     id: webView1
     width: 200
     height: 200
-    context: context
 
     onNewViewRequested: {
       created = webViewFactory.createObject(column, { request: request, width: 200, height: 50 });
@@ -37,7 +32,6 @@ Column {
     id: webView2
     width: 200
     height: 200
-    context: context
   }
 
   SignalSpy {

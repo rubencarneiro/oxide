@@ -11,12 +11,16 @@ TestWebView {
 
   property var lastOverrideUrl: null
 
-  context.userAgentOverrideDelegate: WebContextDelegateWorker {
+  WebContextDelegateWorker {
+    id: worker
+
     source: Qt.resolvedUrl("tst_bug1349510.js")
     onMessage: {
       webView.lastOverrideUrl = message.url;
     }
   }
+
+  Component.onCompleted: context.userAgentOverrideDelegate = worker
 
   TestCase {
     name: "bug1349510"

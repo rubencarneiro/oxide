@@ -9,9 +9,7 @@ TestCase {
 
   Component {
     id: webContextFactory
-    TestWebContext {
-      persistent: false
-    }
+    TestWebContext {}
   }
 
   Component {

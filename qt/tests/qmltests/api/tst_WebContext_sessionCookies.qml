@@ -9,6 +9,7 @@ TestCase {
 
   function _createWebView(sessionCookieMode) {
     var webContext = webContextComponent.createObject(this, {
+      "dataPath": QMLTEST_TMPDIR + "/_test_context",
       "sessionCookieMode": sessionCookieMode
     });
     var webView = webViewComponent.createObject(this, {
