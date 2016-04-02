@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@
 
 #include <QtGlobal>
 
+#include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 
@@ -51,16 +52,15 @@ class BrowserStartup final {
   void SetSharedGLContext(GLContextDependent* context);
 #endif
 
-  bool DidSelectProcessModelFromEnv() const;
-
   void EnsureChromiumStarted();
+
+  static void AddShutdownCallback(const base::Closure& callback);
 
  private:
 #if defined(USE_NSS_CERTS)
   base::FilePath nss_db_path_;
 #endif
 
-  bool process_model_is_from_env_;
   oxide::ProcessModel process_model_;
 
   scoped_refptr<GLContextDependent> shared_gl_context_;

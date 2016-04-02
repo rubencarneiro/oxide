@@ -76,9 +76,6 @@ class WebContext : public WebContextProxy,
 
   static WebContext* FromBrowserContext(oxide::BrowserContext* context);
 
-  static WebContext* GetDefault();
-  static void DestroyDefault();
-
   oxide::BrowserContext* GetContext();
 
   QNetworkAccessManager* GetCustomNetworkAccessManager();
@@ -101,7 +98,6 @@ class WebContext : public WebContextProxy,
   // WebContextProxy implementation
   void init(
       const QWeakPointer<WebContextProxyClient::IOClient>& io_client) override;
-  void makeDefault() override;
   QString product() const override;
   void setProduct(const QString& product) override;
   QString userAgent() const override;

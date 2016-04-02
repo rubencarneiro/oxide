@@ -105,7 +105,6 @@ class Q_DECL_EXPORT OxideQQuickWebContextPrivate
                         const QList<QNetworkCookie>& cookies) override;
   void CookiesDeleted(int request_id, int num_deleted) override;
   QNetworkAccessManager* GetCustomNetworkAccessManager() override;
-  void DestroyDefault() override;
   void DefaultAudioCaptureDeviceChanged() override;
   void DefaultVideoCaptureDeviceChanged() override;
 

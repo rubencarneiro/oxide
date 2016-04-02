@@ -44,15 +44,5 @@ bool WebContextProxy::checkIPAddress(const QString& address) {
 
 WebContextProxy::~WebContextProxy() {}
 
-//static
-QObject* WebContextProxy::defaultContext() {
-  WebContext* context = WebContext::GetDefault();
-  if (!context) {
-    return nullptr;
-  }
-
-  return context->handle();
-}
-
 } // namespace qt
 } // namespace oxide

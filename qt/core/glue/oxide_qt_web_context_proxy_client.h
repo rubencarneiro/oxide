@@ -47,8 +47,6 @@ class WebContextProxyClient {
 
   virtual QNetworkAccessManager* GetCustomNetworkAccessManager() = 0;
 
-  virtual void DestroyDefault() = 0;
-
   virtual void DefaultAudioCaptureDeviceChanged() = 0;
 
   virtual void DefaultVideoCaptureDeviceChanged() = 0;
