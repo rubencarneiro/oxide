@@ -1120,7 +1120,6 @@ WebView::WebView(WebViewProxyClient* client,
   if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
           oxide::PROCESS_MODEL_SINGLE_PROCESS) {
     DCHECK(!incognito);
-    DCHECK_EQ(context, WebContext::GetDefault());
   }
 
   web_view_.reset(new oxide::WebView(common_params, create_params));

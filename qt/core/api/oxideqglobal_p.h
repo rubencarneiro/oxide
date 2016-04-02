@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,11 +21,17 @@
 #include <QtDebug>
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
+
 #define WARN_DEPRECATED_API_USAGE() \
     static bool _warned_deprecated_api_usage = false; \
     bool _need_to_warn = !_warned_deprecated_api_usage; \
     _warned_deprecated_api_usage = true; \
     if (_need_to_warn) \
       qWarning()
+
+typedef void (*OxideShutdownCallback)();
+
+OXIDE_QTCORE_EXPORT void oxideAddShutdownCallback(OxideShutdownCallback callback);
       
 #endif // _OXIDE_QT_CORE_API_GLOBAL_P_H_
