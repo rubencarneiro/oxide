@@ -25,6 +25,7 @@
 
 #include "base/at_exit.h"
 #include "base/base_paths.h"
+#include "base/base_switches.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
@@ -243,6 +244,9 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
 
   command_line->AppendSwitch(switches::kUIPrioritizeInGpuProcess);
   command_line->AppendSwitch(switches::kEnableSmoothScrolling);
+
+  command_line->AppendSwitchASCII(switches::kProfilerTiming,
+                                  switches::kProfilerTimingDisabledValue);
 
   if (gl_impl == gfx::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
