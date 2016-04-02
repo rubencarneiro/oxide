@@ -8,8 +8,9 @@ TestWebView {
 
   SignalSpy {
     id: spy
-    target: context.cookieManager
   }
+
+  Component.onCompleted: spy.target = context.cookieManager
 
   TestCase {
     id: test

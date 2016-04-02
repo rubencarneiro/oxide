@@ -98,14 +98,15 @@ class Runner(object):
       print("Missing --config option", file=sys.stderr)
       sys.exit(1)
 
+    test_name = os.path.splitext(os.path.basename(opts.config))[0]
     config = load_config(opts.config)
 
     debugger_args = get_debugger_args(opts)
 
     with ScopedTmpdir(prefix="tmp-oxide-runtests") as tmpdir:
-      return self._run_with_tmpdir(tmpdir, config, debugger_args, args)
+      return self._run_with_tmpdir(tmpdir, test_name, config, debugger_args, args)
 
-  def _run_with_tmpdir(self, tmpdir, config, debugger_args, extra_args):
+  def _run_with_tmpdir(self, tmpdir, test_name, config, debugger_args, extra_args):
     os.environ["OXIDE_TESTING_MODE"] = "1"
 
     for server in SERVER_CONFIGS:
@@ -120,10 +121,13 @@ class Runner(object):
 
     test_args.extend(
         [ config["exec"],
+          "--name", test_name,
           "--qml-import-path", config["qml_import_path"],
           "--qt-plugin-path", config["qt_plugin_path"],
           "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
           "--tmpdir", tmpdir ])
+    if "single_process" in config and config["single_process"]:
+      test_args.append("--single-process")
 
     test_args.extend(extra_args)
 
