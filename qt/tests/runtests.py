@@ -124,6 +124,8 @@ class Runner(object):
           "--qt-plugin-path", config["qt_plugin_path"],
           "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
           "--tmpdir", tmpdir ])
+    if "single_process" in config and config["single_process"]:
+      test_args.append("--single-process")
 
     test_args.extend(extra_args)
 

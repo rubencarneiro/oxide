@@ -84,8 +84,9 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
   return new ClipboardTestUtils();
 }
 
-QJSValue BuildTestConstants(QJSEngine* engine) {
+QJSValue BuildTestConstants(QJSEngine* engine, bool single_process) {
   QJSValue constants = engine->newObject();
+  constants.setProperty(QStringLiteral("SINGLE_PROCESS"), single_process);
   return constants;
 }
 
@@ -185,6 +186,8 @@ int main(int argc, char** argv) {
 
   QStringList test_file_names;
 
+  bool single_process = false;
+
   int index = 1;
   int outargc = 1;
   while (index < argc) {
@@ -216,6 +219,9 @@ int main(int argc, char** argv) {
     } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
       test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--single-process")) {
+      single_process = true;
+      index += 1;
     } else if (index != outargc) {
       argv[outargc++] = argv[index++];
     } else {
@@ -227,6 +233,10 @@ int main(int argc, char** argv) {
   argv[outargc] = nullptr;
 
   QGuiApplication app(outargc, argv);
+
+  if (single_process) {
+    oxideSetProcessModel(OxideProcessModelSingleProcess);
+  }
 
   QOpenGLContext context;
   context.create();
@@ -334,10 +344,21 @@ int main(int argc, char** argv) {
     engine.addImportPath(import_path);
   }
 
-  QJSValue test_constants = BuildTestConstants(&engine);
+  QJSValue test_constants = BuildTestConstants(&engine, single_process);
   engine.rootContext()->setContextProperty(
       QStringLiteral("TestConstants"),
       QVariant::fromValue(test_constants));
+
+  QScopedPointer<QObject> single_process_web_context;
+  if (single_process) {
+    QDir tmp_dir(tmp_path);
+    single_process_web_context.reset(
+        CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
+                             &engine));
+    engine.rootContext()->setContextProperty(
+        QStringLiteral("SingletonTestWebContext"),
+        single_process_web_context.data());
+  }
 
   QQuickView view(&engine, nullptr);
   view.setFlags(Qt::Window | Qt::WindowSystemMenuHint |
@@ -364,12 +385,15 @@ int main(int argc, char** argv) {
         QStringLiteral("TMPDIR"),
         engine.toScriptValue(QUrl::fromLocalFile(tmp_dir.absolutePath())));
 
-    QScopedPointer<QObject> test_web_context(
-        CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
-                             &engine));
-    view.rootContext()->setContextProperty(
-        QStringLiteral("SingletonTestWebContext"),
-        test_web_context.data());
+    QScopedPointer<QObject> test_web_context;
+    if (!single_process) {
+      test_web_context.reset(
+          CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
+                               &engine));
+      engine.rootContext()->setContextProperty(
+          QStringLiteral("SingletonTestWebContext"),
+          test_web_context.data());
+    }
 
     view.setObjectName(fi.baseName());
     view.setTitle(view.objectName());
