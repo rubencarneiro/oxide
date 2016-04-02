@@ -177,12 +177,12 @@ static QString stripQuotes(const QString& in) {
 }
 
 int main(int argc, char** argv) {
-  QString test_name(QLatin1String(QML_TEST_NAME));
   QString test_path(QLatin1String(QML_TEST_PATH));
 
   QString plugin_path;
   QString import_path;
   QString tmp_path;
+  QString test_name;
 
   QStringList test_file_names;
 
@@ -216,6 +216,12 @@ int main(int argc, char** argv) {
       }
       tmp_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--name") && (index + 1) < argc) {
+      if (!test_name.isEmpty()) {
+        qFatal("Can only specify --name once");
+      }
+      test_name = stripQuotes(QString::fromLatin1(argv[index + 1]));
+      index += 2;
     } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
       test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
       index += 2;
@@ -228,6 +234,10 @@ int main(int argc, char** argv) {
       outargc++;
       index++;
     }
+  }
+
+  if (test_name.isEmpty()) {
+    qFatal("Didn't specify a test name!");
   }
 
   argv[outargc] = nullptr;

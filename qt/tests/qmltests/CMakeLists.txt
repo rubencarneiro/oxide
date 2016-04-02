@@ -93,7 +93,6 @@ function(add_qml_test)
     add_executable(${_ARGS_EXEC} ${QML_TEST_SRCS})
     target_compile_definitions(
         ${_ARGS_EXEC} PRIVATE
-        -DQML_TEST_NAME="${_ARGS_NAME}"
         -DQML_TEST_PATH="${_ARGS_TEST_DIR}")
     target_link_libraries(
         ${_ARGS_EXEC}
