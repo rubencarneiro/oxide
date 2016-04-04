@@ -45,26 +45,11 @@ RendererUserAgentSettings::GetLegacyUserAgentOverrideForURLFromBrowser(
 
   GURL u = url.ReplaceComponents(rep);
 
-  // URL's longer than kMaxURLChars can't be serialized.
-  // Strip query if we are above the max number of chars
-  if (u.spec().size() > url::kMaxURLChars && u.has_query()) {
-    GURL::Replacements rep;
-    rep.ClearQuery();
-    u = u.ReplaceComponents(rep);
-  }
-
-  // If we are still over, just send the origin
-  if (u.spec().size() > url::kMaxURLChars) {
-    u = u.GetOrigin();
-  }
-
-  if (u.spec().size() > url::kMaxURLChars) {
-    return std::string();
-  }
-
   std::string user_agent;
   content::RenderThread::Get()->Send(
-      new OxideHostMsg_GetUserAgentOverride(u, &user_agent));
+      new OxideHostMsg_GetUserAgentOverride(
+          url.ReplaceComponents(rep),
+          &user_agent));
 
   return user_agent;
 }
