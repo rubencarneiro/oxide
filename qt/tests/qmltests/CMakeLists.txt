@@ -148,7 +148,9 @@ add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test
 add_qml_test(EXEC qmltest_crash NAME qml-crash-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
 add_qml_test(EXEC qmltest_api NAME qml-api-single-process-test
-             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api SINGLE_PROCESS)
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api
+             SINGLE_PROCESS
+             EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/api/single-process.exclude)
 add_qml_test(EXEC qmltest_core NAME qml-core-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
              SINGLE_PROCESS
