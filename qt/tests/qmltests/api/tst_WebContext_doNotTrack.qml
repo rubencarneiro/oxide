@@ -13,9 +13,10 @@ TestWebView {
 
   SignalSpy {
     id: dntSignalSpy
-    target: webView.context
     signalName: "doNotTrackEnabledChanged"
   }
+
+  Component.onCompleted: dntSignalSpy.target = webView.context
 
   TestCase {
     id: test
