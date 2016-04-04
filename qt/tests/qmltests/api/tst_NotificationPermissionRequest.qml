@@ -19,18 +19,13 @@ TestWebView {
     signalName: "cancelled"
   }
 
-  TestWebContext {
-    id: c
-    Component.onCompleted: {
-      addTestUserScript({
-          context: "oxide://notifytest/",
-          url: Qt.resolvedUrl("tst_NotificationPermissionRequest.js"),
-          matchAllFrames: true
-      });
-    }
+  Component.onCompleted: {
+    context.addTestUserScript({
+        context: "oxide://notifytest/",
+        url: Qt.resolvedUrl("tst_NotificationPermissionRequest.js"),
+        matchAllFrames: true
+    });
   }
-
-  context: c
 
   property var lastRequest: null
   onNotificationPermissionRequested: {
@@ -69,7 +64,7 @@ TestWebView {
       spy.clear();
       cancelSpy.clear();
       cancelSpy.target = null;
-      c.clearTemporarySavedPermissionStatuses();
+      webView.context.clearTemporarySavedPermissionStatuses();
       webView.lastRequest = null;
       webView.lastStatus = -1;
     }

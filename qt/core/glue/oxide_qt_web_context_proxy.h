@@ -52,8 +52,6 @@ class Q_DECL_EXPORT WebContextProxy : public ProxyBase<WebContext> {
 
   virtual ~WebContextProxy();
 
-  static QObject* defaultContext();
-
   enum CookiePolicy {
     CookiePolicyAllowAll,
     CookiePolicyBlockAll,
@@ -68,7 +66,6 @@ class Q_DECL_EXPORT WebContextProxy : public ProxyBase<WebContext> {
 
   virtual void init(
       const QWeakPointer<WebContextProxyClient::IOClient>& io_client) = 0;
-  virtual void makeDefault() = 0;
 
   virtual QString product() const = 0;
   virtual void setProduct(const QString& product) = 0;

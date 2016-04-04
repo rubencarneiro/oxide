@@ -8,12 +8,6 @@ TestWebView {
   width: 200
   height: 200
 
-  TestWebContext {
-    id: c
-  }
-
-  context: c
-
   SignalSpy {
     id: spy
     target: webView
@@ -23,7 +17,6 @@ TestWebView {
   Component {
     id: webViewFactory
     TestWebView {
-      context: c
       property var rootFrame2: undefined
       property bool initRootFrame2: false
       onInitRootFrame2Changed: rootFrame2 = rootFrame

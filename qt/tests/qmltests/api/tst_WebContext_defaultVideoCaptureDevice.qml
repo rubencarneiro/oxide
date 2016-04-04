@@ -9,9 +9,7 @@ TestCase {
 
   Component {
     id: webContextFactory
-    TestWebContext {
-      persistent: false
-    }
+    TestWebContext {}
   }
 
   Component {
@@ -58,15 +56,16 @@ TestCase {
   // XXX(chrisccoulson): Note, this currently only works once a WebContext is
   // "in-use", due to the way initialization works
   function test_WebContext_defaultVideoCaptureDevice3() {
-    var context = webContextFactory.createObject(null, {});
-    // We need a webview to activate this context for this test to work
-    var view = webViewFactory.createObject(null, { context: context });
-    spy.target = context;
+    // We need a webview to activate this context for this test to work.
+    // Also, use the singleton context here, so that this test works in single
+    // process
+    var view = webViewFactory.createObject(null);
+    spy.target = view.context;
 
-    context.defaultVideoCaptureDeviceId = "AAAAAAAAAAAAA";
+    view.context.defaultVideoCaptureDeviceId = "AAAAAAAAAAAAA";
 
     compare(spy.count, 0);
-    compare(context.defaultVideoCaptureDeviceId, "");
+    compare(view.context.defaultVideoCaptureDeviceId, "");
   }
 
   // XXX(chrisccoulson): How do we verify that defaultVideoCaptureDeviceId

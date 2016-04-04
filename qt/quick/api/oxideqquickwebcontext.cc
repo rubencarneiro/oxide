@@ -47,6 +47,14 @@ using oxide::qt::WebContextProxy;
 
 namespace {
 
+bool g_default_context_initialized = false;
+OxideQQuickWebContext* g_default_context;
+
+void CleanupDefaultContext() {
+  delete g_default_context;
+  Q_ASSERT(!g_default_context);
+}
+
 QVariant networkCookiesToVariant(const QList<QNetworkCookie>& cookies) {
   QList<QVariant> list;
   Q_FOREACH(QNetworkCookie cookie, cookies) {
@@ -361,13 +369,6 @@ OxideQQuickWebContextPrivate::GetCustomNetworkAccessManager() {
   return engine->networkAccessManager();
 }
 
-void OxideQQuickWebContextPrivate::DestroyDefault() {
-  Q_Q(OxideQQuickWebContext);
-
-  Q_ASSERT(q == OxideQQuickWebContext::defaultContext(false));
-  delete q;
-}
-
 void OxideQQuickWebContextPrivate::DefaultAudioCaptureDeviceChanged() {
   Q_Q(OxideQQuickWebContext);
 
@@ -437,8 +438,8 @@ void OxideQQuickWebContext::componentComplete() {
   emit d->constructed();
 }
 
-OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
-    QObject(parent) {
+OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent)
+    : QObject(parent) {
   oxide::qquick::EnsureChromiumStarted();
   d_ptr.reset(new OxideQQuickWebContextPrivate(this));
 
@@ -447,10 +448,21 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent) :
   QSharedPointer<oxide::qt::WebContextProxyClient::IOClient> io =
       qSharedPointerCast<oxide::qt::WebContextProxyClient::IOClient>(d->io_);
   d->proxy_->init(io.toWeakRef());
+
+  if (oxideGetProcessModel() == OxideProcessModelSingleProcess &&
+      !g_default_context_initialized) {
+    Q_ASSERT(!g_default_context);
+    g_default_context = this;
+    g_default_context_initialized = true;
+  }
 }
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
+
+  if (g_default_context == this) {
+    g_default_context = nullptr;
+  }
 
   for (int i = 0; i < d->proxy_->userScripts().size(); ++i) {
     d->detachUserScriptSignals(
@@ -466,23 +478,30 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
 
 // static
 OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
-  QObject* h = WebContextProxy::defaultContext();
-  if (h) {
-    return qobject_cast<OxideQQuickWebContext*>(h);
+  if (g_default_context) {
+    return g_default_context;
   }
 
   if (!create) {
     return nullptr;
   }
 
-  OxideQQuickWebContext* c = new OxideQQuickWebContext();
-  c->componentComplete();
-  QQmlEngine::setObjectOwnership(c, QQmlEngine::CppOwnership);
+  if (g_default_context_initialized) {
+    qFatal("OxideQQuickWebContext::defaultContext: The default context has "
+           "been deleted. This can happen in single process mode when the "
+           "application creates and manages the default context");
+    return nullptr;
+  }
 
-  OxideQQuickWebContextPrivate::get(c)->proxy_->makeDefault();
-  Q_ASSERT(WebContextProxy::defaultContext());
+  g_default_context_initialized = true;
 
-  return c;
+  g_default_context = new OxideQQuickWebContext();
+  g_default_context->componentComplete();
+  QQmlEngine::setObjectOwnership(g_default_context, QQmlEngine::CppOwnership);
+
+  oxideAddShutdownCallback(CleanupDefaultContext);
+
+  return g_default_context;
 }
 
 QString OxideQQuickWebContext::product() const {

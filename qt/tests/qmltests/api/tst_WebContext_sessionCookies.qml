@@ -9,6 +9,7 @@ TestCase {
 
   function _createWebView(sessionCookieMode) {
     var webContext = webContextComponent.createObject(this, {
+      "dataPath": TestConstants.TMPDIR + "/_test_context",
       "sessionCookieMode": sessionCookieMode
     });
     var webView = webViewComponent.createObject(this, {

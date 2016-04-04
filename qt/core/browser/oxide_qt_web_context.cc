@@ -75,10 +75,6 @@ namespace {
 
 const unsigned kDefaultDevtoolsPort = 8484;
 
-bool g_default_is_application_owned;
-bool g_initialized_default = false;
-WebContext* g_default;
-
 int GetNextCookieRequestId() {
   static int id = 0;
   if (id == std::numeric_limits<int>::max()) {
@@ -453,10 +449,6 @@ WebContext::WebContext(WebContextProxyClient* client,
 }
 
 WebContext::~WebContext() {
-  if (g_default == this) {
-    g_default = nullptr;
-  }
-
   if (context_.get()) {
     context_->SetDelegate(nullptr);
     MediaCaptureDevicesContext::Get(context_.get())->set_client(nullptr);
@@ -472,21 +464,6 @@ WebContext* WebContext::FromBrowserContext(oxide::BrowserContext* context) {
   }
 
   return delegate->context();
-}
-
-// static
-WebContext* WebContext::GetDefault() {
-  return g_default;
-}
-
-// static
-void WebContext::DestroyDefault() {
-  if (!g_default || g_default_is_application_owned) {
-    return;
-  }
-
-  g_default->client_->DestroyDefault();
-  DCHECK(!g_default);
 }
 
 oxide::BrowserContext* WebContext::GetContext() {
@@ -566,27 +543,7 @@ QNetworkAccessManager* WebContext::GetCustomNetworkAccessManager() {
 
 void WebContext::init(
     const QWeakPointer<WebContextProxyClient::IOClient>& io_client) {
-  // If we are in single process mode because it was set in the environment,
-  // allow the first application-created context to become the default
-  if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==
-          oxide::PROCESS_MODEL_SINGLE_PROCESS &&
-      BrowserStartup::GetInstance()->DidSelectProcessModelFromEnv() &&
-      !g_initialized_default) {
-    g_initialized_default = true;
-    g_default_is_application_owned = true;
-    g_default = this;
-  }
-
   delegate_->Init(io_client);
-}
-
-void WebContext::makeDefault() {
-  DCHECK(!g_initialized_default);
-  DCHECK(!g_default || g_default == this);
-
-  g_initialized_default = true;
-  g_default_is_application_owned = false;
-  g_default = this;
 }
 
 QString WebContext::product() const {

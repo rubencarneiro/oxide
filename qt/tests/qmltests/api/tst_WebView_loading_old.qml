@@ -8,7 +8,7 @@ WebView {
   width: 200
   height: 200
 
-  context: TestWebContext {}
+  context: SingletonTestWebContext
 
   property bool loading2: loading
 

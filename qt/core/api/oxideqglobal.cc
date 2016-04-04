@@ -16,10 +16,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqglobal.h"
+#include "oxideqglobal_p.h"
 
 #include <QGlobalStatic>
 #include <QtDebug>
 
+#include "base/bind.h"
+#include "base/callback.h"
 #include "base/files/file_path.h"
 #include "content/public/browser/render_process_host.h"
 
@@ -28,6 +31,19 @@
 #include "shared/browser/oxide_browser_process_main.h"
 
 using namespace oxide::qt;
+
+namespace {
+
+void RunShutdownCallback(OxideShutdownCallback callback) {
+  callback();
+}
+
+}
+
+void oxideAddShutdownCallback(OxideShutdownCallback callback) {
+  BrowserStartup::AddShutdownCallback(
+      base::Bind(&RunShutdownCallback, callback));
+}
 
 QString oxideGetNSSDbPath() {
   base::FilePath path = BrowserStartup::GetInstance()->GetNSSDbPath();

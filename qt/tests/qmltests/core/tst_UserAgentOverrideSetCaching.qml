@@ -8,8 +8,6 @@ TestWebView {
   width: 200
   height: 200
 
-  context.userAgent: "Default user agent"
-
   property variant qtest_overrides: [
     [ /^http:\/\/testsuite\/empty\.html\?1$/, "Override 1" ],
     [ /^http:\/\/testsuite\/empty\.html\?2$/, "Override 2" ],
@@ -48,6 +46,7 @@ TestWebView {
   ]
 
   Component.onCompleted: {
+    context.userAgent = "Default user agent";
     context.userAgentOverrides = qtest_overrides;
   }
 

@@ -5,15 +5,10 @@ import Oxide.testsupport 1.0
 Item {
   id: top
 
-  TestWebContext {
-    id: c
-  }
-
   Component {
     id: webViewFactory
     TestWebView {
       incognito: true
-      context: c
     }
   }
 

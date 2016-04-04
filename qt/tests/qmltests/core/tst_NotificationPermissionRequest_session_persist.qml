@@ -8,16 +8,13 @@ Item {
   width: 200
   height: 200
 
-  TestWebContext {
-    id: c
-    Component.onCompleted: {
-      addTestUserScript({
-          context: "oxide://notifytest/",
-          url: Qt.resolvedUrl("tst_NotificationPermissionRequest_session_persist.js"),
-          incognitoEnabled: true,
-          matchAllFrames: true
-      });
-    }
+  Component.onCompleted: {
+    SingletonTestWebContext.addTestUserScript({
+        context: "oxide://notifytest/",
+        url: Qt.resolvedUrl("tst_NotificationPermissionRequest_session_persist.js"),
+        incognitoEnabled: true,
+        matchAllFrames: true
+    });
   }
 
   SignalSpy {
@@ -28,8 +25,6 @@ Item {
   Component {
     id: webViewFactory
     TestWebView {
-      context: c
-
       property var lastRequest: null
       onNotificationPermissionRequested: {
         lastRequest = request;
@@ -73,7 +68,7 @@ Item {
     function init() {
       spy.target = null;
       spy.clear();
-      c.clearTemporarySavedPermissionStatuses();
+      SingletonTestWebContext.clearTemporarySavedPermissionStatuses();
     }
 
     function test_NotificationPermissionRequest_session_persist1_data() {

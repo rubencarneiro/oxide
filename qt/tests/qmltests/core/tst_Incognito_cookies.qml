@@ -4,29 +4,22 @@ import Oxide.testsupport 1.0
 
 Column {
 
-  TestWebContext {
-    id: context
-  }
-
   TestWebView {
     id: webView1
     width: 200
     height: 100
-    context: context
   }
 
   TestWebView {
     id: webView2
     width: 200
     height: 100
-    context: context
   }
 
   TestWebView {
     id: webView3
     width: 200
     height: 200
-    context: context
     incognito: true
   }
 
@@ -34,7 +27,6 @@ Column {
     id: webView4
     width: 200
     height: 200
-    context: context
     incognito: true
   }
 
@@ -48,7 +40,7 @@ Column {
       webView2.clearLoadEventCounters();
       webView3.clearLoadEventCounters();
       webView4.clearLoadEventCounters();
-      context.deleteAllCookies();
+      SingletonTestWebContext.deleteAllCookies();
     }
 
     // Verify that a cookie set in a normal webview is not accessible in an

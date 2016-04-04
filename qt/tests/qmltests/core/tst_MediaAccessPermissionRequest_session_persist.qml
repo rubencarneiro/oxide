@@ -7,16 +7,13 @@ Item {
   width: 200
   height: 200
 
-  TestWebContext {
-    id: c
-    Component.onCompleted: {
-      addTestUserScript({
-          context: "oxide://mediatest/",
-          url: Qt.resolvedUrl("tst_MediaAccessPermissionRequest_session_persist.js"),
-          incognitoEnabled: true,
-          matchAllFrames: true
-      });
-    }
+  Component.onCompleted: {
+    SingletonTestWebContext.addTestUserScript({
+        context: "oxide://mediatest/",
+        url: Qt.resolvedUrl("tst_MediaAccessPermissionRequest_session_persist.js"),
+        incognitoEnabled: true,
+        matchAllFrames: true
+    });
   }
 
   SignalSpy {
@@ -27,8 +24,6 @@ Item {
   Component {
     id: webViewFactory
     TestWebView {
-      context: c
-
       property var lastRequest: null
       onMediaAccessPermissionRequested: {
         lastRequest = request;
@@ -72,7 +67,7 @@ Item {
     function init() {
       spy.target = null;
       spy.clear();
-      c.clearTemporarySavedPermissionStatuses();
+      SingletonTestWebContext.clearTemporarySavedPermissionStatuses();
     }
 
     function test_MediaAccessPermissionRequest_session_persist1_data() {

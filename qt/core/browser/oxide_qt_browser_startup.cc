@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,8 @@
 
 #include "oxide_qt_browser_startup.h"
 
+#include <queue>
+
 #include <QCoreApplication>
 #include <QGlobalStatic>
 #include <QGuiApplication>
@@ -26,6 +28,7 @@
 #include <QtGui/private/qopenglcontext_p.h>
 #endif
 
+#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -46,16 +49,24 @@ namespace {
 
 Q_GLOBAL_STATIC(BrowserStartup, g_instance)
 
+base::LazyInstance<std::queue<base::Closure>> g_shutdown_callbacks =
+    LAZY_INSTANCE_INITIALIZER;
+
 void ShutdownChromium() {
-  WebContext::DestroyDefault();
+  std::queue<base::Closure>& callbacks = g_shutdown_callbacks.Get();
+  while (!callbacks.empty()) {
+    base::Closure callback = callbacks.front();
+    callbacks.pop();
+    callback.Run();
+  }
+
   BrowserProcessMain::GetInstance()->Shutdown();
 }
 
 }
 
 BrowserStartup::BrowserStartup()
-    : process_model_is_from_env_(false),
-      process_model_(oxide::PROCESS_MODEL_UNDEFINED) {}
+    : process_model_(oxide::PROCESS_MODEL_UNDEFINED) {}
 
 // static
 BrowserStartup* BrowserStartup::GetInstance() {
@@ -91,8 +102,6 @@ oxide::ProcessModel BrowserStartup::GetProcessModel() {
         oxide::BrowserProcessMain::GetProcessModelOverrideFromEnv();
     if (process_model_ == oxide::PROCESS_MODEL_UNDEFINED) {
       process_model_ = oxide::PROCESS_MODEL_MULTI_PROCESS;
-    } else {
-      process_model_is_from_env_ = true;
     }
   }
 
@@ -118,7 +127,6 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
         << "public use";
   }
 
-  process_model_is_from_env_ = false;
   process_model_ = model;
 }
 
@@ -128,10 +136,6 @@ void BrowserStartup::SetSharedGLContext(GLContextDependent* context) {
   shared_gl_context_ = context;
 }
 #endif
-
-bool BrowserStartup::DidSelectProcessModelFromEnv() const {
-  return process_model_is_from_env_;
-}
 
 void BrowserStartup::EnsureChromiumStarted() {
   if (BrowserProcessMain::GetInstance()->IsRunning()) {
@@ -189,6 +193,11 @@ void BrowserStartup::EnsureChromiumStarted() {
   oxide::BrowserProcessMain::GetInstance()->Start(std::move(params));
 
   qAddPostRoutine(ShutdownChromium);
+}
+
+// static
+void BrowserStartup::AddShutdownCallback(const base::Closure& callback) {
+  g_shutdown_callbacks.Get().push(callback);
 }
 
 } // namespace qt

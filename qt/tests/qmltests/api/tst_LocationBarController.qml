@@ -8,16 +8,11 @@ Item {
   width: 200
   height: 200
 
-  TestWebContext {
-    id: testContext
-  }
-
   Component {
     id: webViewFactory
     TestWebView {
       id: webView
       anchors.fill: parent
-      context: testContext
 
       Rectangle {
         id: locationBar

@@ -11,7 +11,6 @@ TestWebView {
   Component {
     id: webViewComponent
     TestWebView {
-      context: TestWebContext { persistent: false }
       property string html: ""
       onHtmlChanged: loadHtml(html, "file:///")
     }

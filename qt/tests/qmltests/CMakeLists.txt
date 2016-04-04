@@ -41,7 +41,6 @@ foreach(f
     ScriptMessageTestHandler.qml
     ScriptMessageTestUtils.js
     ScriptMessageTestUtilsUserScript.js
-    SkippableTestCase.qml
     TestUtils.js
     TestUtilsSlave.js
     TestWebContext.qml
@@ -76,7 +75,7 @@ set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
 set(QML_TEST_SRCS main.cc)
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "" "EXEC;NAME;TEST_DIR" "" "${ARGN}")
+  cmake_parse_arguments(_ARGS "SINGLE_PROCESS" "EXCLUDE_LIST;EXEC;NAME;TEST_DIR" "" "${ARGN}")
 
   if(NOT DEFINED _ARGS_EXEC)
     message(FATAL_ERROR "Missing option EXEC")
@@ -89,28 +88,29 @@ function(add_qml_test)
     set(_ARGS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 
-  add_executable(${_ARGS_EXEC} ${QML_TEST_SRCS})
-  target_compile_definitions(
-      ${_ARGS_EXEC} PRIVATE
-      -DQML_TEST_NAME="${_ARGS_NAME}"
-      -DQML_TEST_PATH="${_ARGS_TEST_DIR}")
-  target_link_libraries(
-      ${_ARGS_EXEC}
-      ${QML_TEST_SHARED}
-      Qt5::Core
-      Qt5::Gui
-      Qt5::Qml
-      Qt5::Quick
-      Qt5::QuickTest
-      Qt5::Test
-      ${OXIDE_LIB})
-  target_include_directories(
-      ${_ARGS_EXEC} PRIVATE
-      ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-      ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
-      ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
-      ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
-  set_target_properties(${_ARGS_EXEC} PROPERTIES AUTOMOC TRUE)
+  if(NOT TARGET ${_ARGS_EXEC})
+    add_executable(${_ARGS_EXEC} ${QML_TEST_SRCS})
+    target_compile_definitions(
+        ${_ARGS_EXEC} PRIVATE
+        -DQML_TEST_PATH="${_ARGS_TEST_DIR}")
+    target_link_libraries(
+        ${_ARGS_EXEC}
+        ${QML_TEST_SHARED}
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Qml
+        Qt5::Quick
+        Qt5::QuickTest
+        Qt5::Test
+        ${OXIDE_LIB})
+    target_include_directories(
+        ${_ARGS_EXEC} PRIVATE
+        ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+        ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+        ${Qt5Quick_PRIVATE_INCLUDE_DIRS}
+        ${Qt5QuickTest_PRIVATE_INCLUDE_DIRS})
+    set_target_properties(${_ARGS_EXEC} PROPERTIES AUTOMOC TRUE)
+  endif()
 
   set(_CONFIG ${OXIDE_OUTPUT_DIR}/test_configs/${_ARGS_NAME}.conf)
 
@@ -118,11 +118,19 @@ function(add_qml_test)
   set(QT_PLUGIN_PATH ${OXIDE_MOCK_QTPLUGIN_DIR})
   set(HTTP_SERVER_DIR ${_ARGS_TEST_DIR})
   set(QML_IMPORT_PATH ${QML_SUPPORT_IMPORT_DIR})
+  set(SINGLE_PROCESS false)
+  if(_ARGS_SINGLE_PROCESS)
+    set(SINGLE_PROCESS true)
+  endif()
+  set(EXCLUDE_LIST "")
+  if(_ARGS_EXCLUDE_LIST)
+    set(EXCLUDE_LIST ${_ARGS_EXCLUDE_LIST})
+  endif()
 
   auto_generate_file(
       OUTPUT ${_CONFIG}
       INPUT ${CMAKE_CURRENT_SOURCE_DIR}/qml-test.conf.in
-      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH)
+      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH SINGLE_PROCESS EXCLUDE_LIST)
 
   set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
@@ -131,7 +139,23 @@ function(add_qml_test)
   add_test(NAME ${_ARGS_NAME} COMMAND ${_COMMAND})
 endfunction()
 
-add_qml_test(EXEC qmltest_api NAME qml-api-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
-add_qml_test(EXEC qmltest_core NAME qml-core-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
-add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform)
-add_qml_test(EXEC qmltest_crash NAME qml-crash-test TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
+add_qml_test(EXEC qmltest_api NAME qml-api-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api)
+add_qml_test(EXEC qmltest_core NAME qml-core-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
+add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform)
+add_qml_test(EXEC qmltest_crash NAME qml-crash-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
+add_qml_test(EXEC qmltest_api NAME qml-api-single-process-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api
+             SINGLE_PROCESS
+             EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/api/single-process.exclude)
+add_qml_test(EXEC qmltest_core NAME qml-core-single-process-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
+             SINGLE_PROCESS
+             EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/core/single-process.exclude)
+add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-single-process-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform SINGLE_PROCESS)
+add_qml_test(EXEC qmltest_crash NAME qml-crash-single-process-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash SINGLE_PROCESS)
