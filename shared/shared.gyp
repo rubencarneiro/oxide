@@ -215,6 +215,7 @@
         'oxide_extra_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/base/base.gyp:base_i18n',
+        '<(DEPTH)/base/base.gyp:base_static',
         # Used via Singleton. Should base have this in export_dependent_settings?
         '<(DEPTH)/base/third_party/dynamic_annotations/dynamic_annotations.gyp:dynamic_annotations',
         '<(DEPTH)/build/linux/system.gyp:dbus',
