@@ -66,13 +66,6 @@ static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
-  return TestSupport::instance();
-}
-
-static QObject* GetTestSupportHack(QQmlEngine* engine, QJSEngine* js_engine) {
-  Q_UNUSED(engine);
-  Q_UNUSED(js_engine);
-
   return new TestSupport();
 }
 
@@ -340,7 +333,7 @@ int main(int argc, char** argv) {
       "Create this with TestSupport.createWebViewTestSupport()");
 
   qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupportHack);
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
 
   QEventLoop event_loop;
 
@@ -409,7 +402,6 @@ int main(int argc, char** argv) {
     view.setTitle(view.objectName());
 
     QTestRootObject::instance()->reset();
-    TestSupport::instance()->reset();
 
     QString path = fi.absoluteFilePath();
     view.setSource(QUrl::fromLocalFile(path));
@@ -457,10 +449,6 @@ int main(int argc, char** argv) {
       }
 
       if (!QTestRootObject::instance()->hasTestCase()) {
-        continue;
-      }
-
-      if (TestSupport::instance()->skipTestCase()) {
         continue;
       }
 
