@@ -75,7 +75,7 @@ set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
 set(QML_TEST_SRCS main.cc)
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "SINGLE_PROCESS" "EXEC;NAME;TEST_DIR" "" "${ARGN}")
+  cmake_parse_arguments(_ARGS "SINGLE_PROCESS" "EXCLUDE_LIST;EXEC;NAME;TEST_DIR" "" "${ARGN}")
 
   if(NOT DEFINED _ARGS_EXEC)
     message(FATAL_ERROR "Missing option EXEC")
@@ -122,11 +122,15 @@ function(add_qml_test)
   if(_ARGS_SINGLE_PROCESS)
     set(SINGLE_PROCESS true)
   endif()
+  set(EXCLUDE_LIST "")
+  if(_ARGS_EXCLUDE_LIST)
+    set(EXCLUDE_LIST ${_ARGS_EXCLUDE_LIST})
+  endif()
 
   auto_generate_file(
       OUTPUT ${_CONFIG}
       INPUT ${CMAKE_CURRENT_SOURCE_DIR}/qml-test.conf.in
-      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH SINGLE_PROCESS)
+      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH SINGLE_PROCESS EXCLUDE_LIST)
 
   set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh

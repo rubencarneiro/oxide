@@ -128,8 +128,12 @@ class Runner(object):
           "--tmpdir", tmpdir ])
     if "single_process" in config and config["single_process"]:
       test_args.append("--single-process")
+    if "exclude_list" in config and config["exclude_list"]:
+      test_args.extend(["--exclude-list", config["exclude_list"]]);
 
     test_args.extend(extra_args)
+
+    print("runtests.py: Running command '%s'" % ' '.join(test_args))
 
     self._p = TestProcess(test_args)
     self._event_loop.add_reader(self._p, self._p.handle_event, self._event_loop)
