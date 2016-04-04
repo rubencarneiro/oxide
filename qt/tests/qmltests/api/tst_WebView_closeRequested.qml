@@ -98,6 +98,8 @@ Column {
 
       verify(!created.preferences.allowScriptsToCloseWindows);
 
+      created.clearLoadEventCounters();
+
       created.url = "http://testsuite/empty.html";
       verify(created.waitForLoadSucceeded());
 
