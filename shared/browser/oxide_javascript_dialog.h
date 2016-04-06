@@ -38,7 +38,6 @@ class JavaScriptDialog {
   JavaScriptDialog();
 
   GURL origin_url_;
-  std::string accept_lang_;
   base::string16 message_text_;
   base::string16 default_prompt_text_;
   bool is_reload_;

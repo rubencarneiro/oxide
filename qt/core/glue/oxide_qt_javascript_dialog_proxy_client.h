@@ -38,7 +38,6 @@ class JavaScriptDialogProxyClient {
   virtual void close(bool accept, const QString& user_input = QString()) = 0;
 
   virtual QUrl originUrl() const = 0;
-  virtual QString acceptLang() const = 0;
   virtual QString messageText() const = 0;
   virtual QString defaultPromptText() const = 0;
 };

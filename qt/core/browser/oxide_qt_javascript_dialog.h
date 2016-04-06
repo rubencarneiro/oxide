@@ -51,7 +51,6 @@ class JavaScriptDialog : public oxide::JavaScriptDialog,
   // JavaScriptDialogProxyClient implementation
   void close(bool accept, const QString& user_input = QString()) override;
   QUrl originUrl() const override;
-  QString acceptLang() const override;
   QString messageText() const override;
   QString defaultPromptText() const override;
 
