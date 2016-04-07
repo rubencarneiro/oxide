@@ -106,10 +106,11 @@ SkCanvas* CompositorSoftwareOutputDevice::BeginPaint(
   // Create a surface
   SkImageInfo info = SkImageInfo::MakeN32Premul(viewport_pixel_size_.width(),
                                                 viewport_pixel_size_.height());
-  surface_ = skia::AdoptRef(SkSurface::NewRasterDirect(
-      info,
-      const_cast<unsigned char*>(back_buffer_->pixels->front()),
-      info.minRowBytes()));
+  surface_ =
+      SkSurface::MakeRasterDirect(
+          info,
+          const_cast<unsigned char*>(back_buffer_->pixels->front()),
+          info.minRowBytes());
 
   // Get the outdated region for this buffer so we can update it from the
   // last painted buffer

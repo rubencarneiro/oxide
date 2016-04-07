@@ -110,8 +110,6 @@ class RenderWidgetHostView final :
 
  private:
   // content::RenderWidgetHostViewOxide implementation
-  void OnTextInputStateChanged(ui::TextInputType type,
-                               bool show_ime_if_needed) final;
   void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
                                 const gfx::Rect& focus_rect,
                                 bool is_anchor_first) final;
@@ -129,6 +127,7 @@ class RenderWidgetHostView final :
   void ClearCompositorFrame() final;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) final;
+  void UpdateInputMethodIfNecessary(bool text_input_state_changed) final;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) final;
   void InitAsFullscreen(

@@ -32,7 +32,7 @@ class PepperHostFactoryBrowser final : public ppapi::host::HostFactory {
   PepperHostFactoryBrowser(content::BrowserPpapiHost* host);
   ~PepperHostFactoryBrowser();
 
-  scoped_ptr<ppapi::host::ResourceHost> CreateResourceHost(
+  std::unique_ptr<ppapi::host::ResourceHost> CreateResourceHost(
       ppapi::host::PpapiHost* host,
       PP_Resource resource,
       PP_Instance instance,
