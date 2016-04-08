@@ -153,7 +153,7 @@ TestWebView {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://foo.testsuite/tst_SecurityStatus_run_insecure_content.html",
+          url: "https://8979847.testsuite/tst_SecurityStatus_run_insecure_content.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusRanInsecure,
           certStatus: SecurityStatus.CertStatusOk,
@@ -162,7 +162,7 @@ TestWebView {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://bar.testsuite/tst_SecurityStatus_run_insecure_content_in_iframe.html",
+          url: "https://6645227.testsuite/tst_SecurityStatus_run_insecure_content_in_iframe.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusRanInsecure,
           certStatus: SecurityStatus.CertStatusOk,

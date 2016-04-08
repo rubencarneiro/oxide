@@ -21,7 +21,9 @@
 #include "content/public/renderer/render_view.h"
 #include "ipc/ipc_message.h"
 #include "ipc/ipc_message_macros.h"
+#include "third_party/WebKit/public/web/WebDataSource.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
+#include "third_party/WebKit/public/web/WebNavigationType.h"
 
 #include "shared/common/oxide_messages.h"
 
@@ -36,6 +38,13 @@ void WebContentSettingsClient::DidCommitProvisionalLoad(
 
   did_block_displaying_insecure_content_ = false;
   did_block_running_insecure_content_ = false;
+
+  if (render_frame()->GetWebFrame()->dataSource()->navigationType() !=
+          blink::WebNavigationTypeReload &&
+      !render_frame()->GetWebFrame()->parent()) {
+    can_display_insecure_content_ = false;
+    can_run_insecure_content_ = false;
+  }
 }
 
 bool WebContentSettingsClient::OnMessageReceived(const IPC::Message& message) {
