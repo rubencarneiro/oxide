@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -216,11 +216,12 @@ void IOThreadControllerImpl::receiveMessage(
 
 using namespace oxide::qquick::webcontextdelegateworker;
 
-OxideQQuickWebContextDelegateWorkerPrivate::OxideQQuickWebContextDelegateWorkerPrivate() :
-    constructed_(false),
-    attached_count_(0),
-    in_destruction_(false),
-    io_thread_controller_(new IOThreadControllerImpl(), &QObject::deleteLater) {}
+OxideQQuickWebContextDelegateWorkerPrivate::OxideQQuickWebContextDelegateWorkerPrivate()
+    : attached_count(0),
+      owned_by_context(false),
+      constructed_(false),
+      in_destruction_(false),
+      io_thread_controller_(new IOThreadControllerImpl(), &QObject::deleteLater) {}
 
 OxideQQuickWebContextDelegateWorkerPrivate::~OxideQQuickWebContextDelegateWorkerPrivate() {}
 
@@ -255,12 +256,12 @@ OxideQQuickWebContextDelegateWorker::~OxideQQuickWebContextDelegateWorker() {
   Q_ASSERT(!d->in_destruction_);
   d->in_destruction_ = true;
 
-  OxideQQuickWebContext* context = qobject_cast<OxideQQuickWebContext *>(parent());
-  if (context) {
-    OxideQQuickWebContextPrivate::get(context)->delegateWorkerDestroyed(this);
+  if (d->context) {
+    OxideQQuickWebContextPrivate::get(d->context)->delegateWorkerDestroyed(this);
   }
 
-  Q_ASSERT(d->attached_count_ == 0);
+  Q_ASSERT(d->attached_count == 0);
+  Q_ASSERT(!d->context);
 
   disconnect(d->io_thread_controller_.data(),
              SIGNAL(error(const QString&)),

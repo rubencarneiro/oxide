@@ -19,6 +19,7 @@
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_P_P_H_
 
 #include <QObject>
+#include <QPointer>
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QStringList>
@@ -116,9 +117,9 @@ class Q_DECL_EXPORT OxideQQuickWebContextPrivate
 
   QSharedPointer<oxide::qquick::WebContextIODelegate> io_;
 
-  OxideQQuickWebContextDelegateWorker* network_request_delegate_;
-  OxideQQuickWebContextDelegateWorker* unused_storage_access_permission_delegate_;
-  OxideQQuickWebContextDelegateWorker* user_agent_override_delegate_;
+  QPointer<OxideQQuickWebContextDelegateWorker> network_request_delegate_;
+  QPointer<OxideQQuickWebContextDelegateWorker> unused_storage_access_permission_delegate_;
+  QPointer<OxideQQuickWebContextDelegateWorker> user_agent_override_delegate_;
 
   mutable OxideQQuickCookieManager* cookie_manager_;
 
