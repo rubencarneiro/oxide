@@ -9,9 +9,10 @@ TestWebView {
 
   SignalSpy {
     id: spy
-    target: webView.context
     signalName: "userAgentOverridesChanged"
   }
+
+  Component.onCompleted: spy.target = webView.context
 
   TestCase {
     id: test
