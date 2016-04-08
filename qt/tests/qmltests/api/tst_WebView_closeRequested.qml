@@ -43,6 +43,10 @@ Column {
       webView.clearLoadEventCounters();
     }
 
+    function cleanupTestCase() {
+      webView.context.popupBlockerEnabled = true;
+    }
+
     // Verify that window.close() is ignored for non-script-opened windows
     // by default when there is more than one entry in the navigation history
     function test_WebView_closeRequested1_application_opened_default() {
@@ -92,6 +96,8 @@ Column {
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
       TestUtils.waitFor(function() { return column.created != null; });
+
+      webView.context.popupBlockerEnabled = true;
 
       var created = column.created;
       spy.target = created;
