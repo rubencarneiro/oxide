@@ -43,6 +43,10 @@ TestWebView {
       spy.clear();
     }
 
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
+    }
+
     function test_WebContext_userAgentOverrides1_data_validity_data() {
       return [
         { data: [ /^http:\/\/.*/ ], valid: false },

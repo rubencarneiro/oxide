@@ -21,6 +21,10 @@ TestWebView {
     name: "UserAgentOverrideRequest"
     when: windowShown
 
+    function cleanupTestCase() {
+      context.userAgent = "";
+    }
+
     function test_UserAgentOverrideRequest() {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),

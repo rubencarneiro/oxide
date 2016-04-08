@@ -36,6 +36,10 @@ Column {
     name: "bug1324909"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
+    }
+
     function test_bug1324909_1_new_window() {
       verify(webView.context.userAgent != "Foo");
       webView.context.userAgent = "Foo";

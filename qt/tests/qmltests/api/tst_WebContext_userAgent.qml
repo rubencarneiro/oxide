@@ -10,13 +10,16 @@ TestWebView {
 
   SignalSpy {
     id: productSpy
-    target: webView.context
     signalName: "productChanged"
   }
   SignalSpy {
     id: userAgentSpy
-    target: webView.context
     signalName: "userAgentChanged"
+  }
+
+  Component.onCompleted: {
+    productSpy.target = webView.context;
+    userAgentSpy.target = webView.context;
   }
 
   TestCase {
@@ -29,6 +32,11 @@ TestWebView {
       webView.context.userAgent = "";
       productSpy.clear();
       userAgentSpy.clear();
+    }
+
+    function cleanupTestCase() {
+      webView.context.product = "";
+      webView.context.userAgent = "";
     }
 
     function makeDefaultUserAgentRegExp() {

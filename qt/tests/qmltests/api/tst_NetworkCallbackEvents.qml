@@ -49,6 +49,10 @@ TestWebView {
       webView.clearLoadEventCounters();
     }
 
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
+    }
+
     function _verify_worker_messages(data) {
       compare(webView.workerMessages.length, data.length);
       for (var i = 0; i < data.length; ++i) {
