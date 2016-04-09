@@ -45,9 +45,12 @@ Column {
     when: windowShown
 
     function init() {
-      webView.context.popupBlockerEnabled = true;
       spy.clear();
       navSpy.clear();
+    }
+
+    function cleanupTestCase() {
+      webView.context.popupBlockerEnabled = true;
     }
 
     function test_NewViewRequest1_from_user_gesture_data() {
@@ -107,11 +110,11 @@ Column {
     }
 
     function test_NewViewRequest2_no_user_gesture(data) {
-      webView.context.popupBlockerEnabled = false;
-
       if (data.style == "link") {
         return;
       }
+
+      webView.context.popupBlockerEnabled = false;
 
       webView.url = "http://testsuite/tst_NewViewRequest.html";
       verify(webView.waitForLoadSucceeded(),
@@ -126,6 +129,8 @@ document.querySelector(\"" + data.selector + "\").dispatchEvent(e);", true);
 
       compare(spy.count, 1);
       compare(navSpy.count, 1);
+
+      webView.context.popupBlockerEnabled = true;
 
       if (data.style != "link-new-window") {
         // XXX: This will fail if the request is outside of the screen's availableRect

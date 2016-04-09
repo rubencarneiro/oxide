@@ -51,12 +51,12 @@ return style.getPropertyValue(\"color\");", true) == "rgb(0, 128, 0)";
 
       return [
         {
-          url: "https://testsuite/tst_WebView_mixedContentOverrides.html", testMode: "display",
+          url: "https://8786310.testsuite/tst_WebView_mixedContentOverrides.html", testMode: "display",
           checkMixedDisplay: _did_display_mixed_content, checkMixedScript: _did_run_mixed_content,
           hasMixedDisplay: true, hasMixedScript: true, blockedCount: [3,6,9,12,13,16]
         },
         {
-          url: "https://testsuite/tst_WebView_mixedContentOverrides.html", testMode: "run",
+          url: "https://98661.testsuite/tst_WebView_mixedContentOverrides.html", testMode: "run",
           checkMixedDisplay: _did_display_mixed_content, checkMixedScript: _did_run_mixed_content,
           hasMixedDisplay: true, hasMixedScript: true, blockedCount: [3,5,8,10,11,14]
         },

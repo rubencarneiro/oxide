@@ -49,6 +49,10 @@ TestWebView {
       webView.clearLoadEventCounters();
     }
 
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
+    }
+
     function _verify_worker_messages(data) {
       compare(webView.workerMessages.length, data.length);
       for (var i = 0; i < data.length; ++i) {
@@ -146,7 +150,7 @@ TestWebView {
       webView.url = data.url;
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for a successful load");
-      TestUtils.waitFor(function() { return !webView.loading; });
+      TestUtils.waitFor(function() { return webView.workerMessages.length == 2; });
 
       _verify_worker_messages([
         { url: data.url, method: "GET", requestCancelled: false, isMainFrame: true, hasUA: true, UA: "Oxide Test", hasFoo: false, Foo: "" },

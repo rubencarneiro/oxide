@@ -83,19 +83,25 @@ TestWebView {
       context2[data.prop] = null;
     }
 
-    function test_WebContext_delegateWorkers3_reparent_data() {
+    function test_WebContext_delegateWorkers3_assign_owned_data() {
       return slots;
     }
 
-    function test_WebContext_delegateWorkers3_reparent(data) {
+    function test_WebContext_delegateWorkers3_assign_owned(data) {
       spy.signalName = data.signal;
 
       var d = webContextDelegateWorkerFactory.createObject(top, {});
       context[data.prop] = d;
       compare(context[data.prop], d, "Unexpected value");
       compare(spy.count, 1, "Expected a signal");
-      compare(TestSupport.qObjectParent(d), context,
-              "Delegate should be parented to the WebContext");
+      compare(TestSupport.qObjectParent(d), top,
+              "Delegate shouldn't be parented to the WebContext");
+
+      var helper = TestSupport.createQObjectTestHelper(d);
+
+      context[data.prop] = null;
+      compare(spy.count, 2, "Expected a signal");
+      verify(!helper.destroyed, "Delegate should not have been destroyed");
     }
 
     function test_WebContext_delegateWorkers4_delete_in_use_data() {

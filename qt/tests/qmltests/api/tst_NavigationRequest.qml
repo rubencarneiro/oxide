@@ -70,8 +70,11 @@ TestWebView {
       newViewSpy.clear();
       frameSpy.clear();
       webView.shouldReject = false;
-      webView.context.popupBlockerEnabled = true;
       webView.clearLoadEventCounters();
+    }
+
+    function cleanupTestCase() {
+      webView.context.popupBlockerEnabled = true;
     }
 
     function test_NavigationRequest1_from_user_gestures_data() {
@@ -150,6 +153,8 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       } else {
         newViewSpy.wait();
       }
+
+      webView.context.popupBlockerEnabled = true;
 
       compare(spy.count, 1, "Should have had an onNavigationRequested signal")
       compare(webView.lastRequestUrl, "http://testsuite/empty.html");
