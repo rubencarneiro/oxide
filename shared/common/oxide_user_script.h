@@ -25,6 +25,8 @@
 #include "extensions/common/url_pattern_set.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class URLPattern;
 
 namespace base {
@@ -34,10 +36,10 @@ class PickleIterator;
 
 namespace oxide {
 
-class UserScript final {
+class OXIDE_SHARED_EXPORT UserScript final {
  public:
-
   UserScript();
+  ~UserScript();
 
   enum RunLocation {
     DOCUMENT_START,

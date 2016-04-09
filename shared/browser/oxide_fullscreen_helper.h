@@ -21,14 +21,18 @@
 #include "base/macros.h"
 #include "content/public/browser/web_contents_user_data.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class FullscreenHelperClient;
 
-class FullscreenHelper
+class OXIDE_SHARED_EXPORT FullscreenHelper
     : public content::WebContentsUserData<FullscreenHelper> {
  public:
   ~FullscreenHelper() override;
+
+  static FullscreenHelper* FromWebContents(content::WebContents* contents);
 
   void set_client(FullscreenHelperClient* client) {
     client_ = client;

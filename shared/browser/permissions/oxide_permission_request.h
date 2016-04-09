@@ -24,13 +24,14 @@
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
 // Base class of all PermissionRequests. It contains functionality that is
 // common to all requests (url, embedder, allow, deny). If your request
 // requires more information to be exposed, feel free to subclass from this 
-class PermissionRequest {
+class OXIDE_SHARED_EXPORT PermissionRequest {
  public:
   PermissionRequest(int request_id,
                     const RenderFrameHostID& frame_id,

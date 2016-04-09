@@ -18,12 +18,14 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_OBSERVER_H_
 #define _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_OBSERVER_H_
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class WebFrame;
 class WebFrameTree;
 
-class WebFrameTreeObserver {
+class OXIDE_SHARED_EXPORT WebFrameTreeObserver {
  public:
   virtual ~WebFrameTreeObserver();
 

@@ -26,6 +26,8 @@
 #include "content/public/browser/browser_thread.h"
 #include "device/vibration/vibration_manager_impl.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class GURL;
 
 namespace content {
@@ -47,7 +49,7 @@ class ScreenClient;
 
 // An abstract interface allowing toolkit-independent code to integrate with
 // toolkit-specific features
-class BrowserPlatformIntegration {
+class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
  public:
   virtual ~BrowserPlatformIntegration();
 

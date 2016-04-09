@@ -22,6 +22,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 class RunLoop;
 }
@@ -34,7 +36,8 @@ namespace oxide {
 // handling of nested tasks. One of these is created at applicaton startup, and
 // then new ones should be created whenever we detect nested pumping of the
 // MessagePump that didn't come from an internal use of base::RunLoop
-class PlatformRunLoop : public base::MessageLoop::TaskObserver {
+class OXIDE_SHARED_EXPORT PlatformRunLoop
+    : public base::MessageLoop::TaskObserver {
  public:
   PlatformRunLoop();
   ~PlatformRunLoop();

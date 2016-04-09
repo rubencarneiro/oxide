@@ -22,6 +22,8 @@
 #include "net/base/completion_callback.h"
 #include "net/base/net_errors.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class GURL;
 
 namespace base {
@@ -40,7 +42,7 @@ namespace oxide {
 class BrowserContextDelegate;
 class URLRequestDelegatedJob;
 
-struct BrowserContextDelegateTraits {
+struct OXIDE_SHARED_EXPORT BrowserContextDelegateTraits {
   static void Destruct(const BrowserContextDelegate* x);
 };
 

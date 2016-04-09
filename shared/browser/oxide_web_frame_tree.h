@@ -25,16 +25,21 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class WebFrame;
 class WebFrameTreeObserver;
 
 // This class manages a tree of WebFrames
-class WebFrameTree : public content::WebContentsUserData<WebFrameTree>,
-                     public content::WebContentsObserver {
+class OXIDE_SHARED_EXPORT WebFrameTree
+    : public content::WebContentsUserData<WebFrameTree>,
+      public content::WebContentsObserver {
  public:
   ~WebFrameTree() override;
+
+  static WebFrameTree* FromWebContents(content::WebContents* contents);
 
   WebFrame* root_frame() const { return root_frame_.get(); }
 

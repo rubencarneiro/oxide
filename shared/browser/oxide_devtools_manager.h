@@ -24,6 +24,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "components/keyed_service/core/keyed_service.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class BrowserContext;
 }
@@ -37,7 +39,7 @@ namespace oxide {
 class BrowserContext;
 class DevToolsManagerFactory;
 
-class DevToolsManager : public KeyedService {
+class OXIDE_SHARED_EXPORT DevToolsManager : public KeyedService {
  public:
   static DevToolsManager* Get(content::BrowserContext* context);
 

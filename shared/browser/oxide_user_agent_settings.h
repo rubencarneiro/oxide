@@ -28,6 +28,7 @@
 #include "base/threading/non_thread_safe.h"
 #include "components/keyed_service/core/keyed_service.h"
 
+#include "shared/common/oxide_shared_export.h"
 #include "shared/common/oxide_user_agent_override_set.h"
 
 class BrowserContextKeyedServiceFactory;
@@ -88,8 +89,8 @@ class UserAgentSettingsIOData {
 
 // Per-BrowserContext user-agent settings. This must only be used on the
 // UI thread
-class UserAgentSettings : public KeyedService,
-                          public base::NonThreadSafe {
+class OXIDE_SHARED_EXPORT UserAgentSettings : public KeyedService,
+                                              public base::NonThreadSafe {
  public:
   static UserAgentSettings* Get(content::BrowserContext* context);
 

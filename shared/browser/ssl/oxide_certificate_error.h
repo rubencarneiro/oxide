@@ -24,6 +24,7 @@
 #include "url/gurl.h"
 
 #include "shared/browser/oxide_security_types.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace net {
 class X509Certificate;
@@ -35,7 +36,7 @@ class CertificateErrorProxy;
 
 // Represents a SSL certificate error. It provides access to the relevant
 // information about the error, as well as methods to accept or deny it
-class CertificateError {
+class OXIDE_SHARED_EXPORT CertificateError {
  public:
   CertificateError(bool is_main_frame,
                    bool is_subresource,

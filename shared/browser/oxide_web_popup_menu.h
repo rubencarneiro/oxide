@@ -25,6 +25,8 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/menu_item.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 template <typename T> class DeleteHelper;
 }
@@ -40,7 +42,7 @@ class Rect;
 
 namespace oxide {
 
-class WebPopupMenu : public content::WebContentsObserver {
+class OXIDE_SHARED_EXPORT WebPopupMenu : public content::WebContentsObserver {
  public:
   virtual void Show(const gfx::Rect& bounds,
                     const std::vector<content::MenuItem>& items,

@@ -25,6 +25,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "components/keyed_service/core/keyed_service.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 class SharedMemory;
 }
@@ -39,7 +41,7 @@ namespace oxide {
 class BrowserContext;
 class UserScript;
 
-class UserScriptMaster : public KeyedService {
+class OXIDE_SHARED_EXPORT UserScriptMaster : public KeyedService {
  public:
   static UserScriptMaster* Get(content::BrowserContext* context);
 

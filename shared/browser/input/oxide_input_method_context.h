@@ -21,6 +21,8 @@
 #include "base/macros.h"
 #include "base/observer_list.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class ImeBridge;
@@ -30,7 +32,7 @@ class InputMethodContextObserver;
 // This class is the interface from ImeBridgeImpl to the toolkit provided
 // input method context, and provides a way for the toolkit layer to access
 // the currently connected ImeBridge
-class InputMethodContext {
+class OXIDE_SHARED_EXPORT InputMethodContext {
  public:
   InputMethodContext();
   virtual ~InputMethodContext();

@@ -23,6 +23,8 @@
 #include "base/macros.h"
 #include "content/public/browser/web_contents_user_data.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class WebContents;
 }
@@ -31,9 +33,12 @@ namespace oxide {
 
 class FindControllerClient;
 
-class FindController : public content::WebContentsUserData<FindController> {
+class OXIDE_SHARED_EXPORT FindController
+    : public content::WebContentsUserData<FindController> {
  public:
   ~FindController() override;
+
+  static FindController* FromWebContents(content::WebContents* contents);
 
   // Begin a find-in-page for the current |text|. |case_sensitive| specifies
   // whether the find will be case sensitive
