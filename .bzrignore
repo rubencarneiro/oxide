@@ -4,5 +4,6 @@ gclient.conf_entries
 objdir*
 third_party/*
 *.swp
+qt/oxide_version.h
 qt/examples/oxide-test-browser/*.click
 .rebase.state

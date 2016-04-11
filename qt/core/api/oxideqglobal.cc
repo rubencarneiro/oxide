@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,9 @@
 
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
 #include "qt/core/browser/oxide_qt_browser_startup.h"
+#include "qt/oxide_version.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#include "shared/common/chrome_version.h"
 
 using namespace oxide::qt;
 
@@ -37,6 +39,9 @@ namespace {
 void RunShutdownCallback(OxideShutdownCallback callback) {
   callback();
 }
+
+const QString kChromeVersion = QStringLiteral(CHROME_VERSION_STRING);
+const QString kOxideVersion = QStringLiteral(OXIDE_VERSION_STRING);
 
 }
 
@@ -112,4 +117,12 @@ void oxideSetMaxRendererProcessCount(size_t count) {
   }
 
   content::RenderProcessHost::SetMaxRendererProcessCount(count);
+}
+
+QString oxideGetChromeVersion() {
+  return kChromeVersion;
+}
+
+QString oxideGetOxideVersion() {
+  return kOxideVersion;
 }
