@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
-#define _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
+#ifndef _OXIDE_SHARED_PORT_GPU_GPU_SERVICE_SHIM_H_
+#define _OXIDE_SHARED_PORT_GPU_GPU_SERVICE_SHIM_H_
 
 #include <stdint.h>
 
-#include "content/common/content_export.h"
 #include "gpu/command_buffer/common/command_buffer_id.h"
+#include "gpu/gpu_export.h"
 
 namespace gfx {
 class GLShareGroup;
@@ -33,16 +33,16 @@ class GLES2Decoder;
 }
 }
 
-namespace content {
-namespace oxide_gpu_shim {
+namespace gpu {
+namespace oxide_shim {
 
-CONTENT_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(
+GPU_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(
     gpu::CommandBufferId command_buffer_id);
 
 gfx::GLShareGroup* GetGLShareGroup();
-CONTENT_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
+GPU_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
 
-} // oxide_gpu_shim
-} // content
+} // oxide_shim
+} // gpu
 
-#endif // _OXIDE_SHARED_PORT_CONTENT_COMMON_GPU_SERVICE_SHIM_H_
+#endif // _OXIDE_SHARED_PORT_GPU_GPU_SERVICE_SHIM_H_
