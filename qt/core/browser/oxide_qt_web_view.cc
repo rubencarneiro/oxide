@@ -695,11 +695,10 @@ void WebView::LoadCommittedInFrame(oxide::WebFrame* frame) {
 }
 
 void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
-  scoped_ptr<OxideQCertificateError> qerror(
-      OxideQCertificateErrorPrivate::Create(std::move(error)));
+  std::unique_ptr<OxideQCertificateError> qerror =
+      OxideQCertificateErrorPrivate::Create(std::move(error));
 
-  // Embedder takes ownership of qerror
-  client_->CertificateError(qerror.release());
+  client_->CertificateError(std::move(qerror));
 }
 
 void WebView::EnterFullscreenMode(const GURL& origin) {

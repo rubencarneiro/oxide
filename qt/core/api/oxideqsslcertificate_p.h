@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,11 +18,11 @@
 #ifndef _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_
 #define _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_
 
+#include <memory>
 #include <QSharedData>
 #include <QtGlobal>
 
-#include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
+#include "qt/core/api/oxideqglobal.h"
 
 namespace net {
 class X509Certificate;
@@ -30,20 +30,29 @@ class X509Certificate;
 
 class OxideQSslCertificate;
 
-class OxideQSslCertificateData : public QSharedData {
+class OXIDE_QTCORE_EXPORT OxideQSslCertificateData : public QSharedData {
+  Q_DISABLE_COPY(OxideQSslCertificateData)
+
  public:
   ~OxideQSslCertificateData();
 
+  static net::X509Certificate* GetX509Certificate(
+      const OxideQSslCertificate& cert);
+
   static OxideQSslCertificate Create(net::X509Certificate* cert);
 
+  static OxideQSslCertificate CreateForTesting(const QString& subject,
+                                               const QString& issuer,
+                                               const QDateTime& effective_date,
+                                               const QDateTime& expiry_date);
  private:
   friend class OxideQSslCertificate;
 
   OxideQSslCertificateData();
   OxideQSslCertificateData(net::X509Certificate* cert);
 
-  scoped_refptr<net::X509Certificate> x509_cert_;
-  mutable scoped_ptr<OxideQSslCertificate> issuer_;
+  net::X509Certificate* x509_cert_; // strong ref, but can't use scoped_refptr
+  mutable std::unique_ptr<OxideQSslCertificate> issuer_;
 };
 
 #endif // _OXIDE_QT_CORE_API_SSL_CERTIFICATE_P_H_

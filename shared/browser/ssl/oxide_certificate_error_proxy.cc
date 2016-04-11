@@ -76,11 +76,6 @@ void CertificateErrorProxy::Cancel() {
     return;
   }
 
-  // Chromium can call in to us after we've responded, if we responded
-  // before the interstitial navigation was committed. This is why this check
-  // is here, and not higher up
-  DCHECK(placeholder_page_);
-
   is_cancelled_ = true;
   placeholder_page_ = nullptr;
 
