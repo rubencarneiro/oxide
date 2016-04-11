@@ -24,6 +24,8 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/file_chooser_params.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 template <typename T> class DeleteHelper;
 }
@@ -36,7 +38,7 @@ struct FileChooserParams;
 
 namespace oxide {
 
-class FilePicker : public content::WebContentsObserver {
+class OXIDE_SHARED_EXPORT FilePicker : public content::WebContentsObserver {
  public:
   virtual void Run(const content::FileChooserParams& params) = 0;
 

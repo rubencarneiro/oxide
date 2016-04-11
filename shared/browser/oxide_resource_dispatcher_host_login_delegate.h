@@ -21,6 +21,8 @@
 #include "base/callback.h"
 #include "content/public/browser/resource_dispatcher_host_login_delegate.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace net {
 class URLRequest;
 class AuthChallengeInfo;
@@ -31,7 +33,7 @@ namespace oxide {
 class ResourceDispatcherHostDelegate;
 class WebView;
 
-class ResourceDispatcherHostLoginDelegate
+class OXIDE_SHARED_EXPORT ResourceDispatcherHostLoginDelegate
     : public content::ResourceDispatcherHostLoginDelegate {
  public:
   ResourceDispatcherHostLoginDelegate(net::AuthChallengeInfo* auth_info,

@@ -22,6 +22,8 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class Compositor;
@@ -29,7 +31,7 @@ class CompositorFrameData;
 class CompositorProxy;
 class CompositorSingleThreadProxy;
 
-class CompositorFrameHandle
+class OXIDE_SHARED_EXPORT CompositorFrameHandle
     : public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(scoped_refptr<CompositorProxy> proxy,

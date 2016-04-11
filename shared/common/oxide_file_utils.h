@@ -23,6 +23,8 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 class FilePath;
 class TaskRunner;
@@ -41,7 +43,7 @@ class AsyncFileJob {
   scoped_refptr<AsyncFileJobImpl> impl_;
 };
 
-class FileUtils final {
+class OXIDE_SHARED_EXPORT FileUtils final {
  public:
   typedef base::Callback<void(base::File::Error,
                               const char*,

@@ -55,6 +55,10 @@ TestWebView {
     name: "UserAgentOverrideSetCaching"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
+    }
+
     function test_UserAgentOverrideSetCaching_data() {
       var data = [];
       for (var i = 0; i < 500; i++) {

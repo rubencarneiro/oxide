@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,10 +19,12 @@
 #define _OXIDE_QT_QUICK_API_WEB_CONTEXT_DELEGATE_WORKER_P_P_H_
 
 #include <QObject>
+#include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
 #include <QUrl>
 
+class OxideQQuickWebContext;
 class OxideQQuickWebContextDelegateWorker;
 
 QT_BEGIN_NAMESPACE
@@ -59,13 +61,11 @@ class OxideQQuickWebContextDelegateWorkerPrivate final {
   QSharedPointer<oxide::qquick::webcontextdelegateworker::IOThreadController>
       io_thread_controller() const;
 
-  void incAttachedCount() { attached_count_++; }
-  bool decAttachedCount() {
-    Q_ASSERT(attached_count_ > 0);
-    return --attached_count_ == 0;
-  }
-
   bool in_destruction() const { return in_destruction_; }
+
+  unsigned attached_count;
+  QPointer<OxideQQuickWebContext> context;
+  bool owned_by_context;
 
  private:
   friend class OxideQQuickWebContextDelegateWorker;
@@ -75,7 +75,6 @@ class OxideQQuickWebContextDelegateWorkerPrivate final {
   bool constructed_;
   QUrl source_;
 
-  unsigned attached_count_;
   bool in_destruction_;
 
   QSharedPointer<oxide::qquick::webcontextdelegateworker::IOThreadControllerImpl>

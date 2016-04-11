@@ -41,7 +41,6 @@ foreach(f
     ScriptMessageTestHandler.qml
     ScriptMessageTestUtils.js
     ScriptMessageTestUtilsUserScript.js
-    SkippableTestCase.qml
     TestUtils.js
     TestUtilsSlave.js
     TestWebContext.qml
@@ -76,7 +75,7 @@ set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
 set(QML_TEST_SRCS main.cc)
 
 function(add_qml_test)
-  cmake_parse_arguments(_ARGS "SINGLE_PROCESS" "EXEC;NAME;TEST_DIR" "" "${ARGN}")
+  cmake_parse_arguments(_ARGS "SINGLE_PROCESS" "EXCLUDE_LIST;EXEC;NAME;TEST_DIR" "" "${ARGN}")
 
   if(NOT DEFINED _ARGS_EXEC)
     message(FATAL_ERROR "Missing option EXEC")
@@ -123,11 +122,15 @@ function(add_qml_test)
   if(_ARGS_SINGLE_PROCESS)
     set(SINGLE_PROCESS true)
   endif()
+  set(EXCLUDE_LIST "")
+  if(_ARGS_EXCLUDE_LIST)
+    set(EXCLUDE_LIST ${_ARGS_EXCLUDE_LIST})
+  endif()
 
   auto_generate_file(
       OUTPUT ${_CONFIG}
       INPUT ${CMAKE_CURRENT_SOURCE_DIR}/qml-test.conf.in
-      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH SINGLE_PROCESS)
+      VARS QML_TEST_EXEC QT_PLUGIN_PATH HTTP_SERVER_DIR QML_IMPORT_PATH SINGLE_PROCESS EXCLUDE_LIST)
 
   set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
@@ -145,9 +148,13 @@ add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test
 add_qml_test(EXEC qmltest_crash NAME qml-crash-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
 add_qml_test(EXEC qmltest_api NAME qml-api-single-process-test
-             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api SINGLE_PROCESS)
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api
+             SINGLE_PROCESS
+             EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/api/single-process.exclude)
 add_qml_test(EXEC qmltest_core NAME qml-core-single-process-test
-             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core SINGLE_PROCESS)
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core
+             SINGLE_PROCESS
+             EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/core/single-process.exclude)
 add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform SINGLE_PROCESS)
 add_qml_test(EXEC qmltest_crash NAME qml-crash-single-process-test

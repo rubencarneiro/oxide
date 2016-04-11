@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,28 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
-#define _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
+#ifndef _OXIDE_SHARED_COMMON_SHARED_EXPORT_H_
+#define _OXIDE_SHARED_COMMON_SHARED_EXPORT_H_
 
-#include "third_party/WebKit/public/web/WebInputEvent.h"
+#if defined(COMPONENT_BUILD)
+#if defined(WIN32)
 
-#include "shared/common/oxide_shared_export.h"
+#if defined(OXIDE_SHARED_IMPLEMENTATION)
+#define OXIDE_SHARED_EXPORT __declspec(dllexport)
+#else
+#define OXIDE_SHARED_EXPORT __declspec(dllimport)
+#endif  // defined(OXIDE_SHARED_IMPLEMENTATION)
 
-namespace ui {
-class GestureEventData;
-class MotionEvent;
-}
+#else // defined(WIN32)
+#if defined(OXIDE_SHARED_IMPLEMENTATION)
+#define OXIDE_SHARED_EXPORT __attribute__((visibility("default")))
+#else
+#define OXIDE_SHARED_EXPORT
+#endif
+#endif
 
-namespace oxide {
+#else // defined(COMPONENT_BUILD)
+#define OXIDE_SHARED_EXPORT
+#endif
 
-blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
-
-blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
-                                       bool moved_beyond_slop_region);
-
-OXIDE_SHARED_EXPORT int WindowsKeyCodeWithoutLocation(int code);
-OXIDE_SHARED_EXPORT int LocationModifiersFromWindowsKeyCode(int code);
-
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
+#endif // _OXIDE_SHARED_COMMON_SHARED_EXPORT_H_

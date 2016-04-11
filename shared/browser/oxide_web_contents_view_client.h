@@ -21,6 +21,8 @@
 #include "base/macros.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 struct ContextMenuParams;
 class NativeWebKeyboardEvent;
@@ -43,7 +45,7 @@ class WebContentsView;
 class WebContextMenu;
 class WebPopupMenu;
 
-class WebContentsViewClient {
+class OXIDE_SHARED_EXPORT WebContentsViewClient {
  public:
   virtual ~WebContentsViewClient();
 

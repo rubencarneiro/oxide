@@ -132,6 +132,11 @@ WebFrameTree::~WebFrameTree() {
       WebFrameTreeObserver, observers_, OnFrameTreeDestruction());
 }
 
+// static
+WebFrameTree* WebFrameTree::FromWebContents(content::WebContents* contents) {
+  return content::WebContentsUserData<WebFrameTree>::FromWebContents(contents);
+}
+
 void WebFrameTree::ForEachFrame(const ForEachFrameCallback& callback) {
   if (!root_frame_.get()) {
     return;

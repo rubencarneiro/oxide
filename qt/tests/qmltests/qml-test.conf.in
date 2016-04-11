@@ -3,3 +3,4 @@ http_server_dir: @HTTP_SERVER_DIR@
 qml_import_path: @QML_IMPORT_PATH@
 qt_plugin_path: @QT_PLUGIN_PATH@
 single_process: @SINGLE_PROCESS@
+exclude_list: @EXCLUDE_LIST@

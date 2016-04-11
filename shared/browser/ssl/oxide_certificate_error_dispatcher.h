@@ -24,6 +24,8 @@
 #include "content/public/browser/web_contents_user_data.h"
 #include "content/public/common/resource_type.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class GURL;
 
 namespace net {
@@ -37,10 +39,13 @@ class CertificateErrorDispatcherClient;
 
 // A helper class for dispatching certificate errors from Chromium to
 // CertificateErrorDispatcherClient
-class CertificateErrorDispatcher
+class OXIDE_SHARED_EXPORT CertificateErrorDispatcher
     : public content::WebContentsUserData<CertificateErrorDispatcher> {
  public:
   ~CertificateErrorDispatcher();
+
+  static CertificateErrorDispatcher* FromWebContents(
+      content::WebContents* contents);
 
   static void CreateForWebContents(content::WebContents* contents);
 

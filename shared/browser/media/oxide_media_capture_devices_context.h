@@ -25,6 +25,7 @@
 #include "content/public/common/media_stream_request.h"
 
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher_observer.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace content {
 class BrowserContext;
@@ -37,8 +38,9 @@ class MediaCaptureDevicesContextFactory;
 
 // This class provides per-context default settings for capture devices.
 // It's shared between each pair of BrowserContexts
-class MediaCaptureDevicesContext : public KeyedService,
-                                   public MediaCaptureDevicesDispatcherObserver {
+class OXIDE_SHARED_EXPORT MediaCaptureDevicesContext
+    : public KeyedService,
+      public MediaCaptureDevicesDispatcherObserver {
  public:
   static MediaCaptureDevicesContext* Get(content::BrowserContext* context);
 

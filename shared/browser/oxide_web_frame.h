@@ -27,6 +27,7 @@
 #include "url/gurl.h"
 
 #include "shared/browser/oxide_script_message_target.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace base {
 class Value;
@@ -45,7 +46,7 @@ class WebView;
 // Represents a document frame (either the top level frame or an iframe). This
 // tries to provide a representation of a view's frame tree whilst hiding
 // the concept of RenderFrameHost, to make it suitable for a public API
-class WebFrame : public ScriptMessageTarget {
+class OXIDE_SHARED_EXPORT WebFrame : public ScriptMessageTarget {
  public:
   typedef std::vector<WebFrame*> ChildVector;
   typedef std::vector<ScriptMessageRequestImplBrowser*>

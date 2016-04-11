@@ -20,9 +20,11 @@
 
 #include "base/macros.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class MediaCaptureDevicesDispatcherObserver {
+class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcherObserver {
  public:
   virtual ~MediaCaptureDevicesDispatcherObserver();
 

@@ -24,6 +24,8 @@
 #include "ui/gfx/geometry/size.h"
 #include "ui/gl/gl_implementation.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 #if defined(USE_NSS_CERTS)
 namespace base {
 class FilePath;
@@ -48,7 +50,7 @@ enum ProcessModel {
 // This class basically encapsulates the process-wide bits that would
 // normally be kept alive for the life of the process on the stack in
 // Chrome (which is not possible in a public API)
-class BrowserProcessMain {
+class OXIDE_SHARED_EXPORT BrowserProcessMain {
  public:
 
   struct StartParams {

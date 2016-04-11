@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_APP_MAIN_H_
 #define _OXIDE_SHARED_APP_MAIN_H_
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 class PlatformDelegate;
@@ -34,7 +36,7 @@ struct OxideMainParams {
   const char** argv;
 };
 
-int OxideMain(const OxideMainParams& params);
+OXIDE_SHARED_EXPORT int OxideMain(const OxideMainParams& params);
 
 } // namespace oxide
 

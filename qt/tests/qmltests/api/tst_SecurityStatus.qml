@@ -3,38 +3,32 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
-Item {
-  id: top
+TestWebView {
+  id: webView
+
+  preferences.canRunInsecureContent: true
+
+  onCertificateError: error.allow()
 
   SignalSpy {
     id: securityLevelSpy
+    target: webView.securityStatus
     signalName: "securityLevelChanged"
   }
   SignalSpy {
     id: contentStatusSpy
+    target: webView.securityStatus
     signalName: "contentStatusChanged"
   }
   SignalSpy {
     id: certStatusSpy
+    target: webView.securityStatus
     signalName: "certStatusChanged"
   }
   SignalSpy {
     id: certificateSpy
+    target: webView.securityStatus
     signalName: "certificateChanged"
-  }
-
-  Component {
-    id: webViewFactory
-    TestWebView {
-      width: 200
-      height: 200
-
-      preferences.canRunInsecureContent: true
-
-      onCertificateError: {
-        error.allow();
-      }
-    }
   }
 
   TestCase {
@@ -43,6 +37,11 @@ Item {
     when: windowShown
 
     function init() {
+      webView.url = "about:blank";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.clearLoadEventCounters();
+
       securityLevelSpy.clear();
       contentStatusSpy.clear();
       certStatusSpy.clear();
@@ -145,15 +144,6 @@ Item {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://testsuite/tst_SecurityStatus_run_insecure_content.html",
-          securityLevel: SecurityStatus.SecurityLevelError,
-          contentStatus: SecurityStatus.ContentStatusRanInsecure,
-          certStatus: SecurityStatus.CertStatusOk,
-          securityLevelSignals: [2,3], contentStatusSignals: [1,2],
-          certStatusSignals: [0,0], certificateSignals: [1,2],
-          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
-        },
-        {
           url: "https://testsuite/tst_SecurityStatus_display_insecure_content_in_iframe.html",
           securityLevel: SecurityStatus.SecurityLevelWarning,
           contentStatus: SecurityStatus.ContentStatusDisplayedInsecure,
@@ -163,7 +153,16 @@ Item {
           certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
         },
         {
-          url: "https://testsuite/tst_SecurityStatus_run_insecure_content_in_iframe.html",
+          url: "https://8979847.testsuite/tst_SecurityStatus_run_insecure_content.html",
+          securityLevel: SecurityStatus.SecurityLevelError,
+          contentStatus: SecurityStatus.ContentStatusRanInsecure,
+          certStatus: SecurityStatus.CertStatusOk,
+          securityLevelSignals: [2,3], contentStatusSignals: [1,2],
+          certStatusSignals: [0,0], certificateSignals: [1,2],
+          certificate: "b354a8e3d1359447ec719e7a03b42cef379a4cc1"
+        },
+        {
+          url: "https://6645227.testsuite/tst_SecurityStatus_run_insecure_content_in_iframe.html",
           securityLevel: SecurityStatus.SecurityLevelError,
           contentStatus: SecurityStatus.ContentStatusRanInsecure,
           certStatus: SecurityStatus.CertStatusOk,
@@ -175,18 +174,8 @@ Item {
     }
 
     // This test loads content over SSL with various errors to check the behaviour
-    // of the API. Each test uses a new WebView because an error permanently marks
-    // a host / process combination as having ran insecure content. This can only
-    // be cleared by a process swap
+    // of the API
     function test_SecurityStatus1(data) {
-      // Create webview, attach SignalSpy's and verify initial conditions
-      var webView = webViewFactory.createObject(top, {});
-
-      securityLevelSpy.target = webView.securityStatus;
-      contentStatusSpy.target = webView.securityStatus;
-      certStatusSpy.target = webView.securityStatus;
-      certificateSpy.target = webView.securityStatus;
-
       compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelNone);
       compare(webView.securityStatus.contentStatus, SecurityStatus.ContentStatusNormal);
       compare(webView.securityStatus.certStatus, SecurityStatus.CertStatusOk);
@@ -223,8 +212,6 @@ Item {
       compare(contentStatusSpy.count, data.contentStatusSignals[1]);
       compare(certStatusSpy.count, data.certStatusSignals[1]);
       compare(certificateSpy.count, data.certificateSignals[1]);
-
-      webView.destroy();
     }
   }
 }

@@ -9,9 +9,10 @@ TestWebView {
 
   SignalSpy {
     id: spy
-    target: webView.context
     signalName: "userAgentOverridesChanged"
   }
+
+  Component.onCompleted: spy.target = webView.context
 
   TestCase {
     id: test
@@ -40,6 +41,10 @@ TestWebView {
       webView.context.userAgentOverrides = [];
       webView.context.userAgent = "Default user agent";
       spy.clear();
+    }
+
+    function cleanupTestCase() {
+      webView.context.userAgent = "";
     }
 
     function test_WebContext_userAgentOverrides1_data_validity_data() {

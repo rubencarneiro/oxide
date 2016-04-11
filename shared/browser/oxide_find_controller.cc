@@ -46,6 +46,12 @@ FindController::FindController(content::WebContents* contents)
 
 FindController::~FindController() {}
 
+// static
+FindController* FindController::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<FindController>::FromWebContents(contents);
+}
+
 void FindController::StartFinding(const std::string& text,
                                   bool case_sensitive) {
   StopFinding();

@@ -213,9 +213,6 @@ OxideQQuickWebContextPrivate::OxideQQuickWebContextPrivate(
       proxy_(WebContextProxy::create(this, q)),
       constructed_(false),
       io_(new oxide::qquick::WebContextIODelegate()),
-      network_request_delegate_(nullptr),
-      unused_storage_access_permission_delegate_(nullptr),
-      user_agent_override_delegate_(nullptr),
       cookie_manager_(nullptr) {}
 
 void OxideQQuickWebContextPrivate::userScriptUpdated() {
@@ -297,18 +294,25 @@ bool OxideQQuickWebContextPrivate::prepareToAttachDelegateWorker(
     OxideQQuickWebContextDelegateWorker* delegate) {
   Q_Q(OxideQQuickWebContext);
 
-  OxideQQuickWebContext* parent =
-      qobject_cast<OxideQQuickWebContext *>(delegate->parent());
-  if (parent && parent != q) {
+  OxideQQuickWebContextDelegateWorkerPrivate* p =
+      OxideQQuickWebContextDelegateWorkerPrivate::get(delegate);
+  Q_ASSERT((!p->context && p->attached_count == 0) ||
+           (p->context && p->attached_count > 0));
+
+  if (p->context && p->context != q) {
     qWarning() << "Can't add WebContextDelegateWorker to more than one WebContext";
     return false;
   }
 
-  delegate->setParent(q);
+  if (!p->context) {
+    p->context = q;
+    if (!delegate->parent()) {
+      delegate->setParent(q);
+      p->owned_by_context = true;
+    }
+  }
 
-  OxideQQuickWebContextDelegateWorkerPrivate* p =
-      OxideQQuickWebContextDelegateWorkerPrivate::get(delegate);
-  p->incAttachedCount();
+  ++p->attached_count;
 
   Q_ASSERT(p->io_thread_controller().data());
 
@@ -325,15 +329,21 @@ void OxideQQuickWebContextPrivate::detachedDelegateWorker(
 
   OxideQQuickWebContextDelegateWorkerPrivate* p =
       OxideQQuickWebContextDelegateWorkerPrivate::get(delegate);
-  if (!p->decAttachedCount()) {
+  Q_ASSERT(p->context == q);
+  Q_ASSERT(p->attached_count > 0);
+
+  if (--p->attached_count > 0) {
     return;
   }
 
-  // The delegate is not attached to any more slots on this context.
-  // If it's not already being deleted and we own it, delete it now
-  if (!p->in_destruction() && delegate->parent() == q) {
-    delete delegate;
+  p->context = nullptr;
+
+  if (p->in_destruction() || delegate->parent() != q || !p->owned_by_context) {
+    p->owned_by_context = false;
+    return;
   }
+
+  delete delegate;
 }
 
 void OxideQQuickWebContextPrivate::CookiesSet(
@@ -469,11 +479,11 @@ OxideQQuickWebContext::~OxideQQuickWebContext() {
         qobject_cast<OxideQQuickUserScript*>(d->proxy_->userScripts().at(i)));
   }
 
-  // These call back in to us when destroyed, so delete them now in order
-  // to avoid a reentrancy crash
-  delete d->network_request_delegate_;
-  delete d->unused_storage_access_permission_delegate_;
-  delete d->user_agent_override_delegate_;
+  // These call back in to us when destroyed, so delete them now if we own them
+  // in order to avoid a reentrancy crash
+  setNetworkRequestDelegate(nullptr);
+  setStorageAccessPermissionDelegate(nullptr);
+  setUserAgentOverrideDelegate(nullptr);
 }
 
 // static

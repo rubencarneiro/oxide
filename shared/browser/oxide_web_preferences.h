@@ -24,6 +24,8 @@
 #include "base/observer_list.h"
 #include "base/strings/string16.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class WebPreferences;
 }
@@ -32,7 +34,7 @@ namespace oxide {
 
 class WebPreferencesObserver;
 
-class WebPreferences {
+class OXIDE_SHARED_EXPORT WebPreferences {
  public:
   WebPreferences();
 

@@ -91,6 +91,13 @@ void CertificateErrorDispatcher::Dispatch(scoped_ptr<CertificateError> error) {
 CertificateErrorDispatcher::~CertificateErrorDispatcher() {}
 
 // static
+CertificateErrorDispatcher* CertificateErrorDispatcher::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<CertificateErrorDispatcher>
+      ::FromWebContents(contents);
+}
+
+// static
 void CertificateErrorDispatcher::CreateForWebContents(
     content::WebContents* contents) {
   DCHECK(contents);

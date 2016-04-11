@@ -18,6 +18,7 @@
 
 #include <QDir>
 #include <QDirIterator>
+#include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QLatin1String>
@@ -26,6 +27,7 @@
 #include <QQmlEngine>
 #include <QQmlError>
 #include <QQuickView>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <QtDebug>
@@ -63,13 +65,6 @@ static QObject* GetTestRootObject(QQmlEngine* engine, QJSEngine* js_engine)
 }
 
 static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
-  Q_UNUSED(engine);
-  Q_UNUSED(js_engine);
-
-  return TestSupport::instance();
-}
-
-static QObject* GetTestSupportHack(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
@@ -168,6 +163,25 @@ QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
   return context;
 }
 
+QSet<QString> LoadExcludeList(const QString& path) {
+  QSet<QString> rv;
+
+  QFile file(path);
+  if (!file.open(QIODevice::ReadOnly)) {
+    qFatal("Failed to open exclude list '%s'", qPrintable(path));
+    return rv;
+  }
+
+  QTextStream stream(&file);
+
+  while (!stream.atEnd()) {
+    QString line = stream.readLine();
+    rv.insert(line);
+  }
+
+  return rv;
+}
+
 static QString stripQuotes(const QString& in) {
   if (in.length() >= 2 && in.startsWith("\"") && in.endsWith("\"")) {
     return in.mid(1, in.length() - 2);
@@ -185,6 +199,8 @@ int main(int argc, char** argv) {
   QString test_name;
 
   QStringList test_file_names;
+
+  QString exclude_list_file_path;
 
   bool single_process = false;
 
@@ -224,6 +240,12 @@ int main(int argc, char** argv) {
       index += 2;
     } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
       test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
+      index += 2;
+    } else if (QLatin1String(arg) == QLatin1String("--exclude-list") && (index + 1) < argc) {
+      if (!exclude_list_file_path.isEmpty()) {
+        qFatal("Can only specify --exclude-list once");
+      }
+      exclude_list_file_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
       index += 2;
     } else if (QLatin1String(arg) == QLatin1String("--single-process")) {
       single_process = true;
@@ -320,6 +342,11 @@ int main(int argc, char** argv) {
     }
   }
 
+  QSet<QString> exclude_list;
+  if (!exclude_list_file_path.isEmpty()) {
+    exclude_list = LoadExcludeList(exclude_list_file_path);
+  }
+
   qmlRegisterSingletonType<QTestRootObject>(
       "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
 
@@ -340,7 +367,7 @@ int main(int argc, char** argv) {
       "Create this with TestSupport.createWebViewTestSupport()");
 
   qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupportHack);
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
 
   QEventLoop event_loop;
 
@@ -386,9 +413,13 @@ int main(int argc, char** argv) {
       continue;
     }
 
+    if (exclude_list.contains(fi.fileName())) {
+      continue;
+    }
+
     QDir tmp_dir(tmp_path);
     if (files.size() > 1) {
-      tmp_dir = tmp_path + QDir::separator() + fi.baseName();
+      tmp_dir = tmp_path + QDir::separator() + fi.fileName();
     }
 
     test_constants.setProperty(
@@ -409,7 +440,6 @@ int main(int argc, char** argv) {
     view.setTitle(view.objectName());
 
     QTestRootObject::instance()->reset();
-    TestSupport::instance()->reset();
 
     QString path = fi.absoluteFilePath();
     view.setSource(QUrl::fromLocalFile(path));
@@ -457,10 +487,6 @@ int main(int argc, char** argv) {
       }
 
       if (!QTestRootObject::instance()->hasTestCase()) {
-        continue;
-      }
-
-      if (TestSupport::instance()->skipTestCase()) {
         continue;
       }
 

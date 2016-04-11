@@ -11,9 +11,10 @@ TestWebView {
 
   SignalSpy {
     id: spy
-    target: webView.context
     signalName: "userScriptsChanged"
   }
+
+  Component.onCompleted: spy.target = webView.context
 
   Component {
     id: userScript

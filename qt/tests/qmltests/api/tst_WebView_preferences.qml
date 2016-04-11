@@ -45,6 +45,10 @@ TestWebView {
       }
     }
 
+    function cleanupTestCase() {
+      webView.context.popupBlockerEnabled = true;
+    }
+
     // Test we get a preference object by default, that it has the correct
     // ownership and gets destroyed when we assign a new preference object
     function test_WebView_preferences1() {

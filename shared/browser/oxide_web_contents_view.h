@@ -40,6 +40,7 @@
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
+#include "shared/common/oxide_shared_export.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace blink {
@@ -72,13 +73,14 @@ class RenderWidgetHostView;
 class WebContentsViewClient;
 class WebPopupMenu;
 
-class WebContentsView : public content::WebContentsViewOxide,
-                        public content::WebContentsObserver,
-                        public CompositorClient,
-                        public CompositorObserver,
-                        public DragSourceClient,
-                        public InputMethodContextObserver,
-                        public RenderWidgetHostViewContainer {
+class OXIDE_SHARED_EXPORT WebContentsView
+    : public content::WebContentsViewOxide,
+      public content::WebContentsObserver,
+      public CompositorClient,
+      public CompositorObserver,
+      public DragSourceClient,
+      public InputMethodContextObserver,
+      public RenderWidgetHostViewContainer {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(

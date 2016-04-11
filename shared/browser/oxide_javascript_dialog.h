@@ -20,9 +20,11 @@
 
 #include "content/public/browser/javascript_dialog_manager.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class JavaScriptDialog {
+class OXIDE_SHARED_EXPORT JavaScriptDialog {
  public:
   virtual ~JavaScriptDialog();
 

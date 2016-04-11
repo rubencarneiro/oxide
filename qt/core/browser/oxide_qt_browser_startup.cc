@@ -116,17 +116,6 @@ void BrowserStartup::SetProcessModel(oxide::ProcessModel model) {
 
   DCHECK_NE(model, oxide::PROCESS_MODEL_UNDEFINED);
 
-  static bool did_warn = false;
-  if (!did_warn) {
-    did_warn = true;
-    qWarning()
-        << "Changing the Oxide process model is currently experimental "
-        << "and untested, and might break your application in unexpected "
-        << "ways. This interface is only exposed for development purposes "
-        << "at the moment, although it will eventually be suitable for "
-        << "public use";
-  }
-
   process_model_ = model;
 }
 

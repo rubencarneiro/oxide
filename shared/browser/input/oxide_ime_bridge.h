@@ -26,6 +26,8 @@
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace gfx {
 class Range;
 }
@@ -34,7 +36,7 @@ namespace oxide {
 
 // This class contains state for a particular RWHV. InputMethodContext is
 // connected to one ImeBridge
-class ImeBridge {
+class OXIDE_SHARED_EXPORT ImeBridge {
  public:
   ImeBridge();
   virtual ~ImeBridge();

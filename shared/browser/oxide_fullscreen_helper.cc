@@ -36,6 +36,13 @@ FullscreenHelper::FullscreenHelper(content::WebContents* contents)
 
 FullscreenHelper::~FullscreenHelper() {}
 
+// static
+FullscreenHelper* FullscreenHelper::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<FullscreenHelper>
+      ::FromWebContents(contents);
+}
+
 void FullscreenHelper::SetFullscreenGranted(bool granted) {
   DCHECK(client_);
 

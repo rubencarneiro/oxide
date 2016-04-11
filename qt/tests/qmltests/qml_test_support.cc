@@ -163,28 +163,7 @@ void WebViewTestSupport::killWebProcess(bool crash) {
   OxideQQuickWebViewPrivate::get(view_)->killWebProcess(crash);
 }
 
-TestSupport::TestSupport()
-    : skip_test_case_(false) {}
-
-// static
-TestSupport* TestSupport::instance() {
-  static QPointer<TestSupport> object = new TestSupport();
-  Q_ASSERT(object);
-  return object;
-}
-
-bool TestSupport::skipTestCase() const {
-  return skip_test_case_;
-}
-
-void TestSupport::setSkipTestCase(bool skip) {
-  skip_test_case_ = skip;
-  Q_EMIT skipTestCaseChanged();
-}
-
-void TestSupport::reset() {
-  skip_test_case_ = false;
-}
+TestSupport::TestSupport() {}
 
 QObject* TestSupport::qObjectParent(QObject* object) {
   if (!object) {

@@ -49,6 +49,7 @@
 #include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/common/oxide_message_enums.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -100,13 +101,13 @@ class WebViewIterator final {
 
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
-class WebView : public ScriptMessageTarget,
-                private CompositorObserver,
-                private WebPreferencesObserver,
-                private content::NotificationObserver,
-                private content::WebContentsDelegate,
-                private content::WebContentsObserver,
-                private BrowserPlatformIntegrationObserver {
+class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
+                                    private CompositorObserver,
+                                    private WebPreferencesObserver,
+                                    private content::NotificationObserver,
+                                    private content::WebContentsDelegate,
+                                    private content::WebContentsObserver,
+                                    private BrowserPlatformIntegrationObserver {
  public:
 
   struct CommonParams {
