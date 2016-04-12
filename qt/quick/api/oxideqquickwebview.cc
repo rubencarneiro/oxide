@@ -1784,23 +1784,11 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
 }
 
 qreal OxideQQuickWebView::minimumZoomFactor() const {
-  Q_D(const OxideQQuickWebView);
-
-  if (!d->proxy_) {
-    return 1.0;
-  }
-
-  return d->proxy_->minimumZoomFactor();
+  return oxide::qt::WebViewProxy::minimumZoomFactor();
 }
 
 qreal OxideQQuickWebView::maximumZoomFactor() const {
-  Q_D(const OxideQQuickWebView);
-
-  if (!d->proxy_) {
-    return 1.0;
-  }
-
-  return d->proxy_->maximumZoomFactor();
+  return oxide::qt::WebViewProxy::maximumZoomFactor();
 }
 
 // static
