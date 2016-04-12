@@ -38,6 +38,7 @@ class CompositorProxyClient {
   virtual ~CompositorProxyClient() {}
 
   virtual void SwapCompositorFrameFromProxy(
+      uint32_t surface_id,
       scoped_ptr<CompositorFrameData> frame) = 0;
 };
 
@@ -72,7 +73,8 @@ class CompositorProxy : public base::RefCounted<CompositorProxy> {
 
   // Called when CompositorFrameHandle is deleted, so that associated
   // resources can be reclaimed
-  virtual void ReclaimResourcesForFrame(CompositorFrameData* frame) = 0;
+  virtual void ReclaimResourcesForFrame(uint32_t surface_id,
+                                        CompositorFrameData* frame) = 0;
 
  protected:
   CompositorProxy(CompositorProxyClient* client) : client_(client) {}

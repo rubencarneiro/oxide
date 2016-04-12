@@ -37,6 +37,10 @@
 
 namespace oxide {
 
+bool CompositorSingleThreadProxy::SurfaceIdIsCurrent(uint32_t surface_id) {
+  return output_surface_ && output_surface_->surface_id() == surface_id;
+}
+
 void CompositorSingleThreadProxy::GetTextureFromMailboxResponse(
     uint32_t surface_id,
     const gpu::Mailbox& mailbox,
@@ -51,23 +55,17 @@ void CompositorSingleThreadProxy::GetTextureFromMailboxResponse(
       mailbox_resource_fetches_in_progress_);
   --mailbox_resource_fetches_in_progress_;
 
+  if (!SurfaceIdIsCurrent(surface_id)) {
+    return;
+  }
+
   if (texture == 0) {
     // FIXME: This just causes the compositor to hang
     return;
   }
 
-  MailboxBufferMap::DelayedFrameQueue ready_frames;
-
-  mailbox_buffer_map_.AddTextureMapping(surface_id,
-                                        mailbox,
-                                        texture,
-                                        &ready_frames);
-
-  while (!ready_frames.empty()) {
-    scoped_ptr<CompositorFrameData> frame = std::move(ready_frames.front());
-    ready_frames.pop();
-    ContinueSwapGLFrame(std::move(frame));
-  }
+  mailbox_buffer_map_.AddTextureMapping(mailbox, texture);
+  DispatchQueuedGLFrameSwaps();
 }
 
 void CompositorSingleThreadProxy::CreateEGLImageFromMailboxResponse(
@@ -84,32 +82,21 @@ void CompositorSingleThreadProxy::CreateEGLImageFromMailboxResponse(
       mailbox_resource_fetches_in_progress_);
   --mailbox_resource_fetches_in_progress_;
 
+  if (!SurfaceIdIsCurrent(surface_id)) {
+    return;
+  }
+
   if (egl_image == EGL_NO_IMAGE_KHR) {
     // FIXME: This just causes the compositor to hang
     return;
   }
 
-  MailboxBufferMap::DelayedFrameQueue ready_frames;
-
-  if (!mailbox_buffer_map_.AddEGLImageMapping(surface_id,
-                                              mailbox,
-                                              egl_image,
-                                              &ready_frames)) {
-    GpuUtils::GetTaskRunner()->PostTask(
-        FROM_HERE,
-        base::Bind(base::IgnoreResult(&EGL::DestroyImageKHR),
-                   GpuUtils::GetHardwareEGLDisplay(),
-                   egl_image));
-  }
-
-  while (!ready_frames.empty()) {
-    scoped_ptr<CompositorFrameData> frame = std::move(ready_frames.front());
-    ready_frames.pop();
-    ContinueSwapGLFrame(std::move(frame));
-  }
+  mailbox_buffer_map_.AddEGLImageMapping(mailbox, egl_image);
+  DispatchQueuedGLFrameSwaps();
 }
 
 void CompositorSingleThreadProxy::DidCompleteGLFrame(
+    uint32_t surface_id,
     scoped_ptr<CompositorFrameData> frame) {
   TRACE_EVENT_ASYNC_END1(
       "cc",
@@ -118,15 +105,21 @@ void CompositorSingleThreadProxy::DidCompleteGLFrame(
       "frames_waiting_for_completion", frames_waiting_for_completion_);
   --frames_waiting_for_completion_;
 
-  ContinueSwapGLFrame(std::move(frame));
+  ContinueSwapGLFrame(surface_id, std::move(frame));
 }
 
 void CompositorSingleThreadProxy::ContinueSwapGLFrame(
+    uint32_t surface_id,
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
 
-  if (!mailbox_buffer_map_.CanBeginFrameSwap(frame.get())) {
+  if (!SurfaceIdIsCurrent(surface_id)) {
+    return;
+  }
+
+  if (!queued_gl_frame_swaps_.empty()) {
+    QueueGLFrameSwap(std::move(frame));
     return;
   }
 
@@ -135,7 +128,10 @@ void CompositorSingleThreadProxy::ContinueSwapGLFrame(
       GLuint texture =
           mailbox_buffer_map_.ConsumeTextureFromMailbox(
             frame->gl_frame_data->mailbox);
-      DCHECK_NE(texture, 0U);
+      if (texture == 0U) {
+        QueueGLFrameSwap(std::move(frame));
+        return;
+      }
       frame->gl_frame_data->resource.texture = texture;
       frame->gl_frame_data->type = GLFrameData::Type::TEXTURE;
       break;
@@ -145,7 +141,10 @@ void CompositorSingleThreadProxy::ContinueSwapGLFrame(
       EGLImageKHR egl_image =
           mailbox_buffer_map_.ConsumeEGLImageFromMailbox(
             frame->gl_frame_data->mailbox);
-      DCHECK_NE(egl_image, EGL_NO_IMAGE_KHR);
+      if (egl_image == EGL_NO_IMAGE_KHR) {
+        QueueGLFrameSwap(std::move(frame));
+        return;
+      }
       frame->gl_frame_data->resource.egl_image = egl_image;
       frame->gl_frame_data->type = GLFrameData::Type::EGLIMAGE;
       break;
@@ -156,10 +155,29 @@ void CompositorSingleThreadProxy::ContinueSwapGLFrame(
   }
 
   if (!client()) {
+    // XXX: Should we synthesize the ack here?
     return;
   }
 
-  client()->SwapCompositorFrameFromProxy(std::move(frame));
+  client()->SwapCompositorFrameFromProxy(surface_id, std::move(frame));
+}
+
+void CompositorSingleThreadProxy::QueueGLFrameSwap(
+    scoped_ptr<CompositorFrameData> frame) {
+  queued_gl_frame_swaps_.push(std::move(frame));
+}
+
+void CompositorSingleThreadProxy::DispatchQueuedGLFrameSwaps() {
+  DCHECK(output_surface_);
+
+  std::queue<scoped_ptr<CompositorFrameData>> swaps;
+
+  std::swap(swaps, queued_gl_frame_swaps_);
+  while (!swaps.empty()) {
+    ContinueSwapGLFrame(output_surface_->surface_id(),
+                        std::move(swaps.front()));
+    swaps.pop();
+  }
 }
 
 void CompositorSingleThreadProxy::SetOutputSurface(
@@ -169,8 +187,11 @@ void CompositorSingleThreadProxy::SetOutputSurface(
 
   output_surface_ = output_surface;
 
-  mailbox_buffer_map_.SetOutputSurfaceID(
-      output_surface ? output_surface->surface_id() : 0);
+  mailbox_buffer_map_.DropAllResources();
+
+  while (!queued_gl_frame_swaps_.empty()) {
+    queued_gl_frame_swaps_.pop();
+  }
 }
 
 void CompositorSingleThreadProxy::MailboxBufferCreated(
@@ -216,6 +237,8 @@ void CompositorSingleThreadProxy::MailboxBufferDestroyed(
 void CompositorSingleThreadProxy::SwapCompositorFrame(
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
+  DCHECK(output_surface_);
+
   TRACE_EVENT0("cc", "oxide::CompositorSingleThreadProxy::SwapCompositorFrame");
 
   switch (mode_) {
@@ -236,7 +259,7 @@ void CompositorSingleThreadProxy::SwapCompositorFrame(
 
       if (!context_provider->ContextCapabilities().gpu.sync_query) {
         gl->Finish();
-        DidCompleteGLFrame(std::move(frame));
+        DidCompleteGLFrame(output_surface_->surface_id(), std::move(frame));
       } else {
         uint32_t query_id;
         gl->GenQueriesEXT(1, &query_id);
@@ -245,6 +268,7 @@ void CompositorSingleThreadProxy::SwapCompositorFrame(
             query_id,
             base::Bind(&CompositorSingleThreadProxy::DidCompleteGLFrame,
                        this,
+                       output_surface_->surface_id(),
                        base::Passed(&frame)));
         gl->EndQueryEXT(GL_COMMANDS_COMPLETED_CHROMIUM);
         gl->Flush();
@@ -254,7 +278,9 @@ void CompositorSingleThreadProxy::SwapCompositorFrame(
     }
     case COMPOSITING_MODE_SOFTWARE:
       DCHECK(frame->software_frame_data);
-      client()->SwapCompositorFrameFromProxy(std::move(frame));
+      client()->SwapCompositorFrameFromProxy(
+          output_surface_->surface_id(),
+          std::move(frame));
       break;
   }
 }
@@ -264,7 +290,7 @@ void CompositorSingleThreadProxy::DidSwapCompositorFrame(
     FrameHandleVector returned_frames) {
   DCHECK(CalledOnValidThread());
 
-  if (output_surface_ && output_surface_->surface_id() == surface_id) {
+  if (SurfaceIdIsCurrent(surface_id)) {
     output_surface_->DidSwapBuffers();
   }
 
@@ -277,11 +303,12 @@ void CompositorSingleThreadProxy::DidSwapCompositorFrame(
     }
 
     scoped_ptr<CompositorFrameData> frame = std::move(handle->data_);
-    ReclaimResourcesForFrame(frame.get());
+    ReclaimResourcesForFrame(handle->surface_id_, frame.get());
   }
 }
 
 void CompositorSingleThreadProxy::ReclaimResourcesForFrame(
+    uint32_t surface_id,
     CompositorFrameData* frame) {
   DCHECK(CalledOnValidThread());
 
@@ -298,7 +325,7 @@ void CompositorSingleThreadProxy::ReclaimResourcesForFrame(
       break;
   }
 
-  if (!output_surface_ || frame->surface_id != output_surface_->surface_id()) {
+  if (!SurfaceIdIsCurrent(surface_id)) {
     return;
   }
 

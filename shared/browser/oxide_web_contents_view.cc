@@ -484,8 +484,9 @@ void WebContentsView::DidDetachInterstitialPage() {
   TouchSelectionChanged(false);
 }
 
-void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
-  received_surface_ids_.push(handle->data()->surface_id);
+void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
+                                          const SwapAckCallback& callback) {
+  compositor_ack_callbacks_.push(callback);
 
   if (current_compositor_frame_.get()) {
     previous_compositor_frames_.push_back(current_compositor_frame_);
@@ -856,15 +857,12 @@ CompositorFrameHandle* WebContentsView::GetCompositorFrameHandle() const {
 }
 
 void WebContentsView::DidCommitCompositorFrame() {
-  DCHECK(!received_surface_ids_.empty());
+  DCHECK(!compositor_ack_callbacks_.empty());
 
-  while (!received_surface_ids_.empty()) {
-    uint32_t surface_id = received_surface_ids_.front();
-    received_surface_ids_.pop();
-
-    compositor_->DidSwapCompositorFrame(
-        surface_id,
+  while (!compositor_ack_callbacks_.empty()) {
+    compositor_ack_callbacks_.front().Run(
         std::move(previous_compositor_frames_));
+    compositor_ack_callbacks_.pop();
   }
 }
 

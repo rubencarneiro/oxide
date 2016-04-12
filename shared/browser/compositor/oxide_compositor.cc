@@ -97,6 +97,21 @@ Compositor::Compositor(CompositorClient* client)
       pending_swaps_(0),
       weak_factory_(this) {}
 
+void Compositor::SwapCompositorFrameAckFromClient(
+    uint32_t surface_id,
+    FrameHandleVector returned_frames) {
+  TRACE_EVENT_ASYNC_END1("cc", "oxide::Compositor:pending_swaps",
+                         this,
+                         "pending_swaps", pending_swaps_);
+  --pending_swaps_;
+
+  for (auto& frame : returned_frames) {
+    CHECK(frame->HasOneRef());
+    DCHECK_EQ(frame->proxy_.get(), proxy_.get());
+  }
+  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
+}
+
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   uint32_t output_surface_id = next_output_surface_id_++;
 
@@ -205,6 +220,7 @@ void Compositor::DidPostSwapBuffers() {}
 void Compositor::DidAbortSwapBuffers() {}
 
 void Compositor::SwapCompositorFrameFromProxy(
+    uint32_t surface_id,
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
   FOR_EACH_OBSERVER(CompositorObserver,
@@ -220,8 +236,12 @@ void Compositor::SwapCompositorFrameFromProxy(
   ++pending_swaps_;
 
   scoped_refptr<CompositorFrameHandle> handle =
-      new CompositorFrameHandle(proxy_, std::move(frame));
-  client_->CompositorSwapFrame(handle.get());
+      new CompositorFrameHandle(surface_id, proxy_, std::move(frame));
+  client_->CompositorSwapFrame(
+      handle.get(),
+      base::Bind(&Compositor::SwapCompositorFrameAckFromClient,
+                 weak_factory_.GetWeakPtr(),
+                 surface_id));
 
   FOR_EACH_OBSERVER(CompositorObserver,
                     observers_,
@@ -304,20 +324,6 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   if (layer.get()) {
     root_layer_->AddChild(layer);
   }
-}
-
-void Compositor::DidSwapCompositorFrame(uint32_t surface_id,
-                                        FrameHandleVector returned_frames) {
-  TRACE_EVENT_ASYNC_END1("cc", "oxide::Compositor:pending_swaps",
-                         this,
-                         "pending_swaps", pending_swaps_);
-  --pending_swaps_;
-
-  for (auto& frame : returned_frames) {
-    CHECK(frame->HasOneRef());
-    DCHECK_EQ(frame->proxy_.get(), proxy_.get());
-  }
-  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 
 } // namespace oxide

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <vector>
+
+#include "base/callback.h"
+#include "base/memory/ref_counted.h"
 
 namespace oxide {
 
@@ -28,7 +31,11 @@ class CompositorClient {
  public:
   virtual ~CompositorClient() {}
 
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle) = 0;
+  using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
+  using SwapAckCallback = base::Callback<void(FrameHandleVector)>;
+
+  virtual void CompositorSwapFrame(CompositorFrameHandle* handle,
+                                   const SwapAckCallback& callback) = 0;
 };
 
 } // namespace oxide

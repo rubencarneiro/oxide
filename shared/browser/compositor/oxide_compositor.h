@@ -54,8 +54,6 @@ class Compositor : public cc::LayerTreeHostClient,
                    public CompositorProxyClient,
                    public base::NonThreadSafe {
  public:
-  typedef std::vector<scoped_refptr<CompositorFrameHandle>> FrameHandleVector;
-
   static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
 
@@ -66,13 +64,14 @@ class Compositor : public cc::LayerTreeHostClient,
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
-  void DidSwapCompositorFrame(uint32_t surface_id,
-                              FrameHandleVector returned_frames);
-
  private:
   friend class CompositorObserver;
 
   Compositor(CompositorClient* client);
+
+  using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
+  void SwapCompositorFrameAckFromClient(uint32_t surface_id,
+                                        FrameHandleVector returned_frames);
 
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
@@ -107,7 +106,8 @@ class Compositor : public cc::LayerTreeHostClient,
   void DidAbortSwapBuffers() override;
 
   // CompositorProxyClient
-  void SwapCompositorFrameFromProxy(scoped_ptr<CompositorFrameData> frame);
+  void SwapCompositorFrameFromProxy(uint32_t surface_id,
+                                    scoped_ptr<CompositorFrameData> frame);
   
   CompositorClient* client_;
 

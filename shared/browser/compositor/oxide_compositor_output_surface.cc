@@ -55,8 +55,6 @@ void CompositorOutputSurface::DoSwapBuffers(
 
   DCHECK(frame->gl_frame_data || frame->software_frame_data);
 
-  frame->surface_id = surface_id_;
-
   proxy_->SwapCompositorFrame(std::move(frame));
   client_->DidSwapBuffers();
 }

@@ -76,8 +76,6 @@ class CompositorFrameData {
   static scoped_ptr<CompositorFrameData> AllocFrom(
       CompositorFrameData* other);
 
-  uint32_t surface_id;
-
   gfx::Size size_in_pixels;
   float device_scale;
 

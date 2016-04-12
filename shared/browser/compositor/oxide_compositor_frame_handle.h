@@ -34,7 +34,8 @@ class CompositorSingleThreadProxy;
 class OXIDE_SHARED_EXPORT CompositorFrameHandle
     : public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
-  CompositorFrameHandle(scoped_refptr<CompositorProxy> proxy,
+  CompositorFrameHandle(uint32_t surface_id,
+                        scoped_refptr<CompositorProxy> proxy,
                         scoped_ptr<CompositorFrameData> data);
 
   CompositorFrameData* data() const { return data_.get(); }
@@ -45,6 +46,8 @@ class OXIDE_SHARED_EXPORT CompositorFrameHandle
   friend class base::RefCountedThreadSafe<CompositorFrameHandle>;
 
   ~CompositorFrameHandle();
+
+  uint32_t surface_id_;
 
   scoped_refptr<CompositorProxy> proxy_;
   scoped_ptr<CompositorFrameData> data_;
