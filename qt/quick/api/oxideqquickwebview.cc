@@ -96,7 +96,8 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
         location_bar_mode(oxide::qt::LOCATION_BAR_MODE_AUTO),
         location_bar_animated(true),
         load_html(false),
-        fullscreen(false) {}
+        fullscreen(false),
+        zoom_factor(1.0) {}
 
   bool incognito;
   QPointer<OxideQQuickWebContext> context;
@@ -112,6 +113,7 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
   QString html;
   bool fullscreen;
   QPointer<OxideQWebPreferences> preferences;
+  qreal zoom_factor;
 };
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
@@ -554,6 +556,8 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   }
 
   proxy_->setFullscreen(construct_props_->fullscreen);
+
+  proxy_->setZoomFactor(construct_props_->zoom_factor);
 
   if (construct_props_->preferences) {
     proxy_->setPreferences(construct_props_->preferences);
@@ -1750,7 +1754,7 @@ qreal OxideQQuickWebView::zoomFactor() const {
   Q_D(const OxideQQuickWebView);
 
   if (!d->proxy_) {
-    return 1.0;
+    return d->construct_props_->zoom_factor;
   }
 
   return d->proxy_->zoomFactor();
@@ -1759,16 +1763,17 @@ qreal OxideQQuickWebView::zoomFactor() const {
 void OxideQQuickWebView::setZoomFactor(qreal factor) {
   Q_D(OxideQQuickWebView);
 
-  if (!d->proxy_) {
+  if (qFuzzyCompare(factor, zoomFactor())) {
     return;
   }
 
-  qreal old_factor = zoomFactor();
-  d->proxy_->setZoomFactor(factor);
-
-  if (!qFuzzyCompare(old_factor, zoomFactor())) {
-    emit zoomFactorChanged();
+  if (!d->proxy_) {
+    d->construct_props_->zoom_factor = factor;
+  } else {
+    d->proxy_->setZoomFactor(factor);
   }
+
+  emit zoomFactorChanged();
 }
 
 qreal OxideQQuickWebView::minimumZoomFactor() const {
