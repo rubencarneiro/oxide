@@ -133,6 +133,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void CloseRequested() override;
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
+  void ZoomLevelChanged() override;
 
   void completeConstruction();
 

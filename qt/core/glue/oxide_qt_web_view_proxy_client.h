@@ -125,6 +125,8 @@ class WebViewProxyClient {
   virtual void TargetURLChanged() = 0;
 
   virtual void OnEditingCapabilitiesChanged() = 0;
+  
+  virtual void ZoomLevelChanged() = 0;
 };
 
 } // namespace qt

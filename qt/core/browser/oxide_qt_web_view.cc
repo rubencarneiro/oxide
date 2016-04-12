@@ -267,6 +267,10 @@ void WebView::CommonInit(OxideQFindController* find_controller) {
       contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
+  track_zoom_subscription_ = content::HostZoomMap::GetForWebContents(contents)
+      ->AddZoomLevelChangedCallback(
+          base::Bind(&WebView::OnZoomLevelChanged, base::Unretained(this)));
+
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
   web_view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
@@ -281,6 +285,11 @@ void WebView::EnsurePreferences() {
   OxideQWebPreferences* p = new OxideQWebPreferences(handle());
   web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
+}
+
+void WebView::OnZoomLevelChanged(
+    const content::HostZoomMap::ZoomLevelChange& change) {
+  client_->ZoomLevelChanged();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(

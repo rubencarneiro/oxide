@@ -514,6 +514,12 @@ void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
   emit q->editingCapabilitiesChanged();
 }
 
+void OxideQQuickWebViewPrivate::ZoomLevelChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->zoomFactorChanged();
+}
+
 void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_Q(OxideQQuickWebView);
 
@@ -1778,7 +1784,6 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
   }
 
   d->proxy_->setZoomFactor(factor);
-  emit zoomFactorChanged();
 }
 
 qreal OxideQQuickWebView::minimumZoomFactor() const {
