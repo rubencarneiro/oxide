@@ -21,6 +21,13 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
+
+class GURL;
+
+namespace content {
+class WebContents;
+}
 
 namespace oxide {
 
@@ -43,7 +50,8 @@ class CertificateErrorProxy : public base::RefCounted<CertificateErrorProxy> {
 
   void Cancel();
 
-  void SetPlaceholderPage(CertificateErrorPlaceholderPage* placeholder);
+  void AttachPlaceholderPage(content::WebContents* contents,
+                             const GURL& request_url);
 
  private:
   friend class base::RefCounted<CertificateErrorProxy>;
@@ -55,7 +63,7 @@ class CertificateErrorProxy : public base::RefCounted<CertificateErrorProxy> {
   bool did_respond_;
   base::Closure cancel_callback_;
 
-  CertificateErrorPlaceholderPage* placeholder_page_;
+  base::WeakPtr<CertificateErrorPlaceholderPage> placeholder_page_;
 
   DISALLOW_COPY_AND_ASSIGN(CertificateErrorProxy);
 };
