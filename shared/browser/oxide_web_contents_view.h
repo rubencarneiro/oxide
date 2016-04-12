@@ -224,6 +224,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;
+  void CompositorEvictResources() override;
 
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;

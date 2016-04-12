@@ -217,6 +217,15 @@ void CompositorOutputSurfaceGL::ReclaimResources(
     DiscardBufferIfPossible(&buffer);
   }
 
+  int unavailable_count = std::count_if(buffers_.begin(),
+                                        buffers_.end(),
+                                        [](const BufferData& buffer) {
+    return !buffer.available;
+  });
+  if (unavailable_count == 0) {
+    proxy()->AllFramesReturnedFromClient();
+  }
+
   CompositorOutputSurface::ReclaimResources(ack);
 }
 

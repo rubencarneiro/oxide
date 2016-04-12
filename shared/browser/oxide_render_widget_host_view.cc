@@ -55,7 +55,6 @@
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_event_utils.h"
-#include "oxide_renderer_frame_evictor.h"
 #include "oxide_render_widget_host_view_container.h"
 
 namespace oxide {
@@ -328,11 +327,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     layer_->SetNeedsDisplayRect(damage_rect_dip);
   }
 
-  if (frame_is_evicted_) {
-    frame_is_evicted_ = false;
-    RendererFrameEvictor::GetInstance()->AddFrame(this, is_showing_);
-  }
-
   bool shrink =
       metadata.location_bar_offset.y() == 0.0f &&
       metadata.location_bar_content_translation.y() > 0.0f;
@@ -570,6 +564,10 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   }
 }
 
+void RenderWidgetHostView::CompositorEvictResources() {
+  DestroyDelegatedContent();
+}
+
 void RenderWidgetHostView::OnGestureEvent(
     const blink::WebGestureEvent& event) {
   if (!host_) {
@@ -638,11 +636,6 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
       break;
   }
   return false;
-}
-
-void RenderWidgetHostView::EvictCurrentFrame() {
-  frame_is_evicted_ = true;
-  DestroyDelegatedContent();
 }
 
 void RenderWidgetHostView::ReturnResources(
@@ -808,7 +801,6 @@ RenderWidgetHostView::RenderWidgetHostView(
       id_allocator_(
           CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
       last_output_surface_id_(0),
-      frame_is_evicted_(true),
       ime_bridge_(this),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
@@ -924,10 +916,6 @@ void RenderWidgetHostView::Show() {
     layer_->SetHideLayerAndSubtree(false);
   }
 
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->LockFrame(this);
-  }
-
   if (!host_ || !host_->is_hidden()) {
     return;
   }
@@ -943,10 +931,6 @@ void RenderWidgetHostView::Hide() {
 
   if (layer_.get()) {
     layer_->SetHideLayerAndSubtree(true);
-  }
-
-  if (!frame_is_evicted_) {
-    RendererFrameEvictor::GetInstance()->UnlockFrame(this);
   }
 
   RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);

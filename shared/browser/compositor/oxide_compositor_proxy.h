@@ -40,6 +40,8 @@ class CompositorProxyClient {
   virtual void SwapCompositorFrameFromProxy(
       uint32_t surface_id,
       scoped_ptr<CompositorFrameData> frame) = 0;
+
+  virtual void AllFramesReturnedFromClient() = 0;
 };
 
 class CompositorProxy : public base::RefCounted<CompositorProxy> {
@@ -63,6 +65,9 @@ class CompositorProxy : public base::RefCounted<CompositorProxy> {
 
   // Called from the OutputSurface to tell the client to swap
   virtual void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) = 0;
+
+  // Called when the client has returned all frames
+  virtual void AllFramesReturnedFromClient() = 0;
 
   // Called from the client to tell the compositor that a frame swap
   // completed. |returned_frames| contains the buffers that the client

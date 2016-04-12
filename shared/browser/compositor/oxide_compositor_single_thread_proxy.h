@@ -63,6 +63,7 @@ class CompositorSingleThreadProxy : public CompositorProxy,
                             uint64_t sync_point) override;
   void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) override;
   void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) override;
+  void AllFramesReturnedFromClient() override;
   void DidSwapCompositorFrame(uint32_t surface_id,
                               FrameHandleVector returned_frames) override;
   void ReclaimResourcesForFrame(uint32_t surface_id,

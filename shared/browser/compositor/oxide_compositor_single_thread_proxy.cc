@@ -285,6 +285,14 @@ void CompositorSingleThreadProxy::SwapCompositorFrame(
   }
 }
 
+void CompositorSingleThreadProxy::AllFramesReturnedFromClient() {
+  if (!client()) {
+    return;
+  }
+
+  client()->AllFramesReturnedFromClient();
+}
+
 void CompositorSingleThreadProxy::DidSwapCompositorFrame(
     uint32_t surface_id,
     FrameHandleVector returned_frames) {

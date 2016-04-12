@@ -508,6 +508,17 @@ void WebContentsView::CompositorDidCommit() {
         : cc::CompositorFrameMetadata();
 }
 
+void WebContentsView::CompositorEvictResources() {
+  current_compositor_frame_ = nullptr;
+  previous_compositor_frames_.clear();
+ 
+  if (!client_) {
+    return;
+  }
+
+  client_->EvictCurrentFrame();
+}
+
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   DCHECK(drag_source_);
 
@@ -886,19 +897,6 @@ void WebContentsView::VisibilityChanged() {
   bool visible = IsVisible();
 
   compositor_->SetVisibility(visible);
-
-  if (!visible) {
-    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
-    //  trigger eviction of the frontbuffer from a CompositorClient callback.
-    // XXX: Also this isn't really necessary for eviction - after all, the LTH
-    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
-    //  This callback is really to notify the toolkit layer that the
-    //  frontbuffer is being dropped
-    current_compositor_frame_ = nullptr;
-    if (client_) {
-      client_->EvictCurrentFrame();
-    }
-  }
 
   if (visible) {
     web_contents()->WasShown();
