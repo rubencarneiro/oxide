@@ -244,7 +244,6 @@ class BrowserContext
   // content::BrowserContext implementation
   scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
       const base::FilePath& partition_path) override;
-  net::URLRequestContextGetter* GetRequestContext() override;
   net::URLRequestContextGetter* GetMediaRequestContext() override;
   net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
       int renderer_child_id) override;

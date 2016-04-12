@@ -644,14 +644,9 @@ scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
   return nullptr;
 }
 
-net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
-  DCHECK(CalledOnValidThread());
-  return GetStoragePartition(this, nullptr)->GetURLRequestContext();
-}
-
 net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
   DCHECK(CalledOnValidThread());
-  return GetRequestContext();
+  return GetStoragePartition(this, nullptr)->GetMediaURLRequestContext();
 }
 
 net::URLRequestContextGetter*
