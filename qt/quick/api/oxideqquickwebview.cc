@@ -1767,6 +1767,13 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
     return;
   }
 
+  if (factor < minimumZoomFactor() || factor > maximumZoomFactor()) {
+    qWarning() <<
+        "OxideQQuickWebView: invalid value for zoom factor, expected to be "
+        "between" << minimumZoomFactor() << "and" << maximumZoomFactor();
+    return;
+  }
+
   if (!d->proxy_) {
     d->construct_props_->zoom_factor = factor;
   } else {
