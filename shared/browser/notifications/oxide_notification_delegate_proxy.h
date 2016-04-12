@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_DELEGATE_PROXY_H_
 #define _OXIDE_SHARED_BROWSER_NOTIFICATIONS_NOTIFICATION_DELEGATE_PROXY_H_
 
+#include <memory>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 
 namespace content {
 class DesktopNotificationDelegate;
@@ -35,7 +36,7 @@ class NotificationDelegateProxy
     : public base::RefCounted<NotificationDelegateProxy> {
  public:
   NotificationDelegateProxy(
-      scoped_ptr<content::DesktopNotificationDelegate> delegate);
+      std::unique_ptr<content::DesktopNotificationDelegate> delegate);
 
   void NotificationDisplayed();
   void NotificationClosed();
@@ -45,7 +46,7 @@ class NotificationDelegateProxy
   friend class base::RefCounted<NotificationDelegateProxy>;
   ~NotificationDelegateProxy();
 
-  scoped_ptr<content::DesktopNotificationDelegate> delegate_;
+  std::unique_ptr<content::DesktopNotificationDelegate> delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(NotificationDelegateProxy);
 };
