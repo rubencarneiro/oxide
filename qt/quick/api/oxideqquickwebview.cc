@@ -96,8 +96,7 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
         location_bar_mode(oxide::qt::LOCATION_BAR_MODE_AUTO),
         location_bar_animated(true),
         load_html(false),
-        fullscreen(false),
-        zoom_factor(1.0) {}
+        fullscreen(false) {}
 
   bool incognito;
   QPointer<OxideQQuickWebContext> context;
@@ -113,7 +112,6 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
   QString html;
   bool fullscreen;
   QPointer<OxideQWebPreferences> preferences;
-  qreal zoom_factor;
 };
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
@@ -556,8 +554,6 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   }
 
   proxy_->setFullscreen(construct_props_->fullscreen);
-
-  proxy_->setZoomFactor(construct_props_->zoom_factor);
 
   if (construct_props_->preferences) {
     proxy_->setPreferences(construct_props_->preferences);
@@ -1754,7 +1750,7 @@ qreal OxideQQuickWebView::zoomFactor() const {
   Q_D(const OxideQQuickWebView);
 
   if (!d->proxy_) {
-    return d->construct_props_->zoom_factor;
+    return 1.0;
   }
 
   return d->proxy_->zoomFactor();
@@ -1767,6 +1763,13 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
     return;
   }
 
+  if (!d->proxy_) {
+    qWarning() <<
+        "OxideQQuickWebView: zoom factor cannot be set during construction, "
+        "it is a per-host value";
+    return;
+  }
+
   if (factor < minimumZoomFactor() || factor > maximumZoomFactor()) {
     qWarning() <<
         "OxideQQuickWebView: invalid value for zoom factor, expected to be "
@@ -1774,12 +1777,7 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
     return;
   }
 
-  if (!d->proxy_) {
-    d->construct_props_->zoom_factor = factor;
-  } else {
-    d->proxy_->setZoomFactor(factor);
-  }
-
+  d->proxy_->setZoomFactor(factor);
   emit zoomFactorChanged();
 }
 
