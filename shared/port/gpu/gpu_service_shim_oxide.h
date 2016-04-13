@@ -18,9 +18,6 @@
 #ifndef _OXIDE_SHARED_PORT_GPU_GPU_SERVICE_SHIM_H_
 #define _OXIDE_SHARED_PORT_GPU_GPU_SERVICE_SHIM_H_
 
-#include <stdint.h>
-
-#include "gpu/command_buffer/common/command_buffer_id.h"
 #include "gpu/gpu_export.h"
 
 namespace gfx {
@@ -28,16 +25,7 @@ class GLShareGroup;
 }
 
 namespace gpu {
-namespace gles2 {
-class GLES2Decoder;
-}
-}
-
-namespace gpu {
 namespace oxide_shim {
-
-GPU_EXPORT gpu::gles2::GLES2Decoder* GetGLES2Decoder(
-    gpu::CommandBufferId command_buffer_id);
 
 gfx::GLShareGroup* GetGLShareGroup();
 GPU_EXPORT void SetGLShareGroup(gfx::GLShareGroup* share_group);
