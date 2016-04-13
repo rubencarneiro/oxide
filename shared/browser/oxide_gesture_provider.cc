@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/memory/ptr_util.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
@@ -136,10 +136,10 @@ GestureProviderImpl::~GestureProviderImpl() {}
 GestureProviderClient::~GestureProviderClient() {}
 
 // static
-scoped_ptr<GestureProvider> GestureProvider::Create(
+std::unique_ptr<GestureProvider> GestureProvider::Create(
     GestureProviderClient* client) {
   DCHECK(client) << "A GestureProviderClient must be provided";
-  return make_scoped_ptr(new GestureProviderImpl(client));
+  return base::WrapUnique(new GestureProviderImpl(client));
 }
 
 GestureProvider::~GestureProvider() {}

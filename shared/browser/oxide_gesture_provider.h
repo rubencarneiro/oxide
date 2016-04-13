@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_GESTURE_PROVIDER_H_
 #define _OXIDE_SHARED_BROWSER_GESTURE_PROVIDER_H_
 
+#include <memory>
+
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 
 namespace blink {
@@ -39,7 +41,7 @@ class GestureProviderClient {
 
 class GestureProvider {
  public:
-  static scoped_ptr<GestureProvider> Create(GestureProviderClient* client);
+  static std::unique_ptr<GestureProvider> Create(GestureProviderClient* client);
   virtual ~GestureProvider();
 
   virtual ui::FilteredGestureProvider::TouchHandlingResult
