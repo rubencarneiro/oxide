@@ -19,7 +19,6 @@
 
 #include "base/lazy_instance.h"
 #include "base/single_thread_task_runner.h"
-#include "content/common/gpu/gpu_channel_manager.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/context_state.h"
@@ -31,7 +30,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface_egl.h"
 
-#include "shared/port/content/common/gpu_service_shim_oxide.h"
+#include "shared/port/gpu/gpu_service_shim_oxide.h"
 
 namespace oxide {
 
@@ -177,7 +176,7 @@ EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
 GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
                                        const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
+      gpu::oxide_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return 0;
   }
@@ -196,7 +195,7 @@ EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
     gpu::CommandBufferId command_buffer,
     const gpu::Mailbox& mailbox) {
   gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
+      gpu::oxide_shim::GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return EGL_NO_IMAGE_KHR;
   }

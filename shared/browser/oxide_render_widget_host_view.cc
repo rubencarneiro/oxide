@@ -34,6 +34,7 @@
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/common/text_input_state.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -144,12 +145,6 @@ bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
 }
 
 } // namespace
-
-void RenderWidgetHostView::OnTextInputStateChanged(
-    ui::TextInputType type,
-    bool show_ime_if_needed) {
-  ime_bridge_.TextInputStateChanged(type, show_ime_if_needed);
-}
 
 void RenderWidgetHostView::OnSelectionBoundsChanged(
     const gfx::Rect& anchor_rect,
@@ -365,6 +360,16 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
+void RenderWidgetHostView::UpdateInputMethodIfNecessary(
+    bool text_input_state_changed) {
+  if (!text_input_state_changed) {
+    return;
+  }
+
+  ime_bridge_.TextInputStateChanged(text_input_state()->type,
+                                    text_input_state()->show_ime_if_needed);
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
@@ -413,6 +418,7 @@ void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
 }
 
 void RenderWidgetHostView::Destroy() {
+  NotifyHostDelegateAboutShutdown();
   DestroyDelegatedContent();
   surface_factory_.reset();
   host_ = nullptr;

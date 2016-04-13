@@ -15,11 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxide_pepper_render_frame_observer.h"
+
+#include <memory>
+
+#include "base/memory/ptr_util.h"
 #include "content/public/renderer/renderer_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 
 #include "oxide_pepper_shared_memory_message_filter.h"
-#include "oxide_pepper_render_frame_observer.h"
 #include "oxide_pepper_renderer_host_factory.h"
 
 namespace oxide {
@@ -33,12 +37,10 @@ PepperRenderFrameObserver::~PepperRenderFrameObserver() {}
 void PepperRenderFrameObserver::DidCreatePepperPlugin(content::RendererPpapiHost* host) {
 
   host->GetPpapiHost()->AddHostFactoryFilter(
-      scoped_ptr<ppapi::host::HostFactory>(
-          new PepperRendererHostFactory(host)));
+      base::WrapUnique(new PepperRendererHostFactory(host)));
 
   host->GetPpapiHost()->AddInstanceMessageFilter(
-      scoped_ptr<ppapi::host::InstanceMessageFilter>(
-          new ::PepperSharedMemoryMessageFilter(host)));
+      base::WrapUnique(new ::PepperSharedMemoryMessageFilter(host)));
 
 }
 

@@ -17,8 +17,10 @@
 
 #include "oxide_pepper_host_factory_browser.h"
 
+#include <memory>
+
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
+#include "base/memory/ptr_util.h"
 #include "content/public/browser/browser_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 #include "ppapi/host/resource_host.h"
@@ -35,7 +37,7 @@ PepperHostFactoryBrowser::PepperHostFactoryBrowser(
 
 PepperHostFactoryBrowser::~PepperHostFactoryBrowser() {}
 
-scoped_ptr<ppapi::host::ResourceHost>
+std::unique_ptr<ppapi::host::ResourceHost>
 PepperHostFactoryBrowser::CreateResourceHost(
     ppapi::host::PpapiHost* host,
     PP_Resource resource,
@@ -64,7 +66,7 @@ PepperHostFactoryBrowser::CreateResourceHost(
           ppapi::PERMISSION_FLASH)) {
       switch (message.type()) {
         case PpapiHostMsg_Flash_Create::ID:
-          return scoped_ptr<ppapi::host::ResourceHost>(
+          return base::WrapUnique(
             new PepperFlashBrowserHost(host_, instance, resource));
         default:
           ;

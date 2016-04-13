@@ -649,16 +649,6 @@ net::URLRequestContextGetter* BrowserContext::GetRequestContext() {
   return GetStoragePartition(this, nullptr)->GetURLRequestContext();
 }
 
-net::URLRequestContextGetter*
-BrowserContext::GetRequestContextForRenderProcess(int renderer_child_id) {
-  DCHECK(CalledOnValidThread());
-
-  content::RenderProcessHost* host =
-      content::RenderProcessHost::FromID(renderer_child_id);
-
-  return host->GetStoragePartition()->GetURLRequestContext();
-}
-
 net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
   DCHECK(CalledOnValidThread());
   return GetRequestContext();
@@ -720,6 +710,32 @@ content::PermissionManager* BrowserContext::GetPermissionManager() {
 
 content::BackgroundSyncController*
 BrowserContext::GetBackgroundSyncController() {
+  return nullptr;
+}
+
+net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::URLRequestInterceptorScopedVector request_interceptors) {
+  DCHECK(CalledOnValidThread());
+  DCHECK(!main_request_context_getter_.get());
+
+  main_request_context_getter_ =
+      new MainURLRequestContextGetter(io_data(),
+                                      protocol_handlers,
+                                      std::move(request_interceptors));
+
+  return main_request_context_getter_.get();
+}
+
+net::URLRequestContextGetter*
+BrowserContext::CreateRequestContextForStoragePartition(
+    const base::FilePath& partition_path,
+    bool in_memory,
+    content::ProtocolHandlerMap* protocol_handlers,
+    content::URLRequestInterceptorScopedVector request_interceptors) {
+  // We don't return any storage partition names from
+  // GetStoragePartitionConfigForSite(), so it's a bug to hit this
+  NOTREACHED() << "Invalid request for request context for storage partition";
   return nullptr;
 }
 
@@ -787,20 +803,6 @@ void BrowserContext::AssertNoContextsExist() {
 
 BrowserContextID BrowserContext::GetID() const {
   return reinterpret_cast<BrowserContextID>(this);
-}
-
-net::URLRequestContextGetter* BrowserContext::CreateRequestContext(
-    content::ProtocolHandlerMap* protocol_handlers,
-    content::URLRequestInterceptorScopedVector request_interceptors) {
-  DCHECK(CalledOnValidThread());
-  DCHECK(!main_request_context_getter_.get());
-
-  main_request_context_getter_ =
-      new MainURLRequestContextGetter(io_data(),
-                                      protocol_handlers,
-                                      std::move(request_interceptors));
-
-  return main_request_context_getter_.get();
 }
 
 BrowserContextDelegate* BrowserContext::GetDelegate() const {

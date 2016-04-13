@@ -237,7 +237,6 @@
         '<(DEPTH)/content/content.gyp:content_common',
         '<(DEPTH)/content/content.gyp:content_gpu',
         '<(DEPTH)/content/content.gyp:content_ppapi_plugin',
-        '<(DEPTH)/content/content.gyp:content_plugin',
         '<(DEPTH)/content/content.gyp:content_renderer',
         '<(DEPTH)/content/content.gyp:content_utility',
         '<(DEPTH)/crypto/crypto.gyp:crypto',

@@ -25,7 +25,7 @@ class PepperRendererHostFactory : public ppapi::host::HostFactory {
   ~PepperRendererHostFactory();
 
   // HostFactory.
-  scoped_ptr<ppapi::host::ResourceHost> CreateResourceHost(
+  std::unique_ptr<ppapi::host::ResourceHost> CreateResourceHost(
       ppapi::host::PpapiHost* host,
       PP_Resource resource,
       PP_Instance instance,

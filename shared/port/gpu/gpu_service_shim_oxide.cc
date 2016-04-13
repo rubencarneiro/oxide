@@ -21,14 +21,14 @@
 #include "base/logging.h"
 #include "base/single_thread_task_runner.h"
 #include "base/thread_task_runner_handle.h"
-#include "content/common/gpu/gpu_channel.h"
-#include "content/common/gpu/gpu_channel_manager.h"
-#include "content/common/gpu/gpu_command_buffer_stub.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/gles2_cmd_decoder.h"
+#include "gpu/ipc/service/gpu_channel.h"
+#include "gpu/ipc/service/gpu_channel_manager.h"
+#include "gpu/ipc/service/gpu_command_buffer_stub.h"
 
-namespace content {
-namespace oxide_gpu_shim {
+namespace gpu {
+namespace oxide_shim {
 
 namespace {
 
@@ -37,12 +37,12 @@ base::LazyInstance<base::Lock> g_gl_share_group_lock =
 bool g_gl_share_group_used = false;
 gfx::GLShareGroup* g_gl_share_group;
 
-content::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
-                                                   int32_t route_id) {
-  content::GpuChannelManager* gpu_channel_manager =
+gpu::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
+                                               int32_t route_id) {
+  gpu::GpuChannelManager* gpu_channel_manager =
       content::GpuChildThread::GetChannelManager();
   DCHECK(gpu_channel_manager);
-  content::GpuChannel* channel =
+  gpu::GpuChannel* channel =
       gpu_channel_manager->LookupChannel(client_id);
   if (!channel) {
     return nullptr;
@@ -64,7 +64,7 @@ gpu::gles2::GLES2Decoder* GetGLES2Decoder(
   int32_t client_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() >> 32);
   int32_t route_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() & 0x00000000FFFFFFFF);
 
-  content::GpuCommandBufferStub* command_buffer =
+  gpu::GpuCommandBufferStub* command_buffer =
       LookupCommandBuffer(client_id, route_id);
   if (!command_buffer) {
     return nullptr;
@@ -85,5 +85,5 @@ void SetGLShareGroup(gfx::GLShareGroup* share_group) {
   g_gl_share_group = share_group;
 }
 
-} // namespace oxide_gpu_shim
-} // namespace content
+} // namespace oxide_shim
+} // namespace gpu

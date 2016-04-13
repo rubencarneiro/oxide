@@ -5,6 +5,9 @@
 
 #include "oxide_pepper_renderer_host_factory.h"
 
+#include <memory>
+
+#include "base/memory/ptr_util.h"
 #include "content/public/renderer/renderer_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 #include "ppapi/host/resource_host.h"
@@ -25,7 +28,7 @@ PepperRendererHostFactory::PepperRendererHostFactory(
 
 PepperRendererHostFactory::~PepperRendererHostFactory() {}
 
-scoped_ptr<ppapi::host::ResourceHost>
+std::unique_ptr<ppapi::host::ResourceHost>
 PepperRendererHostFactory::CreateResourceHost(
     ppapi::host::PpapiHost* host,
     PP_Resource resource,
@@ -41,7 +44,7 @@ PepperRendererHostFactory::CreateResourceHost(
         ppapi::PERMISSION_FLASH)) {
     switch (message.type()) {
       case PpapiHostMsg_Flash_Create::ID:
-        return make_scoped_ptr(
+        return base::WrapUnique(
             new PepperFlashRendererHost(host_, instance, resource));
 
       case PpapiHostMsg_FlashFontFile_Create::ID: {
@@ -49,21 +52,21 @@ PepperRendererHostFactory::CreateResourceHost(
         PP_PrivateFontCharset charset;
         if (ppapi::UnpackMessage<PpapiHostMsg_FlashFontFile_Create>(
                 message, &description, &charset)) {
-          return make_scoped_ptr(
+          return base::WrapUnique(
               new PepperFlashFontFileHost(
                 host_, instance, resource, description, charset));
         }
         break;
       }
       case PpapiHostMsg_FlashFullscreen_Create::ID:
-        return make_scoped_ptr(
+        return base::WrapUnique(
             new PepperFlashFullscreenHost(host_, instance, resource));
 
       case PpapiHostMsg_FlashMenu_Create::ID: {
         ppapi::proxy::SerializedFlashMenu serialized_menu;
         if (ppapi::UnpackMessage<PpapiHostMsg_FlashMenu_Create>(
           message, &serialized_menu)) {
-          return make_scoped_ptr(
+          return base::WrapUnique(
               new PepperFlashMenuHost(host_,
                                       instance,
                                       resource,

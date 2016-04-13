@@ -52,10 +52,6 @@ QUrl JavaScriptDialog::originUrl() const {
   return QUrl(QString::fromStdString(origin_url_.spec()));
 }
 
-QString JavaScriptDialog::acceptLang() const {
-  return QString::fromStdString(accept_lang_);
-}
-
 QString JavaScriptDialog::messageText() const {
   return QString::fromStdString(base::UTF16ToUTF8(message_text_));
 }

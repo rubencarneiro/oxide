@@ -91,28 +91,6 @@ void ContentBrowserClient::RenderProcessWillLaunch(
   host->AddFilter(new RenderMessageFilter(host));
 }
 
-net::URLRequestContextGetter* ContentBrowserClient::CreateRequestContext(
-    content::BrowserContext* browser_context,
-    content::ProtocolHandlerMap* protocol_handlers,
-    content::URLRequestInterceptorScopedVector request_interceptors) {
-  return BrowserContext::FromContent(
-      browser_context)->CreateRequestContext(protocol_handlers,
-                                             std::move(request_interceptors));
-}
-
-net::URLRequestContextGetter*
-ContentBrowserClient::CreateRequestContextForStoragePartition(
-    content::BrowserContext* browser_context,
-    const base::FilePath& partition_path,
-    bool in_memory,
-    content::ProtocolHandlerMap* protocol_handlers,
-    content::URLRequestInterceptorScopedVector request_interceptors) {
-  // We don't return any storage partition names from
-  // GetStoragePartitionConfigForSite(), so it's a bug to hit this
-  NOTREACHED() << "Invalid request for request context for storage partition";
-  return nullptr;
-}
-
 std::string ContentBrowserClient::GetAcceptLangs(
     content::BrowserContext* browser_context) {
   return UserAgentSettings::Get(browser_context)->GetAcceptLangs();
