@@ -23,6 +23,7 @@
 #include "content/public/common/ssl_status.h"
 
 #include "shared/browser/oxide_security_types.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace net {
 class X509Certificate;
@@ -30,7 +31,7 @@ class X509Certificate;
 
 namespace oxide {
 
-class SecurityStatus final {
+class OXIDE_SHARED_EXPORT SecurityStatus final {
  public:
 
   SecurityStatus();

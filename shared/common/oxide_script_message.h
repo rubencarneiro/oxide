@@ -26,6 +26,7 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_script_message_params.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace base {
 class ListValue;
@@ -36,7 +37,7 @@ namespace oxide {
 
 class ScriptMessage;
 
-struct ScriptMessageTraits {
+struct OXIDE_SHARED_EXPORT ScriptMessageTraits {
   static void Destruct(const ScriptMessage* x);
 };
 
@@ -44,7 +45,7 @@ struct ScriptMessageTraits {
 // which we need in order to be able to send an error on destruction if the
 // handler doesn't respond itself. We can't do this from the destructor,
 // as it relies a vcall in to the derived class
-class ScriptMessage :
+class OXIDE_SHARED_EXPORT ScriptMessage :
     public base::RefCountedThreadSafe<ScriptMessage, ScriptMessageTraits> {
  public:
 

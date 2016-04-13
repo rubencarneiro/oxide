@@ -98,6 +98,8 @@ UserScript::UserScript() :
     incognito_enabled_(false),
     emulate_greasemonkey_(false) {}
 
+UserScript::~UserScript() {}
+
 void UserScript::add_exclude_glob(const std::string& glob) {
   exclude_globs_.push_back(glob);
 }

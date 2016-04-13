@@ -32,6 +32,8 @@
 #include "content/public/browser/cookie_store_factory.h"
 #include "net/base/static_cookie_policy.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class ResourceContext;
 }
@@ -146,14 +148,14 @@ class BrowserContextIOData {
 
 class BrowserContext;
 
-struct BrowserContextTraits {
+struct OXIDE_SHARED_EXPORT BrowserContextTraits {
   static void Destruct(const BrowserContext* x);
 };
 
 // This class holds the context needed for a browsing session. It lives on
 // and must only be accessed on the UI thread - note that it uses a thread-safe
 // refcount only so that we can override the delete behaviour
-class BrowserContext
+class OXIDE_SHARED_EXPORT BrowserContext
     : public content::BrowserContext,
       public base::RefCountedThreadSafe<BrowserContext, BrowserContextTraits>,
       public base::NonThreadSafe {

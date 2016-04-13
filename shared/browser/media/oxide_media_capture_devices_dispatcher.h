@@ -23,6 +23,8 @@
 #include "content/public/browser/media_observer.h"
 #include "content/public/common/media_stream_request.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 template <typename T> struct DefaultSingletonTraits;
 }
@@ -39,7 +41,8 @@ class MediaCaptureDevicesDispatcherObserver;
 
 // I think the name of this class is a bit odd, but I couldn't think of a
 // better one so I copied the name from Chrome
-class MediaCaptureDevicesDispatcher : public content::MediaObserver {
+class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcher
+    : public content::MediaObserver {
  public:
   static MediaCaptureDevicesDispatcher* GetInstance();
 

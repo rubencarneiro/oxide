@@ -45,7 +45,7 @@
   ],
   'targets': [
     {
-      'target_name': 'oxide_extra_resources',
+      'target_name': 'extra_resources',
       'type': 'none',
       'actions': [
         {
@@ -59,13 +59,13 @@
       'includes': [ '../third_party/chromium/src/build/grit_target.gypi' ],
     },
     {
-      'target_name': 'oxide_packed_resources',
+      'target_name': 'packed_resources',
       'type': 'none',
       'variables': {
         'repack_path': '<(DEPTH)/tools/grit/grit/format/repack.py'
       },
       'dependencies': [
-        'oxide_extra_resources',
+        'extra_resources',
         '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
         '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
         '<(DEPTH)/content/browser/tracing/tracing_resources.gyp:tracing_resources',
@@ -190,7 +190,7 @@
     },
     {
       'target_name': 'oxide_shared',
-      'type': 'static_library',
+      'type': '<(component)',
       'hard_dependency': 1,
       'variables': {
         'chromium_code': 1,
@@ -209,10 +209,11 @@
       'defines': [
         'OXIDE_SUBPROCESS_PATH=\"<(oxide_subprocess_path)\"',
         'OXIDE_GETTEXT_DOMAIN=\"<(oxide_gettext_domain)\"',
+        'OXIDE_SHARED_IMPLEMENTATION',
       ],
       'dependencies': [
-        'oxide_packed_resources',
-        'oxide_extra_resources',
+        'packed_resources',
+        'extra_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/base/base.gyp:base_i18n',
         '<(DEPTH)/base/base.gyp:base_static',
@@ -240,6 +241,7 @@
         '<(DEPTH)/content/content.gyp:content_utility',
         '<(DEPTH)/crypto/crypto.gyp:crypto',
         '<(DEPTH)/dbus/dbus.gyp:dbus',
+        '<(DEPTH)/device/vibration/vibration.gyp:device_vibration_mojo_bindings',
         '<(DEPTH)/gin/gin.gyp:gin',
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
         '<(DEPTH)/ipc/ipc.gyp:ipc',
@@ -289,6 +291,8 @@
         'browser/compositor/oxide_compositor_client.h',
         'browser/compositor/oxide_compositor_frame_ack.cc',
         'browser/compositor/oxide_compositor_frame_ack.h',
+        'browser/compositor/oxide_compositor_frame_collector.cc',
+        'browser/compositor/oxide_compositor_frame_collector.h',
         'browser/compositor/oxide_compositor_frame_data.cc',
         'browser/compositor/oxide_compositor_frame_data.h',
         'browser/compositor/oxide_compositor_frame_handle.cc',
@@ -301,11 +305,9 @@
         'browser/compositor/oxide_compositor_output_surface.h',
         'browser/compositor/oxide_compositor_output_surface_gl.cc',
         'browser/compositor/oxide_compositor_output_surface_gl.h',
+        'browser/compositor/oxide_compositor_output_surface_listener.h',
         'browser/compositor/oxide_compositor_output_surface_software.cc',
         'browser/compositor/oxide_compositor_output_surface_software.h',
-        'browser/compositor/oxide_compositor_proxy.h',
-        'browser/compositor/oxide_compositor_single_thread_proxy.cc',
-        'browser/compositor/oxide_compositor_single_thread_proxy.h',
         'browser/compositor/oxide_compositor_software_output_device.cc',
         'browser/compositor/oxide_compositor_software_output_device.h',
         'browser/compositor/oxide_compositor_utils.cc',
@@ -411,8 +413,6 @@
         'browser/oxide_quota_permission_context.h',
         'browser/oxide_redirection_intercept_throttle.cc',
         'browser/oxide_redirection_intercept_throttle.h',
-        'browser/oxide_renderer_frame_evictor.cc',
-        'browser/oxide_renderer_frame_evictor.h',
         'browser/oxide_render_object_id.h',
         'browser/oxide_render_message_filter.cc',
         'browser/oxide_render_message_filter.h',
@@ -528,6 +528,7 @@
         'common/oxide_script_message_params.h',
         'common/oxide_script_message_request.cc',
         'common/oxide_script_message_request.h',
+        'common/oxide_shared_export.h',
         'common/oxide_unowned_user_data.h',
         'common/oxide_user_agent.cc',
         'common/oxide_user_agent.h',

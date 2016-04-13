@@ -23,11 +23,13 @@
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
 static const int kInvalidId = -1;
 
-class IdAllocator final {
+class OXIDE_SHARED_EXPORT IdAllocator final {
  public:
   IdAllocator(size_t max_id = 0);
   ~IdAllocator();

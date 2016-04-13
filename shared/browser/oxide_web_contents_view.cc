@@ -484,8 +484,9 @@ void WebContentsView::DidDetachInterstitialPage() {
   TouchSelectionChanged(false);
 }
 
-void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle) {
-  received_surface_ids_.push(handle->data()->surface_id);
+void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
+                                          const SwapAckCallback& callback) {
+  compositor_ack_callbacks_.push(callback);
 
   if (current_compositor_frame_.get()) {
     previous_compositor_frames_.push_back(current_compositor_frame_);
@@ -505,6 +506,17 @@ void WebContentsView::CompositorDidCommit() {
       GetRenderWidgetHostView() ?
         GetRenderWidgetHostView()->last_submitted_frame_metadata()
         : cc::CompositorFrameMetadata();
+}
+
+void WebContentsView::CompositorEvictResources() {
+  current_compositor_frame_ = nullptr;
+  previous_compositor_frames_.clear();
+ 
+  if (!client_) {
+    return;
+  }
+
+  client_->EvictCurrentFrame();
 }
 
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
@@ -856,15 +868,12 @@ CompositorFrameHandle* WebContentsView::GetCompositorFrameHandle() const {
 }
 
 void WebContentsView::DidCommitCompositorFrame() {
-  DCHECK(!received_surface_ids_.empty());
+  DCHECK(!compositor_ack_callbacks_.empty());
 
-  while (!received_surface_ids_.empty()) {
-    uint32_t surface_id = received_surface_ids_.front();
-    received_surface_ids_.pop();
-
-    compositor_->DidSwapCompositorFrame(
-        surface_id,
+  while (!compositor_ack_callbacks_.empty()) {
+    compositor_ack_callbacks_.front().Run(
         std::move(previous_compositor_frames_));
+    compositor_ack_callbacks_.pop();
   }
 }
 
@@ -888,19 +897,6 @@ void WebContentsView::VisibilityChanged() {
   bool visible = IsVisible();
 
   compositor_->SetVisibility(visible);
-
-  if (!visible) {
-    // TODO: Have an eviction algorithm for LayerTreeHosts in Compositor, and
-    //  trigger eviction of the frontbuffer from a CompositorClient callback.
-    // XXX: Also this isn't really necessary for eviction - after all, the LTH
-    //  owned by Compositor owns the frontbuffer (via its cc::OutputSurface).
-    //  This callback is really to notify the toolkit layer that the
-    //  frontbuffer is being dropped
-    current_compositor_frame_ = nullptr;
-    if (client_) {
-      client_->EvictCurrentFrame();
-    }
-  }
 
   if (visible) {
     web_contents()->WasShown();

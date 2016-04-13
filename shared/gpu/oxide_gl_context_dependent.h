@@ -22,13 +22,15 @@
 #include "base/memory/ref_counted.h"
 #include "ui/gl/gl_context.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace gfx {
 class GLShareGroup;
 }
 
 namespace oxide {
 
-class GLContextDependent : public gfx::GLContext {
+class OXIDE_SHARED_EXPORT GLContextDependent : public gfx::GLContext {
  public:
   GLContextDependent(void* handle,
                      bool was_allocated_using_robustness_extension);

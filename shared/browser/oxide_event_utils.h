@@ -20,6 +20,8 @@
 
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace ui {
 class GestureEventData;
 class MotionEvent;
@@ -32,8 +34,8 @@ blink::WebGestureEvent MakeWebGestureEvent(const ui::GestureEventData& gesture);
 blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
                                        bool moved_beyond_slop_region);
 
-int WindowsKeyCodeWithoutLocation(int code);
-int LocationModifiersFromWindowsKeyCode(int code);
+OXIDE_SHARED_EXPORT int WindowsKeyCodeWithoutLocation(int code);
+OXIDE_SHARED_EXPORT int LocationModifiersFromWindowsKeyCode(int code);
 
 } // namespace oxide
 

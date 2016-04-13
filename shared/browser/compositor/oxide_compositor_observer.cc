@@ -61,4 +61,6 @@ void CompositorObserver::CompositorWillRequestSwapFrame() {}
 
 void CompositorObserver::CompositorDidRequestSwapFrame() {}
 
+void CompositorObserver::CompositorEvictResources() {}
+
 } // namespace oxide

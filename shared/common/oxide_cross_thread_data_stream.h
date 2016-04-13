@@ -25,6 +25,8 @@
 #include "base/synchronization/lock.h"
 #include "base/threading/thread_checker.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 class SingleThreadTaskRunner;
 }
@@ -35,7 +37,7 @@ class IOBuffer;
 
 namespace oxide {
 
-class CrossThreadDataStream
+class OXIDE_SHARED_EXPORT CrossThreadDataStream
     : public base::RefCountedThreadSafe<CrossThreadDataStream> {
  public:
   CrossThreadDataStream();

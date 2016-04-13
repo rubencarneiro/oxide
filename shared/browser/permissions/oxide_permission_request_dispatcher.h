@@ -28,6 +28,7 @@
 #include "content/public/browser/web_contents_user_data.h"
 
 #include "shared/browser/permissions/oxide_permission_request_response.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -47,11 +48,14 @@ class PermissionRequestDispatcherClient;
 // This class keeps track of pending permission requests for a WebContents
 // instance
 // TODO: Coalesce requests with the same embedder/request origin and type
-class PermissionRequestDispatcher
+class OXIDE_SHARED_EXPORT PermissionRequestDispatcher
     : public content::WebContentsUserData<PermissionRequestDispatcher>,
       public content::WebContentsObserver {
  public:
   ~PermissionRequestDispatcher();
+
+  static PermissionRequestDispatcher* FromWebContents(
+      content::WebContents* contents);
 
   void set_client(PermissionRequestDispatcherClient* client) {
     client_ = client;

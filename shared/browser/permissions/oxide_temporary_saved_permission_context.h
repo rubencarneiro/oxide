@@ -25,6 +25,8 @@
 #include "base/synchronization/lock.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class BrowserContext;
 }
@@ -56,7 +58,7 @@ enum TemporarySavedPermissionType {
 //  persistence of permission request decisions (as well as other stuff).
 //  Please don't add new features to this class, other than expanding
 //  TemporarySavedPermissionType
-class TemporarySavedPermissionContext {
+class OXIDE_SHARED_EXPORT TemporarySavedPermissionContext {
  public:
   TemporarySavedPermissionContext();
   ~TemporarySavedPermissionContext();

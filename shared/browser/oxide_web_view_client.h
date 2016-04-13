@@ -28,6 +28,7 @@
 #include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/oxide_script_message_target.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -53,7 +54,7 @@ class WebView;
 
 // A class for customizing the behaviour of WebView
 // TODO(chrisccoulson): Redesign ScriptMessageTarget and stop inheriting it
-class WebViewClient : public ScriptMessageTarget {
+class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
 

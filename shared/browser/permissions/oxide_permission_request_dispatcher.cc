@@ -169,6 +169,13 @@ PermissionRequestDispatcher::~PermissionRequestDispatcher() {
   CancelPendingRequests();
 }
 
+// static
+PermissionRequestDispatcher* PermissionRequestDispatcher::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<PermissionRequestDispatcher>
+      ::FromWebContents(contents);
+}
+
 bool PermissionRequestDispatcher::CanDispatchRequest() const {
   return !!client_;
 }

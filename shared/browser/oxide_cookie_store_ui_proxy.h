@@ -22,9 +22,11 @@
 #include "base/memory/ref_counted.h"
 #include "net/cookies/cookie_store.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class CookieStoreUIProxy : public net::CookieStore {
+class OXIDE_SHARED_EXPORT CookieStoreUIProxy : public net::CookieStore {
  public:
   CookieStoreUIProxy(net::CookieStore* store);
   ~CookieStoreUIProxy() override;

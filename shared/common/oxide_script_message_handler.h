@@ -26,6 +26,8 @@
 #include "base/memory/scoped_ptr.h"
 #include "url/gurl.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace base {
 class Value;
 }
@@ -34,7 +36,7 @@ namespace oxide {
 
 class ScriptMessage;
 
-class ScriptMessageHandler final {
+class OXIDE_SHARED_EXPORT ScriptMessageHandler final {
  public:
   typedef base::Callback<bool(ScriptMessage*, scoped_ptr<base::Value>*)>
       HandlerCallback;

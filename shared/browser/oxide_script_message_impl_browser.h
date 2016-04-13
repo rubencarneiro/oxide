@@ -24,6 +24,7 @@
 #include "base/memory/weak_ptr.h"
 
 #include "shared/common/oxide_script_message.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -35,7 +36,7 @@ namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageImplBrowser : public ScriptMessage {
+class OXIDE_SHARED_EXPORT ScriptMessageImplBrowser : public ScriptMessage {
  public:
   ScriptMessageImplBrowser(WebFrame* source_frame,
                            int serial,

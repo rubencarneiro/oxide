@@ -26,6 +26,7 @@
 
 #include "shared/common/oxide_script_message_params.h"
 #include "shared/common/oxide_script_message_request.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -37,7 +38,8 @@ namespace oxide {
 
 class WebFrame;
 
-class ScriptMessageRequestImplBrowser : public ScriptMessageRequest {
+class OXIDE_SHARED_EXPORT ScriptMessageRequestImplBrowser
+    : public ScriptMessageRequest {
  public:
   typedef base::Callback<void(const base::Value&)> ReplyCallback;
   typedef base::Callback<void(ScriptMessageParams::Error, const base::Value&)>

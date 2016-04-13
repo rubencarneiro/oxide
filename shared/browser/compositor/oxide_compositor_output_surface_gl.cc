@@ -30,15 +30,15 @@
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
-#include "oxide_compositor_proxy.h"
+#include "oxide_compositor_output_surface_listener.h"
 
 namespace oxide {
 
 CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
-    scoped_refptr<CompositorProxy> proxy)
-    : CompositorOutputSurface(surface_id, context_provider, proxy),
+    CompositorOutputSurfaceListener* listener)
+    : CompositorOutputSurface(surface_id, context_provider, listener),
       back_buffer_(nullptr),
       is_backbuffer_discarded_(false),
       fbo_(0) {
@@ -46,8 +46,6 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
 }
 
 CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
-  DCHECK(CalledOnValidThread());
-
   for (auto& buffer : buffers_) {
     buffer.available = true;
   }
@@ -55,8 +53,6 @@ CompositorOutputSurfaceGL::~CompositorOutputSurfaceGL() {
 }
 
 void CompositorOutputSurfaceGL::EnsureBackbuffer() {
-  DCHECK(CalledOnValidThread());
-
   is_backbuffer_discarded_ = false;
 
   if (!back_buffer_) {
@@ -114,7 +110,7 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
     gpu::SyncToken token;
     gl->GenSyncTokenCHROMIUM(sync_point, token.GetData());
 
-    proxy()->MailboxBufferCreated(back_buffer_->mailbox, sync_point);
+    listener()->MailboxBufferCreated(back_buffer_->mailbox, sync_point);
   }
 
   DCHECK_NE(back_buffer_->texture_id, 0U);
@@ -123,8 +119,6 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
 }
 
 void CompositorOutputSurfaceGL::DiscardBackbuffer() {
-  DCHECK(CalledOnValidThread());
-
   if (is_backbuffer_discarded_) {
     return;
   }
@@ -163,8 +157,6 @@ void CompositorOutputSurfaceGL::Reshape(const gfx::Size& size,
 }
 
 void CompositorOutputSurfaceGL::BindFramebuffer() {
-  DCHECK(CalledOnValidThread());
-
   EnsureBackbuffer();
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
@@ -181,7 +173,6 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
 }
 
 void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
-  DCHECK(CalledOnValidThread());
   DCHECK(frame->gl_frame_data);
   DCHECK(back_buffer_);
   DCHECK(!back_buffer_->mailbox.IsZero());
@@ -205,7 +196,6 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
 
 void CompositorOutputSurfaceGL::ReclaimResources(
     const CompositorFrameAck& ack) {
-  DCHECK(CalledOnValidThread());
   DCHECK_EQ(ack.software_frame_id, 0U);
   DCHECK(!ack.gl_frame_mailbox.IsZero());
 
@@ -215,6 +205,15 @@ void CompositorOutputSurfaceGL::ReclaimResources(
 
   if (is_backbuffer_discarded_ || buffer.size != surface_size_) {
     DiscardBufferIfPossible(&buffer);
+  }
+
+  int unavailable_count = std::count_if(buffers_.begin(),
+                                        buffers_.end(),
+                                        [](const BufferData& buffer) {
+    return !buffer.available;
+  });
+  if (unavailable_count == 0) {
+    listener()->AllFramesReturnedFromClient();
   }
 
   CompositorOutputSurface::ReclaimResources(ack);
@@ -247,7 +246,7 @@ void CompositorOutputSurfaceGL::DiscardBufferIfPossible(BufferData* buffer) {
   DCHECK(!buffer->mailbox.IsZero());
 
   context_provider_->ContextGL()->DeleteTextures(1, &buffer->texture_id);
-  proxy()->MailboxBufferDestroyed(buffer->mailbox);
+  listener()->MailboxBufferDestroyed(buffer->mailbox);
 
   buffer->texture_id = 0;
   buffer->mailbox.SetZero();

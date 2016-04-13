@@ -25,9 +25,11 @@
 #include "net/http/http_request_headers.h"
 #include "net/url_request/url_request_job.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class URLRequestDelegatedJob : public net::URLRequestJob {
+class OXIDE_SHARED_EXPORT URLRequestDelegatedJob : public net::URLRequestJob {
  public:
   virtual ~URLRequestDelegatedJob();
 

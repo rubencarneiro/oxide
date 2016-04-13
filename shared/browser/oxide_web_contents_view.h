@@ -40,6 +40,7 @@
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
+#include "shared/common/oxide_shared_export.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
 
 namespace blink {
@@ -72,13 +73,14 @@ class RenderWidgetHostView;
 class WebContentsViewClient;
 class WebPopupMenu;
 
-class WebContentsView : public content::WebContentsViewOxide,
-                        public content::WebContentsObserver,
-                        public CompositorClient,
-                        public CompositorObserver,
-                        public DragSourceClient,
-                        public InputMethodContextObserver,
-                        public RenderWidgetHostViewContainer {
+class OXIDE_SHARED_EXPORT WebContentsView
+    : public content::WebContentsViewOxide,
+      public content::WebContentsObserver,
+      public CompositorClient,
+      public CompositorObserver,
+      public DragSourceClient,
+      public InputMethodContextObserver,
+      public RenderWidgetHostViewContainer {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -217,10 +219,12 @@ class WebContentsView : public content::WebContentsViewOxide,
   void DidDetachInterstitialPage() override;
 
   // CompositorClient implementation
-  void CompositorSwapFrame(CompositorFrameHandle* handle) override;
+  void CompositorSwapFrame(CompositorFrameHandle* handle,
+                           const SwapAckCallback& callback) override;
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;
+  void CompositorEvictResources() override;
 
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
@@ -248,7 +252,7 @@ class WebContentsView : public content::WebContentsViewOxide,
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
-  std::queue<uint32_t> received_surface_ids_;
+  std::queue<SwapAckCallback> compositor_ack_callbacks_;
 
   scoped_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;

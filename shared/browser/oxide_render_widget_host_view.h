@@ -38,7 +38,6 @@
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_ime_bridge_impl.h"
 #include "shared/browser/oxide_gesture_provider.h"
-#include "shared/browser/oxide_renderer_frame_evictor_client.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
 namespace cc {
@@ -65,7 +64,6 @@ class RenderWidgetHostView final :
     public content::RenderWidgetHostViewOxide,
     public CompositorObserver,
     public GestureProviderClient,
-    public RendererFrameEvictorClient,
     public cc::SurfaceFactoryClient,
     public ui::TouchSelectionControllerClient,
     public base::SupportsWeakPtr<RenderWidgetHostView> {
@@ -176,12 +174,10 @@ class RenderWidgetHostView final :
   // CompositorObserver implementation
   void CompositorDidCommit() final;
   void CompositorWillRequestSwapFrame() final;
+  void CompositorEvictResources() final;
 
   // GestureProviderClient implementation
   void OnGestureEvent(const blink::WebGestureEvent& event) final;
-
-  // RendererFrameEvictorClient implemenetation
-  void EvictCurrentFrame() final;
 
   // cc::SurfaceFactoryClient implementation
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
@@ -226,8 +222,6 @@ class RenderWidgetHostView final :
   std::queue<base::Closure> ack_callbacks_;
 
   gfx::Size last_frame_size_dip_;
-
-  bool frame_is_evicted_;
 
   ImeBridgeImpl ime_bridge_;
 

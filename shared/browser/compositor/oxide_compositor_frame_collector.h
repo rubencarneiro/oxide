@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_COLLECTOR_H_
+#define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_COLLECTOR_H_
 
-#include <vector>
+#include <stdint.h>
 
-#include "base/callback.h"
-#include "base/memory/ref_counted.h"
+#include "base/memory/scoped_ptr.h"
 
 namespace oxide {
 
+class CompositorFrameData;
 class CompositorFrameHandle;
 
-class CompositorClient {
+class CompositorFrameCollector {
  public:
-  virtual ~CompositorClient() {}
+  virtual ~CompositorFrameCollector();
 
-  using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
-  using SwapAckCallback = base::Callback<void(FrameHandleVector)>;
+  virtual void ReclaimResourcesForFrame(uint32_t surface_id,
+                                        CompositorFrameData* frame) = 0;
 
-  virtual void CompositorSwapFrame(CompositorFrameHandle* handle,
-                                   const SwapAckCallback& callback) = 0;
+ protected:
+  static CompositorFrameCollector* FromFrameHandle(
+      CompositorFrameHandle* handle);
+  static scoped_ptr<CompositorFrameData> TakeFrameData(
+      CompositorFrameHandle* handle);
+  static uint32_t FrameHandleSurfaceId(CompositorFrameHandle* handle);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_COLLECTOR_H_

@@ -32,6 +32,8 @@ class CompositorObserver {
 
   virtual void CompositorDidRequestSwapFrame();
 
+  virtual void CompositorEvictResources();
+
  protected:
   CompositorObserver();
   CompositorObserver(Compositor* compositor);

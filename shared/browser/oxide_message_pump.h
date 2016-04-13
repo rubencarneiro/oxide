@@ -22,10 +22,11 @@
 #include "base/message_loop/message_pump.h"
 
 #include "shared/browser/oxide_platform_run_loop.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
-class MessagePump : public base::MessagePump {
+class OXIDE_SHARED_EXPORT MessagePump : public base::MessagePump {
  public:
   static MessagePump* Get();
 

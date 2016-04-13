@@ -23,6 +23,8 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/context_menu_params.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class GURL;
 
 namespace base {
@@ -41,7 +43,7 @@ class Rect;
 
 namespace oxide {
 
-class WebContextMenu : public content::WebContentsObserver {
+class OXIDE_SHARED_EXPORT WebContextMenu : public content::WebContentsObserver {
  public:
   virtual void Show() = 0;
   void Close();

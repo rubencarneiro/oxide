@@ -34,8 +34,8 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   CompositorOutputSurfaceGL(
       uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
-      scoped_refptr<CompositorProxy> proxy);
-  ~CompositorOutputSurfaceGL();
+      CompositorOutputSurfaceListener* listener);
+  ~CompositorOutputSurfaceGL() override;
 
  private:
   // cc::OutputSurface implementation

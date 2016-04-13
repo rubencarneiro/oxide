@@ -25,55 +25,45 @@
 
 #include "oxide_compositor.h"
 #include "oxide_compositor_frame_data.h"
-#include "oxide_compositor_proxy.h"
+#include "oxide_compositor_output_surface_listener.h"
 
 namespace oxide {
 
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
-    scoped_refptr<CompositorProxy> proxy)
+    CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(context_provider),
-      proxy_(proxy),
-      surface_id_(surface_id) {
-  DetachFromThread();
-}
+      listener_(listener),
+      surface_id_(surface_id) {}
 
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
-    scoped_refptr<CompositorProxy> proxy)
+    CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(std::move(software_device)),
-      proxy_(proxy),
-      surface_id_(surface_id) {
-  DetachFromThread();
-}
+      listener_(listener),
+      surface_id_(surface_id) {}
 
 void CompositorOutputSurface::DoSwapBuffers(
     scoped_ptr<CompositorFrameData> frame) {
-  DCHECK(CalledOnValidThread());
-
   DCHECK(frame->gl_frame_data || frame->software_frame_data);
 
-  frame->surface_id = surface_id_;
-
-  proxy_->SwapCompositorFrame(std::move(frame));
+  listener_->SwapCompositorFrame(std::move(frame));
   client_->DidSwapBuffers();
 }
 
 bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
-  DCHECK(CalledOnValidThread());
   if (!cc::OutputSurface::BindToClient(client)) {
     return false;
   }
 
-  proxy_->SetOutputSurface(this);
+  listener_->OutputSurfaceBound(this);
   return true;
 }
 
 CompositorOutputSurface::~CompositorOutputSurface() {
-  DCHECK(CalledOnValidThread());
-  proxy_->SetOutputSurface(nullptr);
+  listener_->OutputSurfaceDestroyed(this);
 }
 
 void CompositorOutputSurface::DidSwapBuffers() {
