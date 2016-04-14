@@ -28,7 +28,7 @@
 
 #include "qt/core/browser/oxide_qt_browser_platform_integration.h"
 #include "qt/core/browser/oxide_qt_browser_startup.h"
-#include "qt/oxide_version.h"
+#include "qt/core/common/oxide_version.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/common/chrome_version.h"
 

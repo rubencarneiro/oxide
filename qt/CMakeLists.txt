@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2014-2015 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -61,11 +61,6 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
          GROUP_READ GROUP_EXECUTE
          WORLD_READ WORLD_EXECUTE)
-
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/oxide_version.h.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/oxide_version.h
-    IMMEDIATE @ONLY)
 
 configure_and_install_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCoreConfig.cmake.in)

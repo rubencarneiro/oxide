@@ -15,9 +15,9 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_QTCORE_VERSION
-#define OXIDE_QTCORE_VERSION
+#ifndef OXIDE_QTCORE_COMMON_VERSION
+#define OXIDE_QTCORE_COMMON_VERSION
 
-#define OXIDE_VERSION_STRING "@PROJECT_VERSION@"
+#define OXIDE_VERSION_STRING "@MAJOR@.@MINOR@.@PATCH@"
 
-#endif // OXIDE_QTCORE_VERSION
+#endif // OXIDE_QTCORE_COMMON_VERSION
