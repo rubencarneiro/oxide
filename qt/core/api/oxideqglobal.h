@@ -58,6 +58,6 @@ OXIDE_QTCORE_EXPORT size_t oxideGetMaxRendererProcessCount();
 OXIDE_QTCORE_EXPORT void oxideSetMaxRendererProcessCount(size_t count);
 
 OXIDE_QTCORE_EXPORT QString oxideGetChromeVersion();
-OXIDE_QTCORE_EXPORT QString oxideGetOxideVersion();
+OXIDE_QTCORE_EXPORT QString oxideGetVersion();
 
 #endif // OXIDE_QTCORE_GLOBAL

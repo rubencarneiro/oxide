@@ -216,7 +216,7 @@ QString OxideQQuickGlobal::chromiumVersion() const {
 }
 
 QString OxideQQuickGlobal::oxideVersion() const {
-  return oxideGetOxideVersion();
+  return oxideGetVersion();
 }
 
 #include "moc_oxideqquickglobal_p.cpp"

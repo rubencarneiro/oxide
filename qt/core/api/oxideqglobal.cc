@@ -121,7 +121,7 @@ QString oxideGetChromeVersion() {
   return kChromeVersion;
 }
 
-QString oxideGetOxideVersion() {
+QString oxideGetVersion() {
   static QString kOxideVersion = QStringLiteral(OXIDE_VERSION_STRING);
   return kOxideVersion;
 }
