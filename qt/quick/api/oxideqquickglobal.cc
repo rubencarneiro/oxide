@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -209,6 +209,14 @@ QVariant OxideQQuickGlobal::availableVideoCaptureDevices() {
   }
 
   return d->video_capture_devices_;
+}
+
+QString OxideQQuickGlobal::chromiumVersion() const {
+  return oxideGetChromeVersion();
+}
+
+QString OxideQQuickGlobal::oxideVersion() const {
+  return oxideGetVersion();
 }
 
 #include "moc_oxideqquickglobal_p.cpp"
