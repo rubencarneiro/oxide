@@ -40,9 +40,6 @@ void RunShutdownCallback(OxideShutdownCallback callback) {
   callback();
 }
 
-const QString kChromeVersion = QStringLiteral(CHROME_VERSION_STRING);
-const QString kOxideVersion = QStringLiteral(OXIDE_VERSION_STRING);
-
 }
 
 void oxideAddShutdownCallback(OxideShutdownCallback callback) {
@@ -120,9 +117,11 @@ void oxideSetMaxRendererProcessCount(size_t count) {
 }
 
 QString oxideGetChromeVersion() {
+  static QString kChromeVersion = QStringLiteral(CHROME_VERSION_STRING);
   return kChromeVersion;
 }
 
 QString oxideGetOxideVersion() {
+  static QString kOxideVersion = QStringLiteral(OXIDE_VERSION_STRING);
   return kOxideVersion;
 }
