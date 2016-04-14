@@ -22,7 +22,6 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/threading/non_thread_safe.h"
 #include "cc/output/output_surface.h"
 
 namespace cc {
@@ -33,10 +32,9 @@ namespace oxide {
 
 class CompositorFrameAck;
 class CompositorFrameData;
-class CompositorProxy;
+class CompositorOutputSurfaceListener;
 
-class CompositorOutputSurface : public cc::OutputSurface,
-                                public base::NonThreadSafe {
+class CompositorOutputSurface : public cc::OutputSurface {
  public:
   virtual ~CompositorOutputSurface();
 
@@ -49,21 +47,21 @@ class CompositorOutputSurface : public cc::OutputSurface,
   CompositorOutputSurface(
       uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
-      scoped_refptr<CompositorProxy> proxy);
+      CompositorOutputSurfaceListener* listener);
   CompositorOutputSurface(
       uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
-      scoped_refptr<CompositorProxy> proxy);
+      CompositorOutputSurfaceListener* listener);
 
   void DoSwapBuffers(scoped_ptr<CompositorFrameData> frame);
 
   // cc::OutputSurface implementation
   bool BindToClient(cc::OutputSurfaceClient* client);
 
-  CompositorProxy* proxy() const { return proxy_.get(); }
+  CompositorOutputSurfaceListener* listener() const { return listener_; }
 
  private:
-  scoped_refptr<CompositorProxy> proxy_;
+  CompositorOutputSurfaceListener* listener_; // Owns us via LayerTreeHost
 
   uint32_t surface_id_;
 
