@@ -100,16 +100,26 @@ class MediaAccessPermissionRequest : public PermissionRequest {
                                const GURL& embedder,
                                bool audio_requested,
                                bool video_requested,
+                               const std::string& requested_audio_device_id,
+                               const std::string& requested_video_device_id,
                                const PermissionRequestCallback& callback);
   ~MediaAccessPermissionRequest() override;
 
   bool audio_requested() const { return audio_requested_; }
-
   bool video_requested() const { return video_requested_; }
+
+  std::string requested_audio_device_id() const {
+    return requested_audio_device_id_;
+  }
+  std::string requested_video_device_id() const {
+    return requested_video_device_id_;
+  }
 
  private:
   bool audio_requested_;
   bool video_requested_;
+  std::string requested_audio_device_id_;
+  std::string requested_video_device_id_;
 
   DISALLOW_COPY_AND_ASSIGN(MediaAccessPermissionRequest);
 };

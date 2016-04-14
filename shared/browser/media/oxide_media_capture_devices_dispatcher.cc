@@ -74,6 +74,8 @@ void RespondToMediaAccessPermissionRequest(
     content::RenderFrameHost* render_frame_host,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     PermissionRequestResponse response) {
   if (response != PERMISSION_REQUEST_RESPONSE_ALLOW) {
     callback.Run(content::MediaStreamDevices(),
@@ -90,6 +92,8 @@ void RespondToMediaAccessPermissionRequest(
       ->GetDefaultCaptureDevicesForContext(context,
                                            audio,
                                            video,
+                                           requested_audio_device_id,
+                                           requested_video_device_id,
                                            &devices);
 
   callback.Run(devices,
@@ -105,6 +109,8 @@ void RespondToMediaAccessPermissionRequestCallback(
     int render_frame_id,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     const GURL& requesting_origin,
     const GURL& embedding_origin,
     PermissionRequestResponse response) {
@@ -121,6 +127,8 @@ void RespondToMediaAccessPermissionRequestCallback(
                                         rfh,
                                         audio,
                                         video,
+                                        requested_audio_device_id,
+                                        requested_video_device_id,
                                         response);
 
   if (response == PERMISSION_REQUEST_RESPONSE_CANCEL) {
@@ -153,6 +161,8 @@ PermissionRequestCallback WrapMediaResponseCallback(
     int render_frame_id,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     const GURL& requesting_origin,
     const GURL& embedding_origin) {
   return base::Bind(&RespondToMediaAccessPermissionRequestCallback,
@@ -161,6 +171,8 @@ PermissionRequestCallback WrapMediaResponseCallback(
                     render_frame_id,
                     audio,
                     video,
+                    requested_audio_device_id,
+                    requested_video_device_id,
                     requesting_origin,
                     embedding_origin);
 }
@@ -288,6 +300,8 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
     content::BrowserContext* context,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     content::MediaStreamDevices* devices) {
   bool need_audio = audio;
   bool need_video = video;
@@ -295,7 +309,13 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   MediaCaptureDevicesContext* dc = MediaCaptureDevicesContext::Get(context);
 
   if (need_audio) {
-    const content::MediaStreamDevice* device = dc->GetDefaultAudioDevice();
+    const content::MediaStreamDevice* device = nullptr;
+    if (!requested_audio_device_id.empty()) {
+      device = FindAudioCaptureDeviceById(requested_audio_device_id);
+    }
+    if (!device) {
+      device = dc->GetDefaultAudioDevice();
+    }
     if (!device) {
       device = GetFirstAudioCaptureDevice();
     }
@@ -306,7 +326,13 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   }
 
   if (need_video) {
-    const content::MediaStreamDevice* device = dc->GetDefaultVideoDevice();
+    const content::MediaStreamDevice* device = nullptr;
+    if (!requested_video_device_id.empty()) {
+      device = FindVideoCaptureDeviceById(requested_video_device_id);
+    }
+    if (!device) {
+      device = dc->GetDefaultVideoDevice();
+    }
     if (!device) {
       device = GetFirstVideoCaptureDevice();
     }
@@ -430,6 +456,8 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
         rfh,
         audio,
         video,
+        request.requested_audio_device_id,
+        request.requested_video_device_id,
         ToPermissionRequestResponse(saved_status));
     return;
   }
@@ -440,11 +468,15 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
         request.security_origin,
         audio,
         video,
+        request.requested_audio_device_id,
+        request.requested_video_device_id,
         WrapMediaResponseCallback(callback,
                                   request.render_process_id,
                                   request.render_frame_id,
                                   audio,
                                   video,
+                                  request.requested_audio_device_id,
+                                  request.requested_video_device_id,
                                   request.security_origin,
                                   embedding_origin));
 }

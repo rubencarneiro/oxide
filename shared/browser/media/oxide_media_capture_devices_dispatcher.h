@@ -77,6 +77,8 @@ class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcher
       content::BrowserContext* context,
       bool audio,
       bool video,
+      const std::string& requested_audio_device_id,
+      const std::string& requested_video_device_id,
       content::MediaStreamDevices* devices);
 
   // Request permission to access media devices

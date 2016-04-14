@@ -92,6 +92,9 @@ class OXIDE_QTCORE_EXPORT OxideQMediaAccessPermissionRequest
   Q_PROPERTY(bool isForAudio READ isForAudio CONSTANT)
   Q_PROPERTY(bool isForVideo READ isForVideo CONSTANT)
 
+  Q_PROPERTY(QString requestedAudioDeviceId READ requestedAudioDeviceId CONSTANT)
+  Q_PROPERTY(QString requestedVideoDeviceId READ requestedVideoDeviceId CONSTANT)
+
   Q_DECLARE_PRIVATE(OxideQMediaAccessPermissionRequest)
   Q_DISABLE_COPY(OxideQMediaAccessPermissionRequest)
 
@@ -100,6 +103,8 @@ class OXIDE_QTCORE_EXPORT OxideQMediaAccessPermissionRequest
 
   bool isForAudio() const;
   bool isForVideo() const;
+  QString requestedAudioDeviceId() const;
+  QString requestedVideoDeviceId() const;
 
  private:
   OxideQMediaAccessPermissionRequest(

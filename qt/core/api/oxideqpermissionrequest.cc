@@ -206,3 +206,15 @@ bool OxideQMediaAccessPermissionRequest::isForVideo() const {
 
   return d->request()->video_requested();
 }
+
+QString OxideQMediaAccessPermissionRequest::requestedAudioDeviceId() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return QString::fromStdString(d->request()->requested_audio_device_id());
+}
+
+QString OxideQMediaAccessPermissionRequest::requestedVideoDeviceId() const {
+  Q_D(const OxideQMediaAccessPermissionRequest);
+
+  return QString::fromStdString(d->request()->requested_video_device_id());
+}
