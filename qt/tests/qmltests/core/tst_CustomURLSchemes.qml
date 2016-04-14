@@ -26,12 +26,12 @@ TestWebView {
 
     function test_CustomURLSchemes1_compare_content() {
       webView.url = "test:///tst_CustomURLSchemes.txt";
-      verify(webView.waitForLoadSucceeded(10000));
+      verify(webView.waitForLoadSucceeded(20000));
 
       var test = webView.getTestApi().evaluateCode("return document.body.children[0].innerHTML;", true);
 
       webView.url = Qt.resolvedUrl("tst_CustomURLSchemes.txt");
-      verify(webView.waitForLoadSucceeded());
+      verify(webView.waitForLoadSucceeded(20000));
 
       var file = webView.getTestApi().evaluateCode("return document.body.children[0].innerHTML;", true);
 
