@@ -21,41 +21,35 @@
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/memory/weak_ptr.h"
 
 #include "shared/common/oxide_shared_export.h"
 
-namespace base {
-class SingleThreadTaskRunner;
-}
-
 namespace oxide {
 
-class CompositorFrameCollector;
+class Compositor;
 class CompositorFrameData;
+class CompositorProxy;
+class CompositorSingleThreadProxy;
 
 class OXIDE_SHARED_EXPORT CompositorFrameHandle
     : public base::RefCountedThreadSafe<CompositorFrameHandle> {
  public:
   CompositorFrameHandle(uint32_t surface_id,
-                        scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-                        base::WeakPtr<CompositorFrameCollector> collector,
+                        scoped_refptr<CompositorProxy> proxy,
                         scoped_ptr<CompositorFrameData> data);
 
   CompositorFrameData* data() const { return data_.get(); }
 
  private:
-  friend class CompositorFrameCollector;
+  friend class Compositor;
+  friend class CompositorSingleThreadProxy;
   friend class base::RefCountedThreadSafe<CompositorFrameHandle>;
 
   ~CompositorFrameHandle();
 
   uint32_t surface_id_;
 
-  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
-
-  base::WeakPtr<CompositorFrameCollector> collector_;
-  
+  scoped_refptr<CompositorProxy> proxy_;
   scoped_ptr<CompositorFrameData> data_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorFrameHandle);

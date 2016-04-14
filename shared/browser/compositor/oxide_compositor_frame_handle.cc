@@ -19,56 +19,22 @@
 
 #include <utility>
 
-#include "base/bind.h"
-#include "base/location.h"
-#include "base/single_thread_task_runner.h"
-
-#include "oxide_compositor_frame_collector.h"
 #include "oxide_compositor_frame_data.h"
+#include "oxide_compositor_proxy.h"
 
 namespace oxide {
 
-namespace {
-
-void ReclaimResourcesForFrameThunk(
-    base::WeakPtr<CompositorFrameCollector> collector,
-    uint32_t surface_id,
-    scoped_ptr<CompositorFrameData> frame) {
-  if (!collector) {
-    return;
-  }
-
-  collector->ReclaimResourcesForFrame(surface_id, frame.get());
-}
-
-}
-
 CompositorFrameHandle::CompositorFrameHandle(
     uint32_t surface_id,
-    scoped_refptr<base::SingleThreadTaskRunner> task_runner,
-    base::WeakPtr<CompositorFrameCollector> collector,
+    scoped_refptr<CompositorProxy> proxy,
     scoped_ptr<CompositorFrameData> data)
     : surface_id_(surface_id),
-      task_runner_(task_runner),
-      collector_(collector),
+      proxy_(proxy),
       data_(std::move(data)) {}
 
 CompositorFrameHandle::~CompositorFrameHandle() {
-  if (!data_) {
-    return;
-  }
-
-  if (task_runner_->BelongsToCurrentThread()) {
-    if (collector_) {
-      collector_->ReclaimResourcesForFrame(surface_id_, data_.get());
-    }
-  } else {
-    // CompositorFrameHandle may be deleted on another thread where the
-    // application UI is composited on a dedicated render thread
-    task_runner_->PostTask(
-        FROM_HERE,
-        base::Bind(&ReclaimResourcesForFrameThunk,
-                   collector_, surface_id_, base::Passed(&data_)));
+  if (data_) {
+    proxy_->ReclaimResourcesForFrame(surface_id_, data_.get());
   }
 }
 

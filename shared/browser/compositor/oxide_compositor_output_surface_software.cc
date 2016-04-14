@@ -25,6 +25,7 @@
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
+#include "oxide_compositor_proxy.h"
 #include "oxide_compositor_software_output_device.h"
 
 namespace oxide {
@@ -52,10 +53,10 @@ void CompositorOutputSurfaceSoftware::ReclaimResources(
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     uint32_t surface_id,
     scoped_ptr<cc::SoftwareOutputDevice> software_device,
-    CompositorOutputSurfaceListener* listener)
+    scoped_refptr<CompositorProxy> proxy)
     : CompositorOutputSurface(surface_id,
                               std::move(software_device),
-                              listener) {}
+                              proxy) {}
 
 CompositorOutputSurfaceSoftware::~CompositorOutputSurfaceSoftware() {}
 

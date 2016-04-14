@@ -30,6 +30,7 @@ namespace oxide {
 
 void MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
                                   const MailboxBufferData& data) {
+  DCHECK(CalledOnValidThread());
   DCHECK(map_.find(mailbox) == map_.end());
 
   map_[mailbox] = data;
@@ -41,6 +42,8 @@ MailboxBufferMap::MailboxBufferMap(CompositingMode mode)
 MailboxBufferMap::~MailboxBufferMap() {}
 
 void MailboxBufferMap::DropAllResources() {
+  DCHECK(CalledOnValidThread());
+
   for (auto it = map_.begin(); it != map_.end(); ) {
     if (mode_ == COMPOSITING_MODE_TEXTURE) {
       auto e = it++;
@@ -88,6 +91,8 @@ void MailboxBufferMap::AddEGLImageMapping(const gpu::Mailbox& mailbox,
 }
 
 void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
+
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     map_.erase(mailbox);
   } else {
@@ -110,6 +115,7 @@ void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
 
 GLuint MailboxBufferMap::ConsumeTextureFromMailbox(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
   DCHECK_EQ(mode_, COMPOSITING_MODE_TEXTURE);
 
   auto it = map_.find(mailbox);
@@ -122,6 +128,7 @@ GLuint MailboxBufferMap::ConsumeTextureFromMailbox(
 
 EGLImageKHR MailboxBufferMap::ConsumeEGLImageFromMailbox(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
 
   auto it = map_.find(mailbox);
@@ -135,6 +142,8 @@ EGLImageKHR MailboxBufferMap::ConsumeEGLImageFromMailbox(
 
 void MailboxBufferMap::ReclaimMailboxBufferResources(
     const gpu::Mailbox& mailbox) {
+  DCHECK(CalledOnValidThread());
+
   if (mode_ == COMPOSITING_MODE_TEXTURE) {
     return;
   }

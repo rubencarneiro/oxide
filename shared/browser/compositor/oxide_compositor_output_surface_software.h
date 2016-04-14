@@ -30,7 +30,7 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
   CompositorOutputSurfaceSoftware(
       uint32_t surface_id,
       scoped_ptr<cc::SoftwareOutputDevice> software_device,
-      CompositorOutputSurfaceListener* listener);
+      scoped_refptr<CompositorProxy> proxy);
   ~CompositorOutputSurfaceSoftware() override;
 
  private:
