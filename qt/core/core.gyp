@@ -59,6 +59,7 @@
         '<(INTERMEDIATE_DIR)',
         'api/includes',
         '<(DEPTH)',
+        '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
       'ldflags': [
         '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
@@ -322,6 +323,23 @@
           'action_name': 'oxide_qt_url_request_delegated_job.moc',
           'moc_input': 'browser/oxide_qt_url_request_delegated_job.cc',
           'includes': [ 'moc.gypi' ]
+        },
+        {
+          'action_name': 'oxide_version_header',
+          'inputs': [
+            'common/oxide_version.h.in',
+            '../VERSION'
+          ],
+          'outputs': [
+            '<(SHARED_INTERMEDIATE_DIR)/oxide/qt/core/common/oxide_version.h'
+          ],
+          'action': [
+            'python',
+            '<(DEPTH)/build/util/version.py',
+            '-f', '../VERSION',
+            '-i', '<@(_inputs)',
+            '-o', '<@(_outputs)'
+          ]
         },
       ],
       'conditions': [

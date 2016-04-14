@@ -243,6 +243,7 @@
         '<(DEPTH)/dbus/dbus.gyp:dbus',
         '<(DEPTH)/device/vibration/vibration.gyp:device_vibration_mojo_bindings',
         '<(DEPTH)/gin/gin.gyp:gin',
+        '<(DEPTH)/gpu/command_buffer/command_buffer.gyp:gles2_utils',
         '<(DEPTH)/gpu/gpu.gyp:command_buffer_common',
         '<(DEPTH)/ipc/ipc.gyp:ipc',
         '<(DEPTH)/media/media.gyp:media',

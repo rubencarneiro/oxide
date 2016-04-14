@@ -19,13 +19,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "base/single_thread_task_runner.h"
-#include "base/thread_task_runner_handle.h"
-#include "content/gpu/gpu_child_thread.h"
-#include "gpu/command_buffer/service/gles2_cmd_decoder.h"
-#include "gpu/ipc/service/gpu_channel.h"
-#include "gpu/ipc/service/gpu_channel_manager.h"
-#include "gpu/ipc/service/gpu_command_buffer_stub.h"
+#include "base/synchronization/lock.h"
 
 namespace gpu {
 namespace oxide_shim {
@@ -37,40 +31,6 @@ base::LazyInstance<base::Lock> g_gl_share_group_lock =
 bool g_gl_share_group_used = false;
 gfx::GLShareGroup* g_gl_share_group;
 
-gpu::GpuCommandBufferStub* LookupCommandBuffer(int32_t client_id,
-                                               int32_t route_id) {
-  gpu::GpuChannelManager* gpu_channel_manager =
-      content::GpuChildThread::GetChannelManager();
-  DCHECK(gpu_channel_manager);
-  gpu::GpuChannel* channel =
-      gpu_channel_manager->LookupChannel(client_id);
-  if (!channel) {
-    return nullptr;
-  }
-
-  return channel->LookupCommandBuffer(route_id);
-}
-
-bool IsCurrentlyOnGpuThread() {
-  return content::GpuChildThread::GetTaskRunner()->BelongsToCurrentThread();
-}
-
-}
-
-gpu::gles2::GLES2Decoder* GetGLES2Decoder(
-    gpu::CommandBufferId command_buffer_id) {
-  DCHECK(IsCurrentlyOnGpuThread());
-
-  int32_t client_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() >> 32);
-  int32_t route_id = static_cast<int32_t>(command_buffer_id.GetUnsafeValue() & 0x00000000FFFFFFFF);
-
-  gpu::GpuCommandBufferStub* command_buffer =
-      LookupCommandBuffer(client_id, route_id);
-  if (!command_buffer) {
-    return nullptr;
-  }
-
-  return command_buffer->decoder();
 }
 
 gfx::GLShareGroup* GetGLShareGroup() {

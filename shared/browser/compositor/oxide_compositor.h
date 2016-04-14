@@ -64,8 +64,6 @@ class Compositor : public cc::LayerTreeHostClient,
   static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
 
-  bool IsActive() const;
-
   void SetVisibility(bool visible);
   void SetDeviceScaleFactor(float scale);
   void SetViewportSize(const gfx::Size& bounds);
@@ -172,8 +170,12 @@ class Compositor : public cc::LayerTreeHostClient,
 
   std::queue<scoped_ptr<CompositorFrameData>> queued_gl_frame_swaps_;
 
-  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+  // Needs to outlive |display_client_|, as its destructor results in our
+  // OutputSurface calling in to OutputSurfaceDestroyed
+  CompositorClient::SwapAckCallback swap_ack_callback_;
 
+  // Both of these need to outlive |layer_tree_host_|
+  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
   scoped_ptr<cc::OnscreenDisplayClient> display_client_;
 
   bool layer_tree_host_eviction_pending_;
@@ -192,8 +194,6 @@ class Compositor : public cc::LayerTreeHostClient,
   uint32_t next_output_surface_id_;
 
   base::ObserverList<CompositorObserver> observers_;
-
-  CompositorClient::SwapAckCallback swap_ack_callback_;
 
   int pending_swaps_;
   int frames_waiting_for_completion_;

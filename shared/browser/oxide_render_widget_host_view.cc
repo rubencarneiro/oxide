@@ -335,8 +335,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
-  Compositor* compositor = container_ ? container_->GetCompositor() : nullptr;
-  if (!compositor || !compositor->IsActive()) {
+  if (host_->is_hidden()) {
     RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
   }
 

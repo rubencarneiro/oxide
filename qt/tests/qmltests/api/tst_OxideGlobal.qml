@@ -28,4 +28,12 @@ TestCase {
     compare(devices[0].displayName.substr(0, 13), "fake_device_0");
     compare(devices[0].position, "unspecified");
   }
+
+  function test_OxideGlobal3_chromiumVersion() {
+    verify(/^\d+\.\d+\.\d+\.\d+$/.test(Oxide.chromiumVersion));
+  }
+
+  function test_OxideGlobal3_oxideVersion() {
+    verify(/^\d+\.\d+\.\d+$/.test(Oxide.version));
+  }
 }
