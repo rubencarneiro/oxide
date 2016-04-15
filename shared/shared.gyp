@@ -692,12 +692,14 @@
         '<(DEPTH)/base/base.gyp:test_support_base',
         '<(DEPTH)/content/content_shell_and_tests.gyp:test_support_content',
         '<(DEPTH)/mojo/mojo_edk.gyp:mojo_system_impl',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
       ],
       'include_dirs': [
         '..',
         '<(DEPTH)',
       ],
       'sources': [
+        'browser/ssl/oxide_certificate_error_unittest.cc',
         'test/oxide_test_suite.cc',
         'test/oxide_test_suite.h',
         'test/run_all_unittests.cc',

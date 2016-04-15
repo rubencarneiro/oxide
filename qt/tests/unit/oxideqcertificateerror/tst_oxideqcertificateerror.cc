@@ -45,6 +45,15 @@ void CancelledSpy::onCancelled() {
   ++count_;
 }
 
+struct Params {
+  bool isMainFrame = true;
+  bool isSubresource = false;
+  OxideQCertificateError::Error certError =
+      OxideQCertificateError::ErrorBadIdentity;
+  bool strictEnforcement = false;
+  bool overridable = true;
+};
+
 class tst_oxideqcertificateerror : public QObject {
   Q_OBJECT
 
@@ -67,10 +76,12 @@ class tst_oxideqcertificateerror : public QObject {
   void certError();
   void allow();
   void deny();
+  void deleteWithoutResponse();
 
  private:
   void onResponse(bool response);
-  std::unique_ptr<OxideQCertificateError> makeOverridable();
+  std::unique_ptr<OxideQCertificateError> createError(
+      const Params& params = Params());
 
   OxideQSslCertificate cert_;
 
@@ -96,28 +107,28 @@ void tst_oxideqcertificateerror::onResponse(bool response) {
 }
 
 std::unique_ptr<OxideQCertificateError>
-tst_oxideqcertificateerror::makeOverridable() {
+tst_oxideqcertificateerror::createError(const Params& params) {
   return OxideQCertificateErrorPrivate::CreateForTesting(
-      true,
-      false,
-      OxideQCertificateError::ErrorBadIdentity,
+      params.isMainFrame,
+      params.isSubresource,
+      params.certError,
       cert_,
       QUrl("https://www.google.com/"),
-      false,
-      true,
+      params.strictEnforcement,
+      params.overridable,
       std::bind(&tst_oxideqcertificateerror::onResponse,
                 this, std::placeholders::_1));
 }
 
 void tst_oxideqcertificateerror::url() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QCOMPARE(error->url(), QUrl("https://www.google.com/"));
 }
 
 void tst_oxideqcertificateerror::isCancelled() {
   CancelledSpy spy;
 
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   spy.connect(error.get(), SIGNAL(cancelled()), SLOT(onCancelled()));
 
   QVERIFY(!error->isCancelled());
@@ -135,56 +146,38 @@ void tst_oxideqcertificateerror::isCancelled() {
 }
 
 void tst_oxideqcertificateerror::isMainFrame() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QVERIFY(error->isMainFrame());
 
-  error = OxideQCertificateErrorPrivate::CreateForTesting(
-      false,
-      false,
-      OxideQCertificateError::ErrorBadIdentity,
-      cert_,
-      QUrl("https://www.google.com/"),
-      false,
-      true,
-      std::bind(&tst_oxideqcertificateerror::onResponse,
-                this, std::placeholders::_1));
+  Params params;
+  params.isMainFrame = false;
+
+  error = createError(params);
   QVERIFY(!error->isMainFrame());
 }
 
 void tst_oxideqcertificateerror::isSubresource() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QVERIFY(!error->isSubresource());
 
-  error = OxideQCertificateErrorPrivate::CreateForTesting(
-      true,
-      true,
-      OxideQCertificateError::ErrorBadIdentity,
-      cert_,
-      QUrl("https://www.google.com/"),
-      false,
-      true,
-      std::bind(&tst_oxideqcertificateerror::onResponse,
-                this, std::placeholders::_1));
+  Params params;
+  params.isSubresource = true;
+
+  error = createError(params);
   QVERIFY(error->isSubresource());
 }
 
 void tst_oxideqcertificateerror::overridable() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QVERIFY(error->overridable());
 
   error.reset();
   responded_count_ = 0;
 
-  error = OxideQCertificateErrorPrivate::CreateForTesting(
-      true,
-      false,
-      OxideQCertificateError::ErrorBadIdentity,
-      cert_,
-      QUrl("https://www.google.com/"),
-      false,
-      false,
-      std::bind(&tst_oxideqcertificateerror::onResponse,
-                this, std::placeholders::_1));
+  Params params;
+  params.overridable = false;
+
+  error = createError(params);
   QVERIFY(!error->overridable());
 
   error->allow();
@@ -195,47 +188,35 @@ void tst_oxideqcertificateerror::overridable() {
 }
 
 void tst_oxideqcertificateerror::strictEnforcement() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QVERIFY(!error->strictEnforcement());
 
-  error = OxideQCertificateErrorPrivate::CreateForTesting(
-      true,
-      false,
-      OxideQCertificateError::ErrorBadIdentity,
-      cert_,
-      QUrl("https://www.google.com/"),
-      true,
-      true,
-      std::bind(&tst_oxideqcertificateerror::onResponse,
-                this, std::placeholders::_1));
+  Params params;
+  params.strictEnforcement = true;
+
+  error = createError(params);
   QVERIFY(error->strictEnforcement());
 }
 
 void tst_oxideqcertificateerror::certificate() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QCOMPARE(error->certificate().subjectDisplayName(), cert_.subjectDisplayName());
   QCOMPARE(error->certificate().issuerDisplayName(), cert_.issuerDisplayName());
 }
 
 void tst_oxideqcertificateerror::certError() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
   QCOMPARE(error->certError(), OxideQCertificateError::ErrorBadIdentity);
 
-  error = OxideQCertificateErrorPrivate::CreateForTesting(
-      true,
-      false,
-      OxideQCertificateError::ErrorRevoked,
-      cert_,
-      QUrl("https://www.google.com/"),
-      false,
-      true,
-      std::bind(&tst_oxideqcertificateerror::onResponse,
-                this, std::placeholders::_1));
+  Params params;
+  params.certError = OxideQCertificateError::ErrorRevoked;
+
+  error = createError(params);
   QCOMPARE(error->certError(), OxideQCertificateError::ErrorRevoked);
 }
 
 void tst_oxideqcertificateerror::allow() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
 
   error->allow();
   QCOMPARE(responded_count_, 1);
@@ -252,7 +233,7 @@ void tst_oxideqcertificateerror::allow() {
 }
 
 void tst_oxideqcertificateerror::deny() {
-  std::unique_ptr<OxideQCertificateError> error = makeOverridable();
+  std::unique_ptr<OxideQCertificateError> error = createError();
 
   error->deny();
   QCOMPARE(responded_count_, 1);
@@ -266,6 +247,14 @@ void tst_oxideqcertificateerror::deny() {
 
   error.reset();
   QCOMPARE(responded_count_, 1);
+}
+
+void tst_oxideqcertificateerror::deleteWithoutResponse() {
+  std::unique_ptr<OxideQCertificateError> error = createError();
+  error.reset();
+
+  QCOMPARE(responded_count_, 1);
+  QVERIFY(!last_response_);
 }
 
 QTEST_MAIN(tst_oxideqcertificateerror)
