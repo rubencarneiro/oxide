@@ -45,7 +45,7 @@
   ],
   'targets': [
     {
-      'target_name': 'extra_resources',
+      'target_name': 'oxide_resources',
       'type': 'none',
       'actions': [
         {
@@ -65,7 +65,7 @@
         'repack_path': '<(DEPTH)/tools/grit/grit/format/repack.py'
       },
       'dependencies': [
-        'extra_resources',
+        'oxide_resources',
         '<(DEPTH)/content/app/resources/content_resources.gyp:content_resources',
         '<(DEPTH)/content/app/strings/content_strings.gyp:content_strings',
         '<(DEPTH)/content/browser/tracing/tracing_resources.gyp:tracing_resources',
@@ -213,7 +213,7 @@
       ],
       'dependencies': [
         'packed_resources',
-        'extra_resources',
+        'oxide_resources',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/base/base.gyp:base_i18n',
         '<(DEPTH)/base/base.gyp:base_static',
@@ -679,6 +679,29 @@
           ]
         },
       ],
-    }
+    },
+    {
+      'target_name': 'oxide_shared_unittests',
+      'type': 'executable',
+      'variables': {
+        'chromium_code': 1,
+      },
+      'dependencies': [
+        'oxide_shared',
+        '<(DEPTH)/base/base.gyp:base',
+        '<(DEPTH)/base/base.gyp:test_support_base',
+        '<(DEPTH)/content/content_shell_and_tests.gyp:test_support_content',
+        '<(DEPTH)/mojo/mojo_edk.gyp:mojo_system_impl',
+      ],
+      'include_dirs': [
+        '..',
+        '<(DEPTH)',
+      ],
+      'sources': [
+        'test/oxide_test_suite.cc',
+        'test/oxide_test_suite.h',
+        'test/run_all_unittests.cc',
+      ],
+    },
   ]
 }

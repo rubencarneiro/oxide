@@ -19,6 +19,7 @@
     'clang': 0,
     'host_clang': 0,
     'print_ld_stats%': 0,
+    'enable_app_list': 0,
     'enable_tcmalloc%': 0,
     'disable_nacl': 1,
     'ffmpeg_component': 'shared_library',
