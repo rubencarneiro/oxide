@@ -86,16 +86,36 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
 } // namespace
 
 Compositor::Compositor(CompositorClient* client)
-    : client_(client),
+    : mode_(CompositorUtils::GetInstance()->GetCompositingMode()),
+      client_(client),
+      task_runner_(base::ThreadTaskRunnerHandle::Get()),
       proxy_(new CompositorSingleThreadProxy(this)),
       surface_id_allocator_(
           CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
+      layer_tree_host_eviction_pending_(false),
+      can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
+      visible_(false),
       device_scale_factor_(1.0f),
       root_layer_(cc::Layer::Create()),
       next_output_surface_id_(1),
       pending_swaps_(0),
       weak_factory_(this) {}
+
+void Compositor::SwapCompositorFrameAckFromClient(
+    uint32_t surface_id,
+    FrameHandleVector returned_frames) {
+  TRACE_EVENT_ASYNC_END1("cc", "oxide::Compositor:pending_swaps",
+                         this,
+                         "pending_swaps", pending_swaps_);
+  --pending_swaps_;
+
+  for (auto& frame : returned_frames) {
+    CHECK(frame->HasOneRef());
+    DCHECK_EQ(frame->proxy_.get(), proxy_.get());
+  }
+  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
+}
 
 scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   uint32_t output_surface_id = next_output_surface_id_++;
@@ -149,6 +169,51 @@ void Compositor::AddObserver(CompositorObserver* observer) {
 
 void Compositor::RemoveObserver(CompositorObserver* observer) {
   observers_.RemoveObserver(observer);
+}
+
+void Compositor::EnsureLayerTreeHost() {
+  DCHECK(!layer_tree_host_eviction_pending_);
+
+  if (layer_tree_host_) {
+    return;
+  }
+
+  cc::LayerTreeSettings settings;
+  settings.use_external_begin_frame_source = false;
+  settings.renderer_settings.allow_antialiasing = false;
+
+  cc::LayerTreeHost::InitParams params;
+  params.client = this;
+  params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
+  params.gpu_memory_buffer_manager =
+      content::BrowserGpuMemoryBufferManager::current();
+  params.task_graph_runner =
+      CompositorUtils::GetInstance()->GetTaskGraphRunner();
+  params.settings = &settings;
+  params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
+
+  layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
+  DCHECK(layer_tree_host_);
+
+  can_evict_layer_tree_host_ = true;
+
+  layer_tree_host_->SetRootLayer(root_layer_);
+  layer_tree_host_->SetVisible(visible_);
+  layer_tree_host_->SetViewportSize(size_);
+  layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
+}
+
+void Compositor::MaybeEvictLayerTreeHost() {
+  if (!layer_tree_host_eviction_pending_ ||
+      (!can_evict_layer_tree_host_ && mode_ != COMPOSITING_MODE_SOFTWARE)) {
+    return;
+  }
+
+  layer_tree_host_eviction_pending_ = false;
+  can_evict_layer_tree_host_ = false;
+
+  layer_tree_host_.reset();
+  display_client_.reset();
 }
 
 void Compositor::WillBeginMainFrame() {}
@@ -205,8 +270,10 @@ void Compositor::DidPostSwapBuffers() {}
 void Compositor::DidAbortSwapBuffers() {}
 
 void Compositor::SwapCompositorFrameFromProxy(
+    uint32_t surface_id,
     scoped_ptr<CompositorFrameData> frame) {
   DCHECK(CalledOnValidThread());
+
   FOR_EACH_OBSERVER(CompositorObserver,
                     observers_,
                     CompositorWillRequestSwapFrame());
@@ -219,13 +286,26 @@ void Compositor::SwapCompositorFrameFromProxy(
                            "pending_swaps", pending_swaps_);
   ++pending_swaps_;
 
+  can_evict_layer_tree_host_ = false;
+
   scoped_refptr<CompositorFrameHandle> handle =
-      new CompositorFrameHandle(proxy_, std::move(frame));
-  client_->CompositorSwapFrame(handle.get());
+      new CompositorFrameHandle(surface_id, proxy_, std::move(frame));
+  client_->CompositorSwapFrame(
+      handle.get(),
+      base::Bind(&Compositor::SwapCompositorFrameAckFromClient,
+                 weak_factory_.GetWeakPtr(),
+                 surface_id));
 
   FOR_EACH_OBSERVER(CompositorObserver,
                     observers_,
                     CompositorDidRequestSwapFrame());
+}
+
+void Compositor::AllFramesReturnedFromClient() {
+  can_evict_layer_tree_host_ = true;
+  task_runner_->PostTask(FROM_HERE,
+                         base::Bind(&Compositor::MaybeEvictLayerTreeHost,
+                                    weak_factory_.GetWeakPtr()));
 }
 
 // static
@@ -240,34 +320,30 @@ Compositor::~Compositor() {
 }
 
 bool Compositor::IsActive() const {
-  return layer_tree_host_.get() != nullptr;
+  return layer_tree_host_.get() != nullptr &&
+         !layer_tree_host_eviction_pending_;
 }
 
 void Compositor::SetVisibility(bool visible) {
+  if (visible == visible_) {
+    return;
+  }
+
+  visible_ = visible;
+
+  if (visible) {
+    layer_tree_host_eviction_pending_ = false;
+    EnsureLayerTreeHost();
+  }
+
+  layer_tree_host_->SetVisible(visible);
+
   if (!visible) {
-    layer_tree_host_.reset();
-    display_client_.reset();
-  } else if (!layer_tree_host_) {
-    cc::LayerTreeSettings settings;
-    settings.use_external_begin_frame_source = false;
-    settings.renderer_settings.allow_antialiasing = false;
-
-    cc::LayerTreeHost::InitParams params;
-    params.client = this;
-    params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
-    params.gpu_memory_buffer_manager =
-        content::BrowserGpuMemoryBufferManager::current();
-    params.task_graph_runner =
-        CompositorUtils::GetInstance()->GetTaskGraphRunner();
-    params.settings = &settings;
-    params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
-
-    layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
-
-    layer_tree_host_->SetRootLayer(root_layer_);
-    layer_tree_host_->SetVisible(true);
-    layer_tree_host_->SetViewportSize(size_);
-    layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
+    layer_tree_host_eviction_pending_ = true;
+    FOR_EACH_OBSERVER(CompositorObserver,
+                      observers_,
+                      CompositorEvictResources());
+    MaybeEvictLayerTreeHost();
   }
 }
 
@@ -304,20 +380,6 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   if (layer.get()) {
     root_layer_->AddChild(layer);
   }
-}
-
-void Compositor::DidSwapCompositorFrame(uint32_t surface_id,
-                                        FrameHandleVector returned_frames) {
-  TRACE_EVENT_ASYNC_END1("cc", "oxide::Compositor:pending_swaps",
-                         this,
-                         "pending_swaps", pending_swaps_);
-  --pending_swaps_;
-
-  for (auto& frame : returned_frames) {
-    CHECK(frame->HasOneRef());
-    DCHECK_EQ(frame->proxy_.get(), proxy_.get());
-  }
-  proxy_->DidSwapCompositorFrame(surface_id, std::move(returned_frames));
 }
 
 } // namespace oxide

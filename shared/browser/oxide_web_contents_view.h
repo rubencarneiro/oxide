@@ -219,10 +219,12 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void DidDetachInterstitialPage() override;
 
   // CompositorClient implementation
-  void CompositorSwapFrame(CompositorFrameHandle* handle) override;
+  void CompositorSwapFrame(CompositorFrameHandle* handle,
+                           const SwapAckCallback& callback) override;
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;
+  void CompositorEvictResources() override;
 
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
@@ -250,7 +252,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
-  std::queue<uint32_t> received_surface_ids_;
+  std::queue<SwapAckCallback> compositor_ack_callbacks_;
 
   scoped_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;

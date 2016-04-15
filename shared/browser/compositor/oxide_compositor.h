@@ -20,6 +20,7 @@
 
 #include "base/compiler_specific.h"
 #include "base/macros.h"
+#include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
@@ -29,7 +30,12 @@
 #include "cc/trees/layer_tree_host_single_thread_client.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/compositor/oxide_compositing_mode.h"
 #include "shared/browser/compositor/oxide_compositor_proxy.h"
+
+namespace base {
+class SingleThreadTaskRunner;
+}
 
 namespace cc {
 class Layer;
@@ -54,8 +60,6 @@ class Compositor : public cc::LayerTreeHostClient,
                    public CompositorProxyClient,
                    public base::NonThreadSafe {
  public:
-  typedef std::vector<scoped_refptr<CompositorFrameHandle>> FrameHandleVector;
-
   static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
 
@@ -66,18 +70,22 @@ class Compositor : public cc::LayerTreeHostClient,
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
 
-  void DidSwapCompositorFrame(uint32_t surface_id,
-                              FrameHandleVector returned_frames);
-
  private:
   friend class CompositorObserver;
 
   Compositor(CompositorClient* client);
 
+  using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
+  void SwapCompositorFrameAckFromClient(uint32_t surface_id,
+                                        FrameHandleVector returned_frames);
+
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
   void AddObserver(CompositorObserver* observer);
   void RemoveObserver(CompositorObserver* observer);
+
+  void EnsureLayerTreeHost();
+  void MaybeEvictLayerTreeHost();
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame() override;
@@ -107,9 +115,16 @@ class Compositor : public cc::LayerTreeHostClient,
   void DidAbortSwapBuffers() override;
 
   // CompositorProxyClient
-  void SwapCompositorFrameFromProxy(scoped_ptr<CompositorFrameData> frame);
-  
+  void SwapCompositorFrameFromProxy(
+      uint32_t surface_id,
+      scoped_ptr<CompositorFrameData> frame) override;
+  void AllFramesReturnedFromClient() override;
+
+  CompositingMode mode_;
+
   CompositorClient* client_;
+
+  scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 
   scoped_refptr<CompositorProxy> proxy_;
 
@@ -117,10 +132,14 @@ class Compositor : public cc::LayerTreeHostClient,
 
   scoped_ptr<cc::OnscreenDisplayClient> display_client_;
 
+  bool layer_tree_host_eviction_pending_;
+  bool can_evict_layer_tree_host_;
+
   scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
 
   int num_failed_recreate_attempts_;
 
+  bool visible_;
   gfx::Size size_;
   float device_scale_factor_;
 

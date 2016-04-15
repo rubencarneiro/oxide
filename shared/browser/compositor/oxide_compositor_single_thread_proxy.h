@@ -18,7 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_SINGLE_THREAD_PROXY_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_SINGLE_THREAD_PROXY_H_
 
+#include <queue>
+
 #include "base/macros.h"
+#include "base/memory/scoped_ptr.h"
 #include "base/threading/non_thread_safe.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
@@ -34,6 +37,8 @@ class CompositorSingleThreadProxy : public CompositorProxy,
   ~CompositorSingleThreadProxy() override;
 
  private:
+  bool SurfaceIdIsCurrent(uint32_t surface_id);
+
   // Response from CompositorUtils::GetTextureFromMailbox
   void GetTextureFromMailboxResponse(uint32_t surface_id,
                                      const gpu::Mailbox& mailbox,
@@ -44,8 +49,13 @@ class CompositorSingleThreadProxy : public CompositorProxy,
                                          const gpu::Mailbox& mailbox,
                                          EGLImageKHR egl_image);
 
-  void DidCompleteGLFrame(scoped_ptr<CompositorFrameData> frame);
-  void ContinueSwapGLFrame(scoped_ptr<CompositorFrameData> frame);
+  void DidCompleteGLFrame(uint32_t surface_id,
+                          scoped_ptr<CompositorFrameData> frame);
+  void ContinueSwapGLFrame(uint32_t surface_id,
+                           scoped_ptr<CompositorFrameData> frame);
+
+  void QueueGLFrameSwap(scoped_ptr<CompositorFrameData> frame);
+  void DispatchQueuedGLFrameSwaps();
 
   // CompositorProxy implementation
   void SetOutputSurface(CompositorOutputSurface* output_surface) override;
@@ -53,15 +63,19 @@ class CompositorSingleThreadProxy : public CompositorProxy,
                             uint64_t sync_point) override;
   void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) override;
   void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) override;
+  void AllFramesReturnedFromClient() override;
   void DidSwapCompositorFrame(uint32_t surface_id,
                               FrameHandleVector returned_frames) override;
-  void ReclaimResourcesForFrame(CompositorFrameData* frame) override;
+  void ReclaimResourcesForFrame(uint32_t surface_id,
+                                CompositorFrameData* frame) override;
 
   const CompositingMode mode_;
 
   CompositorOutputSurface* output_surface_;
 
   MailboxBufferMap mailbox_buffer_map_;
+
+  std::queue<scoped_ptr<CompositorFrameData>> queued_gl_frame_swaps_;
 
   int frames_waiting_for_completion_;
   int mailbox_resource_fetches_in_progress_;

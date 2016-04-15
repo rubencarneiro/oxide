@@ -25,14 +25,16 @@
 namespace oxide {
 
 CompositorFrameHandle::CompositorFrameHandle(
+    uint32_t surface_id,
     scoped_refptr<CompositorProxy> proxy,
     scoped_ptr<CompositorFrameData> data)
-    : proxy_(proxy),
+    : surface_id_(surface_id),
+      proxy_(proxy),
       data_(std::move(data)) {}
 
 CompositorFrameHandle::~CompositorFrameHandle() {
   if (data_) {
-    proxy_->ReclaimResourcesForFrame(data_.get());
+    proxy_->ReclaimResourcesForFrame(surface_id_, data_.get());
   }
 }
 

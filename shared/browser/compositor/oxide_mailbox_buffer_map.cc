@@ -28,47 +28,23 @@
 
 namespace oxide {
 
-bool MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
-                                  const MailboxBufferData& data,
-                                  DelayedFrameQueue* ready_frames) {
+void MailboxBufferMap::AddMapping(const gpu::Mailbox& mailbox,
+                                  const MailboxBufferData& data) {
   DCHECK(CalledOnValidThread());
   DCHECK(map_.find(mailbox) == map_.end());
 
-  bool added = false;
-  if (data.surface_id == surface_id_) {
-    added = true;
-    map_[mailbox] = data;
-  }
-
-  while (!delayed_frames_.empty()) {
-    scoped_ptr<CompositorFrameData>& frame = delayed_frames_.front();
-    DCHECK_EQ(frame->surface_id, surface_id_);
-
-    if (map_.find(frame->gl_frame_data->mailbox) == map_.end()) {
-      break;
-    }
-
-    ready_frames->push(std::move(frame));
-    delayed_frames_.pop();
-  }
-
-  return added;
+  map_[mailbox] = data;
 }
 
 MailboxBufferMap::MailboxBufferMap(CompositingMode mode)
-    : mode_(mode),
-      surface_id_(0) {}
+    : mode_(mode) {}
 
 MailboxBufferMap::~MailboxBufferMap() {}
 
-void MailboxBufferMap::SetOutputSurfaceID(uint32_t surface_id) {
+void MailboxBufferMap::DropAllResources() {
   DCHECK(CalledOnValidThread());
 
-  surface_id_ = surface_id;
-
   for (auto it = map_.begin(); it != map_.end(); ) {
-    DCHECK_NE(it->second.surface_id, surface_id);
-
     if (mode_ == COMPOSITING_MODE_TEXTURE) {
       auto e = it++;
       map_.erase(e);
@@ -88,43 +64,30 @@ void MailboxBufferMap::SetOutputSurfaceID(uint32_t surface_id) {
       }
     }
   }
-
-  while (!delayed_frames_.empty()) {
-    DCHECK_NE(delayed_frames_.front()->surface_id, surface_id);
-    delayed_frames_.pop();
-  }
 }
 
-bool MailboxBufferMap::AddTextureMapping(
-    uint32_t surface_id,
-    const gpu::Mailbox& mailbox,
-    GLuint texture,
-    DelayedFrameQueue* ready_frames) {
+void MailboxBufferMap::AddTextureMapping(const gpu::Mailbox& mailbox,
+                                         GLuint texture) {
   DCHECK_EQ(mode_, COMPOSITING_MODE_TEXTURE);
   DCHECK_NE(texture, 0U);
 
   MailboxBufferData data;
-  data.surface_id = surface_id;
   data.data.texture = texture;
 
-  return AddMapping(mailbox, data, ready_frames);
+  AddMapping(mailbox, data);
 }
 
-bool MailboxBufferMap::AddEGLImageMapping(
-    uint32_t surface_id,
-    const gpu::Mailbox& mailbox,
-    EGLImageKHR egl_image,
-    DelayedFrameQueue* ready_frames) {
+void MailboxBufferMap::AddEGLImageMapping(const gpu::Mailbox& mailbox,
+                                          EGLImageKHR egl_image) {
   DCHECK_EQ(mode_, COMPOSITING_MODE_EGLIMAGE);
   DCHECK_NE(egl_image, EGL_NO_IMAGE_KHR);
 
   MailboxBufferData data;
-  data.surface_id = surface_id;
   data.data.image.live = true;
   data.data.image.ref_count = 0;
   data.data.image.egl_image = egl_image;
 
-  return AddMapping(mailbox, data, ready_frames);
+  AddMapping(mailbox, data);
 }
 
 void MailboxBufferMap::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
@@ -200,31 +163,6 @@ void MailboxBufferMap::ReclaimMailboxBufferResources(
                    it->second.data.image.egl_image));
     map_.erase(it);
   }
-}
-
-bool MailboxBufferMap::CanBeginFrameSwap(CompositorFrameData* frame) {
-  DCHECK(CalledOnValidThread());
-  DCHECK(frame->gl_frame_data);
-
-  if (frame->surface_id != surface_id_) {
-    return false;
-  }
-
-  if (!delayed_frames_.empty()) {
-    scoped_ptr<CompositorFrameData> frame_copy =
-        CompositorFrameData::AllocFrom(frame);
-    delayed_frames_.push(std::move(frame_copy));
-    return false;
-  }
-
-  if (map_.find(frame->gl_frame_data->mailbox) == map_.end()) {
-    scoped_ptr<CompositorFrameData> frame_copy =
-        CompositorFrameData::AllocFrom(frame);
-    delayed_frames_.push(std::move(frame_copy));
-    return false;
-  }
-
-  return true;
 }
 
 } // namespace oxide
