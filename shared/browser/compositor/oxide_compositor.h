@@ -64,8 +64,6 @@ class Compositor : public cc::LayerTreeHostClient,
   static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
 
-  bool IsActive() const;
-
   void SetVisibility(bool visible);
   void SetDeviceScaleFactor(float scale);
   void SetViewportSize(const gfx::Size& bounds);

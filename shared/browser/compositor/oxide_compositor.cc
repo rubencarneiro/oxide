@@ -659,11 +659,6 @@ Compositor::~Compositor() {
   FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
 }
 
-bool Compositor::IsActive() const {
-  return layer_tree_host_.get() != nullptr &&
-         !layer_tree_host_eviction_pending_;
-}
-
 void Compositor::SetVisibility(bool visible) {
   if (visible == visible_) {
     return;
