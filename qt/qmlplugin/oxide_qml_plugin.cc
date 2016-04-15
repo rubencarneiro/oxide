@@ -205,6 +205,10 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         uri, 1, 15, "TouchSelectionController",
         "TouchSelectionController is accessed via "
         "WebView.touchSelectionController");
+    qmlRegisterUncreatableType<OxideQMediaAccessPermissionRequest, 1>(
+        uri, 1, 15, "MediaAccessPermissionRequest",
+        "MediaAccessPermissionRequest is delivered by "
+        "WebView.mediaAccessPermissionRequested");
   }
 };
 
