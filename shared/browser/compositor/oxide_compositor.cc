@@ -322,7 +322,8 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
-          base::ThreadTaskRunnerHandle::Get()));
+          base::ThreadTaskRunnerHandle::Get(),
+          surface_id_allocator_->id_namespace()));
   scoped_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
