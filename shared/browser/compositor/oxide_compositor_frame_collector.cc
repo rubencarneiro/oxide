@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
-#define _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_
+#include "oxide_compositor_frame_collector.h"
 
-#include "base/macros.h"
-#include "ppapi/host/host_factory.h"
-
-namespace content {
-class BrowserPpapiHost;
-}
+#include "oxide_compositor_frame_data.h"
+#include "oxide_compositor_frame_handle.h"
 
 namespace oxide {
 
-class PepperHostFactoryBrowser final : public ppapi::host::HostFactory {
- public:
-  PepperHostFactoryBrowser(content::BrowserPpapiHost* host);
-  ~PepperHostFactoryBrowser();
+// static
+CompositorFrameCollector* CompositorFrameCollector::FromFrameHandle(
+    CompositorFrameHandle* handle) {
+  return handle->collector_.get();
+}
 
-  std::unique_ptr<ppapi::host::ResourceHost> CreateResourceHost(
-      ppapi::host::PpapiHost* host,
-      PP_Resource resource,
-      PP_Instance instance,
-      const IPC::Message& message) final;
+// static
+scoped_ptr<CompositorFrameData> CompositorFrameCollector::TakeFrameData(
+    CompositorFrameHandle* handle) {
+  return std::move(handle->data_);
+}
 
- private:
-  content::BrowserPpapiHost* host_;
+// static
+uint32_t CompositorFrameCollector::FrameHandleSurfaceId(
+    CompositorFrameHandle* handle) {
+  return handle->surface_id_;
+}
 
-  DISALLOW_COPY_AND_ASSIGN(PepperHostFactoryBrowser);
-};
+CompositorFrameCollector::~CompositorFrameCollector() {}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_PEPPER_HOST_FACTORY_H_

@@ -52,17 +52,6 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) final;
   void RenderProcessWillLaunch(content::RenderProcessHost* host) final;
-  net::URLRequestContextGetter* CreateRequestContext(
-      content::BrowserContext* browser_context,
-      content::ProtocolHandlerMap* protocol_handlers,
-      content::URLRequestInterceptorScopedVector request_interceptors) final;
-  net::URLRequestContextGetter*
-      CreateRequestContextForStoragePartition(
-        content::BrowserContext* browser_context,
-        const base::FilePath& partition_path,
-        bool in_memory,
-        content::ProtocolHandlerMap* protocol_handlers,
-        content::URLRequestInterceptorScopedVector request_interceptors) final;
   std::string GetAcceptLangs(
       content::BrowserContext* browser_context) final;
   void AppendExtraCommandLineSwitches(base::CommandLine* command_line,

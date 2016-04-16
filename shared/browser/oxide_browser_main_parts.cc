@@ -43,8 +43,8 @@
 #include "shared/port/content/browser/power_save_blocker_oxide.h"
 #include "shared/port/content/browser/render_widget_host_view_oxide.h"
 #include "shared/port/content/browser/web_contents_view_oxide.h"
-#include "shared/port/content/common/gpu_service_shim_oxide.h"
 #include "shared/port/gfx/gfx_utils_oxide.h"
+#include "shared/port/gpu/gpu_service_shim_oxide.h"
 #include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 #include "shared/port/media/video_capture_device_factory_override.h"
 #include "shared/port/ui_base/clipboard_oxide.h"
@@ -270,7 +270,7 @@ void BrowserMainParts::PreMainMessageLoopRun() {
       // that you can assume it's safe to use the handle returned by it for
       // anything
       gl_share_context_ = GLContextDependent::CloneFrom(share_context.get());
-      content::oxide_gpu_shim::SetGLShareGroup(gl_share_context_->share_group());
+      gpu::oxide_shim::SetGLShareGroup(gl_share_context_->share_group());
     }
   }
 
@@ -319,7 +319,7 @@ void BrowserMainParts::PostDestroyThreads() {
   gfx::Screen::SetScreenInstance(nullptr);
   io_thread_.reset();
 
-  content::oxide_gpu_shim::SetGLShareGroup(nullptr);
+  gpu::oxide_shim::SetGLShareGroup(nullptr);
   gl_share_context_ = nullptr;
 
   gpu::SetGpuInfoCollectorOxideLinux(nullptr);

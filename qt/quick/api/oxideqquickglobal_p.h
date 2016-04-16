@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickGlobal : public QObject {
   Q_PROPERTY(QVariant availableAudioCaptureDevices READ availableAudioCaptureDevices NOTIFY availableAudioCaptureDevicesChanged)
   Q_PROPERTY(QVariant availableVideoCaptureDevices READ availableVideoCaptureDevices NOTIFY availableVideoCaptureDevicesChanged)
 
+  Q_PROPERTY(QString chromiumVersion READ chromiumVersion CONSTANT)
+  Q_PROPERTY(QString version READ oxideVersion CONSTANT)
+
   Q_ENUMS(ProcessModel)
 
   Q_DECLARE_PRIVATE(OxideQQuickGlobal)
@@ -65,6 +68,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickGlobal : public QObject {
 
   QVariant availableAudioCaptureDevices();
   QVariant availableVideoCaptureDevices();
+
+  QString chromiumVersion() const;
+  QString oxideVersion() const;
 
   Q_INVOKABLE OxideQQuickWebContext* defaultWebContext();
 

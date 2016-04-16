@@ -15,34 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
+#include "gpu_service_shim_oxide.h"
 
-#include <QString>
-#include <QUrl>
+#include "base/lazy_instance.h"
+#include "base/logging.h"
+#include "base/synchronization/lock.h"
 
-namespace oxide {
-namespace qt {
+namespace gpu {
+namespace oxide_shim {
 
-class JavaScriptDialogProxyClient {
- public:
+namespace {
 
-  enum Type {
-    TypeAlert,
-    TypeConfirm,
-    TypePrompt
-  };
+base::LazyInstance<base::Lock> g_gl_share_group_lock =
+    LAZY_INSTANCE_INITIALIZER;
+bool g_gl_share_group_used = false;
+gfx::GLShareGroup* g_gl_share_group;
 
-  virtual ~JavaScriptDialogProxyClient() {}
+}
 
-  virtual void close(bool accept, const QString& user_input = QString()) = 0;
+gfx::GLShareGroup* GetGLShareGroup() {
+  base::AutoLock lock(g_gl_share_group_lock.Get());
+  g_gl_share_group_used = true;
+  return g_gl_share_group;
+}
 
-  virtual QUrl originUrl() const = 0;
-  virtual QString messageText() const = 0;
-  virtual QString defaultPromptText() const = 0;
-};
+void SetGLShareGroup(gfx::GLShareGroup* share_group) {
+  base::AutoLock lock(g_gl_share_group_lock.Get());
+  CHECK(!g_gl_share_group_used || !share_group);
+  g_gl_share_group = share_group;
+}
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
+} // namespace oxide_shim
+} // namespace gpu

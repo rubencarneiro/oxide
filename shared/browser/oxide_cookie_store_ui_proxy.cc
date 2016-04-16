@@ -182,6 +182,10 @@ void CookieStoreUIProxy::Core::SetCookieWithDetailsAsync_IO(
 void CookieStoreUIProxy::Core::SetCookiesResponse_IO(
     const net::CookieStore::SetCookiesCallback& callback,
     bool success) {
+  if (callback.is_null()) {
+    return;
+  }
+
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
@@ -192,6 +196,7 @@ void CookieStoreUIProxy::Core::SendSetCookiesResponse_UI(
     const net::CookieStore::SetCookiesCallback& callback,
     bool success) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   callback.Run(success);
 }
 
@@ -223,6 +228,7 @@ void CookieStoreUIProxy::Core::SendGetCookiesResponse_UI(
     const net::CookieStore::GetCookiesCallback& callback,
     const std::string& result) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   callback.Run(result);
 }
 
@@ -266,6 +272,7 @@ void CookieStoreUIProxy::Core::SendGetCookieListResponse_UI(
     const net::CookieStore::GetCookieListCallback& callback,
     const net::CookieList& result) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   callback.Run(result);
 }
 
@@ -287,6 +294,10 @@ void CookieStoreUIProxy::Core::DeleteAllCreatedBetweenAsync_IO(
 void CookieStoreUIProxy::Core::DeleteResponse_IO(
     const net::CookieStore::DeleteCallback& callback,
     int num_deleted) {
+  if (callback.is_null()) {
+    return;
+  }
+
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
@@ -297,12 +308,14 @@ void CookieStoreUIProxy::Core::SendDeleteResponse_UI(
     const net::CookieStore::DeleteCallback& callback,
     int num_deleted) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   callback.Run(num_deleted);
 }
 
 void CookieStoreUIProxy::Core::FlushStore_IO(const base::Closure& callback) {
   net::CookieStore* store = GetStore();
   if (!store) {
+    GenericResponse_IO(callback);
     return;
   }
 
@@ -311,6 +324,10 @@ void CookieStoreUIProxy::Core::FlushStore_IO(const base::Closure& callback) {
 
 void CookieStoreUIProxy::Core::GenericResponse_IO(
     const base::Closure& callback) {
+  if (callback.is_null()) {
+    return;
+  }
+
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
@@ -320,6 +337,7 @@ void CookieStoreUIProxy::Core::GenericResponse_IO(
 void CookieStoreUIProxy::Core::SendGenericResponse_UI(
     const base::Closure& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   callback.Run();
 }
 
@@ -451,6 +469,11 @@ void CookieStoreUIProxy::GetCookiesWithOptionsAsync(
     const net::CookieOptions& options,
     const GetCookiesCallback& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  if (callback.is_null()) {
+    return;
+  }
+
   core_->GetCookiesWithOptionsAsync(url, options, callback);
 }
 
@@ -459,12 +482,22 @@ void CookieStoreUIProxy::GetCookieListWithOptionsAsync(
     const net::CookieOptions& options,
     const GetCookieListCallback& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  if (callback.is_null()) {
+    return;
+  }
+
   core_->GetCookieListWithOptionsAsync(url, options, callback);
 }
 
 void CookieStoreUIProxy::GetAllCookiesAsync(
     const GetCookieListCallback& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  if (callback.is_null()) {
+    return;
+  }
+
   core_->GetAllCookiesAsync(callback);
 }
 

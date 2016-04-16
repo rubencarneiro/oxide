@@ -248,6 +248,8 @@ Module {
         Property { name: "maxRendererProcessCount"; type: "int" }
         Property { name: "availableAudioCaptureDevices"; type: "QVariant"; isReadonly: true }
         Property { name: "availableVideoCaptureDevices"; type: "QVariant"; isReadonly: true }
+        Property { name: "chromiumVersion"; type: "string"; isReadonly: true }
+        Property { name: "version"; type: "string"; isReadonly: true }
         Method { name: "defaultWebContext"; type: "OxideQQuickWebContext*" }
     }
     Component {

@@ -20,7 +20,6 @@
 #include "base/bind.h"
 #include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/permission_type.h"
-#include "content/public/common/permission_status.mojom.h"
 
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
@@ -33,25 +32,25 @@ namespace oxide {
 
 namespace {
 
-content::mojom::PermissionStatus ToPermissionStatus(
+blink::mojom::PermissionStatus ToPermissionStatus(
     PermissionRequestResponse response) {
   return response == PERMISSION_REQUEST_RESPONSE_ALLOW ?
-      content::mojom::PermissionStatus::GRANTED :
-      content::mojom::PermissionStatus::DENIED;
+      blink::mojom::PermissionStatus::GRANTED :
+      blink::mojom::PermissionStatus::DENIED;
 }
 
-content::mojom::PermissionStatus ToPermissionStatus(
+blink::mojom::PermissionStatus ToPermissionStatus(
     TemporarySavedPermissionStatus status) {
   switch (status) {
     case TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED:
-      return content::mojom::PermissionStatus::GRANTED;
+      return blink::mojom::PermissionStatus::GRANTED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_DENIED:
-      return content::mojom::PermissionStatus::DENIED;
+      return blink::mojom::PermissionStatus::DENIED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_ASK:
-      return content::mojom::PermissionStatus::ASK;
+      return blink::mojom::PermissionStatus::ASK;
     default:
       NOTREACHED();
-      return content::mojom::PermissionStatus::DENIED;
+      return blink::mojom::PermissionStatus::DENIED;
   }
 }
 
@@ -90,7 +89,7 @@ TemporarySavedPermissionStatus ToTemporarySavedPermissionStatus(
 }
 
 struct PermissionManager::Subscription {
-  base::Callback<void(content::mojom::PermissionStatus)> callback;
+  base::Callback<void(blink::mojom::PermissionStatus)> callback;
 };
 
 struct PermissionManager::RequestData {
@@ -107,7 +106,7 @@ void PermissionManager::RespondToPermissionRequest(
     content::PermissionType permission,
     const GURL& requesting_origin,
     const GURL& embedding_origin,
-    const base::Callback<void(content::mojom::PermissionStatus)>& callback,
+    const base::Callback<void(blink::mojom::PermissionStatus)>& callback,
     PermissionRequestResponse response) {
   if (permission == content::PermissionType::GEOLOCATION &&
       response == PERMISSION_REQUEST_RESPONSE_ALLOW) {
@@ -133,16 +132,16 @@ int PermissionManager::RequestPermission(
     content::PermissionType permission,
     content::RenderFrameHost* render_frame_host,
     const GURL& requesting_origin,
-    const base::Callback<void(content::mojom::PermissionStatus)>& callback) {
+    const base::Callback<void(blink::mojom::PermissionStatus)>& callback) {
   if (!IsPermissionTypeSupported(permission)) {
-    callback.Run(content::mojom::PermissionStatus::DENIED);
+    callback.Run(blink::mojom::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   if (!web_contents) {
-    callback.Run(content::mojom::PermissionStatus::DENIED);
+    callback.Run(blink::mojom::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
@@ -172,12 +171,12 @@ int PermissionManager::RequestPermission(
       PermissionRequestDispatcher::FromWebContents(web_contents);
   if (!dispatcher) {
     // Are there any cases when this can be null?
-    callback.Run(content::mojom::PermissionStatus::DENIED);
+    callback.Run(blink::mojom::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
   if (!dispatcher->CanDispatchRequest()) {
-    callback.Run(content::mojom::PermissionStatus::DENIED);
+    callback.Run(blink::mojom::PermissionStatus::DENIED);
     return kNoPendingOperation;
   }
 
@@ -211,10 +210,10 @@ int PermissionManager::RequestPermissions(
     content::RenderFrameHost* render_frame_host,
     const GURL& requesting_origin,
     const base::Callback<void(
-        const std::vector<content::mojom::PermissionStatus>&)>& callback) {
+        const std::vector<blink::mojom::PermissionStatus>&)>& callback) {
   NOTIMPLEMENTED();
 
-  std::vector<content::mojom::PermissionStatus> result(permissions.size());
+  std::vector<blink::mojom::PermissionStatus> result(permissions.size());
   const GURL& embedding_origin =
       content::WebContents::FromRenderFrameHost(render_frame_host)
           ->GetLastCommittedURL().GetOrigin();
@@ -257,12 +256,12 @@ void PermissionManager::CancelPermissionRequest(int request_id) {
   dispatcher->CancelPermissionRequest(dispatcher_request_id);
 }
 
-content::mojom::PermissionStatus PermissionManager::GetPermissionStatus(
+blink::mojom::PermissionStatus PermissionManager::GetPermissionStatus(
     content::PermissionType permission,
     const GURL& requesting_origin,
     const GURL& embedding_origin) {
   if (!IsPermissionTypeSupported(permission)) {
-    return content::mojom::PermissionStatus::DENIED;
+    return blink::mojom::PermissionStatus::DENIED;
   }
 
   return ToPermissionStatus(
@@ -287,7 +286,7 @@ int PermissionManager::SubscribePermissionStatusChange(
     content::PermissionType permission,
     const GURL& requesting_origin,
     const GURL& embedding_origin,
-    const base::Callback<void(content::mojom::PermissionStatus)>& callback) {
+    const base::Callback<void(blink::mojom::PermissionStatus)>& callback) {
   // This is currently unused, but the callback owns a pointer that the calling
   // code expects us to keep alive
   Subscription* subscription = new Subscription();

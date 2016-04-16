@@ -19,7 +19,6 @@
 
 #include "base/lazy_instance.h"
 #include "base/single_thread_task_runner.h"
-#include "content/common/gpu/gpu_channel_manager.h"
 #include "content/gpu/gpu_child_thread.h"
 #include "gpu/command_buffer/service/context_group.h"
 #include "gpu/command_buffer/service/context_state.h"
@@ -27,11 +26,14 @@
 #include "gpu/command_buffer/service/mailbox_manager.h"
 #include "gpu/command_buffer/service/sync_point_manager.h"
 #include "gpu/command_buffer/service/texture_manager.h"
+#include "gpu/ipc/service/gpu_channel.h"
+#include "gpu/ipc/service/gpu_channel_manager.h"
+#include "gpu/ipc/service/gpu_command_buffer_stub.h"
 #include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface_egl.h"
 
-#include "shared/port/content/common/gpu_service_shim_oxide.h"
+#include "shared/port/gpu/gpu_service_shim_oxide.h"
 
 namespace oxide {
 
@@ -52,6 +54,34 @@ namespace {
 
 base::LazyInstance<SyncPointWaiter> g_sync_point_waiter =
     LAZY_INSTANCE_INITIALIZER;
+
+gpu::gles2::GLES2Decoder* GetGLES2Decoder(
+    gpu::CommandBufferId command_buffer_id) {
+  int32_t client_id =
+      static_cast<int32_t>(command_buffer_id.GetUnsafeValue() >> 32);
+  int32_t route_id =
+      static_cast<int32_t>(command_buffer_id.GetUnsafeValue() &
+                           0x00000000FFFFFFFF);
+
+  gpu::GpuChannelManager* gpu_channel_manager =
+      content::GpuChildThread::GetChannelManager();
+  DCHECK(gpu_channel_manager);
+
+  gpu::GpuChannel* channel = gpu_channel_manager->LookupChannel(client_id);
+  if (!channel) {
+    return nullptr;
+  }
+
+  gpu::GpuCommandBufferStub* command_buffer =
+      channel->LookupCommandBuffer(route_id);
+  if (!command_buffer) {
+    return nullptr;
+  }
+
+  CHECK_EQ(command_buffer->command_buffer_id(), command_buffer_id);
+
+  return command_buffer->decoder();
+}
 
 }
 
@@ -176,8 +206,7 @@ EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
 // static
 GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
                                        const gpu::Mailbox& mailbox) {
-  gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
+  gpu::gles2::GLES2Decoder* decoder = GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return 0;
   }
@@ -195,8 +224,7 @@ GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
 EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
     gpu::CommandBufferId command_buffer,
     const gpu::Mailbox& mailbox) {
-  gpu::gles2::GLES2Decoder* decoder =
-      content::oxide_gpu_shim::GetGLES2Decoder(command_buffer);
+  gpu::gles2::GLES2Decoder* decoder = GetGLES2Decoder(command_buffer);
   if (!decoder) {
     return EGL_NO_IMAGE_KHR;
   }

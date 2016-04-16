@@ -27,7 +27,6 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
-#include "base/threading/non_thread_safe.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -37,9 +36,8 @@ namespace oxide {
 
 class CompositorFrameData;
 
-// This class maintains a map of mailbox names to actual GPU buffers on
-// behalf of CompositorProxy
-class MailboxBufferMap : public base::NonThreadSafe {
+// This class maintains a map of mailbox names to actual in-process GPU buffers
+class MailboxBufferMap {
  public:
   MailboxBufferMap(CompositingMode mode);
   ~MailboxBufferMap();

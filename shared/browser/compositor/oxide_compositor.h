@@ -25,13 +25,15 @@
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
-#include "base/threading/non_thread_safe.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "cc/trees/layer_tree_host_single_thread_client.h"
 #include "ui/gfx/geometry/size.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
-#include "shared/browser/compositor/oxide_compositor_proxy.h"
+#include "shared/browser/compositor/oxide_compositor_client.h"
+#include "shared/browser/compositor/oxide_compositor_frame_collector.h"
+#include "shared/browser/compositor/oxide_compositor_output_surface_listener.h"
+#include "shared/browser/compositor/oxide_mailbox_buffer_map.h"
 
 namespace base {
 class SingleThreadTaskRunner;
@@ -50,20 +52,17 @@ class Size;
 
 namespace oxide {
 
-class CompositorClient;
 class CompositorFrameData;
 class CompositorFrameHandle;
 class CompositorObserver;
 
 class Compositor : public cc::LayerTreeHostClient,
                    public cc::LayerTreeHostSingleThreadClient,
-                   public CompositorProxyClient,
-                   public base::NonThreadSafe {
+                   public CompositorOutputSurfaceListener,
+                   public CompositorFrameCollector {
  public:
   static scoped_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
-
-  bool IsActive() const;
 
   void SetVisibility(bool visible);
   void SetDeviceScaleFactor(float scale);
@@ -75,9 +74,27 @@ class Compositor : public cc::LayerTreeHostClient,
 
   Compositor(CompositorClient* client);
 
+  bool SurfaceIdIsCurrent(uint32_t surface_id);
+
+  void DidCompleteGLFrame(uint32_t surface_id,
+                          scoped_ptr<CompositorFrameData> frame);
+  void ContinueSwapGLFrame(uint32_t surface_id,
+                           scoped_ptr<CompositorFrameData> frame);
+  void QueueGLFrameSwap(scoped_ptr<CompositorFrameData> frame);
+  void DispatchQueuedGLFrameSwaps();
+
+  void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
+
   using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
+  static void SwapCompositorFrameAckFromClientThunk(
+      base::WeakPtr<Compositor> compositor,
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
+      uint32_t surface_id,
+      FrameHandleVector returned_frames);
   void SwapCompositorFrameAckFromClient(uint32_t surface_id,
                                         FrameHandleVector returned_frames);
+
+  void OutputSurfaceChanged();
 
   scoped_ptr<cc::OutputSurface> CreateOutputSurface();
 
@@ -86,6 +103,20 @@ class Compositor : public cc::LayerTreeHostClient,
 
   void EnsureLayerTreeHost();
   void MaybeEvictLayerTreeHost();
+
+  // Response from CompositorUtils::GetTextureFromMailbox
+  void GetTextureFromMailboxResponse(uint32_t surface_id,
+                                     const gpu::Mailbox& mailbox,
+                                     GLuint texture);
+  // Response from CompositorUtils::CreateEGLImageFromMailbox
+  static void CreateEGLImageFromMailboxResponseThunk(
+      base::WeakPtr<Compositor> compositor,
+      uint32_t surface_id,
+      const gpu::Mailbox& mailbox,
+      EGLImageKHR egl_image);
+  void CreateEGLImageFromMailboxResponse(uint32_t surface_id,
+                                         const gpu::Mailbox& mailbox,
+                                         EGLImageKHR egl_image);
 
   // cc::LayerTreeHostClient implementation
   void WillBeginMainFrame() override;
@@ -114,11 +145,18 @@ class Compositor : public cc::LayerTreeHostClient,
   void DidPostSwapBuffers() override;
   void DidAbortSwapBuffers() override;
 
-  // CompositorProxyClient
-  void SwapCompositorFrameFromProxy(
-      uint32_t surface_id,
-      scoped_ptr<CompositorFrameData> frame) override;
+  // CompositorOutputSurfaceListener implementation
+  void OutputSurfaceBound(CompositorOutputSurface* output_surface) override;
+  void OutputSurfaceDestroyed(CompositorOutputSurface* output_surface) override;
+  void MailboxBufferCreated(const gpu::Mailbox& mailbox,
+                            uint64_t sync_point) override;
+  void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) override;
+  void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) override;
   void AllFramesReturnedFromClient() override;
+
+  // CompositorFrameCollector implementation
+  void ReclaimResourcesForFrame(uint32_t surface_id,
+                                CompositorFrameData* frame) override;
 
   CompositingMode mode_;
 
@@ -126,10 +164,18 @@ class Compositor : public cc::LayerTreeHostClient,
 
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 
-  scoped_refptr<CompositorProxy> proxy_;
+  CompositorOutputSurface* output_surface_;
 
+  MailboxBufferMap mailbox_buffer_map_;
+
+  std::queue<scoped_ptr<CompositorFrameData>> queued_gl_frame_swaps_;
+
+  // Needs to outlive |display_client_|, as its destructor results in our
+  // OutputSurface calling in to OutputSurfaceDestroyed
+  CompositorClient::SwapAckCallback swap_ack_callback_;
+
+  // Both of these need to outlive |layer_tree_host_|
   scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
-
   scoped_ptr<cc::OnscreenDisplayClient> display_client_;
 
   bool layer_tree_host_eviction_pending_;
@@ -150,6 +196,8 @@ class Compositor : public cc::LayerTreeHostClient,
   base::ObserverList<CompositorObserver> observers_;
 
   int pending_swaps_;
+  int frames_waiting_for_completion_;
+  int mailbox_resource_fetches_in_progress_;
 
   base::WeakPtrFactory<Compositor> weak_factory_;
 

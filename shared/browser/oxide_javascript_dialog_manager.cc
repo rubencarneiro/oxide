@@ -74,7 +74,6 @@ void JavaScriptDialogManager::RunNextDialogForContents(
 void JavaScriptDialogManager::RunJavaScriptDialog(
     content::WebContents* web_contents,
     const GURL& origin_url,
-    const std::string& accept_lang,
     content::JavaScriptMessageType javascript_message_type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
@@ -97,7 +96,6 @@ void JavaScriptDialogManager::RunJavaScriptDialog(
 
   dialog->web_contents_ = web_contents;
   dialog->origin_url_ = origin_url;
-  dialog->accept_lang_ = accept_lang;
   dialog->message_text_ = message_text;
   dialog->default_prompt_text_ = default_prompt_text;
   dialog->callback_ = callback;

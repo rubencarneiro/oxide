@@ -193,10 +193,6 @@ class OXIDE_SHARED_EXPORT BrowserContext
 
   BrowserContextID GetID() const;
 
-  net::URLRequestContextGetter* CreateRequestContext(
-      content::ProtocolHandlerMap* protocol_handlers,
-      content::URLRequestInterceptorScopedVector request_interceptors);
-
   BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
@@ -251,8 +247,6 @@ class OXIDE_SHARED_EXPORT BrowserContext
   scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
       const base::FilePath& partition_path) override;
   net::URLRequestContextGetter* GetRequestContext() override;
-  net::URLRequestContextGetter* GetRequestContextForRenderProcess(
-      int renderer_child_id) override;
   net::URLRequestContextGetter* GetMediaRequestContext() override;
   net::URLRequestContextGetter* GetMediaRequestContextForRenderProcess(
       int renderer_child_id) override;
@@ -266,6 +260,14 @@ class OXIDE_SHARED_EXPORT BrowserContext
   content::SSLHostStateDelegate* GetSSLHostStateDelegate() override;
   content::PermissionManager* GetPermissionManager() override;
   content::BackgroundSyncController* GetBackgroundSyncController() override;
+  net::URLRequestContextGetter* CreateRequestContext(
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::URLRequestInterceptorScopedVector request_interceptors) override;
+  net::URLRequestContextGetter* CreateRequestContextForStoragePartition(
+      const base::FilePath& partition_path,
+      bool in_memory,
+      content::ProtocolHandlerMap* protocol_handlers,
+      content::URLRequestInterceptorScopedVector request_interceptors) override;
 
   void AddObserver(BrowserContextObserver* observer);
   void RemoveObserver(BrowserContextObserver* observer);
