@@ -644,32 +644,6 @@ scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
   return nullptr;
 }
 
-net::URLRequestContextGetter* BrowserContext::GetMediaRequestContext() {
-  DCHECK(CalledOnValidThread());
-  return GetStoragePartition(this, nullptr)->GetMediaURLRequestContext();
-}
-
-net::URLRequestContextGetter*
-BrowserContext::GetMediaRequestContextForRenderProcess(int renderer_child_id) {
-  DCHECK(CalledOnValidThread());
-
-  content::RenderProcessHost* host =
-      content::RenderProcessHost::FromID(renderer_child_id);
-
-  return host->GetStoragePartition()->GetMediaURLRequestContext();
-}
-
-net::URLRequestContextGetter*
-BrowserContext::GetMediaRequestContextForStoragePartition(
-    const base::FilePath& partition_path,
-    bool in_memory) {
-  // We don't return any storage partition names from
-  // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
-  // bug to hit this
-  NOTREACHED() << "Invalid request for request context for storage partition";
-  return nullptr;
-}
-
 content::DownloadManagerDelegate*
 BrowserContext::GetDownloadManagerDelegate() {
   return DownloadManagerDelegate::Get(this);
@@ -730,6 +704,23 @@ BrowserContext::CreateRequestContextForStoragePartition(
     content::URLRequestInterceptorScopedVector request_interceptors) {
   // We don't return any storage partition names from
   // GetStoragePartitionConfigForSite(), so it's a bug to hit this
+  NOTREACHED() << "Invalid request for request context for storage partition";
+  return nullptr;
+}
+
+net::URLRequestContextGetter* BrowserContext::CreateMediaRequestContext() {
+  DCHECK(CalledOnValidThread());
+  DCHECK(main_request_context_getter_.get());
+  return main_request_context_getter_.get();
+}
+
+net::URLRequestContextGetter*
+BrowserContext::CreateMediaRequestContextForStoragePartition(
+    const base::FilePath& partition_path,
+    bool in_memory) {
+  // We don't return any storage partition names from
+  // ContentBrowserClient::GetStoragePartitionConfigForSite(), so it's a
+  // bug to hit this
   NOTREACHED() << "Invalid request for request context for storage partition";
   return nullptr;
 }

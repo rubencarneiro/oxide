@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_DRAG_SOURCE_H_
 #define _OXIDE_SHARED_BROWSER_DRAG_SOURCE_H_
 
-#include "third_party/WebKit/public/web/WebDragOperation.h"
+#include "third_party/WebKit/public/platform/WebDragOperation.h"
 
 namespace content {
 class DropData;
