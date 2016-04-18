@@ -34,7 +34,6 @@
 #include <QSGNode>
 #include <QSizeF>
 #include <QSize>
-#include <QtQml>
 #include <Qt>
 
 #include "qt/core/api/oxideqcertificateerror.h"
@@ -462,22 +461,23 @@ void OxideQQuickWebViewPrivate::DownloadRequested(
 }
 
 void OxideQQuickWebViewPrivate::CertificateError(
-    OxideQCertificateError* cert_error) {
+    std::unique_ptr<OxideQCertificateError> cert_error) {
   Q_Q(OxideQQuickWebView);
 
   // See the comment in RequestGeolocationPermission
   QQmlEngine* engine = qmlEngine(q);
   if (!engine) {
-    delete cert_error;
     return;
   }
 
   {
-    QJSValue val = engine->newQObject(cert_error);
+    QJSValue val = engine->newQObject(cert_error.get());
     if (!val.isQObject()) {
-      delete cert_error;
       return;
     }
+
+    // |cert_error| is owned by the QML engine
+    cert_error.release();
 
     emit q->certificateError(val);
   }
@@ -513,6 +513,12 @@ void OxideQQuickWebViewPrivate::OnEditingCapabilitiesChanged() {
   Q_Q(OxideQQuickWebView);
 
   emit q->editingCapabilitiesChanged();
+}
+
+void OxideQQuickWebViewPrivate::ZoomLevelChanged() {
+  Q_Q(OxideQQuickWebView);
+
+  emit q->zoomFactorChanged();
 }
 
 void OxideQQuickWebViewPrivate::completeConstruction() {
@@ -1745,6 +1751,48 @@ OxideQQuickWebView::editingCapabilities() const {
 
   oxide::qt::EditCapabilityFlags flags = d->proxy_->editFlags();
   return static_cast<EditCapabilities>(flags);
+}
+
+qreal OxideQQuickWebView::zoomFactor() const {
+  Q_D(const OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    return 1.0;
+  }
+
+  return d->proxy_->zoomFactor();
+}
+
+void OxideQQuickWebView::setZoomFactor(qreal factor) {
+  Q_D(OxideQQuickWebView);
+
+  if (qFuzzyCompare(factor, zoomFactor())) {
+    return;
+  }
+
+  if (!d->proxy_) {
+    qWarning() <<
+        "OxideQQuickWebView: zoom factor cannot be set during construction, "
+        "it is a per-host value";
+    return;
+  }
+
+  if (factor < minimumZoomFactor() || factor > maximumZoomFactor()) {
+    qWarning() <<
+        "OxideQQuickWebView: invalid value for zoom factor, expected to be "
+        "between" << minimumZoomFactor() << "and" << maximumZoomFactor();
+    return;
+  }
+
+  d->proxy_->setZoomFactor(factor);
+}
+
+qreal OxideQQuickWebView::minimumZoomFactor() const {
+  return oxide::qt::WebViewProxy::minimumZoomFactor();
+}
+
+qreal OxideQQuickWebView::maximumZoomFactor() const {
+  return oxide::qt::WebViewProxy::maximumZoomFactor();
 }
 
 // static

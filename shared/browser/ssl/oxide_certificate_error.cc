@@ -18,6 +18,7 @@
 #include "oxide_certificate_error.h"
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "net/cert/x509_certificate.h"
 
 #include "oxide_certificate_error_proxy.h"
@@ -42,7 +43,7 @@ CertificateError::CertificateError(bool is_main_frame,
       proxy_(proxy) {}
 
 CertificateError::~CertificateError() {
-  if (!proxy_->did_respond() && !proxy_->is_cancelled()) {
+  if (!proxy_->did_respond() && !proxy_->is_cancelled() && overridable_) {
     proxy_->Deny();
   }
 }
@@ -86,6 +87,32 @@ void CertificateError::Deny() {
   }
 
   proxy_->Deny();
+}
+
+// static
+std::unique_ptr<CertificateError> CertificateError::CreateForTesting(
+    bool is_main_frame,
+    bool is_subresource,
+    CertError cert_error,
+    net::X509Certificate* cert,
+    const GURL& url,
+    bool strict_enforcement,
+    bool overridable,
+    const base::Callback<void(bool)>& callback) {
+  scoped_refptr<CertificateErrorProxy> proxy(
+      new CertificateErrorProxy(callback));
+  return base::WrapUnique(new CertificateError(is_main_frame,
+                                               is_subresource,
+                                               cert_error,
+                                               cert,
+                                               url,
+                                               strict_enforcement,
+                                               overridable,
+                                               proxy.get()));
+}
+
+void CertificateError::SimulateCancel() {
+  proxy_->Cancel();
 }
 
 } // namespace oxide

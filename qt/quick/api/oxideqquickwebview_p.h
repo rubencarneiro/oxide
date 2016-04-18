@@ -127,12 +127,14 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
       const OxideQDownloadRequest& download_request) override;
   void HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequest* authentication_request) override;
-  void CertificateError(OxideQCertificateError* cert_error) override;
+  void CertificateError(
+      std::unique_ptr<OxideQCertificateError> cert_error) override;
   void ContentBlocked() override;
   void PrepareToCloseResponse(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
+  void ZoomLevelChanged() override;
 
   void completeConstruction();
 

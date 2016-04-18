@@ -31,6 +31,7 @@ std::string CertificateErrorPlaceholderPage::GetHTMLContents() {
 }
 
 void CertificateErrorPlaceholderPage::OnDontProceed() {
+  weak_ptr_factory_.InvalidateWeakPtrs();
   error_->Cancel();
 }
 
@@ -42,8 +43,10 @@ CertificateErrorPlaceholderPage::CertificateErrorPlaceholderPage(
                                                       true,
                                                       request_url,
                                                       this)),
-      error_(error) {
-  error_->SetPlaceholderPage(this);
+      error_(error),
+      weak_ptr_factory_(this) {}
+
+void CertificateErrorPlaceholderPage::Show() {
   interstitial_->Show();
 }
 

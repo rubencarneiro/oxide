@@ -27,6 +27,7 @@
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/macros.h"
+#include "base/memory/ptr_util.h"
 #include "net/cert/x509_certificate.h"
 
 #include "shared/browser/oxide_security_types.h"
@@ -34,8 +35,17 @@
 
 #include "oxideqsslcertificate_p.h"
 
+namespace {
+
+void SendTestResponse(const std::function<void(bool)>& callback,
+                      bool response) {
+  callback(response);
+}
+
+}
+
 OxideQCertificateErrorPrivate::OxideQCertificateErrorPrivate(
-    scoped_ptr<oxide::CertificateError> error)
+    std::unique_ptr<oxide::CertificateError> error)
     : q_ptr(nullptr),
       certificate_(OxideQSslCertificateData::Create(error->cert())),
       error_(std::move(error)),
@@ -76,12 +86,47 @@ void OxideQCertificateErrorPrivate::respond(bool accept) {
 OxideQCertificateErrorPrivate::~OxideQCertificateErrorPrivate() {}
 
 // static
-OxideQCertificateError* OxideQCertificateErrorPrivate::Create(
-    scoped_ptr<oxide::CertificateError> error,
+OxideQCertificateErrorPrivate* OxideQCertificateErrorPrivate::get(
+    OxideQCertificateError* q) {
+  return q->d_func();
+}
+
+// static
+std::unique_ptr<OxideQCertificateError> OxideQCertificateErrorPrivate::Create(
+    std::unique_ptr<oxide::CertificateError> error,
     QObject* parent) {
-  return new OxideQCertificateError(
-      *new OxideQCertificateErrorPrivate(std::move(error)),
-      parent);
+  return base::WrapUnique(
+      new OxideQCertificateError(
+          *new OxideQCertificateErrorPrivate(std::move(error)),
+          parent));
+}
+
+// static
+std::unique_ptr<OxideQCertificateError>
+OxideQCertificateErrorPrivate::CreateForTesting(
+    bool is_main_frame,
+    bool is_subresource,
+    OxideQCertificateError::Error error,
+    const OxideQSslCertificate& cert,
+    const QUrl& url,
+    bool strict_enforcement,
+    bool overridable,
+    const std::function<void(bool)>& callback) {
+  std::unique_ptr<oxide::CertificateError> cert_error =
+      oxide::CertificateError::CreateForTesting(
+          is_main_frame,
+          is_subresource,
+          static_cast<oxide::CertError>(error),
+          OxideQSslCertificateData::GetX509Certificate(cert),
+          GURL(url.toString().toStdString()),
+          strict_enforcement,
+          overridable,
+          base::Bind(&SendTestResponse, callback));
+  return Create(std::move(cert_error));                                                
+}
+
+void OxideQCertificateErrorPrivate::SimulateCancel() {
+  error_->SimulateCancel();
 }
 
 OxideQCertificateError::OxideQCertificateError(

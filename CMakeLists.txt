@@ -94,6 +94,8 @@ endif()
 
 if(ENABLE_TESTS)
   enable_testing()
+  add_test(NAME shared_unittests
+           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)
 endif()
 
 # Add one target for running "ninja all" on the gyp generated bits.
@@ -286,6 +288,11 @@ if(ENABLE_HYBRIS_CAMERA)
   list(APPEND _GYP_COMMAND -Denable_hybris_camera=1)
 else()
   list(APPEND _GYP_COMMAND -Denable_hybris_camera=0)
+endif()
+if(ENABLE_TESTS)
+  list(APPEND _GYP_COMMAND -Denable_tests=1)
+else()
+  list(APPEND _GYP_COMMAND -Denable_tests=0)
 endif()
 
 if(CMAKE_CROSSCOMPILING)

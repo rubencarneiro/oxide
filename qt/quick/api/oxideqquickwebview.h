@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -133,6 +133,10 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_PROPERTY(OxideQQuickTouchSelectionController* touchSelectionController READ touchSelectionController CONSTANT REVISION 7)
 
   Q_PROPERTY(EditCapabilities editingCapabilities READ editingCapabilities NOTIFY editingCapabilitiesChanged REVISION 7)
+
+  Q_PROPERTY(qreal zoomFactor READ zoomFactor WRITE setZoomFactor NOTIFY zoomFactorChanged REVISION 8)
+  Q_PROPERTY(qreal minimumZoomFactor READ minimumZoomFactor CONSTANT REVISION 8)
+  Q_PROPERTY(qreal maximumZoomFactor READ maximumZoomFactor CONSTANT REVISION 8)
 
   Q_DECLARE_PRIVATE(OxideQQuickWebView)
 
@@ -306,6 +310,11 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
 
   EditCapabilities editingCapabilities() const;
 
+  qreal zoomFactor() const;
+  void setZoomFactor(qreal factor);
+  qreal minimumZoomFactor() const;
+  qreal maximumZoomFactor() const;
+
  public Q_SLOTS:
   void goBack();
   void goForward();
@@ -366,6 +375,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   Q_REVISION(5) void httpAuthenticationRequested(const QJSValue& request);
   Q_REVISION(7) void hoveredUrlChanged();
   Q_REVISION(7) void editingCapabilitiesChanged();
+  Q_REVISION(8) void zoomFactorChanged();
 
   // Deprecated since 1.3
   void loadingChanged(const OxideQLoadEvent& loadEvent);

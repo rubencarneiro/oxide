@@ -182,10 +182,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
   // (should dismiss the error via the cancel callback and go back to the last
   // committed page)
 
-  // This gets owned by the |contents|
-  new CertificateErrorPlaceholderPage(contents,
-                                      request_url,
-                                      proxy.get());
+  proxy->AttachPlaceholderPage(contents, request_url);
 }
 
 } // namespace oxide

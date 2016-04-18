@@ -545,13 +545,14 @@ Module {
             "WebView 1.0",
             "WebView 1.11",
             "WebView 1.12",
+            "WebView 1.15",
             "WebView 1.3",
             "WebView 1.4",
             "WebView 1.5",
             "WebView 1.8",
             "WebView 1.9"
         ]
-        exportMetaObjectRevisions: [0, 6, 7, 1, 2, 3, 4, 5]
+        exportMetaObjectRevisions: [0, 6, 7, 8, 1, 2, 3, 4, 5]
         attachedType: "OxideQQuickWebViewAttached"
         Enum {
             name: "LogMessageSeverityLevel"
@@ -712,6 +713,9 @@ Module {
             isPointer: true
         }
         Property { name: "editingCapabilities"; revision: 7; type: "EditCapabilities"; isReadonly: true }
+        Property { name: "zoomFactor"; revision: 8; type: "double" }
+        Property { name: "minimumZoomFactor"; revision: 8; type: "double"; isReadonly: true }
+        Property { name: "maximumZoomFactor"; revision: 8; type: "double"; isReadonly: true }
         Signal { name: "loadingStateChanged"; revision: 1 }
         Signal {
             name: "loadEvent"
@@ -782,6 +786,7 @@ Module {
         }
         Signal { name: "hoveredUrlChanged"; revision: 7 }
         Signal { name: "editingCapabilitiesChanged"; revision: 7 }
+        Signal { name: "zoomFactorChanged"; revision: 8 }
         Signal {
             name: "loadingChanged"
             Parameter { name: "loadEvent"; type: "OxideQLoadEvent" }

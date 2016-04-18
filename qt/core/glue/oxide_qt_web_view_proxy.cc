@@ -18,6 +18,7 @@
 #include "oxide_qt_web_view_proxy.h"
 
 #include "base/logging.h"
+#include "content/public/common/page_zoom.h"
 #include "qt/core/browser/oxide_qt_web_context.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
 
@@ -63,6 +64,16 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 }
 
 WebViewProxy::~WebViewProxy() {}
+
+// static
+qreal WebViewProxy::minimumZoomFactor() {
+  return content::kMinimumZoomFactor;
+}
+
+// static
+qreal WebViewProxy::maximumZoomFactor() {
+  return content::kMaximumZoomFactor;
+}
 
 } // namespace qt
 } // namespace oxide

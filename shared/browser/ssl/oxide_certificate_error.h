@@ -84,6 +84,21 @@ class OXIDE_SHARED_EXPORT CertificateError {
   // Cancel the request that generated the error
   void Deny();
 
+  // Create a CertificateError for unit testing
+  static std::unique_ptr<CertificateError> CreateForTesting(
+      bool is_main_frame,
+      bool is_subresource,
+      CertError cert_error,
+      net::X509Certificate* cert,
+      const GURL& url,
+      bool strict_enforcement,
+      bool overridable,
+      const base::Callback<void(bool)>& callback);
+
+  // Simulate a cancel for unit testing by calling Cancel on the |proxy_|
+  // instance
+  void SimulateCancel();
+
  private:
   bool is_main_frame_;
   bool is_subresource_;

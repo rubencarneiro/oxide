@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_VIEW_H_
 
+#include <memory>
+
 #include <QKeyEvent>
 #include <QList>
 #include <QPointer>
@@ -25,6 +27,7 @@
 
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
+#include "content/public/browser/host_zoom_map.h"
 
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
@@ -97,6 +100,8 @@ class WebView : public oxide::WebViewClient,
   void CommonInit(OxideQFindController* find_controller);
 
   void EnsurePreferences();
+
+  void OnZoomLevelChanged(const content::HostZoomMap::ZoomLevelChange& change);
 
   // oxide::WebViewClient implementation
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
@@ -258,6 +263,9 @@ class WebView : public oxide::WebViewClient,
 
   EditCapabilityFlags editFlags() const override;
 
+  qreal zoomFactor() const override;
+  void setZoomFactor(qreal factor) override;
+
   void teardownFrameTree() override;
 
   void killWebProcess(bool crash) override;
@@ -272,6 +280,8 @@ class WebView : public oxide::WebViewClient,
   QList<QObject*> message_handlers_;
 
   bool frame_tree_torn_down_;
+
+  std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

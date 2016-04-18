@@ -20,6 +20,7 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
 #include "content/public/browser/interstitial_page_delegate.h"
 
 class GURL;
@@ -42,8 +43,14 @@ class CertificateErrorPlaceholderPage
                                   const GURL& request_url,
                                   CertificateErrorProxy* error);
 
+  void Show();
+
   void Proceed();
   void DontProceed();
+
+  base::WeakPtr<CertificateErrorPlaceholderPage> GetWeakPtr() {
+    return weak_ptr_factory_.GetWeakPtr();
+  }
 
  private:
   ~CertificateErrorPlaceholderPage() override;
@@ -55,6 +62,8 @@ class CertificateErrorPlaceholderPage
   content::InterstitialPage* interstitial_; // This owns us
 
   scoped_refptr<CertificateErrorProxy> error_;
+
+  base::WeakPtrFactory<CertificateErrorPlaceholderPage> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(CertificateErrorPlaceholderPage);
 };

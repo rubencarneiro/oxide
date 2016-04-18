@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
+#include <memory>
 #include <QRect>
 #include <QtGlobal>
 
@@ -115,7 +116,8 @@ class WebViewProxyClient {
   virtual void HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequest* authentication_request) = 0;
 
-  virtual void CertificateError(OxideQCertificateError* cert_error) = 0;
+  virtual void CertificateError(
+      std::unique_ptr<OxideQCertificateError> cert_error) = 0;
 
   virtual void ContentBlocked() = 0; // XXX(chrisccoulson): Rename to BlockedContentChanged throughout Oxide
 
@@ -125,6 +127,8 @@ class WebViewProxyClient {
   virtual void TargetURLChanged() = 0;
 
   virtual void OnEditingCapabilitiesChanged() = 0;
+  
+  virtual void ZoomLevelChanged() = 0;
 };
 
 } // namespace qt
