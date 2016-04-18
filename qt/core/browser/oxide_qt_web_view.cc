@@ -38,10 +38,12 @@
 #include "base/process/process_handle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
+#include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/render_process_host.h"
-#include "content/browser/web_contents/web_contents_impl.h"
+#include "content/public/browser/web_contents.h"
+#include "content/public/common/page_zoom.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebDragOperation.h"
@@ -265,6 +267,10 @@ void WebView::CommonInit(OxideQFindController* find_controller) {
       contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
+  track_zoom_subscription_ = content::HostZoomMap::GetForWebContents(contents)
+      ->AddZoomLevelChangedCallback(
+          base::Bind(&WebView::OnZoomLevelChanged, base::Unretained(this)));
+
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
   web_view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
@@ -279,6 +285,11 @@ void WebView::EnsurePreferences() {
   OxideQWebPreferences* p = new OxideQWebPreferences(handle());
   web_view_->SetWebPreferences(
       OxideQWebPreferencesPrivate::get(p)->preferences());
+}
+
+void WebView::OnZoomLevelChanged(
+    const content::HostZoomMap::ZoomLevelChange& change) {
+  client_->ZoomLevelChanged();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -1051,6 +1062,22 @@ EditCapabilityFlags WebView::editFlags() const {
     capabilities |= SELECT_ALL_CAPABILITY;
   }
   return capabilities;
+}
+
+qreal WebView::zoomFactor() const {
+  return content::ZoomLevelToZoomFactor(
+      content::HostZoomMap::GetZoomLevel(web_view_->GetWebContents()));
+}
+
+void WebView::setZoomFactor(qreal factor) {
+  if (factor < content::kMinimumZoomFactor ||
+      factor > content::kMaximumZoomFactor) {
+    return;
+  }
+
+  content::HostZoomMap::SetZoomLevel(
+      web_view_->GetWebContents(),
+      content::ZoomFactorToZoomLevel(static_cast<double>(factor)));
 }
 
 void WebView::teardownFrameTree() {

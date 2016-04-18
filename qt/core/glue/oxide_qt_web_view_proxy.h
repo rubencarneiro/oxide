@@ -186,6 +186,11 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual EditCapabilityFlags editFlags() const = 0;
 
+  virtual qreal zoomFactor() const = 0;
+  virtual void setZoomFactor(qreal factor) = 0;
+  static qreal minimumZoomFactor();
+  static qreal maximumZoomFactor();
+
   virtual void teardownFrameTree() = 0;
 
   virtual void killWebProcess(bool crash) = 0;
