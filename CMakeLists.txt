@@ -94,6 +94,8 @@ endif()
 
 if(ENABLE_TESTS)
   enable_testing()
+  add_test(NAME shared_unittests
+           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)
 endif()
 
 # Add one target for running "ninja all" on the gyp generated bits.
