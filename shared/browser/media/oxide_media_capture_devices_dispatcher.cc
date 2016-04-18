@@ -88,13 +88,33 @@ void RespondToMediaAccessPermissionRequest(
       render_frame_host->GetProcess()->GetBrowserContext();
 
   content::MediaStreamDevices devices;
-  MediaCaptureDevicesDispatcher::GetInstance()
-      ->GetDefaultCaptureDevicesForContext(context,
-                                           audio,
-                                           video,
-                                           requested_audio_device_id,
-                                           requested_video_device_id,
-                                           &devices);
+  if (audio && !requested_audio_device_id.empty()) {
+    const content::MediaStreamDevice* device =
+        MediaCaptureDevicesDispatcher::GetInstance()->
+            FindAudioCaptureDeviceById(requested_audio_device_id);
+    if (!device) {
+      devices.push_back(*device);
+      audio = false;
+    }
+  }
+
+  if (video && !requested_video_device_id.empty()) {
+    const content::MediaStreamDevice* device =
+        MediaCaptureDevicesDispatcher::GetInstance()->
+            FindVideoCaptureDeviceById(requested_video_device_id);
+    if (!device) {
+      devices.push_back(*device);
+      video = false;
+    }
+  }
+
+  if (audio || video) {
+      MediaCaptureDevicesDispatcher::GetInstance()
+          ->GetDefaultCaptureDevicesForContext(context,
+                                               audio,
+                                               video,
+                                               &devices);
+  }
 
   callback.Run(devices,
                devices.empty() ?
@@ -300,8 +320,6 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
     content::BrowserContext* context,
     bool audio,
     bool video,
-    const std::string& requested_audio_device_id,
-    const std::string& requested_video_device_id,
     content::MediaStreamDevices* devices) {
   bool need_audio = audio;
   bool need_video = video;
@@ -309,13 +327,8 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   MediaCaptureDevicesContext* dc = MediaCaptureDevicesContext::Get(context);
 
   if (need_audio) {
-    const content::MediaStreamDevice* device = nullptr;
-    if (!requested_audio_device_id.empty()) {
-      device = FindAudioCaptureDeviceById(requested_audio_device_id);
-    }
-    if (!device) {
-      device = dc->GetDefaultAudioDevice();
-    }
+    const content::MediaStreamDevice* device =
+        dc->GetDefaultAudioDevice();
     if (!device) {
       device = GetFirstAudioCaptureDevice();
     }
@@ -326,13 +339,8 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   }
 
   if (need_video) {
-    const content::MediaStreamDevice* device = nullptr;
-    if (!requested_video_device_id.empty()) {
-      device = FindVideoCaptureDeviceById(requested_video_device_id);
-    }
-    if (!device) {
-      device = dc->GetDefaultVideoDevice();
-    }
+    const content::MediaStreamDevice* device =
+        dc->GetDefaultVideoDevice();
     if (!device) {
       device = GetFirstVideoCaptureDevice();
     }
