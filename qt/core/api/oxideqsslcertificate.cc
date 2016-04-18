@@ -28,8 +28,10 @@
 #include "net/cert/x509_certificate.h"
 #include "net/cert/x509_cert_types.h"
 
-static QStringList GetPrincipalValue(const net::CertPrincipal& principal,
-                                     OxideQSslCertificate::PrincipalAttr attr) {
+namespace {
+
+QStringList GetPrincipalValue(const net::CertPrincipal& principal,
+                              OxideQSslCertificate::PrincipalAttr attr) {
   switch (attr) {
     case OxideQSslCertificate::PrincipalAttrOrganizationName: {
       QStringList rv;
@@ -59,17 +61,43 @@ static QStringList GetPrincipalValue(const net::CertPrincipal& principal,
   }
 }
 
-static QDateTime ToQDateTime(const base::Time& time) {
+QDateTime ToQDateTime(const base::Time& time) {
   int64_t ms = (time - base::Time::UnixEpoch()).InMilliseconds();
   return QDateTime::fromMSecsSinceEpoch(ms);
 }
 
-OxideQSslCertificateData::OxideQSslCertificateData() {}
+base::Time ToChromiumTime(const QDateTime& time) {
+  return base::Time::UnixEpoch() +
+         base::TimeDelta::FromMilliseconds(time.toMSecsSinceEpoch());
+}
+
+}
+
+OxideQSslCertificateData::OxideQSslCertificateData()
+    : x509_cert_(nullptr) {}
 
 OxideQSslCertificateData::OxideQSslCertificateData(net::X509Certificate* cert)
-    : x509_cert_(cert) {}
+    : x509_cert_(cert) {
+  if (cert) {
+    cert->AddRef();
+  }
+}
 
-OxideQSslCertificateData::~OxideQSslCertificateData() {}
+OxideQSslCertificateData::~OxideQSslCertificateData() {
+  if (x509_cert_) {
+    x509_cert_->Release();
+  }
+}
+
+// static
+net::X509Certificate* OxideQSslCertificateData::GetX509Certificate(
+    const OxideQSslCertificate& cert) {
+  if (!cert.isValid()) {
+    return nullptr;
+  }
+
+  return cert.d->x509_cert_;
+}
 
 // static
 OxideQSslCertificate OxideQSslCertificateData::Create(
@@ -77,6 +105,20 @@ OxideQSslCertificate OxideQSslCertificateData::Create(
   QSharedDataPointer<OxideQSslCertificateData> data(
       new OxideQSslCertificateData(cert));
   return OxideQSslCertificate(data);
+}
+
+// static
+OxideQSslCertificate OxideQSslCertificateData::CreateForTesting(
+    const QString& subject,
+    const QString& issuer,
+    const QDateTime& effective_date,
+    const QDateTime& expiry_date) {
+  scoped_refptr<net::X509Certificate> x509_cert(
+      new net::X509Certificate(subject.toStdString(),
+                               issuer.toStdString(),
+                               ToChromiumTime(effective_date),
+                               ToChromiumTime(expiry_date)));
+  return Create(x509_cert.get());
 }
 
 OxideQSslCertificate::OxideQSslCertificate(
@@ -187,6 +229,8 @@ bool OxideQSslCertificate::isExpired() const {
 
 QVariant OxideQSslCertificate::issuer() const {
   if (!isValid()) {
+    // We return a null QVariant with the type VoidStar, as this gets converted
+    // to null in QML engine
     return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
 

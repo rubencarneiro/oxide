@@ -31,8 +31,7 @@ CertificateErrorProxy::CertificateErrorProxy(
     const base::Callback<void(bool)>& callback)
     : callback_(callback),
       is_cancelled_(false),
-      did_respond_(false),
-      placeholder_page_(nullptr) {}
+      did_respond_(false) {}
 
 void CertificateErrorProxy::Allow() {
   DCHECK(!did_respond_);
@@ -46,7 +45,6 @@ void CertificateErrorProxy::Allow() {
 
   if (placeholder_page_) {
     placeholder_page_->Proceed();
-    placeholder_page_ = nullptr;
   }
 }
 
@@ -63,12 +61,12 @@ void CertificateErrorProxy::Deny() {
 
   if (placeholder_page_) {
     placeholder_page_->DontProceed();
-    placeholder_page_ = nullptr;
   }
 }
 
 void CertificateErrorProxy::Cancel() {
   DCHECK(!is_cancelled_);
+  DCHECK(!placeholder_page_);
 
   if (did_respond_) {
     // Calling Deny() ends up re-entering here via
@@ -76,13 +74,7 @@ void CertificateErrorProxy::Cancel() {
     return;
   }
 
-  // Chromium can call in to us after we've responded, if we responded
-  // before the interstitial navigation was committed. This is why this check
-  // is here, and not higher up
-  DCHECK(placeholder_page_);
-
   is_cancelled_ = true;
-  placeholder_page_ = nullptr;
 
   if (!callback_.is_null()) {
     callback_.Run(false);
@@ -95,11 +87,13 @@ void CertificateErrorProxy::Cancel() {
   }
 }
 
-void CertificateErrorProxy::SetPlaceholderPage(
-    CertificateErrorPlaceholderPage* placeholder) {
-  DCHECK(!did_respond_);
-  DCHECK(!is_cancelled_);
-  placeholder_page_ = placeholder;
+void CertificateErrorProxy::AttachPlaceholderPage(
+    content::WebContents* contents,
+    const GURL& request_url) {
+  CertificateErrorPlaceholderPage* placeholder =
+      new CertificateErrorPlaceholderPage(contents, request_url, this);
+  placeholder_page_ = placeholder->GetWeakPtr();
+  placeholder_page_->Show();
 }
 
 } // namespace oxide

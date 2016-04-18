@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,32 +18,47 @@
 #ifndef _OXIDE_QT_CORE_API_CERTIFICATE_ERROR_P_H_
 #define _OXIDE_QT_CORE_API_CERTIFICATE_ERROR_P_H_
 
+#include <functional>
+#include <memory>
 #include <QtGlobal>
 
-#include "base/memory/scoped_ptr.h"
-
 #include "qt/core/api/oxideqcertificateerror.h"
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 
 namespace oxide {
 class CertificateError;
 }
 
-class OxideQSslCertificate;
-
-class OxideQCertificateErrorPrivate final {
+class OXIDE_QTCORE_EXPORT OxideQCertificateErrorPrivate final {
   Q_DECLARE_PUBLIC(OxideQCertificateError)
 
  public:
   ~OxideQCertificateErrorPrivate();
 
-  static OxideQCertificateError* Create(
-      scoped_ptr<oxide::CertificateError> error,
+  static OxideQCertificateErrorPrivate* get(OxideQCertificateError* q);
+
+  static std::unique_ptr<OxideQCertificateError> Create(
+      std::unique_ptr<oxide::CertificateError> error,
       QObject* parent = nullptr);
+
+  typedef void (*ResponseCallback)(bool);
+
+  static std::unique_ptr<OxideQCertificateError> CreateForTesting(
+      bool is_main_frame,
+      bool is_subresource,
+      OxideQCertificateError::Error error,
+      const OxideQSslCertificate& cert,
+      const QUrl& url,
+      bool strict_enforcement,
+      bool overridable,
+      const std::function<void(bool)>& callback);
+
+  void SimulateCancel();
 
  private:
   OxideQCertificateErrorPrivate(
-      scoped_ptr<oxide::CertificateError> error);
+      std::unique_ptr<oxide::CertificateError> error);
 
   void OnCancel();
   void respond(bool accept);
@@ -51,7 +66,7 @@ class OxideQCertificateErrorPrivate final {
   OxideQCertificateError* q_ptr;
 
   OxideQSslCertificate certificate_;
-  scoped_ptr<oxide::CertificateError> error_;
+  std::unique_ptr<oxide::CertificateError> error_;
 
   bool did_respond_;
 };

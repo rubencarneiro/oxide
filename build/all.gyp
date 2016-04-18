@@ -22,8 +22,15 @@
       'dependencies': [
         '<@(oxide_lib_target)',
         '<@(oxide_renderer_target)',
-        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox'
-      ]
+        '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
+      ],
+      'conditions': [
+        ['enable_tests==1', {
+          'dependencies': [
+            '../shared/shared.gyp:oxide_shared_unittests',
+          ],
+        }],
+      ],
     }
   ]
 }
