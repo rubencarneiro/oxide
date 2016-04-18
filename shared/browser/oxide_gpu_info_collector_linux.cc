@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -287,12 +287,14 @@ gpu::CollectInfoResult CollectDriverInfo(gpu::GPUInfo* gpu_info) {
         reinterpret_cast<GLint*>(&gpu_info->gl_reset_notification_strategy));
   }
 
-  std::string glsl_version_string =
+  const char* glsl_version_string =
       reinterpret_cast<const char*>(glGetStringFn(GL_SHADING_LANGUAGE_VERSION));
 
-  std::string glsl_version = GetVersionFromString(glsl_version_string).first;
-  gpu_info->pixel_shader_version = glsl_version;
-  gpu_info->vertex_shader_version = glsl_version;
+  if (glsl_version_string) {
+    std::string glsl_version = GetVersionFromString(glsl_version_string).first;
+    gpu_info->pixel_shader_version = glsl_version;
+    gpu_info->vertex_shader_version = glsl_version;
+  }
 
   if (curr_display != EGL_NO_DISPLAY &&
       curr_context != EGL_NO_CONTEXT) {
