@@ -92,8 +92,6 @@ MediaAccessPermissionRequest::MediaAccessPermissionRequest(
     const GURL& embedder,
     bool audio_requested,
     bool video_requested,
-    const std::string& requested_audio_device_id,
-    const std::string& requested_video_device_id,
     const base::Callback<void(PermissionRequestResponse)>& callback)
     : PermissionRequest(request_id,
                         frame_id,
@@ -101,9 +99,7 @@ MediaAccessPermissionRequest::MediaAccessPermissionRequest(
                         embedder,
                         callback),
       audio_requested_(audio_requested),
-      video_requested_(video_requested),
-      requested_audio_device_id_(requested_audio_device_id),
-      requested_video_device_id_(requested_video_device_id) {}
+      video_requested_(video_requested) {}
 
 MediaAccessPermissionRequest::~MediaAccessPermissionRequest() {}
 

@@ -92,7 +92,7 @@ void RespondToMediaAccessPermissionRequest(
     const content::MediaStreamDevice* device =
         MediaCaptureDevicesDispatcher::GetInstance()->
             FindAudioCaptureDeviceById(requested_audio_device_id);
-    if (!device) {
+    if (device) {
       devices.push_back(*device);
       audio = false;
     }
@@ -102,7 +102,7 @@ void RespondToMediaAccessPermissionRequest(
     const content::MediaStreamDevice* device =
         MediaCaptureDevicesDispatcher::GetInstance()->
             FindVideoCaptureDeviceById(requested_video_device_id);
-    if (!device) {
+    if (device) {
       devices.push_back(*device);
       video = false;
     }
@@ -476,8 +476,6 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
         request.security_origin,
         audio,
         video,
-        request.requested_audio_device_id,
-        request.requested_video_device_id,
         WrapMediaResponseCallback(callback,
                                   request.render_process_id,
                                   request.render_frame_id,

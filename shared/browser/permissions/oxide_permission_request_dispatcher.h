@@ -78,8 +78,6 @@ class OXIDE_SHARED_EXPORT PermissionRequestDispatcher
                                    const GURL& requesting_origin,
                                    bool audio,
                                    bool video,
-                                   const std::string& requested_audio_device_id,
-                                   const std::string& requested_video_device_id,
                                    const PermissionRequestCallback& callback);
 
  private:
