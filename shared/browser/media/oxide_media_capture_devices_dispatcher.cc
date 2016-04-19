@@ -327,8 +327,7 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   MediaCaptureDevicesContext* dc = MediaCaptureDevicesContext::Get(context);
 
   if (need_audio) {
-    const content::MediaStreamDevice* device =
-        dc->GetDefaultAudioDevice();
+    const content::MediaStreamDevice* device = dc->GetDefaultAudioDevice();
     if (!device) {
       device = GetFirstAudioCaptureDevice();
     }
@@ -339,8 +338,7 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   }
 
   if (need_video) {
-    const content::MediaStreamDevice* device =
-        dc->GetDefaultVideoDevice();
+    const content::MediaStreamDevice* device = dc->GetDefaultVideoDevice();
     if (!device) {
       device = GetFirstVideoCaptureDevice();
     }

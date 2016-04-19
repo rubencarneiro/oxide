@@ -104,6 +104,7 @@ class MediaAccessPermissionRequest : public PermissionRequest {
   ~MediaAccessPermissionRequest() override;
 
   bool audio_requested() const { return audio_requested_; }
+
   bool video_requested() const { return video_requested_; }
 
  private:
