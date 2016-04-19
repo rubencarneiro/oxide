@@ -546,7 +546,7 @@ void CookieStoreUIProxy::SetForceKeepSessionState() {
   NOTIMPLEMENTED();
 }
 
-scoped_ptr<net::CookieStore::CookieChangedSubscription>
+std::unique_ptr<net::CookieStore::CookieChangedSubscription>
 CookieStoreUIProxy::AddCallbackForCookie(
     const GURL& url,
     const std::string& name,

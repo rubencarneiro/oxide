@@ -73,7 +73,7 @@ class OXIDE_SHARED_EXPORT CookieStoreUIProxy : public net::CookieStore {
   void DeleteSessionCookiesAsync(const DeleteCallback& callback) override;
   void FlushStore(const base::Closure& callback) override;
   void SetForceKeepSessionState() override;
-  scoped_ptr<CookieChangedSubscription> AddCallbackForCookie(
+  std::unique_ptr<CookieChangedSubscription> AddCallbackForCookie(
       const GURL& url,
       const std::string& name,
       const CookieChangedCallback& callback) override;
