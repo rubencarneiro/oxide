@@ -15,26 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_TEST_TEST_SUITE_H_
-#define _OXIDE_SHARED_TEST_TEST_SUITE_H_
+#ifndef _OXIDE_SHARED_TEST_TEST_BROWSER_THREAD_BUNDLE_H_
+#define _OXIDE_SHARED_TEST_TEST_BROWSER_THREAD_BUNDLE_H_
+
+#include <memory>
 
 #include "base/macros.h"
-#include "content/public/test/content_test_suite_base.h"
+
+namespace content {
+class TestBrowserThreadBundle;
+}
 
 namespace oxide {
 
-class TestSuite : public content::ContentTestSuiteBase {
+// A helper class around content::TestBrowserThreadBundle that creates the
+// UI thread MessageLoop with a MessagePumpDefault for unit tests, rather than
+// using the Chromium MessagePumpForUI implementation, which we don't normally
+// use in Oxide (we use a MessagePump provided by the embedding layer)
+class TestBrowserThreadBundle {
  public:
-  TestSuite(int argc, char** argv);
-  ~TestSuite() override;
+  TestBrowserThreadBundle();
+  ~TestBrowserThreadBundle();
 
  private:
-  // base::TestSuite implementation
-  void Initialize() override;
+  std::unique_ptr<content::TestBrowserThreadBundle> bundle_;
 
-  DISALLOW_COPY_AND_ASSIGN(TestSuite);
+  DISALLOW_COPY_AND_ASSIGN(TestBrowserThreadBundle);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_TEST_TEST_SUITE_H_
+#endif // _OXIDE_SHARED_TEST_TEST_BROWSER_THREAD_BUNDLE_H_

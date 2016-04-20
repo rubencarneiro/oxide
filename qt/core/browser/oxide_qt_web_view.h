@@ -35,7 +35,6 @@
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
-#include "shared/browser/ssl/oxide_certificate_error_dispatcher_client.h"
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -63,7 +62,6 @@ class WebViewProxyClient;
 class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
-                public oxide::CertificateErrorDispatcherClient,
                 public oxide::FullscreenHelperClient,
                 public WebViewProxy {
  public:
@@ -180,8 +178,8 @@ class WebView : public oxide::WebViewClient,
   void FrameDeleted(oxide::WebFrame* frame) override;
   void LoadCommittedInFrame(oxide::WebFrame* frame) override;
 
-  // oxide::CertificateErrorDispatcherClient implementation
-  void OnCertificateError(scoped_ptr<oxide::CertificateError> error) override;
+  // oxide::CertificateErrorDispatcher::Callback
+  void OnCertificateError(std::unique_ptr<oxide::CertificateError> error);
 
   // oxide::FullscreenHelperClient
   void EnterFullscreenMode(const GURL& origin) override;

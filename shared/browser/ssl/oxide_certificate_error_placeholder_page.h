@@ -23,6 +23,8 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/interstitial_page_delegate.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 class GURL;
 
 namespace content {
@@ -51,6 +53,9 @@ class CertificateErrorPlaceholderPage
   base::WeakPtr<CertificateErrorPlaceholderPage> GetWeakPtr() {
     return weak_ptr_factory_.GetWeakPtr();
   }
+
+  OXIDE_SHARED_EXPORT static void SetDontCreateViewForTesting(
+      bool dont_create_view);
 
  private:
   ~CertificateErrorPlaceholderPage() override;

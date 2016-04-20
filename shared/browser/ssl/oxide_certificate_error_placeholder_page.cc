@@ -24,6 +24,10 @@
 
 namespace oxide {
 
+namespace {
+bool g_dont_create_view = false;
+}
+
 CertificateErrorPlaceholderPage::~CertificateErrorPlaceholderPage() {}
 
 std::string CertificateErrorPlaceholderPage::GetHTMLContents() {
@@ -47,6 +51,9 @@ CertificateErrorPlaceholderPage::CertificateErrorPlaceholderPage(
       weak_ptr_factory_(this) {}
 
 void CertificateErrorPlaceholderPage::Show() {
+  if (g_dont_create_view) {
+    interstitial_->DontCreateViewForTesting();
+  }
   interstitial_->Show();
 }
 
@@ -56,6 +63,12 @@ void CertificateErrorPlaceholderPage::Proceed() {
 
 void CertificateErrorPlaceholderPage::DontProceed() {
   interstitial_->DontProceed();
+}
+
+// static
+void CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(
+    bool dont_create_view) {
+  g_dont_create_view = dont_create_view;
 }
 
 } // namespace oxide
