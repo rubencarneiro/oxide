@@ -259,7 +259,11 @@ WebView::WebView(WebViewProxyClient* client,
 void WebView::CommonInit(OxideQFindController* find_controller) {
   content::WebContents* contents = web_view_->GetWebContents();
 
-  CertificateErrorDispatcher::FromWebContents(contents)->set_client(this);
+  // base::Unretained is safe here because we disconnect in the destructor
+  CertificateErrorDispatcher::FromWebContents(contents)->SetCallback(
+      base::Bind(&WebView::OnCertificateError,
+                 base::Unretained(this)));
+
   FullscreenHelper::FromWebContents(contents)->set_client(this);
   PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
   OxideQSecurityStatusPrivate::get(security_status_)->view = this;
@@ -1192,7 +1196,8 @@ WebView* WebView::CreateFromNewViewRequest(
 
 WebView::~WebView() {
   content::WebContents* contents = web_view_->GetWebContents();
-  CertificateErrorDispatcher::FromWebContents(contents)->set_client(nullptr);
+  CertificateErrorDispatcher::FromWebContents(contents)->SetCallback(
+      CertificateErrorDispatcher::Callback());
   FullscreenHelper::FromWebContents(contents)->set_client(nullptr);
   DCHECK(frame_tree_torn_down_);
 

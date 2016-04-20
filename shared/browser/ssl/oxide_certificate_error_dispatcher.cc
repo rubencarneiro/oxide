@@ -33,7 +33,6 @@
 #include "shared/browser/oxide_security_types.h"
 
 #include "oxide_certificate_error.h"
-#include "oxide_certificate_error_dispatcher_client.h"
 #include "oxide_certificate_error_placeholder_page.h"
 #include "oxide_certificate_error_proxy.h"
 
@@ -77,15 +76,15 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
 
 DEFINE_WEB_CONTENTS_USER_DATA_KEY(CertificateErrorDispatcher);
 
-CertificateErrorDispatcher::CertificateErrorDispatcher()
-    : client_(nullptr) {}
+CertificateErrorDispatcher::CertificateErrorDispatcher() {}
 
 bool CertificateErrorDispatcher::CanDispatch() const {
-  return !!client_;
+  return !callback_.is_null();
 }
 
-void CertificateErrorDispatcher::Dispatch(scoped_ptr<CertificateError> error) {
-  client_->OnCertificateError(std::move(error));
+void CertificateErrorDispatcher::Dispatch(
+    std::unique_ptr<CertificateError> error) {
+  callback_.Run(std::move(error));
 }
 
 CertificateErrorDispatcher::~CertificateErrorDispatcher() {}
@@ -119,13 +118,21 @@ void CertificateErrorDispatcher::AllowCertificateError(
     const base::Callback<void(bool)>& callback,
     content::CertificateRequestResultType* result) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+  DCHECK(!callback.is_null());
   DCHECK(!strict_enforcement || !overridable);
+  DCHECK((is_main_frame && resource_type != content::RESOURCE_TYPE_SUB_FRAME) ||
+          (!is_main_frame && resource_type != content::RESOURCE_TYPE_MAIN_FRAME));
 
   // Note, CANCEL will stop the resource load associated with the error, and
   // DENY will fail it, resulting in an error page being loaded if it's
   // for the document request
 
   CertificateErrorDispatcher* dispatcher = FromWebContents(contents);
+
+  if (!dispatcher) {
+    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+    return;
+  }
 
   if (!dispatcher->CanDispatch()) {
     *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
@@ -183,6 +190,10 @@ void CertificateErrorDispatcher::AllowCertificateError(
   // committed page)
 
   proxy->AttachPlaceholderPage(contents, request_url);
+}
+
+void CertificateErrorDispatcher::SetCallback(const Callback& callback) {
+  callback_ = callback;
 }
 
 } // namespace oxide

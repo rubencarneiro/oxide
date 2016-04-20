@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SSL_CERTIFICATE_ERROR_DISPATCHER_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_SSL_CERTIFICATE_ERROR_DISPATCHER_CLIENT_H_
+#include "oxide_test_browser_thread_bundle.h"
 
-#include "base/memory/scoped_ptr.h"
+#include "base/memory/ptr_util.h"
+#include "base/message_loop/message_loop.h"
+#include "base/message_loop/message_pump_default.h"
+#include "content/public/test/test_browser_thread_bundle.h"
 
 namespace oxide {
 
-class CertificateError;
+namespace {
 
-class CertificateErrorDispatcherClient {
- public:
-  virtual ~CertificateErrorDispatcherClient() {}
+std::unique_ptr<base::MessagePump> CreateUIMessagePump() {
+  return base::WrapUnique(new base::MessagePumpDefault());
+}
 
-  virtual void OnCertificateError(scoped_ptr<CertificateError> error) = 0;
-};
+}
+
+TestBrowserThreadBundle::TestBrowserThreadBundle() {
+  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
+  bundle_.reset(new content::TestBrowserThreadBundle());
+  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
+}
+
+TestBrowserThreadBundle::~TestBrowserThreadBundle() {}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_SSL_CERTIFICATE_ERROR_DISPATCHER_CLIENT_H_

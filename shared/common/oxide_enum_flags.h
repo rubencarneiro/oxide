@@ -38,9 +38,11 @@ class CastableEnumResult {
   E value_;
 };
 
+} // namespace oxide
+
 #define OXIDE_MAKE_ENUM_BINOP_IMPL(Name, Op) \
-  inline CastableEnumResult<Name> operator Op(Name lhs, Name rhs) { \
-    return CastableEnumResult<Name>(Name(unsigned(lhs) Op unsigned(rhs))); \
+  inline ::oxide::CastableEnumResult<Name> operator Op(Name lhs, Name rhs) { \
+    return ::oxide::CastableEnumResult<Name>(Name(unsigned(lhs) Op unsigned(rhs))); \
   } \
   \
   inline Name& operator Op##=(Name& lhs, Name rhs) { \
@@ -51,10 +53,8 @@ class CastableEnumResult {
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, |) \
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, &) \
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, ^) \
-  inline CastableEnumResult<Name> operator ~(Name a) { \
-    return CastableEnumResult<Name>(Name(~unsigned(a))); \
+  inline ::oxide::CastableEnumResult<Name> operator ~(Name a) { \
+    return ::oxide::CastableEnumResult<Name>(Name(~unsigned(a))); \
   }
-
-} // namespace oxide
 
 #endif // _OXIDE_SHARED_BASE_ENUM_FLAGS_H_

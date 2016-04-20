@@ -111,6 +111,31 @@ std::unique_ptr<CertificateError> CertificateError::CreateForTesting(
                                                proxy.get()));
 }
 
+// static
+std::unique_ptr<CertificateError>
+CertificateError::CreateForTestingWithPlaceholder(
+    content::WebContents* contents,
+    bool is_main_frame,
+    bool is_subresource,
+    CertError cert_error,
+    net::X509Certificate* cert,
+    const GURL& url,
+    bool strict_enforcement,
+    bool overridable,
+    const base::Callback<void(bool)>& callback) {
+  scoped_refptr<CertificateErrorProxy> proxy(
+      new CertificateErrorProxy(callback));
+  proxy->AttachPlaceholderPage(contents, url);
+  return base::WrapUnique(new CertificateError(is_main_frame,
+                                               is_subresource,
+                                               cert_error,
+                                               cert,
+                                               url,
+                                               strict_enforcement,
+                                               overridable,
+                                               proxy.get()));
+}
+
 void CertificateError::SimulateCancel() {
   proxy_->Cancel();
 }

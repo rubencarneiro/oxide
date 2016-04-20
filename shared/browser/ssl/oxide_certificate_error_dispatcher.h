@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_SSL_CERTIFICATE_ERROR_DISPATCHER_H_
 #define _OXIDE_SHARED_BROWSER_SSL_CERTIFICATE_ERROR_DISPATCHER_H_
 
+#include <memory>
+
 #include "base/callback.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/web_contents_user_data.h"
 #include "content/public/common/resource_type.h"
@@ -36,10 +37,9 @@ class SSLInfo;
 namespace oxide {
 
 class CertificateError;
-class CertificateErrorDispatcherClient;
 
 // A helper class for dispatching certificate errors from Chromium to
-// CertificateErrorDispatcherClient
+// the provided callback
 class OXIDE_SHARED_EXPORT CertificateErrorDispatcher
     : public content::WebContentsUserData<CertificateErrorDispatcher> {
  public:
@@ -63,17 +63,17 @@ class OXIDE_SHARED_EXPORT CertificateErrorDispatcher
       const base::Callback<void(bool)>& callback,
       content::CertificateRequestResultType* result);
 
-  void set_client(CertificateErrorDispatcherClient* client) {
-    client_ = client;
-  }
+  using Callback = base::Callback<void(std::unique_ptr<CertificateError>)>;
+
+  void SetCallback(const Callback& callback);
 
  private:
   CertificateErrorDispatcher();
 
   bool CanDispatch() const;
-  void Dispatch(scoped_ptr<CertificateError> error);
+  void Dispatch(std::unique_ptr<CertificateError> error);
 
-  CertificateErrorDispatcherClient* client_;
+  Callback callback_;
 
   DISALLOW_COPY_AND_ASSIGN(CertificateErrorDispatcher);
 };

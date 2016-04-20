@@ -26,6 +26,10 @@
 #include "shared/browser/oxide_security_types.h"
 #include "shared/common/oxide_shared_export.h"
 
+namespace content {
+class WebContents;
+}
+
 namespace net {
 class X509Certificate;
 }
@@ -86,6 +90,19 @@ class OXIDE_SHARED_EXPORT CertificateError {
 
   // Create a CertificateError for unit testing
   static std::unique_ptr<CertificateError> CreateForTesting(
+      bool is_main_frame,
+      bool is_subresource,
+      CertError cert_error,
+      net::X509Certificate* cert,
+      const GURL& url,
+      bool strict_enforcement,
+      bool overridable,
+      const base::Callback<void(bool)>& callback);
+
+  // Create a CertificateError for unit testing, with a placeholder page
+  // loaded in to the specified WebContents
+  static std::unique_ptr<CertificateError> CreateForTestingWithPlaceholder(
+      content::WebContents* contents,
       bool is_main_frame,
       bool is_subresource,
       CertError cert_error,
