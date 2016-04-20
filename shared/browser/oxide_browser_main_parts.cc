@@ -21,6 +21,7 @@
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/message_loop/message_loop.h"
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
@@ -66,9 +67,9 @@ namespace oxide {
 
 namespace {
 
-scoped_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
-    scoped_ptr<media::VideoCaptureDeviceFactory> delegate) {
-  return make_scoped_ptr(
+std::unique_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
+    std::unique_ptr<media::VideoCaptureDeviceFactory> delegate) {
+  return base::WrapUnique(
       new VideoCaptureDeviceFactoryLinux(std::move(delegate)));
 }
 
@@ -76,7 +77,7 @@ ui::Clipboard* CreateClipboard() {
   return BrowserPlatformIntegration::GetInstance()->CreateClipboard();
 }
 
-scoped_ptr<base::MessagePump> CreateUIMessagePump() {
+std::unique_ptr<base::MessagePump> CreateUIMessagePump() {
   return BrowserPlatformIntegration::GetInstance()->CreateUIMessagePump();
 }
 

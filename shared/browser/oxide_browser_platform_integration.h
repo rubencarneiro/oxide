@@ -18,10 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
 #include "device/vibration/vibration_manager_impl.h"
@@ -92,7 +92,7 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
 
   // Create a MessagePump that allows Chromium events to be pumped from
   // the applications UI event loop
-  virtual scoped_ptr<MessagePump> CreateUIMessagePump() = 0;
+  virtual std::unique_ptr<MessagePump> CreateUIMessagePump() = 0;
 
   // Create a ui::Clipboard implementation. Can return nullptr
   virtual ui::Clipboard* CreateClipboard();
@@ -103,7 +103,7 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
 
   // Create a LocationProvider for determining location information from
   // the toolkit. Can return nullptr. Called on the geolocation thread
-  virtual scoped_ptr<content::LocationProvider> CreateLocationProvider();
+  virtual std::unique_ptr<content::LocationProvider> CreateLocationProvider();
 
   // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();
@@ -118,7 +118,7 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
   // Create a new DragSource implementation. Ownership of |client| is not
   // transferred, and |client| will outlive the returned DragSource.
   // Called on the UI thread
-  virtual scoped_ptr<DragSource> CreateDragSource(DragSourceClient* client);
+  virtual std::unique_ptr<DragSource> CreateDragSource(DragSourceClient* client);
 
   // Get the proper vibration manager factory
   virtual void CreateVibrationManager(

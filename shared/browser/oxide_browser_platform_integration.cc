@@ -72,7 +72,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
 void BrowserPlatformIntegration::BrowserThreadCleanUp(
     content::BrowserThread::ID id) {}
 
-scoped_ptr<content::LocationProvider>
+std::unique_ptr<content::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   return nullptr;
 }
@@ -86,7 +86,7 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
   return kDefaultApplicationName;
 }
 
-scoped_ptr<DragSource> BrowserPlatformIntegration::CreateDragSource(
+std::unique_ptr<DragSource> BrowserPlatformIntegration::CreateDragSource(
     DragSourceClient* client) {
   return nullptr;
 }

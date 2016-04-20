@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/thread_task_runner_handle.h"
 #include "base/trace_event/trace_event.h"
 #include "cc/layers/layer.h"
@@ -63,9 +64,9 @@ namespace {
 
 typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
 
-scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
+std::unique_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
-    return scoped_ptr<WGC3DCBI>();
+    return nullptr;
   }
 
   content::CauseForGpuLaunch cause =
@@ -73,7 +74,7 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (!gpu_channel_host.get()) {
-    return scoped_ptr<WGC3DCBI>();
+    return nullptr;
   }
 
   gpu::gles2::ContextCreationAttribHelper attrs;
@@ -85,7 +86,7 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   attrs.bind_generates_resource = false;
   attrs.lose_context_when_out_of_memory = true;
 
-  return make_scoped_ptr(
+  return base::WrapUnique(
       WGC3DCBI::CreateOffscreenContext(
           gpu_channel_host.get(),
           attrs,
@@ -124,7 +125,7 @@ bool Compositor::SurfaceIdIsCurrent(uint32_t surface_id) {
 }
 
 void Compositor::DidCompleteGLFrame(uint32_t surface_id,
-                                    scoped_ptr<CompositorFrameData> frame) {
+                                    std::unique_ptr<CompositorFrameData> frame) {
   TRACE_EVENT_ASYNC_END1(
       "cc",
       "oxide::Compositor:frames_waiting_for_completion",
@@ -135,8 +136,9 @@ void Compositor::DidCompleteGLFrame(uint32_t surface_id,
   ContinueSwapGLFrame(surface_id, std::move(frame));
 }
 
-void Compositor::ContinueSwapGLFrame(uint32_t surface_id,
-                                     scoped_ptr<CompositorFrameData> frame) {
+void Compositor::ContinueSwapGLFrame(
+    uint32_t surface_id,
+    std::unique_ptr<CompositorFrameData> frame) {
   DCHECK(frame->gl_frame_data);
 
   if (!SurfaceIdIsCurrent(surface_id)) {
@@ -182,14 +184,14 @@ void Compositor::ContinueSwapGLFrame(uint32_t surface_id,
   SendSwapCompositorFrameToClient(std::move(frame));
 }
 
-void Compositor::QueueGLFrameSwap(scoped_ptr<CompositorFrameData> frame) {
+void Compositor::QueueGLFrameSwap(std::unique_ptr<CompositorFrameData> frame) {
   queued_gl_frame_swaps_.push(std::move(frame));
 }
 
 void Compositor::DispatchQueuedGLFrameSwaps() {
   DCHECK(output_surface_);
 
-  std::queue<scoped_ptr<CompositorFrameData>> swaps;
+  std::queue<std::unique_ptr<CompositorFrameData>> swaps;
 
   std::swap(swaps, queued_gl_frame_swaps_);
   while (!swaps.empty()) {
@@ -200,7 +202,7 @@ void Compositor::DispatchQueuedGLFrameSwaps() {
 }
 
 void Compositor::SendSwapCompositorFrameToClient(
-    scoped_ptr<CompositorFrameData> frame) {
+    std::unique_ptr<CompositorFrameData> frame) {
   DCHECK(output_surface_);
   DCHECK(!swap_ack_callback_.is_null());
 
@@ -277,7 +279,7 @@ void Compositor::SwapCompositorFrameAckFromClient(
       continue;
     }
 
-    scoped_ptr<CompositorFrameData> frame = TakeFrameData(handle.get());
+    std::unique_ptr<CompositorFrameData> frame = TakeFrameData(handle.get());
     ReclaimResourcesForFrame(FrameHandleSurfaceId(handle.get()), frame.get());
   }
 }
@@ -290,11 +292,11 @@ void Compositor::OutputSurfaceChanged() {
   }
 }
 
-scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
+std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   uint32_t output_surface_id = next_output_surface_id_++;
 
   scoped_refptr<cc::ContextProvider> context_provider;
-  scoped_ptr<cc::OutputSurface> surface;
+  std::unique_ptr<cc::OutputSurface> surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     context_provider =
         content::ContextProviderCommandBuffer::Create(
@@ -306,7 +308,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
                                                 context_provider,
                                                 this));
   } else {
-    scoped_ptr<CompositorSoftwareOutputDevice> output_device(
+    std::unique_ptr<CompositorSoftwareOutputDevice> output_device(
         new CompositorSoftwareOutputDevice());
     surface.reset(new CompositorOutputSurfaceSoftware(output_surface_id,
                                                       std::move(output_device),
@@ -323,7 +325,7 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
           base::ThreadTaskRunnerHandle::Get()));
-  scoped_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
+  std::unique_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
           surface_id_allocator_.get(),
@@ -470,7 +472,7 @@ void Compositor::ApplyViewportDeltas(
     float top_controls_delta) {}
 
 void Compositor::RequestNewOutputSurface() {
-  scoped_ptr<cc::OutputSurface> surface(CreateOutputSurface());
+  std::unique_ptr<cc::OutputSurface> surface(CreateOutputSurface());
   if (!surface) {
     DidFailToInitializeOutputSurface();
     return;
@@ -503,8 +505,8 @@ void Compositor::DidCommit() {
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
 void Compositor::RecordFrameTimingEvents(
-    scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
-    scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
+    std::unique_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
+    std::unique_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 void Compositor::DidPostSwapBuffers() {}
@@ -573,7 +575,7 @@ void Compositor::MailboxBufferDestroyed(const gpu::Mailbox& mailbox) {
   mailbox_buffer_map_.MailboxBufferDestroyed(mailbox);
 }
 
-void Compositor::SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) {
+void Compositor::SwapCompositorFrame(std::unique_ptr<CompositorFrameData> frame) {
   DCHECK(output_surface_);
 
   TRACE_EVENT0("cc", "oxide::Compositor::SwapCompositorFrame");
@@ -650,9 +652,9 @@ void Compositor::ReclaimResourcesForFrame(uint32_t surface_id,
 }
 
 // static
-scoped_ptr<Compositor> Compositor::Create(CompositorClient* client) {
+std::unique_ptr<Compositor> Compositor::Create(CompositorClient* client) {
   DCHECK(client);
-  return make_scoped_ptr(new Compositor(client));
+  return base::WrapUnique(new Compositor(client));
 }
 
 Compositor::~Compositor() {

@@ -30,6 +30,7 @@
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
 #include "base/lazy_instance.h"
+#include "base/memory/ptr_util.h"
 #include "base/single_thread_task_runner.h"
 #include "base/thread_task_runner_handle.h"
 #include "content/public/browser/browser_thread.h"
@@ -139,9 +140,9 @@ oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return BrowserStartup::GetInstance()->shared_gl_context();
 }
 
-scoped_ptr<oxide::MessagePump>
+std::unique_ptr<oxide::MessagePump>
 BrowserPlatformIntegration::CreateUIMessagePump() {
-  return make_scoped_ptr(new MessagePump());
+  return base::WrapUnique(new MessagePump());
 }
 
 ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
@@ -160,7 +161,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
   g_io_thread.Get() = thread;
 }
 
-scoped_ptr<content::LocationProvider>
+std::unique_ptr<content::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   // Give the geolocation thread a Qt event dispatcher, so that we can use
   // Queued signals / slots between it and the IO thread
@@ -170,7 +171,7 @@ BrowserPlatformIntegration::CreateLocationProvider() {
       new BrowserThreadQEventDispatcher(base::ThreadTaskRunnerHandle::Get()));
   }
 
-  return make_scoped_ptr(new LocationProvider());
+  return base::WrapUnique(new LocationProvider());
 }
 
 oxide::BrowserPlatformIntegration::ApplicationState
@@ -187,9 +188,9 @@ std::string BrowserPlatformIntegration::GetApplicationName() {
   return application_name_;
 }
 
-scoped_ptr<oxide::DragSource> BrowserPlatformIntegration::CreateDragSource(
+std::unique_ptr<oxide::DragSource> BrowserPlatformIntegration::CreateDragSource(
     oxide::DragSourceClient* client) {
-  return make_scoped_ptr(new DragSource(client));
+  return base::WrapUnique(new DragSource(client));
 }
 
 bool BrowserPlatformIntegration::eventFilter(QObject* watched, QEvent* event) {

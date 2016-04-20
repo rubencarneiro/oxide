@@ -18,7 +18,8 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
 #define _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
+
 #include "ui/touch_selection/touch_handle.h"
 
 namespace oxide {
@@ -46,7 +47,7 @@ class TouchHandleDrawable : public ui::TouchHandleDrawable {
   gfx::RectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
 
-  scoped_ptr<TouchHandleDrawableProxy> proxy_;
+  std::unique_ptr<TouchHandleDrawableProxy> proxy_;
   const ContentsView* view_;
 };
 

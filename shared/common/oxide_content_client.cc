@@ -18,6 +18,7 @@
 #include "oxide_content_client.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "base/logging.h"
 #include "content/public/common/user_agent.h"
@@ -76,7 +77,7 @@ void GetPepperFlashPluginInfo(
     return;
   }
 
-  scoped_ptr<base::Value> manifest_json =
+  std::unique_ptr<base::Value> manifest_json =
       base::JSONReader::Read(manifest_contents,
                              base::JSON_ALLOW_TRAILING_COMMAS);
   if (!manifest_json) {

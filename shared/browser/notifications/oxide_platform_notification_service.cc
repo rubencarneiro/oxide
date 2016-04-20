@@ -102,7 +102,7 @@ void PlatformNotificationService::DisplayNotification(
     const GURL& origin,
     const content::PlatformNotificationData& notification_data,
     const content::NotificationResources& notification_resources,
-    scoped_ptr<content::DesktopNotificationDelegate> delegate,
+    std::unique_ptr<content::DesktopNotificationDelegate> delegate,
     base::Closure* cancel_callback) {
   NotificationID id(BrowserContext::FromContent(browser_context)->GetID(),
                     origin,

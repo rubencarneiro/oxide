@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_H_
 #define _OXIDE_SHARED_BROWSER_WEB_FRAME_TREE_H_
 
+#include <memory>
+
 #include "base/callback.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
@@ -71,7 +72,7 @@ class OXIDE_SHARED_EXPORT WebFrameTree
   base::ObserverList<WebFrameTreeObserver> observers_;
 
   // This should be torn down before |observers_|
-  scoped_ptr<WebFrame> root_frame_;
+  std::unique_ptr<WebFrame> root_frame_;
 
   DISALLOW_COPY_AND_ASSIGN(WebFrameTree);
 };

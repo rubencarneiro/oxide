@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_HANDLER_H_
 #define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_HANDLER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_script_message_handler_proxy.h"
 #include "shared/common/oxide_script_message_handler.h"
@@ -48,7 +48,7 @@ class ScriptMessageHandler : public ScriptMessageHandlerProxy {
 
  private:
   bool ReceiveMessageCallback(oxide::ScriptMessage* message,
-                              scoped_ptr<base::Value>* error_payload);
+                              std::unique_ptr<base::Value>* error_payload);
 
   // ScriptMessageHandlerProxy implementation
   QString msgId() const override;

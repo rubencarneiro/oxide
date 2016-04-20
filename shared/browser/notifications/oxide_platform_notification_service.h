@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_NOTIFICATIONS_PLATFORM_NOTIFICATION_SERVICE_H_
 #define _OXIDE_SHARED_BROWSER_NOTIFICATIONS_PLATFORM_NOTIFICATION_SERVICE_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
@@ -57,7 +58,7 @@ class PlatformNotificationService: public content::PlatformNotificationService {
       const GURL& origin,
       const content::PlatformNotificationData& notification_data,
       const content::NotificationResources& notification_resources,
-      scoped_ptr<content::DesktopNotificationDelegate> delegate,
+      std::unique_ptr<content::DesktopNotificationDelegate> delegate,
       base::Closure* cancel_callback) override;
   void DisplayPersistentNotification(
       content::BrowserContext* browser_context,
@@ -72,7 +73,7 @@ class PlatformNotificationService: public content::PlatformNotificationService {
       content::BrowserContext* browser_context,
       std::set<std::string>* displayed_notifications) override;
 
-  scoped_ptr<SystemNotificationDispatcher> system_notification_dispatcher_;
+  std::unique_ptr<SystemNotificationDispatcher> system_notification_dispatcher_;
 
   DISALLOW_COPY_AND_ASSIGN(PlatformNotificationService);
 };

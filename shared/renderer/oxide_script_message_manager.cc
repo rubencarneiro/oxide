@@ -19,6 +19,7 @@
 
 #include "oxide_script_message_manager.h"
 
+#include <memory>
 #include <utility>
 
 #include "base/logging.h"
@@ -210,9 +211,9 @@ void ScriptMessageManager::SendMessageInner(
   v8::Local<v8::Boolean> msg_want_reply = msg_want_reply_as_val->ToBoolean();
   v8::Local<v8::String> msg_id = msg_id_as_val.As<v8::String>();
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
-  scoped_ptr<base::Value> payload(
+  std::unique_ptr<base::Value> payload(
       converter->FromV8Value(msg_payload, isolate->GetCallingContext()));
 
   v8::Handle<v8::Object> handle;

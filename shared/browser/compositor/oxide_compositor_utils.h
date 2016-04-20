@@ -22,10 +22,11 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 
+#include <memory>
+
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
@@ -91,7 +92,7 @@ class CompositorUtils {
 
   virtual cc::SurfaceManager* GetSurfaceManager() const = 0;
 
-  virtual scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() = 0;
+  virtual std::unique_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() = 0;
 
  protected:
   virtual ~CompositorUtils();

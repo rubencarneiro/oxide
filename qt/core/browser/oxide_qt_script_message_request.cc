@@ -59,7 +59,7 @@ ScriptMessageRequest::ScriptMessageRequest(
 ScriptMessageRequest::~ScriptMessageRequest() {}
 
 void ScriptMessageRequest::SetRequest(
-    scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req) {
+    std::unique_ptr<oxide::ScriptMessageRequestImplBrowser> req) {
   DCHECK(!request_ && req);
   request_ = std::move(req);
 

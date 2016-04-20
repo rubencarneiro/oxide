@@ -17,6 +17,8 @@
 
 #include "oxide_script_message_request.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/values.h"
 
@@ -38,7 +40,7 @@ void ScriptMessageRequest::OnReceiveResponse(
   DCHECK(!has_received_response_);
   has_received_response_ = true;
 
-  scoped_ptr<base::Value> payload;
+  std::unique_ptr<base::Value> payload;
   if (!wrapped_payload->Remove(0, &payload)) {
     payload = base::Value::CreateNullValue();
   }

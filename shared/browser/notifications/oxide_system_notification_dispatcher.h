@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_NOTIFICATIONS_SYSTEM_NOTIFICATION_DISPATCHER_H_
 #define _OXIDE_SHARED_BROWSER_NOTIFICATIONS_SYSTEM_NOTIFICATION_DISPATCHER_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
 
 #include "shared/browser/notifications/oxide_notification_dispatcher.h"
 
@@ -26,7 +26,7 @@ namespace oxide {
 
 class SystemNotificationDispatcher : public NotificationDispatcher {
  public:
-  static scoped_ptr<SystemNotificationDispatcher> Create();
+  static std::unique_ptr<SystemNotificationDispatcher> Create();
 };
 
 } // namespace oxide

@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
 #define _OXIDE_SHARED_BROWSER_BROWSER_MAIN_PARTS_H_
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_main_parts.h"
 
 namespace base {
@@ -62,14 +63,14 @@ class BrowserMainParts : public content::BrowserMainParts {
   // has been shut-down
   scoped_refptr<GLContextDependent> gl_share_context_;
 
-  scoped_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
-  scoped_ptr<base::MessageLoop> main_message_loop_;
-  scoped_ptr<IOThread> io_thread_;
-  scoped_ptr<gfx::Screen> primary_screen_;
+  std::unique_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
+  std::unique_ptr<base::MessageLoop> main_message_loop_;
+  std::unique_ptr<IOThread> io_thread_;
+  std::unique_ptr<gfx::Screen> primary_screen_;
 
-  scoped_ptr<LifecycleObserver> lifecycle_observer_;
+  std::unique_ptr<LifecycleObserver> lifecycle_observer_;
 
-  scoped_ptr<RenderProcessInitializer> render_process_initializer_;
+  std::unique_ptr<RenderProcessInitializer> render_process_initializer_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserMainParts);
 };

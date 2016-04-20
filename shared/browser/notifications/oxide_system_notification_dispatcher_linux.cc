@@ -24,6 +24,7 @@
 #include <libnotify/notify.h>
 
 #include "base/macros.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/scoped_vector.h"
 #include "base/strings/utf_string_conversions.h"
 #include "third_party/skia/include/core/SkBitmap.h"
@@ -281,9 +282,9 @@ void SystemNotificationDispatcherLinux::NotificationClosed(
 }
 
 // static
-scoped_ptr<SystemNotificationDispatcher>
+std::unique_ptr<SystemNotificationDispatcher>
 SystemNotificationDispatcher::Create() {
-  return make_scoped_ptr(new SystemNotificationDispatcherLinux());
+  return base::WrapUnique(new SystemNotificationDispatcherLinux());
 }
 
 } // namespace oxide

@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_gpu_shims.h"
 
+#include <memory>
+
 #include "base/lazy_instance.h"
 #include "base/single_thread_task_runner.h"
 #include "content/gpu/gpu_child_thread.h"
@@ -47,7 +49,7 @@ class SyncPointWaiter {
             const base::Closure& wait_complete_callback);
 
  private:
-  scoped_ptr<gpu::SyncPointClient> sync_point_client_;
+  std::unique_ptr<gpu::SyncPointClient> sync_point_client_;
 };
 
 namespace {

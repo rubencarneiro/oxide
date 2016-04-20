@@ -30,6 +30,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "ui/gfx/geometry/size.h"
 
 #include "qt/core/app/oxide_qt_platform_delegate.h"
@@ -143,7 +144,7 @@ void BrowserStartup::EnsureChromiumStarted() {
 #endif
 
   BrowserProcessMain::StartParams params(
-      make_scoped_ptr(new PlatformDelegate()));
+      base::WrapUnique(new PlatformDelegate()));
 #if defined(USE_NSS_CERTS)
   params.nss_db_path = GetNSSDbPath();
 #endif

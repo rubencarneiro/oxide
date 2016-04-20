@@ -93,7 +93,7 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
 
 void VideoCaptureDeviceHybris::AllocateAndStart(
     const media::VideoCaptureParams& params,
-    scoped_ptr<Client> client) {
+    std::unique_ptr<Client> client) {
   DCHECK(params.requested_format.IsValid());
   DCHECK(!camera_control_);
 

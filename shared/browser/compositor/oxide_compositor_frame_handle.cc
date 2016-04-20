@@ -33,7 +33,7 @@ namespace {
 void ReclaimResourcesForFrameThunk(
     base::WeakPtr<CompositorFrameCollector> collector,
     uint32_t surface_id,
-    scoped_ptr<CompositorFrameData> frame) {
+    std::unique_ptr<CompositorFrameData> frame) {
   if (!collector) {
     return;
   }
@@ -47,7 +47,7 @@ CompositorFrameHandle::CompositorFrameHandle(
     uint32_t surface_id,
     scoped_refptr<base::SingleThreadTaskRunner> task_runner,
     base::WeakPtr<CompositorFrameCollector> collector,
-    scoped_ptr<CompositorFrameData> data)
+    std::unique_ptr<CompositorFrameData> data)
     : surface_id_(surface_id),
       task_runner_(task_runner),
       collector_(collector),

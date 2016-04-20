@@ -39,14 +39,14 @@ CompositorOutputSurface::CompositorOutputSurface(
 
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
-    scoped_ptr<cc::SoftwareOutputDevice> software_device,
+    std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(std::move(software_device)),
       listener_(listener),
       surface_id_(surface_id) {}
 
 void CompositorOutputSurface::DoSwapBuffers(
-    scoped_ptr<CompositorFrameData> frame) {
+    std::unique_ptr<CompositorFrameData> frame) {
   DCHECK(frame->gl_frame_data || frame->software_frame_data);
 
   listener_->SwapCompositorFrame(std::move(frame));

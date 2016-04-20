@@ -17,6 +17,8 @@
 
 #include "ui/gl/gl_surface.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/sys_info.h"
@@ -71,7 +73,7 @@ EGLConfig ChooseRGB565Config(EGLDisplay display) {
     return nullptr;
   }
 
-  scoped_ptr<EGLConfig[]> matching_configs(new EGLConfig[num_configs]);
+  std::unique_ptr<EGLConfig[]> matching_configs(new EGLConfig[num_configs]);
   EGLint config_size = num_configs;
 
   if (!eglChooseConfig(display,

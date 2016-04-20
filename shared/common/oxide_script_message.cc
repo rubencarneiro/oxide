@@ -34,7 +34,7 @@ void ScriptMessageTraits::Destruct(const ScriptMessage* x) {
 
 void ScriptMessage::MakeResponseParams(ScriptMessageParams* params,
                                        ScriptMessageParams::Error error,
-                                       scoped_ptr<base::Value> payload) {
+                                       std::unique_ptr<base::Value> payload) {
   params->serial = serial();
   params->context = context();
   params->type = ScriptMessageParams::TYPE_REPLY;
@@ -60,7 +60,7 @@ ScriptMessage::~ScriptMessage() {
   DCHECK(has_responded_);
 }
 
-void ScriptMessage::Reply(scoped_ptr<base::Value> payload) {
+void ScriptMessage::Reply(std::unique_ptr<base::Value> payload) {
   if (has_responded_) {
     return;
   }
@@ -76,7 +76,7 @@ void ScriptMessage::Reply(scoped_ptr<base::Value> payload) {
 }
 
 void ScriptMessage::Error(ScriptMessageParams::Error code,
-                          scoped_ptr<base::Value> payload) {
+                          std::unique_ptr<base::Value> payload) {
   DCHECK(code != ScriptMessageParams::ERROR_OK) <<
       "Use Reply() for non-error responses";
   if (has_responded_) {

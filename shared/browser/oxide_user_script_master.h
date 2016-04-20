@@ -18,11 +18,11 @@
 #ifndef _OXIDE_SHARED_BROWSER_USER_SCRIPT_MASTER_H_
 #define _OXIDE_SHARED_BROWSER_USER_SCRIPT_MASTER_H_
 
+#include <memory>
 #include <set>
 #include <vector>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "components/keyed_service/core/keyed_service.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -63,7 +63,7 @@ class OXIDE_SHARED_EXPORT UserScriptMaster : public KeyedService {
   void SendUpdate(content::RenderProcessHost* process);
 
   BrowserContext* context_;
-  scoped_ptr<base::SharedMemory> shmem_;
+  std::unique_ptr<base::SharedMemory> shmem_;
 
   DISALLOW_COPY_AND_ASSIGN(UserScriptMaster);
 };

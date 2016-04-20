@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_HANDLE_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_HANDLE_H_
 
+#include <memory>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -40,7 +41,7 @@ class OXIDE_SHARED_EXPORT CompositorFrameHandle
   CompositorFrameHandle(uint32_t surface_id,
                         scoped_refptr<base::SingleThreadTaskRunner> task_runner,
                         base::WeakPtr<CompositorFrameCollector> collector,
-                        scoped_ptr<CompositorFrameData> data);
+                        std::unique_ptr<CompositorFrameData> data);
 
   CompositorFrameData* data() const { return data_.get(); }
 
@@ -56,7 +57,7 @@ class OXIDE_SHARED_EXPORT CompositorFrameHandle
 
   base::WeakPtr<CompositorFrameCollector> collector_;
   
-  scoped_ptr<CompositorFrameData> data_;
+  std::unique_ptr<CompositorFrameData> data_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorFrameHandle);
 };

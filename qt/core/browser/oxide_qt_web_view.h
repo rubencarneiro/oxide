@@ -26,7 +26,6 @@
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/host_zoom_map.h"
 
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
@@ -151,7 +150,7 @@ class WebView : public oxide::WebViewClient,
   oxide::WebView* CreateNewWebView(
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
-      scoped_ptr<content::WebContents> contents) override;
+      std::unique_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
   void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void ContentBlocked() override;
@@ -167,11 +166,11 @@ class WebView : public oxide::WebViewClient,
 
   // oxide::PermissionRequestDispatcherClient implementation
   void RequestGeolocationPermission(
-      scoped_ptr<oxide::PermissionRequest> request) override;
+      std::unique_ptr<oxide::PermissionRequest> request) override;
   void RequestNotificationPermission(
-      scoped_ptr<oxide::PermissionRequest> request) override;
+      std::unique_ptr<oxide::PermissionRequest> request) override;
   void RequestMediaAccessPermission(
-      scoped_ptr<oxide::MediaAccessPermissionRequest> request) override;
+      std::unique_ptr<oxide::MediaAccessPermissionRequest> request) override;
 
   // oxide::WebFrameTreeObserver implementation
   void FrameCreated(oxide::WebFrame* frame) override;
@@ -268,9 +267,9 @@ class WebView : public oxide::WebViewClient,
 
   void killWebProcess(bool crash) override;
 
-  scoped_ptr<ContentsView> contents_view_;
+  std::unique_ptr<ContentsView> contents_view_;
 
-  scoped_ptr<oxide::WebView> web_view_;
+  std::unique_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
 

@@ -18,8 +18,9 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
 #include "shared/browser/oxide_web_popup_menu.h"
@@ -50,7 +51,7 @@ class WebPopupMenu : public oxide::WebPopupMenu,
   void selectItems(const QList<int>& selected_indices) override;
   void cancel() override;
 
-  scoped_ptr<WebPopupMenuProxy> proxy_;
+  std::unique_ptr<WebPopupMenuProxy> proxy_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
 };

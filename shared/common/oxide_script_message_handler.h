@@ -18,12 +18,12 @@
 #ifndef _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_HANDLER_H_
 #define _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_HANDLER_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/callback.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "url/gurl.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -38,7 +38,7 @@ class ScriptMessage;
 
 class OXIDE_SHARED_EXPORT ScriptMessageHandler final {
  public:
-  typedef base::Callback<bool(ScriptMessage*, scoped_ptr<base::Value>*)>
+  typedef base::Callback<bool(ScriptMessage*, std::unique_ptr<base::Value>*)>
       HandlerCallback;
 
   ScriptMessageHandler();

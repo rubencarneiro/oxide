@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/output_surface_client.h"
 
@@ -30,8 +31,8 @@
 namespace oxide {
 
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
-  scoped_ptr<CompositorFrameData> data(new CompositorFrameData());
-  data->software_frame_data = make_scoped_ptr(new SoftwareFrameData());
+  std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
+  data->software_frame_data = base::WrapUnique(new SoftwareFrameData());
 
   static_cast<CompositorSoftwareOutputDevice*>(software_device())
       ->PopulateFrameDataForSwap(data.get());
@@ -51,7 +52,7 @@ void CompositorOutputSurfaceSoftware::ReclaimResources(
 
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     uint32_t surface_id,
-    scoped_ptr<cc::SoftwareOutputDevice> software_device,
+    std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
     : CompositorOutputSurface(surface_id,
                               std::move(software_device),

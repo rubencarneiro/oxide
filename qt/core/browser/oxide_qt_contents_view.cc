@@ -321,7 +321,7 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
 }
 
 void ContentsView::handleTouchUngrabEvent() {
-  scoped_ptr<ui::MotionEvent> cancel_event = motion_event_factory_.Cancel();
+  std::unique_ptr<ui::MotionEvent> cancel_event = motion_event_factory_.Cancel();
   view()->HandleMotionEvent(*cancel_event.get());
 }
 

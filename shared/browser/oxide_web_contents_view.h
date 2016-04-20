@@ -18,13 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_H_
 
+#include <memory>
 #include <queue>
 #include <vector>
 
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -247,19 +247,19 @@ class OXIDE_SHARED_EXPORT WebContentsView
   WebContentsViewClient* client_;
   base::Closure editing_capabilities_changed_callback_;
 
-  scoped_ptr<Compositor> compositor_;
+  std::unique_ptr<Compositor> compositor_;
   scoped_refptr<cc::SolidColorLayer> root_layer_;
 
   scoped_refptr<CompositorFrameHandle> current_compositor_frame_;
   std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
   std::queue<SwapAckCallback> compositor_ack_callbacks_;
 
-  scoped_ptr<content::DropData> current_drop_data_;
+  std::unique_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
   blink::WebDragOperation current_drag_op_;
   RenderWidgetHostID current_drag_target_;
 
-  scoped_ptr<DragSource> drag_source_;
+  std::unique_ptr<DragSource> drag_source_;
 
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
 

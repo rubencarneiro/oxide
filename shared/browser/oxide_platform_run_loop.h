@@ -18,8 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_PLATFORM_RUN_LOOP_H_
 #define _OXIDE_SHARED_BROWSER_PLATFORM_RUN_LOOP_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -50,7 +51,7 @@ class OXIDE_SHARED_EXPORT PlatformRunLoop
   void WillProcessTask(const base::PendingTask& pending_task) override;
   void DidProcessTask(const base::PendingTask& pending_task) override;
 
-  scoped_ptr<base::RunLoop> run_loop_;
+  std::unique_ptr<base::RunLoop> run_loop_;
 
   PlatformRunLoop* previous_run_loop_;
   static PlatformRunLoop* s_top_run_loop_;

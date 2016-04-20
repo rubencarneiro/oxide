@@ -21,6 +21,7 @@
 
 #include "base/files/file_path.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/singleton.h"
 #include "components/devtools_http_handler/devtools_http_handler.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
@@ -54,8 +55,8 @@ class TCPServerSocketFactory
         port_(port) {}
 
  private:
-  scoped_ptr<net::ServerSocket> CreateForHttpServer() override {
-    scoped_ptr<net::TCPServerSocket> socket(
+  std::unique_ptr<net::ServerSocket> CreateForHttpServer() override {
+    std::unique_ptr<net::TCPServerSocket> socket(
         new net::TCPServerSocket(nullptr, net::NetLog::Source()));
     if (socket->ListenWithAddressAndPort(address_,
                                          port_,
@@ -66,7 +67,7 @@ class TCPServerSocketFactory
     return std::move(socket);
   }
 
-  scoped_ptr<net::ServerSocket> CreateForTethering(
+  std::unique_ptr<net::ServerSocket> CreateForTethering(
       std::string* out_name) override {
     NOTIMPLEMENTED();
     return nullptr;
@@ -152,7 +153,7 @@ void DevToolsManager::SetEnabled(bool enabled) {
     return;
   }
 
-  scoped_ptr<TCPServerSocketFactory> factory(
+  std::unique_ptr<TCPServerSocketFactory> factory(
       new TCPServerSocketFactory(address_, port_));
 
   http_handler_.reset(

@@ -26,7 +26,7 @@ namespace oxide {
 NotificationDelegateProxy::~NotificationDelegateProxy() {}
 
 NotificationDelegateProxy::NotificationDelegateProxy(
-    scoped_ptr<content::DesktopNotificationDelegate> delegate)
+    std::unique_ptr<content::DesktopNotificationDelegate> delegate)
     : delegate_(std::move(delegate)) {}
 
 void NotificationDelegateProxy::NotificationDisplayed() {

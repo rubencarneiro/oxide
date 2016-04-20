@@ -17,7 +17,6 @@
 
 #include "base/compiler_specific.h"
 #include "base/logging.h"
-#include "base/memory/scoped_ptr.h"
 #include "ui/display/types/native_display_delegate.h"
 #include "ui/ozone/common/stub_client_native_pixmap_factory.h"
 #include "ui/ozone/public/gpu_platform_support.h"
@@ -38,51 +37,51 @@ class OzonePlatformOxide : public OzonePlatform {
 
   virtual ~OzonePlatformOxide() {}
 
-  SurfaceFactoryOzone* GetSurfaceFactoryOzone() final {
+  SurfaceFactoryOzone* GetSurfaceFactoryOzone() override {
     return &surface_factory_;
   }
 
-  OverlayManagerOzone* GetOverlayManager() final {
+  OverlayManagerOzone* GetOverlayManager() override {
     return nullptr;
   }
 
-  CursorFactoryOzone* GetCursorFactoryOzone() final {
+  CursorFactoryOzone* GetCursorFactoryOzone() override {
     return nullptr;
   }
 
-  ui::InputController* GetInputController() final {
+  ui::InputController* GetInputController() override {
     return nullptr;
   }
 
-  GpuPlatformSupport* GetGpuPlatformSupport() final {
+  GpuPlatformSupport* GetGpuPlatformSupport() override {
     return gpu_platform_support_.get();
   }
 
-  GpuPlatformSupportHost* GetGpuPlatformSupportHost() final {
+  GpuPlatformSupportHost* GetGpuPlatformSupportHost() override {
     return gpu_platform_support_host_.get();
   }
 
-  scoped_ptr<SystemInputInjector> CreateSystemInputInjector() final {
-    return scoped_ptr<SystemInputInjector>();
+  std::unique_ptr<SystemInputInjector> CreateSystemInputInjector() override {
+    return nullptr;
   }
 
-  scoped_ptr<PlatformWindow> CreatePlatformWindow(
+  std::unique_ptr<PlatformWindow> CreatePlatformWindow(
       PlatformWindowDelegate* delegate,
-      const gfx::Rect& bounds) final {
-    return scoped_ptr<PlatformWindow>();
+      const gfx::Rect& bounds) override {
+    return nullptr;
   }
 
-  scoped_ptr<NativeDisplayDelegate> CreateNativeDisplayDelegate() final {
-    return scoped_ptr<NativeDisplayDelegate>();
+  std::unique_ptr<NativeDisplayDelegate> CreateNativeDisplayDelegate() override {
+    return nullptr;
   }
 
  private:
-  void InitializeUI() final {}
-  void InitializeGPU() final {}
+  void InitializeUI() override {}
+  void InitializeGPU() override {}
 
   SurfaceFactoryOzoneOxide surface_factory_;
-  scoped_ptr<GpuPlatformSupportHost> gpu_platform_support_host_;
-  scoped_ptr<GpuPlatformSupport> gpu_platform_support_;
+  std::unique_ptr<GpuPlatformSupportHost> gpu_platform_support_host_;
+  std::unique_ptr<GpuPlatformSupport> gpu_platform_support_;
 };
 
 OzonePlatform* CreateOzonePlatformOxide() {

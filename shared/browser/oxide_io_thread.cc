@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/cert/cert_verifier.h"
@@ -138,16 +139,15 @@ void IOThread::InitSystemRequestContextOnIOThread() {
 
   storage->set_ssl_config_service(new SSLConfigService());
   storage->set_channel_id_service(
-      make_scoped_ptr(new net::ChannelIDService(
+      base::WrapUnique(new net::ChannelIDService(
           new net::DefaultChannelIDStore(nullptr),
           base::WorkerPool::GetTaskRunner(true))));
   storage->set_http_server_properties(
-      scoped_ptr<net::HttpServerProperties>(
-        new net::HttpServerPropertiesImpl()));
+      base::WrapUnique(new net::HttpServerPropertiesImpl()));
   storage->set_cookie_store(
-      make_scoped_ptr(new net::CookieMonster(nullptr, nullptr)));
+      base::WrapUnique(new net::CookieMonster(nullptr, nullptr)));
   storage->set_transport_security_state(
-      make_scoped_ptr(new net::TransportSecurityState()));
+      base::WrapUnique(new net::TransportSecurityState()));
 
   net::HttpNetworkSession::Params session_params;
   session_params.host_resolver = context->host_resolver();
@@ -163,11 +163,11 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   session_params.net_log = context->net_log();
 
   storage->set_http_transaction_factory(
-      make_scoped_ptr(new net::HttpNetworkLayer(
+      base::WrapUnique(new net::HttpNetworkLayer(
         new net::HttpNetworkSession(session_params))));
 
   storage->set_job_factory(
-      make_scoped_ptr(new net::URLRequestJobFactoryImpl()));
+      base::WrapUnique(new net::URLRequestJobFactoryImpl()));
 }
 
 void IOThread::Init() {
@@ -191,7 +191,7 @@ void IOThread::Init() {
       net::HttpAuthHandlerFactory::CreateDefault(
         globals()->host_resolver_.get());
 
-  scoped_ptr<net::ProxyConfigService> proxy_config_service =
+  std::unique_ptr<net::ProxyConfigService> proxy_config_service =
       net::ProxyService::CreateSystemProxyConfigService(
           content::BrowserThread::GetMessageLoopProxyForThread(
               content::BrowserThread::IO),

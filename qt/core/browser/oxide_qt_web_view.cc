@@ -553,7 +553,7 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
 oxide::WebView* WebView::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
-    scoped_ptr<content::WebContents> contents) {
+    std::unique_ptr<content::WebContents> contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
@@ -643,8 +643,8 @@ const oxide::ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
 }
 
 void WebView::RequestGeolocationPermission(
-    scoped_ptr<oxide::PermissionRequest> request) {
-  scoped_ptr<OxideQGeolocationPermissionRequest> req(
+    std::unique_ptr<oxide::PermissionRequest> request) {
+  std::unique_ptr<OxideQGeolocationPermissionRequest> req(
       OxideQGeolocationPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
@@ -652,8 +652,8 @@ void WebView::RequestGeolocationPermission(
 }
 
 void WebView::RequestNotificationPermission(
-    scoped_ptr<oxide::PermissionRequest> request) {
-  scoped_ptr<OxideQPermissionRequest> req(
+    std::unique_ptr<oxide::PermissionRequest> request) {
+  std::unique_ptr<OxideQPermissionRequest> req(
       OxideQPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
@@ -661,8 +661,8 @@ void WebView::RequestNotificationPermission(
 }
 
 void WebView::RequestMediaAccessPermission(
-    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
-  scoped_ptr<OxideQMediaAccessPermissionRequest> req(
+    std::unique_ptr<oxide::MediaAccessPermissionRequest> request) {
+  std::unique_ptr<OxideQMediaAccessPermissionRequest> req(
       OxideQMediaAccessPermissionRequestPrivate::Create(std::move(request)));
 
   // The embedder takes ownership of this
@@ -709,7 +709,8 @@ void WebView::LoadCommittedInFrame(oxide::WebFrame* frame) {
   f->client()->LoadCommitted();
 }
 
-void WebView::OnCertificateError(scoped_ptr<oxide::CertificateError> error) {
+void WebView::OnCertificateError(
+    std::unique_ptr<oxide::CertificateError> error) {
   std::unique_ptr<OxideQCertificateError> qerror =
       OxideQCertificateErrorPrivate::Create(std::move(error));
 

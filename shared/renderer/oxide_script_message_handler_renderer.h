@@ -18,10 +18,10 @@
 #ifndef _OXIDE_SHARED_RENDERER_SCRIPT_MESSAGE_HANDLER_H_
 #define _OXIDE_SHARED_RENDERER_SCRIPT_MESSAGE_HANDLER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "v8/include/v8.h"
 
 #include "shared/common/oxide_script_message_handler.h"
@@ -47,7 +47,7 @@ class ScriptMessageHandlerRenderer {
 
  private:
   bool ReceiveMessageCallback(ScriptMessage* message,
-                              scoped_ptr<base::Value>* error_payload);
+                              std::unique_ptr<base::Value>* error_payload);
 
   ScriptMessageManager* manager_;
   ScriptMessageHandler handler_;

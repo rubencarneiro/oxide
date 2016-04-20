@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_REQUEST_H_
 #define _OXIDE_QT_CORE_BROWSER_SCRIPT_MESSAGE_REQUEST_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_script_message_request_proxy.h"
 #include "shared/common/oxide_script_message_params.h"
@@ -44,7 +44,7 @@ class ScriptMessageRequest : public ScriptMessageRequestProxy {
                        QObject* handle);
   ~ScriptMessageRequest() override;
 
-  void SetRequest(scoped_ptr<oxide::ScriptMessageRequestImplBrowser> req);
+  void SetRequest(std::unique_ptr<oxide::ScriptMessageRequestImplBrowser> req);
 
  private:
   void ReceiveReplyCallback(const base::Value& payload);
@@ -52,7 +52,7 @@ class ScriptMessageRequest : public ScriptMessageRequestProxy {
                             const base::Value& payload);
 
   ScriptMessageRequestProxyClient* client_;
-  scoped_ptr<oxide::ScriptMessageRequestImplBrowser> request_;
+  std::unique_ptr<oxide::ScriptMessageRequestImplBrowser> request_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessageRequest);
 };

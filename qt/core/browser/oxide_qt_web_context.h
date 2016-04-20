@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_H_
 
+#include <memory>
 #include <QList>
 #include <QtGlobal>
 #include <QUrl>
@@ -27,7 +28,6 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "net/cookies/canonical_cookie.h"
 
@@ -155,7 +155,7 @@ class WebContext : public WebContextProxy,
   scoped_refptr<BrowserContext> context_;
 
   struct ConstructProperties;
-  scoped_ptr<ConstructProperties> construct_props_;
+  std::unique_ptr<ConstructProperties> construct_props_;
 
   class BrowserContextDelegate;
   scoped_refptr<BrowserContextDelegate> delegate_;

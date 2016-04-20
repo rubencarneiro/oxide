@@ -30,6 +30,7 @@
 
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/memory/ptr_util.h"
 #include "base/strings/stringprintf.h"
 
 #include "shared/browser/oxide_hybris_utils.h"
@@ -55,12 +56,12 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
   return "";
 }
 
-scoped_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
+std::unique_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
   DCHECK(HybrisUtils::IsCameraCompatAvailable());
 
   int32_t number_of_devices = android_camera_get_number_of_devices();
 
-  scoped_ptr<media::VideoCaptureDevice::Names> names(
+  std::unique_ptr<media::VideoCaptureDevice::Names> names(
       new media::VideoCaptureDevice::Names());
 
   for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
@@ -105,14 +106,15 @@ bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
 
 }
 
-scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
+std::unique_ptr<media::VideoCaptureDevice>
+VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (!HybrisUtils::IsCameraCompatAvailable()) {
     return delegate_->Create(device_name);
   }
 
-  scoped_ptr<media::VideoCaptureDevice::Names> names =
+  std::unique_ptr<media::VideoCaptureDevice::Names> names =
       GetDeviceNamesFromHybris();
   if (!names) {
     return nullptr;
@@ -122,7 +124,7 @@ scoped_ptr<media::VideoCaptureDevice> VideoCaptureDeviceFactoryLinux::Create(
     return nullptr;
   }
 
-  return make_scoped_ptr(new VideoCaptureDeviceHybris(device_name));
+  return base::WrapUnique(new VideoCaptureDeviceHybris(device_name));
 #else
   return delegate_->Create(device_name);
 #endif
@@ -132,7 +134,7 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
     const EnumerateDevicesCallback& callback) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (HybrisUtils::IsCameraCompatAvailable()) {
-    scoped_ptr<media::VideoCaptureDevice::Names> names =
+    std::unique_ptr<media::VideoCaptureDevice::Names> names =
         GetDeviceNamesFromHybris();
     callback.Run(std::move(names));
   } else
@@ -160,7 +162,7 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
 }
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(
-    scoped_ptr<media::VideoCaptureDeviceFactory> delegate)
+    std::unique_ptr<media::VideoCaptureDeviceFactory> delegate)
     : delegate_(std::move(delegate)) {}
 
 VideoCaptureDeviceFactoryLinux::~VideoCaptureDeviceFactoryLinux() {}

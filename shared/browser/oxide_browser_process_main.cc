@@ -126,10 +126,10 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
   ProcessModel process_model_;
 
   // XXX: Don't change the order of these
-  scoped_ptr<PlatformDelegate> platform_delegate_;
-  scoped_ptr<ContentMainDelegate> main_delegate_;
-  scoped_ptr<base::AtExitManager> exit_manager_;
-  scoped_ptr<content::BrowserMainRunner> browser_main_runner_;
+  std::unique_ptr<PlatformDelegate> platform_delegate_;
+  std::unique_ptr<ContentMainDelegate> main_delegate_;
+  std::unique_ptr<base::AtExitManager> exit_manager_;
+  std::unique_ptr<content::BrowserMainRunner> browser_main_runner_;
 };
 
 namespace {
@@ -371,7 +371,7 @@ const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
 }
 
 BrowserProcessMain::StartParams::StartParams(
-    scoped_ptr<PlatformDelegate> delegate)
+    std::unique_ptr<PlatformDelegate> delegate)
     : delegate(std::move(delegate)),
       gl_implementation(gfx::kGLImplementationNone),
       process_model(PROCESS_MODEL_MULTI_PROCESS) {}

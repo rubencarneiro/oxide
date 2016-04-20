@@ -18,13 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_H_
 
+#include <memory>
 #include <queue>
 #include <string>
 
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/resources/returned_resource.h"
@@ -60,13 +60,13 @@ namespace oxide {
 
 class RenderWidgetHostViewContainer;
 
-class RenderWidgetHostView final :
-    public content::RenderWidgetHostViewOxide,
-    public CompositorObserver,
-    public GestureProviderClient,
-    public cc::SurfaceFactoryClient,
-    public ui::TouchSelectionControllerClient,
-    public base::SupportsWeakPtr<RenderWidgetHostView> {
+class RenderWidgetHostView
+    : public content::RenderWidgetHostViewOxide,
+      public CompositorObserver,
+      public GestureProviderClient,
+      public cc::SurfaceFactoryClient,
+      public ui::TouchSelectionControllerClient,
+      public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
   RenderWidgetHostView(content::RenderWidgetHostImpl* render_widget_host);
   ~RenderWidgetHostView();
@@ -95,12 +95,12 @@ class RenderWidgetHostView final :
   void Blur();
 
   // content::RenderWidgetHostView implementation
-  content::RenderWidgetHost* GetRenderWidgetHost() const final;
-  void SetSize(const gfx::Size& size) final;
-  void SetBounds(const gfx::Rect& rect) final;
-  void Focus() final;
-  void Show() final;
-  void Hide() final;
+  content::RenderWidgetHost* GetRenderWidgetHost() const override;
+  void SetSize(const gfx::Size& size) override;
+  void SetBounds(const gfx::Rect& rect) override;
+  void Focus() override;
+  void Show() override;
+  void Hide() override;
 
   ui::TouchSelectionController* selection_controller() const {
     return selection_controller_.get();
@@ -109,76 +109,78 @@ class RenderWidgetHostView final :
  private:
   // content::RenderWidgetHostViewOxide implementation
   void OnTextInputStateChanged(ui::TextInputType type,
-                               bool show_ime_if_needed) final;
+                               bool show_ime_if_needed) override;
   void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
                                 const gfx::Rect& focus_rect,
-                                bool is_anchor_first) final;
+                                bool is_anchor_first) override;
 
   // content::RenderWidgetHostViewBase implementation
   void SelectionChanged(const base::string16& text,
                         size_t offset,
-                        const gfx::Range& range) final;
-  gfx::Size GetPhysicalBackingSize() const final;
-  bool DoTopControlsShrinkBlinkSize() const final;
-  float GetTopControlsHeight() const final;
-  void FocusedNodeChanged(bool is_editable_node) final;
-  void OnSwapCompositorFrame(uint32_t output_surface_id,
-                             scoped_ptr<cc::CompositorFrame> frame) final;
-  void ClearCompositorFrame() final;
+                        const gfx::Range& range) override;
+  gfx::Size GetPhysicalBackingSize() const override;
+  bool DoTopControlsShrinkBlinkSize() const override;
+  float GetTopControlsHeight() const override;
+  void FocusedNodeChanged(bool is_editable_node) override;
+  void OnSwapCompositorFrame(
+      uint32_t output_surface_id,
+      std::unique_ptr<cc::CompositorFrame> frame) override;
+  void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
-                              content::InputEventAckState ack_result) final;
+                              content::InputEventAckState ack_result) override;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
-                   const gfx::Rect& pos) final;
+                   const gfx::Rect& pos) override;
   void InitAsFullscreen(
-      content::RenderWidgetHostView* reference_host_view) final;
-  void UpdateCursor(const content::WebCursor& cursor) final;
-  void SetIsLoading(bool is_loading) final;
-  void ImeCancelComposition() final;
-  void RenderProcessGone(base::TerminationStatus status, int error_code) final;
-  void Destroy() final;
-  void SetTooltipText(const base::string16& tooltip_text) final;
+      content::RenderWidgetHostView* reference_host_view) override;
+  void UpdateCursor(const content::WebCursor& cursor) override;
+  void SetIsLoading(bool is_loading) override;
+  void ImeCancelComposition() override;
+  void RenderProcessGone(base::TerminationStatus status,
+                         int error_code) override;
+  void Destroy() override;
+  void SetTooltipText(const base::string16& tooltip_text) override;
   void CopyFromCompositingSurface(
       const gfx::Rect& src_subrect,
       const gfx::Size& dst_size,
       const content::ReadbackRequestCallback& callback,
-      const SkColorType color_type) final;
+      const SkColorType color_type) override;
   void CopyFromCompositingSurfaceToVideoFrame(
       const gfx::Rect& src_subrect,
       const scoped_refptr<media::VideoFrame>& target,
-      const base::Callback<void(const gfx::Rect&, bool)>& callback) final;
-  bool CanCopyToVideoFrame() const final;
-  bool HasAcceleratedSurface(const gfx::Size& desired_size) final;
-  void GetScreenInfo(blink::WebScreenInfo* results) final;
-  bool GetScreenColorProfile(std::vector<char>* color_profile) final;
-  gfx::Rect GetBoundsInRootWindow() final;
+      const base::Callback<void(const gfx::Rect&, bool)>& callback) override;
+  bool CanCopyToVideoFrame() const override;
+  bool HasAcceleratedSurface(const gfx::Size& desired_size) override;
+  void GetScreenInfo(blink::WebScreenInfo* results) override;
+  bool GetScreenColorProfile(std::vector<char>* color_profile) override;
+  gfx::Rect GetBoundsInRootWindow() override;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
-                               const SkBitmap& zoomed_bitmap) final;
-  void LockCompositingSurface() final;
-  void UnlockCompositingSurface() final;
+                               const SkBitmap& zoomed_bitmap) override;
+  void LockCompositingSurface() override;
+  void UnlockCompositingSurface() override;
   void ImeCompositionRangeChanged(
       const gfx::Range& range,
-      const std::vector<gfx::Rect>& character_bounds) final;
+      const std::vector<gfx::Rect>& character_bounds) override;
 
   // content::RenderWidgetHostView implementation
-  void InitAsChild(gfx::NativeView parent_view) final;
-  gfx::Vector2dF GetLastScrollOffset() const final;
-  gfx::NativeView GetNativeView() const final;
-  gfx::NativeViewId GetNativeViewId() const final;
-  gfx::NativeViewAccessible GetNativeViewAccessible() final;
-  bool HasFocus() const final;
-  bool IsSurfaceAvailableForCopy() const final;
-  bool IsShowing() final;
-  gfx::Rect GetViewBounds() const final;
-  bool LockMouse() final;
-  void UnlockMouse() final;
+  void InitAsChild(gfx::NativeView parent_view) override;
+  gfx::Vector2dF GetLastScrollOffset() const override;
+  gfx::NativeView GetNativeView() const override;
+  gfx::NativeViewId GetNativeViewId() const override;
+  gfx::NativeViewAccessible GetNativeViewAccessible() override;
+  bool HasFocus() const override;
+  bool IsSurfaceAvailableForCopy() const override;
+  bool IsShowing() override;
+  gfx::Rect GetViewBounds() const override;
+  bool LockMouse() override;
+  void UnlockMouse() override;
 
   // CompositorObserver implementation
-  void CompositorDidCommit() final;
-  void CompositorWillRequestSwapFrame() final;
-  void CompositorEvictResources() final;
+  void CompositorDidCommit() override;
+  void CompositorWillRequestSwapFrame() override;
+  void CompositorEvictResources() override;
 
   // GestureProviderClient implementation
-  void OnGestureEvent(const blink::WebGestureEvent& event) final;
+  void OnGestureEvent(const blink::WebGestureEvent& event) override;
 
   // cc::SurfaceFactoryClient implementation
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
@@ -192,7 +194,7 @@ class RenderWidgetHostView final :
   void SelectBetweenCoordinates(const gfx::PointF& base,
                                 const gfx::PointF& extent) override;
   void OnSelectionEvent(ui::SelectionEventType event) override;
-  scoped_ptr<ui::TouchHandleDrawable> CreateDrawable() override;
+  std::unique_ptr<ui::TouchHandleDrawable> CreateDrawable() override;
 
   // ===================
 
@@ -212,8 +214,8 @@ class RenderWidgetHostView final :
   RenderWidgetHostViewContainer* container_;
 
   scoped_refptr<cc::SurfaceLayer> layer_;
-  scoped_ptr<cc::SurfaceIdAllocator> id_allocator_;
-  scoped_ptr<cc::SurfaceFactory> surface_factory_;
+  std::unique_ptr<cc::SurfaceIdAllocator> id_allocator_;
+  std::unique_ptr<cc::SurfaceFactory> surface_factory_;
   cc::SurfaceId surface_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
 
@@ -239,9 +241,9 @@ class RenderWidgetHostView final :
 
   bool top_controls_shrink_blink_size_;
 
-  scoped_ptr<GestureProvider> gesture_provider_;
+  std::unique_ptr<GestureProvider> gesture_provider_;
 
-  scoped_ptr<ui::TouchSelectionController> selection_controller_;
+  std::unique_ptr<ui::TouchSelectionController> selection_controller_;
   bool handle_drag_in_progress_;
 
   base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;

@@ -1,6 +1,8 @@
 #ifndef _OXIDE_MEDIA_WEB_CONTENTS_OBSERVER_H_
 #define _OXIDE_MEDIA_WEB_CONTENTS_OBSERVER_H_
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/containers/scoped_ptr_hash_map.h"
 #include "content/common/content_export.h"
@@ -32,7 +34,7 @@ class MediaWebContentsObserver : public content::WebContentsObserver {
       content::RenderFrameHost* render_frame_host);
 
  private:
-  typedef base::ScopedPtrHashMap<uintptr_t, scoped_ptr<BrowserMediaPlayerManager>>
+  typedef base::ScopedPtrHashMap<uintptr_t, std::unique_ptr<BrowserMediaPlayerManager>>
       MediaPlayerManagerMap;
   MediaPlayerManagerMap media_player_managers_;
 

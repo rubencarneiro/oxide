@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_software_output_device.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/memory/ref_counted_memory.h"
 #include "cc/resources/shared_bitmap.h"
@@ -42,7 +44,7 @@ class RefCountedPixelMemory : public base::RefCountedMemory {
   ~RefCountedPixelMemory();
 
   size_t size_;
-  scoped_ptr<unsigned char[]> pixels_;
+  std::unique_ptr<unsigned char[]> pixels_;
 };
 
 RefCountedPixelMemory::RefCountedPixelMemory(size_t size)

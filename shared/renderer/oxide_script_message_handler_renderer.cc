@@ -18,6 +18,7 @@
 #include "oxide_script_message_handler_renderer.h"
 
 #include "base/bind.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
@@ -33,18 +34,18 @@ namespace oxide {
 
 namespace {
 
-scoped_ptr<base::StringValue> V8StringToValue(
+std::unique_ptr<base::StringValue> V8StringToValue(
     v8::Local<v8::String> string) {
   v8::String::Value v(string);
   base::string16 s(static_cast<const base::char16 *>(*v), v.length());
-  return make_scoped_ptr(new base::StringValue(base::UTF16ToUTF8(s)));
+  return base::WrapUnique(new base::StringValue(base::UTF16ToUTF8(s)));
 }
 
 }
 
 bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
     ScriptMessage* message,
-    scoped_ptr<base::Value>* error_payload) {
+    std::unique_ptr<base::Value>* error_payload) {
   v8::HandleScope handle_scope(manager_->isolate());
   v8::Context::Scope context_scope(manager_->GetV8Context());
 

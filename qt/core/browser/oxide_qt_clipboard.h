@@ -18,9 +18,9 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_CLIPBOARD_QT_H_
 #define _OXIDE_QT_CORE_BROWSER_CLIPBOARD_QT_H_
 
-#include "ui/base/clipboard/clipboard.h"
+#include <memory>
 
-#include "base/memory/scoped_ptr.h"
+#include "ui/base/clipboard/clipboard.h"
 
 class QMimeData;
 class ClipboardChangedListener;
@@ -74,10 +74,10 @@ class Clipboard : public ui::Clipboard {
                  size_t data_len) override;
 
  private:
-  scoped_ptr<ClipboardChangedListener> clipboard_changed_listener_;
+  std::unique_ptr<ClipboardChangedListener> clipboard_changed_listener_;
   
   // Used for accumulated mimedata
-  scoped_ptr<QMimeData> write_mime_data_acc_;
+  std::unique_ptr<QMimeData> write_mime_data_acc_;
   
   DISALLOW_COPY_AND_ASSIGN(Clipboard);
 };

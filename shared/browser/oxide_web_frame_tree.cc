@@ -20,6 +20,7 @@
 #include <queue>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 
@@ -65,7 +66,7 @@ void WebFrameTree::RenderFrameCreated(
   DCHECK(parent);
 
   WebFrame* frame = new WebFrame(this, render_frame_host);
-  parent->AddChild(make_scoped_ptr(frame));
+  parent->AddChild(base::WrapUnique(frame));
   
   FOR_EACH_OBSERVER(WebFrameTreeObserver, observers_, FrameCreated(frame));
 }

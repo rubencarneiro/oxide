@@ -1,7 +1,7 @@
 
 #include "shared/browser/media/oxide_media_web_contents_observer.h"
 
-#include "base/memory/scoped_ptr.h"
+#include "base/memory/ptr_util.h"
 #include "base/stl_util.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
@@ -69,7 +69,7 @@ BrowserMediaPlayerManager* MediaWebContentsObserver::GetMediaPlayerManager(
   if (!media_player_managers_.contains(key)) {
     media_player_managers_.set(
         key,
-        make_scoped_ptr(new BrowserMediaPlayerManager(render_frame_host)));
+        base::WrapUnique(new BrowserMediaPlayerManager(render_frame_host)));
   }
   return media_player_managers_.get(key);
 }

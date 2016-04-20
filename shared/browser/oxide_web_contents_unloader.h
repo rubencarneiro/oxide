@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNLOADER_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNLOADER_H_
 
+#include <memory>
+
 #include "base/callback.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "content/public/browser/web_contents_delegate.h"
 
@@ -46,7 +47,7 @@ class WebContentsUnloader : public content::WebContentsDelegate {
 
   // Run the unload handler for the current page in |contents|. This method
   // takes ownership of |contents| and deletes it when complete
-  void Unload(scoped_ptr<content::WebContents> contents);
+  void Unload(std::unique_ptr<content::WebContents> contents);
 
   // Creates a RunLoop and waits for all pending unloads to complete. This
   // must not be called inside an existing Chromium event

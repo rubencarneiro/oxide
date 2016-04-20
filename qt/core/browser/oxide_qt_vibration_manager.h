@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_VIBRATION_MANAGER_H_
 #define _OXIDE_QT_CORE_BROWSER_VIBRATION_MANAGER_H_
 
+#include <memory>
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "mojo/public/cpp/bindings/strong_binding.h"
 
@@ -46,7 +46,7 @@ class VibrationManager : public device::VibrationManager {
   ~VibrationManager() override;
 
   mojo::StrongBinding<device::VibrationManager> binding_;
-  scoped_ptr<QFeedbackHapticsEffect> vibration_;
+  std::unique_ptr<QFeedbackHapticsEffect> vibration_;
 };
 
 } // namespace qt

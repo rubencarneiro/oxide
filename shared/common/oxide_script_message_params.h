@@ -18,9 +18,9 @@
 #ifndef _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_PARAMS_H_
 #define _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_PARAMS_H_
 
+#include <memory>
 #include <string>
 
-#include "base/memory/scoped_ptr.h"
 #include "base/values.h"
 #include "url/gurl.h"
 
@@ -82,7 +82,7 @@ struct ScriptMessageParams {
 void PopulateScriptMessageParams(int serial,
                                  const GURL& context,
                                  const std::string& msg_id,
-                                 scoped_ptr<base::Value> payload,
+                                 std::unique_ptr<base::Value> payload,
                                  ScriptMessageParams* params);
 
 } // namespace oxide

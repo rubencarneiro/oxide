@@ -105,7 +105,7 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
 WebView* WebViewClient::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
-    scoped_ptr<content::WebContents> contents) {
+    std::unique_ptr<content::WebContents> contents) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
   return nullptr;

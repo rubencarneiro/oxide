@@ -41,7 +41,7 @@ void ScriptMessageHandler::OnReceiveMessage(ScriptMessage* message) const {
   DCHECK_EQ(message->msg_id(), msg_id());
   DCHECK(!callback_.is_null());
 
-  scoped_ptr<base::Value> error_payload;
+  std::unique_ptr<base::Value> error_payload;
   bool success = callback_.Run(message, &error_payload);
 
   if (!success) {

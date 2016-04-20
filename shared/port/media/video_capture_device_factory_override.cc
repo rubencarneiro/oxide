@@ -26,8 +26,9 @@ namespace {
 VideoCaptureDeviceFactoryOverrideFactory* g_factory;
 }
 
-scoped_ptr<VideoCaptureDeviceFactory> CreateOverrideVideoCaptureDeviceFactory(
-    scoped_ptr<VideoCaptureDeviceFactory> factory) {
+std::unique_ptr<VideoCaptureDeviceFactory>
+CreateOverrideVideoCaptureDeviceFactory(
+    std::unique_ptr<VideoCaptureDeviceFactory> factory) {
   if (!g_factory) {
     return std::move(factory);
   }

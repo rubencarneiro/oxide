@@ -17,6 +17,8 @@
 
 #include "oxide_script_message_request_impl_renderer.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "content/public/child/v8_value_converter.h"
 #include "content/public/renderer/render_frame.h"
@@ -60,7 +62,7 @@ void ScriptMessageRequestImplRenderer::OnReply(const base::Value& payload) {
     return;
   }
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
 
   v8::Local<v8::Value> argv[] = {
@@ -82,7 +84,7 @@ void ScriptMessageRequestImplRenderer::OnError(
     return;
   }
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
 
   v8::Local<v8::Value> argv[] = {

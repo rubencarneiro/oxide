@@ -18,13 +18,13 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
 #define _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
 
-#include "base/callback.h"
-#include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-
+#include <memory>
 #include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
+
+#include "base/callback.h"
+#include "base/macros.h"
 
 #include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/browser/oxide_qt_motion_event_factory.h"
@@ -122,7 +122,7 @@ class ContentsView : public ContentsViewProxy,
 
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
-  scoped_ptr<InputMethodContext> input_method_context_;
+  std::unique_ptr<InputMethodContext> input_method_context_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsView);
 };

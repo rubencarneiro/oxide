@@ -20,9 +20,10 @@
 
 #include "oxide_power_save_blocker.h"
 
+#include <memory>
+
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
@@ -137,13 +138,13 @@ void PowerSaveBlocker::ApplyBlockUnityScreenService() {
   scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
         kUnityScreenServiceName,
         dbus::ObjectPath(kUnityScreenPath));
-  scoped_ptr<dbus::MethodCall> method_call;
+  std::unique_ptr<dbus::MethodCall> method_call;
   method_call.reset(
       new dbus::MethodCall(kUnityScreenInterface, "keepDisplayOn"));
-  scoped_ptr<dbus::MessageWriter> message_writer;
+  std::unique_ptr<dbus::MessageWriter> message_writer;
   message_writer.reset(new dbus::MessageWriter(method_call.get()));
 
-  scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
+  std::unique_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
       method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
   if (response) {
     dbus::MessageReader message_reader(response.get());
@@ -162,7 +163,7 @@ void PowerSaveBlocker::RemoveBlockUnityScreenService() {
     scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
         kUnityScreenServiceName,
         dbus::ObjectPath(kUnityScreenPath));
-    scoped_ptr<dbus::MethodCall> method_call;
+    std::unique_ptr<dbus::MethodCall> method_call;
     method_call.reset(
         new dbus::MethodCall(kUnityScreenInterface, "removeDisplayOnRequest"));
     dbus::MessageWriter message_writer(method_call.get());
@@ -200,15 +201,15 @@ void PowerSaveBlocker::ApplyBlockFreedesktop() {
   scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
         kFreeDesktopScreenSaverName,
         dbus::ObjectPath(kFreeDesktopScreenSaverPath));
-  scoped_ptr<dbus::MethodCall> method_call;
+  std::unique_ptr<dbus::MethodCall> method_call;
   method_call.reset(
       new dbus::MethodCall(kFreeDestopScreenSaverInterface, "Inhibit"));
-  scoped_ptr<dbus::MessageWriter> message_writer;
+  std::unique_ptr<dbus::MessageWriter> message_writer;
   message_writer.reset(new dbus::MessageWriter(method_call.get()));
   message_writer->AppendString(application_name);
   message_writer->AppendString(description);
 
-  scoped_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
+  std::unique_ptr<dbus::Response> response(object_proxy->CallMethodAndBlock(
       method_call.get(), dbus::ObjectProxy::TIMEOUT_USE_DEFAULT));
   if (response) {
     dbus::MessageReader message_reader(response.get());
@@ -227,7 +228,7 @@ void PowerSaveBlocker::RemoveBlockFreedesktop() {
     scoped_refptr<dbus::ObjectProxy> object_proxy = bus_->GetObjectProxy(
         kFreeDesktopScreenSaverName,
         dbus::ObjectPath(kFreeDesktopScreenSaverPath));
-    scoped_ptr<dbus::MethodCall> method_call;
+    std::unique_ptr<dbus::MethodCall> method_call;
     method_call.reset(
         new dbus::MethodCall(kFreeDestopScreenSaverInterface, "UnInhibit"));
     dbus::MessageWriter message_writer(method_call.get());
