@@ -32,6 +32,11 @@ void RenderWidgetHostViewBase::GetDefaultScreenInfo(
       result);
 }
 
+void RenderWidgetHostViewOxide::TextInputStateChanged(
+    const ViewHostMsg_TextInputState_Params& params) {
+  OnTextInputStateChanged(params.type, params.show_ime_if_needed);
+}
+
 void RenderWidgetHostViewOxide::SelectionBoundsChanged(
     const ViewHostMsg_SelectionBounds_Params& params) {
   OnSelectionBoundsChanged(params.anchor_rect,

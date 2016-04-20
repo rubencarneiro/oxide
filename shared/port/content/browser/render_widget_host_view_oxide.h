@@ -22,6 +22,8 @@
 #include "content/common/content_export.h"
 #include "ui/base/ime/text_input_type.h"
 
+struct ViewHostMsg_TextInputState_Params;
+
 namespace blink {
 class WebScreenInfo;
 }
@@ -43,9 +45,13 @@ class CONTENT_EXPORT RenderWidgetHostViewOxide
 
  private:
   // content::RenderWidgetHostViewBase implementation
+  void TextInputStateChanged(
+      const ViewHostMsg_TextInputState_Params& params) final;
   void SelectionBoundsChanged(
       const ViewHostMsg_SelectionBounds_Params& params) final;
 
+  virtual void OnTextInputStateChanged(ui::TextInputType type,
+                                       bool show_ime_if_needed) = 0;
   virtual void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
                                         const gfx::Rect& focus_rect,
                                         bool is_anchor_first) = 0;
