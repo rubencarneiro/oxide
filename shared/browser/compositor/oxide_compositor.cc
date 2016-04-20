@@ -63,7 +63,8 @@ namespace {
 
 typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
 
-scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
+scoped_ptr<content::WebGraphicsContext3DCommandBufferImpl>
+CreateOffscreenContext3D() {
   if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
     return scoped_ptr<WGC3DCBI>();
   }
@@ -86,13 +87,14 @@ scoped_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   attrs.lose_context_when_out_of_memory = true;
 
   return make_scoped_ptr(
-      WGC3DCBI::CreateOffscreenContext(
+      new content::WebGraphicsContext3DCommandBufferImpl(
+          gpu::kNullSurfaceHandle,
+          GURL(),
           gpu_channel_host.get(),
           attrs,
           gfx::PreferIntegratedGpu,
           true, // share_resources
           false, // automatic_flushes
-          GURL(),
           content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
           nullptr)); // share_context
 }
@@ -297,8 +299,9 @@ scoped_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   scoped_ptr<cc::OutputSurface> surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     context_provider =
-        content::ContextProviderCommandBuffer::Create(
-            CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
+        make_scoped_refptr(new content::ContextProviderCommandBuffer(
+            CreateOffscreenContext3D(),
+            content::CONTEXT_TYPE_UNKNOWN));
     if (!context_provider.get()) {
       return nullptr;
     }
@@ -503,9 +506,6 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
-void Compositor::RecordFrameTimingEvents(
-    scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
-    scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 void Compositor::DidPostSwapBuffers() {}

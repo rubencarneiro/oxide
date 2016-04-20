@@ -136,9 +136,6 @@ class Compositor : public cc::LayerTreeHostClient,
   void DidCommit() override;
   void DidCommitAndDrawFrame() override;
   void DidCompleteSwapBuffers() override;
-  void RecordFrameTimingEvents(
-      scoped_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
-      scoped_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) override;
   void DidCompletePageScaleAnimation() override;
 
   // cc::LayerTreeHostSingleThreadClient implementation

@@ -254,6 +254,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
     prefs->viewport_meta_enabled = true;
+    prefs->viewport_style = content::ViewportStyle::MOBILE;
   }
 
   prefs->supports_multiple_windows = false;
