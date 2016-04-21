@@ -19,15 +19,16 @@
 #ifndef _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_OVERRIDE_H_
 #define _OXIDE_SHARED_PORT_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_OVERRIDE_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
+
 #include "media/base/video_capture_types.h"
 #include "media/capture/video/video_capture_device_factory.h"
 
 namespace media {
 
-typedef scoped_ptr<VideoCaptureDeviceFactory>
+typedef std::unique_ptr<VideoCaptureDeviceFactory>
     (VideoCaptureDeviceFactoryOverrideFactory)(
-      scoped_ptr<VideoCaptureDeviceFactory>);
+      std::unique_ptr<VideoCaptureDeviceFactory>);
 
 MEDIA_EXPORT void SetVideoCaptureDeviceFactoryOverrideFactory(
     VideoCaptureDeviceFactoryOverrideFactory* factory);

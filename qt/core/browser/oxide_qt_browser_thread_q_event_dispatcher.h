@@ -20,6 +20,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 
 #include <QAbstractEventDispatcher>
@@ -29,7 +30,6 @@
 #include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/message_loop/message_loop.h"
 #include "base/synchronization/lock.h"
 
@@ -88,7 +88,7 @@ class BrowserThreadQEventDispatcher final : public QAbstractEventDispatcher {
     TimerInstance();
     ~TimerInstance();
 
-    scoped_ptr<base::Timer> timer;
+    std::unique_ptr<base::Timer> timer;
     std::set<int> ids;
   };
 
@@ -121,7 +121,7 @@ class BrowserThreadQEventDispatcher final : public QAbstractEventDispatcher {
     SocketNotifierData();
     ~SocketNotifierData();
 
-    scoped_ptr<IOWatcher> watcher;
+    std::unique_ptr<IOWatcher> watcher;
     base::MessageLoopForIO::FileDescriptorWatcher controller;
   };
 

@@ -112,7 +112,7 @@ WebFrame::~WebFrame() {
       continue;
     }
 
-    scoped_ptr<base::ListValue> wrapped_payload(new base::ListValue());
+    std::unique_ptr<base::ListValue> wrapped_payload(new base::ListValue());
     request->OnReceiveResponse(
         wrapped_payload.get(),
         ScriptMessageParams::ERROR_HANDLER_DID_NOT_RESPOND);
@@ -134,7 +134,7 @@ GURL WebFrame::GetURL() const {
   return render_frame_host_->GetLastCommittedURL();
 }
 
-void WebFrame::AddChild(scoped_ptr<WebFrame> child) {
+void WebFrame::AddChild(std::unique_ptr<WebFrame> child) {
   DCHECK(!child->parent_);
   child->parent_ = this;
   child_frames_.push_back(child.release());
@@ -169,15 +169,15 @@ const std::vector<WebFrame*>& WebFrame::GetChildFrames() const {
   return child_frames_;
 }
 
-scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
+std::unique_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
     const GURL& context,
     const std::string& msg_id,
-    scoped_ptr<base::Value> payload) {
+    std::unique_ptr<base::Value> payload) {
   if (destroying_) {
     return nullptr;
   }
 
-  scoped_ptr<ScriptMessageRequestImplBrowser> request(
+  std::unique_ptr<ScriptMessageRequestImplBrowser> request(
       new ScriptMessageRequestImplBrowser(this,
                                           next_message_serial_++));
 
@@ -200,7 +200,7 @@ scoped_ptr<ScriptMessageRequestImplBrowser> WebFrame::SendMessage(
 
 bool WebFrame::SendMessageNoReply(const GURL& context,
                                   const std::string& msg_id,
-                                  scoped_ptr<base::Value> payload) {
+                                  std::unique_ptr<base::Value> payload) {
   if (destroying_) {
     return false;
   }

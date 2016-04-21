@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_MOTION_EVENT_FACTORY_H_
 #define _OXIDE_QT_CORE_BROWSER_MOTION_EVENT_FACTORY_H_
 
+#include <memory>
 #include <QtGlobal>
 #include <QEvent>
 #include <QTouchEvent>
@@ -25,7 +26,6 @@
 #include "base/callback.h"
 #include "base/containers/stack_container.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "ui/events/gesture_detection/motion_event_generic.h"
 
 #include "shared/common/oxide_id_allocator.h"
@@ -47,9 +47,9 @@ class MotionEventFactory {
   MotionEventFactory();
   ~MotionEventFactory();
 
-  scoped_ptr<ui::MotionEvent> Cancel();
+  std::unique_ptr<ui::MotionEvent> Cancel();
 
-  using ResultVector = std::vector<scoped_ptr<ui::MotionEvent>>;
+  using ResultVector = std::vector<std::unique_ptr<ui::MotionEvent>>;
 
   // Make a sequence of ui::MotionEvents from the specified QTouchEvent. This
   // also updates pointer state internally.
@@ -78,10 +78,10 @@ class MotionEventFactory {
   int AddTouchPoint(const QTouchEvent::TouchPoint& touch_point,
                     float location_bar_content_offset,
                     QScreen* screen);
-  scoped_ptr<ui::MotionEventGeneric> BuildMotionEventCommon(
+  std::unique_ptr<ui::MotionEventGeneric> BuildMotionEventCommon(
       ui::MotionEvent::Action action,
       const base::TimeTicks& event_time);
-  scoped_ptr<ui::MotionEvent> BuildMotionEvent(
+  std::unique_ptr<ui::MotionEvent> BuildMotionEvent(
       const QTouchEvent::TouchPoint& touch_point,
       float location_bar_content_offset,
       QScreen* screen,

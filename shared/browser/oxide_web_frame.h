@@ -18,10 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_FRAME_H_
 #define _OXIDE_SHARED_BROWSER_WEB_FRAME_H_
 
+#include <memory>
 #include <vector>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "ipc/ipc_sender.h"
 #include "url/gurl.h"
@@ -63,7 +63,7 @@ class OXIDE_SHARED_EXPORT WebFrame : public ScriptMessageTarget {
   // Return the last committed URL for this frame
   GURL GetURL() const;
 
-  void AddChild(scoped_ptr<WebFrame> child);
+  void AddChild(std::unique_ptr<WebFrame> child);
 
   void RemoveChild(WebFrame* child);
 
@@ -92,17 +92,17 @@ class OXIDE_SHARED_EXPORT WebFrame : public ScriptMessageTarget {
   // Send a message with |msg_id| and |payload| to the isolated world
   // addressed by |context|. Returns a request object on success with which you
   // can use to wait for a response
-  scoped_ptr<ScriptMessageRequestImplBrowser> SendMessage(
+  std::unique_ptr<ScriptMessageRequestImplBrowser> SendMessage(
       const GURL& context,
       const std::string& msg_id,
-      scoped_ptr<base::Value> payload);
+      std::unique_ptr<base::Value> payload);
 
   // Send a message with |msg_id| and |payload| to the isolated world
   // addressed by |context|, for which you don't want a response. Returns
   // true on success
   bool SendMessageNoReply(const GURL& context,
                           const std::string& msg_id,
-                          scoped_ptr<base::Value> value);
+                          std::unique_ptr<base::Value> value);
 
   // Return the pending ScriptMessageRequests for this frame
   const ScriptMessageRequestVector& current_script_message_requests() const {

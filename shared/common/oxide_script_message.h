@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_H_
 #define _OXIDE_SHARED_COMMON_SCRIPT_MESSAGE_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
@@ -49,9 +50,9 @@ class OXIDE_SHARED_EXPORT ScriptMessage :
     public base::RefCountedThreadSafe<ScriptMessage, ScriptMessageTraits> {
  public:
 
-  void Reply(scoped_ptr<base::Value> payload);
+  void Reply(std::unique_ptr<base::Value> payload);
   void Error(ScriptMessageParams::Error code,
-             scoped_ptr<base::Value> payload = base::Value::CreateNullValue());
+             std::unique_ptr<base::Value> payload = base::Value::CreateNullValue());
 
   int serial() const { return serial_; }
   GURL context() const { return context_; }
@@ -71,12 +72,12 @@ class OXIDE_SHARED_EXPORT ScriptMessage :
   virtual void DoSendResponse(const ScriptMessageParams& params) = 0;
   void MakeResponseParams(ScriptMessageParams* params,
                           ScriptMessageParams::Error error,
-                          scoped_ptr<base::Value> payload);
+                          std::unique_ptr<base::Value> payload);
 
   int serial_;
   GURL context_;
   std::string msg_id_;
-  scoped_ptr<base::Value> payload_;
+  std::unique_ptr<base::Value> payload_;
   bool has_responded_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessage);

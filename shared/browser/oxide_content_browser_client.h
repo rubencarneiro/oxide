@@ -18,12 +18,12 @@
 #ifndef _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_CONTENT_BROWSER_CLIENT_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/browser/content_browser_client.h"
 
 namespace content {
@@ -48,28 +48,28 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
 
  private:
   // content::ContentBrowserClient implementation
-  std::string GetApplicationLocale() final;
+  std::string GetApplicationLocale() override;
   content::BrowserMainParts* CreateBrowserMainParts(
-      const content::MainFunctionParams& parameters) final;
-  void RenderProcessWillLaunch(content::RenderProcessHost* host) final;
+      const content::MainFunctionParams& parameters) override;
+  void RenderProcessWillLaunch(content::RenderProcessHost* host) override;
   std::string GetAcceptLangs(
-      content::BrowserContext* browser_context) final;
+      content::BrowserContext* browser_context) override;
   void AppendExtraCommandLineSwitches(base::CommandLine* command_line,
-                                      int child_process_id) final;
+                                      int child_process_id) override;
   bool AllowGetCookie(const GURL& url,
                       const GURL& first_party,
                       const net::CookieList& cookie_list,
                       content::ResourceContext* context,
                       int render_process_id,
-                      int render_frame_id) final;
+                      int render_frame_id) override;
   bool AllowSetCookie(const GURL& url,
                       const GURL& first_party,
                       const std::string& cookie_line,
                       content::ResourceContext* context,
                       int render_process_id,
                       int render_frame_id,
-                      const net::CookieOptions& options) final;
-  content::QuotaPermissionContext* CreateQuotaPermissionContext() final;
+                      const net::CookieOptions& options) override;
+  content::QuotaPermissionContext* CreateQuotaPermissionContext() override;
   void AllowCertificateError(
       content::WebContents* contents,
       bool is_main_frame,
@@ -81,9 +81,10 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
       bool strict_enforcement,
       bool expired_previous_decision,
       const base::Callback<void(bool)>& callback,
-      content::CertificateRequestResultType* result) final;
-  content::MediaObserver* GetMediaObserver() final;
-  content::PlatformNotificationService* GetPlatformNotificationService() final;
+      content::CertificateRequestResultType* result) override;
+  content::MediaObserver* GetMediaObserver() override;
+  content::PlatformNotificationService*
+      GetPlatformNotificationService() override;
   bool CanCreateWindow(const GURL& opener_url,
                        const GURL& opener_top_level_frame_url,
                        const GURL& source_origin,
@@ -98,21 +99,23 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                        int render_process_id,
                        int opener_render_view_id,
                        int opener_render_frame_id,
-                       bool* no_javascript_access) final;
-  void ResourceDispatcherHostCreated() final;
-  content::AccessTokenStore* CreateAccessTokenStore() final;
+                       bool* no_javascript_access) override;
+  void ResourceDispatcherHostCreated() override;
+  content::AccessTokenStore* CreateAccessTokenStore() override;
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
-                           content::WebPreferences* prefs) final;
-  content::LocationProvider* OverrideSystemLocationProvider() final;
-  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) final;
+                           content::WebPreferences* prefs) override;
+  content::LocationProvider* OverrideSystemLocationProvider() override;
+  void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) override;
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
-      std::string* os_version) final;
-  void RegisterRenderProcessMojoServices(content::ServiceRegistry* registry) final;
+      std::string* os_version) override;
+  void RegisterRenderProcessMojoServices(
+      content::ServiceRegistry* registry) override;
 
   std::string application_locale_;
-  scoped_ptr<BrowserPlatformIntegration> platform_integration_;
+  std::unique_ptr<BrowserPlatformIntegration> platform_integration_;
 
-  scoped_ptr<oxide::ResourceDispatcherHostDelegate> resource_dispatcher_host_delegate_;
+  std::unique_ptr<ResourceDispatcherHostDelegate>
+      resource_dispatcher_host_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentBrowserClient);
 };

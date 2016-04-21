@@ -18,10 +18,9 @@
 #ifndef _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_
 #define _OXIDE_QT_CORE_API_PERMISSION_REQUEST_P_H_
 
+#include <memory>
 #include <QtGlobal>
 #include <QUrl>
-
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/api/oxideqpermissionrequest.h"
 
@@ -39,13 +38,14 @@ class OxideQPermissionRequestPrivate {
   virtual ~OxideQPermissionRequestPrivate();
 
   static OxideQPermissionRequest* Create(
-      scoped_ptr<oxide::PermissionRequest> request);
+      std::unique_ptr<oxide::PermissionRequest> request);
 
  protected:
-  OxideQPermissionRequestPrivate(scoped_ptr<oxide::PermissionRequest> request);
+  OxideQPermissionRequestPrivate(
+      std::unique_ptr<oxide::PermissionRequest> request);
 
   OxideQPermissionRequest* q_ptr;
-  scoped_ptr<oxide::PermissionRequest> request_;
+  std::unique_ptr<oxide::PermissionRequest> request_;
 
  private:
   bool canRespond() const;
@@ -59,11 +59,11 @@ class OxideQGeolocationPermissionRequestPrivate
   ~OxideQGeolocationPermissionRequestPrivate() override;
 
   static OxideQGeolocationPermissionRequest* Create(
-      scoped_ptr<oxide::PermissionRequest> request);
+      std::unique_ptr<oxide::PermissionRequest> request);
 
  private:
   OxideQGeolocationPermissionRequestPrivate(
-      scoped_ptr<oxide::PermissionRequest> request);
+      std::unique_ptr<oxide::PermissionRequest> request);
 };
 
 class OxideQMediaAccessPermissionRequestPrivate
@@ -72,13 +72,13 @@ class OxideQMediaAccessPermissionRequestPrivate
   ~OxideQMediaAccessPermissionRequestPrivate() override;
 
   static OxideQMediaAccessPermissionRequest* Create(
-      scoped_ptr<oxide::MediaAccessPermissionRequest> request);
+      std::unique_ptr<oxide::MediaAccessPermissionRequest> request);
 
  private:
   friend class OxideQMediaAccessPermissionRequest;
 
   OxideQMediaAccessPermissionRequestPrivate(
-      scoped_ptr<oxide::MediaAccessPermissionRequest> request);
+      std::unique_ptr<oxide::MediaAccessPermissionRequest> request);
 
   oxide::MediaAccessPermissionRequest* request() const;
 };

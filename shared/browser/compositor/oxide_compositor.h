@@ -18,10 +18,11 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_H_
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
@@ -61,7 +62,7 @@ class Compositor : public cc::LayerTreeHostClient,
                    public CompositorOutputSurfaceListener,
                    public CompositorFrameCollector {
  public:
-  static scoped_ptr<Compositor> Create(CompositorClient* client);
+  static std::unique_ptr<Compositor> Create(CompositorClient* client);
   ~Compositor() override;
 
   void SetVisibility(bool visible);
@@ -77,13 +78,13 @@ class Compositor : public cc::LayerTreeHostClient,
   bool SurfaceIdIsCurrent(uint32_t surface_id);
 
   void DidCompleteGLFrame(uint32_t surface_id,
-                          scoped_ptr<CompositorFrameData> frame);
+                          std::unique_ptr<CompositorFrameData> frame);
   void ContinueSwapGLFrame(uint32_t surface_id,
-                           scoped_ptr<CompositorFrameData> frame);
-  void QueueGLFrameSwap(scoped_ptr<CompositorFrameData> frame);
+                           std::unique_ptr<CompositorFrameData> frame);
+  void QueueGLFrameSwap(std::unique_ptr<CompositorFrameData> frame);
   void DispatchQueuedGLFrameSwaps();
 
-  void SendSwapCompositorFrameToClient(scoped_ptr<CompositorFrameData> frame);
+  void SendSwapCompositorFrameToClient(std::unique_ptr<CompositorFrameData> frame);
 
   using FrameHandleVector = std::vector<scoped_refptr<CompositorFrameHandle>>;
   static void SwapCompositorFrameAckFromClientThunk(
@@ -96,7 +97,7 @@ class Compositor : public cc::LayerTreeHostClient,
 
   void OutputSurfaceChanged();
 
-  scoped_ptr<cc::OutputSurface> CreateOutputSurface();
+  std::unique_ptr<cc::OutputSurface> CreateOutputSurface();
 
   void AddObserver(CompositorObserver* observer);
   void RemoveObserver(CompositorObserver* observer);
@@ -148,7 +149,7 @@ class Compositor : public cc::LayerTreeHostClient,
   void MailboxBufferCreated(const gpu::Mailbox& mailbox,
                             uint64_t sync_point) override;
   void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) override;
-  void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) override;
+  void SwapCompositorFrame(std::unique_ptr<CompositorFrameData> frame) override;
   void AllFramesReturnedFromClient() override;
 
   // CompositorFrameCollector implementation
@@ -165,20 +166,20 @@ class Compositor : public cc::LayerTreeHostClient,
 
   MailboxBufferMap mailbox_buffer_map_;
 
-  std::queue<scoped_ptr<CompositorFrameData>> queued_gl_frame_swaps_;
+  std::queue<std::unique_ptr<CompositorFrameData>> queued_gl_frame_swaps_;
 
   // Needs to outlive |display_client_|, as its destructor results in our
   // OutputSurface calling in to OutputSurfaceDestroyed
   CompositorClient::SwapAckCallback swap_ack_callback_;
 
   // Both of these need to outlive |layer_tree_host_|
-  scoped_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
-  scoped_ptr<cc::OnscreenDisplayClient> display_client_;
+  std::unique_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+  std::unique_ptr<cc::OnscreenDisplayClient> display_client_;
 
   bool layer_tree_host_eviction_pending_;
   bool can_evict_layer_tree_host_;
 
-  scoped_ptr<cc::LayerTreeHost> layer_tree_host_;
+  std::unique_ptr<cc::LayerTreeHost> layer_tree_host_;
 
   int num_failed_recreate_attempts_;
 

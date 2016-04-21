@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_LISTENER_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_LISTENER_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
 
 namespace gpu {
 class Mailbox;
@@ -48,7 +48,8 @@ class CompositorOutputSurfaceListener {
   virtual void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) = 0;
 
   // Notification that the client should swap
-  virtual void SwapCompositorFrame(scoped_ptr<CompositorFrameData> frame) = 0;
+  virtual void SwapCompositorFrame(
+      std::unique_ptr<CompositorFrameData> frame) = 0;
 
   // Notification that the client has returned all frames
   virtual void AllFramesReturnedFromClient() = 0;

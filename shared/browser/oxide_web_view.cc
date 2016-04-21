@@ -22,6 +22,7 @@
 
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -147,7 +148,7 @@ base::LazyInstance<std::vector<WebView*> > g_all_web_views;
 }
 
 void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
-  WebContentsUnloader::GetInstance()->Unload(make_scoped_ptr(contents));
+  WebContentsUnloader::GetInstance()->Unload(base::WrapUnique(contents));
 };
 
 WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
@@ -207,7 +208,7 @@ WebView::WebView(WebViewClient* client)
   CHECK(client) << "Didn't specify a client";
 }
 
-void WebView::CommonInit(scoped_ptr<content::WebContents> contents,
+void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
                          WebContentsViewClient* view_client) {
   web_contents_.reset(contents.release());
 
@@ -534,7 +535,7 @@ content::WebContents* WebView::OpenURLFromTab(
       web_contents_->GetMainFrame()->GetRoutingID();
   contents_params.opener_suppressed = opener_suppressed;
 
-  scoped_ptr<content::WebContents> contents(
+  std::unique_ptr<content::WebContents> contents(
       content::WebContents::Create(contents_params));
   if (!contents) {
     LOG(ERROR) << "Failed to create new WebContents for navigation";
@@ -664,7 +665,7 @@ void WebView::AddNewContents(content::WebContents* source,
     *was_blocked = true;
   }
 
-  scoped_ptr<content::WebContents> contents(new_contents);
+  std::unique_ptr<content::WebContents> contents(new_contents);
 
   WebView* new_view =
       client_->CreateNewWebView(initial_pos,
@@ -1010,7 +1011,7 @@ WebView::WebView(const CommonParams& common_params,
       gfx::ToEnclosingRect(common_params.view_client->GetBounds()).size();
   content_params.initially_hidden = !common_params.view_client->IsVisible();
 
-  scoped_ptr<content::WebContents> contents(
+  std::unique_ptr<content::WebContents> contents(
       content::WebContents::Create(content_params));
   CHECK(contents.get()) << "Failed to create WebContents";
 
@@ -1018,7 +1019,7 @@ WebView::WebView(const CommonParams& common_params,
   CommonInit(std::move(contents), common_params.view_client);
 
   if (create_params.restore_entries.size() > 0) {
-    std::vector<scoped_ptr<content::NavigationEntry>> entries =
+    std::vector<std::unique_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
             create_params.restore_entries, context.get());
     web_contents_->GetController().Restore(
@@ -1030,7 +1031,7 @@ WebView::WebView(const CommonParams& common_params,
 }
 
 WebView::WebView(const CommonParams& common_params,
-                 scoped_ptr<content::WebContents> contents)
+                 std::unique_ptr<content::WebContents> contents)
     : WebView(common_params.client) {
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<

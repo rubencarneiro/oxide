@@ -21,9 +21,10 @@
 
 #include <hybris/camera/camera_compatibility_layer.h>
 
+#include <memory>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "media/base/video_capture_types.h"
 #include "media/capture/video/video_capture_device.h"
 
@@ -56,7 +57,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
 
   // media::VideoCaptureDevice implementation
   void AllocateAndStart(const media::VideoCaptureParams& params,
-                        scoped_ptr<Client> client) override;
+                        std::unique_ptr<Client> client) override;
   void StopAndDeAllocate() override;
 
   Name device_name_;
@@ -64,11 +65,11 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
   CameraType position_;
   int orientation_;
 
-  scoped_ptr<Client> client_;
+  std::unique_ptr<Client> client_;
 
   scoped_refptr<base::SingleThreadTaskRunner> task_runner_;
 
-  scoped_ptr<CameraControlListener> listener_;
+  std::unique_ptr<CameraControlListener> listener_;
 
   media::VideoCaptureFormat capture_format_;
 

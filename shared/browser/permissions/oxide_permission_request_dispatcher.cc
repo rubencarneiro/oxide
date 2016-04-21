@@ -18,6 +18,7 @@
 #include "oxide_permission_request_dispatcher.h"
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 #include "base/logging.h"
@@ -192,7 +193,7 @@ int PermissionRequestDispatcher::RequestPermission(
 
   int request_id = next_request_id_++;
 
-  scoped_ptr<PermissionRequest> request(
+  std::unique_ptr<PermissionRequest> request(
       new PermissionRequest(
         request_id,
         RenderFrameHostID(),
@@ -242,7 +243,7 @@ int PermissionRequestDispatcher::RequestMediaAccessPermission(
 
   int request_id = next_request_id_++;
 
-  scoped_ptr<MediaAccessPermissionRequest> req(
+  std::unique_ptr<MediaAccessPermissionRequest> req(
       new MediaAccessPermissionRequest(
         request_id,
         RenderFrameHostID(render_frame_host),

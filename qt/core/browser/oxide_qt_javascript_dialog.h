@@ -18,12 +18,12 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_JAVASCRIPT_DIALOG_H_
 #define _OXIDE_QT_CORE_BROWSER_JAVASCRIPT_DIALOG_H_
 
-#include "base/compiler_specific.h"
-#include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
-
+#include <memory>
 #include <QString>
 #include <QUrl>
+
+#include "base/compiler_specific.h"
+#include "base/macros.h"
 
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "shared/browser/oxide_javascript_dialog.h"
@@ -54,7 +54,7 @@ class JavaScriptDialog : public oxide::JavaScriptDialog,
   QString messageText() const override;
   QString defaultPromptText() const override;
 
-  scoped_ptr<JavaScriptDialogProxy> proxy_;
+  std::unique_ptr<JavaScriptDialogProxy> proxy_;
 
   DISALLOW_COPY_AND_ASSIGN(JavaScriptDialog);
 };

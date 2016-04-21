@@ -17,6 +17,7 @@
 
 #include "oxide_certificate_error_dispatcher.h"
 
+#include <memory>
 #include <utility>
 
 #include "base/logging.h"
@@ -158,7 +159,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
   scoped_refptr<CertificateErrorProxy> proxy =
       new CertificateErrorProxy(
         overridable ? callback : base::Callback<void(bool)>());
-  scoped_ptr<CertificateError> error(
+  std::unique_ptr<CertificateError> error(
       new CertificateError(is_main_frame,
                            !content::IsResourceTypeFrame(resource_type),
                            ToCertError(cert_error, ssl_info.cert.get()),

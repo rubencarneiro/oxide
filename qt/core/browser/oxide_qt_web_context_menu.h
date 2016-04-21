@@ -18,8 +18,9 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_H_
 #define _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_web_context_menu_proxy_client.h"
 #include "shared/browser/oxide_web_context_menu.h"
@@ -62,7 +63,7 @@ class WebContextMenu : public oxide::WebContextMenu,
   void saveLink() const override;
   void saveMedia() const override;
 
-  scoped_ptr<WebContextMenuProxy> proxy_;
+  std::unique_ptr<WebContextMenuProxy> proxy_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
 };

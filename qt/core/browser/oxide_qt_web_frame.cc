@@ -18,6 +18,7 @@
 #include "oxide_qt_web_frame.h"
 
 #include <map>
+#include <memory>
 #include <utility>
 
 #include <QObject>
@@ -101,10 +102,10 @@ bool WebFrame::sendMessage(const QUrl& context,
                            const QString& msg_id,
                            const QVariant& payload,
                            QObject* req) {
-  scoped_ptr<base::Value> payload_value(
+  std::unique_ptr<base::Value> payload_value(
       VariantValueConverter::FromVariantValue(payload));
 
-  scoped_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
+  std::unique_ptr<oxide::ScriptMessageRequestImplBrowser> smr =
       frame_->SendMessage(GURL(context.toString().toStdString()),
                           msg_id.toStdString(),
                           std::move(payload_value));

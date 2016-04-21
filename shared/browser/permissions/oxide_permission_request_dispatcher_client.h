@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_PERMISSIONS_PERMISSION_REQUEST_DISPATCHER_CLIENT_H_
 
-#include "base/memory/scoped_ptr.h"
+#include <memory>
 
 namespace content {
 class WebContents;
@@ -34,13 +34,13 @@ class PermissionRequestDispatcherClient {
   virtual ~PermissionRequestDispatcherClient() {}
 
   virtual void RequestGeolocationPermission(
-      scoped_ptr<PermissionRequest> request) {}
+      std::unique_ptr<PermissionRequest> request) {}
 
   virtual void RequestMediaAccessPermission(
-      scoped_ptr<MediaAccessPermissionRequest> request) {}
+      std::unique_ptr<MediaAccessPermissionRequest> request) {}
 
   virtual void RequestNotificationPermission(
-      scoped_ptr<PermissionRequest> request) {}
+      std::unique_ptr<PermissionRequest> request) {}
 };
 
 } // namespace oxide

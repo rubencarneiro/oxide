@@ -23,7 +23,6 @@
 #include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "base/threading/non_thread_safe.h"
@@ -126,23 +125,23 @@ class BrowserContextIOData {
   void Init();
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
-  scoped_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
-  scoped_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
-  scoped_ptr<net::HttpServerProperties> http_server_properties_;
-  scoped_ptr<net::NetworkDelegate> network_delegate_;
+  std::unique_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
+  std::unique_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
+  std::unique_ptr<net::HttpServerProperties> http_server_properties_;
+  std::unique_ptr<net::NetworkDelegate> network_delegate_;
 
-  scoped_ptr<net::TransportSecurityState> transport_security_state_;
-  scoped_ptr<net::TransportSecurityPersister> transport_security_persister_;
+  std::unique_ptr<net::TransportSecurityState> transport_security_state_;
+  std::unique_ptr<net::TransportSecurityPersister> transport_security_persister_;
 
-  scoped_ptr<net::HttpNetworkSession> http_network_session_;
+  std::unique_ptr<net::HttpNetworkSession> http_network_session_;
 
-  scoped_ptr<URLRequestContext> main_request_context_;
-  scoped_ptr<ResourceContext> resource_context_;
-  scoped_ptr<net::CookieStore> cookie_store_;
+  std::unique_ptr<URLRequestContext> main_request_context_;
+  std::unique_ptr<ResourceContext> resource_context_;
+  std::unique_ptr<net::CookieStore> cookie_store_;
 
-  scoped_ptr<net::HostMappingRules> host_mapping_rules_;
+  std::unique_ptr<net::HostMappingRules> host_mapping_rules_;
 
-  scoped_ptr<TemporarySavedPermissionContext>
+  std::unique_ptr<TemporarySavedPermissionContext>
       temporary_saved_permission_context_;
 };
 
@@ -244,7 +243,7 @@ class OXIDE_SHARED_EXPORT BrowserContext
   friend class BrowserContextObserver; // for {Add,Remove}Observer
 
   // content::BrowserContext implementation
-  scoped_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
+  std::unique_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
       const base::FilePath& partition_path) override;
   content::DownloadManagerDelegate* GetDownloadManagerDelegate() override;
   content::BrowserPluginGuestManager* GetGuestManager() override;
@@ -273,10 +272,10 @@ class OXIDE_SHARED_EXPORT BrowserContext
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
   base::ObserverList<BrowserContextObserver> observers_;
 
-  scoped_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
-  scoped_ptr<PermissionManager> permission_manager_;
+  std::unique_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
+  std::unique_ptr<PermissionManager> permission_manager_;
 
-  scoped_ptr<CookieStoreUIProxy> cookie_store_;
+  std::unique_ptr<CookieStoreUIProxy> cookie_store_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContext);
 };

@@ -18,10 +18,11 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_H_
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "cc/output/output_surface.h"
 
 namespace cc {
@@ -51,10 +52,10 @@ class CompositorOutputSurface : public cc::OutputSurface {
       CompositorOutputSurfaceListener* listener);
   CompositorOutputSurface(
       uint32_t surface_id,
-      scoped_ptr<cc::SoftwareOutputDevice> software_device,
+      std::unique_ptr<cc::SoftwareOutputDevice> software_device,
       CompositorOutputSurfaceListener* listener);
 
-  void DoSwapBuffers(scoped_ptr<CompositorFrameData> frame);
+  void DoSwapBuffers(std::unique_ptr<CompositorFrameData> frame);
 
   // cc::OutputSurface implementation
   bool BindToClient(cc::OutputSurfaceClient* client);

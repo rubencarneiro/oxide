@@ -18,9 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_COLLECTOR_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_FRAME_COLLECTOR_H_
 
+#include <memory>
 #include <stdint.h>
-
-#include "base/memory/scoped_ptr.h"
 
 namespace oxide {
 
@@ -37,7 +36,7 @@ class CompositorFrameCollector {
  protected:
   static CompositorFrameCollector* FromFrameHandle(
       CompositorFrameHandle* handle);
-  static scoped_ptr<CompositorFrameData> TakeFrameData(
+  static std::unique_ptr<CompositorFrameData> TakeFrameData(
       CompositorFrameHandle* handle);
   static uint32_t FrameHandleSurfaceId(CompositorFrameHandle* handle);
 };

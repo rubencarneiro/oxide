@@ -18,8 +18,9 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_FILE_PICKER_H_
 #define _OXIDE_QT_CORE_BROWSER_FILE_PICKER_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "qt/core/glue/oxide_qt_file_picker_proxy_client.h"
 #include "shared/browser/oxide_file_picker.h"
@@ -47,7 +48,7 @@ class FilePicker : public oxide::FilePicker,
   void done(const QFileInfoList& files,
             FilePickerProxy::Mode mode) override;
 
-  scoped_ptr<FilePickerProxy> proxy_;
+  std::unique_ptr<FilePickerProxy> proxy_;
 
   DISALLOW_IMPLICIT_CONSTRUCTORS(FilePicker);
 };

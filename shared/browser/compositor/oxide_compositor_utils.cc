@@ -161,7 +161,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
   cc::SurfaceManager* GetSurfaceManager() const override;
-  scoped_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() override;
+  std::unique_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() override;
 
   bool CalledOnMainThread() const;
   bool CalledOnGpuThread() const;
@@ -217,8 +217,8 @@ class CompositorUtilsImpl : public CompositorUtils,
   } texture_resource_fetches_;
 
   struct MainData {
-    scoped_ptr<cc::SingleThreadTaskGraphRunner> task_graph_runner;
-    scoped_ptr<cc::SurfaceManager> surface_manager;
+    std::unique_ptr<cc::SingleThreadTaskGraphRunner> task_graph_runner;
+    std::unique_ptr<cc::SurfaceManager> surface_manager;
   } main_unsafe_access_;
 
   struct GpuData {
@@ -612,9 +612,9 @@ cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
   return main().surface_manager.get();
 }
 
-scoped_ptr<cc::SurfaceIdAllocator>
+std::unique_ptr<cc::SurfaceIdAllocator>
 CompositorUtilsImpl::CreateSurfaceIdAllocator() {
-  scoped_ptr<cc::SurfaceIdAllocator> allocator(
+  std::unique_ptr<cc::SurfaceIdAllocator> allocator(
       new cc::SurfaceIdAllocator(++g_surface_id_namespace));
   allocator->RegisterSurfaceIdNamespace(GetSurfaceManager());
   return allocator;

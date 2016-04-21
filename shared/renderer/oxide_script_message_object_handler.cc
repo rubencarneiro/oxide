@@ -19,6 +19,7 @@
 
 #include "base/bind.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/strings/string16.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/utf_string_conversions.h"
@@ -52,11 +53,11 @@ void ScriptMessageObjectHandler::Reply(
     payload = info[0];
   }
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
   message->Reply(
-      make_scoped_ptr(converter->FromV8Value(payload,
-                                             isolate->GetCallingContext())));
+      base::WrapUnique(converter->FromV8Value(payload,
+                                              isolate->GetCallingContext())));
 }
 
 void ScriptMessageObjectHandler::Error(
@@ -81,12 +82,12 @@ void ScriptMessageObjectHandler::Error(
     return;
   }
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
   message->Error(
       ScriptMessageParams::ERROR_HANDLER_REPORTED_ERROR,
-      make_scoped_ptr(converter->FromV8Value(info[0],
-                                             isolate->GetCallingContext())));
+      base::WrapUnique(converter->FromV8Value(info[0],
+                                              isolate->GetCallingContext())));
 }
 
 void ScriptMessageObjectHandler::GetID(
@@ -117,7 +118,7 @@ void ScriptMessageObjectHandler::GetPayload(
     return;
   }
 
-  scoped_ptr<content::V8ValueConverter> converter(
+  std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
   info.GetReturnValue().Set(
       converter->ToV8Value(message->payload(), isolate->GetCallingContext()));

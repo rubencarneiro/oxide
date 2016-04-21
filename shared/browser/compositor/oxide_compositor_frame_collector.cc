@@ -29,7 +29,7 @@ CompositorFrameCollector* CompositorFrameCollector::FromFrameHandle(
 }
 
 // static
-scoped_ptr<CompositorFrameData> CompositorFrameCollector::TakeFrameData(
+std::unique_ptr<CompositorFrameData> CompositorFrameCollector::TakeFrameData(
     CompositorFrameHandle* handle) {
   return std::move(handle->data_);
 }

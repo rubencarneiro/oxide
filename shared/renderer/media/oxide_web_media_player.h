@@ -5,12 +5,12 @@
 #ifndef _OXIDE_RENDERER_MEDIA_WEBMEDIAPLAYER_OXIDE_H_
 #define _OXIDE_RENDERER_MEDIA_WEBMEDIAPLAYER_OXIDE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/time/time.h"
 #include "base/threading/thread_checker.h"
@@ -277,7 +277,7 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
 
   media::MediaLog* media_log_;
 
-  scoped_ptr<MediaInfoLoader> info_loader_;
+  std::unique_ptr<MediaInfoLoader> info_loader_;
 
   // The currently selected key system. Empty string means that no key system
   // has been selected.

@@ -18,8 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 #define _OXIDE_SHARED_BROWSER_COMPOSITOR_COMPOSITOR_OUTPUT_SURFACE_SOFTWARE_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 #include "shared/browser/compositor/oxide_compositor_output_surface.h"
 
@@ -29,7 +30,7 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
  public:
   CompositorOutputSurfaceSoftware(
       uint32_t surface_id,
-      scoped_ptr<cc::SoftwareOutputDevice> software_device,
+      std::unique_ptr<cc::SoftwareOutputDevice> software_device,
       CompositorOutputSurfaceListener* listener);
   ~CompositorOutputSurfaceSoftware() override;
 

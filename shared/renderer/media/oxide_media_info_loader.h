@@ -5,10 +5,10 @@
 #ifndef _OXIDE_MEDIA_INFO_LOADER_H_
 #define _OXIDE_MEDIA_INFO_LOADER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/callback.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/time/time.h"
 #include "content/common/content_export.h"
 #include "media/blink/active_loader.h"
@@ -108,7 +108,7 @@ class MediaInfoLoader : private blink::WebURLLoaderClient {
   void DidBecomeReady(Status status);
 
   // Keeps track of an active WebURLLoader and associated state.
-  scoped_ptr<media::ActiveLoader> active_loader_;
+  std::unique_ptr<media::ActiveLoader> active_loader_;
 
   bool loader_failed_;
   GURL url_;

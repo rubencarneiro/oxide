@@ -18,6 +18,7 @@
 #include "oxide_user_script_slave.h"
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include "base/command_line.h"
@@ -77,7 +78,8 @@ int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
 void UserScriptSlave::OnUpdateUserScripts(base::SharedMemoryHandle handle) {
   user_scripts_.clear();
 
-  scoped_ptr<base::SharedMemory> shmem(new base::SharedMemory(handle, true));
+  std::unique_ptr<base::SharedMemory> shmem(
+      new base::SharedMemory(handle, true));
 
   CHECK(shmem->Map(sizeof(base::Pickle::Header)));
   base::Pickle::Header* header =

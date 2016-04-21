@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 #define _OXIDE_QT_CORE_BROWSER_PLATFORM_INTEGRATION_H_
 
+#include <memory>
 #include <QObject>
 #include <QtGlobal>
 
@@ -56,14 +57,14 @@ class BrowserPlatformIntegration : public QObject,
   intptr_t GetNativeDisplay() override;
   oxide::ScreenClient* GetScreenClient() override;
   oxide::GLContextDependent* GetGLShareContext() override;
-  scoped_ptr<oxide::MessagePump> CreateUIMessagePump() override;
+  std::unique_ptr<oxide::MessagePump> CreateUIMessagePump() override;
   ui::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
-  scoped_ptr<content::LocationProvider> CreateLocationProvider() override;
+  std::unique_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   virtual int GetClickInterval() override;
   std::string GetApplicationName() override;
-  scoped_ptr<oxide::DragSource> CreateDragSource(
+  std::unique_ptr<oxide::DragSource> CreateDragSource(
       oxide::DragSourceClient* client) override;
   void CreateVibrationManager(
       mojo::InterfaceRequest<device::VibrationManager> request) override;
@@ -92,7 +93,7 @@ class BrowserPlatformIntegration : public QObject,
   // when the state really does change
   ApplicationState state_;
 
-  scoped_ptr<ScreenClient> screen_client_;
+  std::unique_ptr<ScreenClient> screen_client_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

@@ -18,9 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_CLIENT_H_
 
+#include <memory>
 #include <string>
 
-#include "base/memory/scoped_ptr.h"
 #include "base/strings/string16.h"
 #include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
@@ -133,9 +133,10 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
                                       WindowOpenDisposition disposition,
                                       bool user_gesture);
 
-  virtual WebView* CreateNewWebView(const gfx::Rect& initial_pos,
-                                    WindowOpenDisposition disposition,
-                                    scoped_ptr<content::WebContents> contents);
+  virtual WebView* CreateNewWebView(
+      const gfx::Rect& initial_pos,
+      WindowOpenDisposition disposition,
+      std::unique_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
 

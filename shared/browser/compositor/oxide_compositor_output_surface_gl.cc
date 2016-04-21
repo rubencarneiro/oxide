@@ -17,7 +17,10 @@
 
 #include "oxide_compositor_output_surface_gl.h"
 
+#include <memory>
+
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/context_provider.h"
@@ -183,10 +186,10 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
   gl->Flush();
 
-  scoped_ptr<CompositorFrameData> data(new CompositorFrameData());
+  std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
   data->size_in_pixels = back_buffer_->size;
   data->device_scale = device_scale_factor_;
-  data->gl_frame_data = make_scoped_ptr(new GLFrameData());
+  data->gl_frame_data = base::WrapUnique(new GLFrameData());
   data->gl_frame_data->mailbox = back_buffer_->mailbox;
 
   DoSwapBuffers(std::move(data));

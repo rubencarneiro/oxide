@@ -50,7 +50,7 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
   // TODO:
   frame->setReferrerForRequest(request, blink::WebURL());
 
-  scoped_ptr<WebURLLoader> loader;
+  std::unique_ptr<WebURLLoader> loader;
   WebURLLoaderOptions options;
   if (cors_mode_ == blink::WebMediaPlayer::CORSModeUnspecified) {
     options.allowCredentials = true;

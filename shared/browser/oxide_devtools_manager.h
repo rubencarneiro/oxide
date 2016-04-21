@@ -18,10 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_DEVTOOLS_MANAGER_H_
 #define _OXIDE_SHARED_BROWSER_DEVTOOLS_MANAGER_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "components/keyed_service/core/keyed_service.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -65,7 +65,7 @@ class OXIDE_SHARED_EXPORT DevToolsManager : public KeyedService {
   int port_;
   std::string address_;
 
-  scoped_ptr<devtools_http_handler::DevToolsHttpHandler> http_handler_;
+  std::unique_ptr<devtools_http_handler::DevToolsHttpHandler> http_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(DevToolsManager);
 };

@@ -44,7 +44,7 @@ ScriptMessageParams::ScriptMessageParams(ScriptMessageParams&& other)
 void PopulateScriptMessageParams(int serial,
                                  const GURL& context,
                                  const std::string& msg_id,
-                                 scoped_ptr<base::Value> payload,
+                                 std::unique_ptr<base::Value> payload,
                                  ScriptMessageParams* params) {
   DCHECK(params);
   DCHECK(!msg_id.empty());

@@ -19,25 +19,26 @@
 #ifndef _OXIDE_SHARED_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_LINUX_H_
 #define _OXIDE_SHARED_BROWSER_MEDIA_VIDEO_CAPTURE_DEVICE_FACTORY_LINUX_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "media/capture/video/video_capture_device_factory.h"
 
 namespace oxide {
 
-typedef base::Callback<void(scoped_ptr<media::VideoCaptureDevice::Names>)>
+typedef base::Callback<void(std::unique_ptr<media::VideoCaptureDevice::Names>)>
     EnumerateDevicesCallback;
 
 class VideoCaptureDeviceFactoryLinux
     : public media::VideoCaptureDeviceFactory {
  public:
   VideoCaptureDeviceFactoryLinux(
-      scoped_ptr<media::VideoCaptureDeviceFactory> delegate);
+      std::unique_ptr<media::VideoCaptureDeviceFactory> delegate);
   ~VideoCaptureDeviceFactoryLinux() override;
 
  private:
   // media::VideoCaptureDeviceFactory implementation
-  scoped_ptr<media::VideoCaptureDevice> Create(
+  std::unique_ptr<media::VideoCaptureDevice> Create(
       const media::VideoCaptureDevice::Name& device_name) override;
   void EnumerateDeviceNames(const EnumerateDevicesCallback& callback) override;
   void GetDeviceSupportedFormats(
@@ -45,7 +46,7 @@ class VideoCaptureDeviceFactoryLinux
       media::VideoCaptureFormats* supported_formats) override;
   void GetDeviceNames(media::VideoCaptureDevice::Names* device_names) override;
 
-  scoped_ptr<media::VideoCaptureDeviceFactory> delegate_;
+  std::unique_ptr<media::VideoCaptureDeviceFactory> delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(VideoCaptureDeviceFactoryLinux);
 };

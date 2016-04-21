@@ -22,9 +22,10 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 
+#include <memory>
+
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "cc/resources/shared_bitmap.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/rect.h"
@@ -73,14 +74,14 @@ class CompositorFrameData {
 
   CompositorFrameData(CompositorFrameData&& other);
 
-  static scoped_ptr<CompositorFrameData> AllocFrom(
+  static std::unique_ptr<CompositorFrameData> AllocFrom(
       CompositorFrameData* other);
 
   gfx::Size size_in_pixels;
   float device_scale;
 
-  scoped_ptr<GLFrameData> gl_frame_data;
-  scoped_ptr<SoftwareFrameData> software_frame_data;
+  std::unique_ptr<GLFrameData> gl_frame_data;
+  std::unique_ptr<SoftwareFrameData> software_frame_data;
 };
 
 } // namespace oxide

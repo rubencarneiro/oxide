@@ -18,11 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_URL_REQUEST_DELEGATED_JOB_FACTORY_H_
 #define _OXIDE_SHARED_BROWSER_URL_REQUEST_DELEGATED_JOB_FACTORY_H_
 
+#include <memory>
 #include <string>
 
-#include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "net/url_request/url_request_job_factory.h"
 
 namespace oxide {
@@ -32,7 +31,7 @@ class BrowserContextIOData;
 class URLRequestDelegatedJobFactory final : public net::URLRequestJobFactory {
  public:
   URLRequestDelegatedJobFactory(
-      scoped_ptr<net::URLRequestJobFactory> job_factory,
+      std::unique_ptr<net::URLRequestJobFactory> job_factory,
       BrowserContextIOData* context);
   ~URLRequestDelegatedJobFactory();
 
@@ -55,7 +54,7 @@ class URLRequestDelegatedJobFactory final : public net::URLRequestJobFactory {
   bool IsHandledURL(const GURL& url) const final;
   bool IsSafeRedirectTarget(const GURL& location) const final;
 
-  scoped_ptr<net::URLRequestJobFactory> job_factory_;
+  std::unique_ptr<net::URLRequestJobFactory> job_factory_;
   BrowserContextIOData* context_;
 
   DISALLOW_COPY_AND_ASSIGN(URLRequestDelegatedJobFactory);

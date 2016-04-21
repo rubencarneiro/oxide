@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_API_NEW_VIEW_REQUEST_P_H_
 #define _OXIDE_QT_CORE_API_NEW_VIEW_REQUEST_P_H_
 
+#include <memory>
 #include <QRect>
 #include <QtGlobal>
 
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 
 #include "qt/core/api/oxideqnewviewrequest.h"
@@ -40,7 +40,7 @@ class OxideQNewViewRequestPrivate final {
 
   static OxideQNewViewRequestPrivate* get(OxideQNewViewRequest* q);
 
-  scoped_ptr<content::WebContents> contents;
+  std::unique_ptr<content::WebContents> contents;
   base::WeakPtr<oxide::WebView> view;
 
  private:

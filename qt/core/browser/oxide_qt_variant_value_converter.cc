@@ -25,6 +25,7 @@
 #include <QVariant>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/values.h"
 
 namespace oxide {
@@ -58,16 +59,16 @@ class State {
 
 namespace {
 
-scoped_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
-                                                 State* state);
+std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
+                                                      State* state);
 
-scoped_ptr<base::ListValue> FromVariantListValueInternal(
+std::unique_ptr<base::ListValue> FromVariantListValueInternal(
     const QList<QVariant>& list,
     State* state) {
-  scoped_ptr<base::ListValue> rv(new base::ListValue());
+  std::unique_ptr<base::ListValue> rv(new base::ListValue());
 
   for (auto it = list.begin(); it != list.end(); ++it) {
-    scoped_ptr<base::Value> value = FromVariantValueInternal(*it, state);
+    std::unique_ptr<base::Value> value = FromVariantValueInternal(*it, state);
     if (!value) {
       value = base::Value::CreateNullValue();
     }
@@ -77,13 +78,13 @@ scoped_ptr<base::ListValue> FromVariantListValueInternal(
   return std::move(rv);
 }
 
-scoped_ptr<base::DictionaryValue> FromVariantMapValueInternal(
+std::unique_ptr<base::DictionaryValue> FromVariantMapValueInternal(
     const QMap<QString, QVariant>& map,
     State* state) {
-  scoped_ptr<base::DictionaryValue> rv(new base::DictionaryValue());
+  std::unique_ptr<base::DictionaryValue> rv(new base::DictionaryValue());
 
   for (auto it = map.begin(); it != map.end(); ++it) {
-    scoped_ptr<base::Value> value = FromVariantValueInternal(*it, state);
+    std::unique_ptr<base::Value> value = FromVariantValueInternal(*it, state);
     if (!value) {
       continue;
     }
@@ -93,8 +94,8 @@ scoped_ptr<base::DictionaryValue> FromVariantMapValueInternal(
   return std::move(rv);
 }
 
-scoped_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
-                                                 State* state) {
+std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
+                                                      State* state) {
   State::Scope scope(state);
 
   if (state->HasReachedMaxRecursionDepth()) {
@@ -103,21 +104,21 @@ scoped_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
 
   switch (variant.type()) {
     case QVariant::Bool:
-      return make_scoped_ptr(new base::FundamentalValue(variant.toBool()));
+      return base::WrapUnique(new base::FundamentalValue(variant.toBool()));
     case QVariant::Double:
     case QVariant::LongLong:
     case QVariant::UInt:
     case QVariant::ULongLong:
-      return make_scoped_ptr(new base::FundamentalValue(variant.toDouble()));
+      return base::WrapUnique(new base::FundamentalValue(variant.toDouble()));
     case QVariant::Int:
-      return make_scoped_ptr(new base::FundamentalValue(variant.toInt()));
+      return base::WrapUnique(new base::FundamentalValue(variant.toInt()));
     case QVariant::List:
     case QVariant::StringList:
       return FromVariantListValueInternal(variant.toList(), state);
     case QVariant::Map:
       return FromVariantMapValueInternal(variant.toMap(), state);
     case QVariant::String:
-      return make_scoped_ptr(
+      return base::WrapUnique(
           new base::StringValue(variant.toString().toStdString()));
     default:
       break;
@@ -132,7 +133,7 @@ scoped_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
     return nullptr;
   }
 
-  return make_scoped_ptr(
+  return base::WrapUnique(
       new base::StringValue(variant.toString().toStdString()));
 }
 
@@ -229,7 +230,7 @@ QVariant ToVariantValueInternal(const base::Value* value,
 }
 
 // static
-scoped_ptr<base::Value> VariantValueConverter::FromVariantValue(
+std::unique_ptr<base::Value> VariantValueConverter::FromVariantValue(
     const QVariant& variant) {
   State state;
   return FromVariantValueInternal(variant, &state);

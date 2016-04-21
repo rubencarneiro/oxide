@@ -40,7 +40,7 @@ void OxideQPermissionRequestPrivate::OnCancelled() {
 }
 
 OxideQPermissionRequestPrivate::OxideQPermissionRequestPrivate(
-    scoped_ptr<oxide::PermissionRequest> request)
+    std::unique_ptr<oxide::PermissionRequest> request)
     : q_ptr(nullptr),
       request_(std::move(request)) {}
 
@@ -66,7 +66,7 @@ OxideQPermissionRequestPrivate::~OxideQPermissionRequestPrivate() {}
 
 // static
 OxideQPermissionRequest* OxideQPermissionRequestPrivate::Create(
-    scoped_ptr<oxide::PermissionRequest> request) {
+    std::unique_ptr<oxide::PermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQPermissionRequest(
@@ -75,7 +75,7 @@ OxideQPermissionRequest* OxideQPermissionRequestPrivate::Create(
 
 OxideQGeolocationPermissionRequestPrivate::
     OxideQGeolocationPermissionRequestPrivate(
-      scoped_ptr<oxide::PermissionRequest> request)
+      std::unique_ptr<oxide::PermissionRequest> request)
       : OxideQPermissionRequestPrivate(std::move(request)) {}
 
 OxideQGeolocationPermissionRequestPrivate::
@@ -84,7 +84,7 @@ OxideQGeolocationPermissionRequestPrivate::
 // static
 OxideQGeolocationPermissionRequest*
 OxideQGeolocationPermissionRequestPrivate::Create(
-    scoped_ptr<oxide::PermissionRequest> request) {
+    std::unique_ptr<oxide::PermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQGeolocationPermissionRequest(
@@ -93,7 +93,7 @@ OxideQGeolocationPermissionRequestPrivate::Create(
 
 OxideQMediaAccessPermissionRequestPrivate::
     OxideQMediaAccessPermissionRequestPrivate(
-      scoped_ptr<oxide::MediaAccessPermissionRequest> request)
+      std::unique_ptr<oxide::MediaAccessPermissionRequest> request)
       : OxideQPermissionRequestPrivate(std::move(request)) {}
 
 oxide::MediaAccessPermissionRequest*
@@ -107,7 +107,7 @@ OxideQMediaAccessPermissionRequestPrivate::
 // static
 OxideQMediaAccessPermissionRequest*
 OxideQMediaAccessPermissionRequestPrivate::Create(
-    scoped_ptr<oxide::MediaAccessPermissionRequest> request) {
+    std::unique_ptr<oxide::MediaAccessPermissionRequest> request) {
   DCHECK(request);
 
   return new OxideQMediaAccessPermissionRequest(

@@ -17,6 +17,7 @@
 
 #include "oxide_compositor_frame_data.h"
 
+#include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted_memory.h"
 
 namespace oxide {
@@ -47,9 +48,9 @@ CompositorFrameData::CompositorFrameData(CompositorFrameData&& other)
 }
 
 // static
-scoped_ptr<CompositorFrameData> CompositorFrameData::AllocFrom(
+std::unique_ptr<CompositorFrameData> CompositorFrameData::AllocFrom(
     CompositorFrameData* other) {
-  return make_scoped_ptr(new CompositorFrameData(std::move(*other)));
+  return base::WrapUnique(new CompositorFrameData(std::move(*other)));
 }
 
 } // namespace oxide

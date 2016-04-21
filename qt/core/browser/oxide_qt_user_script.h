@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_USER_SCRIPT_H_
 #define _OXIDE_QT_CORE_BROWSER_USER_SCRIPT_H_
 
+#include <memory>
 #include <string>
 
 #include "base/macros.h"
@@ -73,7 +74,7 @@ class UserScript : public UserScriptProxy {
 
   oxide::UserScript impl_;
 
-  scoped_ptr<AsyncFileJob> load_job_;
+  std::unique_ptr<AsyncFileJob> load_job_;
 
   DISALLOW_COPY_AND_ASSIGN(UserScript);
 };

@@ -22,6 +22,7 @@
 #include "base/bind.h"
 #include "base/command_line.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
@@ -234,7 +235,7 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
 
 void RenderWidgetHostView::OnSwapCompositorFrame(
     uint32_t output_surface_id,
-    scoped_ptr<cc::CompositorFrame> frame) {
+    std::unique_ptr<cc::CompositorFrame> frame) {
   if (!frame->delegated_frame_data) {
     DLOG(ERROR) << "Non delegated renderer path is not supported";
     host_->GetProcess()->ShutdownForBadMessage();
@@ -286,7 +287,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     if (!surface_factory_) {
       DCHECK(manager);
       surface_factory_ =
-          make_scoped_ptr(new cc::SurfaceFactory(manager, this));
+          base::WrapUnique(new cc::SurfaceFactory(manager, this));
     }
 
     if (surface_id_.is_null() ||
@@ -704,13 +705,13 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
   }
 }
 
-scoped_ptr<ui::TouchHandleDrawable> RenderWidgetHostView::CreateDrawable() {
+std::unique_ptr<ui::TouchHandleDrawable>
+RenderWidgetHostView::CreateDrawable() {
   if (!container_) {
     return nullptr;
   }
 
-  return scoped_ptr<ui::TouchHandleDrawable>(
-      container_->CreateTouchHandleDrawable());
+  return base::WrapUnique(container_->CreateTouchHandleDrawable());
 }
 
 void RenderWidgetHostView::UpdateCurrentCursor() {
@@ -881,7 +882,7 @@ void RenderWidgetHostView::ResetGestureDetection() {
   const ui::MotionEvent* current_down_event =
       gesture_provider_->GetCurrentDownEvent();
   if (current_down_event) {
-    scoped_ptr<ui::MotionEvent> cancel_event = current_down_event->Cancel();
+    std::unique_ptr<ui::MotionEvent> cancel_event = current_down_event->Cancel();
     HandleTouchEvent(*cancel_event);
   }
 

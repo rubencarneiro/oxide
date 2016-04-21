@@ -151,7 +151,7 @@ bool URLRequestDelegatedJobFactory::IsSafeRedirectTarget(
 }
 
 URLRequestDelegatedJobFactory::URLRequestDelegatedJobFactory(
-    scoped_ptr<net::URLRequestJobFactory> job_factory,
+    std::unique_ptr<net::URLRequestJobFactory> job_factory,
     BrowserContextIOData* context)
     : job_factory_(std::move(job_factory)),
       context_(context) {

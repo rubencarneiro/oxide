@@ -141,10 +141,10 @@ int MotionEventFactory::AddTouchPoint(
   return UpdateTouchPoint(touch_point, screen);
 }
 
-scoped_ptr<ui::MotionEventGeneric> MotionEventFactory::BuildMotionEventCommon(
+std::unique_ptr<ui::MotionEventGeneric> MotionEventFactory::BuildMotionEventCommon(
     ui::MotionEvent::Action action,
     const base::TimeTicks& event_time) {
-  scoped_ptr<ui::MotionEventGeneric> event(new MotionEvent());
+  std::unique_ptr<ui::MotionEventGeneric> event(new MotionEvent());
 
   for (const auto& pointer : touch_points_.container()) {
     event->PushPointer(pointer);
@@ -156,7 +156,7 @@ scoped_ptr<ui::MotionEventGeneric> MotionEventFactory::BuildMotionEventCommon(
   return std::move(event);
 }
 
-scoped_ptr<ui::MotionEvent> MotionEventFactory::BuildMotionEvent(
+std::unique_ptr<ui::MotionEvent> MotionEventFactory::BuildMotionEvent(
     const QTouchEvent::TouchPoint& touch_point,
     float location_bar_content_offset,
     QScreen* screen,
@@ -174,7 +174,7 @@ scoped_ptr<ui::MotionEvent> MotionEventFactory::BuildMotionEvent(
     return nullptr;
   }
 
-  scoped_ptr<ui::MotionEventGeneric> motion_event(
+  std::unique_ptr<ui::MotionEventGeneric> motion_event(
       BuildMotionEventCommon(DetermineAction(touch_point.state()),
                              event_time));
   motion_event->set_action_index(pointer_index);
@@ -195,8 +195,8 @@ MotionEventFactory::MotionEventFactory()
 
 MotionEventFactory::~MotionEventFactory() {}
 
-scoped_ptr<ui::MotionEvent> MotionEventFactory::Cancel() {
-  scoped_ptr<ui::MotionEventGeneric> motion_event(
+std::unique_ptr<ui::MotionEvent> MotionEventFactory::Cancel() {
+  std::unique_ptr<ui::MotionEventGeneric> motion_event(
       BuildMotionEventCommon(ui::MotionEvent::ACTION_CANCEL,
                              base::TimeTicks::Now()));
 
@@ -215,7 +215,7 @@ void MotionEventFactory::MakeMotionEvents(QTouchEvent* event,
   DCHECK(out);
 
   if (event->type() == QEvent::TouchCancel) {
-    scoped_ptr<ui::MotionEvent> cancel_event = Cancel();
+    std::unique_ptr<ui::MotionEvent> cancel_event = Cancel();
     out->push_back(std::move(cancel_event));
     return;
   }
@@ -230,7 +230,7 @@ void MotionEventFactory::MakeMotionEvents(QTouchEvent* event,
       continue;
     }
 
-    scoped_ptr<ui::MotionEvent> motion_event(
+    std::unique_ptr<ui::MotionEvent> motion_event(
         BuildMotionEvent(touch_point,
                          location_bar_content_offset,
                          screen,

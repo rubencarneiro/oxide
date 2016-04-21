@@ -18,9 +18,10 @@
 #ifndef _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 #define _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 
+#include <memory>
+
 #include "base/files/file_path.h"
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/gl/gl_implementation.h"
 
@@ -54,12 +55,12 @@ class OXIDE_SHARED_EXPORT BrowserProcessMain {
  public:
 
   struct StartParams {
-    StartParams(scoped_ptr<PlatformDelegate> delegate);
+    StartParams(std::unique_ptr<PlatformDelegate> delegate);
     ~StartParams();
 
     StartParams(StartParams&& other);
 
-    scoped_ptr<PlatformDelegate> delegate;
+    std::unique_ptr<PlatformDelegate> delegate;
 #if defined(USE_NSS_CERTS)
     base::FilePath nss_db_path;
 #endif

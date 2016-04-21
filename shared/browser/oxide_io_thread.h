@@ -18,8 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_IO_THREAD_H_
 #define _OXIDE_SHARED_BROWSER_IO_THREAD_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/ref_counted.h"
 #include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_thread_delegate.h"
@@ -67,13 +68,13 @@ class IOThread final : public content::BrowserThreadDelegate {
     ~Globals();
 
     // host_resolver_ needs to outlive http_auth_handler_factory_
-    scoped_ptr<net::HostResolver> host_resolver_;
-    scoped_ptr<net::CertVerifier> cert_verifier_;
-    scoped_ptr<net::HttpAuthHandlerFactory> http_auth_handler_factory_;
-    scoped_ptr<net::ProxyService> proxy_service_;
-    scoped_ptr<net::URLRequestThrottlerManager> throttler_manager_;
+    std::unique_ptr<net::HostResolver> host_resolver_;
+    std::unique_ptr<net::CertVerifier> cert_verifier_;
+    std::unique_ptr<net::HttpAuthHandlerFactory> http_auth_handler_factory_;
+    std::unique_ptr<net::ProxyService> proxy_service_;
+    std::unique_ptr<net::URLRequestThrottlerManager> throttler_manager_;
 
-    scoped_ptr<URLRequestContext> system_request_context_;
+    std::unique_ptr<URLRequestContext> system_request_context_;
 
     DISALLOW_COPY_AND_ASSIGN(Globals);
   };
@@ -96,7 +97,7 @@ class IOThread final : public content::BrowserThreadDelegate {
   void Init() final;
   void CleanUp() final;
 
-  scoped_ptr<net::NetLog> net_log_;
+  std::unique_ptr<net::NetLog> net_log_;
   Globals* globals_;
   scoped_refptr<URLRequestContextGetter> system_request_context_getter_;
 

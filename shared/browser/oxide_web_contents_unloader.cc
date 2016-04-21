@@ -72,7 +72,8 @@ WebContentsUnloader* WebContentsUnloader::GetInstance() {
   return base::Singleton<WebContentsUnloader>::get();
 }
 
-void WebContentsUnloader::Unload(scoped_ptr<content::WebContents> contents) {
+void WebContentsUnloader::Unload(
+    std::unique_ptr<content::WebContents> contents) {
   if (!contents->NeedToFireBeforeUnload()) {
     // Despite the name, this checks if sudden termination is allowed. If so,
     // we shouldn't fire the unload handler particularly if this was script

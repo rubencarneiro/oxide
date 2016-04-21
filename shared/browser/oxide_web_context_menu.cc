@@ -17,6 +17,7 @@
 
 #include "oxide_web_context_menu.h"
 
+#include <memory>
 #include <utility>
 
 #include "base/logging.h"
@@ -84,7 +85,7 @@ void WebContextMenu::SaveLink() const {
   content::DownloadManager* dlm =
       content::BrowserContext::GetDownloadManager(context);
   const GURL& url = params_.link_url;
-  scoped_ptr<content::DownloadUrlParameters> dl_params(
+  std::unique_ptr<content::DownloadUrlParameters> dl_params(
       content::DownloadUrlParameters::FromWebContents(web_contents(), url));
   dl_params->set_referrer(CreateSaveAsReferrer(url, params_));
   dl_params->set_referrer_encoding(params_.frame_charset);

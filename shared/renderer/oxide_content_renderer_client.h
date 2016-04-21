@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_RENDERER_CONTENT_RENDERER_CLIENT_H_
 #define _OXIDE_SHARED_RENDERER_CONTENT_RENDERER_CLIENT_H_
 
+#include <memory>
+
 #include "base/macros.h"
 #include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
@@ -57,7 +59,7 @@ class ContentRendererClient : public content::ContentRendererClient {
   void OverrideCompositorSettings(cc::LayerTreeSettings* settings) override;
   std::string GetUserAgentOverrideForURL(const GURL& url) override;
 
-  scoped_ptr<RendererUserAgentSettings> user_agent_settings_;
+  std::unique_ptr<RendererUserAgentSettings> user_agent_settings_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentRendererClient);
 };

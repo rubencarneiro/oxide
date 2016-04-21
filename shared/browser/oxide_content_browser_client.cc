@@ -23,8 +23,8 @@
 
 #include "base/command_line.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/geolocation_provider.h"
@@ -272,7 +272,7 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
 #if defined(ENABLE_PLUGINS)
   host->GetPpapiHost()->AddHostFactoryFilter(
-      scoped_ptr<ppapi::host::HostFactory>(new PepperHostFactoryBrowser(host)));
+      base::WrapUnique(new PepperHostFactoryBrowser(host)));
 #endif
 }
 

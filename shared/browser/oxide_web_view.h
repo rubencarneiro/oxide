@@ -18,11 +18,11 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 #define _OXIDE_SHARED_BROWSER_WEB_VIEW_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "cc/output/compositor_frame_metadata.h"
@@ -134,7 +134,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   WebView(const CommonParams& common_params,
           const CreateParams& create_params);
   WebView(const CommonParams& common_params,
-          scoped_ptr<content::WebContents> contents);
+          std::unique_ptr<content::WebContents> contents);
 
   ~WebView() override;
 
@@ -258,7 +258,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
  private:
   WebView(WebViewClient* client);
 
-  void CommonInit(scoped_ptr<content::WebContents> contents,
+  void CommonInit(std::unique_ptr<content::WebContents> contents,
                   WebContentsViewClient* view_client);
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
@@ -294,22 +294,23 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
 
   // CompositorObserver implementation
-  void CompositorWillRequestSwapFrame() final;
+  void CompositorWillRequestSwapFrame() override;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() final;
+  void WebPreferencesDestroyed() override;
 
   // content::NotificationObserver implementation
   void Observe(int type,
                const content::NotificationSource& source,
-               const content::NotificationDetails& details) final;
+               const content::NotificationDetails& details) override;
 
   // content::WebContentsDelegate implementation
-  content::WebContents* OpenURLFromTab(content::WebContents* source,
-                                       const content::OpenURLParams& params) final;
+  content::WebContents* OpenURLFromTab(
+      content::WebContents* source,
+      const content::OpenURLParams& params) override;
   void NavigationStateChanged(content::WebContents* source,
-                              content::InvalidateTypes changed_flags) final;
-  void VisibleSSLStateChanged(const content::WebContents* source) final;
+                              content::InvalidateTypes changed_flags) override;
+  void VisibleSSLStateChanged(const content::WebContents* source) override;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,
@@ -321,108 +322,110 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const std::string& partition_id,
       content::SessionStorageNamespace* session_storage_namespace,
       WindowOpenDisposition disposition,
-      bool user_gesture) final;
-  void HandleKeyboardEvent(content::WebContents* source,
-                           const content::NativeWebKeyboardEvent& event) final;
+      bool user_gesture) override;
+  void HandleKeyboardEvent(
+      content::WebContents* source,
+      const content::NativeWebKeyboardEvent& event) override;
   void WebContentsCreated(content::WebContents* source,
                           int source_frame_id,
                           const std::string& frame_name,
                           const GURL& target_url,
-                          content::WebContents* new_contents) final;
+                          content::WebContents* new_contents) override;
   void AddNewContents(content::WebContents* source,
                       content::WebContents* new_contents,
                       WindowOpenDisposition disposition,
                       const gfx::Rect& initial_pos,
                       bool user_gesture,
-                      bool* was_blocked) final;
-  void LoadProgressChanged(content::WebContents* source, double progress) final;
-  void CloseContents(content::WebContents* source) final;
-  void UpdateTargetURL(content::WebContents* source, const GURL& url) final;
+                      bool* was_blocked) override;
+  void LoadProgressChanged(content::WebContents* source,
+                           double progress) override;
+  void CloseContents(content::WebContents* source) override;
+  void UpdateTargetURL(content::WebContents* source, const GURL& url) override;
   bool AddMessageToConsole(content::WebContents* source,
                int32_t level,
                const base::string16& message,
                int32_t line_no,
-               const base::string16& source_id) final;
+               const base::string16& source_id) override;
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
-                         bool* proceed_to_fire_unload) final;
+                         bool* proceed_to_fire_unload) override;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager(
-      content::WebContents* source) final;
+      content::WebContents* source) override;
   void RunFileChooser(content::WebContents* web_contents,
-                      const content::FileChooserParams& params) final;
-  bool EmbedsFullscreenWidget() const final;
+                      const content::FileChooserParams& params) override;
+  bool EmbedsFullscreenWidget() const override;
   void EnterFullscreenModeForTab(content::WebContents* source,
-                                 const GURL& origin) final;
-  void ExitFullscreenModeForTab(content::WebContents* source) final;
+                                 const GURL& origin) override;
+  void ExitFullscreenModeForTab(content::WebContents* source) override;
   bool IsFullscreenForTabOrPending(
-      const content::WebContents* source) const final;
+      const content::WebContents* source) const override;
   void FindReply(content::WebContents* source,
                  int request_id,
                  int number_of_matches,
                  const gfx::Rect& selection_rect,
                  int active_match_ordinal,
-                 bool final_update) final;
+                 bool final_update) override;
   void RequestMediaAccessPermission(
       content::WebContents* source,
       const content::MediaStreamRequest& request,
-      const content::MediaResponseCallback& callback) final;
+      const content::MediaResponseCallback& callback) override;
   bool CheckMediaAccessPermission(content::WebContents* source,
                                   const GURL& security_origin,
-                                  content::MediaStreamType type) final;
+                                  content::MediaStreamType type) override;
 
   // content::WebContentsObserver implementation
   void RenderFrameForInterstitialPageCreated(
-      content::RenderFrameHost* render_frame_host) final;
-  void RenderViewReady() final;
-  void RenderProcessGone(base::TerminationStatus status) final;
+      content::RenderFrameHost* render_frame_host) override;
+  void RenderViewReady() override;
+  void RenderProcessGone(base::TerminationStatus status) override;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
-                             content::RenderViewHost* new_host) final;
-  void DidStartLoading() final;
-  void DidStopLoading() final;
+                             content::RenderViewHost* new_host) override;
+  void DidStartLoading() override;
+  void DidStopLoading() override;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
-                     const GURL& validated_url) final;
+                     const GURL& validated_url) override;
   void DidFailLoad(content::RenderFrameHost* render_frame_host,
                    const GURL& validated_url,
                    int error_code,
                    const base::string16& error_description,
-                   bool was_ignored_by_handler) final;
+                   bool was_ignored_by_handler) override;
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       bool is_error_page,
-      bool is_iframe_srcdoc) final;
+      bool is_iframe_srcdoc) override;
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,
-      ui::PageTransition transition_type) final;
+      ui::PageTransition transition_type) override;
   void DidFailProvisionalLoad(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
       int error_code,
       const base::string16& error_description,
-      bool was_ignored_by_handler) final;
+      bool was_ignored_by_handler) override;
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
-      const content::FrameNavigateParams& params) final;
+      const content::FrameNavigateParams& params) override;
   void DidGetRedirectForResourceRequest(
       content::RenderFrameHost* render_frame_host,
-      const content::ResourceRedirectDetails& details) final;
+      const content::ResourceRedirectDetails& details) override;
   void NavigationEntryCommitted(
-      const content::LoadCommittedDetails& load_details) final;
-  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) final;
-  void DidShowFullscreenWidget(int routing_id) final;
+      const content::LoadCommittedDetails& load_details) override;
+  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) override;
+  void DidShowFullscreenWidget(int routing_id) override;
   bool OnMessageReceived(const IPC::Message& msg,
-                         content::RenderFrameHost* render_frame_host) final;
+                         content::RenderFrameHost* render_frame_host) override;
 
   // BrowserPlatformIntegrationObserver implementation
-  void ClipboardDataChanged() final;
+  void ClipboardDataChanged() override;
 
   WebViewClient* client_;
 
   struct WebContentsDeleter {
     void operator()(content::WebContents* contents);
   };
-  typedef scoped_ptr<content::WebContents, WebContentsDeleter>
+  typedef std::unique_ptr<content::WebContents, WebContentsDeleter>
       WebContentsScopedPtr;
 
   WebContentsScopedPtr web_contents_;

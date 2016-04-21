@@ -18,10 +18,10 @@
 #ifndef _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
 #define _OXIDE_QT_CORE_BROWSER_VARIANT_VALUE_CONVERTER_H_
 
+#include <memory>
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 
 QT_BEGIN_NAMESPACE
 class QVariant;
@@ -36,7 +36,7 @@ namespace qt {
 
 class VariantValueConverter {
  public:
-  static scoped_ptr<base::Value> FromVariantValue(const QVariant& variant);
+  static std::unique_ptr<base::Value> FromVariantValue(const QVariant& variant);
 
   static QVariant ToVariantValue(const base::Value* value);
 

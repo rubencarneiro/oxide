@@ -28,6 +28,7 @@
 #include "base/files/file_util.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/weak_ptr.h"
 #include "base/supports_user_data.h"
 #include "base/synchronization/lock.h"
@@ -207,7 +208,7 @@ struct BrowserContextSharedIOData {
 
   std::vector<std::string> host_mapping_rules;
 
-  scoped_ptr<UserAgentSettingsIOData> user_agent_settings;
+  std::unique_ptr<UserAgentSettingsIOData> user_agent_settings;
 
   bool do_not_track;
 
@@ -407,7 +408,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   // TODO: We want persistent storage here (for non-incognito), but 
   //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      make_scoped_ptr(new net::ChannelIDService(
+      base::WrapUnique(new net::ChannelIDService(
           new net::DefaultChannelIDStore(nullptr),
           base::WorkerPool::GetTaskRunner(true))));
 
@@ -425,7 +426,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       FROM_HERE,
       base::Bind(&CleanupOldCacheDir, GetCachePath().Append(kCacheDirname)));
 
-  scoped_ptr<net::HttpCache::BackendFactory> cache_backend;
+  std::unique_ptr<net::HttpCache::BackendFactory> cache_backend;
   if (IsOffTheRecord() || GetCachePath().empty()) {
     cache_backend = net::HttpCache::DefaultBackend::InMemory(0);
   } else {
@@ -454,18 +455,19 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.host_mapping_rules = host_mapping_rules_.get();
 
   http_network_session_ =
-      make_scoped_ptr(new net::HttpNetworkSession(session_params));
+      base::WrapUnique(new net::HttpNetworkSession(session_params));
 
   {
     // Calls QuickStreamFactory constructor which uses base::CPU
     base::ThreadRestrictions::ScopedAllowIO allow_io;
     storage->set_http_transaction_factory(
-        make_scoped_ptr(new net::HttpCache(http_network_session_.get(),
-                                           std::move(cache_backend),
-                                           true)));
+        base::WrapUnique(
+            new net::HttpCache(http_network_session_.get(),
+                               std::move(cache_backend),
+                               true)));
   }
 
-  scoped_ptr<net::URLRequestJobFactoryImpl> job_factory(
+  std::unique_ptr<net::URLRequestJobFactoryImpl> job_factory(
       new net::URLRequestJobFactoryImpl());
 
   bool set_protocol = false;
@@ -474,29 +476,30 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
        ++it) {
     set_protocol =
         job_factory->SetProtocolHandler(it->first,
-                                        make_scoped_ptr(it->second.release()));
+                                        base::WrapUnique(it->second.release()));
     DCHECK(set_protocol);
   }
   protocol_handlers.clear();
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFileScheme,
-      make_scoped_ptr(new net::FileProtocolHandler(
-        content::BrowserThread::GetMessageLoopProxyForThread(
-          content::BrowserThread::FILE))));
+      base::WrapUnique(
+          new net::FileProtocolHandler(
+              content::BrowserThread::GetMessageLoopProxyForThread(
+                  content::BrowserThread::FILE))));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kDataScheme,
-      make_scoped_ptr(new net::DataProtocolHandler()));
+      base::WrapUnique(new net::DataProtocolHandler()));
   DCHECK(set_protocol);
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFtpScheme,
-      make_scoped_ptr(new net::FtpProtocolHandler(
+      base::WrapUnique(new net::FtpProtocolHandler(
         ftp_transaction_factory_.get())));
   DCHECK(set_protocol);
 
-  scoped_ptr<net::URLRequestJobFactory> top_job_factory(
+  std::unique_ptr<net::URLRequestJobFactory> top_job_factory(
       new URLRequestDelegatedJobFactory(std::move(job_factory),
                                         this));
 
@@ -504,8 +507,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           request_interceptors.rbegin();
        it != request_interceptors.rend();
        ++it) {
-    top_job_factory.reset(new net::URLRequestInterceptingJobFactory(
-        std::move(top_job_factory), make_scoped_ptr(*it)));
+    top_job_factory.reset(
+        new net::URLRequestInterceptingJobFactory(std::move(top_job_factory),
+                                                  base::WrapUnique(*it)));
   }
   request_interceptors.weak_clear();
 
@@ -639,7 +643,8 @@ void BrowserContextTraits::Destruct(const BrowserContext* x) {
   BrowserContextDestroyer::DestroyContext(const_cast<BrowserContext*>(x));
 }
 
-scoped_ptr<content::ZoomLevelDelegate> BrowserContext::CreateZoomLevelDelegate(
+std::unique_ptr<content::ZoomLevelDelegate>
+BrowserContext::CreateZoomLevelDelegate(
     const base::FilePath& partition_path) {
   return nullptr;
 }
