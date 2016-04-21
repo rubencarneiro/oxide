@@ -40,6 +40,7 @@
 #include "content/common/host_shared_bitmap_manager.h"
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
+#include "gpu/command_buffer/client/shared_memory_limits.h"
 #include "gpu/command_buffer/common/gles2_cmd_utils.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
@@ -96,7 +97,6 @@ CreateOffscreenContext3D() {
           gfx::PreferIntegratedGpu,
           true, // share_resources
           false, // automatic_flushes
-          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
           nullptr)); // share_context
 }
 
@@ -303,6 +303,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
     context_provider =
         make_scoped_refptr(new content::ContextProviderCommandBuffer(
             CreateOffscreenContext3D(),
+            gpu::SharedMemoryLimits(),
             content::CONTEXT_TYPE_UNKNOWN));
     if (!context_provider.get()) {
       return nullptr;
@@ -597,7 +598,7 @@ void Compositor::SwapCompositorFrame(std::unique_ptr<CompositorFrameData> frame)
           output_surface_->context_provider();
       gpu::gles2::GLES2Interface* gl = context_provider->ContextGL();
 
-      if (!context_provider->ContextCapabilities().gpu.sync_query) {
+      if (!context_provider->ContextCapabilities().sync_query) {
         gl->Finish();
         DidCompleteGLFrame(output_surface_->surface_id(), std::move(frame));
       } else {

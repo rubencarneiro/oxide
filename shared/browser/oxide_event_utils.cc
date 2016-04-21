@@ -200,7 +200,11 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
       result.type = blink::WebInputEvent::Undefined;
   }
 
-  result.cancelable = result.type != blink::WebInputEvent::TouchCancel;
+  result.dispatchType =
+      result.type == blink::WebInputEvent::TouchCancel ?
+          blink::WebInputEvent::EventNonBlocking :
+          blink::WebInputEvent::Blocking;
+
   result.movedBeyondSlopRegion = moved_beyond_slop_region;
 
   result.touchesLength = std::min(
