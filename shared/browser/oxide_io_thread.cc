@@ -43,8 +43,9 @@
 #include "net/url_request/url_request_job_factory_impl.h"
 #include "net/url_request/url_request_throttler_manager.h"
 
+#include "shared/browser/ssl/oxide_ssl_config_service.h"
+
 #include "oxide_browser_platform_integration.h"
-#include "oxide_ssl_config_service.h"
 #include "oxide_url_request_context.h"
 
 namespace oxide {

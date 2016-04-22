@@ -34,13 +34,13 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_security_types.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/test/oxide_test_browser_thread_bundle.h"
 
 #include "oxide_certificate_error.h"
 #include "oxide_certificate_error_dispatcher.h"
 #include "oxide_certificate_error_placeholder_page.h"
+#include "oxide_security_types.h"
 
 using oxide::CertificateErrorDispatcher;
 

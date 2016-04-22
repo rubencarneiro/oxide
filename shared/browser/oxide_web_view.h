@@ -45,9 +45,9 @@
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
-#include "shared/browser/oxide_security_status.h"
-#include "shared/browser/oxide_security_types.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
+#include "shared/browser/ssl/oxide_security_status.h"
+#include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_shared_export.h"
 

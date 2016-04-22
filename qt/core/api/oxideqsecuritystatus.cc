@@ -24,8 +24,8 @@
 #include "net/cert/x509_certificate.h"
 
 #include "qt/core/browser/oxide_qt_web_view.h"
-#include "shared/browser/oxide_security_status.h"
-#include "shared/browser/oxide_security_types.h"
+#include "shared/browser/ssl/oxide_security_status.h"
+#include "shared/browser/ssl/oxide_security_types.h"
 
 #include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"

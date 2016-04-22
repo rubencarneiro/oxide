@@ -30,7 +30,7 @@
 #include "base/memory/ptr_util.h"
 #include "net/cert/x509_certificate.h"
 
-#include "shared/browser/oxide_security_types.h"
+#include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/browser/ssl/oxide_certificate_error.h"
 
 #include "oxideqsslcertificate_p.h"

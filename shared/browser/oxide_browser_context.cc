@@ -60,6 +60,8 @@
 
 #include "shared/browser/permissions/oxide_permission_manager.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
+#include "shared/browser/ssl/oxide_ssl_config_service.h"
+#include "shared/browser/ssl/oxide_ssl_host_state_delegate.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
 
@@ -72,8 +74,6 @@
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
 #include "oxide_network_delegate.h"
-#include "oxide_ssl_config_service.h"
-#include "oxide_ssl_host_state_delegate.h"
 #include "oxide_url_request_context.h"
 #include "oxide_url_request_delegated_job_factory.h"
 #include "oxide_user_agent_settings.h"
