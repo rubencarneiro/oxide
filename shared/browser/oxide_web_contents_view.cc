@@ -249,8 +249,15 @@ void WebContentsView::CreateView(const gfx::Size& initial_size,
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
     content::RenderWidgetHost* render_widget_host,
     bool is_guest_view_hack) {
-  return new RenderWidgetHostView(
-      content::RenderWidgetHostImpl::From(render_widget_host));
+  RenderWidgetHostView* view =
+      new RenderWidgetHostView(
+          content::RenderWidgetHostImpl::From(render_widget_host));
+  if (web_contents()->GetRenderViewHost() &&
+      web_contents()->GetRenderViewHost()->GetWidget() == render_widget_host) {
+    view->SetContainer(this);
+  }
+
+  return view;
 }
 
 content::RenderWidgetHostViewBase* WebContentsView::CreateViewForPopupWidget(
@@ -583,7 +590,12 @@ bool WebContentsView::HasFocus(const RenderWidgetHostView* view) const {
 }
 
 bool WebContentsView::IsFullscreen() const {
-  return FullscreenHelper::FromWebContents(web_contents())->IsFullscreen();
+  FullscreenHelper* helper = FullscreenHelper::FromWebContents(web_contents());
+  if (!helper) {
+    return false;
+  }
+
+  return helper->IsFullscreen();
 }
 
 float WebContentsView::GetLocationBarHeight() const {
