@@ -32,11 +32,10 @@
 #include "net/ssl/ssl_info.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_security_types.h"
-
 #include "oxide_certificate_error.h"
 #include "oxide_certificate_error_placeholder_page.h"
 #include "oxide_certificate_error_proxy.h"
+#include "oxide_security_types.h"
 
 namespace oxide {
 

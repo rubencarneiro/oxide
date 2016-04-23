@@ -74,6 +74,8 @@ void RespondToMediaAccessPermissionRequest(
     content::RenderFrameHost* render_frame_host,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     PermissionRequestResponse response) {
   if (response != PERMISSION_REQUEST_RESPONSE_ALLOW) {
     callback.Run(content::MediaStreamDevices(),
@@ -86,11 +88,33 @@ void RespondToMediaAccessPermissionRequest(
       render_frame_host->GetProcess()->GetBrowserContext();
 
   content::MediaStreamDevices devices;
-  MediaCaptureDevicesDispatcher::GetInstance()
-      ->GetDefaultCaptureDevicesForContext(context,
-                                           audio,
-                                           video,
-                                           &devices);
+  if (audio && !requested_audio_device_id.empty()) {
+    const content::MediaStreamDevice* device =
+        MediaCaptureDevicesDispatcher::GetInstance()->
+            FindAudioCaptureDeviceById(requested_audio_device_id);
+    if (device) {
+      devices.push_back(*device);
+      audio = false;
+    }
+  }
+
+  if (video && !requested_video_device_id.empty()) {
+    const content::MediaStreamDevice* device =
+        MediaCaptureDevicesDispatcher::GetInstance()->
+            FindVideoCaptureDeviceById(requested_video_device_id);
+    if (device) {
+      devices.push_back(*device);
+      video = false;
+    }
+  }
+
+  if (audio || video) {
+      MediaCaptureDevicesDispatcher::GetInstance()
+          ->GetDefaultCaptureDevicesForContext(context,
+                                               audio,
+                                               video,
+                                               &devices);
+  }
 
   callback.Run(devices,
                devices.empty() ?
@@ -105,6 +129,8 @@ void RespondToMediaAccessPermissionRequestCallback(
     int render_frame_id,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     const GURL& requesting_origin,
     const GURL& embedding_origin,
     PermissionRequestResponse response) {
@@ -121,6 +147,8 @@ void RespondToMediaAccessPermissionRequestCallback(
                                         rfh,
                                         audio,
                                         video,
+                                        requested_audio_device_id,
+                                        requested_video_device_id,
                                         response);
 
   if (response == PERMISSION_REQUEST_RESPONSE_CANCEL) {
@@ -153,6 +181,8 @@ PermissionRequestCallback WrapMediaResponseCallback(
     int render_frame_id,
     bool audio,
     bool video,
+    const std::string& requested_audio_device_id,
+    const std::string& requested_video_device_id,
     const GURL& requesting_origin,
     const GURL& embedding_origin) {
   return base::Bind(&RespondToMediaAccessPermissionRequestCallback,
@@ -161,6 +191,8 @@ PermissionRequestCallback WrapMediaResponseCallback(
                     render_frame_id,
                     audio,
                     video,
+                    requested_audio_device_id,
+                    requested_video_device_id,
                     requesting_origin,
                     embedding_origin);
 }
@@ -430,6 +462,8 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
         rfh,
         audio,
         video,
+        request.requested_audio_device_id,
+        request.requested_video_device_id,
         ToPermissionRequestResponse(saved_status));
     return;
   }
@@ -445,6 +479,8 @@ void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
                                   request.render_frame_id,
                                   audio,
                                   video,
+                                  request.requested_audio_device_id,
+                                  request.requested_video_device_id,
                                   request.security_origin,
                                   embedding_origin));
 }

@@ -22,7 +22,7 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/common/ssl_status.h"
 
-#include "shared/browser/oxide_security_types.h"
+#include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_shared_export.h"
 
 namespace net {
