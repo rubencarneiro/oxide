@@ -17,8 +17,10 @@
 
 #include "oxide_qquick_before_unload_dialog.h"
 
+#include <libintl.h>
 #include <QObject>
 
+#include "qt/core/api/oxideqglobal_p.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 
@@ -48,7 +50,12 @@ BeforeUnloadDialogContext::BeforeUnloadDialogContext(
     : client_(client) {}
 
 QString BeforeUnloadDialogContext::message() const {
-  return client_->messageText();
+  WARN_DEPRECATED_API_USAGE() <<
+      "BeforeUnloadDialogContext::message is deprecated and the message text "
+      "provided by the web page is ignored. This API returns a message for "
+      "compatibility purposes, but applications should stop using it";
+  return QString(
+      dgettext(OXIDE_GETTEXT_DOMAIN, "Changes you made may not be saved."));
 }
 
 void BeforeUnloadDialogContext::accept() const {
