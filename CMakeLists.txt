@@ -69,6 +69,7 @@ string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_P
 # for dh_translations to extract the domain
 # (regarding syntax consistency, see http://pad.lv/1181187)
 set(GETTEXT_PACKAGE "oxide-${OXIDE_PLATFORM}")
+add_definitions(-DOXIDE_GETTEXT_DOMAIN="${GETTEXT_PACKAGE}")
 
 # Check we have a new enough compiler
 # FIXME: Support clang

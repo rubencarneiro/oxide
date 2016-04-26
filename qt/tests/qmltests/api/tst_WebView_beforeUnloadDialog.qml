@@ -77,7 +77,7 @@ TestWebView {
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
-      compare(dialog.message, "Confirm navigation");
+      verify(dialog.message);
       mouseClick(dialog, dialog.width / 2, dialog.height / 2, data.button);
       verify(TestUtils.waitFor(webView.dialogDismissed),
              "Before unload dialog not dismissed");

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: oxide-qt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-13 14:45-0400\n"
+"POT-Creation-Date: 2016-04-25 16:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: shared/browser/oxide_browser_context.cc:204
+#: qt/quick/oxide_qquick_before_unload_dialog.cc:58
+msgid "Changes you made may not be saved."
+msgstr ""
+
+#: shared/browser/oxide_user_agent_settings.cc:100
 msgid "AcceptLanguage"
 msgstr ""

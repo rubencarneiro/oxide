@@ -24,8 +24,6 @@ TestWebView {
   property var currentDialog: null
 
   beforeUnloadDialog: Item {
-    readonly property string message: model.message
-
     function respond(accept) {
       if (accept) {
         model.accept();
@@ -95,7 +93,6 @@ TestWebView {
       webView.prepareToClose();
       _waitForDialog();
 
-      compare(webView.currentDialog.message, "Foo");
       webView.currentDialog.respond(true);
       spy.wait();
 
@@ -111,7 +108,6 @@ TestWebView {
       webView.prepareToClose();
       _waitForDialog();
 
-      compare(webView.currentDialog.message, "Foo");
       webView.currentDialog.respond(false);
       spy.wait();
 
