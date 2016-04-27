@@ -164,6 +164,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   bool ViewSizeShouldBeScreenSize() const;
 
+  void ResizeCompositorViewport();
+  void UpdateContentsSize();
+
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
   gfx::NativeView GetContentNativeView() const override;

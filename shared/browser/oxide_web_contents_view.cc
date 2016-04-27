@@ -193,6 +193,22 @@ bool WebContentsView::ViewSizeShouldBeScreenSize() const {
   return true;
 }
 
+void WebContentsView::ResizeCompositorViewport() {
+  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetViewportSize(GetSizeInPixels());
+}
+
+void WebContentsView::UpdateContentsSize() {
+  gfx::Size size = GetBounds().size();
+
+  root_layer_->SetBounds(size);
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->SetSize(size);
+  }
+}
+
 gfx::NativeView WebContentsView::GetNativeView() const {
   return nullptr;
 }
@@ -890,16 +906,13 @@ void WebContentsView::DidCommitCompositorFrame() {
 }
 
 void WebContentsView::WasResized() {
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
-  compositor_->SetViewportSize(GetSizeInPixels());
-  root_layer_->SetBounds(GetBounds().size());
+  ResizeCompositorViewport();
+  UpdateContentsSize();
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->SetSize(GetBounds().size());
-    content::RenderWidgetHostImpl::From(GetRenderWidgetHost())
-        ->SendScreenRects();
-    GetRenderWidgetHost()->WasResized();
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (rwh) {
+    content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
+    rwh->WasResized();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
@@ -935,17 +948,26 @@ void WebContentsView::FocusChanged() {
 }
 
 void WebContentsView::ScreenUpdated() {
+  // If the device scale has changed, then the compositor viewport size
+  // and scale needs updating
+  // See https://launchpad.net/bugs/1575216
+  ResizeCompositorViewport();
+ 
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+ 
   if (ViewSizeShouldBeScreenSize()) {
     // See https://launchpad.net/bugs/1558792
-    WasResized();
+    UpdateContentsSize();
+    if (rwh) {
+      content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
+    }
   }
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
+  if (!rwh) {
     return;
   }
 
-  content::RenderWidgetHostImpl::From(host)->NotifyScreenInfoChanged();
+  content::RenderWidgetHostImpl::From(rwh)->NotifyScreenInfoChanged();
 }
 
 void WebContentsView::HideTouchSelectionController() {
