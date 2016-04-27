@@ -35,6 +35,7 @@
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/common/text_input_state.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -145,12 +146,6 @@ bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
 }
 
 } // namespace
-
-void RenderWidgetHostView::OnTextInputStateChanged(
-    ui::TextInputType type,
-    bool show_ime_if_needed) {
-  ime_bridge_.TextInputStateChanged(type, show_ime_if_needed);
-}
 
 void RenderWidgetHostView::OnSelectionBoundsChanged(
     const gfx::Rect& anchor_rect,
@@ -397,6 +392,11 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
 
   is_loading_ = is_loading;
   UpdateCurrentCursor();
+}
+
+void RenderWidgetHostView::TextInputStateChanged(
+    const content::TextInputState& params) {
+  ime_bridge_.TextInputStateChanged(params.type, params.show_ime_if_needed);
 }
 
 void RenderWidgetHostView::ImeCancelComposition() {

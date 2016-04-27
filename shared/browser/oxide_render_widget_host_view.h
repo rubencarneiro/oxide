@@ -108,8 +108,6 @@ class RenderWidgetHostView
 
  private:
   // content::RenderWidgetHostViewOxide implementation
-  void OnTextInputStateChanged(ui::TextInputType type,
-                               bool show_ime_if_needed) override;
   void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
                                 const gfx::Rect& focus_rect,
                                 bool is_anchor_first) override;
@@ -134,6 +132,7 @@ class RenderWidgetHostView
       content::RenderWidgetHostView* reference_host_view) override;
   void UpdateCursor(const content::WebCursor& cursor) override;
   void SetIsLoading(bool is_loading) override;
+  void TextInputStateChanged(const content::TextInputState& params) override;
   void ImeCancelComposition() override;
   void RenderProcessGone(base::TerminationStatus status,
                          int error_code) override;
