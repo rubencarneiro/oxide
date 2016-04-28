@@ -25,6 +25,8 @@
 #include <QTouchEvent>
 
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
+#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/quick/api/oxideqquickwebview_p.h"
 
 #include "oxide_qquick_accelerated_frame_node.h"
 #include "oxide_qquick_image_frame_node.h"
@@ -247,6 +249,9 @@ void ContentsView::screenChanged(QScreen* screen) {
   }
 
   proxy()->screenUpdated();
+  //REMOVEME - need to recalculate location bar height in case scale changed
+  auto webview = static_cast<OxideQQuickWebView*>(item_.data());
+  OxideQQuickWebViewPrivate::get(webview)->updateLocationBarHeight();
 }
 
 void ContentsView::screenChangedHelper(QScreen* screen) {

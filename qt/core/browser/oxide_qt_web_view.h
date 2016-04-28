@@ -243,6 +243,7 @@ class WebView : public oxide::WebViewClient,
 
   int locationBarHeight() const override;
   void setLocationBarHeight(int height) override;
+  void updateLocationBarHeight() const override;
   int locationBarOffset() const override;
   int locationBarContentOffset() const override;
   LocationBarMode locationBarMode() const override;
@@ -276,6 +277,7 @@ class WebView : public oxide::WebViewClient,
   QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;
 
+  int location_bar_height_;
   bool frame_tree_torn_down_;
 
   std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;

@@ -736,6 +736,12 @@ void OxideQQuickWebViewPrivate::setLocationBarHeight(int height) {
   }
 }
 
+void OxideQQuickWebViewPrivate::updateLocationBarHeight() {
+  if (proxy_) {
+    proxy_->updateLocationBarHeight();
+  }
+}
+
 oxide::qt::LocationBarMode OxideQQuickWebViewPrivate::locationBarMode() const {
   if (!proxy_) {
     return construct_props_->location_bar_mode;
