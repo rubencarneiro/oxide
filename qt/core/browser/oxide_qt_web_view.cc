@@ -956,7 +956,7 @@ void WebView::setLocationBarHeight(int height) {
                                           contents_view_->GetScreen()));
 }
 
- // FIXME: called on screen change, to recalculate location bzr height if scale changed
+ // FIXME: called on screen change, to recalculate location bar height if scale changed
 void WebView::updateLocationBarHeight() const {
   setLocationBarHeight(location_bar_height_);
 }
