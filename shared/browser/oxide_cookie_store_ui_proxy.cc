@@ -522,10 +522,10 @@ void CookieStoreUIProxy::DeleteAllCreatedBetweenAsync(
   core_->DeleteAllCreatedBetweenAsync(delete_begin, delete_end, callback);
 }
 
-void CookieStoreUIProxy::DeleteAllCreatedBetweenForHostAsync(
-    const base::Time delete_begin,
-    const base::Time delete_end,
-    const GURL& url,
+void CookieStoreUIProxy::DeleteAllCreatedBetweenWithPredicateAsync(
+    const base::Time& delete_begin,
+    const base::Time& delete_end,
+    const CookiePredicate& predicate,
     const DeleteCallback& callback) {
   NOTIMPLEMENTED();
   callback.Run(0);
@@ -546,7 +546,7 @@ void CookieStoreUIProxy::SetForceKeepSessionState() {
   NOTIMPLEMENTED();
 }
 
-scoped_ptr<net::CookieStore::CookieChangedSubscription>
+std::unique_ptr<net::CookieStore::CookieChangedSubscription>
 CookieStoreUIProxy::AddCallbackForCookie(
     const GURL& url,
     const std::string& name,

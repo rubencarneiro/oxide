@@ -36,19 +36,21 @@ namespace oxide {
 
 namespace {
 
-blink::WebNotificationPermission
-ToNotificationPermission(TemporarySavedPermissionStatus status) {
+// FIXME(chrisccoulson): Split out of here. This code is duplicated in
+//  oxide_permission_manager.cc
+blink::mojom::PermissionStatus ToPermissionStatus(
+    TemporarySavedPermissionStatus status) {
   switch (status) {
     case TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED:
-      return blink::WebNotificationPermissionAllowed;
+      return blink::mojom::PermissionStatus::GRANTED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_DENIED:
-      return blink::WebNotificationPermissionDenied;
+      return blink::mojom::PermissionStatus::DENIED;
     case TEMPORARY_SAVED_PERMISSION_STATUS_ASK:
-      return blink::WebNotificationPermissionDefault;
-  };
-
-  NOTREACHED();
-  return blink::WebNotificationPermissionDefault;
+      return blink::mojom::PermissionStatus::ASK;
+    default:
+      NOTREACHED();
+      return blink::mojom::PermissionStatus::DENIED;
+  }
 }
 
 }
@@ -63,34 +65,32 @@ void PlatformNotificationService::CancelNotificationByID(
   system_notification_dispatcher_->CloseNotification(notification_id);
 }
 
-blink::WebNotificationPermission
+blink::mojom::PermissionStatus
 PlatformNotificationService::CheckPermissionOnUIThread(
     content::BrowserContext* browser_context,
     const GURL& origin,
     int render_process_id) {
-      return blink::WebNotificationPermissionAllowed;
   BrowserContext* context = static_cast<BrowserContext*>(browser_context);
   TemporarySavedPermissionContext* permission_context =
       context->GetTemporarySavedPermissionContext();
 
-  return ToNotificationPermission(
+  return ToPermissionStatus(
       permission_context->GetPermissionStatus(
         TEMPORARY_SAVED_PERMISSION_TYPE_NOTIFICATIONS,
         origin,
         origin));
 }
 
-blink::WebNotificationPermission
+blink::mojom::PermissionStatus
 PlatformNotificationService::CheckPermissionOnIOThread(
     content::ResourceContext* resource_context,
     const GURL& origin,
     int render_process_id) {
-      return blink::WebNotificationPermissionAllowed;
   TemporarySavedPermissionContext* permission_context =
       BrowserContextIOData::FromResourceContext(resource_context)
         ->GetTemporarySavedPermissionContext();
 
-  return ToNotificationPermission(
+  return ToPermissionStatus(
       permission_context->GetPermissionStatus(
         TEMPORARY_SAVED_PERMISSION_TYPE_NOTIFICATIONS,
         origin,

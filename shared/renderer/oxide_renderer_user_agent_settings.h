@@ -21,7 +21,7 @@
 #include <string>
 
 #include "base/macros.h"
-#include "content/public/renderer/render_process_observer.h"
+#include "content/public/renderer/render_thread_observer.h"
 
 #include "shared/common/oxide_user_agent_override_set.h"
 
@@ -31,7 +31,7 @@ namespace oxide {
 
 class ContentRendererClient;
 
-class RendererUserAgentSettings : public content::RenderProcessObserver {
+class RendererUserAgentSettings : public content::RenderThreadObserver {
  public:
   ~RendererUserAgentSettings() override;
 
@@ -49,7 +49,7 @@ class RendererUserAgentSettings : public content::RenderProcessObserver {
       const std::vector<UserAgentOverrideSet::Entry>& overrides);
   void OnSetLegacyUserAgentOverrideEnabled(bool enabled);
 
-  // content::RenderProcessObserver implementation
+  // content::RenderThreadObserver implementation
   bool OnControlMessageReceived(const IPC::Message& message) override;
 
   bool legacy_override_enabled_;

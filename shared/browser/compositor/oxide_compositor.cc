@@ -40,6 +40,7 @@
 #include "content/common/host_shared_bitmap_manager.h"
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
+#include "gpu/command_buffer/client/shared_memory_limits.h"
 #include "gpu/command_buffer/common/gles2_cmd_utils.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
@@ -64,7 +65,8 @@ namespace {
 
 typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
 
-std::unique_ptr<WGC3DCBI> CreateOffscreenContext3D() {
+std::unique_ptr<content::WebGraphicsContext3DCommandBufferImpl>
+CreateOffscreenContext3D() {
   if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
     return nullptr;
   }
@@ -87,14 +89,14 @@ std::unique_ptr<WGC3DCBI> CreateOffscreenContext3D() {
   attrs.lose_context_when_out_of_memory = true;
 
   return base::WrapUnique(
-      WGC3DCBI::CreateOffscreenContext(
+      new content::WebGraphicsContext3DCommandBufferImpl(
+          gpu::kNullSurfaceHandle,
+          GURL(),
           gpu_channel_host.get(),
           attrs,
           gfx::PreferIntegratedGpu,
           true, // share_resources
           false, // automatic_flushes
-          GURL(),
-          content::WebGraphicsContext3DCommandBufferImpl::SharedMemoryLimits(),
           nullptr)); // share_context
 }
 
@@ -299,8 +301,10 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   std::unique_ptr<cc::OutputSurface> surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     context_provider =
-        content::ContextProviderCommandBuffer::Create(
-            CreateOffscreenContext3D(), content::CONTEXT_TYPE_UNKNOWN);
+        make_scoped_refptr(new content::ContextProviderCommandBuffer(
+            CreateOffscreenContext3D(),
+            gpu::SharedMemoryLimits(),
+            content::CONTEXT_TYPE_UNKNOWN));
     if (!context_provider.get()) {
       return nullptr;
     }
@@ -324,7 +328,8 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
-          base::ThreadTaskRunnerHandle::Get()));
+          base::ThreadTaskRunnerHandle::Get(),
+          surface_id_allocator_->id_namespace()));
   std::unique_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
@@ -504,9 +509,6 @@ void Compositor::DidCommit() {
 
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
-void Compositor::RecordFrameTimingEvents(
-    std::unique_ptr<cc::FrameTimingTracker::CompositeTimingSet> composite_events,
-    std::unique_ptr<cc::FrameTimingTracker::MainFrameTimingSet> main_frame_events) {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 void Compositor::DidPostSwapBuffers() {}
@@ -596,7 +598,7 @@ void Compositor::SwapCompositorFrame(std::unique_ptr<CompositorFrameData> frame)
           output_surface_->context_provider();
       gpu::gles2::GLES2Interface* gl = context_provider->ContextGL();
 
-      if (!context_provider->ContextCapabilities().gpu.sync_query) {
+      if (!context_provider->ContextCapabilities().sync_query) {
         gl->Finish();
         DidCompleteGLFrame(output_surface_->surface_id(), std::move(frame));
       } else {

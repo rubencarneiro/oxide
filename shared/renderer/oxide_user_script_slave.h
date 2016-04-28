@@ -23,7 +23,7 @@
 #include "base/macros.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/shared_memory.h"
-#include "content/public/renderer/render_process_observer.h"
+#include "content/public/renderer/render_thread_observer.h"
 
 #include "shared/common/oxide_user_script.h"
 
@@ -38,7 +38,7 @@ namespace oxide {
 
 class UserScript;
 
-class UserScriptSlave final : public content::RenderProcessObserver {
+class UserScriptSlave final : public content::RenderThreadObserver {
  public:
   static UserScriptSlave* GetInstance();
 
@@ -60,7 +60,7 @@ class UserScriptSlave final : public content::RenderProcessObserver {
       blink::WebLocalFrame* frame,
       const blink::WebScriptSource& script_source);
 
-  // content::RenderProcessObserver implementation
+  // content::RenderThreadObserver implementation
   bool OnControlMessageReceived(const IPC::Message& message) final;
   void OnRenderProcessShutdown() final;
 

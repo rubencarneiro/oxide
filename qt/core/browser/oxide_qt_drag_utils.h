@@ -21,7 +21,7 @@
 #include <Qt>
 #include <QtGlobal>
 
-#include "third_party/WebKit/public/web/WebDragOperation.h"
+#include "third_party/WebKit/public/platform/WebDragOperation.h"
 
 QT_BEGIN_NAMESPACE
 class QDragEnterEvent;

@@ -20,8 +20,11 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/thread_task_runner_handle.h"
+#include "cc/output/begin_frame_args.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
+#include "cc/scheduler/begin_frame_source.h"
 
 #include "oxide_compositor.h"
 #include "oxide_compositor_frame_data.h"
@@ -35,7 +38,11 @@ CompositorOutputSurface::CompositorOutputSurface(
     CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(context_provider),
       listener_(listener),
-      surface_id_(surface_id) {}
+      surface_id_(surface_id),
+      begin_frame_source_(
+          new cc::SyntheticBeginFrameSource(
+              base::ThreadTaskRunnerHandle::Get().get(),
+              cc::BeginFrameArgs::DefaultInterval())) {}
 
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
@@ -43,7 +50,11 @@ CompositorOutputSurface::CompositorOutputSurface(
     CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(std::move(software_device)),
       listener_(listener),
-      surface_id_(surface_id) {}
+      surface_id_(surface_id),
+      begin_frame_source_(
+          new cc::SyntheticBeginFrameSource(
+              base::ThreadTaskRunnerHandle::Get().get(),
+              cc::BeginFrameArgs::DefaultInterval())) {}
 
 void CompositorOutputSurface::DoSwapBuffers(
     std::unique_ptr<CompositorFrameData> frame) {
@@ -57,6 +68,8 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   if (!cc::OutputSurface::BindToClient(client)) {
     return false;
   }
+
+  client->SetBeginFrameSource(begin_frame_source_.get());
 
   listener_->OutputSurfaceBound(this);
   return true;
