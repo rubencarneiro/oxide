@@ -541,13 +541,14 @@ void ContentsView::UnhandledKeyboardEvent(
     return;
   }
 
-  if (!event.os_event) {
+  if (!event.extra_data()) {
     return;
   }
-  
-  DCHECK(!event.os_event->isAccepted());
 
-  client_->HandleUnhandledKeyboardEvent(event.os_event);
+  QKeyEvent* key_event = reinterpret_cast<QKeyEvent*>(event.extra_data());
+  DCHECK(!key_event->isAccepted());
+
+  client_->HandleUnhandledKeyboardEvent(key_event);
 }
 
 ContentsView::ContentsView(ContentsViewProxyClient* client,

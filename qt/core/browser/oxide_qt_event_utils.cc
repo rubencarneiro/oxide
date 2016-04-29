@@ -437,6 +437,14 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
+void ReleaseKeyEvent(void* event) {
+  delete reinterpret_cast<QKeyEvent*>(event);
+}
+
+void* CopyKeyEvent(void* event) {
+  return new QKeyEvent(*reinterpret_cast<QKeyEvent*>(event));
+}
+
 }
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
@@ -445,7 +453,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 
   QKeyEvent* os_event = new QKeyEvent(*event);
   os_event->setAccepted(false);
-  result.os_event = os_event;
+  result.SetExtraData(os_event, ReleaseKeyEvent, CopyKeyEvent);
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QInputEventStateToWebEventModifiers(event);

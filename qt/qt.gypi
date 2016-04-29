@@ -25,9 +25,8 @@
   },
   'target_defaults': {
     'defines': [
-      # XXX(chrisccoulson): Rename this to OXIDE_PLATFORM_QT and automatically
-      #  add it in build/common.gypi based on oxide_build, or remove if
-      #  possible - it's only used in one place
+      # XXX(chrisccoulson): Remove this as it's unused (will trigger a full
+      #  rebuild though)
       'OXIDE_BUILD_QT',
     ],
   },
