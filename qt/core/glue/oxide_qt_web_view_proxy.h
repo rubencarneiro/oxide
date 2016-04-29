@@ -169,7 +169,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual int locationBarHeight() const = 0;
   virtual void setLocationBarHeight(int height) = 0;
-  virtual void updateLocationBarHeight() = 0;
   virtual int locationBarOffset() const = 0;
   virtual int locationBarContentOffset() const = 0;
   virtual LocationBarMode locationBarMode() const = 0;

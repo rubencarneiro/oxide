@@ -88,6 +88,8 @@ class WebView : public oxide::WebViewClient,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
+  void RescaleLocationBarHeight(); //FIXME: called on screen change only
+
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
@@ -243,7 +245,6 @@ class WebView : public oxide::WebViewClient,
 
   int locationBarHeight() const override;
   void setLocationBarHeight(int height) override;
-  void updateLocationBarHeight() override;
   int locationBarOffset() const override;
   int locationBarContentOffset() const override;
   LocationBarMode locationBarMode() const override;

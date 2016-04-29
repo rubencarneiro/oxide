@@ -274,6 +274,11 @@ void ContentsView::visibilityChanged() {
 
 void ContentsView::screenUpdated() {
   view()->ScreenUpdated();
+
+  // FIXME - need to recalculate location bar height in case scale changed
+  oxide::qt::WebView::FromView(
+    oxide::WebView::FromWebContents(view()->GetWebContents()))
+      ->RescaleLocationBarHeight();
 }
 
 QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
