@@ -33,6 +33,7 @@
 #include "gpu/config/gpu_info_collector_oxide_linux.h"
 #include "gpu/ipc/service/gpu_service_shim_oxide.h"
 #include "media/audio/audio_manager.h"
+#include "media/capture/video/video_capture_device_factory_override.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/gfx/display.h"
@@ -46,7 +47,6 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gpu/oxide_gl_context_dependent.h"
-#include "shared/port/media/video_capture_device_factory_override.h"
 #include "shared/port/ui_base/clipboard_oxide.h"
 
 #include "oxide_browser_context.h"
@@ -66,10 +66,11 @@ namespace oxide {
 
 namespace {
 
-std::unique_ptr<media::VideoCaptureDeviceFactory> CreateVideoCaptureDeviceFactory(
-    std::unique_ptr<media::VideoCaptureDeviceFactory> delegate) {
+std::unique_ptr<media::VideoCaptureDeviceFactory>
+OverrideVideoCaptureDeviceFactory(
+    std::unique_ptr<media::VideoCaptureDeviceFactory> platform_factory) {
   return base::WrapUnique(
-      new VideoCaptureDeviceFactoryLinux(std::move(delegate)));
+      new VideoCaptureDeviceFactoryLinux(std::move(platform_factory)));
 }
 
 ui::Clipboard* CreateClipboard() {
@@ -218,8 +219,8 @@ class Screen : public gfx::Screen {
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
-  media::SetVideoCaptureDeviceFactoryOverrideFactory(
-      CreateVideoCaptureDeviceFactory);
+  media::SetVideoCaptureDeviceFactoryOverrideDelegate(
+      OverrideVideoCaptureDeviceFactory);
   ui::SetClipboardOxideFactory(CreateClipboard);
 
   gfx::InitializeOxideNativeDisplay(

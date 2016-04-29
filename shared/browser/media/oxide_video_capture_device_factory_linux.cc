@@ -111,7 +111,7 @@ VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (!HybrisUtils::IsCameraCompatAvailable()) {
-    return delegate_->Create(device_name);
+    return platform_factory_->Create(device_name);
   }
 
   std::unique_ptr<media::VideoCaptureDevice::Names> names =
@@ -126,7 +126,7 @@ VideoCaptureDeviceFactoryLinux::Create(
 
   return base::WrapUnique(new VideoCaptureDeviceHybris(device_name));
 #else
-  return delegate_->Create(device_name);
+  return platform_factory_->Create(device_name);
 #endif
 }
 
@@ -140,7 +140,7 @@ void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
   } else
 #endif
   {
-    delegate_->EnumerateDeviceNames(callback);
+    platform_factory_->EnumerateDeviceNames(callback);
   }
 }
 
@@ -153,7 +153,7 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
   }
 #endif
 
-  delegate_->GetDeviceSupportedFormats(device, supported_formats);
+  platform_factory_->GetDeviceSupportedFormats(device, supported_formats);
 }
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
@@ -162,8 +162,8 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
 }
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(
-    std::unique_ptr<media::VideoCaptureDeviceFactory> delegate)
-    : delegate_(std::move(delegate)) {}
+    std::unique_ptr<media::VideoCaptureDeviceFactory> platform_factory)
+    : platform_factory_(std::move(platform_factory)) {}
 
 VideoCaptureDeviceFactoryLinux::~VideoCaptureDeviceFactoryLinux() {}
 
