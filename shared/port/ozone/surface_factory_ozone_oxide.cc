@@ -17,7 +17,7 @@
 
 #include "surface_factory_ozone_oxide.h"
 
-#include "../../../shared/port/gfx/gfx_utils_oxide.h"
+#include "ui/gfx/gfx_utils_oxide.h"
 
 namespace ui {
 
