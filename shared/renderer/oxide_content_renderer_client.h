@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/renderer/content_renderer_client.h"
 
 namespace oxide {

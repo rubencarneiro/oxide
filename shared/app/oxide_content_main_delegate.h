@@ -18,8 +18,9 @@
 #ifndef _OXIDE_SHARED_APP_CONTENT_MAIN_DELEGATE_H_
 #define _OXIDE_SHARED_APP_CONTENT_MAIN_DELEGATE_H_
 
+#include <memory>
+
 #include "base/macros.h"
-#include "base/memory/scoped_ptr.h"
 #include "content/public/app/content_main_delegate.h"
 
 namespace oxide {
@@ -47,10 +48,10 @@ class ContentMainDelegate final : public content::ContentMainDelegate {
 
  private:
   PlatformDelegate* delegate_;
-  scoped_ptr<ContentBrowserClient> content_browser_client_;
-  scoped_ptr<ContentRendererClient> content_renderer_client_;
-  scoped_ptr<content::ContentUtilityClient> content_utility_client_;
-  scoped_ptr<ContentClient> content_client_;
+  std::unique_ptr<ContentBrowserClient> content_browser_client_;
+  std::unique_ptr<ContentRendererClient> content_renderer_client_;
+  std::unique_ptr<content::ContentUtilityClient> content_utility_client_;
+  std::unique_ptr<ContentClient> content_client_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentMainDelegate);
 };
