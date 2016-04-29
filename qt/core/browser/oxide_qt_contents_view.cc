@@ -54,6 +54,7 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
+#include "oxide_qt_web_view.h"
 
 namespace oxide {
 namespace qt {
