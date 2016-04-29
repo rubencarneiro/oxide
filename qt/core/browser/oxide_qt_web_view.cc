@@ -951,6 +951,7 @@ int WebView::locationBarHeight() const {
 }
 
 void WebView::setLocationBarHeight(int height) {
+  location_bar_height_ = height;
   web_view_->SetLocationBarHeight(
       DpiUtils::ConvertQtPixelsToChromium(height,
                                           contents_view_->GetScreen()));
