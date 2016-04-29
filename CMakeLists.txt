@@ -236,6 +236,7 @@ list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})
 list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PLATFORM_FULLNAME})
 # oxide_build should be renamed to oxide_platform
 list(APPEND _GYP_COMMAND -Doxide_build=${OXIDE_PLATFORM})
+list(APPEND _GYP_COMMAND -Doxide_platform=${OXIDE_PLATFORM})
 if(CMAKE_CROSSCOMPILING)
   if(NOT CHROMIUM_TARGET_ARCH)
     message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")

@@ -17,10 +17,9 @@
 
 #include "oxide_test_suite.h"
 
+#include "content/browser/web_contents/web_contents_view_oxide.h"
 #include "content/public/test/test_content_client_initializer.h"
 #include "testing/gtest/include/gtest/gtest.h"
-
-#include "shared/port/content/browser/web_contents_view_oxide.h"
 
 #include "oxide_test_web_contents_view.h"
 
