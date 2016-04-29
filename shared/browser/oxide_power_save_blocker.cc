@@ -24,6 +24,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
+#include "content/browser/power_save_blocker_oxide.h"
 #include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
@@ -31,7 +32,6 @@
 #include "dbus/object_proxy.h"
 
 #include "shared/common/oxide_form_factor.h"
-#include "shared/port/content/browser/power_save_blocker_oxide.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_platform_integration_observer.h"

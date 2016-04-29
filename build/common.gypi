@@ -16,6 +16,7 @@
 
 {
   'variables': {
+    'oxide': 1,
     # Build is broken without this since
     # https://chromium.googlesource.com/angle/angle.git/+/35e65e921394713f89df8d9bfe243b4abb5e9bd7
     # (hitting unsupported platform error at the top of third_party/angle/src/libANGLE/Display.cpp)

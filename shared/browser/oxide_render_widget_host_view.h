@@ -31,6 +31,7 @@
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_factory_client.h"
 #include "cc/surfaces/surface_id.h"
+#include "content/browser/renderer_host/render_widget_host_view_oxide.h"
 #include "content/common/cursors/webcursor.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
@@ -38,7 +39,6 @@
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_ime_bridge_impl.h"
 #include "shared/browser/oxide_gesture_provider.h"
-#include "shared/port/content/browser/render_widget_host_view_oxide.h"
 
 namespace cc {
 class SurfaceFactory;

@@ -48,14 +48,13 @@
 #include "base/strings/string_util.h"
 #include "gpu/config/gpu_info.h"
 #include "gpu/config/gpu_info_collector.h"
+#include "gpu/config/gpu_info_collector_oxide_linux.h"
 #include "third_party/libXNVCtrl/NVCtrl.h"
 #include "third_party/libXNVCtrl/NVCtrlLib.h"
 #include "ui/gfx/x/x11_types.h"
 #include "ui/gl/gl_implementation.h"
 
 #include "library_loaders/libpci.h"
-
-#include "shared/port/gpu_config/gpu_info_collector_oxide_linux.h"
 
 #if defined(ENABLE_HYBRIS)
 #include "base/native_library.h"

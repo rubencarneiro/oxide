@@ -46,7 +46,7 @@ class VideoCaptureDeviceFactoryLinux
       media::VideoCaptureFormats* supported_formats) override;
   void GetDeviceNames(media::VideoCaptureDevice::Names* device_names) override;
 
-  std::unique_ptr<media::VideoCaptureDeviceFactory> delegate_;
+  std::unique_ptr<media::VideoCaptureDeviceFactory> platform_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(VideoCaptureDeviceFactoryLinux);
 };

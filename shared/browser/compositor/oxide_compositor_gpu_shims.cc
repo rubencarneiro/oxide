@@ -35,8 +35,6 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface_egl.h"
 
-#include "shared/port/gpu/gpu_service_shim_oxide.h"
-
 namespace oxide {
 
 class SyncPointWaiter {
