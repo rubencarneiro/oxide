@@ -36,6 +36,7 @@
 #include "media/capture/video/video_capture_device_factory_override.h"
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/base/clipboard/clipboard_oxide.h"
 #include "ui/gfx/display.h"
 #include "ui/gfx/gfx_utils_oxide.h"
 #include "ui/gfx/screen.h"
@@ -47,7 +48,6 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gpu/oxide_gl_context_dependent.h"
-#include "shared/port/ui_base/clipboard_oxide.h"
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
