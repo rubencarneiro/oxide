@@ -95,9 +95,7 @@ CreateOffscreenContext3D() {
           gpu_channel_host.get(),
           attrs,
           gfx::PreferIntegratedGpu,
-          true, // share_resources
-          false, // automatic_flushes
-          nullptr)); // share_context
+          false)); // automatic_flushes
 }
 
 } // namespace
@@ -304,6 +302,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
         make_scoped_refptr(new content::ContextProviderCommandBuffer(
             CreateOffscreenContext3D(),
             gpu::SharedMemoryLimits(),
+            nullptr,
             content::CONTEXT_TYPE_UNKNOWN));
     if (!context_provider.get()) {
       return nullptr;
