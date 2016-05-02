@@ -26,7 +26,7 @@
 #include "components/devtools_http_handler/devtools_http_handler.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
-#include "net/base/ip_address_number.h"
+#include "net/base/ip_address.h"
 #include "net/base/net_errors.h"
 #include "net/log/net_log.h"
 #include "net/socket/tcp_server_socket.h"
@@ -181,19 +181,18 @@ void DevToolsManager::SetPort(int port) {
   port_ = port;
 }
 
-void DevToolsManager::SetAddress(const std::string& address) {
+void DevToolsManager::SetAddress(const std::string& ip_literal) {
   if (enabled_) {
     LOG(WARNING) << "Please disable devtools before setting the IP";
     return;
   }
 
-  net::IPAddressNumber unused;
-  if (!net::ParseIPLiteralToNumber(address, &unused)) {
-    LOG(WARNING) << "Invalid IP address " << address;
+  if (!net::IPAddress().AssignFromIPLiteral(ip_literal)) {
+    LOG(WARNING) << "Invalid IP address " << ip_literal;
     return;
   }
 
-  address_ = address;
+  address_ = ip_literal;
 }
 
 // static

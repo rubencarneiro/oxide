@@ -44,7 +44,6 @@
 #include "gpu/command_buffer/common/gles2_cmd_utils.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
-#include "third_party/WebKit/public/platform/WebGraphicsContext3D.h"
 #include "url/gurl.h"
 
 #include "oxide_compositor_client.h"

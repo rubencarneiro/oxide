@@ -49,7 +49,7 @@ class OXIDE_SHARED_EXPORT DevToolsManager : public KeyedService {
 
   void SetEnabled(bool enabled);
   void SetPort(int port);
-  void SetAddress(const std::string& address);
+  void SetAddress(const std::string& ip_literal);
 
   static void GetValidPorts(int* min, int* max);
 
