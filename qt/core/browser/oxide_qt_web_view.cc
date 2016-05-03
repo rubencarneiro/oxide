@@ -249,6 +249,7 @@ WebView::WebView(WebViewProxyClient* client,
     : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
       security_status_(security_status),
+      location_bar_height_(0),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -946,14 +947,19 @@ void WebView::prepareToClose() {
 }
 
 int WebView::locationBarHeight() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarHeight(), contents_view_->GetScreen());
+  return location_bar_height_;
 }
 
 void WebView::setLocationBarHeight(int height) {
+  location_bar_height_ = height;
   web_view_->SetLocationBarHeight(
       DpiUtils::ConvertQtPixelsToChromium(height,
                                           contents_view_->GetScreen()));
+}
+
+ // FIXME: called on screen change, to recalculate location bar height if scale changed
+void WebView::RescaleLocationBarHeight() {
+  setLocationBarHeight(location_bar_height_);
 }
 
 int WebView::locationBarOffset() const {

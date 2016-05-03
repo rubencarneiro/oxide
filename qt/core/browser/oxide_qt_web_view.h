@@ -88,6 +88,8 @@ class WebView : public oxide::WebViewClient,
 
   const oxide::SecurityStatus& GetSecurityStatus() const;
 
+  void RescaleLocationBarHeight(); //FIXME: called on screen change only
+
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
@@ -276,6 +278,7 @@ class WebView : public oxide::WebViewClient,
   QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;
 
+  int location_bar_height_;
   bool frame_tree_torn_down_;
 
   std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;
