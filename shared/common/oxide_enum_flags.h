@@ -1,5 +1,8 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,21 +18,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+// This is basically a copy of the mfbt/TypedEnumBits.h from Firefox
+
 #ifndef _OXIDE_SHARED_BASE_ENUM_FLAGS_H_
 #define _OXIDE_SHARED_BASE_ENUM_FLAGS_H_
 
+#include "base/numerics/safe_math.h"
+
 namespace oxide {
 
-// This is partly based on Mozilla's CastableTypedEnumResult and
-// MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS, except we currently don't currently
-// use C++11 strongly typed enums and we don't have fake enum classes for
-// non-C++11 compilers, which is why there is less code here than there is in
-// mfbt/TypedEnumBits.h (from Firefox)
-
 template <typename E>
-class CastableEnumResult {
+class CastableTypedEnumResult {
  public:
-  explicit CastableEnumResult(E value) : value_(value) {}
+  explicit CastableTypedEnumResult(E value) : value_(value) {}
 
   operator E() const { return value_; }
   bool operator !() const { return !bool(value_); }
@@ -38,11 +39,64 @@ class CastableEnumResult {
   E value_;
 };
 
+template <typename E>
+struct UnsignedIntegerForEnum {
+  typedef typename base::internal::IntegerForSizeAndSign<sizeof(E),
+                                                         false>::type type;
+};
+
 } // namespace oxide
 
+#define OXIDE_CASTABLETYPEDENUMRESULT_BINOP(Op, OtherType, ReturnType) \
+  template<typename E> \
+  ReturnType operator Op(const OtherType& lhs, \
+                         const oxide::CastableTypedEnumResult<E>& rhs) { \
+    return ReturnType(lhs Op OtherType(rhs)); \
+  } \
+  template<typename E> \
+  ReturnType operator Op(const oxide::CastableTypedEnumResult<E>& lhs, \
+                         const OtherType& rhs) { \
+    return ReturnType(OtherType(lhs) Op rhs); \
+  } \
+  template<typename E> \
+  ReturnType operator Op(const oxide::CastableTypedEnumResult<E>& lhs, \
+                         const oxide::CastableTypedEnumResult<E>& rhs) { \
+    return ReturnType(OtherType(lhs) Op OtherType(rhs)); \
+  }
+
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(|, E, oxide::CastableTypedEnumResult<E>)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(&, E, oxide::CastableTypedEnumResult<E>)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(^, E, oxide::CastableTypedEnumResult<E>)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(==, E, bool)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(!=, E, bool)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(||, bool, bool)
+OXIDE_CASTABLETYPEDENUMRESULT_BINOP(&&, bool, bool)
+
+template <typename E>
+oxide::CastableTypedEnumResult<E>
+operator ~(const oxide::CastableTypedEnumResult<E>& a)
+{
+  return oxide::CastableTypedEnumResult<E>(~(E(a)));
+}
+
+#define OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(Op) \
+  template<typename E> \
+  E& operator Op(E& lhs, const oxide::CastableTypedEnumResult<E>& rhs) { \
+    return lhs Op E(rhs); \
+  }
+
+OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(&=)
+OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(|=)
+OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(^=)
+
+#undef OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP
+#undef OXIDE_CASTABLETYPEDENUMRESULT_BINOP
+
 #define OXIDE_MAKE_ENUM_BINOP_IMPL(Name, Op) \
-  inline ::oxide::CastableEnumResult<Name> operator Op(Name lhs, Name rhs) { \
-    return ::oxide::CastableEnumResult<Name>(Name(unsigned(lhs) Op unsigned(rhs))); \
+  inline ::oxide::CastableTypedEnumResult<Name> operator Op(Name lhs, \
+                                                            Name rhs) { \
+    typedef ::oxide::UnsignedIntegerForEnum<Name>::type U; \
+    return ::oxide::CastableTypedEnumResult<Name>(Name(U(lhs) Op U(rhs))); \
   } \
   \
   inline Name& operator Op##=(Name& lhs, Name rhs) { \
@@ -53,8 +107,9 @@ class CastableEnumResult {
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, |) \
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, &) \
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, ^) \
-  inline ::oxide::CastableEnumResult<Name> operator ~(Name a) { \
-    return ::oxide::CastableEnumResult<Name>(Name(~unsigned(a))); \
+  inline ::oxide::CastableTypedEnumResult<Name> operator ~(Name a) { \
+    typedef ::oxide::UnsignedIntegerForEnum<Name>::type U; \
+    return ::oxide::CastableTypedEnumResult<Name>(Name(~U(a))); \
   }
 
 #endif // _OXIDE_SHARED_BASE_ENUM_FLAGS_H_
