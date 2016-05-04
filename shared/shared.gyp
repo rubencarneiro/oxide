@@ -736,6 +736,7 @@
         'browser/ssl/oxide_certificate_error_unittest.cc',
         'browser/ssl/oxide_certificate_error_dispatcher_unittest.cc',
         'browser/ssl/oxide_security_status_unittest.cc',
+        'browser/ssl/oxide_ssl_host_state_delegate_unittest.cc',
         'test/run_all_unittests.cc',
       ],
     },

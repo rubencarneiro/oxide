@@ -25,14 +25,16 @@
 #include "base/macros.h"
 #include "content/public/browser/ssl_host_state_delegate.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class SSLHostStateDelegate : public content::SSLHostStateDelegate {
+class OXIDE_SHARED_EXPORT SSLHostStateDelegate
+    : public content::SSLHostStateDelegate {
  public:
   SSLHostStateDelegate();
   ~SSLHostStateDelegate();
 
- private:
   // content::SSLHostStateDelegate implementation
   void AllowCert(const std::string&,
                  const net::X509Certificate& cert,
@@ -48,7 +50,8 @@ class SSLHostStateDelegate : public content::SSLHostStateDelegate {
                                  int pid) const override;
   void RevokeUserAllowExceptions(const std::string& host) override;
   bool HasAllowException(const std::string& host) const override;
-
+  
+ private:
   typedef std::pair<std::string, int> BrokenHostEntry;
   std::set<BrokenHostEntry> ran_insecure_content_hosts_;
 };
