@@ -20,11 +20,9 @@
 
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "content/public/browser/cert_store.h"
 #include "net/cert/x509_certificate.h"
 
-#include "qt/core/browser/oxide_qt_web_view.h"
-#include "shared/browser/ssl/oxide_security_status.h"
+#include "qt/core/browser/ssl/oxide_qt_security_status.h"
 #include "shared/browser/ssl/oxide_security_types.h"
 
 #include "oxideqsslcertificate.h"
@@ -75,8 +73,9 @@ STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::CertStatusGenericError,
 
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
     OxideQSecurityStatus* q)
-    : view(nullptr),
-      q_ptr(q) {}
+    : q_ptr(q),
+      proxy_(new oxide::qt::SecurityStatus(q)),
+      cert_invalidated_(true) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
 
@@ -91,29 +90,13 @@ OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
   return q->d_func();
 }
 
-void OxideQSecurityStatusPrivate::Update(const oxide::SecurityStatus& old) {
-  Q_Q(OxideQSecurityStatus);
-
-  const oxide::SecurityStatus& status = view->GetSecurityStatus();
-
-  if (old.security_level() != status.security_level()) {
-    Q_EMIT q->securityLevelChanged();
-  }
-  if (old.content_status() != status.content_status()) {
-    Q_EMIT q->contentStatusChanged();
-  }
-  if (old.cert_status() != status.cert_status()) {
-    Q_EMIT q->certStatusChanged();
-  }
-  if (old.cert() != status.cert()) {
-    cert_ = OxideQSslCertificate();
-    Q_EMIT q->certificateChanged();
-  }
+void OxideQSecurityStatusPrivate::InvalidateCertificate() {
+  cert_invalidated_ = true;
+  cert_ = OxideQSslCertificate();
 }
 
 OxideQSecurityStatus::OxideQSecurityStatus()
-    : d_ptr(new OxideQSecurityStatusPrivate(this)) {
-}
+    : d_ptr(new OxideQSecurityStatusPrivate(this)) {}
 
 OxideQSecurityStatus::~OxideQSecurityStatus() {}
 
@@ -121,54 +104,36 @@ OxideQSecurityStatus::SecurityLevel
 OxideQSecurityStatus::securityLevel() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (!d->view) {
-    return SecurityLevelNone;
-  }
-
-  return static_cast<SecurityLevel>(
-      d->view->GetSecurityStatus().security_level());
+  return static_cast<SecurityLevel>(d->proxy_->GetSecurityLevel());
 }
 
 OxideQSecurityStatus::ContentStatus
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (!d->view) {
-    return ContentStatusNormal;
-  }
-
-  return static_cast<ContentStatus>(
-      d->view->GetSecurityStatus().content_status());
+  return static_cast<ContentStatus>(d->proxy_->GetContentStatus());
 }
 
 OxideQSecurityStatus::CertStatus OxideQSecurityStatus::certStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (!d->view) {
-    return CertStatusOk;
-  }
-
-  return static_cast<CertStatus>(d->view->GetSecurityStatus().cert_status());
+  return static_cast<CertStatus>(d->proxy_->GetCertStatus());
 }
 
 QVariant OxideQSecurityStatus::certificate() const {
   Q_D(const OxideQSecurityStatus);
 
-  if (d->cert_.isValid()) {
-    return QVariant::fromValue(d->cert_);
+  if (d->cert_invalidated_) {
+    d->cert_invalidated_ = false;
+    scoped_refptr<net::X509Certificate> cert = d->proxy_->GetCert();
+    if (cert) {
+      d->cert_ = OxideQSslCertificateData::Create(cert.get());
+    }
   }
 
-  if (!d->view) {
+  if (!d->cert_.isValid()) {
     return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
   }
-
-  scoped_refptr<net::X509Certificate> cert =
-      d->view->GetSecurityStatus().cert();
-  if (!cert.get()) {
-    return QVariant(static_cast<QVariant::Type>(QMetaType::VoidStar));
-  }
-
-  d->cert_ = OxideQSslCertificateData::Create(cert.get());
 
   return QVariant::fromValue(d->cert_);
 }

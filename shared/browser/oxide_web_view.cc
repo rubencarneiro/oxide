@@ -67,6 +67,7 @@
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
+#include "shared/browser/ssl/oxide_security_status.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -128,6 +129,7 @@ void CreateHelpers(content::WebContents* contents,
                    content::WebContents* opener = nullptr) {
   new WebViewContentsHelper(contents, opener);
   CertificateErrorDispatcher::CreateForWebContents(contents);
+  SecurityStatus::CreateForWebContents(contents);
   PermissionRequestDispatcher::CreateForWebContents(contents);
   ScriptMessageContentsHelper::CreateForWebContents(contents);
 #if defined(ENABLE_MEDIAHUB)
@@ -581,16 +583,7 @@ void WebView::NavigationStateChanged(content::WebContents* source,
 void WebView::VisibleSSLStateChanged(const content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  content::NavigationEntry* entry =
-      web_contents_->GetController().GetVisibleEntry();
-  if (!entry) {
-    return;
-  }
-
-  SecurityStatus old_status = security_status_;
-  security_status_.Update(entry->GetSSL());
-
-  client_->SecurityStatusChanged(old_status);
+  SecurityStatus::FromWebContents(web_contents_.get())->VisibleSSLStateChanged();
 }
 
 bool WebView::ShouldCreateWebContents(
@@ -1046,13 +1039,6 @@ WebView::WebView(const CommonParams& common_params,
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
     InitializeTopControlsForHost(rvh, true);
-  }
-
-  // Update SSL Status
-  content::NavigationEntry* entry =
-      web_contents_->GetController().GetVisibleEntry();
-  if (entry) {
-    security_status_.Update(entry->GetSSL());
   }
 }
 

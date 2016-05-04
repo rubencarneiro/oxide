@@ -86,17 +86,15 @@ class WebView : public oxide::WebViewClient,
 
   WebContext* GetContext() const;
 
-  const oxide::SecurityStatus& GetSecurityStatus() const;
-
   void RescaleLocationBarHeight(); //FIXME: called on screen change only
 
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
-          QObject* handle,
-          OxideQSecurityStatus* security_status);
+          QObject* handle);
 
-  void CommonInit(OxideQFindController* find_controller);
+  void CommonInit(OxideQFindController* find_controller,
+                  OxideQSecurityStatus* security_status);
 
   void EnsurePreferences();
 
@@ -154,7 +152,6 @@ class WebView : public oxide::WebViewClient,
       WindowOpenDisposition disposition,
       std::unique_ptr<content::WebContents> contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
-  void SecurityStatusChanged(const oxide::SecurityStatus& old) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
@@ -275,7 +272,6 @@ class WebView : public oxide::WebViewClient,
 
   WebViewProxyClient* client_;
 
-  QPointer<OxideQSecurityStatus> security_status_;
   QList<QObject*> message_handlers_;
 
   int location_bar_height_;

@@ -19,6 +19,9 @@
 
 #include "base/logging.h"
 #include "content/public/browser/cert_store.h"
+#include "content/public/browser/navigation_controller.h"
+#include "content/public/browser/navigation_entry.h"
+#include "content/public/browser/web_contents.h"
 #include "content/public/common/security_style.h"
 #include "net/cert/cert_status_flags.h"
 #include "net/cert/x509_certificate.h"
@@ -27,10 +30,13 @@
 
 namespace oxide {
 
+DEFINE_WEB_CONTENTS_USER_DATA_KEY(SecurityStatus);
+
 namespace {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::SSLStatus::ContentStatusFlags)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(CertStatusFlags)
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::ChangedFlags)
 
 inline SecurityLevel CalculateSecurityLevel(
     const content::SSLStatus& ssl_status,
@@ -132,33 +138,77 @@ inline CertStatusFlags CalculateCertStatus(net::CertStatus cert_status,
 
 }
 
-SecurityStatus::SecurityStatus()
-    : security_level_(SECURITY_LEVEL_NONE),
+SecurityStatus::SecurityStatus(content::WebContents* contents)
+    : contents_(contents),
+      security_level_(SECURITY_LEVEL_NONE),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
-      cert_status_(CERT_STATUS_OK) {}
+      cert_status_(CERT_STATUS_OK),
+      cert_store_for_testing_(nullptr) {
+  VisibleSSLStateChanged();
+}
 
-SecurityStatus::SecurityStatus(const content::SSLStatus& ssl_status)
-    : security_level_(SECURITY_LEVEL_NONE),
-      content_status_(content::SSLStatus::NORMAL_CONTENT),
-      cert_status_(CERT_STATUS_OK) {
-  Update(ssl_status);
+content::CertStore* SecurityStatus::GetCertStore() const {
+  if (cert_store_for_testing_) {
+    return cert_store_for_testing_;
+  }
+
+  return content::CertStore::GetInstance();
 }
 
 SecurityStatus::~SecurityStatus() {}
 
-void SecurityStatus::Update(const content::SSLStatus& ssl_status) {
-  cert_ = nullptr;
-  content::CertStore::GetInstance()->RetrieveCert(ssl_status.cert_id,
-                                                  &cert_);
-
-  security_level_ = CalculateSecurityLevel(ssl_status, cert_.get());
-  content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
-      ssl_status.content_status);
-  cert_status_ = CalculateCertStatus(ssl_status.cert_status, cert_.get());
+// static
+SecurityStatus* SecurityStatus::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<SecurityStatus>::FromWebContents(contents);
 }
 
-scoped_refptr<net::X509Certificate> SecurityStatus::cert() const {
-  return cert_;
+void SecurityStatus::VisibleSSLStateChanged() {
+  SecurityLevel old_security_level = security_level_;
+  content::SSLStatus::ContentStatusFlags old_content_status = content_status_;
+  CertStatusFlags old_cert_status = cert_status_;
+  scoped_refptr<net::X509Certificate> old_cert = cert_;
+
+  content::NavigationEntry* entry =
+      contents_->GetController().GetVisibleEntry();
+  content::SSLStatus status = entry ? entry->GetSSL() : content::SSLStatus();
+
+  cert_ = nullptr;
+  GetCertStore()->RetrieveCert(status.cert_id, &cert_);
+
+  security_level_ = CalculateSecurityLevel(status, cert_.get());
+  content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
+      status.content_status);
+  cert_status_ = CalculateCertStatus(status.cert_status, cert_.get());
+
+  ChangedFlags flags = CHANGED_FLAG_NONE;
+  if (old_security_level != security_level_) {
+    flags |= CHANGED_FLAG_SECURITY_LEVEL;
+  }
+  if (old_content_status != content_status_) {
+    flags |= CHANGED_FLAG_CONTENT_STATUS;
+  }
+  if (old_cert_status != cert_status_) {
+    flags |= CHANGED_FLAG_CERT_STATUS;
+  }
+  if (old_cert != cert_) {
+    flags |= CHANGED_FLAG_CERT;
+  }
+
+  if (flags == CHANGED_FLAG_NONE) {
+    return;
+  }
+
+  callback_list_.Notify(flags);
+}
+
+std::unique_ptr<SecurityStatus::Subscription>
+SecurityStatus::AddChangeCallback(const ObserverCallback& callback) {
+  return callback_list_.Add(callback);
+}
+
+void SecurityStatus::SetCertStoreForTesting(content::CertStore* cert_store) {
+  cert_store_for_testing_ = cert_store;
 }
 
 } // namespace oxide

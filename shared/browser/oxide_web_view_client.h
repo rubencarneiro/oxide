@@ -49,7 +49,6 @@ class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
-class SecurityStatus;
 class WebView;
 
 // A class for customizing the behaviour of WebView
@@ -139,9 +138,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
       std::unique_ptr<content::WebContents> contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
-
-  // TODO(chrisccoulson): Get rid of |old| and add |changed_flags|
-  virtual void SecurityStatusChanged(const SecurityStatus& old);
 
   // TODO(chrisccoulson): Rename to BlockedContentChanged or something
   // TODO(chrisccoulson): Move content tracking to a separate class with its
