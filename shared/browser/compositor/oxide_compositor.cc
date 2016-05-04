@@ -34,8 +34,8 @@
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h"
+#include "content/common/gpu/client/command_buffer_metrics.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h"
-#include "content/common/gpu/client/webgraphicscontext3d_command_buffer_impl.h"
 #include "content/common/gpu_process_launch_causes.h"
 #include "content/common/host_shared_bitmap_manager.h"
 #include "gpu/command_buffer/client/context_support.h"
@@ -62,10 +62,7 @@ namespace oxide {
 
 namespace {
 
-typedef content::WebGraphicsContext3DCommandBufferImpl WGC3DCBI;
-
-std::unique_ptr<content::WebGraphicsContext3DCommandBufferImpl>
-CreateOffscreenContext3D() {
+scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
   if (!content::GpuDataManagerImpl::GetInstance()->CanUseGpuBrowserCompositor()) {
     return nullptr;
   }
@@ -87,14 +84,17 @@ CreateOffscreenContext3D() {
   attrs.bind_generates_resource = false;
   attrs.lose_context_when_out_of_memory = true;
 
-  return base::WrapUnique(
-      new content::WebGraphicsContext3DCommandBufferImpl(
+  return make_scoped_refptr(
+      new content::ContextProviderCommandBuffer(
+          gpu_channel_host.get(),
           gpu::kNullSurfaceHandle,
           GURL(),
-          gpu_channel_host.get(),
-          attrs,
           gfx::PreferIntegratedGpu,
-          false)); // automatic_flushes
+          false, // automatic_flushes
+          gpu::SharedMemoryLimits(),
+          attrs,
+          nullptr,
+          content::command_buffer_metrics::CONTEXT_TYPE_UNKNOWN));
 }
 
 } // namespace
@@ -297,12 +297,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   scoped_refptr<cc::ContextProvider> context_provider;
   std::unique_ptr<cc::OutputSurface> surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
-    context_provider =
-        make_scoped_refptr(new content::ContextProviderCommandBuffer(
-            CreateOffscreenContext3D(),
-            gpu::SharedMemoryLimits(),
-            nullptr,
-            content::CONTEXT_TYPE_UNKNOWN));
+    context_provider = CreateOffscreenContextProvider();
     if (!context_provider.get()) {
       return nullptr;
     }

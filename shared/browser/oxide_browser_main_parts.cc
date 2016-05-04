@@ -157,32 +157,32 @@ class Screen : public gfx::Screen {
  public:
   Screen() {}
 
-  gfx::Point GetCursorScreenPoint() final {
+  gfx::Point GetCursorScreenPoint() override {
     NOTREACHED();
     return gfx::Point();
   }
 
-  gfx::NativeWindow GetWindowUnderCursor() final {
+  bool IsWindowUnderCursor(gfx::NativeWindow window) override {
+    NOTREACHED();
+    return false;
+  }
+
+  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) override {
     NOTREACHED();
     return nullptr;
   }
 
-  gfx::NativeWindow GetWindowAtScreenPoint(const gfx::Point& point) final {
-    NOTREACHED();
-    return nullptr;
-  }
-
-  int GetNumDisplays() const final {
+  int GetNumDisplays() const override {
     NOTREACHED();
     return 1;
   }
 
-  std::vector<gfx::Display> GetAllDisplays() const final {
+  std::vector<gfx::Display> GetAllDisplays() const override {
     NOTREACHED();
     return std::vector<gfx::Display>();
   }
 
-  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const final {
+  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const override {
     // XXX(chrisccoulson): This gets called when a drag starts. |view|
     //  is the NativeView for the corresponding RenderWidgetHostView. It would
     //  be nice to find a way to cleverly map this to the associated RWHV and
@@ -190,26 +190,26 @@ class Screen : public gfx::Screen {
     return gfx::Display();
   }
 
-  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const final {
+  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const override {
     NOTREACHED();
     return gfx::Display();
   }
 
-  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const final {
+  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const override {
     NOTREACHED();
     return gfx::Display();
   }
 
-  gfx::Display GetPrimaryDisplay() const final {
+  gfx::Display GetPrimaryDisplay() const override {
     return BrowserPlatformIntegration::GetInstance()
         ->GetScreenClient()
         ->GetPrimaryDisplay();
   }
 
-  void AddObserver(gfx::DisplayObserver* observer) final {
+  void AddObserver(gfx::DisplayObserver* observer) override {
     NOTREACHED();
   }
-  void RemoveObserver(gfx::DisplayObserver* observer) final {
+  void RemoveObserver(gfx::DisplayObserver* observer) override {
     NOTREACHED();
   }
 };
