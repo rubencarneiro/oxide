@@ -18,6 +18,7 @@
 #ifndef _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_
 #define _OXIDE_QT_CORE_API_SECURITY_STATUS_P_H_
 
+#include <QScopedPointer>
 #include <QtGlobal>
 
 #include "qt/core/api/oxideqglobal.h"
@@ -28,14 +29,12 @@ class QObject;
 QT_END_NAMESPACE
 
 namespace oxide {
-class SecurityStatus;
 namespace qt {
-class WebView;
+class SecurityStatus;
 }
 }
 
 class OxideQSecurityStatus;
-class OxideQSslCertificate;
 
 class OXIDE_QTCORE_EXPORT OxideQSecurityStatusPrivate final {
   Q_DECLARE_PUBLIC(OxideQSecurityStatus)
@@ -47,15 +46,18 @@ class OXIDE_QTCORE_EXPORT OxideQSecurityStatusPrivate final {
 
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
-  void Update(const oxide::SecurityStatus& old);
+  oxide::qt::SecurityStatus* proxy() const { return proxy_.data(); }
 
-  oxide::qt::WebView* view;
+  void InvalidateCertificate();
 
  private:
   OxideQSecurityStatusPrivate(OxideQSecurityStatus* q);
 
   OxideQSecurityStatus* q_ptr;
 
+  QScopedPointer<oxide::qt::SecurityStatus> proxy_;
+
+  mutable bool cert_invalidated_;
   mutable OxideQSslCertificate cert_;
 };
 

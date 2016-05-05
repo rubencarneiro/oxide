@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,6 +18,7 @@
 
 #include "oxide_video_capture_device_factory_linux.h"
 
+#include <libintl.h>
 #include <utility>
 
 #include "base/logging.h"
@@ -47,9 +48,9 @@ namespace {
 const char* GetDeviceNameFromCameraType(CameraType type) {
   switch (type) {
     case BACK_FACING_CAMERA_TYPE:
-      return "Rear camera";
+      return dgettext(OXIDE_GETTEXT_DOMAIN, "Rear camera");
     case FRONT_FACING_CAMERA_TYPE:
-      return "Front camera";
+      return dgettext(OXIDE_GETTEXT_DOMAIN, "Front camera");
   }
 
   NOTREACHED();

@@ -16,11 +16,10 @@
 
 {
   'variables': {
-    'oxide_lib_target': [
-      '../qt/core/core.gyp:<(oxide_lib)',
-    ],
-    'oxide_renderer_target': [
-      '../qt/renderer/renderer.gyp:<(oxide_renderer)',
+    'oxide_lib_target': '../qt/core/core.gyp:<(oxide_lib)',
+    'oxide_renderer_target': '../qt/renderer/renderer.gyp:<(oxide_renderer)',
+    'oxide_platform_test_targets': [
+      '../qt/core/core.gyp:oxide_qt_unittests',
     ],
   },
   'target_defaults': {

@@ -42,7 +42,7 @@
 #include "oxide_certificate_error_placeholder_page.h"
 #include "oxide_security_types.h"
 
-using oxide::CertificateErrorDispatcher;
+namespace oxide {
 
 namespace {
 
@@ -67,7 +67,7 @@ class CertificateErrorDispatcherTest : public testing::Test {
 
   content::WebContents* web_contents() const { return web_contents_; }
 
-  oxide::CertificateError* last_error() const { return last_error_.get(); }
+  CertificateError* last_error() const { return last_error_.get(); }
 
   int response_count() const { return response_count_; }
   bool last_response() const { return last_response_; }
@@ -82,16 +82,16 @@ class CertificateErrorDispatcherTest : public testing::Test {
   void TearDown() override;
 
   void OnCertificateError(bool save,
-                          std::unique_ptr<oxide::CertificateError> error);
+                          std::unique_ptr<CertificateError> error);
   void OnResponse(bool response);
 
-  oxide::TestBrowserThreadBundle browser_thread_bundle_;
+  TestBrowserThreadBundle browser_thread_bundle_;
   content::TestBrowserContext browser_context_;
   content::TestWebContentsFactory web_contents_factory_;
 
   content::WebContents* web_contents_;
 
-  std::unique_ptr<oxide::CertificateError> last_error_;
+  std::unique_ptr<CertificateError> last_error_;
 
   int response_count_;
   bool last_response_;
@@ -117,16 +117,16 @@ void CertificateErrorDispatcherTest::AttachCertificateErrorCallback(
 void CertificateErrorDispatcherTest::SetUp() {
   web_contents_ = CreateWebContents();
   CertificateErrorDispatcher::CreateForWebContents(web_contents_);
-  oxide::CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
+  CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
 }
 
 void CertificateErrorDispatcherTest::TearDown() {
-  oxide::CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(false);
+  CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(false);
 }
 
 void CertificateErrorDispatcherTest::OnCertificateError(
     bool save,
-    std::unique_ptr<oxide::CertificateError> error) {
+    std::unique_ptr<CertificateError> error) {
   if (!save) {
     return;
   }
@@ -169,8 +169,8 @@ TEST_F(CertificateErrorDispatcherTest, NoDispatcher) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
-  EXPECT_EQ(response_count(), 0);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
+  EXPECT_EQ(0, response_count());
 }
 
 // Test that we deny an error if there is no client callback registered with
@@ -192,8 +192,8 @@ TEST_F(CertificateErrorDispatcherTest, NullCallback) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
-  EXPECT_EQ(response_count(), 0);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
+  EXPECT_EQ(0, response_count());
 }
 
 // Test that the dispatcher creates a CertificateError with is_main_frame set
@@ -217,9 +217,16 @@ TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  ASSERT_NE(nullptr, last_error());
   EXPECT_TRUE(last_error()->is_main_frame());
+  EXPECT_FALSE(last_error()->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_TRUE(last_error()->overridable());
+  EXPECT_FALSE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
 
   CertificateErrorDispatcher::AllowCertificateError(
       web_contents(),
@@ -233,18 +240,25 @@ TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
   EXPECT_FALSE(last_error()->is_main_frame());
+  EXPECT_FALSE(last_error()->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_FALSE(last_error()->overridable());
+  EXPECT_FALSE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
 }
 
 struct CertErrorRow {
-  CertErrorRow(int net_error, oxide::CertError cert_error, bool expired_cert)
+  CertErrorRow(int net_error, CertError cert_error, bool expired_cert)
       : net_error(net_error),
         cert_error(cert_error),
         expired_cert(expired_cert) {}
 
   int net_error;
-  oxide::CertError cert_error;
+  CertError cert_error;
   bool expired_cert;
 };
 
@@ -252,58 +266,136 @@ class CertificateErrorDispatcherCertErrorConversionTest
     : public CertificateErrorDispatcherTest,
       public testing::WithParamInterface<CertErrorRow> {};
 
-#define COMMON_CASES(expired_cert) \
-    CertErrorRow(net::ERR_CERT_COMMON_NAME_INVALID, \
-                 oxide::CERT_ERROR_BAD_IDENTITY, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_AUTHORITY_INVALID, \
-                 oxide::CERT_ERROR_AUTHORITY_INVALID, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_CONTAINS_ERRORS, \
-                 oxide::CERT_ERROR_INVALID, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_NO_REVOCATION_MECHANISM, \
-                 oxide::CERT_ERROR_GENERIC, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION, \
-                 oxide::CERT_ERROR_GENERIC, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_REVOKED, \
-                 oxide::CERT_ERROR_REVOKED, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_INVALID, \
-                 oxide::CERT_ERROR_INVALID, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM, \
-                 oxide::CERT_ERROR_INSECURE, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_NON_UNIQUE_NAME, \
-                 oxide::CERT_ERROR_GENERIC, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_WEAK_KEY, \
-                 oxide::CERT_ERROR_INSECURE, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_NAME_CONSTRAINT_VIOLATION, \
-                 oxide::CERT_ERROR_GENERIC, \
-                 expired_cert), \
-    CertErrorRow(net::ERR_CERT_VALIDITY_TOO_LONG, \
-                 oxide::CERT_ERROR_INVALID, \
-                 expired_cert)
-
 INSTANTIATE_TEST_CASE_P(
-    CertErrorsNotExpiredCert,
+    CommonNameInvalid,
     CertificateErrorDispatcherCertErrorConversionTest,
-    testing::Values(COMMON_CASES(false),
-                    CertErrorRow(net::ERR_CERT_DATE_INVALID,
-                                 oxide::CERT_ERROR_DATE_INVALID,
-                                 false)));
+    testing::Values(CertErrorRow(net::ERR_CERT_COMMON_NAME_INVALID,
+                                 CERT_ERROR_BAD_IDENTITY, false)));
 INSTANTIATE_TEST_CASE_P(
-    CertErrorsExpiredCert,
+    AuthorityInvalid,
     CertificateErrorDispatcherCertErrorConversionTest,
-    testing::Values(COMMON_CASES(true),
-                    CertErrorRow(net::ERR_CERT_DATE_INVALID,
-                                 oxide::CERT_ERROR_EXPIRED,
-                                 true)));
+    testing::Values(CertErrorRow(net::ERR_CERT_AUTHORITY_INVALID,
+                                 CERT_ERROR_AUTHORITY_INVALID, false)));
+INSTANTIATE_TEST_CASE_P(
+    ContainsErrors,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_CONTAINS_ERRORS,
+                                 CERT_ERROR_INVALID, false)));
+INSTANTIATE_TEST_CASE_P(
+    NoRevocationMechanism,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NO_REVOCATION_MECHANISM,
+                                 CERT_ERROR_GENERIC, false)));
+INSTANTIATE_TEST_CASE_P(
+    UnableToCheckRevocation,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION,
+                                 CERT_ERROR_GENERIC, false)));
+INSTANTIATE_TEST_CASE_P(
+    Revoked,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_REVOKED,
+                                 CERT_ERROR_REVOKED, false)));
+INSTANTIATE_TEST_CASE_P(
+    Invalid,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_INVALID,
+                                 CERT_ERROR_INVALID, false)));
+INSTANTIATE_TEST_CASE_P(
+    WeakSignatureAlgorithm,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM,
+                                 CERT_ERROR_INSECURE, false)));
+INSTANTIATE_TEST_CASE_P(
+    NonUniqueName,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NON_UNIQUE_NAME,
+                                 CERT_ERROR_GENERIC, false)));
+INSTANTIATE_TEST_CASE_P(
+    WeakKey,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_WEAK_KEY,
+                                 CERT_ERROR_INSECURE, false)));
+INSTANTIATE_TEST_CASE_P(
+    NameConstraintViolation,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NAME_CONSTRAINT_VIOLATION,
+                                 CERT_ERROR_GENERIC, false)));
+INSTANTIATE_TEST_CASE_P(
+    ValidityTooLong,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_VALIDITY_TOO_LONG,
+                                 CERT_ERROR_INVALID, false)));
+INSTANTIATE_TEST_CASE_P(
+    DateInvalid,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_DATE_INVALID,
+                                 CERT_ERROR_DATE_INVALID, false)));
+INSTANTIATE_TEST_CASE_P(
+    CommonNameInvalidE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_COMMON_NAME_INVALID,
+                                 CERT_ERROR_BAD_IDENTITY, true)));
+INSTANTIATE_TEST_CASE_P(
+    AuthorityInvalidE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_AUTHORITY_INVALID,
+                                 CERT_ERROR_AUTHORITY_INVALID, true)));
+INSTANTIATE_TEST_CASE_P(
+    ContainsErrorsE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_CONTAINS_ERRORS,
+                                 CERT_ERROR_INVALID, true)));
+INSTANTIATE_TEST_CASE_P(
+    NoRevocationMechanismE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NO_REVOCATION_MECHANISM,
+                                 CERT_ERROR_GENERIC, true)));
+INSTANTIATE_TEST_CASE_P(
+    UnableToCheckRevocationE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_UNABLE_TO_CHECK_REVOCATION,
+                                 CERT_ERROR_GENERIC, true)));
+INSTANTIATE_TEST_CASE_P(
+    RevokedE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_REVOKED,
+                                 CERT_ERROR_REVOKED, true)));
+INSTANTIATE_TEST_CASE_P(
+    InvalidE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_INVALID,
+                                 CERT_ERROR_INVALID, true)));
+INSTANTIATE_TEST_CASE_P(
+    WeakSignatureAlgorithmE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_WEAK_SIGNATURE_ALGORITHM,
+                                 CERT_ERROR_INSECURE, true)));
+INSTANTIATE_TEST_CASE_P(
+    NonUniqueNameE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NON_UNIQUE_NAME,
+                                 CERT_ERROR_GENERIC, true)));
+INSTANTIATE_TEST_CASE_P(
+    WeakKeyE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_WEAK_KEY,
+                                 CERT_ERROR_INSECURE, true)));
+INSTANTIATE_TEST_CASE_P(
+    NameConstraintViolationE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_NAME_CONSTRAINT_VIOLATION,
+                                 CERT_ERROR_GENERIC, true)));
+INSTANTIATE_TEST_CASE_P(
+    ValidityTooLongE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_VALIDITY_TOO_LONG,
+                                 CERT_ERROR_INVALID, true)));
+INSTANTIATE_TEST_CASE_P(
+    DateInvalidE,
+    CertificateErrorDispatcherCertErrorConversionTest,
+    testing::Values(CertErrorRow(net::ERR_CERT_DATE_INVALID,
+                                 CERT_ERROR_EXPIRED, true)));
 
 // Test that the dispatcher creates a CertificateError with cert_error set
 // correctly
@@ -328,60 +420,16 @@ TEST_P(CertificateErrorDispatcherCertErrorConversionTest, ToCertError) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
-  EXPECT_EQ(last_error()->cert_error(), row.cert_error);
-}
-
-// Test that the dispatcher creates a CertificateError with the supplied
-// certificate
-TEST_F(CertificateErrorDispatcherTest, ssl_info) {
-  AttachCertificateErrorCallback(web_contents());
-
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
-  net::SSLInfo ssl_info;
-  ssl_info.cert = CreateCertificate();
-  CertificateErrorDispatcher::AllowCertificateError(
-      web_contents(),
-      true, // is_main_frame
-      net::ERR_CERT_COMMON_NAME_INVALID,
-      ssl_info,
-      GURL("https://www.foo.com/"),
-      content::RESOURCE_TYPE_MAIN_FRAME,
-      true, // overridable
-      false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
-
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
-  EXPECT_EQ(last_error()->cert(), ssl_info.cert.get());
-}
-
-// Test that the dispatcher creates a CertificateError with the correct url
-TEST_F(CertificateErrorDispatcherTest, request_url) {
-  AttachCertificateErrorCallback(web_contents());
-
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
-  net::SSLInfo ssl_info;
-  ssl_info.cert = CreateCertificate();
-  CertificateErrorDispatcher::AllowCertificateError(
-      web_contents(),
-      true, // is_main_frame
-      net::ERR_CERT_COMMON_NAME_INVALID,
-      ssl_info,
-      GURL("https://www.foo.com/"),
-      content::RESOURCE_TYPE_MAIN_FRAME,
-      true, // overridable
-      false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
-
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
-  EXPECT_EQ(last_error()->url(), GURL("https://www.foo.com/"));
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  ASSERT_NE(nullptr, last_error());
+  EXPECT_TRUE(last_error()->is_main_frame());
+  EXPECT_FALSE(last_error()->is_subresource());
+  EXPECT_EQ(row.cert_error, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_TRUE(last_error()->overridable());
+  EXPECT_FALSE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
 }
 
 struct ResourceTypeRow {
@@ -408,24 +456,36 @@ class CertificateErrorDispatcherResourceTypeTest
       public testing::WithParamInterface<ResourceTypeRow> {};
 
 INSTANTIATE_TEST_CASE_P(
-    ResourceTypes,
+    MainFrameOverridable,
     CertificateErrorDispatcherResourceTypeTest,
     testing::Values(
         ResourceTypeRow(content::RESOURCE_TYPE_MAIN_FRAME,
                         true,
                         content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE,
-                        true, false),
-        // Applications might want to show an error UI for non-overridable
-        // RESOURCE_TYPE_MAIN_FRAME errors, so the result here should be CANCEL
+                        true, false)));
+// Applications might want to show an error UI for non-overridable
+// RESOURCE_TYPE_MAIN_FRAME errors, so the result here should be CANCEL
+INSTANTIATE_TEST_CASE_P(
+    MainFrameNonOverridable,
+    CertificateErrorDispatcherResourceTypeTest,
+    testing::Values(
         ResourceTypeRow(content::RESOURCE_TYPE_MAIN_FRAME,
                         false,
                         content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL,
-                        false, false),
-        // Always deny !RESOURCE_TYPE_MAIN_FRAME errors
+                        false, false)));
+// Always deny !RESOURCE_TYPE_MAIN_FRAME errors
+INSTANTIATE_TEST_CASE_P(
+    SubFrame,
+    CertificateErrorDispatcherResourceTypeTest,
+    testing::Values(
         ResourceTypeRow(content::RESOURCE_TYPE_SUB_FRAME,
                         true,
                         content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY,
-                        false, false),
+                        false, false)));
+INSTANTIATE_TEST_CASE_P(
+    Script,
+    CertificateErrorDispatcherResourceTypeTest,
+    testing::Values(
         ResourceTypeRow(content::RESOURCE_TYPE_SCRIPT,
                         true,
                         content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY,
@@ -443,9 +503,11 @@ TEST_P(CertificateErrorDispatcherResourceTypeTest, TestResourceType) {
       content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
+  bool is_main_frame =
+      row.resource_type == content::RESOURCE_TYPE_SUB_FRAME ? false : true;
   CertificateErrorDispatcher::AllowCertificateError(
       web_contents(),
-      row.resource_type == content::RESOURCE_TYPE_SUB_FRAME ? false : true,
+      is_main_frame,
       net::ERR_CERT_COMMON_NAME_INVALID,
       ssl_info,
       GURL("https://www.foo.com/"),
@@ -455,10 +517,16 @@ TEST_P(CertificateErrorDispatcherResourceTypeTest, TestResourceType) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, row.result);
-  ASSERT_NE(last_error(), nullptr);
-  EXPECT_EQ(last_error()->overridable(), row.overridable_out);
-  EXPECT_EQ(last_error()->is_subresource(), row.is_subresource);
+  EXPECT_EQ(row.result, result);
+  ASSERT_NE(nullptr, last_error());
+  EXPECT_EQ(is_main_frame, last_error()->is_main_frame());
+  EXPECT_EQ(row.is_subresource, last_error()->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_EQ(row.overridable_out, last_error()->overridable());
+  EXPECT_FALSE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
 }
 
 // Test that the dispatcher creates a CertificateError with strict_enforcement
@@ -482,9 +550,16 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  ASSERT_NE(nullptr, last_error());
+  EXPECT_TRUE(last_error()->is_main_frame());
+  EXPECT_FALSE(last_error()->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_TRUE(last_error()->overridable());
   EXPECT_FALSE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
   
   CertificateErrorDispatcher::AllowCertificateError(
       web_contents(),
@@ -498,8 +573,15 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, result);
+  EXPECT_TRUE(last_error()->is_main_frame());
+  EXPECT_FALSE(last_error()->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
+  EXPECT_EQ(ssl_info.cert.get(), last_error()->cert());
+  EXPECT_EQ(GURL("https://www.foo.com/"), last_error()->url());
+  EXPECT_FALSE(last_error()->overridable());
   EXPECT_TRUE(last_error()->strict_enforcement());
+  EXPECT_FALSE(last_error()->IsCancelled());
 }
 
 // Test that the CertificateError created by the dispatcher responds via the
@@ -523,12 +605,12 @@ TEST_F(CertificateErrorDispatcherTest, Response) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  ASSERT_NE(last_error(), nullptr);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  ASSERT_NE(nullptr, last_error());
 
   last_error()->Allow();
 
-  EXPECT_EQ(response_count(), 1);
+  EXPECT_EQ(1, response_count());
   EXPECT_TRUE(last_response());
 }
 
@@ -586,11 +668,11 @@ TEST_F(CertificateErrorDispatcherTest, PlaceholderPage) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  EXPECT_NE(last_error(), nullptr);
-  EXPECT_EQ(delegate->changed_flags(), content::INVALIDATE_TYPE_ALL);
-  EXPECT_EQ(web_contents()->GetVisibleURL(), GURL("https://www.foo.com/"));
-  EXPECT_NE(web_contents()->GetController().GetTransientEntry(), nullptr);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_NE(nullptr, last_error());
+  EXPECT_EQ(content::INVALIDATE_TYPE_ALL, delegate->changed_flags());
+  EXPECT_EQ(GURL("https://www.foo.com/"), web_contents()->GetVisibleURL());
+  EXPECT_NE(nullptr, web_contents()->GetController().GetTransientEntry());
 
   web_contents()->SetDelegate(nullptr);
 }
@@ -620,11 +702,12 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderPageForNonMainFrame) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
-  EXPECT_NE(last_error(), nullptr);
-  EXPECT_EQ(delegate->changed_flags(), static_cast<content::InvalidateTypes>(0));
-  EXPECT_NE(web_contents()->GetVisibleURL(), GURL("https://www.foo.com/"));
-  EXPECT_EQ(web_contents()->GetController().GetTransientEntry(), nullptr);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
+  EXPECT_NE(nullptr, last_error());
+  EXPECT_EQ(static_cast<content::InvalidateTypes>(0),
+            delegate->changed_flags());
+  EXPECT_NE(GURL("https://www.foo.com/"), web_contents()->GetVisibleURL());
+  EXPECT_EQ(nullptr, web_contents()->GetController().GetTransientEntry());
 
   web_contents()->SetDelegate(nullptr);
 }
@@ -654,12 +737,15 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderForSyncResponse) {
       CreateResponseCallback(),
       &result);
 
-  EXPECT_EQ(result, content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE);
-  EXPECT_EQ(response_count(), 1);
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(1, response_count());
   EXPECT_FALSE(last_response());
-  EXPECT_EQ(delegate->changed_flags(), static_cast<content::InvalidateTypes>(0));
-  EXPECT_NE(web_contents()->GetVisibleURL(), GURL("https://www.foo.com/"));
-  EXPECT_EQ(web_contents()->GetController().GetTransientEntry(), nullptr);
+  EXPECT_EQ(static_cast<content::InvalidateTypes>(0),
+            delegate->changed_flags());
+  EXPECT_NE(GURL("https://www.foo.com/"), web_contents()->GetVisibleURL());
+  EXPECT_EQ(nullptr, web_contents()->GetController().GetTransientEntry());
 
   web_contents()->SetDelegate(nullptr);
 }
+
+} // namespace oxide

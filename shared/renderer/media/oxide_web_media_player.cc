@@ -21,6 +21,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/render_frame.h"
 #include "media/base/key_systems.h"
+#include "media/base/media_log.h"
 #include "media/blink/webcontentdecryptionmodule_impl.h"
 #include "media/blink/webmediaplayer_delegate.h"
 #include "media/blink/webmediaplayer_util.h"
@@ -36,6 +37,7 @@
 #include "media/base/video_frame.h"
 #include "net/base/mime_util.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayerClient.h"
+#include "third_party/WebKit/public/platform/WebMediaPlayerSource.h"
 #include "third_party/WebKit/public/platform/WebString.h"
 #include "third_party/WebKit/public/platform/WebURL.h"
 #include "third_party/WebKit/public/web/WebDocument.h"
@@ -114,8 +116,8 @@ WebMediaPlayer::~WebMediaPlayer() {
 }
 
 void WebMediaPlayer::load(LoadType load_type,
-                               const blink::WebURL& url,
-                               CORSMode cors_mode) {
+                          const blink::WebMediaPlayerSource& source,
+                          CORSMode cors_mode) {
   switch (load_type) {
     case LoadTypeURL:
       player_type_ = MEDIA_PLAYER_TYPE_URL;
@@ -137,7 +139,7 @@ void WebMediaPlayer::load(LoadType load_type,
 
   info_loader_.reset(
       new MediaInfoLoader(
-          url,
+          source.getAsURL(),
           cors_mode,
           base::Bind(&WebMediaPlayer::DidLoadMediaInfo,
                      weak_factory_.GetWeakPtr())));
@@ -150,12 +152,12 @@ void WebMediaPlayer::load(LoadType load_type,
   info_loader_->set_single_origin(false);
   info_loader_->Start(frame_);
 
-  url_ = url;
+  url_ = source.getAsURL();
 
   if (player_manager_) {
     GURL first_party_url = frame_->document().firstPartyForCookies();
     player_manager_->Initialize(
-        player_type_, player_id_, url, first_party_url);
+        player_type_, player_id_, url_, first_party_url);
   }
 
   UpdateNetworkState(WebMediaPlayer::NetworkStateLoading);
@@ -338,6 +340,10 @@ double WebMediaPlayer::maxTimeSeekable() const {
   return duration();
 }
 
+blink::WebString WebMediaPlayer::getErrorMessage() {
+  return blink::WebString::fromUTF8(media_log_->GetLastErrorMessage());
+}
+
 bool WebMediaPlayer::didLoadingProgress() {
   bool ret = did_loading_progress_;
   did_loading_progress_ = false;
@@ -399,13 +405,13 @@ unsigned WebMediaPlayer::droppedFrameCount() const {
   return 0;
 }
 
-unsigned WebMediaPlayer::audioDecodedByteCount() const {
+size_t WebMediaPlayer::audioDecodedByteCount() const {
   NOTIMPLEMENTED();
 
   return 0;
 }
 
-unsigned WebMediaPlayer::videoDecodedByteCount() const {
+size_t WebMediaPlayer::videoDecodedByteCount() const {
   NOTIMPLEMENTED();
 
   return 0;

@@ -681,6 +681,35 @@
       ],
     },
     {
+      'target_name': 'oxide_shared_testutils',
+      'type': 'static_library',
+      'variables': {
+        'chromium_code': 1,
+      },
+      'dependencies': [
+        'oxide_shared',
+        '<(DEPTH)/base/base.gyp:base',
+        '<(DEPTH)/content/content.gyp:content_browser',
+        '<(DEPTH)/content/content_shell_and_tests.gyp:test_support_content',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+      ],
+      'include_dirs': [
+        '..',
+        '<(DEPTH)',
+      ],
+      'sources': [
+        'test/oxide_mock_cert_store.cc',
+        'test/oxide_mock_cert_store.h',
+        'test/oxide_test_browser_thread_bundle.cc',
+        'test/oxide_test_browser_thread_bundle.h',
+        'test/oxide_test_suite.cc',
+        'test/oxide_test_suite.h',
+        'test/oxide_test_web_contents_view.cc',
+        'test/oxide_test_web_contents_view.h',
+      ],
+    },
+    {
       'target_name': 'oxide_shared_unittests',
       'type': 'executable',
       'variables': {
@@ -688,6 +717,7 @@
       },
       'dependencies': [
         'oxide_shared',
+        'oxide_shared_testutils',
         '<(DEPTH)/base/base.gyp:base',
         '<(DEPTH)/base/base.gyp:test_support_base',
         '<(DEPTH)/content/content.gyp:content_browser',
@@ -696,7 +726,6 @@
         '<(DEPTH)/mojo/mojo_edk.gyp:mojo_system_impl',
         '<(DEPTH)/net/net.gyp:net',
         '<(DEPTH)/testing/gtest.gyp:gtest',
-        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
         '<(DEPTH)/url/url.gyp:url_lib',
       ],
       'include_dirs': [
@@ -706,12 +735,8 @@
       'sources': [
         'browser/ssl/oxide_certificate_error_unittest.cc',
         'browser/ssl/oxide_certificate_error_dispatcher_unittest.cc',
-        'test/oxide_test_browser_thread_bundle.cc',
-        'test/oxide_test_browser_thread_bundle.h',
-        'test/oxide_test_suite.cc',
-        'test/oxide_test_suite.h',
-        'test/oxide_test_web_contents_view.cc',
-        'test/oxide_test_web_contents_view.h',
+        'browser/ssl/oxide_security_status_unittest.cc',
+        'browser/ssl/oxide_ssl_host_state_delegate_unittest.cc',
         'test/run_all_unittests.cc',
       ],
     },

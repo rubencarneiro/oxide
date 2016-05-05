@@ -46,8 +46,6 @@
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
-#include "shared/browser/ssl/oxide_security_status.h"
-#include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_shared_export.h"
 
@@ -203,8 +201,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   float GetLocationBarOffset() const;
   float GetLocationBarContentOffset() const;
-
-  const SecurityStatus& security_status() const { return security_status_; }
 
   ContentType blocked_content() const { return blocked_content_; }
 
@@ -438,8 +434,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   ContentType blocked_content_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
-
-  SecurityStatus security_status_;
 
   int location_bar_height_;
   blink::WebTopControlsState location_bar_constraints_;

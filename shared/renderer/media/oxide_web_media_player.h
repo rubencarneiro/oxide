@@ -73,8 +73,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
 
   // Resource loading.
   void load(LoadType load_type,
-                    const blink::WebURL& url,
-                    CORSMode cors_mode);
+            const blink::WebMediaPlayerSource& source,
+            CORSMode cors_mode);
 
   // Playback controls.
   void play();
@@ -118,6 +118,7 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   double timelineOffset() const;
   double currentTime() const;
 
+  blink::WebString getErrorMessage();
   bool didLoadingProgress();
 
   // Internal states of loading and network.
@@ -132,8 +133,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   // Provide statistics.
   unsigned decodedFrameCount() const;
   unsigned droppedFrameCount() const;
-  unsigned audioDecodedByteCount() const;
-  unsigned videoDecodedByteCount() const;
+  size_t audioDecodedByteCount() const;
+  size_t videoDecodedByteCount() const;
 
   void paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode);
     //

@@ -68,6 +68,7 @@
 #include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/browser/ssl/oxide_qt_security_status.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -244,11 +245,10 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
-                 QObject* handle,
-                 OxideQSecurityStatus* security_status)
+                 QObject* handle)
     : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
-      security_status_(security_status),
+      location_bar_height_(0),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -256,7 +256,8 @@ WebView::WebView(WebViewProxyClient* client,
   setHandle(handle);
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller) {
+void WebView::CommonInit(OxideQFindController* find_controller,
+                         OxideQSecurityStatus* security_status) {
   content::WebContents* contents = web_view_->GetWebContents();
 
   // base::Unretained is safe here because we disconnect in the destructor
@@ -266,7 +267,7 @@ void WebView::CommonInit(OxideQFindController* find_controller) {
 
   FullscreenHelper::FromWebContents(contents)->set_client(this);
   PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
-  OxideQSecurityStatusPrivate::get(security_status_)->view = this;
+  OxideQSecurityStatusPrivate::get(security_status)->proxy()->Init(contents);
   OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
       contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
@@ -608,10 +609,6 @@ oxide::FilePicker* WebView::CreateFilePicker(content::RenderViewHost* rvh) {
   return picker;
 }
 
-void WebView::SecurityStatusChanged(const oxide::SecurityStatus& old) {
-  OxideQSecurityStatusPrivate::get(security_status_)->Update(old);
-}
-
 void WebView::ContentBlocked() {
   client_->ContentBlocked();
 }
@@ -946,14 +943,19 @@ void WebView::prepareToClose() {
 }
 
 int WebView::locationBarHeight() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarHeight(), contents_view_->GetScreen());
+  return location_bar_height_;
 }
 
 void WebView::setLocationBarHeight(int height) {
+  location_bar_height_ = height;
   web_view_->SetLocationBarHeight(
       DpiUtils::ConvertQtPixelsToChromium(height,
                                           contents_view_->GetScreen()));
+}
+
+ // FIXME: called on screen change, to recalculate location bar height if scale changed
+void WebView::RescaleLocationBarHeight() {
+  setLocationBarHeight(location_bar_height_);
 }
 
 int WebView::locationBarOffset() const {
@@ -1131,7 +1133,7 @@ WebView::WebView(WebViewProxyClient* client,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, view_client, handle, security_status) {
+    : WebView(client, view_client, handle) {
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
@@ -1155,7 +1157,7 @@ WebView::WebView(WebViewProxyClient* client,
 
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
-  CommonInit(find_controller);
+  CommonInit(find_controller, security_status);
 
   EnsurePreferences();
 }
@@ -1174,7 +1176,7 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, view_client, handle, security_status);
+  WebView* new_view = new WebView(client, view_client, handle);
 
   oxide::WebView::CommonParams params;
   params.client = new_view;
@@ -1183,7 +1185,7 @@ WebView* WebView::CreateFromNewViewRequest(
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
-  new_view->CommonInit(find_controller);
+  new_view->CommonInit(find_controller, security_status);
 
   OxideQWebPreferences* p =
       static_cast<WebPreferences*>(
@@ -1213,10 +1215,6 @@ WebView* WebView::FromView(oxide::WebView* view) {
 
 WebContext* WebView::GetContext() const {
   return WebContext::FromBrowserContext(web_view_->GetBrowserContext());
-}
-
-const oxide::SecurityStatus& WebView::GetSecurityStatus() const {
-  return web_view_->security_status();
 }
 
 } // namespace qt

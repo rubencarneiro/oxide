@@ -115,8 +115,6 @@ FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
   return nullptr;
 }
 
-void WebViewClient::SecurityStatusChanged(const SecurityStatus& old) {}
-
 void WebViewClient::ContentBlocked() {}
 
 void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}

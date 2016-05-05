@@ -54,6 +54,7 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
+#include "oxide_qt_web_view.h"
 
 namespace oxide {
 namespace qt {
@@ -274,6 +275,11 @@ void ContentsView::visibilityChanged() {
 
 void ContentsView::screenUpdated() {
   view()->ScreenUpdated();
+
+  // FIXME - need to recalculate location bar height in case scale changed
+  oxide::qt::WebView::FromView(
+    oxide::WebView::FromWebContents(view()->GetWebContents()))
+      ->RescaleLocationBarHeight();
 }
 
 QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {

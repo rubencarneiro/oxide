@@ -38,10 +38,12 @@
 #include "oxide_certificate_error_placeholder_page.h"
 #include "oxide_security_types.h"
 
+namespace oxide {
+
 struct Params {
   bool is_main_frame = true;
   bool is_subresource = false;
-  oxide::CertError cert_error = oxide::CERT_ERROR_BAD_IDENTITY;
+  CertError cert_error = CERT_ERROR_BAD_IDENTITY;
   bool overridable = true;
   bool strict_enforcement = false;
 };
@@ -55,7 +57,7 @@ class CertificateErrorTest : public testing::Test {
         responded_count_(0),
         last_response_(false) {}
 
-  std::unique_ptr<oxide::CertificateError> CreateError(
+  std::unique_ptr<CertificateError> CreateError(
       const Params& params = Params());
 
   net::X509Certificate* cert() const { return cert_.get(); }
@@ -77,9 +79,9 @@ void CertificateErrorTest::OnResponse(bool response) {
   last_response_ = response;
 }
 
-std::unique_ptr<oxide::CertificateError> CertificateErrorTest::CreateError(
+std::unique_ptr<CertificateError> CertificateErrorTest::CreateError(
     const Params& params) {
-  return oxide::CertificateError::CreateForTesting(
+  return CertificateError::CreateForTesting(
       params.is_main_frame,
       params.is_subresource,
       params.cert_error,
@@ -91,84 +93,106 @@ std::unique_ptr<oxide::CertificateError> CertificateErrorTest::CreateError(
                  base::Unretained(this)));
 }
 
-// Test that is_main_frame is set correctly
-TEST_F(CertificateErrorTest, is_main_frame) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
+// Test that constructing an error sets properties as expected
+TEST_F(CertificateErrorTest, Construct) {
+  std::unique_ptr<CertificateError> error = CreateError();
   EXPECT_TRUE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
+  EXPECT_FALSE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
+}
 
+// Test that is_main_frame can be flipped correctly
+TEST_F(CertificateErrorTest, is_main_frame) {
   Params params;
   params.is_main_frame = false;
 
-  error = CreateError(params);
+  std::unique_ptr<CertificateError> error = CreateError(params);
   EXPECT_FALSE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
+  EXPECT_FALSE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
 }
 
-// Test that is_subresource is set correctly
+// Test that is_subresource can be flipped correctly
 TEST_F(CertificateErrorTest, is_subresource) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_FALSE(error->is_subresource());
-
   Params params;
   params.is_subresource = true;
 
-  error = CreateError(params);
+  std::unique_ptr<CertificateError> error = CreateError(params);
+  EXPECT_TRUE(error->is_main_frame());
   EXPECT_TRUE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
+  EXPECT_FALSE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
 }
 
 // Test that cert_error is set correctly
 TEST_F(CertificateErrorTest, cert_error) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_EQ(error->cert_error(), oxide::CERT_ERROR_BAD_IDENTITY);
-
   Params params;
-  params.cert_error = oxide::CERT_ERROR_GENERIC;
+  params.cert_error = CERT_ERROR_GENERIC;
 
-  error = CreateError(params);
-  EXPECT_EQ(error->cert_error(), oxide::CERT_ERROR_GENERIC);
-}
-
-// Test that cert is set correctly
-TEST_F(CertificateErrorTest, cert) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_EQ(error->cert(), cert());
-}
-
-// Test that url is set correctly
-TEST_F(CertificateErrorTest, url) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_EQ(error->url(), GURL("https://www.google.com/"));
+  std::unique_ptr<CertificateError> error = CreateError(params);
+  EXPECT_TRUE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_GENERIC, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
+  EXPECT_FALSE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
 }
 
 // Test that overridable is set correctly and that CertificateError ignores
 // calls to Allow()
 TEST_F(CertificateErrorTest, overridable) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_TRUE(error->overridable());
-
   Params params;
   params.overridable = false;
 
-  error = CreateError(params);
+  std::unique_ptr<CertificateError> error = CreateError(params);
+  EXPECT_TRUE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
   EXPECT_FALSE(error->overridable());
-  ASSERT_EQ(responded_count(), 1);
+  EXPECT_FALSE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
+
+  ASSERT_EQ(0, responded_count());
 
   error->Allow();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(0, responded_count());
 
   error.reset();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(0, responded_count());
 }
 
 // Test that strict_enforcement is set correctly
 TEST_F(CertificateErrorTest, strict_enforcement) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
-  EXPECT_FALSE(error->strict_enforcement());
-
   Params params;
   params.strict_enforcement = true;
 
-  error = CreateError(params);
+  std::unique_ptr<CertificateError> error = CreateError(params);
+  EXPECT_TRUE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
   EXPECT_TRUE(error->strict_enforcement());
+  EXPECT_FALSE(error->IsCancelled());
 }
 
 namespace {
@@ -181,11 +205,18 @@ void CancelCallback(bool* cancelled) {
 
 // Test that cancellation works and that calls to Allow() are ignored
 TEST_F(CertificateErrorTest, IsCancelled) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
+  std::unique_ptr<CertificateError> error = CreateError();
 
   bool cancel_callback_ran = false;
   error->SetCancelCallback(base::Bind(&CancelCallback, &cancel_callback_ran));
 
+  EXPECT_TRUE(error->is_main_frame());
+  EXPECT_FALSE(error->is_subresource());
+  EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, error->cert_error());
+  EXPECT_EQ(cert(), error->cert());
+  EXPECT_EQ(GURL("https://www.google.com/"), error->url());
+  EXPECT_TRUE(error->overridable());
+  EXPECT_FALSE(error->strict_enforcement());
   EXPECT_FALSE(error->IsCancelled());
 
   error->SimulateCancel();
@@ -193,58 +224,58 @@ TEST_F(CertificateErrorTest, IsCancelled) {
   EXPECT_TRUE(error->IsCancelled());
   EXPECT_TRUE(cancel_callback_ran);
   EXPECT_FALSE(last_response());
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error->Allow();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error.reset();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 }
 
 // Test that calling Allow() works, and that the callback is only called once
 TEST_F(CertificateErrorTest, Allow) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
+  std::unique_ptr<CertificateError> error = CreateError();
 
   error->Allow();
   EXPECT_TRUE(last_response());
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error->Allow();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error->Deny();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error.reset();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 }
 
 // Test that calling Deny() works, and that the callback is only called once
 TEST_F(CertificateErrorTest, Deny) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
+  std::unique_ptr<CertificateError> error = CreateError();
 
   error->Deny();
   EXPECT_FALSE(last_response());
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error->Deny();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error->Allow();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 
   error.reset();
-  ASSERT_EQ(responded_count(), 1);
+  ASSERT_EQ(1, responded_count());
 }
 
 // Test that we get a denied response if CertificateError is deleted without
 // calling Allow() or Deny()
 TEST_F(CertificateErrorTest, DeleteWithoutResponse) {
-  std::unique_ptr<oxide::CertificateError> error = CreateError();
+  std::unique_ptr<CertificateError> error = CreateError();
   error.reset();
 
-  EXPECT_EQ(responded_count(), 1);
+  EXPECT_EQ(1, responded_count());
   EXPECT_FALSE(last_response());
 }
 
@@ -290,8 +321,8 @@ void DummyResponse(bool response) {}
 //  Allow(). This produces no observable effect because it doesn't drop the
 //  transient entry
 TEST_F(CertificateErrorTest, DenyDismissesPlaceholder) {
-  oxide::CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
-  oxide::TestBrowserThreadBundle browser_thread_bundle;
+  CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
+  TestBrowserThreadBundle browser_thread_bundle;
   content::TestBrowserContext browser_context;
   content::TestWebContentsFactory web_contents_factory;
 
@@ -301,29 +332,31 @@ TEST_F(CertificateErrorTest, DenyDismissesPlaceholder) {
       web_contents_factory.CreateWebContents(&browser_context);
   contents->SetDelegate(delegate.get());
 
-  std::unique_ptr<oxide::CertificateError> error =
-      oxide::CertificateError::CreateForTestingWithPlaceholder(
+  std::unique_ptr<CertificateError> error =
+      CertificateError::CreateForTestingWithPlaceholder(
           contents,
           true,
           false,
-          oxide::CERT_ERROR_BAD_IDENTITY,
+          CERT_ERROR_BAD_IDENTITY,
           cert(),
           GURL("https://www.google.com/"),
           false,
           true,
           base::Bind(&DummyResponse));
 
-  EXPECT_EQ(delegate->changed_flags(), content::INVALIDATE_TYPE_ALL);
-  EXPECT_EQ(contents->GetVisibleURL(), GURL("https://www.google.com/"));
-  EXPECT_NE(contents->GetController().GetTransientEntry(), nullptr);
+  EXPECT_EQ(content::INVALIDATE_TYPE_ALL, delegate->changed_flags());
+  EXPECT_EQ(GURL("https://www.google.com/"), contents->GetVisibleURL());
+  EXPECT_NE(nullptr, contents->GetController().GetTransientEntry());
 
   delegate->ResetChangedFlags();
   error->Deny();
 
-  EXPECT_EQ(delegate->changed_flags(), content::INVALIDATE_TYPE_ALL);
-  EXPECT_NE(contents->GetVisibleURL(), GURL("https://www.google.com/"));
-  EXPECT_EQ(contents->GetController().GetTransientEntry(), nullptr);
+  EXPECT_EQ(content::INVALIDATE_TYPE_ALL, delegate->changed_flags());
+  EXPECT_NE(GURL("https://www.google.com/"), contents->GetVisibleURL());
+  EXPECT_EQ(nullptr, contents->GetController().GetTransientEntry());
 
   contents->SetDelegate(nullptr);
-  oxide::CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(false);
+  CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(false);
 }
+
+} // namespace oxide

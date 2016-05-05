@@ -17,9 +17,8 @@
 {
   'targets': [
     {
-      'target_name': '<(oxide_lib)',
-      'type': 'shared_library',
-      'product_extension': '<(oxide_lib_suffix)',
+      'target_name': 'oxide_qt',
+      'type': '<(component)',
       'defines': [
         'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
@@ -61,6 +60,12 @@
         '<(DEPTH)',
         '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'api/includes',
+          '<(SHARED_INTERMEDIATE_DIR)/oxide',
+        ],
+      },
       'ldflags': [
         '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
       ],
@@ -192,6 +197,9 @@
         'browser/oxide_qt_web_preferences.h',
         'browser/oxide_qt_web_view.cc',
         'browser/oxide_qt_web_view.h',
+        'browser/ssl/oxide_qt_security_status.cc',
+        'browser/ssl/oxide_qt_security_status.h',
+        'common/oxide_qt_export.h',
         'glue/oxide_qt_contents_view_proxy.h'
         'glue/oxide_qt_contents_view_proxy_client.h'
         'glue/oxide_qt_file_picker_proxy.h',
@@ -348,6 +356,54 @@
             '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)/lib',
           ],
         }],
+      ],
+    },
+    {
+      'target_name': '<(oxide_lib)',
+      'type': 'shared_library',
+      'product_extension': '<(oxide_lib_suffix)',
+      'dependencies': [
+        'oxide_qt',
+      ],
+      'sources': [
+        'hack.cc', # Required to get this target to link against the C++ stdlib
+      ],
+    },
+    {
+      'target_name': 'oxide_qt_unittests',
+      'type': 'executable',
+      'variables': {
+        'chromium_code': 1,
+      },
+      'dependencies': [
+        'oxide_qt',
+        '../build/system.gyp:Qt5Core',
+        '../../shared/shared.gyp:oxide_shared',
+        '../../shared/shared.gyp:oxide_shared_testutils',
+        '<(DEPTH)/base/base.gyp:base',
+        '<(DEPTH)/base/base.gyp:test_support_base',
+        '<(DEPTH)/content/content.gyp:content_browser',
+        '<(DEPTH)/content/content.gyp:content_common',
+        '<(DEPTH)/content/content_shell_and_tests.gyp:test_support_content',
+        '<(DEPTH)/mojo/mojo_edk.gyp:mojo_system_impl',
+        '<(DEPTH)/net/net.gyp:net',
+        '<(DEPTH)/testing/gtest.gyp:gtest',
+      ],
+      'include_dirs': [
+        '../..',
+        '<(DEPTH)',
+        '<(INTERMEDIATE_DIR)',
+      ],
+      'sources': [
+        'browser/ssl/oxide_qt_security_status_unittest.cc',
+        'test/run_all_unittests.cc',
+      ],
+      'actions': [
+        {
+          'action_name': 'oxide_qt_security_status_unittest.moc',
+          'moc_input': 'browser/ssl/oxide_qt_security_status_unittest.cc',
+          'includes': [ 'moc.gypi' ],
+        },
       ],
     },
   ]

@@ -20,14 +20,15 @@
       'target_name': 'All',
       'type': 'none',
       'dependencies': [
-        '<@(oxide_lib_target)',
-        '<@(oxide_renderer_target)',
+        '<(oxide_lib_target)',
+        '<(oxide_renderer_target)',
         '<(DEPTH)/sandbox/sandbox.gyp:chrome_sandbox',
       ],
       'conditions': [
         ['enable_tests==1', {
           'dependencies': [
             '../shared/shared.gyp:oxide_shared_unittests',
+            '<@(oxide_platform_test_targets)',
           ],
         }],
       ],

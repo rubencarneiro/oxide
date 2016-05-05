@@ -95,6 +95,8 @@ if(ENABLE_OXIDEQMLSCENE)
 endif()
 
 if(ENABLE_TESTS)
+  add_test(NAME qt_unittests
+           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_unittests)
   add_subdirectory(tests)
 endif()
 
