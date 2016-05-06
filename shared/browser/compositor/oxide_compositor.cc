@@ -68,7 +68,7 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
   }
 
   content::CauseForGpuLaunch cause =
-      content::CAUSE_FOR_GPU_LAUNCH_WEBGRAPHICSCONTEXT3DCOMMANDBUFFERIMPL_INITIALIZE;
+      content::CAUSE_FOR_GPU_LAUNCH_DISPLAY_COMPOSITOR_CONTEXT;
   scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
   if (!gpu_channel_host.get()) {
