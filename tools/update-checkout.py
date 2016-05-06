@@ -29,8 +29,8 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
 from constants import (
-  OXIDE_DEPSFILE,
-  TOP_SRCDIR
+  OXIDEDEPS_FILE,
+  TOPSRC_DIR
 )
 from utils import (
   CheckCall,
@@ -82,7 +82,7 @@ class Config(ConfigParser):
   def __init__(self):
     ConfigParser.__init__(self, allow_no_value=True)
 
-    filename = os.path.join(TOP_SRCDIR, os.pardir, ".checkout.cfg")
+    filename = os.path.join(TOPSRC_DIR, os.pardir, ".checkout.cfg")
     if not os.path.isfile(filename):
       print("Cannot find .checkout.cfg. Is this a checkout created with "
             "fetch_oxide.py?", file=sys.stderr)
@@ -99,7 +99,7 @@ class Config(ConfigParser):
       return None
 
 def GetGclientSpec(cachedir):
-  deps = LoadJsonFromPath(OXIDE_DEPSFILE)
+  deps = LoadJsonFromPath(OXIDEDEPS_FILE)
   custom_deps = ""
   chromium_url = None
   for dep in deps:
@@ -122,14 +122,14 @@ def GetGclientSpec(cachedir):
 def UpdateGclientConfig(config):
   # We don't use gclient config here, because it doesn't support both
   # --spec and --cache-dir, and --spec doesn't support newlines
-  with open(os.path.join(TOP_SRCDIR, os.pardir, ".gclient"), "w") as fd:
+  with open(os.path.join(TOPSRC_DIR, os.pardir, ".gclient"), "w") as fd:
     fd.write(GetGclientSpec(config.cachedir))
 
 def SyncCheckout(force):
   args = ["gclient", "sync", "-D", "--with_branch_heads"]
   if force:
     args.append("--force")
-  CheckCall(args, os.path.join(TOP_SRCDIR, os.pardir))
+  CheckCall(args, os.path.join(TOPSRC_DIR, os.pardir))
 
 def main():
   o = Options()

@@ -19,7 +19,7 @@
 
 import os.path
 
-OXIDE_SRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-TOP_SRCDIR = os.path.join(OXIDE_SRCDIR, os.pardir)
+OXIDESRC_DIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
+TOPSRC_DIR = os.path.abspath(os.path.join(OXIDESRC_DIR, os.pardir))
 
-OXIDE_DEPSFILE = os.path.join(OXIDE_SRCDIR, "DEPS.oxide")
+OXIDEDEPS_FILE = os.path.join(OXIDESRC_DIR, "DEPS.oxide")
