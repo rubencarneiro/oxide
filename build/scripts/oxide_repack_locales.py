@@ -14,8 +14,10 @@ import optparse
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..',
-                             'third_party', 'chromium', 'src', 'tools', 'grit'))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, 'python'))
+from constants import TOPSRC_DIR
+
+sys.path.append(os.path.join(TOPSRC_DIR, 'tools', 'grit'))
 from grit.format import data_pack
 
 # The gyp "branding" variable.

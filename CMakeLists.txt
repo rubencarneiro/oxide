@@ -16,21 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(EXISTS ${CMAKE_BINARY_DIR}/CMakeLists.txt)
-  message(FATAL_ERROR
-          "In-source-tree builds are unsupported. You must use a separate build "
-          "directory to build Oxide. Note that you will need to remove the "
-          "CMakeCache.txt file from the root of your source tree before continuing")
-endif()
-
-cmake_minimum_required(VERSION 2.8.11)
-project(OXIDE)
-
 include(CheckCXXCompilerFlag)
 include(CheckIncludeFileCXX)
 include(GNUInstallDirs)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
 include(OxideCommonOptions)
 include(OxideCommonProperties)
@@ -42,7 +32,7 @@ if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   set(CHROMIUM_BUILD_TYPE Release)
 endif()
-set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/chromium)
+set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium)
 set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
 set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib)
 set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)
@@ -59,7 +49,7 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
 # We have a script for loading apps from the tree
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${OXIDE_SOURCE_DIR})
 
 # Allow the version number to be used in the build
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_MAJOR ${PROJECT_VERSION})
@@ -83,7 +73,7 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # Import the configuration for this build
-include(${CMAKE_SOURCE_DIR}/${OXIDE_PLATFORM}/config.cmake)
+include(${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/config.cmake)
 
 # Set extra variables that depend on the configuration
 calculate_versioned_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
@@ -131,7 +121,7 @@ set_target_properties(
     IMPORTED_LOCATION ${CHROMIUM_LIB_DIR}/${OXIDE_LIB_FILENAME})
 
 file(GLOB_RECURSE I18N_SRC_FILES
-     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+     RELATIVE ${OXIDE_SOURCE_DIR}
      ${OXIDE_PLATFORM}/**.cc shared/**.cc)
 list(SORT I18N_SRC_FILES)
 
@@ -175,33 +165,33 @@ add_custom_target(
     test-package-common-libs
     COMMAND ${CMAKE_COMMAND} -DFILES=${_OXIDE_INSTALL_LIB}
     -DTYPE=FILE -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 add_custom_target(
     test-package-common-programs
     COMMAND ${CMAKE_COMMAND}
     "-DFILES=\"${_OXIDE_INSTALL_PROGRAMS};${_CHROME_SANDBOX}\""
     -DTYPE=PROGRAM
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 add_custom_target(
     test-package-common-files
     COMMAND ${CMAKE_COMMAND} "-DFILES=\"${_OXIDE_INSTALL_FILES}\""
     -DTYPE=FILE
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 add_custom_target(
     test-package-common-locales
     COMMAND ${CMAKE_COMMAND} -DFILES=${_OXIDE_INSTALL_LOCALEDIR}
     -DTYPE=DIRECTORY
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 if(ENABLE_COMPONENT_BUILD)
   add_custom_target(
       test-package-common-component-libs
       COMMAND ${CMAKE_COMMAND} -DFILES=${CHROMIUM_LIB_DIR}
       -DMATCH_PATTERN="*${CMAKE_SHARED_LIBRARY_SUFFIX}" -DTYPE=DIRECTORY
       -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
-      -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+      -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 endif()
 
 add_custom_target(
@@ -223,8 +213,8 @@ add_custom_target(
 
 # Build the gyp command
 set(_GYP_COMMAND
-    ${PYTHON} ${CMAKE_SOURCE_DIR}/build/gyp_oxide
-    -I${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi
+    ${PYTHON} ${OXIDE_SOURCE_DIR}/build/gyp_oxide
+    -I${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi
     --generator-output ${CHROMIUM_OUTPUT_DIR}
     -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})

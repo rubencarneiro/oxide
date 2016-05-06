@@ -31,7 +31,7 @@
     },
   },
   'variables': {
-    'tcmalloc_dir': '../third_party/chromium/src/third_party/tcmalloc/chromium',
+    'tcmalloc_dir': '../../third_party/tcmalloc/chromium',
   },
   'targets': [
     # Only executables and not libraries should depend on the

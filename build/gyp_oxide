@@ -26,23 +26,24 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "python"))
-from utils import CHROMIUMSRCDIR, TOPSRCDIR, CheckCall
+from constants import OXIDESRC_DIR, TOPSRC_DIR
+from utils import CheckCall
 
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'gyp', 'pylib'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'tools', 'gyp', 'pylib'))
 try:
     import gyp
 except ImportError:
     print('Cannot find gyp module. Do you have a Chromium checkout?', file=sys.stderr)
     sys.exit(1)
 
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'build'))
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools'))
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'generate_shim_headers'))
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'tools', 'grit'))
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'chrome', 'tools', 'build'))
-sys.path.insert(0, os.path.join(CHROMIUMSRCDIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'build'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'tools'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'tools', 'generate_shim_headers'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'tools', 'grit'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'chrome', 'tools', 'build'))
+sys.path.insert(0, os.path.join(TOPSRC_DIR, 'third_party', 'WebKit', 'Source', 'build', 'scripts'))
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "scripts"))
+sys.path.insert(0, os.path.join(OXIDESRC_DIR, "build", "scripts"))
 
 def additional_include_files(args=[]):
     specified_includes = set()
@@ -56,32 +57,32 @@ def additional_include_files(args=[]):
             result.append(path)
 
     # Always include common.gypi from Oxide
-    AddInclude(os.path.join(TOPSRCDIR, 'build', 'common.gypi'))
+    AddInclude(os.path.join(OXIDESRC_DIR, 'build', 'common.gypi'))
 
     # Always include common.gypi from Chromium
-    AddInclude(os.path.join(CHROMIUMSRCDIR, 'build', 'common.gypi'))
+    AddInclude(os.path.join(TOPSRC_DIR, 'build', 'common.gypi'))
 
     # Include the Oxide Ozone impl
-    AddInclude(os.path.join(TOPSRCDIR, 'shared', 'port', 'ozone', 'ozone.gypi'))
+    AddInclude(os.path.join(OXIDESRC_DIR, 'shared', 'port', 'ozone', 'ozone.gypi'))
 
     # Optionally add supplemental .gypi files if present.
-    supplements = glob.glob(os.path.join(CHROMIUMSRCDIR, '*', 'supplement.gypi'))
+    supplements = glob.glob(os.path.join(TOPSRC_DIR, '*', 'supplement.gypi'))
     for supplement in supplements:
         AddInclude(supplement)
 
     return result
 
 def main(args):
-    args.append(os.path.join(TOPSRCDIR, 'build', 'all.gyp'))
+    args.append(os.path.join(OXIDESRC_DIR, 'build', 'all.gyp'))
 
     args.extend(['-I' + i for i in additional_include_files(args)])
 
     args.append('--no-circular-check')
-    args.extend(['--toplevel-dir', TOPSRCDIR])
-    args.extend(['--depth', CHROMIUMSRCDIR])
+    args.extend(['--toplevel-dir', TOPSRC_DIR])
+    args.extend(['--depth', TOPSRC_DIR])
     args.extend(['--format', 'ninja'])
 
-    os.chdir(TOPSRCDIR)
+    os.chdir(TOPSRC_DIR)
     sys.exit(gyp.main(args))
 
 if __name__ == "__main__":

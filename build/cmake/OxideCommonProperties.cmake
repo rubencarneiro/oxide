@@ -24,6 +24,8 @@ set(_OxideCommonProperties_INCLUDED_ TRUE)
 include(GNUInstallDirs)
 include(OxideCommonOptions)
 
+set(OXIDE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
 
 # This is based on Debian changes to GNUInstallDirs.cmake, and ensures we
@@ -65,7 +67,7 @@ if(NOT DEFINED PYTHON)
 endif()
 
 execute_process(
-    COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
+    COMMAND ${PYTHON} ${OXIDE_SOURCE_DIR}/build/scripts/get-version.py ${OXIDE_PLATFORM}
     OUTPUT_VARIABLE PROJECT_VERSION
     RESULT_VARIABLE _RESULT
     OUTPUT_STRIP_TRAILING_WHITESPACE)

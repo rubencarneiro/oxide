@@ -27,14 +27,6 @@ import shutil
 from subprocess import Popen, CalledProcessError, PIPE
 import tempfile
 
-TOPSRCDIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-CHROMIUMDIR = os.path.join(TOPSRCDIR, "third_party", "chromium")
-CHROMIUMSRCDIR_REL = "src"
-CHROMIUMSRCDIR = os.path.join(CHROMIUMDIR, CHROMIUMSRCDIR_REL)
-DEPOTTOOLSDIR = os.path.join(TOPSRCDIR, "third_party", "depot_tools")
-
-CHECKOUT_CONFIG = os.path.join(TOPSRCDIR, "checkout.conf")
-
 class VersionFileParserError(Exception):
   pass
 

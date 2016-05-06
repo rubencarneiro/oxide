@@ -53,10 +53,10 @@
           'variables': {
             'grit_grd_file': 'oxide_resources.grd'
           },
-          'includes': [ '../third_party/chromium/src/build/grit_action.gypi' ]
+          'includes': [ '../../build/grit_action.gypi' ]
         }
       ],
-      'includes': [ '../third_party/chromium/src/build/grit_target.gypi' ],
+      'includes': [ '../../build/grit_target.gypi' ],
     },
     {
       'target_name': 'packed_resources',

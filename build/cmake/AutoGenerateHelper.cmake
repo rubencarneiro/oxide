@@ -22,6 +22,7 @@ endif()
 set(_AutoGenerateHelper_INCLUDED_ TRUE)
 
 include(CMakeParseArguments)
+include(OxideCommonProperties)
 
 function(auto_generate_file)
   cmake_parse_arguments(_ARGS "" "INPUT;OUTPUT" "VARS" "${ARGN}")
@@ -51,7 +52,7 @@ function(auto_generate_file)
     set(_ARGS_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/${_FILE}.in)
   endif()
 
-  set(_HELPER "${CMAKE_SOURCE_DIR}/build/scripts/preprocess-helper.cmake")
+  set(_HELPER "${OXIDE_SOURCE_DIR}/build/scripts/preprocess-helper.cmake")
 
   list(APPEND _CMD "-D__INPUT=${_ARGS_INPUT}" "-D__OUTPUT=${_ARGS_OUTPUT}")
   list(APPEND _CMD "-P" "${_HELPER}")

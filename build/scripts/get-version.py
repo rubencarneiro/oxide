@@ -23,17 +23,15 @@ import os.path
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "python"))
-from utils import (
-  TOPSRCDIR,
-  VersionFileParser
-)
+from constants import OXIDESRC_DIR
+from utils import VersionFileParser
 
 def main(args):
   if len(args) < 1:
     print("Usage: get-version.py <port>", file=sys.stderr)
     sys.exit(1)
 
-  v = VersionFileParser(os.path.join(TOPSRCDIR, args[0], "VERSION"))
+  v = VersionFileParser(os.path.join(OXIDESRC_DIR, args[0], "VERSION"))
 
   print(v)
 

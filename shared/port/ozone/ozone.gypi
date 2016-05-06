@@ -9,9 +9,9 @@
       '<(DEPTH)/third_party/khronos/khronos.gyp:khronos_headers',
     ],
     'external_ozone_platform_files': [
-      '../../../third_party/chromium/src/ui/ozone/platform/oxide/ozone_platform_oxide.cc',
-      '../../../third_party/chromium/src/ui/ozone/platform/oxide/surface_factory_ozone_oxide.cc',
-      '../../../third_party/chromium/src/ui/ozone/platform/oxide/surface_factory_ozone_oxide.h',
+      '../../../../ui/ozone/platform/oxide/ozone_platform_oxide.cc',
+      '../../../../ui/ozone/platform/oxide/surface_factory_ozone_oxide.cc',
+      '../../../../ui/ozone/platform/oxide/surface_factory_ozone_oxide.h',
     ],
   },
 }
