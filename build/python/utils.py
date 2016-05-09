@@ -144,3 +144,10 @@ def LoadJsonFromPath(path, throw_on_failure = True):
     if throw_on_failure:
       raise
   return {}
+
+def IsGitRepo(path):
+  try:
+    CheckCall(["git", "status"], path, quiet=True)
+  except:
+    return False
+  return True

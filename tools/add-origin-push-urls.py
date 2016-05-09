@@ -30,10 +30,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "
 from constants import (
   OXIDEDEPS_FILE,
   OXIDESRC_DIR,
-  TOPSRC_DIR
+  TOP_DIR
 )
 from utils import (
   CheckCall,
+  IsGitRepo,
   LoadJsonFromPath
 )
 
@@ -45,6 +46,7 @@ def AddOriginPushUrl(path, origin, user_id):
     sys.exit(1)
   u = u._replace(scheme="git+ssh")
   u = u._replace(netloc="%s@%s" % (user_id, u.netloc))
+  print("Adding push URL '%s' to origin for '%s'" % (u.geturl(), path))
   CheckCall(["git", "remote", "set-url", "--push", "origin", u.geturl()], path)
 
 class Options(OptionParser):
@@ -77,30 +79,29 @@ def main():
     o.print_usage(file=sys.stderr)
     sys.exit(1)
 
-  topsrc_dir_parent = os.path.dirname(TOPSRC_DIR)
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
 
+  paths = []
   if options.all:
-    for path in deps:
-      AddOriginPushUrl(os.path.join(topsrc_dir_parent, path),
-                       deps[path]["origin"],
-                       options.user_id)
+    paths = [ os.path.join(TOP_DIR, path) for path in deps ]
   else:
     if len(args) == 0:
       print("Missing paths to git checkouts", file=sys.stderr)
       o.print_usage(file=sys.stderr)
       sys.exit(1)
-    paths = [ os.path.join(topsrc_dir_parent, path) for path in deps ]
-    paths.append(OXIDESRC_DIR)
-    for arg in args:
-      path = os.path.abspath(arg)
-      if path not in paths:
-        print("'%s' is not the path of a repository found in DEPS.oxide" %
-              path, file=sys.stderr)
-        sys.exit(1)
-      AddOriginPushUrl(path,
-                       deps[os.path.relpath(path, topsrc_dir_parent)]["origin"],
-                       options.user_id)
+    paths = [ os.path.abspath(arg) for arg in args ]
+
+  for path in paths:
+    if not IsGitRepo(path):
+      print("Path '%s' is not a GIT repository" % path, file=sys.stderr)
+      sys.exit(1)
+
+    relpath = os.path.relpath(path, TOP_DIR)
+    if relpath not in deps:
+      print("Path '%s' does not appear in DEPS.oxide" % path, file=sys.stderr)
+      sys.exit(1)
+
+    AddOriginPushUrl(path, deps[relpath]["origin"], options.user_id)
 
 if __name__ == "__main__":
   main()

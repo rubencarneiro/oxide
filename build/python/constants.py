@@ -19,7 +19,15 @@
 
 import os.path
 
+# OXIDESRC_DIR is ../.. from this file
 OXIDESRC_DIR = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir))
-TOPSRC_DIR = os.path.abspath(os.path.join(OXIDESRC_DIR, os.pardir))
+
+# TOPSRC_DIR is OXIDESRC_DIR/..
+TOPSRC_DIR = os.path.abspath(os.path.dirname(OXIDESRC_DIR))
 
 OXIDEDEPS_FILE = os.path.join(OXIDESRC_DIR, "DEPS.oxide")
+
+# TOP_DIR is TOPSRC_DIR/.., and contains .gclient and src/ in a full checkout
+TOP_DIR = os.path.abspath(os.path.dirname(TOPSRC_DIR))
+
+TOPSRC_DIRNAME = "src"

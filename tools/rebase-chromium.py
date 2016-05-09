@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2015 Canonical Ltd.
+# Copyright (C) 2015-2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -31,30 +31,32 @@ import sys
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
+from constants import (
+  OXIDEDEPS_FILE,
+  OXIDESRC_DIR,
+  TOP_DIR,
+  TOPSRC_DIR,
+  TOPSRC_DIRNAME
+)
 from utils import (
   CheckCall,
   CheckOutput,
-  CHECKOUT_CONFIG,
-  CHROMIUMDIR,
-  CHROMIUMSRCDIR,
-  CHROMIUMSRCDIR_REL,
-  DEPOTTOOLSDIR,
-  LoadJsonFromPath,
-  TOPSRCDIR
+  IsGitRepo,
+  LoadJsonFromPath
 )
 import subcommand
 
-RELBRANCH_FILE = os.path.join(TOPSRCDIR, ".relbranch")
-STATE_FILE = os.path.join(TOPSRCDIR, ".rebase.state")
+RELBRANCH_FILE = os.path.join(OXIDESRC_DIR, ".relbranch")
+STATE_FILE = os.path.join(OXIDESRC_DIR, ".rebase.state")
 
 DEV_BRANCH_PREFIX = "oxide/dev/cr"
 REL_BRANCH_PREFIX = "oxide/"
 
 GCLIENT_REVINFO_SPEC = (
   "solutions = ["
-    "{ \"name\": \"src\", "
-      "\"url\": \"%s\", "
+    "{ \"name\": \"%(name)s\", "
+      "\"url\": \"%(url)s\", "
       "\"deps_file\": \"DEPS\", "
       "\"managed\": False, "
     "} "
@@ -127,12 +129,12 @@ def WriteStateFile(state):
   with open(STATE_FILE, "w") as fd:
     json.dump(state, fd)
 
-def WriteUpdatedCheckoutConfig(config, state):
+def WriteUpdatedDepsFile(deps, state):
   for path in state["repos"]:
-    config[path]["rev"] = state["repos"][path]["rev"]
+    deps[path]["rev"] = state["repos"][path]["rev"]
 
-  with open(CHECKOUT_CONFIG, "w") as fd:      
-    json.dump(config, fd, indent=2, sort_keys=True)
+  with open(OXIDEDEPS_FILE, "w") as fd:      
+    json.dump(deps, fd, indent=2, sort_keys=True)
 
 @subcommand.Command("push")
 def cmd_push(options, args):
@@ -155,7 +157,7 @@ def cmd_push(options, args):
       continue
 
     try:
-      rev = DoPushAndDiscardWorkingBranch(os.path.join(CHROMIUMDIR, path),
+      rev = DoPushAndDiscardWorkingBranch(os.path.join(TOP_DIR), path),
                                           branch, state["id"])
       if rev:
         state["repos"][path]["rev"] = rev
@@ -166,12 +168,12 @@ def cmd_push(options, args):
             file=sys.stderr)
       sys.exit(1)
 
-  config = LoadJsonFromPath(CHECKOUT_CONFIG)
-  WriteUpdatedCheckoutConfig(config, state)
+  deps = LoadJsonFromPath(OXIDEDEPS_FILE)
+  WriteUpdatedDepsFile(deps, state)
 
   os.remove(STATE_FILE)
 
-  print("\n** Push completed SUCCESSFULLY. Please commit changes to checkout.conf now **")
+  print("\n** Push completed SUCCESSFULLY. Please commit changes to DEPS.oxide now **")
 
 class MergeFailure(Exception):
   def __init__(self, msg):
@@ -206,7 +208,7 @@ def DetermineBranchForMerge(options, rev):
   except:
     return None
 
-def InitializeState(options, args, config):
+def InitializeState(options, args, deps):
   state = {}
 
   if options.resume:
@@ -225,10 +227,10 @@ def InitializeState(options, args, config):
     state["id"] = "".join(random.choice(string.ascii_uppercase + string.digits) for i in range(8))
     state["merged"] = False
     state["repos"] = {}
-    for path in config:
+    for path in deps:
       state["repos"][path] = {}
       state["repos"][path]["branch"] = None
-      state["repos"][path]["rev"] = config[path]["rev"]
+      state["repos"][path]["rev"] = deps[path]["rev"]
     state["rev"] = args[0]
 
   return state
@@ -320,7 +322,7 @@ def DoMerge(old_rev, rev, branch, path, id):
 
 def AttemptMerge(rev, path, state):
   old_rev = state["repos"][path]["rev"]
-  full_path = os.path.join(CHROMIUMDIR, path)
+  full_path = os.path.join(TOP_DIR, path)
 
   try:
     rv = DoMerge(old_rev, rev, state["branch"], full_path, state["id"])
@@ -344,19 +346,25 @@ def AttemptMerge(rev, path, state):
 def cmd_merge(options, args):
   SanitizeMergeArguments(options, args)
 
-  config = LoadJsonFromPath(CHECKOUT_CONFIG)
-  state = InitializeState(options, args, config)
+  if not IsGitRepo(os.path.join(TOP_DIR, TOPSRC_DIRNAME)):
+    print("This doesn't look like a complete checkout. This script only "
+          "works on a full checkout created with fetch_oxide.py",
+          file=sys.stderr)
+    sys.exit(1)
+
+  deps = LoadJsonFromPath(OXIDEDEPS_FILE)
+  state = InitializeState(options, args, deps)
 
   rev = state["rev"]
 
   if not options.resume:
-    CheckCall(["git", "fetch", "--all"], CHROMIUMSRCDIR)
+    CheckCall(["git", "fetch", "--all"], TOPSRC_DIR)
 
     try:
-      CheckOutput(["git", "rev-parse", rev], CHROMIUMSRCDIR).strip()
+      CheckOutput(["git", "rev-parse", rev], TOPSRC_DIR).strip()
     except:
       print("Revision %s does not exist in repository. Have you added the "
-            "upstream remotes? (init-checkout.py --add-upstream-remotes)" %
+            "upstream remotes? (tools/add-upstream-remotes.py)" %
             rev, file=sys.stderr)
       sys.exit(1)
 
@@ -366,24 +374,25 @@ def cmd_merge(options, args):
       # For merges from master, we wind back from the release tag until we
       # end up with a commit on the master branch
       while True:
-        if GitRevisionIsInBranch(rev, "upstream/master", CHROMIUMSRCDIR):
+        if GitRevisionIsInBranch(rev, "upstream/master", TOPSRC_DIR):
           break
-        rev = CheckOutput(["git", "rev-parse", "%s^" % rev], CHROMIUMSRCDIR).strip()
+        rev = CheckOutput(["git", "rev-parse", "%s^" % rev], TOPSRC_DIR).strip()
       state["rev"] = rev
 
-  AttemptMerge(rev, CHROMIUMSRCDIR_REL, state)
+  AttemptMerge(rev, TOPSRC_DIRNAME, state)
 
-  spec = GCLIENT_REVINFO_SPEC % config[CHROMIUMSRCDIR_REL]["custom_remote"]
+  spec = GCLIENT_REVINFO_SPEC % { "name": TOPSRC_DIRNAME,
+                                  "url": deps[TOPSRC_DIRNAME]["origin"] }
 
   revinfo = StringIO(
-      CheckOutput([sys.executable, os.path.join(DEPOTTOOLSDIR, "gclient.py"),
-                   "revinfo", "--spec", spec], CHROMIUMDIR))
+      CheckOutput(["gclient", "revinfo", "--spec", spec],
+                  TOP_DIR))
   for i in revinfo.readlines():
     i = i.strip()
     path = re.sub(r'([^:]*):', r'\1', i.split()[0].strip())
-    if path == CHROMIUMSRCDIR_REL:
+    if path == TOPSRC_DIRNAME:
       continue
-    if path not in config:
+    if path not in deps:
       continue
     rev = re.sub(r'[^@]*@(.*)', r'\1', i.split()[1].strip())
 
@@ -392,10 +401,10 @@ def cmd_merge(options, args):
   state["merged"] = True
 
   WriteStateFile(state)
-  WriteUpdatedCheckoutConfig(config, state)
+  WriteUpdatedDepsFile(deps, state)
 
   print("\n** Merge completed SUCCESSFULLY. Please update your repository "
-        "with init-checkout.py, review and test your changes and then "
+        "with tools/update-checkout.py, review and test your changes and then "
         "run '%s push' to push these changes to the remote repository **" %
         sys.argv[0])
 

@@ -29,10 +29,12 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
 from constants import (
   OXIDEDEPS_FILE,
-  TOPSRC_DIR
+  TOP_DIR,
+  TOPSRC_DIRNAME
 )
 from utils import (
   CheckCall,
+  IsGitRepo,
   LoadJsonFromPath
 )
 
@@ -50,13 +52,15 @@ upstream URL
 def main():
   (options, args) = Options().parse_args()
 
-  topsrc_dir_parent = os.path.dirname(TOPSRC_DIR)
-
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
   for dep in deps:
     if "upstream" not in deps[dep]:
       continue
-    path = os.path.join(topsrc_dir_parent, dep)
+    path = os.path.join(TOP_DIR, dep)
+    if not IsGitRepo(path):
+      print("Path '%s' is not a GIT repository. Is this a complete checkout?"
+            % path, file=sys.stderr)
+      sys.exit(1)
     try:
       CheckCall(["git", "remote", "show", "upstream"], path, True)
       print("Repository '%s' already has a remote called 'upstream'" % path)
@@ -65,7 +69,7 @@ def main():
       CheckCall(["git", "remote", "add", "upstream",
                  deps[dep]["upstream"]], path)
       extra_refs = [ "refs/branch-heads/*" ]
-      if dep == "src":
+      if dep == TOPSRC_DIRNAME:
         extra_refs.append("refs/tags/*")
       for r in extra_refs:
         CheckCall(["git", "config", "--add", "remote.upstream.fetch",
