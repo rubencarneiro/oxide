@@ -364,7 +364,8 @@ def cmd_merge(options, args):
       CheckOutput(["git", "rev-parse", rev], TOPSRC_DIR).strip()
     except:
       print("Revision %s does not exist in repository. Have you added the "
-            "upstream remotes? (tools/add-upstream-remotes.py)" %
+            "upstream remotes? "
+            "(tools/configure-checkout.py add-upstream-remotes)" %
             rev, file=sys.stderr)
       sys.exit(1)
 

@@ -32,11 +32,45 @@ from constants import (
   OXIDESRC_DIR,
   TOP_DIR
 )
+import subcommand
 from utils import (
   CheckCall,
   IsGitRepo,
   LoadJsonFromPath
 )
+
+@subcommand.Command("add-upstream-remotes")
+@subcommand.CommandOption("--no-fetch", action="store_true",
+                          help="Don't run 'git fetch upstream' after adding "
+                               "the upstream remotes")
+def cmd_add_upstream_remotes(options, args):
+  """Add upstream remotes to all repositories listed in DEPS.oxide with an upstream URL.
+  """
+
+  deps = LoadJsonFromPath(OXIDEDEPS_FILE)
+  for dep in deps:
+    if "upstream" not in deps[dep]:
+      continue
+    path = os.path.join(TOP_DIR, dep)
+    if not IsGitRepo(path):
+      print("Path '%s' is not a GIT repository. Is this a complete checkout?"
+            % path, file=sys.stderr)
+      sys.exit(1)
+    try:
+      CheckCall(["git", "remote", "show", "upstream"], path, True)
+      print("Repository '%s' already has a remote called 'upstream'" % path)
+    except:
+      print("Adding 'upstream' remote to repository '%s'" % path)
+      CheckCall(["git", "remote", "add", "upstream",
+                 deps[dep]["upstream"]], path)
+      extra_refs = [ "refs/branch-heads/*" ]
+      if dep == TOPSRC_DIRNAME:
+        extra_refs.append("refs/tags/*")
+      for r in extra_refs:
+        CheckCall(["git", "config", "--add", "remote.upstream.fetch",
+                   "+%s:%s" % (r, r)], path)
+      if not options.no_fetch:
+        CheckCall(["git", "fetch", "upstream"], path)
 
 def AddOriginPushUrl(path, origin, user_id):
   u = urlsplit(origin)
@@ -49,34 +83,26 @@ def AddOriginPushUrl(path, origin, user_id):
   print("Adding push URL '%s' to origin for '%s'" % (u.geturl(), path))
   CheckCall(["git", "remote", "set-url", "--push", "origin", u.geturl()], path)
 
-class Options(OptionParser):
-  def __init__(self):
-    OptionParser.__init__(self, description="""
-Configure repositories listed in DEPS.oxide to allow pushing directly to
-origin. In a normal checkout, origin is configured with a read-only URL
-by default.
+@subcommand.Command("add-origin-push-urls", usage_more=" [path1] [path2] .. [pathN]")
+@subcommand.CommandOption("-a", "--all", action="store_true",
+                          help="Configure all branches listed in DEPS.oxide to "
+                               "allow pushing directly to origin")
+@subcommand.CommandOption("-u", "--user-id", help="Your Launchpad user ID")
+def cmd_add_origin_push_urls(options, args):
+  """Configure repositories listed in DEPS.oxide to allow pushing directly to origin.
 
-Note that working branches should be pushed to your personal repository. Most
-workflows should not need to use this script.""")
+  In a normal checkout, origin is configured with a read-only URL
+  by default. Note that working branches should be pushed to your personal
+  repository. Most workflows should not need to use this command.
+  """
 
-    self.set_usage("%prog [options] [path1] [path2] [path..]")
-    self.add_option("-a", "--all", action="store_true",
-                    help="Configure all branches listed in DEPS.oxide to allow "
-                         "pushing directly to origin")
-    self.add_option("-u", "--user-id", help="Your Launchpad user ID")
-
-def main():
-  o = Options()
-  (options, args) = o.parse_args()
   if options.all and len(args) > 0:
     print("Mixing --all with specific paths does not make sense",
           file=sys.stderr)
-    o.print_usage(file=sys.stderr)
     sys.exit(1)
 
   if not options.user_id:
     print("Missing --user-id option", file=sys.stderr)
-    o.print_usage(file=sys.stderr)
     sys.exit(1)
 
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
@@ -87,7 +113,6 @@ def main():
   else:
     if len(args) == 0:
       print("Missing paths to git checkouts", file=sys.stderr)
-      o.print_usage(file=sys.stderr)
       sys.exit(1)
     paths = [ os.path.abspath(arg) for arg in args ]
 
@@ -103,5 +128,8 @@ def main():
 
     AddOriginPushUrl(path, deps[relpath]["origin"], options.user_id)
 
+def main(argv):
+  return subcommand.Dispatcher.execute(argv, OptionParser())
+
 if __name__ == "__main__":
-  main()
+  sys.exit(main(sys.argv[1:]))
