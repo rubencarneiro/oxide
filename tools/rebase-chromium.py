@@ -157,7 +157,7 @@ def cmd_push(options, args):
       continue
 
     try:
-      rev = DoPushAndDiscardWorkingBranch(os.path.join(TOP_DIR), path),
+      rev = DoPushAndDiscardWorkingBranch(os.path.join(TOP_DIR, path),
                                           branch, state["id"])
       if rev:
         state["repos"][path]["rev"] = rev
