@@ -57,9 +57,9 @@ endif()
 add_library(${OXIDE_QMLPLUGIN} MODULE ${OXIDE_QMLPLUGIN_SRCS})
 target_link_libraries(
     ${OXIDE_QMLPLUGIN}
-    Qt5::Core
-    Qt5::Qml
-    Qt5::Quick
+    ${Qt5Core_LIBRARIES}
+    ${Qt5Qml_LIBRARIES}
+    ${Qt5Quick_LIBRARIES}
     ${OXIDE_LIB}
     ${OXIDE_QUICKLIB})
 set_target_properties(

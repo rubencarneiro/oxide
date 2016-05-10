@@ -22,7 +22,11 @@ find_package(Qt5Test REQUIRED)
 
 add_executable(tst_oxideqcertificateerror tst_oxideqcertificateerror.cc)
 target_link_libraries(tst_oxideqcertificateerror
-                      PRIVATE ${OXIDE_LIB} Qt5::Core Qt5::Gui Qt5::Test)
+                      PRIVATE
+                      ${OXIDE_LIB}
+                      ${Qt5Core_LIBRARIES}
+                      ${Qt5Gui_LIBRARIES}
+                      ${Qt5Test_LIBRARIES})
 set_target_properties(tst_oxideqcertificateerror PROPERTIES
                       AUTOMOC TRUE)
 

@@ -64,10 +64,10 @@ set(QML_TEST_SHARED_SRCS
 add_library(${QML_TEST_SHARED} STATIC ${QML_TEST_SHARED_SRCS})
 target_link_libraries(
     ${QML_TEST_SHARED}
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Test
+    ${Qt5Core_LIBRARIES}
+    ${Qt5Gui_LIBRARIES}
+    ${Qt5Qml_LIBRARIES}
+    ${Qt5Test_LIBRARIES}
     ${OXIDE_LIB}
     ${OXIDE_QUICKLIB})
 set_target_properties(${QML_TEST_SHARED} PROPERTIES AUTOMOC TRUE)
@@ -96,12 +96,12 @@ function(add_qml_test)
     target_link_libraries(
         ${_ARGS_EXEC}
         ${QML_TEST_SHARED}
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Qml
-        Qt5::Quick
-        Qt5::QuickTest
-        Qt5::Test
+        ${Qt5Core_LIBRARIES}
+        ${Qt5Gui_LIBRARIES}
+        ${Qt5Qml_LIBRARIES}
+        ${Qt5Quick_LIBRARIES}
+        ${Qt5QuickTest_LIBRARIES}
+        ${Qt5Test_LIBRARIES}
         ${OXIDE_LIB})
     target_include_directories(
         ${_ARGS_EXEC} PRIVATE
