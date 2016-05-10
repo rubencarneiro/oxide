@@ -20,6 +20,8 @@
 from __future__ import print_function
 from optparse import OptionParser
 import os
+import re
+from StringIO import StringIO
 import sys
 from urlparse import urlsplit
 
@@ -27,6 +29,7 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
+from checkout_config import Config, ConfigExists
 from constants import (
   OXIDEDEPS_FILE,
   OXIDESRC_DIR,
@@ -36,6 +39,7 @@ from constants import (
 import subcommand
 from utils import (
   CheckCall,
+  CheckOutput,
   IsGitRepo,
   LoadJsonFromPath
 )
@@ -129,6 +133,47 @@ def cmd_add_origin_push_urls(options, args):
       sys.exit(1)
 
     AddOriginPushUrl(path, deps[relpath]["origin"], options.user_id)
+
+def UnshareRepo(path, url):
+  print("Unsharing repo at path '%s' with origin '%s'" % (path, url))
+  CheckCall(["git", "remote", "set-url", "origin", url], path)
+  CheckCall(["git", "repack", "-a"], path)
+
+@subcommand.Command("unshare")
+def cmd_unshare(options, args):
+  """Detach a checkout from its local cache.
+
+  For checkouts created from a local cache, this command points all repositories
+  back to their remote origin, and then does a git repack to drop all
+  dependencies on objects from the source.
+  """
+
+  if not ConfigExists():
+    print("Cannot find .checkout.cfg - is this a full checkout?", file=sys.stderr)
+    sys.exit(1)
+
+  c = Config()
+  if not c.cachedir:
+    print("Checkout is not from a local cache - nothing to do")
+    sys.exit(0)
+
+  if not c.url:
+    print("No url recorded in .checkout.cfg", file=sys.stderr)
+    sys.exit(1)
+
+  UnshareRepo(OXIDESRC_DIR, c.url)
+
+  revinfo = StringIO(CheckOutput(["gclient", "revinfo"], TOP_DIR))
+  for i in revinfo.readlines():
+    i = i.strip().split()
+    if i[1].strip() == "None":
+      continue
+    path = re.sub(r'([^:]*):', r'\1', i[0].strip())
+    url = re.sub(r'([^@]*)@.*', r'\1', i[1].strip())
+    UnshareRepo(os.path.join(TOP_DIR, path), url)
+
+  c.cachedir = None
+  c.save()
 
 def main(argv):
   return subcommand.Dispatcher.execute(argv, OptionParser())

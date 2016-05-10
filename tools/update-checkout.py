@@ -18,7 +18,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from __future__ import print_function
-from ConfigParser import ConfigParser, NoOptionError
 from optparse import OptionParser
 import os
 import os.path
@@ -28,6 +27,7 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
+from checkout_config import Config, ConfigExists
 from constants import (
   OXIDEDEPS_FILE,
   TOP_DIR,
@@ -79,20 +79,6 @@ class Options(OptionParser):
     self.add_option("-f", "--force", dest="force", action="store_true",
                     help="Force an update")
 
-class Config(ConfigParser):
-  def __init__(self, filename):
-    ConfigParser.__init__(self, allow_no_value=True)
-
-    with open(filename, "r") as f:
-      self.readfp(f)
-
-  @property
-  def cachedir(self):
-    try:
-      return self.get("DEFAULT", "cachedir")
-    except NoOptionError:
-      return None
-
 def GetGclientSpec(cachedir):
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
   custom_deps = ""
@@ -131,13 +117,12 @@ def main():
   o = Options()
   (options, args) = o.parse_args()
 
-  filename = os.path.join(TOP_DIR, ".checkout.cfg")
-  if not os.path.isfile(filename):
+  if not ConfigExists():
     print("Cannot find .checkout.cfg. Is this a full checkout created with "
           "fetch_oxide?", file=sys.stderr)
     sys.exit(1)
 
-  c = Config(filename)
+  c = Config()
   UpdateGclientConfig(c)
   SyncCheckout(options.force)
 
