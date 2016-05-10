@@ -62,8 +62,8 @@ class ScopedPersistent {
 
   template <typename P>
   void SetWeak(P* parameters,
-               typename v8::WeakCallbackData<T, P>::Callback callback) {
-    handle_.SetWeak(parameters, callback);
+               typename v8::WeakCallbackInfo<P>::Callback callback) {
+    handle_.SetWeak(parameters, callback, v8::WeakCallbackType::kParameter);
   }
 
  private:

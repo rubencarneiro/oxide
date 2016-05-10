@@ -141,7 +141,7 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
 
   v8::Local<v8::Script> script(v8::Script::Compile(wrapped_src));
 
-  v8::TryCatch try_catch;
+  v8::TryCatch try_catch(isolate);
   {
     v8::MicrotasksScope microtasks(isolate,
                                    v8::MicrotasksScope::kDoNotRunMicrotasks);

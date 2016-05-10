@@ -53,7 +53,7 @@ class ScriptReferencedObjectBase {
  private:
   template <class U>
   static void NearDeathCallback(
-      const v8::WeakCallbackData<v8::Object, scoped_refptr<U> >& data) {
+      const v8::WeakCallbackInfo<scoped_refptr<U> >& data) {
     scoped_refptr<U>* refptr = data.GetParameter();
     (*refptr)->handle_.reset();
     delete refptr;
