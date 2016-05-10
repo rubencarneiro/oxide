@@ -40,7 +40,7 @@ void ScriptMessageRequestImplRenderer::DispatchResponse(
     v8::Handle<v8::Function> function,
     int argc,
     v8::Local<v8::Value> argv[]) {
-  v8::TryCatch try_catch;
+  v8::TryCatch try_catch(manager()->isolate());
   {
     v8::MicrotasksScope microtasks(manager()->isolate(),
                                    v8::MicrotasksScope::kDoNotRunMicrotasks);

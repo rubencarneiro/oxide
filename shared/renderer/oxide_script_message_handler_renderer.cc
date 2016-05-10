@@ -46,10 +46,11 @@ std::unique_ptr<base::StringValue> V8StringToValue(
 bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
     ScriptMessage* message,
     std::unique_ptr<base::Value>* error_payload) {
-  v8::HandleScope handle_scope(manager_->isolate());
+  v8::Isolate* isolate = manager_->isolate();
+  v8::HandleScope handle_scope(isolate);
   v8::Context::Scope context_scope(manager_->GetV8Context());
 
-  v8::Handle<v8::Function> function(callback_.NewHandle(manager_->isolate()));
+  v8::Handle<v8::Function> function(callback_.NewHandle(isolate));
 
   ScriptMessageImplRenderer* m =
       static_cast<ScriptMessageImplRenderer *>(message);
@@ -58,9 +59,9 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
     m->GetHandle()
   };
 
-  v8::TryCatch try_catch;
+  v8::TryCatch try_catch(isolate);
   {
-    v8::MicrotasksScope microtasks(manager_->isolate(),
+    v8::MicrotasksScope microtasks(isolate,
                                    v8::MicrotasksScope::kDoNotRunMicrotasks);
     manager_->frame()->GetWebFrame()->callFunctionEvenIfScriptDisabled(
         function, manager_->GetV8Context()->Global(), arraysize(argv), argv);

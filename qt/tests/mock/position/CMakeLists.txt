@@ -28,8 +28,8 @@ set(PLUGIN_SRCS
 
 add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
 target_link_libraries(${PLUGIN}
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Positioning)
+    ${Qt5Core_LIBRARIES}
+    ${Qt5Gui_LIBRARIES}
+    ${Qt5Positioning_LIBRARIES})
 target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
 set_target_properties(${PLUGIN} PROPERTIES AUTOMOC TRUE)

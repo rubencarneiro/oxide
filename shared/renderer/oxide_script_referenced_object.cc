@@ -44,7 +44,7 @@ ScriptReferencedObjectBase::ScriptReferencedObjectBase(
         v8::Private::ForApi(
             isolate,
             v8::String::NewFromUtf8(isolate, kWrappedNativeObject)),
-        data_.NewHandle(isolate));
+        data_.NewHandle(isolate)).FromJust();
   }
 }
 
@@ -63,18 +63,20 @@ ScriptReferencedObjectBase* ScriptReferencedObjectBase::FromScriptHandle(
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
   v8::HandleScope handle_scope(isolate);
 
-  v8::MaybeLocal<v8::Value> val =
-      handle->GetPrivate(
-          isolate->GetCurrentContext(),
-          v8::Private::ForApi(
-              isolate,
-              v8::String::NewFromUtf8(isolate, kWrappedNativeObject)));
-  if (val.IsEmpty() || !val.ToLocalChecked()->IsExternal()) {
+  v8::Local<v8::Value> value;
+  handle->GetPrivate(
+      isolate->GetCallingContext(),
+      v8::Private::ForApi(
+          isolate,
+          v8::String::NewFromUtf8(isolate, kWrappedNativeObject)))
+     .ToLocal(&value);
+
+  if (value.IsEmpty() || !value->IsExternal()) {
     return nullptr;
   }
 
   return reinterpret_cast<ScriptReferencedObjectBase *>(
-      val.ToLocalChecked().As<v8::External>()->Value());
+      value.As<v8::External>()->Value());
 }
 
 } // namespace oxide

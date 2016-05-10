@@ -43,6 +43,7 @@ if(CMAKE_CROSSCOMPILING)
 endif()
 
 find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
 # 5.2.0 is required for us to be able to set a share context
 find_package(Qt5Quick 5.2.0 REQUIRED)
 
@@ -64,6 +65,18 @@ file(INSTALL ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
 
 configure_and_install_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/core/api/OxideQtCoreConfig.cmake.in)
+
+# See https://launchpad.net/1578808 - QOpenGLFunctions methods in builds
+#  that define QT_OPENGL_ES_2 use GLESv2 symbols inline
+set(CMAKE_REQUIRED_INCLUDES ${Qt5Gui_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES ${Qt5Gui_LIBRARIES})
+check_cxx_source_compiles(
+    "#include <QOpenGLFunctions>
+    #ifndef QT_OPENGL_ES_2
+    # error
+    #endif
+    int main(int argc, char** argv) { return 0; }
+    " QTGUI_OPENGL_REQUIRES_GL_LINKING)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/core/api/
         DESTINATION ${OXIDE_INSTALL_INCLUDEDIR}/OxideQtCore

@@ -73,8 +73,11 @@ target_include_directories(
     ${Qt5Quick_PRIVATE_INCLUDE_DIRS})
 target_link_libraries(
     ${OXIDE_QUICKLIB}
-    PUBLIC Qt5::Core Qt5::Qml Qt5::Quick
-    PRIVATE Qt5::Gui ${OXIDE_LIB})
+    PUBLIC ${Qt5Core_LIBRARIES} ${Qt5Qml_LIBRARIES} ${Qt5Quick_LIBRARIES}
+    PRIVATE ${Qt5Gui_LIBRARIES} ${OXIDE_LIB})
+if(QTGUI_OPENGL_REQUIRES_GL_LINKING)
+  target_link_libraries(${OXIDE_QUICKLIB} PRIVATE ${Qt5Gui_OPENGL_LIBRARIES})
+endif()
 set_target_properties(
     ${OXIDE_QUICKLIB} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_LIB_OUTPUT_DIR}

@@ -28,10 +28,10 @@ set(OXIDE_QMLRUNNER_SRCS main.cc)
 add_executable(${OXIDE_QMLRUNNER} ${OXIDE_QMLRUNNER_SRCS})
 target_link_libraries(
     ${OXIDE_QMLRUNNER} 
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Quick)
+    ${Qt5Core_LIBRARIES}
+    ${Qt5Gui_LIBRARIES}
+    ${Qt5Qml_LIBRARIES}
+    ${Qt5Quick_LIBRARIES}
 target_include_directories(
     ${OXIDE_QMLRUNNER} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}

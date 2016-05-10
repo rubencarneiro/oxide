@@ -124,7 +124,7 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
   v8::MicrotasksScope microstasks(isolate,
                                   v8::MicrotasksScope::kDoNotRunMicrotasks);
 
-  v8::TryCatch try_catch;
+  v8::TryCatch try_catch(isolate);
   v8::Local<v8::Function> function(script->Run().As<v8::Function>());
   if (try_catch.HasCaught()) {
     LOG(ERROR) << "Caught exception when running script";

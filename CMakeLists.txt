@@ -207,7 +207,7 @@ endif()
 add_custom_target(
     test-package
     COMMAND ${CMAKE_COMMAND} -E
-    tar czvf ${OXIDE_OUTPUT_DIR}/${OXIDE_PLATFORM_FULLNAME}.tar.bz2 *
+    tar czvf ${OXIDE_OUTPUT_DIR}/${OXIDE_PLATFORM_FULLNAME}.tar.gz *
     WORKING_DIRECTORY ${OXIDE_PACKAGE_STAGE_DIR}
     DEPENDS test-package-common test-package-${OXIDE_PLATFORM})
 
