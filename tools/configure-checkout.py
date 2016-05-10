@@ -91,9 +91,10 @@ def AddOriginPushUrl(path, origin, user_id):
 def cmd_add_origin_push_urls(options, args):
   """Configure repositories listed in DEPS.oxide to allow pushing directly to origin.
 
-  In a normal checkout, origin is configured with a read-only URL
-  by default. Note that working branches should be pushed to your personal
-  repository. Most workflows should not need to use this command.
+  In a normal checkout, origin for repositories listed in DEPS.oxide is configured
+  with a read-only URL by default. This command adds a read/write push URL for
+  origin. Note that working branches should be pushed to a personal repository -
+  most workflows should not need to use this command.
   """
 
   if options.all and len(args) > 0:
