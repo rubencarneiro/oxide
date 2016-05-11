@@ -98,7 +98,7 @@ def GetGclientSpec(cachedir):
                                    "name": TOPSRC_DIRNAME,
                                    "custom_deps": custom_deps }
   if cachedir:
-    spec = "%s\ncache_dir = \"%s\"" % (spec, cachedir)
+    spec = "%s\ncache_dir = \"%s\"\ncache_mode = \"detached\"" % (spec, cachedir)
   return spec
 
 def UpdateGclientConfig(config):
