@@ -29,11 +29,13 @@ os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
 from constants import (
   OXIDEDEPS_FILE,
+  OXIDESRC_DIR,
   TOP_DIR,
   TOPSRC_DIRNAME
 )
 from utils import (
   CheckCall,
+  CheckOutput,
   LoadJsonFromPath
 )
 
