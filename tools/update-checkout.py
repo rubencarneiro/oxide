@@ -27,7 +27,6 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "build", "python"))
-from checkout_config import Config, ConfigExists
 from constants import (
   OXIDEDEPS_FILE,
   TOP_DIR,
@@ -79,7 +78,7 @@ class Options(OptionParser):
     self.add_option("-f", "--force", dest="force", action="store_true",
                     help="Force an update")
 
-def GetGclientSpec(cachedir):
+def GetGclientSpec(cache_dir, cache_mode):
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
   custom_deps = ""
   chromium_url = None
@@ -97,15 +96,15 @@ def GetGclientSpec(cachedir):
   spec = GCLIENT_SPEC_TEMPLATE % { "url": chromium_url,
                                    "name": TOPSRC_DIRNAME,
                                    "custom_deps": custom_deps }
-  if cachedir:
-    spec = "%s\ncache_dir = \"%s\"\ncache_mode = \"reference\"" % (spec, cachedir)
+  if cache_dir:
+    spec = "%s\ncache_dir = \"%s\"\ncache_mode = \"%s\"" % (spec, cache_dir, cache_mode)
   return spec
 
-def UpdateGclientConfig(config):
+def UpdateGclientConfig(cache_dir, cache_mode):
   # We don't use gclient config here, because it doesn't support both
   # --spec and --cache-dir, and --spec doesn't support newlines
   with open(os.path.join(TOP_DIR, ".gclient"), "w") as fd:
-    fd.write(GetGclientSpec(config.cachedir))
+    fd.write(GetGclientSpec(cache_dir, cache_mode))
 
 def SyncCheckout(force):
   args = ["gclient", "sync", "-D", "--with_branch_heads"]
@@ -113,17 +112,20 @@ def SyncCheckout(force):
     args.append("--force")
   CheckCall(args, TOP_DIR)
 
+def GetConfig(name, default=None):
+  try:
+    return CheckOutput(["git", "config", "--get", "--local", name],
+                       OXIDESRC_DIR).strip()
+  except:
+    return default
+
 def main():
   o = Options()
   (options, args) = o.parse_args()
 
-  if not ConfigExists():
-    print("Cannot find .checkout.cfg. Is this a full checkout created with "
-          "fetch_oxide?", file=sys.stderr)
-    sys.exit(1)
-
-  c = Config()
-  UpdateGclientConfig(c)
+  cache_dir = GetConfig("oxide.cache_dir")
+  cache_mode = GetConfig("oxide.cache_mode", "reference")
+  UpdateGclientConfig(cache_dir, cache_mode)
   SyncCheckout(options.force)
 
 if __name__ == "__main__":
