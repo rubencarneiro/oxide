@@ -123,8 +123,8 @@ def main():
   o = Options()
   (options, args) = o.parse_args()
 
-  cache_dir = GetConfig("oxide.cache_dir")
-  cache_mode = GetConfig("oxide.cache_mode", "reference")
+  cache_dir = GetConfig("oxide.cacheDir")
+  cache_mode = GetConfig("oxide.cacheMode", "reference")
   UpdateGclientConfig(cache_dir, cache_mode)
   SyncCheckout(options.force)
 
