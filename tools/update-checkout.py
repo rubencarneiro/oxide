@@ -36,6 +36,7 @@ from constants import (
 from utils import (
   CheckCall,
   CheckOutput,
+  GetGitConfig,
   LoadJsonFromPath
 )
 
@@ -99,7 +100,9 @@ def GetGclientSpec(cache_dir, cache_mode):
                                    "name": TOPSRC_DIRNAME,
                                    "custom_deps": custom_deps }
   if cache_dir:
-    spec = "%s\ncache_dir = \"%s\"\ncache_mode = \"%s\"" % (spec, cache_dir, cache_mode)
+    spec = "%s\ncache_dir = \"%s\"" % (spec, cache_dir)
+    if cache_mode:
+      spec = "%s\ncache_mode = \"%s\"" % (spec, cache_mode)
   return spec
 
 def UpdateGclientConfig(cache_dir, cache_mode):
@@ -114,19 +117,12 @@ def SyncCheckout(force):
     args.append("--force")
   CheckCall(args, TOP_DIR)
 
-def GetConfig(name, default=None):
-  try:
-    return CheckOutput(["git", "config", "--get", "--local", name],
-                       OXIDESRC_DIR).strip()
-  except:
-    return default
-
 def main():
   o = Options()
   (options, args) = o.parse_args()
 
-  cache_dir = GetConfig("oxide.cacheDir")
-  cache_mode = GetConfig("oxide.cacheMode", "reference")
+  cache_dir = GetGitConfig("oxide.cacheDir", OXIDESRC_DIR)
+  cache_mode = GetGitConfig("oxide.cacheMode", OXIDESRC_DIR)
   UpdateGclientConfig(cache_dir, cache_mode)
   SyncCheckout(options.force)
 

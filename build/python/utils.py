@@ -151,3 +151,10 @@ def IsGitRepo(path):
   except:
     return False
   return True
+
+def GetGitConfig(name, path, default=None):
+  try:
+    return CheckOutput(["git", "config", "--get", "--local", name],
+                       path).strip()
+  except:
+    return default
