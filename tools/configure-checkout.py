@@ -77,12 +77,17 @@ def cmd_add_upstream_remotes(options, args):
       if not options.no_fetch:
         CheckCall(["git", "fetch", "upstream"], path)
 
-def AddOriginPushUrl(path, origin, user_id):
+def AddOriginPushUrl(path, user_id):
+  origin = CheckOutput(["git", "config", "remote.origin.url"], path).strip()
   u = urlsplit(origin)
+  if u.scheme != "git":
+    print("Skipping checkout '%s' with url '%s', which doesn't have a git "
+          "scheme" % (path, origin))
+    return
   if u.netloc != "git.launchpad.net":
-    print("Unexpected origin '%s' found for git checkout '%s'" %
-          (u.netloc, path), file=sys.stderr)
-    sys.exit(1)
+    print("Skipping checkout '%s' with unexpected host '%s'" %
+          (path, u.netloc))
+    return
   u = u._replace(scheme="git+ssh")
   u = u._replace(netloc="%s@%s" % (user_id, u.netloc))
   print("Adding push URL '%s' to origin for '%s'" % (u.geturl(), path))
@@ -94,12 +99,13 @@ def AddOriginPushUrl(path, origin, user_id):
                                "allow pushing directly to origin")
 @subcommand.CommandOption("-u", "--user-id", help="Your Launchpad user ID")
 def cmd_add_origin_push_urls(options, args):
-  """Configure repositories listed in DEPS.oxide to allow pushing directly to origin.
+  """Configure repositories listed in DEPS.oxide with git+ssh push URLs.
 
-  In a normal checkout, origin for repositories listed in DEPS.oxide is configured
-  with a read-only URL by default. This command adds a read/write push URL for
-  origin. Note that working branches should be pushed to a personal repository -
-  most workflows should not need to use this command.
+  In a normal checkout, the origin for repositories listed in DEPS.oxide is
+  configured with a read-only git:// URL by default, as Launchpad only supports
+  pushing via SSH. This command adds a git+ssh:// push URL for these
+  repositories. Note that working branches should be pushed to a personal
+  repository - most workflows should not need to use this command.
   """
 
   if options.all and len(args) > 0:
@@ -116,6 +122,7 @@ def cmd_add_origin_push_urls(options, args):
   paths = []
   if options.all:
     paths = [ os.path.join(TOP_DIR, path) for path in deps ]
+    paths.append(OXIDESRC_DIR)
   else:
     if len(args) == 0:
       print("Missing paths to git checkouts", file=sys.stderr)
@@ -128,11 +135,11 @@ def cmd_add_origin_push_urls(options, args):
       sys.exit(1)
 
     relpath = os.path.relpath(path, TOP_DIR)
-    if relpath not in deps:
+    if relpath not in deps and path != OXIDESRC_DIR:
       print("Path '%s' does not appear in DEPS.oxide" % path, file=sys.stderr)
       sys.exit(1)
 
-    AddOriginPushUrl(path, deps[relpath]["origin"], options.user_id)
+    AddOriginPushUrl(path, options.user_id)
 
 def DissociateRepo(path):
   print("Dissociating repo at %s" % path)
