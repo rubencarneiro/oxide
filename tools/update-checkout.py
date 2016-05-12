@@ -22,6 +22,7 @@ from optparse import OptionParser
 import os
 import os.path
 import sys
+from urlparse import urlsplit
 
 sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -81,16 +82,29 @@ class Options(OptionParser):
     self.add_option("-f", "--force", dest="force", action="store_true",
                     help="Force an update")
 
-def GetGclientSpec(cache_dir, cache_mode):
+def RewriteOrigin(origin, user_id):
+  if not user_id:
+    return origin
+  u = urlsplit(origin)
+  if u.scheme != "git":
+    return origin
+  if u.netloc != "git.launchpad.net":
+    return origin
+  u = u._replace(scheme="git+ssh")
+  u = u._replace(netloc="%s@%s" % (user_id, u.netloc))
+  return u.geturl()
+
+def GetGclientSpec(cache_dir, cache_mode, user_id):
   deps = LoadJsonFromPath(OXIDEDEPS_FILE)
   custom_deps = ""
   chromium_url = None
   for dep in deps:
     if dep == TOPSRC_DIRNAME:
-      chromium_url = "%s@%s" % (deps[dep]["origin"], deps[dep]["rev"])
+      chromium_url = "%s@%s" % (RewriteOrigin(deps[dep]["origin"], user_id),
+                                deps[dep]["rev"])
       continue
     custom_deps += "\"%s\": \"%s@%s\", " % (dep,
-                                            deps[dep]["origin"],
+                                            RewriteOrigin(deps[dep]["origin"], user_id),
                                             deps[dep]["rev"])
   if not chromium_url:
     print("DEPS.oxide must have a src entry pointing to the Chromium GIT "
@@ -105,11 +119,11 @@ def GetGclientSpec(cache_dir, cache_mode):
       spec = "%s\ncache_mode = \"%s\"" % (spec, cache_mode)
   return spec
 
-def UpdateGclientConfig(cache_dir, cache_mode):
+def UpdateGclientConfig(cache_dir, cache_mode, user_id):
   # We don't use gclient config here, because it doesn't support both
   # --spec and --cache-dir, and --spec doesn't support newlines
   with open(os.path.join(TOP_DIR, ".gclient"), "w") as fd:
-    fd.write(GetGclientSpec(cache_dir, cache_mode))
+    fd.write(GetGclientSpec(cache_dir, cache_mode, user_id))
 
 def SyncCheckout(force):
   args = ["gclient", "sync", "-D", "--with_branch_heads"]
@@ -123,8 +137,22 @@ def main():
 
   cache_dir = GetGitConfig("oxide.cacheDir", OXIDESRC_DIR)
   cache_mode = GetGitConfig("oxide.cacheMode", OXIDESRC_DIR)
-  UpdateGclientConfig(cache_dir, cache_mode)
-  SyncCheckout(options.force)
+  user_id = GetGitConfig("oxide.launchpadUserId", OXIDESRC_DIR)
+  UpdateGclientConfig(cache_dir, cache_mode, user_id)
+
+  try:
+    SyncCheckout(options.force)
+  except:
+    if not user_id:
+      raise
+    print("gclient sync failed! Trying again but without git+ssh:// URLs",
+          file=sys.stderr)
+    UpdateGclientConfig(cache_dir, cache_mode, None)
+    SyncCheckout(options.force)
+    print("WARNING: You are using a version of depot_tools that doesn't "
+          "recognize git+ssh:// URLs as Git repositories. Please install "
+          "depot_tools using the instructions at "
+          "https://wiki.ubuntu.com/Oxide/GetTheCode", file=sys.stderr)
 
 if __name__ == "__main__":
   main()
