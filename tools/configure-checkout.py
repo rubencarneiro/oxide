@@ -77,12 +77,12 @@ def cmd_add_upstream_remotes(options, args):
       if not options.no_fetch:
         CheckCall(["git", "fetch", "upstream"], path)
 
-def AddOriginPushUrl(path, user_id):
+def AddSshPushUrl(path, user_id):
   origin = CheckOutput(["git", "config", "remote.origin.url"], path).strip()
   u = urlsplit(origin)
-  if u.scheme != "git":
-    print("Skipping checkout '%s' with url '%s', which doesn't have a git "
-          "scheme" % (path, origin))
+  if u.scheme not in ("git", "https"):
+    print("Skipping checkout '%s' with url '%s', which doesn't have an "
+          "expected scheme" % (path, origin))
     return
   if u.netloc != "git.launchpad.net":
     print("Skipping checkout '%s' with unexpected host '%s'" %
@@ -93,19 +93,18 @@ def AddOriginPushUrl(path, user_id):
   print("Adding push URL '%s' to origin for '%s'" % (u.geturl(), path))
   CheckCall(["git", "remote", "set-url", "--push", "origin", u.geturl()], path)
 
-@subcommand.Command("add-origin-push-urls", usage_more=" [path1] [path2] .. [pathN]")
+@subcommand.Command("add-ssh-push-urls", usage_more=" [path1] [path2] .. [pathN]")
 @subcommand.CommandOption("-a", "--all", action="store_true",
-                          help="Configure all branches listed in DEPS.oxide to "
-                               "allow pushing directly to origin")
+                          help="Add SSH push URLs to all branches listed in "
+                               "DEPS.oxide")
 @subcommand.CommandOption("-u", "--user-id", help="Your Launchpad user ID")
-def cmd_add_origin_push_urls(options, args):
-  """Configure repositories listed in DEPS.oxide with git+ssh push URLs.
+def cmd_add_ssh_push_urls(options, args):
+  """Configure repositories listed in DEPS.oxide with git+ssh:// push URLs.
 
-  In a normal checkout, the origin for repositories listed in DEPS.oxide is
-  configured with a read-only git:// URL by default, as Launchpad only supports
-  pushing via SSH. This command adds a git+ssh:// push URL for these
-  repositories. Note that working branches should be pushed to a personal
-  repository - most workflows should not need to use this command.
+  In a normal checkout, the origin for repositories listed in DEPS.oxide is a
+  https:// URL. As Launchpad only supports pushing via SSH, this command adds
+  a git+ssh:// push URL to these repositories. You can do this when creating
+  a checkout by passing --user-id to fetch_oxide
   """
 
   if options.all and len(args) > 0:
@@ -139,7 +138,7 @@ def cmd_add_origin_push_urls(options, args):
       print("Path '%s' does not appear in DEPS.oxide" % path, file=sys.stderr)
       sys.exit(1)
 
-    AddOriginPushUrl(path, options.user_id)
+    AddSshPushUrl(path, options.user_id)
 
 def DissociateRepo(path):
   print("Dissociating repo at %s" % path)

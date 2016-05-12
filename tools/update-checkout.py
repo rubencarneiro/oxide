@@ -86,7 +86,7 @@ def RewriteOrigin(origin, user_id):
   if not user_id:
     return origin
   u = urlsplit(origin)
-  if u.scheme != "git":
+  if u.scheme not in ("git", "https"):
     return origin
   if u.netloc != "git.launchpad.net":
     return origin
