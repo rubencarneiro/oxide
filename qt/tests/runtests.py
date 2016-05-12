@@ -31,9 +31,10 @@ sys.dont_write_bytecode = True
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "build", "python"))
+from constants import OXIDESRC_DIR
 from eventloop import EventLoop
 from httpserver import TestHTTPServer, TestHTTPRequestHandler
-from utils import ScopedTmpdir, TOPSRCDIR
+from utils import ScopedTmpdir
 
 SERVER_CONFIGS = [
   { "port": 8080 },
@@ -112,7 +113,7 @@ class Runner(object):
     for server in SERVER_CONFIGS:
       server = TestHTTPServer(server["port"],
                               config["http_server_dir"],
-                              os.path.join(TOPSRCDIR, server["sslcert"]) if "sslcert" in server else None)
+                              os.path.join(OXIDESRC_DIR, server["sslcert"]) if "sslcert" in server else None)
       self._event_loop.add_reader(server, server.handle_event)
 
     test_args = []
@@ -124,7 +125,7 @@ class Runner(object):
           "--name", test_name,
           "--qml-import-path", config["qml_import_path"],
           "--qt-plugin-path", config["qt_plugin_path"],
-          "--nss-db-path", os.path.join(TOPSRCDIR, "qt/tests/ssldata/nss"),
+          "--nss-db-path", os.path.join(OXIDESRC_DIR, "qt/tests/ssldata/nss"),
           "--tmpdir", tmpdir ])
     if "single_process" in config and config["single_process"]:
       test_args.append("--single-process")

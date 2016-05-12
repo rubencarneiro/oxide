@@ -134,7 +134,7 @@ function(add_qml_test)
 
   set(_COMMAND
       ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
-      ${PYTHON} ${CMAKE_SOURCE_DIR}/qt/tests/runtests.py
+      ${PYTHON} ${OXIDE_SOURCE_DIR}/qt/tests/runtests.py
       --config ${_CONFIG})
   add_test(NAME ${_ARGS_NAME} COMMAND ${_COMMAND})
 endfunction()
