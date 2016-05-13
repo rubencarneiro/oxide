@@ -109,6 +109,11 @@ class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcher
       content::MediaRequestState state) override;
   void OnCreatingAudioStream(int render_process_id,
                              int render_frame_id) override;
+  void OnSetCapturingLinkSecured(int render_process_id,
+                                 int render_frame_id,
+                                 int page_request_id,
+                                 content::MediaStreamType stream_type,
+                                 bool is_secure) override;
 
   base::ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
 

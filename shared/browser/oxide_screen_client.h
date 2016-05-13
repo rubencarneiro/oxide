@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_SCREEN_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_SCREEN_CLIENT_H_
 
-#include "ui/gfx/display.h"
+#include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 
 namespace oxide {
@@ -27,7 +27,7 @@ class ScreenClient {
  public:
   virtual ~ScreenClient() {}
 
-  virtual gfx::Display GetPrimaryDisplay() = 0;
+  virtual display::Display GetPrimaryDisplay() = 0;
 
   virtual gfx::Point GetCursorScreenPoint() = 0;
 };

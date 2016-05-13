@@ -37,9 +37,9 @@
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/clipboard/clipboard_oxide.h"
-#include "ui/gfx/display.h"
+#include "ui/display/display.h"
+#include "ui/display/screen.h"
 #include "ui/gfx/gfx_utils_oxide.h"
-#include "ui/gfx/screen.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface.h"
 
@@ -153,7 +153,7 @@ ScopedBindGLESAPI::~ScopedBindGLESAPI() {
   eglBindAPI(orig_api_);
 }
 
-class Screen : public gfx::Screen {
+class Screen : public display::Screen {
  public:
   Screen() {}
 
@@ -177,39 +177,39 @@ class Screen : public gfx::Screen {
     return 1;
   }
 
-  std::vector<gfx::Display> GetAllDisplays() const override {
+  std::vector<display::Display> GetAllDisplays() const override {
     NOTREACHED();
-    return std::vector<gfx::Display>();
+    return std::vector<display::Display>();
   }
 
-  gfx::Display GetDisplayNearestWindow(gfx::NativeView view) const override {
+  display::Display GetDisplayNearestWindow(gfx::NativeView view) const override {
     // XXX(chrisccoulson): This gets called when a drag starts. |view|
     //  is the NativeView for the corresponding RenderWidgetHostView. It would
     //  be nice to find a way to cleverly map this to the associated RWHV and
     //  get the correct display
-    return gfx::Display();
+    return display::Display();
   }
 
-  gfx::Display GetDisplayNearestPoint(const gfx::Point& point) const override {
+  display::Display GetDisplayNearestPoint(const gfx::Point& point) const override {
     NOTREACHED();
-    return gfx::Display();
+    return display::Display();
   }
 
-  gfx::Display GetDisplayMatching(const gfx::Rect& match_rect) const override {
+  display::Display GetDisplayMatching(const gfx::Rect& match_rect) const override {
     NOTREACHED();
-    return gfx::Display();
+    return display::Display();
   }
 
-  gfx::Display GetPrimaryDisplay() const override {
+  display::Display GetPrimaryDisplay() const override {
     return BrowserPlatformIntegration::GetInstance()
         ->GetScreenClient()
         ->GetPrimaryDisplay();
   }
 
-  void AddObserver(gfx::DisplayObserver* observer) override {
+  void AddObserver(display::DisplayObserver* observer) override {
     NOTREACHED();
   }
-  void RemoveObserver(gfx::DisplayObserver* observer) override {
+  void RemoveObserver(display::DisplayObserver* observer) override {
     NOTREACHED();
   }
 };
@@ -249,7 +249,7 @@ int BrowserMainParts::PreCreateThreads() {
   }
 
   primary_screen_.reset(new Screen());
-  gfx::Screen::SetScreenInstance(primary_screen_.get());
+  display::Screen::SetScreenInstance(primary_screen_.get());
 
   io_thread_.reset(new IOThread());
 
@@ -317,7 +317,7 @@ void BrowserMainParts::PostDestroyThreads() {
     BrowserContext::AssertNoContextsExist();
   }
 
-  gfx::Screen::SetScreenInstance(nullptr);
+  display::Screen::SetScreenInstance(nullptr);
   io_thread_.reset();
 
   gpu::oxide_shim::SetGLShareGroup(nullptr);

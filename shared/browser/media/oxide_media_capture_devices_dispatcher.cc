@@ -257,6 +257,13 @@ void MediaCaptureDevicesDispatcher::OnCreatingAudioStream(
     int render_process_id,
     int render_frame_id) {}
 
+void MediaCaptureDevicesDispatcher::OnSetCapturingLinkSecured(
+    int render_process_id,
+    int render_frame_id,
+    int page_request_id,
+    content::MediaStreamType stream_type,
+    bool is_secure) {}
+
 // static
 MediaCaptureDevicesDispatcher* MediaCaptureDevicesDispatcher::GetInstance() {
   // We use LeakySingletonTraits here so that observers can be created

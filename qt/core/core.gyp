@@ -42,6 +42,7 @@
         '<(DEPTH)/skia/skia.gyp:skia',
         '<(DEPTH)/third_party/WebKit/public/blink.gyp:blink',
         '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
+        '<(DEPTH)/ui/display/display.gyp:display',
         '<(DEPTH)/ui/events/events.gyp:events',
         '<(DEPTH)/ui/events/events.gyp:gesture_detection',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',

@@ -28,7 +28,7 @@ namespace base {
 class MessageLoop;
 }
 
-namespace gfx {
+namespace display {
 class Screen;
 }
 
@@ -66,7 +66,7 @@ class BrowserMainParts : public content::BrowserMainParts {
   std::unique_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
   std::unique_ptr<base::MessageLoop> main_message_loop_;
   std::unique_ptr<IOThread> io_thread_;
-  std::unique_ptr<gfx::Screen> primary_screen_;
+  std::unique_ptr<display::Screen> primary_screen_;
 
   std::unique_ptr<LifecycleObserver> lifecycle_observer_;
 

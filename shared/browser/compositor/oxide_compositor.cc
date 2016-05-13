@@ -87,6 +87,8 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
   return make_scoped_refptr(
       new content::ContextProviderCommandBuffer(
           gpu_channel_host.get(),
+          gpu::GPU_STREAM_DEFAULT,
+          gpu::GpuStreamPriority::NORMAL,
           gpu::kNullSurfaceHandle,
           GURL(),
           gfx::PreferIntegratedGpu,
