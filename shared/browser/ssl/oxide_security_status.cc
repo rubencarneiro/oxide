@@ -158,6 +158,11 @@ content::CertStore* SecurityStatus::GetCertStore() const {
 SecurityStatus::~SecurityStatus() {}
 
 // static
+void SecurityStatus::CreateForWebContents(content::WebContents* contents) {
+  content::WebContentsUserData<SecurityStatus>::CreateForWebContents(contents);
+}
+
+// static
 SecurityStatus* SecurityStatus::FromWebContents(
     content::WebContents* contents) {
   return content::WebContentsUserData<SecurityStatus>::FromWebContents(contents);

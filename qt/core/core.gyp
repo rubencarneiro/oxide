@@ -17,8 +17,14 @@
 {
   'targets': [
     {
-      'target_name': 'oxide_qt',
-      'type': '<(component)',
+      # What we want is an oxide_qt component that can be consumed by
+      # both the core library and unit tests. However, that arrangement
+      # breaks component builds, because the public API gets exposed from
+      # a library other than the core library (which has no API). To work
+      # around this, we create a static library that can be consumed directly
+      # by the core library, and an oxide_qt component
+      'target_name': 'oxide_qt_static',
+      'type': 'static_library',
       'defines': [
         'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
@@ -364,10 +370,23 @@
       'type': 'shared_library',
       'product_extension': '<(oxide_lib_suffix)',
       'dependencies': [
-        'oxide_qt',
+        'oxide_qt_static',
       ],
       'sources': [
-        'hack.cc', # Required to get this target to link against the C++ stdlib
+        'dummy.cc',
+      ],
+    },
+    {
+      'target_name': 'oxide_qt',
+      'type': '<(component)',
+      'dependencies': [
+        'oxide_qt_static',
+      ],
+      'export_dependent_settings': [
+        'oxide_qt_static',
+      ],
+      'sources': [
+        'dummy.cc',
       ],
     },
     {
