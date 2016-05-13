@@ -46,6 +46,7 @@
         '<(DEPTH)/ui/events/events.gyp:gesture_detection',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_range',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/surface/surface.gyp:surface',
         '<(DEPTH)/url/url.gyp:url_lib'

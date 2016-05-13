@@ -264,6 +264,7 @@
         '<(DEPTH)/ui/events/events.gyp:gesture_detection',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_range',
         '<(DEPTH)/ui/gfx/x/gfx_x11.gyp:gfx_x11',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
