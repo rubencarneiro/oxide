@@ -90,7 +90,7 @@ def RewriteOrigin(origin, user_id):
     return origin
   if u.netloc != "git.launchpad.net":
     return origin
-  u = u._replace(scheme="git+ssh")
+  u = u._replace(scheme="ssh")
   u = u._replace(netloc="%s@%s" % (user_id, u.netloc))
   return u.geturl()
 
@@ -139,20 +139,7 @@ def main():
   cache_mode = GetGitConfig("oxide.cacheMode", OXIDESRC_DIR)
   user_id = GetGitConfig("oxide.launchpadUserId", OXIDESRC_DIR)
   UpdateGclientConfig(cache_dir, cache_mode, user_id)
-
-  try:
-    SyncCheckout(options.force)
-  except:
-    if not user_id:
-      raise
-    print("gclient sync failed! Trying again but without git+ssh:// URLs",
-          file=sys.stderr)
-    UpdateGclientConfig(cache_dir, cache_mode, None)
-    SyncCheckout(options.force)
-    print("WARNING: You are using a version of depot_tools that doesn't "
-          "recognize git+ssh:// URLs as Git repositories. Please install "
-          "depot_tools using the instructions at "
-          "https://wiki.ubuntu.com/Oxide/GetTheCode", file=sys.stderr)
+  SyncCheckout(options.force)
 
 if __name__ == "__main__":
   main()

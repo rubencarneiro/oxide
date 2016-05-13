@@ -88,7 +88,7 @@ def AddSshPushUrl(path, user_id):
     print("Skipping checkout '%s' with unexpected host '%s'" %
           (path, u.netloc))
     return
-  u = u._replace(scheme="git+ssh")
+  u = u._replace(scheme="ssh")
   u = u._replace(netloc="%s@%s" % (user_id, u.netloc))
   print("Adding push URL '%s' to origin for '%s'" % (u.geturl(), path))
   CheckCall(["git", "remote", "set-url", "--push", "origin", u.geturl()], path)
@@ -99,11 +99,11 @@ def AddSshPushUrl(path, user_id):
                                "DEPS.oxide")
 @subcommand.CommandOption("-u", "--user-id", help="Your Launchpad user ID")
 def cmd_add_ssh_push_urls(options, args):
-  """Configure repositories listed in DEPS.oxide with git+ssh:// push URLs.
+  """Configure repositories listed in DEPS.oxide with ssh:// push URLs.
 
   In a normal checkout, the origin for repositories listed in DEPS.oxide is a
   https:// URL. As Launchpad only supports pushing via SSH, this command adds
-  a git+ssh:// push URL to these repositories. You can do this when creating
+  a ssh:// push URL to these repositories. You can do this when creating
   a checkout by passing --user-id to fetch_oxide
   """
 
