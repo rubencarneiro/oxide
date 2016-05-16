@@ -945,7 +945,7 @@ void WebView::NavigationEntryCommitted(
   client_->NavigationEntryCommitted();
 }
 
-void WebView::DidShowFullscreenWidget(int routing_id) {
+void WebView::DidShowFullscreenWidget() {
   if (IsFullscreen()) {
     return;
   }

@@ -439,23 +439,19 @@ void WebContentsView::DidNavigateMainFrame(
   }
 }
 
-void WebContentsView::DidShowFullscreenWidget(int routing_id) {
-  content::RenderWidgetHost* rwh =
-      content::RenderWidgetHost::FromID(
-          web_contents()->GetRenderProcessHost()->GetID(),
-          routing_id);
-  DCHECK(rwh);
+void WebContentsView::DidShowFullscreenWidget() {
+  content::RenderWidgetHostView* rwhv =
+      web_contents()->GetFullscreenRenderWidgetHostView();
+  DCHECK(rwhv);
 
-  static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(this);
+  static_cast<RenderWidgetHostView*>(rwhv)->SetContainer(this);
 
   web_contents()->GetRenderWidgetHostView()->Hide();
 
   TouchSelectionChanged(false);
 }
 
-void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
-  DCHECK(!web_contents()->GetFullscreenRenderWidgetHostView());
-
+void WebContentsView::DidDestroyFullscreenWidget() {
   RenderWidgetHostView* orig_rwhv =
       static_cast<RenderWidgetHostView*>(
         web_contents()->GetRenderWidgetHostView());

@@ -409,7 +409,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) override;
   void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) override;
-  void DidShowFullscreenWidget(int routing_id) override;
+  void DidShowFullscreenWidget() override;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) override;
 
