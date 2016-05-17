@@ -43,6 +43,8 @@
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/common/oxide_shared_export.h"
 
+struct OxideHostMsg_ShowPopup_Params;
+
 namespace blink {
 class WebMouseEvent;
 class WebMouseWheelEvent;
@@ -54,6 +56,7 @@ class SolidColorLayer;
 
 namespace content {
 class NativeWebKeyboardEvent;
+class RenderFrameHost;
 class RenderWidgetHost;
 class WebContents;
 class WebContentsImpl;
@@ -167,6 +170,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void ResizeCompositorViewport();
   void UpdateContentsSize();
 
+  void OnShowPopup(const OxideHostMsg_ShowPopup_Params& params);
+  void OnHidePopup();
+
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
   gfx::NativeView GetContentNativeView() const override;
@@ -200,15 +206,6 @@ class OXIDE_SHARED_EXPORT WebContentsView
                      const gfx::Vector2d& image_offset,
                      const content::DragEventSourceInfo& event_info) override;
   void UpdateDragCursor(blink::WebDragOperation operation) override;
-  void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
-                     const gfx::Rect& bounds,
-                     int item_height,
-                     double item_font_size,
-                     int selected_item,
-                     const std::vector<content::MenuItem>& items,
-                     bool right_aligned,
-                     bool allow_multiple_selection) override;
-  void HidePopupMenu() override;
 
   // content::WebContentsObserver implementation
   void RenderViewHostChanged(content::RenderViewHost* old_host,
@@ -220,6 +217,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void DidDestroyFullscreenWidget() override;
   void DidAttachInterstitialPage() override;
   void DidDetachInterstitialPage() override;
+  bool OnMessageReceived(const IPC::Message& message,
+                         content::RenderFrameHost* render_frame_host) override;
 
   // CompositorClient implementation
   void CompositorSwapFrame(CompositorFrameHandle* handle,
@@ -271,6 +270,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   cc::CompositorFrameMetadata committed_frame_metadata_;
 
   RenderWidgetHostID interstitial_rwh_id_;
+
+  content::RenderFrameHost* render_frame_message_source_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

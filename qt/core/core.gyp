@@ -17,8 +17,14 @@
 {
   'targets': [
     {
-      'target_name': 'oxide_qt',
-      'type': '<(component)',
+      # What we want is an oxide_qt component that can be consumed by
+      # both the core library and unit tests. However, that arrangement
+      # breaks component builds, because the public API gets exposed from
+      # a library other than the core library (which has no API). To work
+      # around this, we create a static library that can be consumed directly
+      # by the core library, and an oxide_qt component
+      'target_name': 'oxide_qt_static',
+      'type': 'static_library',
       'defines': [
         'OXIDE_QTCORE_IMPLEMENTATION',
         'QT_NO_SIGNALS_SLOTS_KEYWORDS',
@@ -47,6 +53,7 @@
         '<(DEPTH)/ui/events/events.gyp:gesture_detection',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx',
         '<(DEPTH)/ui/gfx/gfx.gyp:gfx_geometry',
+        '<(DEPTH)/ui/gfx/gfx.gyp:gfx_range',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
         '<(DEPTH)/ui/surface/surface.gyp:surface',
         '<(DEPTH)/url/url.gyp:url_lib'
@@ -201,6 +208,7 @@
         'browser/ssl/oxide_qt_security_status.cc',
         'browser/ssl/oxide_qt_security_status.h',
         'common/oxide_qt_export.h',
+        'glue/menu_item.h',
         'glue/oxide_qt_contents_view_proxy.h'
         'glue/oxide_qt_contents_view_proxy_client.h'
         'glue/oxide_qt_file_picker_proxy.h',
@@ -364,10 +372,23 @@
       'type': 'shared_library',
       'product_extension': '<(oxide_lib_suffix)',
       'dependencies': [
-        'oxide_qt',
+        'oxide_qt_static',
       ],
       'sources': [
-        'hack.cc', # Required to get this target to link against the C++ stdlib
+        'dummy.cc',
+      ],
+    },
+    {
+      'target_name': 'oxide_qt',
+      'type': '<(component)',
+      'dependencies': [
+        'oxide_qt_static',
+      ],
+      'export_dependent_settings': [
+        'oxide_qt_static',
+      ],
+      'sources': [
+        'dummy.cc',
       ],
     },
     {

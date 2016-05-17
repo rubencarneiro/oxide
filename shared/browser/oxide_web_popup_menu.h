@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,61 +18,19 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_POPUP_MENU_H_
 #define _OXIDE_SHARED_BROWSER_WEB_POPUP_MENU_H_
 
-#include <vector>
-
-#include "base/macros.h"
-#include "base/memory/weak_ptr.h"
-#include "content/public/browser/web_contents_observer.h"
-#include "content/public/common/menu_item.h"
-
-#include "shared/common/oxide_shared_export.h"
-
-namespace base {
-template <typename T> class DeleteHelper;
-}
-
-namespace content {
-class RenderFrameHost;
-class RenderFrameHostImpl;
-}
-
 namespace gfx {
 class Rect;
 }
 
 namespace oxide {
 
-class OXIDE_SHARED_EXPORT WebPopupMenu : public content::WebContentsObserver {
+class WebPopupMenu {
  public:
-  virtual void Show(const gfx::Rect& bounds,
-                    const std::vector<content::MenuItem>& items,
-                    int selected_item,
-                    bool allow_multiple_selection) = 0;
-  void Close();
+  virtual ~WebPopupMenu() {}
 
-  void SelectItems(const std::vector<int>& selected_indices);
-  void Cancel();
+  virtual void Show(const gfx::Rect& bounds) = 0;
 
-  base::WeakPtr<WebPopupMenu> GetWeakPtr() {
-    return weak_ptr_factory_.GetWeakPtr();
-  }
-
- protected:
-  friend class base::DeleteHelper<WebPopupMenu>;
-
-  WebPopupMenu(content::RenderFrameHost* rfh);
-  virtual ~WebPopupMenu();
-
- private:
-  void RenderFrameDeleted(content::RenderFrameHost* rfh) final;
-
-  virtual void Hide();
-
-  content::RenderFrameHostImpl* render_frame_host_;
-
-  base::WeakPtrFactory<WebPopupMenu> weak_ptr_factory_;
-
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
+  virtual void Hide() = 0;
 };
 
 } // namespace oxide

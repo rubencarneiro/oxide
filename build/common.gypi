@@ -26,6 +26,8 @@
     'print_ld_stats%': 0,
     'enable_app_list': 0,
     'enable_tcmalloc%': 0,
+    # The shim results in us overriding malloc for any app linked against us
+    'use_experimental_allocator_shim': 0,
     'disable_nacl': 1,
     'ffmpeg_component': 'shared_library',
     'linux_use_bundled_gold': 0,

@@ -151,9 +151,16 @@ oxide::qt::WebContextMenuProxy* ContentsView::CreateWebContextMenu(
   return new WebContextMenu(item_, context_menu_, client);
 }
 
-oxide::qt::WebPopupMenuProxy* ContentsView::CreateWebPopupMenu(
+std::unique_ptr<oxide::qt::WebPopupMenuProxy> ContentsView::CreateWebPopupMenu(
+    const QList<oxide::qt::MenuItem>& items,
+    bool allow_multiple_selection,
     oxide::qt::WebPopupMenuProxyClient* client) {
-  return new WebPopupMenu(item_, popup_menu_, client);
+  return std::unique_ptr<oxide::qt::WebPopupMenuProxy>(
+      new WebPopupMenu(item_,
+                       popup_menu_,
+                       items,
+                       allow_multiple_selection,
+                       client));
 }
 
 oxide::qt::TouchHandleDrawableProxy*

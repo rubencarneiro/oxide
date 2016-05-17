@@ -45,6 +45,7 @@ class OXIDE_SHARED_EXPORT SecurityStatus
  public:
   ~SecurityStatus();
 
+  static void CreateForWebContents(content::WebContents* contents);
   static SecurityStatus* FromWebContents(content::WebContents* contents);
 
   // Notification from content

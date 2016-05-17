@@ -11,7 +11,7 @@
   }, 
   "src/tools/gyp": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/gyp", 
-    "rev": "62937008daaf31e18bbdaaff386af7b2a5dc1bd8", 
+    "rev": "aa2ae3da82abae93c4f7fffc2850ae15a0815967", 
     "upstream": "https://chromium.googlesource.com/external/gyp.git"
   }
 }

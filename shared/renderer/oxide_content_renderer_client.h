@@ -57,6 +57,12 @@ class ContentRendererClient : public content::ContentRendererClient {
 #endif
   void OverrideCompositorSettings(cc::LayerTreeSettings* settings) override;
   std::string GetUserAgentOverrideForURL(const GURL& url) override;
+  blink::WebExternalPopupMenu* CreateExternalPopupMenu(
+      content::RenderFrame* render_frame,
+      const blink::WebPopupMenuInfo& popup_menu_info,
+      blink::WebExternalPopupMenuClient* popup_menu_client,
+      float origin_scale_for_emulation,
+      const gfx::PointF& origin_offset_for_emulation) override;
 
   std::unique_ptr<RendererUserAgentSettings> user_agent_settings_;
 

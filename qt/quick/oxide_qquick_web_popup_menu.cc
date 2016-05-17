@@ -29,6 +29,7 @@
 #include <QRectF>
 #include <QtDebug>
 
+#include "qt/core/glue/menu_item.h"
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
@@ -208,10 +209,10 @@ class PopupMenuContext : public QObject {
 PopupMenuContext::PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
                                    const QRect& bounds,
                                    const QList<oxide::qt::MenuItem>& items,
-                                   bool allow_multiple_selection) :
-    client_(client),
-    element_rect_(bounds),
-    items_(items, allow_multiple_selection) {}
+                                   bool allow_multiple_selection)
+    : client_(client),
+      element_rect_(bounds),
+      items_(items, allow_multiple_selection) {}
 
 void PopupMenuContext::accept() {
   QList<int> indices = items_.selectedIndices();
@@ -225,9 +226,7 @@ void PopupMenuContext::cancel() {
 
 } // namespace
 
-void WebPopupMenu::Show(const QRect& bounds,
-                        const QList<oxide::qt::MenuItem>& items,
-                        bool allow_multiple_selection) {
+void WebPopupMenu::Show(const QRect& bounds) {
   if (!parent_) {
     qWarning() << "WebPopupMenu::Show: Can't show after the view has gone";
     client_->cancel();
@@ -243,7 +242,7 @@ void WebPopupMenu::Show(const QRect& bounds,
   }
 
   PopupMenuContext* contextObject =
-      new PopupMenuContext(client_, bounds, items, allow_multiple_selection);
+      new PopupMenuContext(client_, bounds, items_, allow_multiple_selection_);
 
   QQmlContext* baseContext = component_->creationContext();
   if (!baseContext) {
@@ -278,15 +277,20 @@ void WebPopupMenu::Show(const QRect& bounds,
 }
 
 void WebPopupMenu::Hide() {
-  if (popup_item_) {
-    popup_item_->setVisible(false);
+  if (!popup_item_) {
+    return;
   }
+  popup_item_->setVisible(false);
 }
 
 WebPopupMenu::WebPopupMenu(QQuickItem* parent,
                            QQmlComponent* component,
+                           const QList<oxide::qt::MenuItem>& items,
+                           bool allow_multiple_selection,
                            oxide::qt::WebPopupMenuProxyClient* client)
-    : client_(client),
+    : items_(items),
+      allow_multiple_selection_(allow_multiple_selection),
+      client_(client),
       parent_(parent),
       component_(component) {}
 

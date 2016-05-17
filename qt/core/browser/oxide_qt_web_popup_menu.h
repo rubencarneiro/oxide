@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,35 +25,46 @@
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
 #include "shared/browser/oxide_web_popup_menu.h"
 
+namespace content {
+struct MenuItem;
+class WebContents;
+}
+
 namespace oxide {
+
+class WebPopupMenuClient;
+
 namespace qt {
 
+class ContentsView;
 class WebPopupMenuProxy;
 
 class WebPopupMenu : public oxide::WebPopupMenu,
                      public WebPopupMenuProxyClient {
  public:
-  WebPopupMenu(content::RenderFrameHost* rfh);
-
-  void SetProxy(WebPopupMenuProxy* proxy);
-
- private:
+  WebPopupMenu(ContentsView* view,
+               const std::vector<content::MenuItem>& items,
+               int selected_index,
+               bool allow_multiple_selection,
+               oxide::WebPopupMenuClient* client);
   ~WebPopupMenu() override;
 
+ private:
   // oxide::WebPopupMenu implementation
-  void Show(const gfx::Rect& bounds,
-            const std::vector<content::MenuItem>& items,
-            int selected_item,
-            bool allow_multiple_selection) override;
+  void Show(const gfx::Rect& bounds) override;
   void Hide() override;
 
   // WebPopupMenuProxyClient implementation
   void selectItems(const QList<int>& selected_indices) override;
   void cancel() override;
 
+  oxide::WebPopupMenuClient* client_; // Owns us
+
+  content::WebContents* contents_;
+
   std::unique_ptr<WebPopupMenuProxy> proxy_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebPopupMenu);
+  DISALLOW_COPY_AND_ASSIGN(WebPopupMenu);
 };
 
 } // namespace qt

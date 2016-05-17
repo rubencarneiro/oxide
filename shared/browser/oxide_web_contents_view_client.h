@@ -18,6 +18,9 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_VIEW_CLIENT_H_
 
+#include <memory>
+#include <vector>
+
 #include "base/macros.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
@@ -25,6 +28,7 @@
 
 namespace content {
 struct ContextMenuParams;
+struct MenuItem;
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class WebCursor;
@@ -44,6 +48,7 @@ class InputMethodContext;
 class WebContentsView;
 class WebContextMenu;
 class WebPopupMenu;
+class WebPopupMenuClient;
 
 class OXIDE_SHARED_EXPORT WebContentsViewClient {
  public:
@@ -67,7 +72,11 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params);
 
-  virtual WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh);
+  virtual std::unique_ptr<WebPopupMenu> CreatePopupMenu(
+      const std::vector<content::MenuItem> & items,
+      int selected_item,
+      bool allow_multiple_selection,
+      WebPopupMenuClient* client);
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
   virtual void TouchSelectionChanged(bool active,

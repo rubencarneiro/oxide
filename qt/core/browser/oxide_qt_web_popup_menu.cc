@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,10 @@
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/geometry/rect.h"
 
+#include "qt/core/glue/menu_item.h"
+#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
+#include "shared/browser/oxide_web_popup_menu_client.h"
 
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
@@ -38,83 +41,111 @@
 namespace oxide {
 namespace qt {
 
-WebPopupMenu::~WebPopupMenu() {}
+namespace {
 
-void WebPopupMenu::Show(const gfx::Rect& bounds,
-                        const std::vector<content::MenuItem>& items,
-                        int selected_item,
-                        bool allow_multiple_selection) {
-  QList<MenuItem> qitems;
+QList<MenuItem> BuildMenuItems(const std::vector<content::MenuItem>& items,
+                               int selected_index,
+                               bool allow_multiple_selection) {
+  QList<MenuItem> results;
+
+  int i = -1;
   QString current_group;
-  // We get a vector of size_t number of elements but Chromium uses
-  // an int when responding with the index of selected items, so
-  // we truncate anything above INT_MAX number of items
-  // XXX: Should this ever happen?
-  // XXX: And shouldn't we do this in shared/?
-  // XXX: Does it matter?
 
-  if (items.size() > INT_MAX) {
-    LOG(WARNING) << "Number of menu items exceeds maximum";
-  }
+  for (const auto& item : items) {
+    if (i == std::numeric_limits<int>::max()) {
+      LOG(WARNING) << "Truncating menu - there are too many items!";
+      break;
+    }
 
-  for (size_t i = 0;
-       i < items.size() && i <= static_cast<size_t>(INT_MAX);
-       ++i) {
-    const content::MenuItem& item = items[i];
+    int index = ++i;
 
     if (item.type == content::MenuItem::GROUP) {
       current_group = QString::fromStdString(base::UTF16ToUTF8(item.label));
       continue;
     }
 
+    // We don't support submenus here
     DCHECK(item.type == content::MenuItem::SEPARATOR ||
            item.type == content::MenuItem::OPTION);
 
-    MenuItem qitem;
+    MenuItem mi;
 
-    qitem.label = QString::fromStdString(base::UTF16ToUTF8(item.label));
-    qitem.tooltip = QString::fromStdString(base::UTF16ToUTF8(item.tool_tip));
-    qitem.group = current_group;
-    // This cast is ok, as this is guaranteed not to cast to a negative index
-    qitem.index = static_cast<int>(i);
-    qitem.enabled = item.enabled;
-    qitem.checked = item.checked || (!allow_multiple_selection && 
-                                     selected_item == qitem.index);
-    qitem.separator = item.type == content::MenuItem::SEPARATOR;
+    mi.label = QString::fromStdString(base::UTF16ToUTF8(item.label));
+    mi.tooltip = QString::fromStdString(base::UTF16ToUTF8(item.tool_tip));
+    mi.group = current_group;
+    mi.index = index;
+    mi.enabled = item.enabled;
+    mi.checked =
+        item.checked || (!allow_multiple_selection && 
+                         selected_index == mi.index);
+    mi.separator = item.type == content::MenuItem::SEPARATOR;
 
-    DCHECK(allow_multiple_selection || qitem.index == selected_item || !qitem.checked);
+    // We're not using content::MenuItem::action here - if this function gets
+    // re-used for custom items in context menus, we'll need that
+
+    DCHECK(allow_multiple_selection ||
+           mi.index == selected_index ||
+           !mi.checked);
  
-    qitems.append(qitem);
+    results.append(mi);
   }
 
-  ContentsView* view = ContentsView::FromWebContents(web_contents());
+  return results;
+}
+
+}
+
+void WebPopupMenu::Show(const gfx::Rect& bounds) {
+  if (!proxy_) {
+    client_->Cancel();
+    return;
+  }
+
+  ContentsView* view = ContentsView::FromWebContents(contents_);
 
   gfx::Rect rect = bounds;
   rect += gfx::Vector2d(0, view->GetLocationBarContentOffset());
   
   proxy_->Show(
-      ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, view->GetScreen())),
-      qitems, allow_multiple_selection);
+      ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, view->GetScreen())));
 }
 
 void WebPopupMenu::Hide() {
+  contents_ = nullptr;
+
+  if (!proxy_) {
+    return;
+  }
+
   proxy_->Hide();
 }
 
 void WebPopupMenu::selectItems(const QList<int>& selected_indices) {
-  SelectItems(selected_indices.toVector().toStdVector());
+  client_->SelectItems(selected_indices.toVector().toStdVector());
 }
 
 void WebPopupMenu::cancel() {
-  Cancel();
+  client_->Cancel();
 }
 
-WebPopupMenu::WebPopupMenu(content::RenderFrameHost* rfh)
-    : oxide::WebPopupMenu(rfh) {}
+WebPopupMenu::WebPopupMenu(ContentsView* view,
+                           const std::vector<content::MenuItem>& items,
+                           int selected_index,
+                           bool allow_multiple_selection,
+                           oxide::WebPopupMenuClient* client)
+    : client_(client),
+      contents_(view->GetWebContents()) {
+  if (!view->client()) {
+    return;
+  }
 
-void WebPopupMenu::SetProxy(WebPopupMenuProxy* proxy) {
-  proxy_.reset(proxy);
+  proxy_ =
+      view->client()->CreateWebPopupMenu(
+          BuildMenuItems(items, selected_index, allow_multiple_selection),
+          allow_multiple_selection, this);
 }
+
+WebPopupMenu::~WebPopupMenu() {}
 
 } // namespace qt
 } // namespace oxide
