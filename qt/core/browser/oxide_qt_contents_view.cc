@@ -508,11 +508,16 @@ oxide::WebContextMenu* ContentsView::CreateContextMenu(
   return menu;
 }
 
-oxide::WebPopupMenu* ContentsView::CreatePopupMenu(
-    content::RenderFrameHost* rfh) {
-  WebPopupMenu* menu = new WebPopupMenu(rfh);
-  menu->SetProxy(client_->CreateWebPopupMenu(menu));
-  return menu;
+std::unique_ptr<oxide::WebPopupMenu> ContentsView::CreatePopupMenu(
+    const std::vector<content::MenuItem>& items,
+    int selected_index,
+    bool allow_multiple_selection,
+    oxide::WebPopupMenuClient* client) {
+  return base::WrapUnique(new WebPopupMenu(this,
+                                           items,
+                                           selected_index,
+                                           allow_multiple_selection,
+                                           client));
 }
 
 ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
@@ -581,6 +586,14 @@ ContentsView* ContentsView::FromWebContents(content::WebContents* contents) {
   }
 
   return static_cast<ContentsView*>(view->client());
+}
+
+content::WebContents* ContentsView::GetWebContents() const {
+  if (!view()) {
+    return nullptr;
+  }
+
+  return view()->GetWebContents();
 }
 
 QScreen* ContentsView::GetScreen() const {

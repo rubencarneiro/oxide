@@ -20,6 +20,7 @@
 #include "base/logging.h"
 
 #include "oxide_web_contents_view.h"
+#include "oxide_web_popup_menu.h"
 
 namespace oxide {
 
@@ -39,8 +40,11 @@ WebContextMenu* WebContentsViewClient::CreateContextMenu(
   return nullptr;
 }
 
-WebPopupMenu* WebContentsViewClient::CreatePopupMenu(
-    content::RenderFrameHost* rfh) {
+std::unique_ptr<WebPopupMenu> WebContentsViewClient::CreatePopupMenu(
+    const std::vector<content::MenuItem> & items,
+    int selected_item,
+    bool allow_multiple_selection,
+    WebPopupMenuClient* client) {
   NOTIMPLEMENTED();
   return nullptr;
 }

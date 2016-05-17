@@ -18,12 +18,14 @@
 #ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
 #define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
 
+#include <memory>
 #include <QRect>
 #include <QtGlobal>
 
 QT_BEGIN_NAMESPACE
 class QCursor;
 class QKeyEvent;
+template <typename T> class QList;
 class QRectF;
 class QScreen;
 QT_END_NAMESPACE
@@ -33,6 +35,7 @@ namespace qt {
 
 class ContentsView;
 class ContentsViewProxy;
+struct MenuItem;
 class TouchHandleDrawableProxy;
 class WebContextMenuProxy;
 class WebContextMenuProxyClient;
@@ -62,8 +65,12 @@ class ContentsViewProxyClient {
 
   virtual WebContextMenuProxy* CreateWebContextMenu(
       WebContextMenuProxyClient* client) = 0;
-  virtual WebPopupMenuProxy* CreateWebPopupMenu(
+
+  virtual std::unique_ptr<WebPopupMenuProxy> CreateWebPopupMenu(
+      const QList<MenuItem>& items,
+      bool allow_multiple_selection,
       WebPopupMenuProxyClient* client) = 0;
+
   virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
   virtual void TouchSelectionChanged(bool active,

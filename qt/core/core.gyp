@@ -207,6 +207,7 @@
         'browser/ssl/oxide_qt_security_status.cc',
         'browser/ssl/oxide_qt_security_status.h',
         'common/oxide_qt_export.h',
+        'glue/menu_item.h',
         'glue/oxide_qt_contents_view_proxy.h'
         'glue/oxide_qt_contents_view_proxy_client.h'
         'glue/oxide_qt_file_picker_proxy.h',

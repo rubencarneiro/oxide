@@ -44,6 +44,7 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
+#include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "oxide_browser_platform_integration.h"
@@ -53,7 +54,7 @@
 #include "oxide_screen_client.h"
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_context_menu.h"
-#include "oxide_web_popup_menu.h"
+#include "oxide_web_popup_menu_impl.h"
 #include "oxide_web_view.h"
 
 namespace oxide {
@@ -70,7 +71,8 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
-      current_drag_op_(blink::WebDragOperationNone) {
+      current_drag_op_(blink::WebDragOperationNone),
+      render_frame_message_source_(nullptr) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
 
@@ -207,6 +209,28 @@ void WebContentsView::UpdateContentsSize() {
   if (rwhv) {
     rwhv->SetSize(size);
   }
+}
+
+void WebContentsView::OnShowPopup(const OxideHostMsg_ShowPopup_Params& params) {
+  // XXX: We should do better than this
+  DCHECK(!active_popup_menu_);
+
+  WebPopupMenuImpl* menu =
+      new WebPopupMenuImpl(render_frame_message_source_,
+                           params.popup_items,
+                           params.selected_item,
+                           params.allow_multiple_selection);
+  active_popup_menu_ = menu->GetWeakPtr();
+
+  menu->Show(params.bounds);
+}
+
+void WebContentsView::OnHidePopup() {
+  if (!active_popup_menu_) {
+    return;
+  }
+
+  active_popup_menu_->Hide();
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -347,44 +371,6 @@ void WebContentsView::UpdateDragCursor(blink::WebDragOperation operation) {
   current_drag_op_ = operation;
 }
 
-void WebContentsView::ShowPopupMenu(
-    content::RenderFrameHost* render_frame_host,
-    const gfx::Rect& bounds,
-    int item_height,
-    double item_font_size,
-    int selected_item,
-    const std::vector<content::MenuItem>& items,
-    bool right_aligned,
-    bool allow_multiple_selection) {
-  // XXX: We should do better than this
-  DCHECK(!active_popup_menu_);
-
-  if (!client_) {
-    static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->DidCancelPopupMenu();
-    return;
-  }
-
-  WebPopupMenu* menu = client_->CreatePopupMenu(render_frame_host);
-  if (!menu) {
-    static_cast<content::RenderFrameHostImpl *>(
-        render_frame_host)->DidCancelPopupMenu();
-    return;
-  }
-
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show(bounds, items, selected_item, allow_multiple_selection);
-}
-
-void WebContentsView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
-  }
-
-  active_popup_menu_->Close();
-}
-
 void WebContentsView::RenderViewHostChanged(
     content::RenderViewHost* old_host,
     content::RenderViewHost* new_host) {
@@ -505,6 +491,25 @@ void WebContentsView::DidDetachInterstitialPage() {
   static_cast<RenderWidgetHostView*>(rwh->GetView())->SetContainer(nullptr);
 
   TouchSelectionChanged(false);
+}
+
+bool WebContentsView::OnMessageReceived(
+    const IPC::Message& message,
+    content::RenderFrameHost* render_frame_host) {
+  DCHECK(!render_frame_message_source_);
+  render_frame_message_source_ = render_frame_host;
+
+  bool handled = true;
+  IPC_BEGIN_MESSAGE_MAP(WebContentsView, message)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_ShowPopup, OnShowPopup)
+    IPC_MESSAGE_HANDLER(OxideHostMsg_HidePopup, OnHidePopup)
+    IPC_MESSAGE_UNHANDLED(handled = false)
+  IPC_END_MESSAGE_MAP()
+
+  DCHECK_EQ(render_frame_message_source_, render_frame_host);
+  render_frame_message_source_ = nullptr;
+
+  return handled;
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,

@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 namespace oxide {
 
 namespace qt {
+class MenuItem;
 class WebPopupMenuProxyClient;
 }
 
@@ -41,15 +42,18 @@ class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
  public:
   WebPopupMenu(QQuickItem* parent,
                QQmlComponent* component,
+               const QList<oxide::qt::MenuItem>& items,
+               bool allow_multiple_selection,
                oxide::qt::WebPopupMenuProxyClient* client);
   ~WebPopupMenu() override;
 
  private:
   // oxide::qt::WebPopupMenuProxy implementation
-  void Show(const QRect& bounds,
-            const QList<oxide::qt::MenuItem>& items,
-            bool allow_multiple_selection) override;
+  void Show(const QRect& bounds) override;
   void Hide() override;
+
+  QList<oxide::qt::MenuItem> items_;
+  bool allow_multiple_selection_;
 
   oxide::qt::WebPopupMenuProxyClient* client_;
   QPointer<QQuickItem> parent_;

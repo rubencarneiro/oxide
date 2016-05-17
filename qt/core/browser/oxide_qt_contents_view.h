@@ -57,11 +57,12 @@ class ContentsView : public ContentsViewProxy,
 
   static ContentsView* FromWebContents(content::WebContents* contents);
 
+  content::WebContents* GetWebContents() const;
+
   QObject* native_view() const { return native_view_; }
 
   QScreen* GetScreen() const;
 
-  // TODO: Get rid
   ContentsViewProxyClient* client() const { return client_; }
 
   float GetLocationBarContentOffset() const;
@@ -105,7 +106,11 @@ class ContentsView : public ContentsViewProxy,
   oxide::WebContextMenu* CreateContextMenu(
       content::RenderFrameHost* rfh,
       const content::ContextMenuParams& params) override;
-  oxide::WebPopupMenu* CreatePopupMenu(content::RenderFrameHost* rfh) override;
+  std::unique_ptr<oxide::WebPopupMenu> CreatePopupMenu(
+      const std::vector<content::MenuItem> & items,
+      int selected_item,
+      bool allow_multiple_selection,
+      oxide::WebPopupMenuClient* client) override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(bool active,
                              const gfx::RectF& bounds,
