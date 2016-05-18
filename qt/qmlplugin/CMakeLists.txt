@@ -93,7 +93,7 @@ add_custom_target(
     "-DFILES=\"$<TARGET_FILE:${OXIDE_QMLPLUGIN}>;${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}/qmldir\""
     -DTYPE=FILE
     -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_QT_PACKAGE_QMLPLUGIN_DIR}/${OXIDE_QMLPLUGIN_MODULE_NAME}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 
 # Only generate typeinfo if not cross compiling
 if(NOT CMAKE_CROSSCOMPILING)

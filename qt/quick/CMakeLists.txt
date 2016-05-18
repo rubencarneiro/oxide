@@ -96,7 +96,7 @@ add_custom_target(
     test-package-qt-quick
     COMMAND ${CMAKE_COMMAND} -DFILES=$<TARGET_FILE:${OXIDE_QUICKLIB}>
     -DTYPE=FILE -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
-    -P ${CMAKE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
+    -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 
 calculate_versioned_library_filename(OXIDE_QUICKLIB_FILENAME ${OXIDE_QUICKLIB} ${OXIDE_LIB_VERSION})
 configure_and_install_package_config_file(
