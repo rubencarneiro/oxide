@@ -41,7 +41,7 @@
 #include "ui/display/screen.h"
 #include "ui/gfx/gfx_utils_oxide.h"
 #include "ui/gl/gl_context.h"
-#include "ui/gl/gl_surface.h"
+#include "ui/gl/init/gl_factory.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
@@ -245,7 +245,7 @@ int BrowserMainParts::PreCreateThreads() {
 
     // Do this here rather than on the GPU thread to work around a mesa race -
     // see https://launchpad.net/bugs/1267893.
-    gfx::GLSurface::InitializeOneOff();
+    gl::init::InitializeGLOneOff();
   }
 
   primary_screen_.reset(new Screen());

@@ -269,6 +269,7 @@
         '<(DEPTH)/ui/gfx/ipc/geometry/gfx_ipc_geometry.gyp:gfx_ipc_geometry',
         '<(DEPTH)/ui/gfx/x/gfx_x11.gyp:gfx_x11',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
+        '<(DEPTH)/ui/gl/init/gl_init.gyp:gl_init',
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection',
