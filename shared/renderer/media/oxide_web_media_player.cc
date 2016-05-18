@@ -356,18 +356,6 @@ void WebMediaPlayer::paint(blink::WebCanvas* canvas,
   NOTIMPLEMENTED();
 }
 
-bool WebMediaPlayer::copyVideoTextureToPlatformTexture(
-    blink::WebGraphicsContext3D* web_graphics_context,
-    unsigned int texture,
-    unsigned int level,
-    unsigned int internal_format,
-    unsigned int type,
-    bool premultiply_alpha,
-    bool flip_y) {
-  NOTIMPLEMENTED();
-  return false;
-}
-
 bool WebMediaPlayer::hasSingleSecurityOrigin() const {
   if (info_loader_) {
     return info_loader_->HasSingleOrigin();
