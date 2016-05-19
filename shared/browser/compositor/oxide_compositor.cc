@@ -506,6 +506,9 @@ void Compositor::DidCommit() {
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
 void Compositor::DidCompletePageScaleAnimation() {}
+void Compositor::ReportFixedRasterScaleUseCounters(
+    bool has_blurry_content,
+    bool has_potential_performance_regression) {}
 
 void Compositor::DidPostSwapBuffers() {}
 void Compositor::DidAbortSwapBuffers() {}
