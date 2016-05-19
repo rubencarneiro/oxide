@@ -74,9 +74,11 @@
           '<(SHARED_INTERMEDIATE_DIR)/oxide',
         ],
       },
-      'ldflags': [
-        '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
-      ],
+      'link_settings': {
+        'ldflags': [
+          '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)',
+        ],
+      },
       'sources': [
         '<(INTERMEDIATE_DIR)/moc_oxideqcertificateerror.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqdownloadrequest.cc',
@@ -361,9 +363,11 @@
       ],
       'conditions': [
         ['component=="shared_library"', {
-          'ldflags': [
-            '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)/lib',
-          ],
+          'link_settings': {
+            'ldflags': [
+              '-Wl,-rpath=\$$ORIGIN/<(oxide_libexecdir)/lib',
+            ],
+          },
         }],
       ],
     },
