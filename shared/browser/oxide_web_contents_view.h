@@ -105,6 +105,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   bool IsVisible() const;
   bool HasFocus() const;
 
+  gfx::Size GetSize() const;
   gfx::Size GetSizeInPixels() const;
   gfx::Rect GetBounds() const;
 
@@ -149,7 +150,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   content::WebContentsImpl* web_contents_impl() const;
 
   // Return the TouchSelectionController for the current RWHV, or interstitial
-  // RWHV if one is attached. Ignores fullscreen RWHVs
+  // RWHV if one is attached. If a fullscreen RWHV is displayed, it will return
+  // the TouchSelectionController for that
   ui::TouchSelectionController* GetTouchSelectionController() const;
 
   // Return the current RWHV, or interstitial RWHV if there is one. If a
