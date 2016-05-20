@@ -295,6 +295,9 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
   if (web_contents()->GetRenderViewHost() &&
       web_contents()->GetRenderViewHost()->GetWidget() == render_widget_host) {
     view->SetContainer(this);
+    if (client_) {
+      view->ime_bridge()->SetContext(client_->GetInputMethodContext());
+    }
   }
 
   return view;
@@ -746,6 +749,12 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
     DCHECK(!client_->view_);
     client_->view_ = this;
     InputMethodContextObserver::Observe(client_->GetInputMethodContext());
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->ime_bridge()->SetContext(
+        client_ ? client_->GetInputMethodContext() : nullptr);
   }
 
   // Update view from client
