@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_H_
 #define _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_H_
 
+#include "base/containers/stack_container.h"
 #include "base/macros.h"
 #include "base/observer_list.h"
 #include "ui/base/clipboard/clipboard.h"
@@ -35,6 +36,8 @@ class OXIDE_SHARED_EXPORT Clipboard : public ui::Clipboard {
 
   static Clipboard* GetForCurrentThread();
 
+  bool HasData(ui::ClipboardType type);
+
  protected:
   Clipboard();
 
@@ -47,6 +50,13 @@ class OXIDE_SHARED_EXPORT Clipboard : public ui::Clipboard {
   void RemoveObserver(ClipboardObserver* observer);
 
   base::ObserverList<ClipboardObserver> observers_;
+
+  struct CachedInfo {
+    bool needs_update = true;
+    bool has_data = false;
+  };
+
+  base::StackVector<CachedInfo, ui::CLIPBOARD_TYPE_LAST + 1> cached_info_;
 
   DISALLOW_COPY_AND_ASSIGN(Clipboard);
 };

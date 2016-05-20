@@ -62,6 +62,7 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
+#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/input/oxide_ime_bridge.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
@@ -368,9 +369,7 @@ void WebView::EditingCapabilitiesChanged() {
   bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
   bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
   bool has_selection = !rwhv->selection_range().is_empty();
-  base::string16 clipboard;
-  ui::Clipboard::GetForCurrentThread()->ReadText(ui::CLIPBOARD_TYPE_COPY_PASTE,
-                                                 &clipboard);
+
   // XXX: if editable, can we determine whether undo/redo is available?
   if (editable && readable && has_selection) {
     flags |= blink::WebContextMenuData::CanCut;
@@ -378,7 +377,8 @@ void WebView::EditingCapabilitiesChanged() {
   if (readable && has_selection) {
     flags |= blink::WebContextMenuData::CanCopy;
   }
-  if (editable && !clipboard.empty()) {
+  if (editable &&
+      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
     flags |= blink::WebContextMenuData::CanPaste;
   }
   if (editable && has_selection) {

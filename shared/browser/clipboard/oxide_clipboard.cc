@@ -28,6 +28,8 @@ Clipboard::Clipboard() {
 }
 
 void Clipboard::NotifyClipboardDataChanged(ui::ClipboardType type) {
+  DCHECK(CalledOnValidThread());
+  cached_info_[type].needs_update = true;
   FOR_EACH_OBSERVER(ClipboardObserver, observers_, ClipboardDataChanged(type));
 }
 
@@ -49,6 +51,19 @@ Clipboard::~Clipboard() {
 // static
 Clipboard* Clipboard::GetForCurrentThread() {
   return static_cast<Clipboard*>(ui::Clipboard::GetForCurrentThread());
+}
+
+bool Clipboard::HasData(ui::ClipboardType type) {
+  DCHECK(CalledOnValidThread());
+
+  if (cached_info_[type].needs_update) {
+    base::string16 text;
+    ReadText(type, &text);
+    cached_info_[type].has_data = !text.empty();
+    cached_info_[type].needs_update = false;
+  }
+
+  return cached_info_[type].has_data;
 }
 
 } // namespace oxide
