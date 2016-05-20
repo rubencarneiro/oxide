@@ -20,6 +20,8 @@
 #include "base/logging.h"
 #include "content/public/browser/location_provider.h"
 
+#include "shared/browser/clipboard/oxide_clipboard_dummy_impl.h"
+
 #include "oxide_browser_platform_integration_observer.h"
 #include "oxide_drag_source.h"
 
@@ -62,8 +64,8 @@ GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return nullptr;
 }
 
-ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
-  return nullptr;
+Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+  return new ClipboardDummyImpl();
 }
 
 void BrowserPlatformIntegration::BrowserThreadInit(
@@ -105,12 +107,6 @@ void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
   FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
                     observers_,
                     ApplicationStateChanged());
-}
-
-void BrowserPlatformIntegration::NotifyClipboardDataChanged() {
-  FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
-                    observers_,
-                    ClipboardDataChanged());
 }
 
 void BrowserPlatformIntegration::CreateVibrationManager(

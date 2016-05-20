@@ -93,6 +93,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_clipboard.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_screen_client.cc',
         'api/oxideqcertificateerror.cc',
@@ -318,6 +319,11 @@
           'includes': [ 'moc.gypi' ]
         },
         {
+          'action_name': 'moc_oxide_qt_clipboard.cc',
+          'moc_input': 'browser/oxide_qt_clipboard.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
           'action_name': 'moc_oxide_qt_input_method_context.cc',
           'moc_input': 'browser/input/oxide_qt_input_method_context.h',
           'includes': [ 'moc.gypi' ]
@@ -325,11 +331,6 @@
         {
           'action_name': 'moc_oxide_qt_screen_client.cc',
           'moc_input': 'browser/oxide_qt_screen_client.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qt_clipboard.moc',
-          'moc_input': 'browser/oxide_qt_clipboard.cc',
           'includes': [ 'moc.gypi' ]
         },
         {

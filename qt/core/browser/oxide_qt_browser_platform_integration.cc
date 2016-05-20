@@ -17,7 +17,6 @@
 
 #include "oxide_qt_browser_platform_integration.h"
 
-#include <QClipboard>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
@@ -84,10 +83,6 @@ void BrowserPlatformIntegration::OnApplicationStateChanged() {
   UpdateApplicationState();
 }
 
-void BrowserPlatformIntegration::OnClipboardDataChanged() {
-  NotifyClipboardDataChanged();
-}
-
 void BrowserPlatformIntegration::UpdateApplicationState() {
   ApplicationState state = CalculateApplicationState(suspended_);
   if (state == state_) {
@@ -145,7 +140,7 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
   return base::WrapUnique(new MessagePump());
 }
 
-ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+oxide::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
   return new Clipboard();
 }
 
@@ -210,8 +205,6 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
       screen_client_(new ScreenClient()) {
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
-  connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
-          SLOT(OnClipboardDataChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     qApp->installEventFilter(this);
   }

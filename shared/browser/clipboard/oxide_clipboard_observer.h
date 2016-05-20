@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,23 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_
-#define _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_
+#ifndef _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_OBSERVER_H_
 
-#include "oxide_browser_platform_integration.h"
+#include "base/macros.h"
+#include "ui/base/clipboard/clipboard_types.h"
+
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
-class BrowserPlatformIntegrationObserver {
- public:
-  virtual ~BrowserPlatformIntegrationObserver();
+class Clipboard;
 
-  virtual void ApplicationStateChanged() {}
+class OXIDE_SHARED_EXPORT ClipboardObserver {
+ public:
+  virtual ~ClipboardObserver();
+
+  virtual void ClipboardDataChanged(ui::ClipboardType type);
 
  protected:
-  BrowserPlatformIntegrationObserver();
+  ClipboardObserver();
+
+ private:
+  friend class Clipboard;
+
+  void OnClipboardDestruction();
+
+  Clipboard* clipboard_;
+
+  DISALLOW_COPY_AND_ASSIGN(ClipboardObserver);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_PLATFORM_INTEGRATION_OBSERVER_H_
+#endif // _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_OBSERVER_H_

@@ -46,7 +46,6 @@ class BrowserPlatformIntegration : public QObject,
 
  private Q_SLOTS:
   void OnApplicationStateChanged();
-  void OnClipboardDataChanged();
 
  private:
   void UpdateApplicationState();
@@ -58,7 +57,7 @@ class BrowserPlatformIntegration : public QObject,
   oxide::ScreenClient* GetScreenClient() override;
   oxide::GLContextDependent* GetGLShareContext() override;
   std::unique_ptr<oxide::MessagePump> CreateUIMessagePump() override;
-  ui::Clipboard* CreateClipboard() override;
+  oxide::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
   std::unique_ptr<content::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;

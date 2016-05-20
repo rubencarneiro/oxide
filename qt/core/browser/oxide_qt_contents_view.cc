@@ -28,6 +28,7 @@
 #include <QTouchEvent>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
 #include "base/memory/ref_counted_memory.h"
 #include "base/memory/scoped_vector.h"

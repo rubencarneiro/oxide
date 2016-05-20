@@ -356,6 +356,7 @@ void WebView::MaybeCancelFullscreenMode() {
 }
 
 void WebView::EditingCapabilitiesChanged() {
+  TRACE_EVENT0("input", "oxide::WebView::EditingCapabilitiesChanged");
   blink::WebContextMenuData::EditFlags flags =
       blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
@@ -986,7 +987,11 @@ bool WebView::OnMessageReceived(const IPC::Message& msg,
   return handled;
 }
 
-void WebView::ClipboardDataChanged() {
+void WebView::ClipboardDataChanged(ui::ClipboardType type) {
+  if (type != ui::CLIPBOARD_TYPE_COPY_PASTE) {
+    return;
+  }
+
   EditingCapabilitiesChanged();
 }
 
