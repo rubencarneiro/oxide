@@ -35,12 +35,12 @@
 #include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
+#include "qt/core/browser/clipboard/oxide_qt_clipboard.h"
 #include "qt/core/glue/oxide_qt_init.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
-#include "oxide_qt_clipboard.h"
 #include "oxide_qt_drag_source.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"

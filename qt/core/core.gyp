@@ -139,6 +139,8 @@
         'app/oxide_qt_main.h',
         'app/oxide_qt_platform_delegate.cc',
         'app/oxide_qt_platform_delegate.h',
+        'browser/clipboard/oxide_qt_clipboard.cc',
+        'browser/clipboard/oxide_qt_clipboard.h',
         'browser/input/oxide_qt_input_method_context.cc',
         'browser/input/oxide_qt_input_method_context.h',
         'browser/input/oxide_qt_input_method_context_client.h',
@@ -148,8 +150,6 @@
         'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
-        'browser/oxide_qt_clipboard.cc',
-        'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_contents_view.cc',
         'browser/oxide_qt_contents_view.h',
         'browser/oxide_qt_dpi_utils.cc',
@@ -320,7 +320,7 @@
         },
         {
           'action_name': 'moc_oxide_qt_clipboard.cc',
-          'moc_input': 'browser/oxide_qt_clipboard.h',
+          'moc_input': 'browser/clipboard/oxide_qt_clipboard.h',
           'includes': [ 'moc.gypi' ]
         },
         {
