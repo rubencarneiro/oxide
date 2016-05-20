@@ -175,7 +175,7 @@ void RenderWidgetHostView::OnSelectionBoundsChanged(
                                      selection_anchor_position);
 
   if (container_) {
-    container_->EditingCapabilitiesChanged();
+    container_->EditingCapabilitiesChanged(this);
   }
 }
 
@@ -502,7 +502,7 @@ bool RenderWidgetHostView::HasFocus() const {
     return false;
   }
 
-  return container_->HasFocus(this);
+  return container_->HasFocus();
 }
 
 bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
@@ -510,7 +510,7 @@ bool RenderWidgetHostView::IsSurfaceAvailableForCopy() const {
 }
 
 bool RenderWidgetHostView::IsShowing() {
-  return is_showing_ && container_ && container_->IsVisible();
+  return is_showing_ && container_;
 }
 
 gfx::Rect RenderWidgetHostView::GetViewBounds() const {
@@ -553,7 +553,7 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   if ((selection_controller_->active_status() !=
           ui::TouchSelectionController::INACTIVE) &&
       HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    container_->TouchSelectionChanged(handle_drag_in_progress_);
+    container_->TouchSelectionChanged(this, handle_drag_in_progress_);
     // XXX: hack to ensure the position of the handles is updated.
     selection_controller_->SetTemporarilyHidden(true);
     selection_controller_->SetTemporarilyHidden(false);
@@ -697,7 +697,7 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
       break;
   }
   if (container_) {
-    container_->TouchSelectionChanged(handle_drag_in_progress_);
+    container_->TouchSelectionChanged(this, handle_drag_in_progress_);
   }
 }
 
@@ -723,7 +723,7 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
     return;
   }
 
-  container_->CursorChanged();
+  container_->CursorChanged(this);
 }
 
 void RenderWidgetHostView::DestroyDelegatedContent() {

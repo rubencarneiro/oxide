@@ -149,17 +149,13 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   content::WebContentsImpl* web_contents_impl() const;
 
-  // Return the TouchSelectionController for the current RWHV, or interstitial
-  // RWHV if one is attached. If a fullscreen RWHV is displayed, it will return
-  // the TouchSelectionController for that
+  // Return the TouchSelectionController for the currently displayed RWHV
   ui::TouchSelectionController* GetTouchSelectionController() const;
 
-  // Return the current RWHV, or interstitial RWHV if there is one. If a
-  // fullscreen RWHV is displayed, it will return this
+  // Return the currently displayed RWHV
   RenderWidgetHostView* GetRenderWidgetHostView() const;
 
-  // Return the current RWH, or interstitial RWH if there is one. If a
-  // fullscreen RWH is displayed, it will return this
+  // Return the currentlty displayed RWH
   content::RenderWidgetHost* GetRenderWidgetHost() const;
 
   bool ShouldScrollFocusedEditableNodeIntoView();
@@ -239,14 +235,14 @@ class OXIDE_SHARED_EXPORT WebContentsView
   // RenderWidgetHostViewContainer implementation
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;
   void DetachLayer(scoped_refptr<cc::Layer> layer) override;
-  void CursorChanged() override;
+  void CursorChanged(RenderWidgetHostView* view) override;
   gfx::Size GetViewSizeInPixels() const override;
-  bool HasFocus(const RenderWidgetHostView* view) const override;
   bool IsFullscreen() const override;
   float GetLocationBarHeight() const override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(bool handle_drag_in_progress) const override;
-  void EditingCapabilitiesChanged() override;
+  void TouchSelectionChanged(RenderWidgetHostView* view,
+                             bool handle_drag_in_progress) const override;
+  void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
   WebContentsViewClient* client_;
   base::Closure editing_capabilities_changed_callback_;

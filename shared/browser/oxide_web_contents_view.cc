@@ -411,8 +411,8 @@ void WebContentsView::RenderViewHostChanged(
     }
   }
 
-  EditingCapabilitiesChanged();
-  TouchSelectionChanged(false);
+  EditingCapabilitiesChanged(GetRenderWidgetHostView());
+  TouchSelectionChanged(GetRenderWidgetHostView(), false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -430,11 +430,9 @@ void WebContentsView::DidNavigateMainFrame(
 
 void WebContentsView::DidShowFullscreenWidget(int routing_id) {
   DCHECK(!web_contents()->ShowingInterstitialPage());
+  DCHECK(web_contents()->GetFullscreenRenderWidgetHostView());
 
-  RenderWidgetHostView* rwhv =
-      static_cast<RenderWidgetHostView*>(
-          web_contents()->GetFullscreenRenderWidgetHostView());
-  DCHECK(rwhv);
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
 
   rwhv->SetContainer(this);
 
@@ -452,7 +450,8 @@ void WebContentsView::DidShowFullscreenWidget(int routing_id) {
   // Hide the original RWHV
   web_contents()->GetRenderWidgetHostView()->Hide();
 
-  TouchSelectionChanged(false);
+  EditingCapabilitiesChanged(rwhv);
+  TouchSelectionChanged(rwhv, false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
@@ -476,7 +475,10 @@ void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
     }
   }
 
-  TouchSelectionChanged(false);
+  // FIXME: This actually doesn't work, because GetRenderWidgetHostView still
+  // returns the fullscreen view
+  EditingCapabilitiesChanged(orig_rwhv);
+  TouchSelectionChanged(orig_rwhv, false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -504,7 +506,8 @@ void WebContentsView::DidAttachInterstitialPage() {
   // Content takes care of adjusting visibility and sending focus / resize
   // messages, so there's nothing else to do with |rwhv|
 
-  TouchSelectionChanged(false);
+  EditingCapabilitiesChanged(rwhv),
+  TouchSelectionChanged(rwhv, false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -524,7 +527,8 @@ void WebContentsView::DidDetachInterstitialPage() {
     orig_rwhv->SetSize(GetSize());
   }
 
-  TouchSelectionChanged(false);
+  EditingCapabilitiesChanged(orig_rwhv);
+  TouchSelectionChanged(orig_rwhv, false);
 }
 
 bool WebContentsView::OnMessageReceived(
@@ -619,29 +623,20 @@ void WebContentsView::DetachLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
-void WebContentsView::CursorChanged() {
+void WebContentsView::CursorChanged(RenderWidgetHostView* view) {
   if (!client_) {
     return;
   }
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
+  if (view != GetRenderWidgetHostView()) {
     return;
   }
 
-  client_->UpdateCursor(rwhv->current_cursor());
+  client_->UpdateCursor(view ? view->current_cursor() : content::WebCursor());
 }
 
 gfx::Size WebContentsView::GetViewSizeInPixels() const {
   return GetSizeInPixels();
-}
-
-bool WebContentsView::HasFocus(const RenderWidgetHostView* view) const {
-  if (!HasFocus()) {
-    return false;
-  }
-
-  return view == GetRenderWidgetHostView();
 }
 
 bool WebContentsView::IsFullscreen() const {
@@ -672,34 +667,43 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
 }
 
 void WebContentsView::TouchSelectionChanged(
+    RenderWidgetHostView* view,
     bool handle_drag_in_progress) const {
   if (!client_) {
     return;
   }
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
+  if (view != GetRenderWidgetHostView()) {
     return;
   }
 
-  ui::TouchSelectionController* controller = rwhv->selection_controller();
+  ui::TouchSelectionController* controller =
+      view ? view->selection_controller() : nullptr;
   bool active =
-      (controller->active_status() != ui::TouchSelectionController::INACTIVE);
+      controller ? (controller->active_status() !=
+                    ui::TouchSelectionController::INACTIVE) : false;
 
-  gfx::RectF bounds = controller->GetRectBetweenBounds();
+  gfx::RectF bounds;
+  if (controller) {
+    bounds = controller->GetRectBetweenBounds();
+  }
 
   // TODO: Add LocationBarController class
   float offset = 0.f;
-  WebView* view = WebView::FromWebContents(web_contents());
-  if (view) {
-    offset = view->GetLocationBarContentOffset();
+  WebView* web_view = WebView::FromWebContents(web_contents());
+  if (web_view) {
+    offset = web_view->GetLocationBarContentOffset();
   }
   bounds.Offset(0, offset);
 
   client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
 }
 
-void WebContentsView::EditingCapabilitiesChanged() {
+void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
   if (!editing_capabilities_changed_callback_.is_null()) {
     editing_capabilities_changed_callback_.Run();
   }
@@ -764,8 +768,8 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
   ScreenUpdated();
 
   // Update client from view
-  CursorChanged();
-  TouchSelectionChanged(false);
+  CursorChanged(GetRenderWidgetHostView());
+  TouchSelectionChanged(GetRenderWidgetHostView(), false);
 }
 
 bool WebContentsView::IsVisible() const {
