@@ -356,7 +356,6 @@ void WebView::MaybeCancelFullscreenMode() {
 }
 
 void WebView::EditingCapabilitiesChanged() {
-  TRACE_EVENT0("input", "oxide::WebView::EditingCapabilitiesChanged");
   blink::WebContextMenuData::EditFlags flags =
       blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
