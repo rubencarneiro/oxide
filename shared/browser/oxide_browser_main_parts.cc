@@ -43,6 +43,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/init/gl_factory.h"
 
+#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
 #include "shared/common/oxide_content_client.h"

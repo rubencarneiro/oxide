@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,26 +15,22 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_CLIPBOARD_QT_H_
-#define _OXIDE_QT_CORE_BROWSER_CLIPBOARD_QT_H_
+#ifndef _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_DUMMY_IMPL_H_
+#define _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_DUMMY_IMPL_H_
 
-#include <memory>
+#include "base/macros.h"
 
-#include "ui/base/clipboard/clipboard.h"
-
-class QMimeData;
-class ClipboardChangedListener;
+#include "shared/browser/clipboard/oxide_clipboard.h"
 
 namespace oxide {
-namespace qt {
 
-class Clipboard : public ui::Clipboard {
+class ClipboardDummyImpl : public Clipboard {
  public:
-  Clipboard();
-  ~Clipboard() override;
+  ClipboardDummyImpl();
+  ~ClipboardDummyImpl() override;
 
  private:
-  // ui::Clipboard overrides
+  // ui::Clipboard implementation
   uint64_t GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;
@@ -43,7 +39,8 @@ class Clipboard : public ui::Clipboard {
                           std::vector<base::string16>* types,
                           bool* contains_filenames) const override;
   void ReadText(ui::ClipboardType type, base::string16* result) const override;
-  void ReadAsciiText(ui::ClipboardType type, std::string* result) const override;
+  void ReadAsciiText(ui::ClipboardType type,
+                     std::string* result) const override;
   void ReadHTML(ui::ClipboardType type,
                 base::string16* markup,
                 std::string* src_url,
@@ -56,7 +53,7 @@ class Clipboard : public ui::Clipboard {
                       base::string16* result) const override;
   void ReadBookmark(base::string16* title, std::string* url) const override;
   void ReadData(const FormatType& format, std::string* result) const override;
-  void WriteObjects(ui::ClipboardType type, const ui::Clipboard::ObjectMap& objects) override;
+  void WriteObjects(ui::ClipboardType type, const ObjectMap& objects) override;
   void WriteText(const char* text_data, size_t text_len) override;
   void WriteHTML(const char* markup_data,
                  size_t markup_len,
@@ -73,16 +70,9 @@ class Clipboard : public ui::Clipboard {
                  const char* data_data,
                  size_t data_len) override;
 
- private:
-  std::unique_ptr<ClipboardChangedListener> clipboard_changed_listener_;
-  
-  // Used for accumulated mimedata
-  std::unique_ptr<QMimeData> write_mime_data_acc_;
-  
-  DISALLOW_COPY_AND_ASSIGN(Clipboard);
+  DISALLOW_COPY_AND_ASSIGN(ClipboardDummyImpl);
 };
 
-}  // namespace qt
-}  // namespace oxide
+} // namespace oxide
 
-#endif  // _OXIDE_QT_CORE_BROWSER_CLIPBOARD_QT_H_
+#endif // _OXIDE_SHARED_BROWSER_CLIPBOARD_CLIPBOARD_DUMMY_IMPL_H_

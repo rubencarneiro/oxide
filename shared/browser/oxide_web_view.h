@@ -40,8 +40,8 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/clipboard/oxide_clipboard_observer.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
-#include "shared/browser/oxide_browser_platform_integration_observer.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
@@ -105,7 +105,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                     private content::NotificationObserver,
                                     private content::WebContentsDelegate,
                                     private content::WebContentsObserver,
-                                    private BrowserPlatformIntegrationObserver {
+                                    private ClipboardObserver {
  public:
 
   struct CommonParams {
@@ -413,8 +413,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) override;
 
-  // BrowserPlatformIntegrationObserver implementation
-  void ClipboardDataChanged() override;
+  // ClipboardObserver implementation
+  void ClipboardDataChanged(ui::ClipboardType type) override;
 
   WebViewClient* client_;
 

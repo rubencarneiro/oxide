@@ -34,13 +34,10 @@ namespace content {
 class LocationProvider;
 }
 
-namespace ui {
-class Clipboard;
-}
-
 namespace oxide {
 
 class BrowserPlatformIntegrationObserver;
+class Clipboard;
 class DragSource;
 class DragSourceClient;
 class GLContextDependent;
@@ -94,8 +91,8 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
   // the applications UI event loop
   virtual std::unique_ptr<MessagePump> CreateUIMessagePump() = 0;
 
-  // Create a ui::Clipboard implementation. Can return nullptr
-  virtual ui::Clipboard* CreateClipboard();
+  // Create a Clipboard implementation
+  virtual Clipboard* CreateClipboard();
 
   // Called on the specified browser thread
   virtual void BrowserThreadInit(content::BrowserThread::ID id);
@@ -128,8 +125,6 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
   BrowserPlatformIntegration();
 
   void NotifyApplicationStateChanged();
-
-  void NotifyClipboardDataChanged();
 
  private:
   friend class BrowserPlatformIntegrationObserver;

@@ -17,26 +17,12 @@
 
 #include "oxide_qt_clipboard.h"
 
-#include <list>
-#include <set>
-
-#include "base/files/file_path.h"
 #include "base/logging.h"
-#include "base/memory/ref_counted_memory.h"
-#include "base/memory/singleton.h"
-#include "base/metrics/histogram.h"
-#include "base/stl_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "third_party/skia/include/core/SkImageInfo.h"
 #include "ui/base/clipboard/custom_data_helper.h"
-#include "ui/events/platform/platform_event_dispatcher.h"
-#include "ui/events/platform/platform_event_observer.h"
-#include "ui/events/platform/platform_event_source.h"
-#include "ui/gfx/codec/png_codec.h"
-#include "ui/gfx/geometry/size.h"
 
-#include <QDebug>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QImage>
@@ -44,45 +30,20 @@
 #include <QObject>
 #include <QString>
 
-
 #define GET_CLIPBOARD_DATA(c) \
   c->mimeData( \
        type == ui::CLIPBOARD_TYPE_COPY_PASTE ? \
        QClipboard::Clipboard \
        : QClipboard::Selection)
 
-class ClipboardChangedListener : public QObject {
-  Q_OBJECT
-  
- public:
-  ClipboardChangedListener();
-  uint64_t clipboard_sequence_number() const {
-    return clipboard_sequence_number_;
-  }
-  uint64_t selection_sequence_number() const {
-    return selection_sequence_number_;
-  }
- private Q_SLOTS:
-  void OnClipboardDataChanged(QClipboard::Mode mode);
- private:
-  uint64_t clipboard_sequence_number_;
-  uint64_t selection_sequence_number_;
+namespace oxide {
+namespace qt {
 
-  Q_DISABLE_COPY(ClipboardChangedListener);
-};
-
-ClipboardChangedListener::ClipboardChangedListener()
-  : clipboard_sequence_number_(0),
-    selection_sequence_number_(0) {
-  QObject::connect(
-      QGuiApplication::clipboard(),
-      SIGNAL(changed(QClipboard::Mode)),
-      this,
-      SLOT(OnClipboardDataChanged(QClipboard::Mode)));
+namespace {
+const char kMimeTypeWebkitSmartPaste[] = "chromium/x-webkit-paste";
 }
 
-void ClipboardChangedListener::OnClipboardDataChanged(
-      QClipboard::Mode mode) {
+void Clipboard::OnClipboardChanged(QClipboard::Mode mode) {
   switch (mode) {
     case QClipboard::Clipboard:
       ++clipboard_sequence_number_;
@@ -95,24 +56,14 @@ void ClipboardChangedListener::OnClipboardDataChanged(
   }
 }
 
-namespace oxide {
-
-namespace qt {
-
-namespace {
-
-const char kMimeTypeWebkitSmartPaste[] = "chromium/x-webkit-paste";
-
+void Clipboard::OnClipboardDataChanged() {
+  NotifyClipboardDataChanged(ui::CLIPBOARD_TYPE_COPY_PASTE);
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// ClipboardAuraX11
 
 uint64_t Clipboard::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
-  return type == ui::CLIPBOARD_TYPE_COPY_PASTE
-    ? clipboard_changed_listener_->clipboard_sequence_number()
-    : clipboard_changed_listener_->selection_sequence_number();
+  return type == ui::CLIPBOARD_TYPE_COPY_PASTE ?
+      clipboard_sequence_number_ : selection_sequence_number_;
 }
 
 bool Clipboard::IsFormatAvailable(const FormatType& format,
@@ -120,8 +71,8 @@ bool Clipboard::IsFormatAvailable(const FormatType& format,
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data) {
     return false;
   }
 
@@ -139,11 +90,11 @@ void Clipboard::ReadAvailableTypes(ui::ClipboardType type,
                                    bool* contains_filenames) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
-  DCHECK(types != nullptr);
-  DCHECK(contains_filenames != nullptr);
+  DCHECK(types);
+  DCHECK(contains_filenames);
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data) {
     return;
   }
 
@@ -162,8 +113,8 @@ void Clipboard::ReadText(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data || ! data->hasText()) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data || !data->hasText()) {
     return;
   }
 
@@ -175,8 +126,8 @@ void Clipboard::ReadAsciiText(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data || ! data->hasText()) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data || !data->hasText()) {
     return;
   }
 
@@ -191,8 +142,8 @@ void Clipboard::ReadHTML(ui::ClipboardType type,
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data || ! data->hasHtml()) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data || !data->hasHtml()) {
     return;
   }
 
@@ -206,8 +157,8 @@ void Clipboard::ReadRTF(ui::ClipboardType type, std::string* result) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! data || ! data->hasFormat(QString::fromLatin1(kMimeTypeRTF))) {
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!data || !data->hasFormat(QString::fromLatin1(kMimeTypeRTF))) {
     return;
   }
 
@@ -218,8 +169,8 @@ SkBitmap Clipboard::ReadImage(ui::ClipboardType type) const {
   DCHECK(IsSupportedClipboardType(type));
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *md = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
-  if ( ! md) {
+  const QMimeData* md = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  if (!md) {
     return SkBitmap();
   }
 
@@ -243,11 +194,9 @@ SkBitmap Clipboard::ReadImage(ui::ClipboardType type) const {
   }
 
   SkBitmap bitmap;
-  bitmap.setInfo(
-      SkImageInfo::MakeN32(
-          image.width(),
-          image.height(),
-          kOpaque_SkAlphaType));
+  bitmap.setInfo(SkImageInfo::MakeN32(image.width(),
+                                      image.height(),
+                                      kOpaque_SkAlphaType));
   
   bitmap.setPixels(const_cast<uchar*>(image.constBits()));
 
@@ -263,9 +212,9 @@ void Clipboard::ReadCustomData(ui::ClipboardType type,
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
   
-  const QMimeData *data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
+  const QMimeData* data = GET_CLIPBOARD_DATA(QGuiApplication::clipboard());
   QString mime_type = QString::fromStdString(base::UTF16ToUTF8(data_type));
-  if ( ! data || ! data->hasFormat(mime_type)) {
+  if (!data || !data->hasFormat(mime_type)) {
     return;
   }
 
@@ -285,8 +234,9 @@ void Clipboard::ReadData(const FormatType& format,
                          std::string* result) const {
   DCHECK(CalledOnValidThread());
 
-  const QMimeData *data = QGuiApplication::clipboard()->mimeData(QClipboard::Clipboard);
-  if ( ! data) {
+  const QMimeData* data =
+      QGuiApplication::clipboard()->mimeData(QClipboard::Clipboard);
+  if (!data) {
     return;
   }
 
@@ -298,25 +248,25 @@ void Clipboard::WriteObjects(ui::ClipboardType type,
   DCHECK(CalledOnValidThread());
   DCHECK(IsSupportedClipboardType(type));
 
-  if (! write_mime_data_acc_) {
+  if (!write_mime_data_acc_) {
     write_mime_data_acc_.reset(new QMimeData());
   }
 
   // dispatch all objects and gather the resulting mime data
   for (ObjectMap::const_iterator iter = objects.begin();
-       iter != objects.end();
-       ++iter) {
+       iter != objects.end(); ++iter) {
     DispatchObject(static_cast<ObjectType>(iter->first), iter->second);
   }
 
   QGuiApplication::clipboard()->setMimeData(
       write_mime_data_acc_.release(),
-      type == ui::CLIPBOARD_TYPE_COPY_PASTE
-      ? QClipboard::Clipboard
-      : QClipboard::Selection);
+      type == ui::CLIPBOARD_TYPE_COPY_PASTE ?
+          QClipboard::Clipboard
+          : QClipboard::Selection);
 }
 
 void Clipboard::WriteText(const char* text_data, size_t text_len) {
+  DCHECK(CalledOnValidThread());
   write_mime_data_acc_->setText(QString::fromUtf8(text_data, text_len));
 }
 
@@ -324,12 +274,14 @@ void Clipboard::WriteHTML(const char* markup_data,
                           size_t markup_len,
                           const char* url_data,
                           size_t url_len) {
-  write_mime_data_acc_->setHtml(
-      QString::fromUtf8(markup_data, markup_len));
+  DCHECK(CalledOnValidThread());
+  write_mime_data_acc_->setHtml(QString::fromUtf8(markup_data, markup_len));
 }
 
 void Clipboard::WriteRTF(const char* rtf_data, size_t data_len) {
-  write_mime_data_acc_->setData(QString::fromLatin1(kMimeTypeRTF), QByteArray(rtf_data, data_len));
+  DCHECK(CalledOnValidThread());
+  write_mime_data_acc_->setData(QString::fromLatin1(kMimeTypeRTF),
+                                QByteArray(rtf_data, data_len));
 }
 
 void Clipboard::WriteBookmark(const char* title_data,
@@ -340,39 +292,37 @@ void Clipboard::WriteBookmark(const char* title_data,
 }
 
 void Clipboard::WriteWebSmartPaste() {
+  DCHECK(CalledOnValidThread());
   write_mime_data_acc_->setData(
       QString::fromLatin1(kMimeTypeWebkitSmartPaste),
       QByteArray());
 }
 
 void Clipboard::WriteBitmap(const SkBitmap& bitmap) {
+  DCHECK(CalledOnValidThread());
   QImage image;
   if (bitmap.info().colorType() != kN32_SkColorType) {
     SkImageInfo info =
-      SkImageInfo::MakeN32(
-        bitmap.width(),
-        bitmap.height(),
-        bitmap.alphaType());
+        SkImageInfo::MakeN32(bitmap.width(),
+                             bitmap.height(),
+                             bitmap.alphaType());
 
     SkBitmap convertedBitmap;
     if (!convertedBitmap.tryAllocPixels(info)) {
       return;
     }
 
-    bitmap.readPixels(
-        info,
-        convertedBitmap.getPixels(),
-        0, 0, 0);
+    bitmap.readPixels(info, convertedBitmap.getPixels(), 0, 0, 0);
 
     image = QImage(reinterpret_cast<const uchar *>(convertedBitmap.getPixels()),
-        bitmap.width(),
-        bitmap.height(),
-        QImage::Format_RGBA8888);
+                   bitmap.width(),
+                   bitmap.height(),
+                   QImage::Format_RGBA8888);
   } else {
     image = QImage(reinterpret_cast<const uchar *>(bitmap.getPixels()),
-        bitmap.width(),
-        bitmap.height(),
-        QImage::Format_RGBA8888);
+                   bitmap.width(),
+                   bitmap.height(),
+                   QImage::Format_RGBA8888);
   }
 
   write_mime_data_acc_->setImageData(image.copy());
@@ -381,15 +331,22 @@ void Clipboard::WriteBitmap(const SkBitmap& bitmap) {
 void Clipboard::WriteData(const FormatType& format,
                           const char* data_data,
                           size_t data_len) {
+  DCHECK(CalledOnValidThread());
   write_mime_data_acc_->setData(
       QString::fromStdString(format.ToString()),
       QByteArray(data_data, data_len));
 }
 
 Clipboard::Clipboard()
-  : clipboard_changed_listener_(new ClipboardChangedListener()),
+  : clipboard_sequence_number_(0),
+    selection_sequence_number_(0),
     write_mime_data_acc_(new QMimeData()) {
   DCHECK(CalledOnValidThread());
+
+  connect(QGuiApplication::clipboard(), SIGNAL(changed(QClipboard::Mode)),
+          SLOT(OnClipboardChanged(QClipboard::Mode)));
+  connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
+          SLOT(OnClipboardDataChanged()));
 }
 
 Clipboard::~Clipboard() {
@@ -398,5 +355,3 @@ Clipboard::~Clipboard() {
 
 } // namespace qt
 } // namespace oxide
-
-#include "oxide_qt_clipboard.moc"

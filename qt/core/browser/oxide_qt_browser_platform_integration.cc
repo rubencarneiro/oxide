@@ -17,7 +17,6 @@
 
 #include "oxide_qt_browser_platform_integration.h"
 
-#include <QClipboard>
 #include <QDesktopServices>
 #include <QEvent>
 #include <QGuiApplication>
@@ -36,12 +35,12 @@
 #include "content/public/browser/browser_thread.h"
 #include "url/gurl.h"
 
+#include "qt/core/browser/clipboard/oxide_qt_clipboard.h"
 #include "qt/core/glue/oxide_qt_init.h"
 #include "qt/core/gpu/oxide_qt_gl_context_dependent.h"
 
 #include "oxide_qt_browser_startup.h"
 #include "oxide_qt_browser_thread_q_event_dispatcher.h"
-#include "oxide_qt_clipboard.h"
 #include "oxide_qt_drag_source.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
@@ -82,10 +81,6 @@ CalculateApplicationState(bool suspended) {
 
 void BrowserPlatformIntegration::OnApplicationStateChanged() {
   UpdateApplicationState();
-}
-
-void BrowserPlatformIntegration::OnClipboardDataChanged() {
-  NotifyClipboardDataChanged();
 }
 
 void BrowserPlatformIntegration::UpdateApplicationState() {
@@ -145,7 +140,7 @@ BrowserPlatformIntegration::CreateUIMessagePump() {
   return base::WrapUnique(new MessagePump());
 }
 
-ui::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
+oxide::Clipboard* BrowserPlatformIntegration::CreateClipboard() {
   return new Clipboard();
 }
 
@@ -210,8 +205,6 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
       screen_client_(new ScreenClient()) {
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
-  connect(QGuiApplication::clipboard(), SIGNAL(dataChanged()),
-          SLOT(OnClipboardDataChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {
     qApp->installEventFilter(this);
   }

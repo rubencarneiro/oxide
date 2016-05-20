@@ -53,7 +53,7 @@ class RenderWidgetHostViewContainer {
 
   virtual void DetachLayer(scoped_refptr<cc::Layer> layer) = 0;
 
-  virtual void CursorChanged() = 0;
+  virtual void CursorChanged(RenderWidgetHostView* view) = 0;
 
   virtual gfx::Size GetViewSizeInPixels() const = 0;
 
@@ -62,9 +62,7 @@ class RenderWidgetHostViewContainer {
   // TODO(chrisccoulson): Return a gfx::Display here
   virtual blink::WebScreenInfo GetScreenInfo() const = 0;
 
-  virtual bool HasFocus(const RenderWidgetHostView* view) const = 0;
-
-  virtual bool IsVisible() const = 0;
+  virtual bool HasFocus() const = 0;
 
   virtual bool IsFullscreen() const = 0;
 
@@ -72,9 +70,10 @@ class RenderWidgetHostViewContainer {
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
-  virtual void TouchSelectionChanged(bool handle_drag_in_progress) const = 0;
+  virtual void TouchSelectionChanged(RenderWidgetHostView* view,
+                                     bool handle_drag_in_progress) const = 0;
 
-  virtual void EditingCapabilitiesChanged() = 0;
+  virtual void EditingCapabilitiesChanged(RenderWidgetHostView* view) = 0;
 };
 
 } // namespace oxide

@@ -94,6 +94,7 @@
         '<(INTERMEDIATE_DIR)/moc_oxideqsslcertificate.cc',
         '<(INTERMEDIATE_DIR)/moc_oxideqwebpreferences.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_browser_platform_integration.cc',
+        '<(INTERMEDIATE_DIR)/moc_oxide_qt_clipboard.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_input_method_context.cc',
         '<(INTERMEDIATE_DIR)/moc_oxide_qt_screen_client.cc',
         'api/oxideqcertificateerror.cc',
@@ -139,6 +140,8 @@
         'app/oxide_qt_main.h',
         'app/oxide_qt_platform_delegate.cc',
         'app/oxide_qt_platform_delegate.h',
+        'browser/clipboard/oxide_qt_clipboard.cc',
+        'browser/clipboard/oxide_qt_clipboard.h',
         'browser/input/oxide_qt_input_method_context.cc',
         'browser/input/oxide_qt_input_method_context.h',
         'browser/input/oxide_qt_input_method_context_client.h',
@@ -148,8 +151,6 @@
         'browser/oxide_qt_browser_startup.h',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.cc',
         'browser/oxide_qt_browser_thread_q_event_dispatcher.h',
-        'browser/oxide_qt_clipboard.cc',
-        'browser/oxide_qt_clipboard.h',
         'browser/oxide_qt_contents_view.cc',
         'browser/oxide_qt_contents_view.h',
         'browser/oxide_qt_dpi_utils.cc',
@@ -319,6 +320,11 @@
           'includes': [ 'moc.gypi' ]
         },
         {
+          'action_name': 'moc_oxide_qt_clipboard.cc',
+          'moc_input': 'browser/clipboard/oxide_qt_clipboard.h',
+          'includes': [ 'moc.gypi' ]
+        },
+        {
           'action_name': 'moc_oxide_qt_input_method_context.cc',
           'moc_input': 'browser/input/oxide_qt_input_method_context.h',
           'includes': [ 'moc.gypi' ]
@@ -326,11 +332,6 @@
         {
           'action_name': 'moc_oxide_qt_screen_client.cc',
           'moc_input': 'browser/oxide_qt_screen_client.h',
-          'includes': [ 'moc.gypi' ]
-        },
-        {
-          'action_name': 'oxide_qt_clipboard.moc',
-          'moc_input': 'browser/oxide_qt_clipboard.cc',
           'includes': [ 'moc.gypi' ]
         },
         {
