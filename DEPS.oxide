@@ -1,12 +1,12 @@
 {
   "src": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/chromium", 
-    "rev": "da3a2905ba0c53d8fd0eea5dd6f50f6774f994e3", 
+    "rev": "889eb272a8b5aef7a011ef27c606a87ed1f04f40", 
     "upstream": "https://chromium.googlesource.com/chromium/src.git"
   }, 
   "src/third_party/icu": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/icu", 
-    "rev": "d78a483ecca2ccccfa1013e5942d8ebfead879c2", 
+    "rev": "ada6a1394d3e4ec19d9c66f6c141d76c4797ccb6", 
     "upstream": "https://chromium.googlesource.com/chromium/deps/icu"
   }, 
   "src/tools/gyp": {
