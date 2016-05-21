@@ -613,16 +613,26 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.globalX = global_pos.x();
   result.globalY = global_pos.y();
 
-  // See comment in third_party/WebKit/Source/web/gtk/WebInputEventFactory.cpp
-  static const float scrollbarPixelsPerTick = 160.0f / 3.0f;
+  QPoint delta = event->angleDelta();
+  QPoint pixels = event->pixelDelta();
 
-  // angelDelta unit is 0.125degrees
-  // 1 tick = 15degrees = (120*0.125)degrees
-  QPoint delta(event->angleDelta());
-  result.wheelTicksX = delta.x() / 120.0f;
-  result.wheelTicksY = delta.y() / 120.0f;
-  result.deltaX = result.wheelTicksX * scrollbarPixelsPerTick;
-  result.deltaY = result.wheelTicksY * scrollbarPixelsPerTick;
+  static const int kPixelsPerTick = 53;
+
+  if (!pixels.isNull()) {
+    gfx::Point p = DpiUtils::ConvertQtPixelsToChromium(ToChromium(pixels),
+                                                       screen);
+    result.deltaX = p.x();
+    result.deltaY = p.y();
+    result.wheelTicksX = result.deltaX / kPixelsPerTick;
+    result.wheelTicksY = result.deltaY / kPixelsPerTick;
+  } else {
+    // angelDelta unit is 0.125degrees
+    // Assuming 1 tick == 15degrees, then 1 tick == (120*0.125)degrees
+    result.wheelTicksX = delta.x() / 120.0f;
+    result.wheelTicksY = delta.y() / 120.0f;
+    result.deltaX = result.wheelTicksX * kPixelsPerTick;
+    result.deltaY = result.wheelTicksY * kPixelsPerTick;
+  }
 
   return result;
 }
