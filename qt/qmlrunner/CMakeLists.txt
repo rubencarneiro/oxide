@@ -31,7 +31,7 @@ target_link_libraries(
     ${Qt5Core_LIBRARIES}
     ${Qt5Gui_LIBRARIES}
     ${Qt5Qml_LIBRARIES}
-    ${Qt5Quick_LIBRARIES}
+    ${Qt5Quick_LIBRARIES})
 target_include_directories(
     ${OXIDE_QMLRUNNER} PRIVATE
     ${Qt5Core_PRIVATE_INCLUDE_DIRS}
