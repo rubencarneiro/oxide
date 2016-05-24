@@ -16,13 +16,13 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(DEFINED _OxideCommonProperties_INCLUDED_)
+if(DEFINED _Oxide_CommonProperties_INCLUDED_)
   return()
 endif()
-set(_OxideCommonProperties_INCLUDED_ TRUE)
+set(_Oxide_CommonProperties_INCLUDED_ TRUE)
 
 include(GNUInstallDirs)
-include(OxideCommonOptions)
+include(CommonOptions)
 
 set(OXIDE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -31,7 +31,7 @@ set(OXIDE_PLATFORM_FULLNAME oxide-${OXIDE_PLATFORM})
 # This is based on Debian changes to GNUInstallDirs.cmake, and ensures we
 # install headers in to a multi-arch location
 set(_INCLUDEDIR_DEFAULT ${CMAKE_INSTALL_INCLUDEDIR})
-if(DEFINED _OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX)
+if(DEFINED _Oxide_CommonProperties_LAST_CMAKE_INSTALL_PREFIX)
   set(__LAST_INCLUDEDIR_DEFAULT ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|kFreeBSD|GNU)$" AND
@@ -41,8 +41,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|kFreeBSD|GNU)$" AND
   if("${CMAKE_INSTALL_PREFIX}" MATCHES "^/usr/?$")
     set(_INCLUDEDIR_DEFAULT "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LIBRARY_ARCHITECTURE}")
   endif()
-  if(DEFINED _OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX
-       AND "${_OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX}" MATCHES "^/usr/?$")
+  if(DEFINED _Oxide_CommonProperties_LAST_CMAKE_INSTALL_PREFIX
+       AND "${_Oxide_CommonProperties_LAST_CMAKE_INSTALL_PREFIX}" MATCHES "^/usr/?$")
     set(__LAST_INCLUDEDIR_DEFAULT "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
   endif()
 endif()
@@ -52,7 +52,7 @@ elseif(DEFINED __LAST_INCLUDEDIR_DEFAULT
          AND "${__LAST_INCLUDEDIR_DEFAULT}" STREQUAL "${CMAKE_INSTALL_INCLUDEDIR}")
   set_property(CACHE OXIDE_INSTALL_INCLUDEDIR PROPERTY VALUE "${_INCLUDEDIR_DEFAULT}")
 endif()
-set(_OxideCommonProperties_LAST_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE INTERNAL "CMAKE_INSTALL_PREFIX during last run")
+set(_Oxide_CommonProperties_LAST_CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE INTERNAL "CMAKE_INSTALL_PREFIX during last run")
 unset(_INCLUDEDIR_DEFAULT)
 unset(__LAST_INCLUDEDIR_DEFAULT)
 

@@ -16,10 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(DEFINED _OxideCommonOptions_INCLUDED_)
+if(DEFINED _Oxide_CommonOptions_INCLUDED_)
   return()
 endif()
-set(_OxideCommonOptions_INCLUDED_ TRUE)
+set(_Oxide_CommonOptions_INCLUDED_ TRUE)
 
 option(OXIDE_PLATFORM "The Oxide project to build")
 option(ENABLE_COMPONENT_BUILD

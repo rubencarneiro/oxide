@@ -18,8 +18,8 @@
 
 include(GNUInstallDirs)
 
-include(OxideCommonProperties)
-include(OxidePackageConfigHelper)
+include(CommonProperties)
+include(PackageConfigHelper)
 
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)

@@ -22,9 +22,9 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
-include(OxideCommonOptions)
-include(OxideCommonProperties)
-include(OxideLibUtils)
+include(CommonOptions)
+include(CommonProperties)
+include(LibUtils)
 
 # Define variables used throughout the build
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")

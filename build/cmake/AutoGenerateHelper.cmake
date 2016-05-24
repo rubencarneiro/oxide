@@ -22,7 +22,7 @@ endif()
 set(_AutoGenerateHelper_INCLUDED_ TRUE)
 
 include(CMakeParseArguments)
-include(OxideCommonProperties)
+include(CommonProperties)
 
 function(auto_generate_file)
   cmake_parse_arguments(_ARGS "" "INPUT;OUTPUT" "VARS" "${ARGN}")

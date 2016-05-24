@@ -16,12 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(DEFINED _OxidePackageConfigHelper_INCLUDED_)
+if(DEFINED _Oxide_PackageConfigHelper_INCLUDED_)
   return()
 endif()
-set(_OxidePackageConfigHelper_INCLUDED_ TRUE)
+set(_Oxide_PackageConfigHelper_INCLUDED_ TRUE)
 
-include(OxideCommonProperties)
+include(CommonProperties)
 include(CMakePackageConfigHelpers)
 
 function(configure_and_install_package_config_file _inPath)
