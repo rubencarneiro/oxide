@@ -91,7 +91,8 @@ class ResourceDispatcherHostDelegate
       const content::ResourceRequestInfo::WebContentsGetter& web_contents_getter,
       bool is_main_frame,
       ui::PageTransition page_transition,
-      bool has_user_gesture) override;
+      bool has_user_gesture,
+      content::ResourceContext* resource_context) override;
 
   content::ResourceDispatcherHostLoginDelegate* CreateLoginDelegate(
       net::AuthChallengeInfo* auth_info,

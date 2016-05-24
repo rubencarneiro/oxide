@@ -41,7 +41,7 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
     CompositorOutputSurfaceListener* listener)
-    : CompositorOutputSurface(surface_id, context_provider, listener),
+    : CompositorOutputSurface(surface_id, context_provider, nullptr, listener),
       back_buffer_(nullptr),
       is_backbuffer_discarded_(false),
       fbo_(0) {

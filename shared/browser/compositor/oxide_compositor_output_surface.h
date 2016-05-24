@@ -49,6 +49,12 @@ class CompositorOutputSurface : public cc::OutputSurface {
   CompositorOutputSurface(
       uint32_t surface_id,
       scoped_refptr<cc::ContextProvider> context_provider,
+      std::unique_ptr<cc::SoftwareOutputDevice> software_device,
+      CompositorOutputSurfaceListener* listener);
+
+  CompositorOutputSurface(
+      uint32_t surface_id,
+      scoped_refptr<cc::ContextProvider> context_provider,
       CompositorOutputSurfaceListener* listener);
   CompositorOutputSurface(
       uint32_t surface_id,

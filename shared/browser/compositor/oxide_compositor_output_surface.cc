@@ -35,20 +35,9 @@ namespace oxide {
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
-    CompositorOutputSurfaceListener* listener)
-    : cc::OutputSurface(context_provider),
-      listener_(listener),
-      surface_id_(surface_id),
-      begin_frame_source_(
-          new cc::SyntheticBeginFrameSource(
-              base::ThreadTaskRunnerHandle::Get().get(),
-              cc::BeginFrameArgs::DefaultInterval())) {}
-
-CompositorOutputSurface::CompositorOutputSurface(
-    uint32_t surface_id,
     std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
-    : cc::OutputSurface(std::move(software_device)),
+    : cc::OutputSurface(context_provider, nullptr, std::move(software_device)),
       listener_(listener),
       surface_id_(surface_id),
       begin_frame_source_(

@@ -260,7 +260,8 @@ bool ResourceDispatcherHostDelegate::HandleExternalProtocol(
     const content::ResourceRequestInfo::WebContentsGetter& web_contents_getter,
     bool is_main_frame,
     ui::PageTransition page_transition,
-    bool has_user_gesture) {
+    bool has_user_gesture,
+    content::ResourceContext* resource_context) {
   return BrowserPlatformIntegration::GetInstance()->LaunchURLExternally(url);
 }
 
