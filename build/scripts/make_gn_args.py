@@ -79,12 +79,23 @@ class ArgsGnWriter(object):
   def WriteString(self, prop, val):
     self._output_stream.write("%s = \"%s\"\n" % (prop, val))
 
+  def WriteStringList(self, prop, *args):
+    self._output_stream.write("%s = [ " % prop)
+    first_entry = True
+    for arg in args:
+      if not first_entry:
+        self._output_stream.write(", ")
+      first_entry = False
+      self._output_stream.write("\"%s\"" % arg)
+    self._output_stream.write(" ]\n")
+
   def SaveToFile(self, path):
     with open(path, "w") as fd:
       fd.write(self._output_stream.getvalue())
 
 def WriteStaticArgs(writer):
   writer.WriteBool("is_oxide", True)
+  writer.WriteStringList("root_extra_deps", "//oxide:oxide_all")
 
   # TODO(chrisccoulson): Support clang builds
   writer.WriteBool("is_clang", False)
