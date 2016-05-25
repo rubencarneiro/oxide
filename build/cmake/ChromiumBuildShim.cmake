@@ -26,7 +26,23 @@ include(CommonOptions)
 include(CommonProperties)
 include(LibFilenameUtils)
 
-function(run_gn)
+function(add_chromium_build_all_target name)
+  find_program(NINJA ninja)
+  if(NINJA STREQUAL "NINJA-NOTFOUND")
+    message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+  endif()
+  set(NINJA_CMD ${NINJA} -C ${CHROMIUM_OUTPUT_DIR})
+  if(CMAKE_VERBOSE_MAKEFILE)
+    list(APPEND NINJA_CMD -v)
+  endif()
+  list(APPEND NINJA_CMD oxide_all)
+  add_custom_target(
+      ${name} ALL COMMAND ${NINJA_CMD}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMENT "Running the Chromium build all target")
+endfunction()
+
+function(run_generate_ninja)
   if(NOT DEFINED OXIDE_LIB OR
      NOT DEFINED OXIDE_LIB_VERSION OR
      NOT DEFINED OXIDE_RENDERER)

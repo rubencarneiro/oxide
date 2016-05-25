@@ -85,21 +85,25 @@ if(ENABLE_TESTS)
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)
 endif()
 
-# Add one target for running "ninja all" on the gyp generated bits.
-# ${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi lists the targets that "all" depends on
-find_program(_NINJA_EXE ninja)
-if(_NINJA_EXE STREQUAL "_NINJA_EXE-NOTFOUND")
-  message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+if(USE_GN)
+  add_chromium_build_all_target(build_all)
+else()
+  # Add one target for running "ninja all" on the gyp generated bits.
+  # ${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi lists the targets that "all" depends on
+  find_program(_NINJA_EXE ninja)
+  if(_NINJA_EXE STREQUAL "_NINJA_EXE-NOTFOUND")
+    message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+  endif()
+  set(_NINJA_BUILD_COMMAND ${_NINJA_EXE} -C ${CHROMIUM_PRODUCT_DIR})
+  if(CMAKE_VERBOSE_MAKEFILE)
+    list(APPEND _NINJA_BUILD_COMMAND -v)
+  endif()
+  list(APPEND _NINJA_BUILD_COMMAND all)
+  add_custom_target(
+      build_all ALL COMMAND ${_NINJA_BUILD_COMMAND}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMENT "Running the build_all target")
 endif()
-set(_NINJA_BUILD_COMMAND ${_NINJA_EXE} -C ${CHROMIUM_PRODUCT_DIR})
-if(CMAKE_VERBOSE_MAKEFILE)
-  list(APPEND _NINJA_BUILD_COMMAND -v)
-endif()
-list(APPEND _NINJA_BUILD_COMMAND all)
-add_custom_target(
-    build_all ALL COMMAND ${_NINJA_BUILD_COMMAND}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running the build_all target")
 
 # Copy chrome_sandbox to chrome-sandbox
 add_custom_target(
@@ -208,7 +212,7 @@ add_custom_target(
     DEPENDS test-package-common test-package-${OXIDE_PLATFORM})
 
 if(USE_GN)
-  run_gn()
+  run_generate_ninja()
 else()
   # Build the gyp command
   set(_GYP_COMMAND
