@@ -24,7 +24,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
 include(CommonOptions)
 include(CommonProperties)
-include(LibUtils)
+include(LibFilenameUtils)
 
 # Define variables used throughout the build
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -76,8 +76,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include(${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/config.cmake)
 
 # Set extra variables that depend on the configuration
-calculate_versioned_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
-calculate_library_filename(OXIDE_LIB_FILENAME_DEV ${OXIDE_LIB})
+get_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
+get_library_namelink_filename(OXIDE_LIB_FILENAME_DEV ${OXIDE_LIB})
 
 if(ENABLE_COMPONENT_BUILD)
   link_directories(${CHROMIUM_LIB_DIR})
@@ -218,7 +218,7 @@ set(_GYP_COMMAND
     -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
     ${OXIDE_GYP_EXTRA_ARGS})
 list(APPEND _GYP_COMMAND -Doxide_lib=${OXIDE_LIB})
-calculate_versioned_library_suffix(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
+get_library_extension(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
 string(REGEX REPLACE "^\\." "" _OXIDE_LIB_SUFFIX ${_OXIDE_LIB_SUFFIX})
 list(APPEND _GYP_COMMAND -Doxide_lib_suffix=${_OXIDE_LIB_SUFFIX})
 list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})

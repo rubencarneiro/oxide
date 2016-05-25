@@ -19,6 +19,7 @@
 include(GNUInstallDirs)
 
 include(CommonProperties)
+include(LibFilenameUtils)
 include(PackageConfigHelper)
 
 find_package(Qt5Core REQUIRED)
@@ -98,6 +99,6 @@ add_custom_target(
     -DTYPE=FILE -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}
     -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 
-calculate_versioned_library_filename(OXIDE_QUICKLIB_FILENAME ${OXIDE_QUICKLIB} ${OXIDE_LIB_VERSION})
+get_library_filename(OXIDE_QUICKLIB_FILENAME ${OXIDE_QUICKLIB} ${OXIDE_LIB_VERSION})
 configure_and_install_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/api/OxideQtQuickConfig.cmake.in)
