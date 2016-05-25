@@ -88,6 +88,10 @@
           '-Wl,--no-keep-files-mapped',
         ],
       }],
+      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library" and linux_dump_symbols==1', {
+        'cflags!': [ '-g' ],
+        'cflags': [ '-g1' ],
+      }],
     ],
   }
 }
