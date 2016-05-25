@@ -320,6 +320,11 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv && rwhv->HandleContextMenu(params)) {
+    return;
+  }
+
   if (!client_) {
     return;
   }

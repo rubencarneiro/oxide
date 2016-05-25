@@ -40,6 +40,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
+#include "content/public/common/context_menu_params.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -595,6 +596,18 @@ void RenderWidgetHostView::OnGestureEvent(
   }
 
   host_->ForwardGestureEvent(event);
+}
+
+bool RenderWidgetHostView::HandleContextMenu(
+    const content::ContextMenuParams& params) {
+  if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
+      params.is_editable &&
+      params.selection_text.empty()) {
+    return true;
+  }
+
+  selection_controller_->HideAndDisallowShowingAutomatically();
+  return false;
 }
 
 bool RenderWidgetHostView::HandleGestureForTouchSelection(
