@@ -38,8 +38,8 @@ class VibrationManager : public device::VibrationManager {
  public:
   static void Create(mojo::InterfaceRequest<device::VibrationManager> request);
 
-  void Vibrate(int64_t milliseconds) override;
-  void Cancel() override;
+  void Vibrate(int64_t milliseconds, const VibrateCallback& callback) override;
+  void Cancel(const CancelCallback& callback) override;
 
  private:
   VibrationManager(mojo::InterfaceRequest<device::VibrationManager> request);

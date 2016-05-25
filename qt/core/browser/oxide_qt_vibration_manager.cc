@@ -40,16 +40,20 @@ VibrationManager::VibrationManager(
 }
 VibrationManager::~VibrationManager() {}
 
-void VibrationManager::Vibrate(int64_t milliseconds) {
-  Cancel();
+void VibrationManager::Vibrate(int64_t milliseconds,
+                               const VibrateCallback& callback) {
+  vibration_->stop();
 
   vibration_->setIntensity(kVibrationIntensity);
   vibration_->setDuration(milliseconds);
   vibration_->start();
+
+  callback.Run();
 }
 
-void VibrationManager::Cancel() {
+void VibrationManager::Cancel(const CancelCallback& callback) {
   vibration_->stop();
+  callback.Run();
 }
 
 } // namespace qt

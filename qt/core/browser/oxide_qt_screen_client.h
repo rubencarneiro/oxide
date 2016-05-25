@@ -48,11 +48,11 @@ class ScreenClient : public QObject,
   void UpdatePrimaryDisplay();
 
   // oxide::ScreenClient implementation
-  gfx::Display GetPrimaryDisplay() override;
+  display::Display GetPrimaryDisplay() override;
   gfx::Point GetCursorScreenPoint() override;
 
   base::Lock primary_display_lock_;
-  gfx::Display primary_display_;
+  display::Display primary_display_;
 };
 
 } // namespace qt

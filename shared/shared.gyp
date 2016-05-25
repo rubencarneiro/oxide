@@ -259,6 +259,7 @@
         # Not used directly. Should content_browser have this in export_dependent_settings?
         '<(DEPTH)/ui/accessibility/accessibility.gyp:accessibility',
         '<(DEPTH)/ui/base/ui_base.gyp:ui_base',
+        '<(DEPTH)/ui/display/display.gyp:display',
         '<(DEPTH)/ui/events/events.gyp:events',
         '<(DEPTH)/ui/events/events.gyp:events_base',
         '<(DEPTH)/ui/events/events.gyp:gesture_detection',
@@ -268,6 +269,7 @@
         '<(DEPTH)/ui/gfx/ipc/geometry/gfx_ipc_geometry.gyp:gfx_ipc_geometry',
         '<(DEPTH)/ui/gfx/x/gfx_x11.gyp:gfx_x11',
         '<(DEPTH)/ui/gl/gl.gyp:gl',
+        '<(DEPTH)/ui/gl/init/gl_init.gyp:gl_init',
         '<(DEPTH)/ui/native_theme/native_theme.gyp:native_theme',
         '<(DEPTH)/ui/ozone/ozone.gyp:ozone',
         '<(DEPTH)/ui/touch_selection/ui_touch_selection.gyp:ui_touch_selection',
