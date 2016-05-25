@@ -27,9 +27,16 @@ option(ENABLE_COMPONENT_BUILD
        OFF)
 option(ENABLE_TESTS "Enable the tests" OFF)
 option(ENABLE_PROPRIETARY_CODECS "Enable support for MP3, H.264 and AAC" OFF)
+
+set(_ENABLE_PLUGINS_DEFAULT ON)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+  set(_ENABLE_PLUGINS_DEFAULT OFF)
+endif()
 option(ENABLE_PLUGINS
        "Enable support for PPAPI plugins. Only Flash is supported right now"
-       ON)
+       ${_ENABLE_PLUGINS_DEFAULT})
+unset(_ENABLE_PLUGINS_DEFAULT)
+
 option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
 option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
 option(ENABLE_HYBRIS "Enable code that uses libhybris" ON)
