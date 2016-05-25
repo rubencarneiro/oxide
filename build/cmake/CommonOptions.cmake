@@ -44,6 +44,8 @@ option(ENABLE_HYBRIS_CAMERA
        "Enable support for the camera compatibility layer in Ubuntu's libhybris"
        OFF)
 
+option(USE_GN "Use Generate Ninja instead of gyp" OFF)
+
 if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
 endif()

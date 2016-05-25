@@ -75,3 +75,9 @@ execute_process(
 if(NOT _RESULT EQUAL 0)
   message(FATAL_ERROR "Failed to get version number")
 endif()
+
+set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium)
+
+# for dh_translations to extract the domain
+# (regarding syntax consistency, see http://pad.lv/1181187)
+set(GETTEXT_PACKAGE "oxide-${OXIDE_PLATFORM}")
