@@ -58,12 +58,6 @@
         # Ubuntu-specific?
         'arm_float_abi': 'hard',
       }],
-      ['(host_arch=="arm" or host_arch=="ia32") and component=="static_library"', {
-        # This is desparate - we're trying to avoid linker OOM on native ARM
-        # and x86 builds. This is unnecessary on ARM cross builds, hence the
-        # test for "host_arch".
-        'remove_webcore_debug_symbols': 1,
-      }],
     ],
   },
   'target_defaults': {
