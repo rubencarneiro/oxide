@@ -209,6 +209,7 @@ class RenderWidgetHostView
   void DetachLayer();
 
   bool HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
+  void NotifyTouchSelectionChanged();
 
   content::RenderWidgetHostImpl* host_;
 
@@ -246,6 +247,7 @@ class RenderWidgetHostView
 
   std::unique_ptr<ui::TouchSelectionController> selection_controller_;
   bool handle_drag_in_progress_;
+  bool quick_menu_requested_;
 
   base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;
 
