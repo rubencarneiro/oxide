@@ -54,13 +54,26 @@ int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
   return camera_id;
 }
 
-int GetRotation(int orientation) {
-  display::Display display =
+int GetRotation(CameraType position, int orientation) {
+  int display_rotation =
       BrowserPlatformIntegration::GetInstance()
         ->GetScreenClient()
-        ->GetPrimaryDisplay();
-  // XXX(chrisccoulson): Make sure this is the correct way around
-  return (orientation - display.RotationAsDegree()) % 360;
+        ->GetPrimaryDisplay().RotationAsDegree();
+  if (position == FRONT_FACING_CAMERA_TYPE) {
+    display_rotation = 360 - display_rotation;
+  }
+
+  if (position == FRONT_FACING_CAMERA_TYPE &&
+      HybrisUtils::GetDeviceProperties().product == "krillin") {
+    // Krillin lies to us - the top of the front facing camera points to the
+    // right of the screen (viewed from the front), which means the camera
+    // image needs rotating by 270deg with the device in its natural
+    // orientation (portrait). It tells us the camera orientation is 90deg
+    // though (see https://launchpad.net/bugs/1567542)
+    orientation = 270;
+  }
+
+  return (orientation + display_rotation) % 360;
 }
 
 }
@@ -87,7 +100,7 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
-                                  GetRotation(orientation_),
+                                  GetRotation(position_, orientation_),
                                   base::TimeTicks::Now());
 }
 
