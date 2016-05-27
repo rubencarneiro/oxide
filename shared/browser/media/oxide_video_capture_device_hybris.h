@@ -73,8 +73,8 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
 
   media::VideoCaptureFormat capture_format_;
 
-  scoped_refptr<gfx::GLSurface> gl_surface_;
-  scoped_refptr<gfx::GLContext> gl_context_;
+  scoped_refptr<gl::GLSurface> gl_surface_;
+  scoped_refptr<gl::GLContext> gl_context_;
   GLuint preview_texture_;
 
   CameraControl* camera_control_;

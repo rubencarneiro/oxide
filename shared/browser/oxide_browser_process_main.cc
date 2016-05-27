@@ -201,14 +201,14 @@ base::FilePath GetSubprocessPath() {
   return subprocess_exe;
 }
 
-const char* GetGLImplName(gfx::GLImplementation impl) {
+const char* GetGLImplName(gl::GLImplementation impl) {
   switch (impl) {
-    case gfx::kGLImplementationDesktopGL:
-      return gfx::kGLImplementationDesktopName;
-    case gfx::kGLImplementationOSMesaGL:
-      return gfx::kGLImplementationOSMesaName;
-    case gfx::kGLImplementationEGLGLES2:
-      return gfx::kGLImplementationEGLName;
+    case gl::kGLImplementationDesktopGL:
+      return gl::kGLImplementationDesktopName;
+    case gl::kGLImplementationOSMesaGL:
+      return gl::kGLImplementationOSMesaName;
+    case gl::kGLImplementationEGLGLES2:
+      return gl::kGLImplementationEGLName;
     default:
       return "unknown";
   }
@@ -216,7 +216,7 @@ const char* GetGLImplName(gfx::GLImplementation impl) {
 
 void InitializeCommandLine(const base::FilePath& subprocess_path,
                            ProcessModel process_model,
-                           gfx::GLImplementation gl_impl) {
+                           gl::GLImplementation gl_impl) {
   CHECK(base::CommandLine::Init(0, nullptr)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
@@ -248,7 +248,7 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
   command_line->AppendSwitchASCII(switches::kProfilerTiming,
                                   switches::kProfilerTimingDisabledValue);
 
-  if (gl_impl == gfx::kGLImplementationNone ||
+  if (gl_impl == gl::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU")) {
     command_line->AppendSwitch(switches::kDisableGpu);
   } else {
@@ -373,7 +373,7 @@ const char* GetFormFactorHintCommandLine(FormFactor form_factor) {
 BrowserProcessMain::StartParams::StartParams(
     std::unique_ptr<PlatformDelegate> delegate)
     : delegate(std::move(delegate)),
-      gl_implementation(gfx::kGLImplementationNone),
+      gl_implementation(gl::kGLImplementationNone),
       process_model(PROCESS_MODEL_MULTI_PROCESS) {}
 
 BrowserProcessMain::StartParams::~StartParams() {}

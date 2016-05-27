@@ -27,7 +27,7 @@ namespace oxide {
 namespace qt {
 
 GLContextDependent::GLContextDependent(void* handle,
-                                       gfx::GLImplementation implementation)
+                                       gl::GLImplementation implementation)
     : oxide::GLContextDependent(handle, false),
       implementation_(implementation) {}
 
@@ -56,21 +56,21 @@ scoped_refptr<GLContextDependent> GLContextDependent::Create(
     if (handle) {
       return make_scoped_refptr(
           new GLContextDependent(handle,
-                                 gfx::kGLImplementationDesktopGL));
+                                 gl::kGLImplementationDesktopGL));
     }
 
     handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
           new GLContextDependent(handle,
-                                 gfx::kGLImplementationEGLGLES2));
+                                 gl::kGLImplementationEGLGLES2));
     }
   } else if (platform.startsWith("ubuntu") || platform == "eglfs") {
     void* handle = pni->nativeResourceForContext("eglcontext", context);
     if (handle) {
       return make_scoped_refptr(
           new GLContextDependent(handle,
-                                 gfx::kGLImplementationEGLGLES2));
+                                 gl::kGLImplementationEGLGLES2));
     }
   } else {
     LOG(WARNING)

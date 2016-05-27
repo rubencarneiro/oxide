@@ -30,7 +30,7 @@ class GLShareGroup;
 
 namespace oxide {
 
-class OXIDE_SHARED_EXPORT GLContextDependent : public gfx::GLContext {
+class OXIDE_SHARED_EXPORT GLContextDependent : public gl::GLContext {
  public:
   GLContextDependent(void* handle,
                      bool was_allocated_using_robustness_extension);
@@ -40,14 +40,14 @@ class OXIDE_SHARED_EXPORT GLContextDependent : public gfx::GLContext {
       GLContextDependent* other);
 
   // gfx::GLContext implementation
-  bool Initialize(gfx::GLSurface* compatible_surface,
-                  gfx::GpuPreference gpu_preference) override;
-  bool MakeCurrent(gfx::GLSurface* surface) override;
-  void ReleaseCurrent(gfx::GLSurface* surface) override;
-  bool IsCurrent(gfx::GLSurface* surface) override;
+  bool Initialize(gl::GLSurface* compatible_surface,
+                  gl::GpuPreference gpu_preference) override;
+  bool MakeCurrent(gl::GLSurface* surface) override;
+  void ReleaseCurrent(gl::GLSurface* surface) override;
+  bool IsCurrent(gl::GLSurface* surface) override;
   void* GetHandle() override;
   bool WasAllocatedUsingRobustnessExtension() override;
-  scoped_refptr<gfx::GPUTimingClient> CreateGPUTimingClient() override;
+  scoped_refptr<gl::GPUTimingClient> CreateGPUTimingClient() override;
 
  private:
   void OnSetSwapInterval(int interval) override;

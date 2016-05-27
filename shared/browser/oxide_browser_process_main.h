@@ -64,7 +64,7 @@ class OXIDE_SHARED_EXPORT BrowserProcessMain {
 #if defined(USE_NSS_CERTS)
     base::FilePath nss_db_path;
 #endif
-    gfx::GLImplementation gl_implementation;
+    gl::GLImplementation gl_implementation;
     ProcessModel process_model;
     gfx::Size primary_screen_size;
   };

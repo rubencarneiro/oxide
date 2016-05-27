@@ -170,7 +170,7 @@ gpu::CollectInfoResult CollectDriverInfo(gpu::GPUInfo* gpu_info) {
     return (void *)nullptr;
   };
 
-#define LOOKUP_FUNC(x) auto x##Fn = reinterpret_cast<gfx::x##Proc>(get_func(#x))
+#define LOOKUP_FUNC(x) auto x##Fn = reinterpret_cast<gl::x##Proc>(get_func(#x))
 
   LOOKUP_FUNC(eglGetError);
   LOOKUP_FUNC(eglQueryString);
@@ -498,7 +498,7 @@ gpu::CollectInfoResult CollectPCIVideoCardInfo(gpu::GPUInfo* gpu_info) {
 gpu::CollectInfoResult CollectContextGraphicsInfoLinux(
     gpu::GPUInfo* gpu_info) {
   gpu_info->can_lose_context =
-      (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2);
+      (gl::GetGLImplementation() == gl::kGLImplementationEGLGLES2);
 
   gpu::CollectInfoResult result = CollectGraphicsInfoGL(gpu_info);
   gpu_info->context_info_state = result;

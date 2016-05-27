@@ -31,6 +31,7 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_surface.h"
+#include "ui/gl/init/gl_factory.h"
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/browser/oxide_hybris_utils.h"
@@ -155,10 +156,10 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
                                     CAMERA_PIXEL_FORMAT_YUV420P);      
 
   // We have to provide a preview texture, even though we aren't using it
-  gl_surface_ = gfx::GLSurface::CreateOffscreenGLSurface(gfx::Size(0, 0));
-  gl_context_ = gfx::GLContext::CreateGLContext(nullptr,
-                                                gl_surface_.get(),
-                                                gfx::PreferIntegratedGpu);
+  gl_surface_ = gl::init::CreateOffscreenGLSurface(gfx::Size(0, 0));
+  gl_context_ = gl::init::CreateGLContext(nullptr,
+                                          gl_surface_.get(),
+                                          gl::PreferIntegratedGpu);
   if (!gl_context_) {
     client_->OnError(FROM_HERE, "Failed to create GL context");
     return;

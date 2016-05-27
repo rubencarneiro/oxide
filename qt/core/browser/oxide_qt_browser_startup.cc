@@ -150,7 +150,7 @@ void BrowserStartup::EnsureChromiumStarted() {
 #endif
   params.process_model = GetProcessModel();
 
-  params.gl_implementation = gfx::kGLImplementationNone;
+  params.gl_implementation = gl::kGLImplementationNone;
 
   if (shared_gl_context_) {
     params.gl_implementation = shared_gl_context_->implementation();
@@ -158,11 +158,11 @@ void BrowserStartup::EnsureChromiumStarted() {
     QString platform = QGuiApplication::platformName();
     if (QGuiApplication::platformNativeInterface()) {
       if (platform == QLatin1String("xcb")) {
-        params.gl_implementation = gfx::kGLImplementationDesktopGL;
+        params.gl_implementation = gl::kGLImplementationDesktopGL;
       } else if (platform.startsWith("ubuntu") ||
                  platform == QLatin1String("mirserver") ||
                  platform == QLatin1String("egl")) {
-        params.gl_implementation = gfx::kGLImplementationEGLGLES2;
+        params.gl_implementation = gl::kGLImplementationEGLGLES2;
       } else {
         LOG(WARNING)
             << "Cannot determine GL implementation to use - "
