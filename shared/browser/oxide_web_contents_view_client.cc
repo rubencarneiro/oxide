@@ -58,8 +58,7 @@ WebContentsViewClient::CreateTouchHandleDrawable() const {
 void WebContentsViewClient::TouchSelectionChanged(
     bool active,
     const gfx::RectF& bounds,
-    bool handle_drag_in_progress,
-    bool quick_menu_requested) const {}
+    bool handle_drag_in_progress) const {}
 
 InputMethodContext* WebContentsViewClient::GetInputMethodContext() const {
   return nullptr;

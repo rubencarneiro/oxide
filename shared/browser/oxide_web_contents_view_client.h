@@ -81,8 +81,7 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
   virtual void TouchSelectionChanged(bool active,
                                      const gfx::RectF& bounds,
-                                     bool handle_drag_in_progress,
-                                     bool quick_menu_requested) const;
+                                     bool handle_drag_in_progress) const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

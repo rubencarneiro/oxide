@@ -31,15 +31,13 @@ class OxideQQuickTouchSelectionControllerPrivate {
       : view(nullptr)
       , handle(nullptr)
       , active(false)
-      , handle_drag_in_progress(false)
-      , quick_menu_requested(false) {}
+      , handle_drag_in_progress(false) {}
 
   oxide::qquick::ContentsView* view;
   QQmlComponent* handle;
   bool active;
   QRectF bounds;
   bool handle_drag_in_progress;
-  bool quick_menu_requested;
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
@@ -93,17 +91,10 @@ bool OxideQQuickTouchSelectionController::handleDragInProgress() const {
   return d->handle_drag_in_progress;
 }
 
-bool OxideQQuickTouchSelectionController::quickMenuRequested() const {
-  Q_D(const OxideQQuickTouchSelectionController);
-
-  return d->quick_menu_requested;
-}
-
 void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
     bool active,
     const QRectF& bounds,
-    bool handle_drag_in_progress,
-    bool quick_menu_requested) {
+    bool handle_drag_in_progress) {
   Q_D(OxideQQuickTouchSelectionController);
 
   if (active != d->active) {
@@ -119,10 +110,5 @@ void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
   if (handle_drag_in_progress != d->handle_drag_in_progress) {
     d->handle_drag_in_progress = handle_drag_in_progress;
     Q_EMIT handleDragInProgressChanged();
-  }
-
-  if (quick_menu_requested != d->quick_menu_requested) {
-    d->quick_menu_requested = quick_menu_requested;
-    Q_EMIT quickMenuRequestedChanged();
   }
 }

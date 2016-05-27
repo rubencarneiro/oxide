@@ -603,8 +603,6 @@ bool RenderWidgetHostView::HandleContextMenu(
   if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
       params.is_editable &&
       params.selection_text.empty()) {
-    quick_menu_requested_ = true;
-    NotifyTouchSelectionChanged();
     return true;
   }
 
@@ -654,9 +652,7 @@ void RenderWidgetHostView::NotifyTouchSelectionChanged() {
     return;
   }
 
-  container_->TouchSelectionChanged(this,
-                                    handle_drag_in_progress_,
-                                    quick_menu_requested_);
+  container_->TouchSelectionChanged(this, handle_drag_in_progress_);
 }
 
 void RenderWidgetHostView::ReturnResources(
@@ -710,13 +706,6 @@ void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
 
 void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
   switch (event) {
-    case ui::SELECTION_HANDLES_SHOWN:
-      quick_menu_requested_ = true;
-      break;
-    case ui::SELECTION_HANDLES_CLEARED:
-    case ui::INSERTION_HANDLE_CLEARED:
-      quick_menu_requested_ = false;
-      break;
     case ui::SELECTION_HANDLE_DRAG_STARTED:
     case ui::INSERTION_HANDLE_DRAG_STARTED:
       handle_drag_in_progress_ = true;
@@ -726,7 +715,6 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
       handle_drag_in_progress_ = false;
       break;
     case ui::INSERTION_HANDLE_TAPPED:
-      quick_menu_requested_ = !quick_menu_requested_;
       break;
     default:
       break;
@@ -836,7 +824,6 @@ RenderWidgetHostView::RenderWidgetHostView(
       top_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)),
       handle_drag_in_progress_(false),
-      quick_menu_requested_(false),
       weak_ptr_factory_(this) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 

@@ -138,8 +138,7 @@ class ContentsView : public QObject,
   oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void TouchSelectionChanged(bool active,
                              const QRectF& bounds,
-                             bool handle_drag_in_progress,
-                             bool quick_menu_requested) override;
+                             bool handle_drag_in_progress) override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;
