@@ -109,7 +109,6 @@ void ContentRendererClient::RenderViewCreated(
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
     settings->setShrinksViewportContentToFit(true);
-    settings->setTouchEditingEnabled(true);
   }
 }
 

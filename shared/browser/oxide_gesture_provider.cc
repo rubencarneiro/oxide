@@ -22,10 +22,10 @@
 #include "base/memory/ptr_util.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 
+#include "ui/display/screen.h"
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"
 #include "ui/events/gesture_detection/gesture_provider.h"
 #include "ui/events/gesture_detection/motion_event.h"
-#include "ui/gfx/screen.h"
 
 #include "oxide_event_utils.h"
 
@@ -60,7 +60,7 @@ ui::ScaleGestureDetector::Config GetScaleGestureDetectorConfig() {
 
 ui::GestureProvider::Config GetGestureProviderConfig() {
   ui::GestureProvider::Config config;
-  config.display = gfx::Screen::GetScreen()->GetPrimaryDisplay();
+  config.display = display::Screen::GetScreen()->GetPrimaryDisplay();
 
   config.gesture_detector_config = GetGestureDetectorConfig();
   config.scale_gesture_detector_config = GetScaleGestureDetectorConfig();

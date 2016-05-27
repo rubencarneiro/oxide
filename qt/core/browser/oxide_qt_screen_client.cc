@@ -24,7 +24,7 @@
 
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
-#include "ui/gfx/display.h"
+#include "ui/display/display.h"
 #include "ui/gfx/geometry/rect.h"
 
 #include "oxide_qt_dpi_utils.h"
@@ -57,7 +57,7 @@ void ScreenClient::UpdatePrimaryDisplay() {
   QScreen* screen = QGuiApplication::primaryScreen();
 
   primary_display_.set_id(0);
-  primary_display_.set_touch_support(gfx::Display::TOUCH_SUPPORT_UNKNOWN);
+  primary_display_.set_touch_support(display::Display::TOUCH_SUPPORT_UNKNOWN);
   primary_display_.set_device_scale_factor(
       DpiUtils::GetScaleFactorForScreen(screen));
 
@@ -74,7 +74,7 @@ void ScreenClient::UpdatePrimaryDisplay() {
                            screen->orientation()));
 }
 
-gfx::Display ScreenClient::GetPrimaryDisplay() {
+display::Display ScreenClient::GetPrimaryDisplay() {
   base::AutoLock lock(primary_display_lock_);
   return primary_display_;
 }

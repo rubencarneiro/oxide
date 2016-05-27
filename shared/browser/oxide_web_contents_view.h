@@ -211,8 +211,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void DidNavigateMainFrame(
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) override;
-  void DidShowFullscreenWidget(int routing_id) override;
-  void DidDestroyFullscreenWidget(int routing_id) override;
+  void DidShowFullscreenWidget() override;
+  void DidDestroyFullscreenWidget() override;
   void DidAttachInterstitialPage() override;
   void DidDetachInterstitialPage() override;
   bool OnMessageReceived(const IPC::Message& message,

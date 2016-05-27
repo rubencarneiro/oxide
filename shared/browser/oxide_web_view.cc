@@ -945,7 +945,7 @@ void WebView::NavigationEntryCommitted(
   client_->NavigationEntryCommitted();
 }
 
-void WebView::DidShowFullscreenWidget(int routing_id) {
+void WebView::DidShowFullscreenWidget() {
   if (IsFullscreen()) {
     return;
   }
@@ -1439,7 +1439,7 @@ void WebView::PrepareToClose() {
 
   // This is ok to call multiple times - RFHI tracks whether a response
   // is pending and won't dispatch another event if it is
-  web_contents_->DispatchBeforeUnload(false);
+  web_contents_->DispatchBeforeUnload();
 }
 
 void WebView::DownloadRequested(

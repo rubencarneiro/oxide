@@ -433,7 +433,7 @@ void WebContentsView::DidNavigateMainFrame(
   }
 }
 
-void WebContentsView::DidShowFullscreenWidget(int routing_id) {
+void WebContentsView::DidShowFullscreenWidget() {
   DCHECK(!web_contents()->ShowingInterstitialPage());
   DCHECK(web_contents()->GetFullscreenRenderWidgetHostView());
 
@@ -459,7 +459,7 @@ void WebContentsView::DidShowFullscreenWidget(int routing_id) {
   TouchSelectionChanged(rwhv, false);
 }
 
-void WebContentsView::DidDestroyFullscreenWidget(int routing_id) {
+void WebContentsView::DidDestroyFullscreenWidget() {
   RenderWidgetHostView* orig_rwhv =
       static_cast<RenderWidgetHostView*>(
         web_contents()->GetRenderWidgetHostView());

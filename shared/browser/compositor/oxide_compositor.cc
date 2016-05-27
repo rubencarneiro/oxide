@@ -21,7 +21,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
-#include "base/thread_task_runner_handle.h"
+#include "base/threading/thread_task_runner_handle.h"
 #include "base/trace_event/trace_event.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
@@ -87,10 +87,13 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
   return make_scoped_refptr(
       new content::ContextProviderCommandBuffer(
           gpu_channel_host.get(),
+          gpu::GPU_STREAM_DEFAULT,
+          gpu::GpuStreamPriority::NORMAL,
           gpu::kNullSurfaceHandle,
           GURL(),
           gfx::PreferIntegratedGpu,
           false, // automatic_flushes
+          false, // support_locking
           gpu::SharedMemoryLimits(),
           attrs,
           nullptr,
@@ -503,6 +506,9 @@ void Compositor::DidCommit() {
 void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidCompleteSwapBuffers() {}
 void Compositor::DidCompletePageScaleAnimation() {}
+void Compositor::ReportFixedRasterScaleUseCounters(
+    bool has_blurry_content,
+    bool has_potential_performance_regression) {}
 
 void Compositor::DidPostSwapBuffers() {}
 void Compositor::DidAbortSwapBuffers() {}
