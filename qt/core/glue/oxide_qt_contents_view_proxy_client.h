@@ -81,6 +81,8 @@ class ContentsViewProxyClient {
       bool handle_drag_in_progress,
       bool insertion_handle_tapped) = 0;
 
+  virtual void ContextMenuIntercepted() const = 0;
+
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
  protected:

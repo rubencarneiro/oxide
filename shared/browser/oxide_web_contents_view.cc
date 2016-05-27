@@ -322,6 +322,9 @@ void WebContentsView::ShowContextMenu(
     const content::ContextMenuParams& params) {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (rwhv && rwhv->HandleContextMenu(params)) {
+    if (client_) {
+      client_->ContextMenuIntercepted();
+    }
     return;
   }
 

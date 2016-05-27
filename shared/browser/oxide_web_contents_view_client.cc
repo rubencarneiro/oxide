@@ -61,6 +61,8 @@ void WebContentsViewClient::TouchSelectionChanged(
     bool handle_drag_in_progress,
     bool insertion_handle_tapped) const {}
 
+void WebContentsViewClient::ContextMenuIntercepted() const {}
+
 InputMethodContext* WebContentsViewClient::GetInputMethodContext() const {
   return nullptr;
 }

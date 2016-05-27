@@ -141,6 +141,7 @@ class ContentsView : public QObject,
       const QRectF& bounds,
       bool handle_drag_in_progress,
       bool insertion_handle_tapped) override;
+  void ContextMenuIntercepted() const override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;

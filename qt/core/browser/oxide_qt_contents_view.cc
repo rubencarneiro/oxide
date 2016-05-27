@@ -554,6 +554,10 @@ void ContentsView::TouchSelectionChanged(
       insertion_handle_tapped);
 }
 
+void ContentsView::ContextMenuIntercepted() const {
+  client_->ContextMenuIntercepted();
+}
+
 oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {
   return input_method_context_.get();
 }

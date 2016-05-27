@@ -182,6 +182,12 @@ void ContentsView::TouchSelectionChanged(
   }
 }
 
+void ContentsView::ContextMenuIntercepted() const {
+  if (touch_selection_controller_) {
+    Q_EMIT touch_selection_controller_->contextMenuIntercepted();
+  }
+}
+
 void ContentsView::HandleUnhandledKeyboardEvent(QKeyEvent* event) {
   QQuickWindow* w = item_->window();
   if (!w) {

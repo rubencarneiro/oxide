@@ -85,6 +85,7 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
       const gfx::RectF& bounds,
       bool handle_drag_in_progress,
       bool insertion_handle_tapped) const;
+  virtual void ContextMenuIntercepted() const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

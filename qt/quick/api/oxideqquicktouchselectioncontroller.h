@@ -91,6 +91,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   Q_REVISION(1) void handleDragInProgressChanged();
   Q_REVISION(1) void statusChanged();
   Q_REVISION(1) void insertionHandleTapped();
+  Q_REVISION(1) void contextMenuIntercepted();
 
  private:
   friend class OxideQQuickWebViewPrivate;
