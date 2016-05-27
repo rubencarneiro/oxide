@@ -83,7 +83,8 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
   virtual void TouchSelectionChanged(
       ui::TouchSelectionController::ActiveStatus status,
       const gfx::RectF& bounds,
-      bool handle_drag_in_progress) const;
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped) const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

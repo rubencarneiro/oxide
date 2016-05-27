@@ -139,7 +139,8 @@ class ContentsView : public QObject,
   void TouchSelectionChanged(
       oxide::qt::TouchSelectionControllerActiveStatus status,
       const QRectF& bounds,
-      bool handle_drag_in_progress) override;
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped) override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;

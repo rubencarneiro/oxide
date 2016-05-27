@@ -530,7 +530,8 @@ ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
 void ContentsView::TouchSelectionChanged(
     ui::TouchSelectionController::ActiveStatus status,
     const gfx::RectF& bounds,
-    bool handle_drag_in_progress) const {
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) const {
   TouchSelectionControllerActiveStatus activeStatus;
   switch (status) {
   case ui::TouchSelectionController::INACTIVE:
@@ -549,7 +550,8 @@ void ContentsView::TouchSelectionChanged(
   client_->TouchSelectionChanged(
       activeStatus,
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
-      handle_drag_in_progress);
+      handle_drag_in_progress,
+      insertion_handle_tapped);
 }
 
 oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {

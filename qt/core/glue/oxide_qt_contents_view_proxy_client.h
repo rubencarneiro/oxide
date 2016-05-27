@@ -78,7 +78,8 @@ class ContentsViewProxyClient {
   virtual void TouchSelectionChanged(
       TouchSelectionControllerActiveStatus status,
       const QRectF& bounds,
-      bool handle_drag_in_progress) = 0;
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped) = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

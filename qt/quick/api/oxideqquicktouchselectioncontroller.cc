@@ -106,7 +106,8 @@ OxideQQuickTouchSelectionController::status() const {
 void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
     Status status,
     const QRectF& bounds,
-    bool handle_drag_in_progress) {
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) {
   Q_D(OxideQQuickTouchSelectionController);
 
   if (status != d->status) {
@@ -127,5 +128,9 @@ void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
   if (handle_drag_in_progress != d->handle_drag_in_progress) {
     d->handle_drag_in_progress = handle_drag_in_progress;
     Q_EMIT handleDragInProgressChanged();
+  }
+
+  if (insertion_handle_tapped) {
+    Q_EMIT insertionHandleTapped();
   }
 }

@@ -90,6 +90,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   void boundsChanged();
   Q_REVISION(1) void handleDragInProgressChanged();
   Q_REVISION(1) void statusChanged();
+  Q_REVISION(1) void insertionHandleTapped();
 
  private:
   friend class OxideQQuickWebViewPrivate;
@@ -101,7 +102,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   void onTouchSelectionChanged(
       Status status,
       const QRectF& bounds,
-      bool handle_drag_in_progress);
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped);
 
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;
 };

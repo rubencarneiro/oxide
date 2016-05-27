@@ -114,7 +114,8 @@ class ContentsView : public ContentsViewProxy,
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(ui::TouchSelectionController::ActiveStatus status,
                              const gfx::RectF& bounds,
-                             bool handle_drag_in_progress) const override;
+                             bool handle_drag_in_progress,
+                             bool insertion_handle_tapped) const override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
