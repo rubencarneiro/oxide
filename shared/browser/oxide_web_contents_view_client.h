@@ -23,6 +23,7 @@
 
 #include "base/macros.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/common/oxide_shared_export.h"
 
@@ -79,9 +80,10 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
       WebPopupMenuClient* client);
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
-  virtual void TouchSelectionChanged(bool active,
-                                     const gfx::RectF& bounds,
-                                     bool handle_drag_in_progress) const;
+  virtual void TouchSelectionChanged(
+      ui::TouchSelectionController::ActiveStatus status,
+      const gfx::RectF& bounds,
+      bool handle_drag_in_progress) const;
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

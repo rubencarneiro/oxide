@@ -684,9 +684,9 @@ void WebContentsView::TouchSelectionChanged(
 
   ui::TouchSelectionController* controller =
       view ? view->selection_controller() : nullptr;
-  bool active =
-      controller ? (controller->active_status() !=
-                    ui::TouchSelectionController::INACTIVE) : false;
+  ui::TouchSelectionController::ActiveStatus status =
+      controller ? controller->active_status()
+                 : ui::TouchSelectionController::INACTIVE;
 
   gfx::RectF bounds;
   if (controller) {
@@ -701,7 +701,7 @@ void WebContentsView::TouchSelectionChanged(
   }
   bounds.Offset(0, offset);
 
-  client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
+  client_->TouchSelectionChanged(status, bounds, handle_drag_in_progress);
 }
 
 void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {

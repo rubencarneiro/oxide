@@ -56,7 +56,7 @@ WebContentsViewClient::CreateTouchHandleDrawable() const {
 }
 
 void WebContentsViewClient::TouchSelectionChanged(
-    bool active,
+    ui::TouchSelectionController::ActiveStatus status,
     const gfx::RectF& bounds,
     bool handle_drag_in_progress) const {}
 

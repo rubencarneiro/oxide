@@ -168,12 +168,13 @@ ContentsView::CreateTouchHandleDrawable() {
   return new TouchHandleDrawable(item_, touch_selection_controller_.data());
 }
 
-void ContentsView::TouchSelectionChanged(bool active,
-                                         const QRectF& bounds,
-                                         bool handle_drag_in_progress) {
+void ContentsView::TouchSelectionChanged(
+    oxide::qt::TouchSelectionControllerActiveStatus status,
+    const QRectF& bounds,
+    bool handle_drag_in_progress) {
   if (touch_selection_controller_) {
     touch_selection_controller_->onTouchSelectionChanged(
-        active,
+        static_cast<OxideQQuickTouchSelectionController::Status>(status),
         bounds,
         handle_drag_in_progress);
   }

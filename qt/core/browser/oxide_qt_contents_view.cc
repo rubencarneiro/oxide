@@ -527,13 +527,27 @@ ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
   return drawable;
 }
 
-void ContentsView::TouchSelectionChanged(bool active,
-                                         const gfx::RectF& bounds,
-                                         bool handle_drag_in_progress) const {
-  gfx::RectF scaled_bounds =
-      DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen());
+void ContentsView::TouchSelectionChanged(
+    ui::TouchSelectionController::ActiveStatus status,
+    const gfx::RectF& bounds,
+    bool handle_drag_in_progress) const {
+  TouchSelectionControllerActiveStatus activeStatus;
+  switch (status) {
+  case ui::TouchSelectionController::INACTIVE:
+    activeStatus = ACTIVE_STATUS_INACTIVE;
+    break;
+  case ui::TouchSelectionController::INSERTION_ACTIVE:
+    activeStatus = ACTIVE_STATUS_INSERTION_ACTIVE;
+    break;
+  case ui::TouchSelectionController::SELECTION_ACTIVE:
+    activeStatus = ACTIVE_STATUS_SELECTION_ACTIVE;
+    break;
+  default:
+    Q_UNREACHABLE();
+  }
+
   client_->TouchSelectionChanged(
-      active,
+      activeStatus,
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
       handle_drag_in_progress);
 }

@@ -112,7 +112,7 @@ class ContentsView : public ContentsViewProxy,
       bool allow_multiple_selection,
       oxide::WebPopupMenuClient* client) override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(bool active,
+  void TouchSelectionChanged(ui::TouchSelectionController::ActiveStatus status,
                              const gfx::RectF& bounds,
                              bool handle_drag_in_progress) const override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
