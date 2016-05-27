@@ -366,11 +366,23 @@ Module {
                 "HandleOrientationUndefined": 3
             }
         }
+        Enum {
+            name: "Status"
+            values: {
+                "StatusInactive": 0,
+                "StatusInsertionActive": 1,
+                "StatusSelectionActive": 2
+            }
+        }
         Property { name: "active"; type: "bool"; isReadonly: true }
         Property { name: "handle"; type: "QQmlComponent"; isPointer: true }
         Property { name: "bounds"; type: "QRectF"; isReadonly: true }
         Property { name: "handleDragInProgress"; revision: 1; type: "bool"; isReadonly: true }
+        Property { name: "status"; revision: 1; type: "Status"; isReadonly: true }
         Signal { name: "handleDragInProgressChanged"; revision: 1 }
+        Signal { name: "statusChanged"; revision: 1 }
+        Signal { name: "insertionHandleTapped"; revision: 1 }
+        Signal { name: "contextMenuIntercepted"; revision: 1 }
         Method { name: "hide"; revision: 1 }
     }
     Component {
