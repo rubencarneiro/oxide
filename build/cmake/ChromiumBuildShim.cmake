@@ -86,7 +86,7 @@ function(run_generate_ninja)
   list(APPEND MAKE_GN_ARGS_CMD -Dsymbol_level=${SYMBOL_LEVEL})
 
   if(CMAKE_VERBOSE_MAKEFILE)
-    list(APPEND GN_COMMAND -Doxide_verbose_build=true)
+    list(APPEND GN_COMMAND -Dprint_gold_stats=true)
   endif()
 
   if(ENABLE_PROPRIETARY_CODECS)

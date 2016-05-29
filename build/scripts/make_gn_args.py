@@ -125,6 +125,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("toolkit_views", False)
   writer.WriteBool("enable_basic_printing", False)
   writer.WriteBool("enable_print_preview", False)
+  writer.WriteBool("enable_extensions", True)
 
 def WriteConfigurableArgs(writer, options):
   host_arch = HostArch()
