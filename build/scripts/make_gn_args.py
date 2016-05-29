@@ -39,12 +39,21 @@ def HostArch():
   elif host_arch.startswith("arm"):
     return "arm"
 
+def GetSymbolLevel(enabled, host_arch, is_component_build):
+  if not enabled:
+    return 0
+  if (host_arch == "arm" or host_arch == "x86") and not is_component_build:
+    return 1
+  return 2
+
 class Options(OptionParser):
   def __init__(self):
     OptionParser.__init__(self)
 
     self.add_option("--component-build", action="store_true",
                     help="Enable a component build")
+    self.add_option("--enable-debug-symbols", action="store_true",
+                    help="Whether to enable debug symbols")
     self.add_option("--libexec-subdir",
                     help="The subdirectory for Oxide components relative to "
                          "the core library location")
@@ -128,11 +137,10 @@ def WriteStaticArgs(writer):
 
 def WriteConfigurableArgs(writer, options):
   host_arch = HostArch()
-  if ((host_arch == "arm" or host_arch == "x86") and
-      not options.component_build):
-    # Try to make it possible to perform builds on 32-bit hosts. This is
-    # officially an unsupported build configuration though
-    writer.WriteBool("remove_webcore_debug_symbols", True)
+  writer.WriteInt("symbol_level",
+                  GetSymbolLevel(options.enable_debug_symbols,
+                                 host_arch,
+                                 options.component_build))
 
   if options.component_build:
     writer.WriteBool("is_component_build", True)

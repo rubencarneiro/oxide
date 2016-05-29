@@ -85,11 +85,9 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD -Dis_debug=false)
   endif()
 
-  set(SYMBOL_LEVEL 2)
-  if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(SYMBOL_LEVEL 0)
+  if(NOT DEFINED CMAKE_BUILD_TYPE OR NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    list(APPEND MAKE_GN_ARGS_CMD --enable-debug-symbols)
   endif()
-  list(APPEND MAKE_GN_ARGS_CMD -Dsymbol_level=${SYMBOL_LEVEL})
 
   if(CMAKE_VERBOSE_MAKEFILE)
     list(APPEND GN_COMMAND -Dprint_gold_stats=true)
