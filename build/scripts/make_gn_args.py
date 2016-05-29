@@ -118,6 +118,10 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_nacl", False)
   writer.WriteBool("is_component_ffmpeg", True)
 
+  # XXX(chrisccoulson): Remove this.
+  # There is a strict-overflow warning in third_party/WebKit/Source/wtf/dtoa/bignum.cc
+  writer.WriteBool("treat_warnings_as_errors", False)
+
   # XXX(chrisccoulson): This produces an error:
   #  "ERROR at //build/toolchain/gcc_toolchain.gni:520:30: Clobbering existing value."
   #  use_gold = true is the default anyway
