@@ -37,7 +37,7 @@ subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
 #  then we can remove this
 config("shared_include_dirs") {
   include_dirs = [
-    "oxide",
+    "//oxide",
     "$root_gen_dir/oxide"
   ]
 }
@@ -122,6 +122,8 @@ action("shared_gen") {
 }
 
 component("shared") {
+  output_name = "oxide_shared"
+
   public_configs = [ ":shared_include_dirs" ]
 
   public_deps = [
