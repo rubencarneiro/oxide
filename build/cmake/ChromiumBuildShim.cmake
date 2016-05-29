@@ -76,7 +76,7 @@ function(run_generate_ninja)
     if(NOT CHROMIUM_TARGET_ARCH)
       message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
     endif()
-    list(APPEND MAKE_GN_ARGS_CMD --target-arch ${CHROMIUM_TARGET_ARCH})
+    list(APPEND MAKE_GN_ARGS_CMD -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
   endif()
 
   if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")

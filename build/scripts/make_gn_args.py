@@ -55,7 +55,6 @@ class Options(OptionParser):
     self.add_option("--platform", help="The Oxide platform to build")
     self.add_option("--renderer-name",
                     help="The filename of the renderer executable")
-    self.add_option("--target-arch", help="The target architecture")
 
     self.add_option("-D", action="append", dest="extra_args", type="string",
                     help="Addition build arguments")
@@ -134,9 +133,6 @@ def WriteConfigurableArgs(writer, options):
     # Try to make it possible to perform builds on 32-bit hosts. This is
     # officially an unsupported build configuration though
     writer.WriteBool("remove_webcore_debug_symbols", True)
-
-  if options.target_arch:
-    writer.WriteString("target_arch", options.target_arch)
 
   if options.component_build:
     writer.WriteBool("is_component_build", True)
