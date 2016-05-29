@@ -79,6 +79,12 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD --target-arch ${CHROMIUM_TARGET_ARCH})
   endif()
 
+  if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND MAKE_GN_ARGS_CMD -Dis_debug=true)
+  else()
+    list(APPEND MAKE_GN_ARGS_CMD -Dis_debug=false)
+  endif()
+
   set(SYMBOL_LEVEL 2)
   if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
     set(SYMBOL_LEVEL 0)
