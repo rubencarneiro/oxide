@@ -55,9 +55,8 @@ void ScriptMessageObjectHandler::Reply(
 
   std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
-  message->Reply(
-      base::WrapUnique(converter->FromV8Value(payload,
-                                              isolate->GetCallingContext())));
+  message->Reply(converter->FromV8Value(payload,
+                                        isolate->GetCallingContext()));
 }
 
 void ScriptMessageObjectHandler::Error(
@@ -84,10 +83,9 @@ void ScriptMessageObjectHandler::Error(
 
   std::unique_ptr<content::V8ValueConverter> converter(
       content::V8ValueConverter::create());
-  message->Error(
-      ScriptMessageParams::ERROR_HANDLER_REPORTED_ERROR,
-      base::WrapUnique(converter->FromV8Value(info[0],
-                                              isolate->GetCallingContext())));
+  message->Error(ScriptMessageParams::ERROR_HANDLER_REPORTED_ERROR,
+                 converter->FromV8Value(info[0],
+                                        isolate->GetCallingContext()));
 }
 
 void ScriptMessageObjectHandler::GetID(
