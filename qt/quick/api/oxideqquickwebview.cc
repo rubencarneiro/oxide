@@ -584,6 +584,8 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
     emit q->contextChanged();
   }
 
+  emit q->editingCapabilitiesChanged();
+
   construct_props_.reset();
 }
 
