@@ -33,6 +33,7 @@
 #include "third_party/skia/include/core/SkGraphics.h"
 #include "ui/base/layout.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
 
 #include "shared/browser/oxide_browser_process_main.h"
@@ -65,6 +66,14 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
 void ContentMainDelegate::PreSandboxStartup() {
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
 
+  base::FilePath dir_exe;
+  PathService::Get(base::DIR_EXE, &dir_exe);
+
+  // Override the default locales/ directory - we have to install these in
+  // to a different place to make GN happy
+  PathService::Override(ui::DIR_LOCALES,
+                        dir_exe.Append(FILE_PATH_LITERAL("chromium_l10n")));
+
   std::string app_locale;
   if (command_line->HasSwitch(switches::kLang)) {
     app_locale = command_line->GetSwitchValueASCII(switches::kLang);
@@ -75,9 +84,6 @@ void ContentMainDelegate::PreSandboxStartup() {
       base::i18n::GetCanonicalLocale(app_locale),
       nullptr,
       ui::ResourceBundle::DO_NOT_LOAD_COMMON_RESOURCES);
-
-  base::FilePath dir_exe;
-  PathService::Get(base::DIR_EXE, &dir_exe);
 
   ui::ResourceBundle::GetSharedInstance().AddDataPackFromPath(
       dir_exe.Append(FILE_PATH_LITERAL("oxide.pak")),

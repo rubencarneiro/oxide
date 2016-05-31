@@ -17,7 +17,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import("//build/config/features.gni")
+import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
+import("//oxide/build/config/repack_locales.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
@@ -106,6 +108,16 @@ repack("packed_resources_200_percent") {
   output = "$root_out_dir/oxide_200_percent.pak"
 }
 
+repack_locales("repack_locales_pack") {
+  input_locales = locales
+
+  if (is_mac) {
+    output_locales = locales_as_mac_outputs
+  } else {
+    output_locales = locales
+  }
+}
+
 action("shared_gen") {
   script = "//build/util/version.py"
 
@@ -148,6 +160,7 @@ component("shared") {
     ":packed_resources",
     ":packed_resources_100_percent",
     ":packed_resources_200_percent",
+    ":repack_locales_pack",
     ":shared_gen",
     ":shared_resources",
     "//base",
