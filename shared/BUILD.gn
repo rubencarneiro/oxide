@@ -600,3 +600,54 @@ component("shared") {
     }
   }
 }
+
+source_set("shared_testutils") {
+  testonly = true
+
+  deps = [
+    ":shared",
+    "//base",
+    "//content/public/browser",
+    "//content/test:test_support",
+    "//testing/gtest",
+    "//ui/gfx/geometry"
+  ]
+
+  sources = [
+    "test/oxide_mock_cert_store.cc",
+    "test/oxide_mock_cert_store.h",
+    "test/oxide_test_browser_thread_bundle.cc",
+    "test/oxide_test_browser_thread_bundle.h",
+    "test/oxide_test_suite.cc",
+    "test/oxide_test_suite.h",
+    "test/oxide_test_web_contents_view.cc",
+    "test/oxide_test_web_contents_view.h"
+  ]
+}
+
+executable("shared_unittests") {
+  output_name = "oxide_shared_unittests"
+  testonly = true
+
+  deps = [
+    ":shared",
+    ":shared_testutils",
+    "//base",
+    "//base/test:test_support",
+    "//content/public/browser",
+    "//content/public/common",
+    "//content/test:test_support",
+    "//mojo/edk/system",
+    "//net",
+    "//testing/gtest",
+    "//url"
+  ]
+
+  sources = [
+    "browser/ssl/oxide_certificate_error_unittest.cc",
+    "browser/ssl/oxide_certificate_error_dispatcher_unittest.cc",
+    "browser/ssl/oxide_security_status_unittest.cc",
+    "browser/ssl/oxide_ssl_host_state_delegate_unittest.cc",
+    "test/run_all_unittests.cc"
+  ]
+}

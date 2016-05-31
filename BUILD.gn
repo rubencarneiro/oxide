@@ -17,11 +17,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 declare_args() {
+  enable_tests = false
+
   oxide_platform = false
 }
 
 assert(oxide_platform != false)
 
 group("oxide_all") {
+  # FIXME: Split test targets out of this one
+  testonly = true
+
   deps = [ "//oxide/shared" ]
+
+  if (enable_tests) {
+    deps += [ "//oxide/shared:shared_unittests" ]
+  }
 }

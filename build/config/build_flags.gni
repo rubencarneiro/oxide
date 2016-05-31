@@ -19,8 +19,6 @@
 declare_args() {
   enable_tcmalloc = false
 
-  enable_tests = false
-
   oxide_gettext_domain = false
 
   oxide_libexec_subdir = ""
