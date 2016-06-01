@@ -780,4 +780,8 @@ TEST_F(SecurityStatusTest, CertUpdate) {
 } // namespace qt
 } // namespace oxide
 
+#if defined(GN_BUILD)
 #include "qt/core/browser/ssl/oxide_qt_security_status_unittest.moc"
+#else
+#include "oxide_qt_security_status_unittest.moc"
+#endif

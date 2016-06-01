@@ -385,4 +385,8 @@ LocationProvider::~LocationProvider() {
 } // namespace qt
 } // namespace oxide
 
+#if defined(GN_BUILD)
 #include "qt/core/browser/oxide_qt_location_provider.moc"
+#else
+#include "oxide_qt_location_provider.moc"
+#endif

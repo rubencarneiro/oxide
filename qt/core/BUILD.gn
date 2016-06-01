@@ -72,6 +72,7 @@ version_header("oxide_version") {
 
 source_set("core_sources") {
   defines = [
+    "GN_BUILD", # Remove this when we drop gyp support
     "OXIDE_QTCORE_IMPLEMENTATION",
     "QT_NO_SIGNALS_SLOTS_KEYWORDS"
   ]
@@ -322,6 +323,10 @@ component("core_component") {
 executable("core_unittests") {
   output_name = "oxide_qt_unittests"
   testonly = true
+
+  defines = [
+    "GN_BUILD" # Remove this when we drop gyp support
+  ]
 
   deps = [
     ":core_component",
