@@ -22,6 +22,8 @@
 #include <QRect>
 #include <QtGlobal>
 
+#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
+
 QT_BEGIN_NAMESPACE
 class QCursor;
 class QKeyEvent;
@@ -73,9 +75,13 @@ class ContentsViewProxyClient {
 
   virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
-  virtual void TouchSelectionChanged(bool active,
-                                     const QRectF& bounds,
-                                     bool handle_drag_in_progress) = 0;
+  virtual void TouchSelectionChanged(
+      TouchSelectionControllerActiveStatus status,
+      const QRectF& bounds,
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped) = 0;
+
+  virtual void ContextMenuIntercepted() const = 0;
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

@@ -241,7 +241,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   float GetLocationBarHeight() const override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(RenderWidgetHostView* view,
-                             bool handle_drag_in_progress) const override;
+                             bool handle_drag_in_progress,
+                             bool insertion_handle_tapped) const override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
   WebContentsViewClient* client_;

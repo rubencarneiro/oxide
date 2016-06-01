@@ -527,15 +527,35 @@ ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
   return drawable;
 }
 
-void ContentsView::TouchSelectionChanged(bool active,
-                                         const gfx::RectF& bounds,
-                                         bool handle_drag_in_progress) const {
-  gfx::RectF scaled_bounds =
-      DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen());
+void ContentsView::TouchSelectionChanged(
+    ui::TouchSelectionController::ActiveStatus status,
+    const gfx::RectF& bounds,
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) const {
+  TouchSelectionControllerActiveStatus active_status;
+  switch (status) {
+  case ui::TouchSelectionController::INACTIVE:
+    active_status = ACTIVE_STATUS_INACTIVE;
+    break;
+  case ui::TouchSelectionController::INSERTION_ACTIVE:
+    active_status = ACTIVE_STATUS_INSERTION_ACTIVE;
+    break;
+  case ui::TouchSelectionController::SELECTION_ACTIVE:
+    active_status = ACTIVE_STATUS_SELECTION_ACTIVE;
+    break;
+  default:
+    Q_UNREACHABLE();
+  }
+
   client_->TouchSelectionChanged(
-      active,
+      active_status,
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
-      handle_drag_in_progress);
+      handle_drag_in_progress,
+      insertion_handle_tapped);
+}
+
+void ContentsView::ContextMenuIntercepted() const {
+  client_->ContextMenuIntercepted();
 }
 
 oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {

@@ -71,7 +71,8 @@ class RenderWidgetHostViewContainer {
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
   virtual void TouchSelectionChanged(RenderWidgetHostView* view,
-                                     bool handle_drag_in_progress) const = 0;
+                                     bool handle_drag_in_progress,
+                                     bool insertion_handle_tapped) const = 0;
 
   virtual void EditingCapabilitiesChanged(RenderWidgetHostView* view) = 0;
 };

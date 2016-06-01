@@ -320,6 +320,14 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv && rwhv->HandleContextMenu(params)) {
+    if (client_) {
+      client_->ContextMenuIntercepted();
+    }
+    return;
+  }
+
   if (!client_) {
     return;
   }
@@ -412,7 +420,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged(GetRenderWidgetHostView());
-  TouchSelectionChanged(GetRenderWidgetHostView(), false);
+  TouchSelectionChanged(GetRenderWidgetHostView(), false, false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -451,7 +459,7 @@ void WebContentsView::DidShowFullscreenWidget() {
   web_contents()->GetRenderWidgetHostView()->Hide();
 
   EditingCapabilitiesChanged(rwhv);
-  TouchSelectionChanged(rwhv, false);
+  TouchSelectionChanged(rwhv, false, false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget() {
@@ -478,7 +486,7 @@ void WebContentsView::DidDestroyFullscreenWidget() {
   // FIXME: This actually doesn't work, because GetRenderWidgetHostView still
   // returns the fullscreen view
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchSelectionChanged(orig_rwhv, false);
+  TouchSelectionChanged(orig_rwhv, false, false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -507,7 +515,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   // messages, so there's nothing else to do with |rwhv|
 
   EditingCapabilitiesChanged(rwhv),
-  TouchSelectionChanged(rwhv, false);
+  TouchSelectionChanged(rwhv, false, false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -528,7 +536,7 @@ void WebContentsView::DidDetachInterstitialPage() {
   }
 
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchSelectionChanged(orig_rwhv, false);
+  TouchSelectionChanged(orig_rwhv, false, false);
 }
 
 bool WebContentsView::OnMessageReceived(
@@ -668,7 +676,8 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
 
 void WebContentsView::TouchSelectionChanged(
     RenderWidgetHostView* view,
-    bool handle_drag_in_progress) const {
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) const {
   if (!client_) {
     return;
   }
@@ -679,9 +688,9 @@ void WebContentsView::TouchSelectionChanged(
 
   ui::TouchSelectionController* controller =
       view ? view->selection_controller() : nullptr;
-  bool active =
-      controller ? (controller->active_status() !=
-                    ui::TouchSelectionController::INACTIVE) : false;
+  ui::TouchSelectionController::ActiveStatus status =
+      controller ? controller->active_status()
+                 : ui::TouchSelectionController::INACTIVE;
 
   gfx::RectF bounds;
   if (controller) {
@@ -696,7 +705,10 @@ void WebContentsView::TouchSelectionChanged(
   }
   bounds.Offset(0, offset);
 
-  client_->TouchSelectionChanged(active, bounds, handle_drag_in_progress);
+  client_->TouchSelectionChanged(status,
+                                 bounds,
+                                 handle_drag_in_progress,
+                                 insertion_handle_tapped);
 }
 
 void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {
@@ -769,7 +781,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged(GetRenderWidgetHostView());
-  TouchSelectionChanged(GetRenderWidgetHostView(), false);
+  TouchSelectionChanged(GetRenderWidgetHostView(), false, false);
 }
 
 bool WebContentsView::IsVisible() const {

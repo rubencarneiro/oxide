@@ -136,9 +136,12 @@ class ContentsView : public QObject,
       bool allow_multiple_selection,
       oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
-  void TouchSelectionChanged(bool active,
-                             const QRectF& bounds,
-                             bool handle_drag_in_progress) override;
+  void TouchSelectionChanged(
+      oxide::qt::TouchSelectionControllerActiveStatus status,
+      const QRectF& bounds,
+      bool handle_drag_in_progress,
+      bool insertion_handle_tapped) override;
+  void ContextMenuIntercepted() const override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QPointer<QQuickItem> item_;
