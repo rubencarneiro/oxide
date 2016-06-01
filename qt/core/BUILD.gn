@@ -283,7 +283,7 @@ shared_library("core") {
   output_name = "$oxide_lib_name"
   output_extension = "$oxide_lib_extension"
 
-  deps = [
+  public_deps = [
     ":core_sources"
   ]
 

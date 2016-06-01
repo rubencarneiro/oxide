@@ -16,11 +16,21 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-oxide_platform_targets = [
-  "//oxide/qt/core",
-  "//oxide/qt/renderer"
-]
+import("//oxide/build/config/build_flags.gni")
 
-#oxide_platform_test_targets = [
-#  "//oxide/qt/core:qt_unittests"
-#]
+executable("renderer") {
+  output_name = "$oxide_renderer_name"
+
+  deps = [
+    "//oxide/build/config/Qt5:Core",
+    "//oxide/qt/core"
+  ]
+
+  sources = [ "main.cc" ]
+
+  if (is_component_build) {
+    deps += [
+      "//content/public/common"
+    ]
+  }
+}
