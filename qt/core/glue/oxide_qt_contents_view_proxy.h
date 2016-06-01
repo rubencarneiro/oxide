@@ -44,6 +44,12 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
+enum TouchSelectionControllerActiveStatus {
+  ACTIVE_STATUS_INACTIVE,
+  ACTIVE_STATUS_INSERTION_ACTIVE,
+  ACTIVE_STATUS_SELECTION_ACTIVE
+};
+
 class CompositorFrameHandle {
  public:
   virtual ~CompositorFrameHandle() {}

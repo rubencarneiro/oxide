@@ -90,12 +90,6 @@ enum EditingCommands {
   EDITING_COMMAND_SELECT_ALL
 };
 
-enum TouchSelectionControllerActiveStatus {
-  ACTIVE_STATUS_INACTIVE,
-  ACTIVE_STATUS_INSERTION_ACTIVE,
-  ACTIVE_STATUS_SELECTION_ACTIVE
-};
-
 class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
  public:
   static WebViewProxy* create(
