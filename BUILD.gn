@@ -33,9 +33,12 @@ group("oxide_all") {
   testonly = true
 
   deps = oxide_platform_targets
-  deps += [
-    "//sandbox"
-  ]
+
+  if (is_linux) {
+    deps += [
+      "//sandbox/linux:chrome_sandbox"
+    ]
+  }
 
   if (enable_tests) {
     if (defined(oxide_platform_test_targets)) {
