@@ -16,11 +16,19 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-oxide_platform_targets = [
-  "//oxide/qt/core",
-  #"//oxide/qt/renderer"
-]
+template("version_header") {
+  assert(defined(invoker.input_file))
+  assert(defined(invoker.output_file))
+  assert(defined(invoker.version_file))
 
-#oxide_platform_test_targets = [
-#  "//oxide/qt/core:qt_unittests"
-#]
+  action(target_name) {
+    script = "//build/util/version.py"
+
+    inputs = [ "${invoker.input_file}", "${invoker.version_file}" ]
+    outputs = [ "${invoker.output_file}" ]
+
+    args = [ "-f", rebase_path("${invoker.version_file}", "", "."),
+             "-i", rebase_path("${invoker.input_file}", "", "."),
+             "-o", rebase_path("${invoker.output_file}", "", ".") ]
+  }
+}

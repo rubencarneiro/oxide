@@ -16,11 +16,32 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-oxide_platform_targets = [
-  "//oxide/qt/core",
-  #"//oxide/qt/renderer"
-]
+assert(is_linux)
 
-#oxide_platform_test_targets = [
-#  "//oxide/qt/core:qt_unittests"
-#]
+group("Core") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Core" ]
+}
+
+group("Core_Private") {
+  public_deps = [ "//oxide/build/config/linux/qt:Qt5Core_Private" ]
+}
+
+group("Feedback") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Feedback" ]
+}
+
+group("Gui") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Gui" ]
+}
+
+group("Gui_Private") {
+  public_deps = [ "//oxide/build/config/linux/qt:Qt5Gui_Private" ]
+}
+
+group("Network") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Network" ]
+}
+
+group("Positioning") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Positioning" ]
+}

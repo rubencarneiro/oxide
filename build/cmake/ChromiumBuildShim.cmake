@@ -144,6 +144,10 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD -Denable_tests=false)
   endif()
 
+  if(DEFINED QT_MOC_EXECUTABLE)
+    list(APPEND MAKE_GN_ARGS_CMD -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
+  endif()
+
   if(CMAKE_CROSSCOMPILING)
     message(FATAL_ERROR "Add support for cross-compiling")
   endif()

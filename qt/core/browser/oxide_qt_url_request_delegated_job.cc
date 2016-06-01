@@ -478,4 +478,4 @@ URLRequestDelegatedJob::~URLRequestDelegatedJob() {
 } // namespace qt
 } // namespace oxide
 
-#include "oxide_qt_url_request_delegated_job.moc"
+#include "qt/core/browser/oxide_qt_url_request_delegated_job.moc"

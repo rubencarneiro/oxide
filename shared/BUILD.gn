@@ -20,6 +20,7 @@ import("//build/config/features.gni")
 import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
 import("//oxide/build/config/repack_locales.gni")
+import("//oxide/build/config/version.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
@@ -118,19 +119,10 @@ repack_locales("repack_locales_pack") {
   }
 }
 
-action("shared_gen") {
-  script = "//build/util/version.py"
-
+version_header("chrome_version") {
   input_file = "common/chrome_version.h.in"
   version_file = "//chrome/VERSION"
-  output_file = "$root_gen_dir/oxide/shared/common/chrome_version.h"
-
-  inputs = [ "common/chrome_version.h.in", "$version_file" ]
-  outputs = [ "$output_file" ]
-
-  args = [ "-f", rebase_path("$version_file", "", "."),
-           "-i", rebase_path("$input_file", "", "."),
-           "-o", rebase_path("$output_file", "", ".") ]
+  output_file = "$target_gen_dir/common/chrome_version.h"
 }
 
 component("shared") {
@@ -157,11 +149,11 @@ component("shared") {
   ]
 
   deps = [
+    ":chrome_version",
     ":packed_resources",
     ":packed_resources_100_percent",
     ":packed_resources_200_percent",
     ":repack_locales_pack",
-    ":shared_gen",
     ":shared_resources",
     "//base",
     "//base:base_static",

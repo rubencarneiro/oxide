@@ -26,13 +26,21 @@ assert(oxide_platform != false)
 
 import("//oxide/$oxide_platform/config.gni")
 
+assert(defined(oxide_platform_targets))
+
 group("oxide_all") {
   # FIXME: Split test targets out of this one
   testonly = true
 
-  deps = [ "//oxide/shared" ]
+  deps = oxide_platform_targets
+  deps += [
+    "//sandbox"
+  ]
 
   if (enable_tests) {
+    if (defined(oxide_platform_test_targets)) {
+      deps += oxide_platform_test_targets
+    }
     deps += [ "//oxide/shared:shared_unittests" ]
   }
 }
