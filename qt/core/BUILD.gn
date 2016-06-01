@@ -60,6 +60,10 @@ qtmoc("core_moc_gen") {
   ]
 }
 
+qtmoc("core_unittests_moc_gen") {
+  sources = [ "browser/ssl/oxide_qt_security_status_unittest.cc" ]
+}
+
 version_header("oxide_version") {
   input_file = "common/oxide_version.h.in"
   output_file = "$target_gen_dir/common/oxide_version.h"
@@ -301,4 +305,42 @@ shared_library("core") {
       "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir/$shlib_subdir"
     ]
   }
+}
+
+component("core_component") {
+  output_name = "oxide_qt"
+
+  public_deps = [
+    ":core_sources"
+  ]
+
+  sources = [
+    "dummy.cc"
+  ]
+}
+
+executable("core_unittests") {
+  output_name = "oxide_qt_unittests"
+  testonly = true
+
+  deps = [
+    ":core_component",
+    ":core_unittests_moc_gen",
+    "//base",
+    "//base/test:test_support",
+    "//content/public/browser",
+    "//content/public/common",
+    "//content/test:test_support",
+    "//mojo/edk/system",
+    "//net",
+    "//testing/gtest",
+    "//oxide/build/config/Qt5:Core",
+    "//oxide/shared",
+    "//oxide/shared:shared_testutils"
+  ]
+
+  sources = [
+    "browser/ssl/oxide_qt_security_status_unittest.cc",
+    "test/run_all_unittests.cc",
+  ]
 }

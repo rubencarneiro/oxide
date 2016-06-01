@@ -780,4 +780,4 @@ TEST_F(SecurityStatusTest, CertUpdate) {
 } // namespace qt
 } // namespace oxide
 
-#include "oxide_qt_security_status_unittest.moc"
+#include "qt/core/browser/ssl/oxide_qt_security_status_unittest.moc"

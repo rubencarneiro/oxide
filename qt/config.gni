@@ -21,6 +21,6 @@ oxide_platform_targets = [
   "//oxide/qt/renderer"
 ]
 
-#oxide_platform_test_targets = [
-#  "//oxide/qt/core:qt_unittests"
-#]
+oxide_platform_test_targets = [
+  "//oxide/qt/core:core_unittests"
+]

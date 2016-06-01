@@ -41,33 +41,46 @@ template("moc_action_foreach") {
 template("qtmoc") {
   assert(defined(invoker.sources))
 
-  sources_cc = []
-  sources_h = []
-
   foreach(source, invoker.sources) {
     ext = get_path_info(source, "extension")
     if (ext == "cc") {
+      if (!defined(sources_cc)) {
+        sources_cc = []
+      }
       sources_cc += [ source ]
     } else {
       assert(ext == "h")
+      if (!defined(sources_h)) {
+        sources_h = []
+      }
       sources_h += [ source ]
     }
   }
 
-  moc_action_foreach("${target_name}_cc") {
-    sources = sources_cc
-    output_prefix = ""
-    output_extension = "moc"
+  targets = []
+
+  if (defined(sources_cc)) {
+    name = "${target_name}_cc"
+    targets += [ ":${name}" ]
+    moc_action_foreach(name) {
+      sources = sources_cc
+      output_prefix = ""
+      output_extension = "moc"
+    }
   }
 
-  moc_action_foreach("${target_name}_h") {
-    sources = sources_h
-    output_prefix = "moc_"
-    output_extension = "cc"
+  if (defined(sources_h)) {
+    name = "${target_name}_h"
+    targets += [ ":${name}" ]
+    moc_action_foreach(name) {
+      sources = sources_h
+      output_prefix = "moc_"
+      output_extension = "cc"
+    }
   }
 
   group(target_name) {
     forward_variables_from(invoker, [ "visibility" ])
-    public_deps = [ ":${target_name}_cc", ":${target_name}_h" ]
+    public_deps = targets
   }
 }

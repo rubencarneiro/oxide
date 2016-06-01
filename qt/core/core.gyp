@@ -427,7 +427,7 @@
       ],
       'actions': [
         {
-          'action_name': 'oxide_qt_security_status_unittest.moc',
+          'action_name': 'browser/ssl/oxide_qt_security_status_unittest.moc',
           'moc_input': 'browser/ssl/oxide_qt_security_status_unittest.cc',
           'includes': [ 'moc.gypi' ],
         },
