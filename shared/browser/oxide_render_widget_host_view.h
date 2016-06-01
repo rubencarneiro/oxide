@@ -47,6 +47,7 @@ class SurfaceLayer;
 }
 
 namespace content {
+struct ContextMenuParams;
 class RenderWidgetHostImpl;
 }
 
@@ -105,6 +106,8 @@ class RenderWidgetHostView
   ui::TouchSelectionController* selection_controller() const {
     return selection_controller_.get();
   }
+
+  bool HandleContextMenu(const content::ContextMenuParams& params);
 
  private:
   // content::RenderWidgetHostViewOxide implementation
@@ -206,6 +209,7 @@ class RenderWidgetHostView
   void DetachLayer();
 
   bool HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
+  void NotifyTouchSelectionChanged(bool insertion_handle_tapped);
 
   content::RenderWidgetHostImpl* host_;
 

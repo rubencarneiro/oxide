@@ -17,6 +17,7 @@
 
 #include "oxideqquicktouchselectioncontroller.h"
 
+#include "qt/core/api/oxideqglobal_p.h"
 #include "qt/quick/oxide_qquick_contents_view.h"
 
 #include "oxideqquickwebview_p.h"
@@ -30,14 +31,14 @@ class OxideQQuickTouchSelectionControllerPrivate {
   OxideQQuickTouchSelectionControllerPrivate()
       : view(nullptr)
       , handle(nullptr)
-      , active(false)
-      , handle_drag_in_progress(false) {}
+      , handle_drag_in_progress(false)
+      , status(OxideQQuickTouchSelectionController::StatusInactive) {}
 
   oxide::qquick::ContentsView* view;
   QQmlComponent* handle;
-  bool active;
   QRectF bounds;
   bool handle_drag_in_progress;
+  OxideQQuickTouchSelectionController::Status status;
 };
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
@@ -59,7 +60,11 @@ void OxideQQuickTouchSelectionController::hide() const {
 bool OxideQQuickTouchSelectionController::active() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->active;
+  WARN_DEPRECATED_API_USAGE() <<
+      "TouchSelectionController::active is deprecated, use "
+      "TouchSelectionController::status instead";
+
+  return (d->status != StatusInactive);
 }
 
 QQmlComponent* OxideQQuickTouchSelectionController::handle() const {
@@ -91,15 +96,28 @@ bool OxideQQuickTouchSelectionController::handleDragInProgress() const {
   return d->handle_drag_in_progress;
 }
 
+OxideQQuickTouchSelectionController::Status
+OxideQQuickTouchSelectionController::status() const {
+  Q_D(const OxideQQuickTouchSelectionController);
+
+  return d->status;
+}
+
 void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
-    bool active,
+    Status status,
     const QRectF& bounds,
-    bool handle_drag_in_progress) {
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) {
   Q_D(OxideQQuickTouchSelectionController);
 
-  if (active != d->active) {
-    d->active = active;
-    Q_EMIT activeChanged();
+  if (status != d->status) {
+    bool was_active = (d->status != StatusInactive);
+    d->status = status;
+    Q_EMIT statusChanged();
+    bool active = (status != StatusInactive);
+    if (active != was_active) {
+      Q_EMIT activeChanged();
+    }
   }
 
   if (bounds != d->bounds) {
@@ -110,5 +128,9 @@ void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
   if (handle_drag_in_progress != d->handle_drag_in_progress) {
     d->handle_drag_in_progress = handle_drag_in_progress;
     Q_EMIT handleDragInProgressChanged();
+  }
+
+  if (insertion_handle_tapped) {
+    Q_EMIT insertionHandleTapped();
   }
 }

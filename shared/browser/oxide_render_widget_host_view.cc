@@ -40,6 +40,7 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
+#include "content/public/common/context_menu_params.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
@@ -553,7 +554,7 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   if ((selection_controller_->active_status() !=
           ui::TouchSelectionController::INACTIVE) &&
       HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    container_->TouchSelectionChanged(this, handle_drag_in_progress_);
+    NotifyTouchSelectionChanged(false);
     // XXX: hack to ensure the position of the handles is updated.
     selection_controller_->SetTemporarilyHidden(true);
     selection_controller_->SetTemporarilyHidden(false);
@@ -597,6 +598,18 @@ void RenderWidgetHostView::OnGestureEvent(
   host_->ForwardGestureEvent(event);
 }
 
+bool RenderWidgetHostView::HandleContextMenu(
+    const content::ContextMenuParams& params) {
+  if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
+      params.is_editable &&
+      params.selection_text.empty()) {
+    return true;
+  }
+
+  selection_controller_->HideAndDisallowShowingAutomatically();
+  return false;
+}
+
 bool RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
   switch (event.type) {
@@ -632,6 +645,17 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
       break;
   }
   return false;
+}
+
+void RenderWidgetHostView::NotifyTouchSelectionChanged(
+    bool insertion_handle_tapped) {
+  if (!container_) {
+    return;
+  }
+
+  container_->TouchSelectionChanged(this,
+                                    handle_drag_in_progress_,
+                                    insertion_handle_tapped);
 }
 
 void RenderWidgetHostView::ReturnResources(
@@ -684,6 +708,7 @@ void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
 }
 
 void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
+  bool insertion_handle_tapped = false;
   switch (event) {
     case ui::SELECTION_HANDLE_DRAG_STARTED:
     case ui::INSERTION_HANDLE_DRAG_STARTED:
@@ -693,12 +718,13 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
     case ui::INSERTION_HANDLE_DRAG_STOPPED:
       handle_drag_in_progress_ = false;
       break;
+    case ui::INSERTION_HANDLE_TAPPED:
+      insertion_handle_tapped = true;
+      break;
     default:
       break;
   }
-  if (container_) {
-    container_->TouchSelectionChanged(this, handle_drag_in_progress_);
-  }
+  NotifyTouchSelectionChanged(insertion_handle_tapped);
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>
