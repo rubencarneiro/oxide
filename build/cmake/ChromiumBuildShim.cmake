@@ -65,6 +65,7 @@ function(run_generate_ninja)
   list(APPEND MAKE_GN_ARGS_CMD --libexec-subdir ${OXIDE_PLATFORM_FULLNAME})
 
   get_library_extension(LIB_EXTENSION ${OXIDE_LIB_VERSION})
+  string(REGEX REPLACE "^\\." "" LIB_EXTENSION ${LIB_EXTENSION})
   list(APPEND MAKE_GN_ARGS_CMD --lib-extension ${LIB_EXTENSION})
 
   list(APPEND MAKE_GN_ARGS_CMD --lib-name ${OXIDE_LIB})
