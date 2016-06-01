@@ -532,23 +532,23 @@ void ContentsView::TouchSelectionChanged(
     const gfx::RectF& bounds,
     bool handle_drag_in_progress,
     bool insertion_handle_tapped) const {
-  TouchSelectionControllerActiveStatus activeStatus;
+  TouchSelectionControllerActiveStatus active_status;
   switch (status) {
   case ui::TouchSelectionController::INACTIVE:
-    activeStatus = ACTIVE_STATUS_INACTIVE;
+    active_status = ACTIVE_STATUS_INACTIVE;
     break;
   case ui::TouchSelectionController::INSERTION_ACTIVE:
-    activeStatus = ACTIVE_STATUS_INSERTION_ACTIVE;
+    active_status = ACTIVE_STATUS_INSERTION_ACTIVE;
     break;
   case ui::TouchSelectionController::SELECTION_ACTIVE:
-    activeStatus = ACTIVE_STATUS_SELECTION_ACTIVE;
+    active_status = ACTIVE_STATUS_SELECTION_ACTIVE;
     break;
   default:
     Q_UNREACHABLE();
   }
 
   client_->TouchSelectionChanged(
-      activeStatus,
+      active_status,
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
       handle_drag_in_progress,
       insertion_handle_tapped);
