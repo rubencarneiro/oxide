@@ -111,11 +111,11 @@ void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
   Q_D(OxideQQuickTouchSelectionController);
 
   if (status != d->status) {
-    bool wasActive = (d->status != StatusInactive);
+    bool was_active = (d->status != StatusInactive);
     d->status = status;
     Q_EMIT statusChanged();
     bool active = (status != StatusInactive);
-    if (active != wasActive) {
+    if (active != was_active) {
       Q_EMIT activeChanged();
     }
   }
