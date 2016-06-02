@@ -26,6 +26,15 @@ pkg_config("gdkpixbuf") {
   packages = [ "gdk-pixbuf-2.0" ]
 }
 
+pkg_config("glib") {
+  packages = [
+    "glib-2.0",
+    "gmodule-2.0",
+    "gobject-2.0",
+    "gthread-2.0"
+  ]
+}
+
 pkg_config("hybris_camera") {
   packages = [ "libcamera" ]
 }
