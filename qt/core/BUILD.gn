@@ -292,16 +292,19 @@ shared_library("core") {
     ":core_sources"
   ]
 
-  ldflags = [
-    # Needed to pick up libffmpeg.so when installed
-    "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir"
-  ]
+  if (is_linux) {
+    ldflags = [
+      # Needed to pick up libffmpeg.so when installed
+      "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir",
+      "-Wl,--disable-new-dtags"
+    ]
+  }
 
   sources = [
     "dummy.cc"
   ]
 
-  if (is_component_build) {
+  if (is_component_build && is_linux) {
     ldflags += [
       "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir/$shlib_subdir"
     ]

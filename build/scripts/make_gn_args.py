@@ -126,7 +126,8 @@ def WriteStaticArgs(writer):
   #  "ERROR at //build/toolchain/gcc_toolchain.gni:520:30: Clobbering existing value."
   #  use_gold = true is the default anyway
   #writer.WriteBool("use_gold", True)
-  writer.WriteBool("linux_use_bundled_gold", False)
+  writer.WriteBool("linux_use_bundled_binutils", False)
+  writer.WriteString("gold_path", "")
 
   writer.WriteBool("use_sysroot", False)
   writer.WriteBool("use_ash", False)
