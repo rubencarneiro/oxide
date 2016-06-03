@@ -20,7 +20,7 @@ declare_args() {
   qt_moc_executable = false
 }
 
-assert(qt_moc_executable != false)
+assert(qt_moc_executable != false, "qt_moc_executable must be defined by CMake")
 
 moc_script = "//oxide/build/config/Qt5/moc.py"
 

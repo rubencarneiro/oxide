@@ -32,9 +32,11 @@ namespace display {
 class Screen;
 }
 
+#if defined(OS_LINUX)
 namespace gpu {
 class GpuInfoCollectorOxideLinux;
 }
+#endif
 
 namespace oxide {
 
@@ -63,7 +65,9 @@ class BrowserMainParts : public content::BrowserMainParts {
   // has been shut-down
   scoped_refptr<GLContextDependent> gl_share_context_;
 
+#if defined(OS_LINUX)
   std::unique_ptr<gpu::GpuInfoCollectorOxideLinux> gpu_info_collector_;
+#endif
   std::unique_ptr<base::MessageLoop> main_message_loop_;
   std::unique_ptr<IOThread> io_thread_;
   std::unique_ptr<display::Screen> primary_screen_;

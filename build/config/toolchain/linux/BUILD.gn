@@ -1,0 +1,90 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import("//build/toolchain/gcc_toolchain.gni")
+import("//oxide/build/config/toolchain/config.gni")
+
+template("host_gcc_toolchain") {
+  gcc_toolchain(target_name) {
+    cc = "$oxide_host_cc"
+    cxx = "$oxide_host_cxx"
+
+    extra_cflags = "$oxide_extra_cflags"
+    extra_cppflags = "$oxide_extra_cpp_flags"
+    extra_cxxflags = "$oxide_extra_cxx_flags"
+    extra_ldflags = "$oxide_extra_ldflags"
+
+    readelf = "readelf"
+    nm = "nm"
+    ar = "$oxide_host_ar"
+
+    ld = cxx
+
+    toolchain_os = "linux"
+    toolchain_cpu = "${invoker.toolchain_cpu}"
+    is_clang = false
+  }
+}
+
+template("cross_gcc_toolchain") {
+  gcc_toolchain(target_name) {
+    cc = "$oxide_cross_cc"
+    cxx = "$oxide_cross_cxx"
+
+    extra_cflags = "$oxide_extra_cflags"
+    extra_cppflags = "$oxide_extra_cpp_flags"
+    extra_cxxflags = "$oxide_extra_cxx_flags"
+    extra_ldflags = "$oxide_extra_ldflags"
+
+    readelf = "$oxide_cross_readelf"
+    nm = "$oxide_cross_nm"
+    ar = "$oxide_cross_ar"
+
+    ld = cxx
+
+    toolchain_os = "linux"
+    toolchain_cpu = "${invoker.toolchain_cpu}"
+    is_clang = false
+  }
+}
+
+host_gcc_toolchain("host_gcc_x86") {
+  toolchain_cpu = "x86"
+}
+
+host_gcc_toolchain("host_gcc_x64") {
+  toolchain_cpu = "x64"
+}
+
+host_gcc_toolchain("host_gcc_arm") {
+  toolchain_cpu = "arm"
+}
+
+if (oxide_enable_cross_toolchains) {
+  cross_gcc_toolchain("cross_gcc_x86") {
+    toolchain_cpu = "x86"
+  }
+
+  cross_gcc_toolchain("cross_gcc_x64") {
+    toolchain_cpu = "x64"
+  }
+
+  cross_gcc_toolchain("cross_gcc_arm") {
+    toolchain_cpu = "arm"
+  }
+}

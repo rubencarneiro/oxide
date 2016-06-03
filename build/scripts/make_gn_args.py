@@ -39,12 +39,29 @@ def HostArch():
   elif host_arch.startswith("arm"):
     return "arm"
 
+  raise Exception
+
 def GetSymbolLevel(enabled, host_arch, is_component_build):
   if not enabled:
     return 0
   if (host_arch == "arm" or host_arch == "x86") and not is_component_build:
     return 1
   return 2
+
+def GetToolchain(system, toolset, compiler, arch):
+  if system != "Linux":
+    raise Exception("Invalid system '%s'" % system)
+
+  toolchain = "//oxide/build/config/toolchain/linux:"
+  toolchain += "%s_" % toolset
+
+  # XXX: Add clang
+  if compiler != "gcc":
+    raise Exception("Invalid compiler '%s'" % compiler)
+
+  toolchain += "gcc_%s" % arch
+
+  return toolchain
 
 class Options(OptionParser):
   def __init__(self):
@@ -54,16 +71,11 @@ class Options(OptionParser):
                     help="Enable a component build")
     self.add_option("--enable-debug-symbols", action="store_true",
                     help="Whether to enable debug symbols")
-    self.add_option("--libexec-subdir",
-                    help="The subdirectory for Oxide components relative to "
-                         "the core library location")
-    self.add_option("--lib-extension", help="The core library file extension")
-    self.add_option("--lib-name", help="The core library name")
+    self.add_option("--host-compiler", help="The host compiler name")
     self.add_option("--output-dir",
                     help="The destination directory for build files")
-    self.add_option("--platform", help="The Oxide platform to build")
-    self.add_option("--renderer-name",
-                    help="The filename of the renderer executable")
+    self.add_option("--target-compiler", help="The target compiler name")
+    self.add_option("--target-arch", help="The target architecture")
 
     self.add_option("-D", action="append", dest="extra_args", type="string",
                     help="Addition build arguments")
@@ -129,6 +141,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("linux_use_bundled_binutils", False)
   writer.WriteString("gold_path", "")
 
+  writer.WriteBool("is_desktop_linux", False)
   writer.WriteBool("use_sysroot", False)
   writer.WriteBool("use_ash", False)
   writer.WriteBool("use_aura", True)
@@ -140,21 +153,59 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_print_preview", False)
   writer.WriteBool("enable_extensions", True)
 
+def GetV8SnapshotArch(host_arch, target_arch):
+  if host_arch == target_arch:
+    return host_arch
+
+  if host_arch == "x64":
+    if target_arch == "x86" or target_arch == "arm":
+      return "x86"
+  elif host_arch == "x86":
+    if target_arch == "arm":
+      return "x86"
+    elif target_arch == "x64":
+      return "x64"
+
+  raise Exception("Failed to detect arch for compiling V8 snapshot")
+
 def WriteConfigurableArgs(writer, options):
-  host_arch = HostArch()
+  try:
+    host_arch = HostArch()
+  except:
+    raise Exception("Failed to detect host architecture")
+
   writer.WriteInt("symbol_level",
                   GetSymbolLevel(options.enable_debug_symbols,
                                  host_arch,
                                  options.component_build))
 
+  host_toolchain = GetToolchain(platform.system(),
+                                "host",
+                                options.host_compiler,
+                                host_arch)
+  writer.WriteString("host_toolchain", host_toolchain)
+
+  if options.target_arch and options.target_arch != host_arch:
+    writer.WriteBool("oxide_enable_cross_toolchains", True)
+    writer.WriteString("target_cpu", options.target_arch)
+    target_toolchain = GetToolchain(platform.system(),
+                                    "cross",
+                                    options.target_compiler,
+                                    options.target_arch)
+    writer.WriteString("custom_toolchain", target_toolchain)
+
+    v8_snapshot_arch = GetV8SnapshotArch(host_arch, options.target_arch)
+    v8_snapshot_toolchain = GetToolchain(platform.system(),
+                                         "host",
+                                         options.host_compiler,
+                                         v8_snapshot_arch)
+    writer.WriteString("v8_snapshot_toolchain", v8_snapshot_toolchain)
+  else:
+    writer.WriteString("custom_toolchain", host_toolchain)
+    writer.WriteString("v8_snapshot_toolchain", host_toolchain)
+
   if options.component_build:
     writer.WriteBool("is_component_build", True)
-
-  writer.WriteString("oxide_libexec_subdir", options.libexec_subdir)
-  writer.WriteString("oxide_lib_extension", options.lib_extension)
-  writer.WriteString("oxide_lib_name", options.lib_name)
-  writer.WriteString("oxide_platform", options.platform)
-  writer.WriteString("oxide_renderer_name", options.renderer_name)
 
 def WriteExtraArgs(writer, args):
   if not args:
@@ -171,33 +222,6 @@ def WriteExtraArgs(writer, args):
     else:
       writer.WriteString(prop, value)
 
-def SanitizeOptions(options):
-  if not options.output_dir:
-    print("No output directory specified!", file=sys.stderr)
-    sys.exit(1)
-
-  if not options.libexec_subdir:
-    print("Missing option --libexec-subdir", file=sys.stderr)
-    sys.exit(1)
-  if not options.lib_extension:
-    print("Missing option --lib-extension", file=sys.stderr)
-    sys.exit(1)
-  if not options.lib_name:
-    print("Missing option --lib-name", file=sys.stderr)
-    sys.exit(1)
-  if not options.platform:
-    print("Missing option --platform", file=sys.stderr)
-    sys.exit(1)
-  if not options.renderer_name:
-    print("Missing option --renderer-name", file=sys.stderr)
-    sys.exit(1)
-
-  if options.extra_args:
-    for arg in options.extra_args:
-      if not re.match(EXTRA_ARGS_RE, arg):
-        print("Invalid extra argument '%s'" % arg, file=sys.stderr)
-        sys.exit(1)
-
 def WriteGnArgs(options):
   writer = ArgsGnWriter()
 
@@ -211,6 +235,20 @@ def WriteGnArgs(options):
     os.makedirs(output_dir)
 
   writer.SaveToFile(os.path.join(output_dir, "args.gn"))
+
+def SanitizeOptions(options):
+  if not options.host_compiler:
+    raise Exception("No host compiler specified")
+  if not options.output_dir:
+    raise Exception("No output directory specified")
+
+  if options.target_arch and not options.target_compiler:
+    raise Exception("No target compiler specified")
+
+  if options.extra_args:
+    for arg in options.extra_args:
+      if not re.match(EXTRA_ARGS_RE, arg):
+        raise Exception("Invalid extra argument '%s'" % arg)
 
 def main(argv):
   optparser = Options()

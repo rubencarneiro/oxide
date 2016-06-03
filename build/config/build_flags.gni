@@ -30,8 +30,8 @@ declare_args() {
   oxide_renderer_name = false
 }
 
-assert(oxide_gettext_domain != false)
-assert(oxide_libexec_subdir != false)
-assert(oxide_lib_extension != false)
-assert(oxide_lib_name != false)
-assert(oxide_renderer_name != false)
+assert(oxide_gettext_domain != false, "oxide_gettext_domain must be defined by CMake")
+assert(oxide_libexec_subdir != false, "oxide_libexec_subdir must be defined by CMake")
+assert(oxide_lib_extension != false, "oxide_lib_extension must be defined by CMake")
+assert(oxide_lib_name != false, "oxide_lib_name must be defined by CMake")
+assert(oxide_renderer_name != false, "oxide_renderer_name must be defined by CMake")

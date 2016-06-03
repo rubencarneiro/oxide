@@ -141,12 +141,14 @@ component("shared") {
     "OXIDE_SHARED_IMPLEMENTATION"
   ]
 
-  configs += [
-    "//build/config/linux:x11",
-    "//oxide/build/config/linux:gdkpixbuf",
-    "//oxide/build/config/linux:glib",
-    "//oxide/build/config/linux:libnotify"
-  ]
+  if (is_linux) {
+    configs += [
+      "//build/config/linux:x11",
+      "//oxide/build/config/linux:gdkpixbuf",
+      "//oxide/build/config/linux:glib",
+      "//oxide/build/config/linux:libnotify"
+    ]
+  }
 
   deps = [
     ":chrome_version",
@@ -173,7 +175,6 @@ component("shared") {
     "//content/public/renderer",
     "//content/public/utility",
     "//crypto",
-    "//dbus",
     "//device/vibration:mojo_bindings",
     "//extensions/common",
     "//gin",
@@ -341,7 +342,7 @@ component("shared") {
     "browser/oxide_network_delegate.h",
     "browser/oxide_platform_run_loop.cc",
     "browser/oxide_platform_run_loop.h",
-    "browser/oxide_power_save_blocker.cc",
+    "browser/oxide_power_save_blocker_linux.cc",
     "browser/oxide_power_save_blocker.h",
     "browser/oxide_quota_permission_context.cc",
     "browser/oxide_quota_permission_context.h",
@@ -511,6 +512,10 @@ component("shared") {
     "renderer/oxide_web_content_settings_client.h",
   ]
 
+  if (is_linux) {
+    deps += [ "//dbus" ]
+  }
+
   if (enable_plugins) {
     deps += [
       "//ppapi/host",
@@ -541,6 +546,7 @@ component("shared") {
   }
 
   if (enable_mediahub) {
+    assert(is_linux)
     defines += [ "ENABLE_MEDIAHUB" ]
 
     deps += [
@@ -567,6 +573,7 @@ component("shared") {
   }
 
   if (enable_hybris) {
+    assert(is_linux)
     defines += [ "ENABLE_HYBRIS" ]
 
     configs += [

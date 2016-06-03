@@ -29,8 +29,6 @@
 #include "content/browser/web_contents/web_contents_view_oxide.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
-#include "gpu/config/gpu_info_collector.h"
-#include "gpu/config/gpu_info_collector_oxide_linux.h"
 #include "gpu/ipc/service/gpu_service_shim_oxide.h"
 #include "media/audio/audio_manager.h"
 #include "media/capture/video/video_capture_device_factory_override.h"
@@ -45,7 +43,6 @@
 
 #include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gpu/oxide_gl_context_dependent.h"
@@ -63,16 +60,25 @@
 #include "oxide_screen_client.h"
 #include "oxide_web_contents_view.h"
 
+#if defined(OS_LINUX)
+#include "gpu/config/gpu_info_collector.h"
+#include "gpu/config/gpu_info_collector_oxide_linux.h"
+
+#include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
+#endif
+
 namespace oxide {
 
 namespace {
 
+#if defined(OS_LINUX)
 std::unique_ptr<media::VideoCaptureDeviceFactory>
 OverrideVideoCaptureDeviceFactory(
     std::unique_ptr<media::VideoCaptureDeviceFactory> platform_factory) {
   return base::WrapUnique(
       new VideoCaptureDeviceFactoryLinux(std::move(platform_factory)));
 }
+#endif
 
 ui::Clipboard* CreateClipboard() {
   return BrowserPlatformIntegration::GetInstance()->CreateClipboard();
@@ -220,15 +226,19 @@ class Screen : public display::Screen {
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
   content::SetPowerSaveBlockerOxideDelegateFactory(CreatePowerSaveBlocker);
+#if defined(OS_LINUX)
   media::SetVideoCaptureDeviceFactoryOverrideDelegate(
       OverrideVideoCaptureDeviceFactory);
+#endif
   ui::SetClipboardOxideFactory(CreateClipboard);
 
   gfx::InitializeOxideNativeDisplay(
       BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
 
+#if defined(OS_LINUX)
   gpu_info_collector_.reset(CreateGpuInfoCollectorLinux());
   gpu::SetGpuInfoCollectorOxideLinux(gpu_info_collector_.get());
+#endif
 
   base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
   main_message_loop_.reset(new base::MessageLoop(base::MessageLoop::TYPE_UI));
@@ -324,7 +334,9 @@ void BrowserMainParts::PostDestroyThreads() {
   gpu::oxide_shim::SetGLShareGroup(nullptr);
   gl_share_context_ = nullptr;
 
+#if defined(OS_LINUX)
   gpu::SetGpuInfoCollectorOxideLinux(nullptr);
+#endif
 }
 
 BrowserMainParts::BrowserMainParts() {}

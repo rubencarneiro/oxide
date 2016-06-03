@@ -150,6 +150,7 @@ base::StringPiece GetEnvironmentOption(base::StringPiece option) {
   return getenv(name.c_str());
 }
 
+#if defined(OS_POSIX)
 void SetupAndVerifySignalHandlers() {
   // Ignoring SIGCHLD will break base::GetTerminationStatus. CHECK that the
   // application hasn't done this
@@ -169,6 +170,7 @@ void SetupAndVerifySignalHandlers() {
     CHECK(sigaction(SIGPIPE, &sigact, nullptr) == 0);
   }
 }
+#endif
 
 base::FilePath GetSubprocessPath() {
   base::StringPiece subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
@@ -184,6 +186,7 @@ base::FilePath GetSubprocessPath() {
     return subprocess_exe;
   }
 
+#if defined(OS_LINUX)
   Dl_info info;
   int rv = dladdr(reinterpret_cast<void *>(BrowserProcessMain::GetInstance),
                   &info);
@@ -197,6 +200,9 @@ base::FilePath GetSubprocessPath() {
   for (size_t i = 0; i < components.size(); ++i) {
     subprocess_exe = subprocess_exe.Append(components[i]);
   }
+#else
+# error "GetSubprocessPath is not implemented for this platform"
+#endif
 
   return subprocess_exe;
 }
@@ -413,11 +419,13 @@ void BrowserProcessMainImpl::Start(StartParams params) {
 
   state_ = STATE_STARTED;
 
+#if defined(OS_POSIX)
   SetupAndVerifySignalHandlers();
 
   base::GlobalDescriptors::GetInstance()->Set(
       kPrimaryIPCChannel,
       kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor);
+#endif
 
   exit_manager_.reset(new base::AtExitManager());
 

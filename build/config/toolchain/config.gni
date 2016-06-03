@@ -1,0 +1,57 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+declare_args() {
+  oxide_host_ar = false
+
+  oxide_host_cc = false
+
+  oxide_host_cxx = false
+
+  oxide_enable_cross_toolchains = false
+
+  oxide_cross_ar = false
+
+  oxide_cross_cc = false
+
+  oxide_cross_cxx = false
+
+  oxide_cross_nm = false
+
+  oxide_cross_readelf = false
+
+  oxide_extra_cflags = ""
+
+  oxide_extra_cpp_flags = ""
+
+  oxide_extra_cxx_flags = ""
+
+  oxide_extra_ldflags = ""
+}
+
+assert(oxide_host_ar != false, "oxide_host_ar must be defined by CMake")
+assert(oxide_host_cc != false, "oxide_host_cc must be defined by CMake")
+assert(oxide_host_cxx != false, "oxide_host_cxx must be defined by CMake")
+
+if (oxide_enable_cross_toolchains) {
+  assert(oxide_cross_ar != false, "oxide_cross_ar must be defined by CMake")
+  assert(oxide_cross_cc != false, "oxide_cross_ar must be defined by CMake")
+  assert(oxide_cross_cxx != false, "oxide_cross_ar must be defined by CMake")
+  assert(oxide_cross_nm != false, "oxide_cross_ar must be defined by CMake")
+  assert(oxide_cross_readelf != false, "oxide_cross_ar must be defined by CMake")
+}
