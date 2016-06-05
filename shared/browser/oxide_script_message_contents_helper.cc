@@ -17,6 +17,7 @@
 
 #include "oxide_script_message_contents_helper.h"
 
+#include <tuple>
 #include <vector>
 
 #include "base/logging.h"
@@ -100,7 +101,7 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
     return;
   }
 
-  ScriptMessageParams params(std::move(base::get<0>(p)));
+  ScriptMessageParams params(std::move(std::get<0>(p)));
 
   bool is_reply = params.type == ScriptMessageParams::TYPE_REPLY;
 

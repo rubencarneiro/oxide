@@ -418,7 +418,7 @@
         'browser/oxide_network_delegate.h',
         'browser/oxide_platform_run_loop.cc',
         'browser/oxide_platform_run_loop.h',
-        'browser/oxide_power_save_blocker.cc',
+        'browser/oxide_power_save_blocker_linux.cc',
         'browser/oxide_power_save_blocker.h',
         'browser/oxide_quota_permission_context.cc',
         'browser/oxide_quota_permission_context.h',

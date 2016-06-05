@@ -18,6 +18,7 @@
 #include "oxide_script_message_dispatcher_renderer.h"
 
 #include <map>
+#include <tuple>
 #include <utility>
 
 #include "base/lazy_instance.h"
@@ -60,7 +61,7 @@ void ScriptMessageDispatcherRenderer::OnReceiveMessage(
     return;
   }
 
-  ScriptMessageParams params(std::move(base::get<0>(p)));
+  ScriptMessageParams params(std::move(std::get<0>(p)));
 
   bool is_reply = params.type == ScriptMessageParams::TYPE_REPLY;
 
