@@ -1,0 +1,354 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import("//build/toolchain/toolchain.gni")
+import("//oxide/build/config/build_flags.gni")
+import("//oxide/build/config/Qt5/moc.gni")
+import("//oxide/build/config/version.gni")
+
+# TODO: All includes should be a fully qualified path from the source root,
+#  then we can remove this
+config("core_include_dirs") {
+  include_dirs = [
+    "//oxide",
+    "$root_gen_dir/oxide"
+  ]
+}
+
+config("core_api_include_dir") {
+  include_dirs = [
+    "//oxide/qt/core/api/includes"
+  ]
+}
+
+qtmoc("core_moc_gen") {
+  sources = [
+    "api/oxideqcertificateerror.h",
+    "api/oxideqdownloadrequest.h",
+    "api/oxideqhttpauthenticationrequest.h",
+    "api/oxideqloadevent.h",
+    "api/oxideqmediacapturedevices.h",
+    "api/oxideqnetworkcallbackevents_p.h",
+    "api/oxideqnavigationrequest.h",
+    "api/oxideqnewviewrequest.h",
+    "api/oxideqpermissionrequest.h",
+    "api/oxideqfindcontroller.h",
+    "api/oxideqsecuritystatus.h",
+    "api/oxideqsslcertificate.h",
+    "api/oxideqwebpreferences.h",
+    "browser/oxide_qt_browser_platform_integration.h",
+    "browser/clipboard/oxide_qt_clipboard.h",
+    "browser/input/oxide_qt_input_method_context.h",
+    "browser/oxide_qt_screen_client.h",
+    "browser/oxide_qt_location_provider.cc",
+    "browser/oxide_qt_url_request_delegated_job.cc"
+  ]
+}
+
+qtmoc("core_unittests_moc_gen") {
+  sources = [ "browser/ssl/oxide_qt_security_status_unittest.cc" ]
+}
+
+version_header("oxide_version") {
+  input_file = "common/oxide_version.h.in"
+  output_file = "$target_gen_dir/common/oxide_version.h"
+  version_file = "//oxide/qt/VERSION"
+}
+
+source_set("core_sources") {
+  defines = [
+    "GN_BUILD", # Remove this when we drop gyp support
+    "OXIDE_QTCORE_IMPLEMENTATION",
+    "QT_NO_SIGNALS_SLOTS_KEYWORDS"
+  ]
+
+  public_configs = [
+    ":core_api_include_dir",
+    ":core_include_dirs"
+  ]
+
+  deps = [
+    ":core_moc_gen",
+    ":oxide_version",
+    "//base",
+    "//components/sessions",
+    "//content/public/browser",
+    "//content/public/common",
+    "//device/vibration",
+    "//device/vibration:mojo_bindings",
+    "//net",
+    "//oxide/build/config/Qt5:Core",
+    "//oxide/build/config/Qt5:Core_Private",
+    "//oxide/build/config/Qt5:Feedback",
+    "//oxide/build/config/Qt5:Gui",
+    "//oxide/build/config/Qt5:Gui_Private",
+    "//oxide/build/config/Qt5:Network",
+    "//oxide/build/config/Qt5:Positioning",
+    "//oxide/shared",
+    "//skia",
+    "//third_party/WebKit/public:blink",
+    "//ui/base",
+    "//ui/display",
+    "//ui/events",
+    "//ui/events:gesture_detection",
+    "//ui/gfx",
+    "//ui/gfx/geometry",
+    "//ui/gfx/range",
+    "//ui/gl",
+    "//url"
+  ]
+
+  sources = [
+    "$target_gen_dir/api/moc_oxideqcertificateerror.cc",
+    "$target_gen_dir/api/moc_oxideqdownloadrequest.cc",
+    "$target_gen_dir/api/moc_oxideqhttpauthenticationrequest.cc",
+    "$target_gen_dir/api/moc_oxideqloadevent.cc",
+    "$target_gen_dir/api/moc_oxideqmediacapturedevices.cc",
+    "$target_gen_dir/api/moc_oxideqnetworkcallbackevents_p.cc",
+    "$target_gen_dir/api/moc_oxideqnavigationrequest.cc",
+    "$target_gen_dir/api/moc_oxideqnewviewrequest.cc",
+    "$target_gen_dir/api/moc_oxideqpermissionrequest.cc",
+    "$target_gen_dir/api/moc_oxideqfindcontroller.cc",
+    "$target_gen_dir/api/moc_oxideqsecuritystatus.cc",
+    "$target_gen_dir/api/moc_oxideqsslcertificate.cc",
+    "$target_gen_dir/api/moc_oxideqwebpreferences.cc",
+    "$target_gen_dir/browser/moc_oxide_qt_browser_platform_integration.cc",
+    "$target_gen_dir/browser/clipboard/moc_oxide_qt_clipboard.cc",
+    "$target_gen_dir/browser/input/moc_oxide_qt_input_method_context.cc",
+    "$target_gen_dir/browser/moc_oxide_qt_screen_client.cc",
+    "api/oxideqcertificateerror.cc",
+    "api/oxideqcertificateerror.h",
+    "api/oxideqcertificateerror_p.h",
+    "api/oxideqdownloadrequest.cc",
+    "api/oxideqdownloadrequest.h",
+    "api/oxideqglobal.cc",
+    "api/oxideqglobal.h",
+    "api/oxideqhttpauthenticationrequest.cc",
+    "api/oxideqhttpauthenticationrequest.h",
+    "api/oxideqhttpauthenticationrequest_p.h",
+    "api/oxideqloadevent.cc",
+    "api/oxideqloadevent.h",
+    "api/oxideqloadevent_p.h",
+    "api/oxideqmediacapturedevices.cc",
+    "api/oxideqmediacapturedevices.h",
+    "api/oxideqmediacapturedevices_p.h",
+    "api/oxideqnetworkcallbackevents.cc",
+    "api/oxideqnetworkcallbackevents_p.h",
+    "api/oxideqnetworkcallbackevents_p_p.h",
+    "api/oxideqnavigationrequest.cc",
+    "api/oxideqnavigationrequest.h",
+    "api/oxideqnewviewrequest.cc",
+    "api/oxideqnewviewrequest.h",
+    "api/oxideqnewviewrequest_p.h",
+    "api/oxideqpermissionrequest.cc",
+    "api/oxideqpermissionrequest.h",
+    "api/oxideqpermissionrequest_p.h",
+    "api/oxideqfindcontroller.cc",
+    "api/oxideqfindcontroller.h",
+    "api/oxideqfindcontroller_p.h",
+    "api/oxideqsecuritystatus.cc",
+    "api/oxideqsecuritystatus.h",
+    "api/oxideqsecuritystatus_p.h",
+    "api/oxideqsslcertificate.cc",
+    "api/oxideqsslcertificate.h",
+    "api/oxideqsslcertificate_p.h",
+    "api/oxideqwebpreferences.cc",
+    "api/oxideqwebpreferences.h",
+    "api/oxideqwebpreferences_p.h",
+    "app/oxide_qt_main.cc",
+    "app/oxide_qt_main.h",
+    "app/oxide_qt_platform_delegate.cc",
+    "app/oxide_qt_platform_delegate.h",
+    "browser/clipboard/oxide_qt_clipboard.cc",
+    "browser/clipboard/oxide_qt_clipboard.h",
+    "browser/input/oxide_qt_input_method_context.cc",
+    "browser/input/oxide_qt_input_method_context.h",
+    "browser/input/oxide_qt_input_method_context_client.h",
+    "browser/oxide_qt_browser_platform_integration.cc",
+    "browser/oxide_qt_browser_platform_integration.h",
+    "browser/oxide_qt_browser_startup.cc",
+    "browser/oxide_qt_browser_startup.h",
+    "browser/oxide_qt_browser_thread_q_event_dispatcher.cc",
+    "browser/oxide_qt_browser_thread_q_event_dispatcher.h",
+    "browser/oxide_qt_contents_view.cc",
+    "browser/oxide_qt_contents_view.h",
+    "browser/oxide_qt_dpi_utils.cc",
+    "browser/oxide_qt_dpi_utils.h",
+    "browser/oxide_qt_drag_source.cc",
+    "browser/oxide_qt_drag_source.h",
+    "browser/oxide_qt_drag_utils.cc",
+    "browser/oxide_qt_drag_utils.h",
+    "browser/oxide_qt_event_utils.cc",
+    "browser/oxide_qt_event_utils.h",
+    "browser/oxide_qt_file_picker.cc",
+    "browser/oxide_qt_file_picker.h",
+    "browser/oxide_qt_find_controller.cc",
+    "browser/oxide_qt_find_controller.h",
+    "browser/oxide_qt_javascript_dialog.cc",
+    "browser/oxide_qt_javascript_dialog.h",
+    "browser/oxide_qt_location_provider.cc",
+    "browser/oxide_qt_location_provider.h",
+    "browser/oxide_qt_message_pump.cc",
+    "browser/oxide_qt_message_pump.h",
+    "browser/oxide_qt_motion_event_factory.cc",
+    "browser/oxide_qt_motion_event_factory.h",
+    "browser/oxide_qt_screen_client.cc",
+    "browser/oxide_qt_screen_client.h",
+    "browser/oxide_qt_screen_utils.cc",
+    "browser/oxide_qt_screen_utils.h",
+    "browser/oxide_qt_script_message.cc",
+    "browser/oxide_qt_script_message.h",
+    "browser/oxide_qt_script_message_handler.cc",
+    "browser/oxide_qt_script_message_handler.h",
+    "browser/oxide_qt_script_message_request.cc",
+    "browser/oxide_qt_script_message_request.h",
+    "browser/oxide_qt_skutils.cc",
+    "browser/oxide_qt_skutils.h",
+    "browser/oxide_qt_touch_handle_drawable.cc",
+    "browser/oxide_qt_touch_handle_drawable.h",
+    "browser/oxide_qt_type_conversions.h",
+    "browser/oxide_qt_url_request_delegated_job.cc",
+    "browser/oxide_qt_url_request_delegated_job.h",
+    "browser/oxide_qt_user_script.cc",
+    "browser/oxide_qt_user_script.h",
+    "browser/oxide_qt_variant_value_converter.cc",
+    "browser/oxide_qt_variant_value_converter.h",
+    "browser/oxide_qt_vibration_manager.cc",
+    "browser/oxide_qt_vibration_manager.h",
+    "browser/oxide_qt_web_context.cc",
+    "browser/oxide_qt_web_context.h",
+    "browser/oxide_qt_web_context_menu.cc",
+    "browser/oxide_qt_web_context_menu.h",
+    "browser/oxide_qt_web_frame.cc",
+    "browser/oxide_qt_web_frame.h",
+    "browser/oxide_qt_web_popup_menu.cc",
+    "browser/oxide_qt_web_popup_menu.h",
+    "browser/oxide_qt_web_preferences.cc",
+    "browser/oxide_qt_web_preferences.h",
+    "browser/oxide_qt_web_view.cc",
+    "browser/oxide_qt_web_view.h",
+    "browser/ssl/oxide_qt_security_status.cc",
+    "browser/ssl/oxide_qt_security_status.h",
+    "common/oxide_qt_export.h",
+    "glue/menu_item.h",
+    "glue/oxide_qt_contents_view_proxy.h",
+    "glue/oxide_qt_contents_view_proxy_client.h",
+    "glue/oxide_qt_file_picker_proxy.h",
+    "glue/oxide_qt_file_picker_proxy_client.h",
+    "glue/oxide_qt_init.cc",
+    "glue/oxide_qt_init.h",
+    "glue/oxide_qt_javascript_dialog_proxy.h",
+    "glue/oxide_qt_javascript_dialog_proxy_client.h",
+    "glue/oxide_qt_proxy_base.cc",
+    "glue/oxide_qt_proxy_base.h",
+    "glue/oxide_qt_script_message_handler_proxy.cc",
+    "glue/oxide_qt_script_message_handler_proxy.h",
+    "glue/oxide_qt_script_message_handler_proxy_client.h",
+    "glue/oxide_qt_script_message_proxy.h",
+    "glue/oxide_qt_script_message_request_proxy.cc",
+    "glue/oxide_qt_script_message_request_proxy.h",
+    "glue/oxide_qt_script_message_request_proxy_client.h",
+    "glue/oxide_qt_touch_handle_drawable_proxy.h",
+    "glue/oxide_qt_user_script_proxy.cc",
+    "glue/oxide_qt_user_script_proxy.h",
+    "glue/oxide_qt_user_script_proxy_client.h",
+    "glue/oxide_qt_web_context_menu_proxy.h",
+    "glue/oxide_qt_web_context_menu_proxy_client.h",
+    "glue/oxide_qt_web_context_proxy.cc",
+    "glue/oxide_qt_web_context_proxy.h",
+    "glue/oxide_qt_web_context_proxy_client.h",
+    "glue/oxide_qt_web_frame_proxy.h",
+    "glue/oxide_qt_web_frame_proxy_client.h",
+    "glue/oxide_qt_web_popup_menu_proxy.h",
+    "glue/oxide_qt_web_popup_menu_proxy_client.h",
+    "glue/oxide_qt_web_view_proxy.cc",
+    "glue/oxide_qt_web_view_proxy.h",
+    "glue/oxide_qt_web_view_proxy_client.h",
+    "gpu/oxide_qt_gl_context_dependent.cc",
+    "gpu/oxide_qt_gl_context_dependent.h"
+  ]
+}
+
+shared_library("core") {
+  output_name = "$oxide_lib_name"
+  output_extension = "$oxide_lib_extension"
+
+  public_deps = [
+    ":core_sources"
+  ]
+
+  if (is_linux) {
+    ldflags = [
+      # Needed to pick up libffmpeg.so when installed
+      "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir",
+      "-Wl,--disable-new-dtags"
+    ]
+  }
+
+  sources = [
+    "dummy.cc"
+  ]
+
+  if (is_component_build && is_linux) {
+    ldflags += [
+      "-Wl,-rpath=\$ORIGIN/$oxide_libexec_subdir/$shlib_subdir"
+    ]
+  }
+}
+
+component("core_component") {
+  output_name = "oxide_qt"
+
+  public_deps = [
+    ":core_sources"
+  ]
+
+  sources = [
+    "dummy.cc"
+  ]
+}
+
+executable("core_unittests") {
+  output_name = "oxide_qt_unittests"
+  testonly = true
+
+  defines = [
+    "GN_BUILD" # Remove this when we drop gyp support
+  ]
+
+  deps = [
+    ":core_component",
+    ":core_unittests_moc_gen",
+    "//base",
+    "//base/test:test_support",
+    "//content/public/browser",
+    "//content/public/common",
+    "//content/test:test_support",
+    "//mojo/edk/system",
+    "//net",
+    "//testing/gtest",
+    "//oxide/build/config/Qt5:Core",
+    "//oxide/shared",
+    "//oxide/shared:shared_testutils"
+  ]
+
+  sources = [
+    "browser/ssl/oxide_qt_security_status_unittest.cc",
+    "test/run_all_unittests.cc",
+  ]
+}

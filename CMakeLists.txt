@@ -22,9 +22,10 @@ include(GNUInstallDirs)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
-include(OxideCommonOptions)
-include(OxideCommonProperties)
-include(OxideLibUtils)
+include(ChromiumBuildShim)
+include(CommonOptions)
+include(CommonProperties)
+include(LibFilenameUtils)
 
 # Define variables used throughout the build
 if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -32,21 +33,28 @@ if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
   set(CHROMIUM_BUILD_TYPE Release)
 endif()
-set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium)
-set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
-set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib)
+if(USE_GN)
+  set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR})
+  set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR})
+else()
+  set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
+  set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib)
+endif()
 set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)
 set(OXIDE_BIN_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/bin)
 set(OXIDE_LIB_OUTPUT_DIR ${OXIDE_OUTPUT_DIR}/lib)
 set(OXIDE_PACKAGE_STAGE_DIR ${CMAKE_BINARY_DIR}/_package_stage)
 
-# Use gold everywhere
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
-set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+   CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  # Use gold everywhere
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=gold")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=gold")
+endif()
 
 # Required for out-of-tree builds
-set(CMAKE_INCLUDE_CURRENT_DIR TRUE CACHE INTERNAL "")
+set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 # We have a script for loading apps from the tree
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${OXIDE_SOURCE_DIR})
@@ -56,14 +64,11 @@ string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_M
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\2" PROJECT_VERSION_MINOR ${PROJECT_VERSION})
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_PATCH ${PROJECT_VERSION})
 
-# for dh_translations to extract the domain
-# (regarding syntax consistency, see http://pad.lv/1181187)
-set(GETTEXT_PACKAGE "oxide-${OXIDE_PLATFORM}")
 add_definitions(-DOXIDE_GETTEXT_DOMAIN="${GETTEXT_PACKAGE}")
 
 # Check we have a new enough compiler
-# FIXME: Support clang
-if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+if(CMAKE_COMPILER_ID STREQUAL "GNU" AND
+   CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
   message(FATAL_ERROR "Oxide requires at least GCC 4.8 to build")
 endif()
 CHECK_CXX_COMPILER_FLAG("-std=c++11" _COMPILER_HAS_CXX11_RESULT)
@@ -76,8 +81,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include(${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/config.cmake)
 
 # Set extra variables that depend on the configuration
-calculate_versioned_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
-calculate_library_filename(OXIDE_LIB_FILENAME_DEV ${OXIDE_LIB})
+get_library_filename(OXIDE_LIB_FILENAME ${OXIDE_LIB} ${OXIDE_LIB_VERSION})
+get_library_namelink_filename(OXIDE_LIB_FILENAME_DEV ${OXIDE_LIB})
 
 if(ENABLE_COMPONENT_BUILD)
   link_directories(${CHROMIUM_LIB_DIR})
@@ -88,21 +93,25 @@ if(ENABLE_TESTS)
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)
 endif()
 
-# Add one target for running "ninja all" on the gyp generated bits.
-# ${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi lists the targets that "all" depends on
-find_program(_NINJA_EXE ninja)
-if(_NINJA_EXE STREQUAL "_NINJA_EXE-NOTFOUND")
-  message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+if(USE_GN)
+  add_chromium_build_all_target(build_all)
+else()
+  # Add one target for running "ninja all" on the gyp generated bits.
+  # ${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi lists the targets that "all" depends on
+  find_program(_NINJA_EXE ninja)
+  if(_NINJA_EXE STREQUAL "_NINJA_EXE-NOTFOUND")
+    message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+  endif()
+  set(_NINJA_BUILD_COMMAND ${_NINJA_EXE} -C ${CHROMIUM_PRODUCT_DIR})
+  if(CMAKE_VERBOSE_MAKEFILE)
+    list(APPEND _NINJA_BUILD_COMMAND -v)
+  endif()
+  list(APPEND _NINJA_BUILD_COMMAND all)
+  add_custom_target(
+      build_all ALL COMMAND ${_NINJA_BUILD_COMMAND}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMENT "Running the build_all target")
 endif()
-set(_NINJA_BUILD_COMMAND ${_NINJA_EXE} -C ${CHROMIUM_PRODUCT_DIR})
-if(CMAKE_VERBOSE_MAKEFILE)
-  list(APPEND _NINJA_BUILD_COMMAND -v)
-endif()
-list(APPEND _NINJA_BUILD_COMMAND all)
-add_custom_target(
-    build_all ALL COMMAND ${_NINJA_BUILD_COMMAND}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Running the build_all target")
 
 # Copy chrome_sandbox to chrome-sandbox
 add_custom_target(
@@ -135,7 +144,7 @@ set(_OXIDE_INSTALL_FILES
     ${CHROMIUM_PRODUCT_DIR}/snapshot_blob.bin)
 set(_OXIDE_INSTALL_PROGRAMS ${CHROMIUM_PRODUCT_DIR}/${OXIDE_RENDERER})
 set(_CHROME_SANDBOX ${CHROMIUM_PRODUCT_DIR}/chrome-sandbox)
-set(_OXIDE_INSTALL_LOCALEDIR ${CHROMIUM_PRODUCT_DIR}/locales)
+set(_OXIDE_INSTALL_LOCALEDIR ${CHROMIUM_PRODUCT_DIR}/chromium_l10n)
 
 install(FILES ${_OXIDE_INSTALL_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(CODE
@@ -151,10 +160,17 @@ install(PROGRAMS ${_CHROME_SANDBOX}
                     GROUP_READ WORLD_EXECUTE WORLD_READ SETUID)
 install(DIRECTORY ${_OXIDE_INSTALL_LOCALEDIR}
         DESTINATION ${OXIDE_INSTALL_LIBEXECDIR})
+set(_COMPONENT_BUILD_INSTALL_EXCLUDES "chromium_l10n;gen;host_;Mojo Applications;obj;pyproto;resources;ui")
 if(ENABLE_COMPONENT_BUILD)
-  install(DIRECTORY ${CHROMIUM_LIB_DIR}
-          DESTINATION ${OXIDE_INSTALL_LIBEXECDIR}
-          FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  file(RELATIVE_PATH _COMPONENT_LIB_REL ${CHROMIUM_PRODUCT_DIR} ${CHROMIUM_LIB_DIR})
+  set(_COMPONENT_BUILD_INSTALL_PARAMS
+      DIRECTORY ${CHROMIUM_LIB_DIR}/
+      DESTINATION ${OXIDE_INSTALL_LIBEXECDIR}/${_COMPONENT_LIB_REL}
+      FILES_MATCHING PATTERN "*${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  foreach(e ${_COMPONENT_BUILD_INSTALL_EXCLUDES})
+    list(APPEND _COMPONENT_BUILD_INSTALL_PARAMS PATTERN "${e}" EXCLUDE)
+  endforeach()
+  install(${_COMPONENT_BUILD_INSTALL_PARAMS})
 endif()
 
 add_subdirectory(po)
@@ -187,9 +203,10 @@ add_custom_target(
 if(ENABLE_COMPONENT_BUILD)
   add_custom_target(
       test-package-common-component-libs
-      COMMAND ${CMAKE_COMMAND} -DFILES=${CHROMIUM_LIB_DIR}
+      COMMAND ${CMAKE_COMMAND} -DFILES=${CHROMIUM_LIB_DIR}/
       -DMATCH_PATTERN="*${CMAKE_SHARED_LIBRARY_SUFFIX}" -DTYPE=DIRECTORY
       -DDESTINATION=${OXIDE_PACKAGE_STAGE_DIR}/${OXIDE_PLATFORM_FULLNAME}
+      "-DEXCLUDES=\"${_COMPONENT_BUILD_INSTALL_EXCLUDES}\""
       -P ${OXIDE_SOURCE_DIR}/build/scripts/test-package-helper.cmake)
 endif()
 
@@ -210,99 +227,103 @@ add_custom_target(
     WORKING_DIRECTORY ${OXIDE_PACKAGE_STAGE_DIR}
     DEPENDS test-package-common test-package-${OXIDE_PLATFORM})
 
-# Build the gyp command
-set(_GYP_COMMAND
-    ${PYTHON} ${OXIDE_SOURCE_DIR}/build/gyp_oxide
-    -I${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi
-    --generator-output ${CHROMIUM_OUTPUT_DIR}
-    -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
-    ${OXIDE_GYP_EXTRA_ARGS})
-list(APPEND _GYP_COMMAND -Doxide_lib=${OXIDE_LIB})
-calculate_versioned_library_suffix(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
-string(REGEX REPLACE "^\\." "" _OXIDE_LIB_SUFFIX ${_OXIDE_LIB_SUFFIX})
-list(APPEND _GYP_COMMAND -Doxide_lib_suffix=${_OXIDE_LIB_SUFFIX})
-list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})
-list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PLATFORM_FULLNAME})
-if(CMAKE_CROSSCOMPILING)
-  if(NOT CHROMIUM_TARGET_ARCH)
-    message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
+if(USE_GN)
+  run_generate_ninja()
+else()
+  # Build the gyp command
+  set(_GYP_COMMAND
+      ${PYTHON} ${OXIDE_SOURCE_DIR}/build/gyp_oxide
+      -I${OXIDE_SOURCE_DIR}/${OXIDE_PLATFORM}/${OXIDE_PLATFORM}.gypi
+      --generator-output ${CHROMIUM_OUTPUT_DIR}
+      -Goutput_dir=${CHROMIUM_OUTPUT_DIR}
+      ${OXIDE_GYP_EXTRA_ARGS})
+  list(APPEND _GYP_COMMAND -Doxide_lib=${OXIDE_LIB})
+  get_library_extension(_OXIDE_LIB_SUFFIX ${OXIDE_LIB_VERSION})
+  string(REGEX REPLACE "^\\." "" _OXIDE_LIB_SUFFIX ${_OXIDE_LIB_SUFFIX})
+  list(APPEND _GYP_COMMAND -Doxide_lib_suffix=${_OXIDE_LIB_SUFFIX})
+  list(APPEND _GYP_COMMAND -Doxide_renderer=${OXIDE_RENDERER})
+  list(APPEND _GYP_COMMAND -Doxide_libexecdir=${OXIDE_PLATFORM_FULLNAME})
+  if(CMAKE_CROSSCOMPILING)
+    if(NOT CHROMIUM_TARGET_ARCH)
+      message(FATAL_ERROR "Need to set CHROMIUM_TARGET_ARCH when cross compiling")
+    endif()
+    list(APPEND _GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
   endif()
-  list(APPEND _GYP_COMMAND -Dtarget_arch=${CHROMIUM_TARGET_ARCH})
-endif()
-if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
-  list(APPEND _GYP_COMMAND -Dlinux_dump_symbols=0)
-else()
-  list(APPEND _GYP_COMMAND -Dlinux_dump_symbols=1)
-endif()
-if(CMAKE_VERBOSE_MAKEFILE)
-  list(APPEND _GYP_COMMAND -Dprint_ld_stats=1)
-endif()
-if(ENABLE_PROPRIETARY_CODECS)
-  list(APPEND _GYP_COMMAND -Dffmpeg_branding=Chrome)
-  list(APPEND _GYP_COMMAND -Dproprietary_codecs=1)
-else()
-  list(APPEND _GYP_COMMAND -Dffmpeg_branding=Chromium)
-  list(APPEND _GYP_COMMAND -Dproprietary_codecs=0)
-endif()
-if(ENABLE_PLUGINS)
-  list(APPEND _GYP_COMMAND -Denable_plugins=1)
-else()
-  list(APPEND _GYP_COMMAND -Denable_plugins=0)
-endif()
-if(ENABLE_TCMALLOC)
-  list(APPEND _GYP_COMMAND -Denable_tcmalloc=1)
-else()
-  list(APPEND _GYP_COMMAND -Denable_tcmalloc=0)
-endif()
-if(ENABLE_COMPONENT_BUILD)
-  list(APPEND _GYP_COMMAND -Dcomponent=shared_library)
-endif()
-list(APPEND _GYP_COMMAND -Doxide_gettext_domain=${GETTEXT_PACKAGE})
-CHECK_INCLUDE_FILE_CXX("core/media/player.h" HAVE_MEDIAHUB "--std=c++11")
-if(NOT HAVE_MEDIAHUB)
-  list(APPEND _GYP_COMMAND -Denable_mediahub=0)
-else()
-  list(APPEND _GYP_COMMAND -Denable_mediahub=1)
-endif()
-if(USE_SYSTEM_PROTOBUF)
-  list(APPEND _GYP_COMMAND -Duse_system_protobuf=1)
-endif()
-if(ENABLE_HYBRIS)
-  list(APPEND _GYP_COMMAND -Denable_hybris=1)
-else()
-  list(APPEND _GYP_COMMAND -Denable_hybris=0)
-endif()
-if(ENABLE_HYBRIS_CAMERA)
-  list(APPEND _GYP_COMMAND -Denable_hybris_camera=1)
-else()
-  list(APPEND _GYP_COMMAND -Denable_hybris_camera=0)
-endif()
-if(ENABLE_TESTS)
-  list(APPEND _GYP_COMMAND -Denable_tests=1)
-else()
-  list(APPEND _GYP_COMMAND -Denable_tests=0)
-endif()
-
-if(CMAKE_CROSSCOMPILING)
-  if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER OR NOT CHROMIUM_HOST_AR)
-    message(FATAL_ERROR "Need to specify host compilers when cross compiling")
+  if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    list(APPEND _GYP_COMMAND -Dlinux_dump_symbols=0)
+  else()
+    list(APPEND _GYP_COMMAND -Dlinux_dump_symbols=1)
   endif()
-  set(ENV{CC_target} ${CMAKE_C_COMPILER})
-  set(ENV{CXX_target} ${CMAKE_CXX_COMPILER})
-  set(ENV{AR_target} ${CMAKE_AR})
-  set(ENV{CC_host} ${CHROMIUM_C_HOST_COMPILER})
-  set(ENV{CXX_host} ${CHROMIUM_CXX_HOST_COMPILER})
-  set(ENV{AR_host} ${CHROMIUM_HOST_AR})
-  set(ENV{PKG_CONFIG_PATH} ${CHROMIUM_PKG_CONFIG_PATH})
-else()
-  set(ENV{CC} ${CMAKE_C_COMPILER})
-  set(ENV{CXX} ${CMAKE_CXX_COMPILER})
-  set(ENV{AR} ${CMAKE_AR})
-endif()
+  if(CMAKE_VERBOSE_MAKEFILE)
+    list(APPEND _GYP_COMMAND -Dprint_ld_stats=1)
+  endif()
+  if(ENABLE_PROPRIETARY_CODECS)
+    list(APPEND _GYP_COMMAND -Dffmpeg_branding=Chrome)
+    list(APPEND _GYP_COMMAND -Dproprietary_codecs=1)
+  else()
+    list(APPEND _GYP_COMMAND -Dffmpeg_branding=Chromium)
+    list(APPEND _GYP_COMMAND -Dproprietary_codecs=0)
+  endif()
+  if(ENABLE_PLUGINS)
+    list(APPEND _GYP_COMMAND -Denable_plugins=1)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_plugins=0)
+  endif()
+  if(ENABLE_TCMALLOC)
+    list(APPEND _GYP_COMMAND -Denable_tcmalloc=1)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_tcmalloc=0)
+  endif()
+  if(ENABLE_COMPONENT_BUILD)
+    list(APPEND _GYP_COMMAND -Dcomponent=shared_library)
+  endif()
+  list(APPEND _GYP_COMMAND -Doxide_gettext_domain=${GETTEXT_PACKAGE})
+  CHECK_INCLUDE_FILE_CXX("core/media/player.h" HAVE_MEDIAHUB "--std=c++11")
+  if(NOT HAVE_MEDIAHUB)
+    list(APPEND _GYP_COMMAND -Denable_mediahub=0)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_mediahub=1)
+  endif()
+  if(USE_SYSTEM_PROTOBUF)
+    list(APPEND _GYP_COMMAND -Duse_system_protobuf=1)
+  endif()
+  if(ENABLE_HYBRIS)
+    list(APPEND _GYP_COMMAND -Denable_hybris=1)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_hybris=0)
+  endif()
+  if(ENABLE_HYBRIS_CAMERA)
+    list(APPEND _GYP_COMMAND -Denable_hybris_camera=1)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_hybris_camera=0)
+  endif()
+  if(ENABLE_TESTS)
+    list(APPEND _GYP_COMMAND -Denable_tests=1)
+  else()
+    list(APPEND _GYP_COMMAND -Denable_tests=0)
+  endif()
 
-message(STATUS "Running gyp")
-execute_process(COMMAND ${_GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-                RESULT_VARIABLE _GYP_RESULT)
-if(NOT _GYP_RESULT EQUAL 0)
-  message(FATAL_ERROR "Running gyp failed")
+  if(CMAKE_CROSSCOMPILING)
+    if(NOT CHROMIUM_C_HOST_COMPILER OR NOT CHROMIUM_CXX_HOST_COMPILER OR NOT CHROMIUM_HOST_AR)
+      message(FATAL_ERROR "Need to specify host compilers when cross compiling")
+    endif()
+    set(ENV{CC_target} ${CMAKE_C_COMPILER})
+    set(ENV{CXX_target} ${CMAKE_CXX_COMPILER})
+    set(ENV{AR_target} ${CMAKE_AR})
+    set(ENV{CC_host} ${CHROMIUM_C_HOST_COMPILER})
+    set(ENV{CXX_host} ${CHROMIUM_CXX_HOST_COMPILER})
+    set(ENV{AR_host} ${CHROMIUM_HOST_AR})
+    set(ENV{PKG_CONFIG_PATH} ${CHROMIUM_PKG_CONFIG_PATH})
+  else()
+    set(ENV{CC} ${CMAKE_C_COMPILER})
+    set(ENV{CXX} ${CMAKE_CXX_COMPILER})
+    set(ENV{AR} ${CMAKE_AR})
+  endif()
+
+  message(STATUS "Running gyp")
+  execute_process(COMMAND ${_GYP_COMMAND} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                  RESULT_VARIABLE _GYP_RESULT)
+  if(NOT _GYP_RESULT EQUAL 0)
+    message(FATAL_ERROR "Running gyp failed")
+  endif()
 endif()

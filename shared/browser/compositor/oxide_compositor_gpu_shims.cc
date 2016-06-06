@@ -193,14 +193,14 @@ bool GpuUtils::WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
 
 // static
 bool GpuUtils::CanUseEGLImage() {
-  return gfx::g_driver_egl.ext.b_EGL_KHR_gl_texture_2D_image &&
-         gfx::g_driver_egl.ext.b_EGL_KHR_image &&
-         gfx::g_driver_egl.ext.b_EGL_KHR_image_base;
+  return gl::g_driver_egl.ext.b_EGL_KHR_gl_texture_2D_image &&
+         gl::g_driver_egl.ext.b_EGL_KHR_image &&
+         gl::g_driver_egl.ext.b_EGL_KHR_image_base;
 }
 
 // static
 EGLDisplay GpuUtils::GetHardwareEGLDisplay() {
-  return gfx::GLSurfaceEGL::GetHardwareDisplay();
+  return gl::GLSurfaceEGL::GetHardwareDisplay();
 }
 
 // static
@@ -248,8 +248,8 @@ EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
       EGL_NONE
   };
   EGLImageKHR egl_image = eglCreateImageKHR(
-      gfx::GLSurfaceEGL::GetHardwareDisplay(),
-      gfx::GLContext::GetCurrent()->GetHandle(),
+      gl::GLSurfaceEGL::GetHardwareDisplay(),
+      gl::GLContext::GetCurrent()->GetHandle(),
       EGL_GL_TEXTURE_2D_KHR,
       reinterpret_cast<EGLClientBuffer>(texture->service_id()),
       attrib_list);

@@ -36,13 +36,13 @@ class GLContextDependent : public oxide::GLContextDependent {
  public:
   static scoped_refptr<GLContextDependent> Create(QOpenGLContext* context);
 
-  gfx::GLImplementation implementation() const { return implementation_; }
+  gl::GLImplementation implementation() const { return implementation_; }
 
  private:
   GLContextDependent(void* handle,
-                     gfx::GLImplementation implementation);
+                     gl::GLImplementation implementation);
 
-  gfx::GLImplementation implementation_;
+  gl::GLImplementation implementation_;
 
   DISALLOW_COPY_AND_ASSIGN(GLContextDependent);
 };

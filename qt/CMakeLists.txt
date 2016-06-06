@@ -18,8 +18,8 @@
 
 include(GNUInstallDirs)
 
-include(OxideCommonProperties)
-include(OxidePackageConfigHelper)
+include(CommonProperties)
+include(PackageConfigHelper)
 
 set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 

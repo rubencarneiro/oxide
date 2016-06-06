@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,27 +16,29 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-cmake_policy(VERSION 2.6.0)
+import("//build/config/linux/pkg_config.gni")
 
-if(NOT DEFINED FILES)
-  message(FATAL_ERROR "Must define FILES")
-endif()
-if(NOT DEFINED DESTINATION)
-  message(FATAL_ERROR "Must define DESTINATION")
-endif()
-if(NOT DEFINED TYPE)
-  message(FATAL_ERROR "Must define TYPE")
-endif()
+pkg_config("android_properties") {
+  packages = [ "libandroid-properties" ]
+}
 
-set(PARAMS INSTALL FILES ${FILES} DESTINATION ${DESTINATION} TYPE ${TYPE})
-if(DEFINED MATCH_PATTERN)
-  list(APPEND PARAMS FILES_MATCHING PATTERN "${MATCH_PATTERN}")
-endif()
+pkg_config("gdkpixbuf") {
+  packages = [ "gdk-pixbuf-2.0" ]
+}
 
-if(DEFINED EXCLUDES)
-  foreach(e ${EXCLUDES})
-    list(APPEND PARAMS PATTERN "${e}" EXCLUDE)
-  endforeach()
-endif()
+pkg_config("glib") {
+  packages = [
+    "glib-2.0",
+    "gmodule-2.0",
+    "gobject-2.0",
+    "gthread-2.0"
+  ]
+}
 
-file(${PARAMS})
+pkg_config("hybris_camera") {
+  packages = [ "libcamera" ]
+}
+
+pkg_config("libnotify") {
+  packages = [ "libnotify" ]
+}

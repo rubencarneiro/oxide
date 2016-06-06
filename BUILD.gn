@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,27 +16,34 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-cmake_policy(VERSION 2.6.0)
+declare_args() {
+  enable_tests = false
 
-if(NOT DEFINED FILES)
-  message(FATAL_ERROR "Must define FILES")
-endif()
-if(NOT DEFINED DESTINATION)
-  message(FATAL_ERROR "Must define DESTINATION")
-endif()
-if(NOT DEFINED TYPE)
-  message(FATAL_ERROR "Must define TYPE")
-endif()
+  oxide_platform = false
+}
 
-set(PARAMS INSTALL FILES ${FILES} DESTINATION ${DESTINATION} TYPE ${TYPE})
-if(DEFINED MATCH_PATTERN)
-  list(APPEND PARAMS FILES_MATCHING PATTERN "${MATCH_PATTERN}")
-endif()
+assert(oxide_platform != false)
 
-if(DEFINED EXCLUDES)
-  foreach(e ${EXCLUDES})
-    list(APPEND PARAMS PATTERN "${e}" EXCLUDE)
-  endforeach()
-endif()
+import("//oxide/$oxide_platform/config.gni")
 
-file(${PARAMS})
+assert(defined(oxide_platform_targets))
+
+group("oxide_all") {
+  # FIXME: Split test targets out of this one
+  testonly = true
+
+  deps = oxide_platform_targets
+
+  if (is_linux) {
+    deps += [
+      "//sandbox/linux:chrome_sandbox"
+    ]
+  }
+
+  if (enable_tests) {
+    if (defined(oxide_platform_test_targets)) {
+      deps += oxide_platform_test_targets
+    }
+    deps += [ "//oxide/shared:shared_unittests" ]
+  }
+}

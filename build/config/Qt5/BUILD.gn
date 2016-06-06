@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,27 +16,32 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-cmake_policy(VERSION 2.6.0)
+assert(is_linux)
 
-if(NOT DEFINED FILES)
-  message(FATAL_ERROR "Must define FILES")
-endif()
-if(NOT DEFINED DESTINATION)
-  message(FATAL_ERROR "Must define DESTINATION")
-endif()
-if(NOT DEFINED TYPE)
-  message(FATAL_ERROR "Must define TYPE")
-endif()
+group("Core") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Core" ]
+}
 
-set(PARAMS INSTALL FILES ${FILES} DESTINATION ${DESTINATION} TYPE ${TYPE})
-if(DEFINED MATCH_PATTERN)
-  list(APPEND PARAMS FILES_MATCHING PATTERN "${MATCH_PATTERN}")
-endif()
+group("Core_Private") {
+  public_deps = [ "//oxide/build/config/linux/qt:Qt5Core_Private" ]
+}
 
-if(DEFINED EXCLUDES)
-  foreach(e ${EXCLUDES})
-    list(APPEND PARAMS PATTERN "${e}" EXCLUDE)
-  endforeach()
-endif()
+group("Feedback") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Feedback" ]
+}
 
-file(${PARAMS})
+group("Gui") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Gui" ]
+}
+
+group("Gui_Private") {
+  public_deps = [ "//oxide/build/config/linux/qt:Qt5Gui_Private" ]
+}
+
+group("Network") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Network" ]
+}
+
+group("Positioning") {
+  public_configs = [ "//oxide/build/config/linux/qt:Qt5Positioning" ]
+}

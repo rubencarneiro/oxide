@@ -1,0 +1,83 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright 2014 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//tools/grit/repack.gni")
+
+# Arguments:
+#
+#   locale
+#       Internal name of locale. e.g. "pt-BR"
+#
+#   output
+#       Output file name.
+#
+#   visibility
+#       Normal meaning.
+template("_repack_one_locale") {
+  locale = invoker.locale
+
+  repack(target_name) {
+    visibility = invoker.visibility
+
+    # Each input pak file should also have a deps line for completeness.
+    sources = [
+      "${root_gen_dir}/content/app/strings/content_strings_${locale}.pak",
+      "${root_gen_dir}/ui/strings/app_locale_settings_${locale}.pak"
+    ]
+
+    deps = [
+      "//content/app/strings",
+      "//ui/strings:app_locale_settings"
+    ]
+
+    output = invoker.output
+  }
+}
+
+template("repack_locales") {
+  # This is the name of the group below that will collect all the invidual
+  # locale targets. External targets will depend on this.
+  group_target_name = target_name
+
+  # GN's subscript is too stupid to do invoker.output_locales[foo] so we need
+  # to make a copy and do output_locales[foo].
+  output_locales = invoker.output_locales
+
+  # Collects all targets the loop generates.
+  locale_targets = []
+
+  # This loop iterates over the input locales and also keeps a counter so it
+  # can simultaneously iterate over the output locales (using GN's very
+  # limited looping capabilities).
+  current_index = 0
+  foreach(input_locale, invoker.input_locales) {
+    output_locale = output_locales[current_index]
+
+    # Compute the name of the target for the current file. Save it for the deps.
+    current_name = "${target_name}_${input_locale}"
+    locale_targets += [ ":$current_name" ]
+
+    _repack_one_locale(current_name) {
+      visibility = [ ":$group_target_name" ]
+      locale = input_locale
+
+      # Compute the output name. Mac uses a different location.
+      if (is_mac || is_ios) {
+        output = "${root_gen_dir}/repack/chromium_l10n/${output_locale}.pak"
+      } else {
+        output = "${root_out_dir}/chromium_l10n/${output_locale}.pak"
+      }
+    }
+
+    current_index = current_index + 1
+  }
+
+  # The group that external targets depend on which collects all deps.
+  group(group_target_name) {
+    forward_variables_from(invoker, [ "visibility" ])
+    public_deps = locale_targets
+  }
+}

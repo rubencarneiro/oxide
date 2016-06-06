@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2016 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,27 +16,11 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-cmake_policy(VERSION 2.6.0)
+oxide_platform_targets = [
+  "//oxide/qt/core",
+  "//oxide/qt/renderer"
+]
 
-if(NOT DEFINED FILES)
-  message(FATAL_ERROR "Must define FILES")
-endif()
-if(NOT DEFINED DESTINATION)
-  message(FATAL_ERROR "Must define DESTINATION")
-endif()
-if(NOT DEFINED TYPE)
-  message(FATAL_ERROR "Must define TYPE")
-endif()
-
-set(PARAMS INSTALL FILES ${FILES} DESTINATION ${DESTINATION} TYPE ${TYPE})
-if(DEFINED MATCH_PATTERN)
-  list(APPEND PARAMS FILES_MATCHING PATTERN "${MATCH_PATTERN}")
-endif()
-
-if(DEFINED EXCLUDES)
-  foreach(e ${EXCLUDES})
-    list(APPEND PARAMS PATTERN "${e}" EXCLUDE)
-  endforeach()
-endif()
-
-file(${PARAMS})
+oxide_platform_test_targets = [
+  "//oxide/qt/core:core_unittests"
+]

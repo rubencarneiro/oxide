@@ -1,0 +1,652 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import("//build/config/features.gni")
+import("//build/config/locales.gni")
+import("//oxide/build/config/build_flags.gni")
+import("//oxide/build/config/repack_locales.gni")
+import("//oxide/build/config/version.gni")
+import("//tools/grit/grit_rule.gni")
+import("//tools/grit/repack.gni")
+
+declare_args() {
+  enable_hybris = false
+
+  enable_hybris_camera = false
+
+  enable_mediahub = false
+}
+
+assert(!enable_hybris_camera || enable_hybris)
+
+subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
+
+# TODO: All includes should be a fully qualified path from the source root,
+#  then we can remove this
+config("shared_include_dirs") {
+  include_dirs = [
+    "//oxide",
+    "$root_gen_dir/oxide"
+  ]
+}
+
+grit("shared_resources") {
+  source = "oxide_resources.grd"
+  outputs = [
+    "grit/oxide_resources.h",
+    "$root_gen_dir/oxide/shared/oxide_resources.pak"
+  ]
+}
+
+repack("packed_resources") {
+  sources = [
+    "$root_gen_dir/blink/devtools_resources.pak",
+    "$root_gen_dir/blink/public/resources/blink_resources.pak",
+    "$root_gen_dir/content/browser/tracing/tracing_resources.pak",
+    "$root_gen_dir/content/content_resources.pak",
+    "$root_gen_dir/net/net_resources.pak",
+    "$root_gen_dir/oxide/shared/oxide_resources.pak",
+    "$root_gen_dir/ui/resources/webui_resources.pak"
+  ]
+
+  deps = [
+    ":shared_resources",
+    "//content/browser/devtools:devtools_resources",
+    "//content/browser/tracing:resources",
+    "//content:resources",
+    "//net:net_resources",
+    "//third_party/WebKit/public:resources",
+    "//ui/resources"
+  ]
+
+  output = "$root_out_dir/oxide.pak"
+}
+
+repack("packed_resources_100_percent") {
+  sources = [
+    "$root_gen_dir/blink/public/resources/blink_image_resources_100_percent.pak",
+    "$root_gen_dir/content/app/resources/content_resources_100_percent.pak",
+    "$root_gen_dir/ui/resources/ui_resources_100_percent.pak"
+  ]
+
+  deps = [
+    "//content/app/resources",
+    "//third_party/WebKit/public:image_resources",
+    "//ui/resources"
+  ]
+
+  output = "$root_out_dir/oxide_100_percent.pak"
+}
+
+repack("packed_resources_200_percent") {
+  sources = [
+    "$root_gen_dir/blink/public/resources/blink_image_resources_200_percent.pak",
+    "$root_gen_dir/content/app/resources/content_resources_200_percent.pak",
+    "$root_gen_dir/ui/resources/ui_resources_200_percent.pak"
+  ]
+
+  deps = [
+    "//content/app/resources",
+    "//third_party/WebKit/public:image_resources",
+    "//ui/resources"
+  ]
+
+  output = "$root_out_dir/oxide_200_percent.pak"
+}
+
+repack_locales("repack_locales_pack") {
+  input_locales = locales
+
+  if (is_mac) {
+    output_locales = locales_as_mac_outputs
+  } else {
+    output_locales = locales
+  }
+}
+
+version_header("chrome_version") {
+  input_file = "common/chrome_version.h.in"
+  version_file = "//chrome/VERSION"
+  output_file = "$target_gen_dir/common/chrome_version.h"
+}
+
+component("shared") {
+  output_name = "oxide_shared"
+
+  public_configs = [ ":shared_include_dirs" ]
+
+  public_deps = [
+    "//mojo/public/cpp/bindings",
+    "//third_party/re2"
+  ]
+
+  defines = [
+    "OXIDE_SUBPROCESS_PATH=\"$subprocess_relpath\"",
+    "OXIDE_GETTEXT_DOMAIN=\"$oxide_gettext_domain\"",
+    "OXIDE_SHARED_IMPLEMENTATION"
+  ]
+
+  if (is_linux) {
+    configs += [
+      "//build/config/linux:x11",
+      "//oxide/build/config/linux:gdkpixbuf",
+      "//oxide/build/config/linux:glib",
+      "//oxide/build/config/linux:libnotify"
+    ]
+  }
+
+  deps = [
+    ":chrome_version",
+    ":packed_resources",
+    ":packed_resources_100_percent",
+    ":packed_resources_200_percent",
+    ":repack_locales_pack",
+    ":shared_resources",
+    "//base",
+    "//base:base_static",
+    "//base:i18n",
+    "//build/linux/libpci",
+    "//cc",
+    "//cc/surfaces",
+    "//components/devtools_http_handler",
+    "//components/keyed_service/content",
+    "//components/keyed_service/core",
+    "//components/sessions",
+    "//content/public/app:both",
+    "//content/public/browser",
+    "//content/public/child",
+    "//content/public/common",
+    "//content/public/gpu",
+    "//content/public/renderer",
+    "//content/public/utility",
+    "//crypto",
+    "//device/vibration:mojo_bindings",
+    "//extensions/common",
+    "//gin",
+    "//gpu/command_buffer/client",
+    "//gpu/command_buffer/common",
+    "//gpu/command_buffer/service",
+    "//ipc",
+    "//media",
+    "//mojo/common",
+    "//mojo/edk/system",
+    "//net",
+    "//skia",
+    "//third_party/libXNVCtrl",
+    "//third_party/WebKit/public:blink",
+    "//ui/base",
+    "//ui/display",
+    "//ui/events",
+    "//ui/events:gesture_detection",
+    "//ui/gfx",
+    "//ui/gfx/geometry",
+    "//ui/gfx/range",
+    "//ui/gfx/ipc/geometry",
+    "//ui/gfx/x",
+    "//ui/gl",
+    "//ui/gl/init",
+    "//ui/native_theme",
+    "//ui/ozone",
+    "//ui/touch_selection",
+    "//url",
+    "//url/ipc:url_ipc",
+    "//v8"
+  ]
+
+  sources = [
+    "app/oxide_content_main_delegate.cc",
+    "app/oxide_content_main_delegate.h",
+    "app/oxide_main.cc",
+    "app/oxide_main.h",
+    "app/oxide_platform_delegate.h",
+    "browser/clipboard/oxide_clipboard.cc",
+    "browser/clipboard/oxide_clipboard.h",
+    "browser/clipboard/oxide_clipboard_dummy_impl.cc",
+    "browser/clipboard/oxide_clipboard_dummy_impl.h",
+    "browser/clipboard/oxide_clipboard_observer.cc",
+    "browser/clipboard/oxide_clipboard_observer.h",
+    "browser/compositor/oxide_compositing_mode.h",
+    "browser/compositor/oxide_compositor.cc",
+    "browser/compositor/oxide_compositor.h",
+    "browser/compositor/oxide_compositor_client.h",
+    "browser/compositor/oxide_compositor_frame_ack.cc",
+    "browser/compositor/oxide_compositor_frame_ack.h",
+    "browser/compositor/oxide_compositor_frame_collector.cc",
+    "browser/compositor/oxide_compositor_frame_collector.h",
+    "browser/compositor/oxide_compositor_frame_data.cc",
+    "browser/compositor/oxide_compositor_frame_data.h",
+    "browser/compositor/oxide_compositor_frame_handle.cc",
+    "browser/compositor/oxide_compositor_frame_handle.h",
+    "browser/compositor/oxide_compositor_gpu_shims.cc",
+    "browser/compositor/oxide_compositor_gpu_shims.h",
+    "browser/compositor/oxide_compositor_observer.cc",
+    "browser/compositor/oxide_compositor_observer.h",
+    "browser/compositor/oxide_compositor_output_surface.cc",
+    "browser/compositor/oxide_compositor_output_surface.h",
+    "browser/compositor/oxide_compositor_output_surface_gl.cc",
+    "browser/compositor/oxide_compositor_output_surface_gl.h",
+    "browser/compositor/oxide_compositor_output_surface_listener.h",
+    "browser/compositor/oxide_compositor_output_surface_software.cc",
+    "browser/compositor/oxide_compositor_output_surface_software.h",
+    "browser/compositor/oxide_compositor_software_output_device.cc",
+    "browser/compositor/oxide_compositor_software_output_device.h",
+    "browser/compositor/oxide_compositor_utils.cc",
+    "browser/compositor/oxide_compositor_utils.h",
+    "browser/compositor/oxide_mailbox_buffer_map.cc",
+    "browser/compositor/oxide_mailbox_buffer_map.h",
+    "browser/input/oxide_ime_bridge.cc",
+    "browser/input/oxide_ime_bridge.h",
+    "browser/input/oxide_ime_bridge_impl.cc",
+    "browser/input/oxide_ime_bridge_impl.h",
+    "browser/input/oxide_input_method_context.cc",
+    "browser/input/oxide_input_method_context.h",
+    "browser/input/oxide_input_method_context_observer.cc",
+    "browser/input/oxide_input_method_context_observer.h",
+    "browser/media/oxide_media_capture_devices_context.cc",
+    "browser/media/oxide_media_capture_devices_context.h",
+    "browser/media/oxide_media_capture_devices_context_client.h",
+    "browser/media/oxide_media_capture_devices_dispatcher.cc",
+    "browser/media/oxide_media_capture_devices_dispatcher.h",
+    "browser/media/oxide_media_capture_devices_dispatcher_observer.cc",
+    "browser/media/oxide_media_capture_devices_dispatcher_observer.h",
+    "browser/media/oxide_video_capture_device_factory_linux.cc",
+    "browser/media/oxide_video_capture_device_factory_linux.h",
+    "browser/notifications/oxide_notification_data.h",
+    "browser/notifications/oxide_notification_delegate_proxy.cc",
+    "browser/notifications/oxide_notification_delegate_proxy.h",
+    "browser/notifications/oxide_notification_dispatcher.h",
+    "browser/notifications/oxide_notification_id.h",
+    "browser/notifications/oxide_platform_notification_service.cc",
+    "browser/notifications/oxide_platform_notification_service.h",
+    "browser/notifications/oxide_system_notification_dispatcher.h",
+    "browser/notifications/oxide_system_notification_dispatcher_linux.cc",
+    "browser/oxide_access_token_store.cc",
+    "browser/oxide_access_token_store.h",
+    "browser/oxide_browser_context.cc",
+    "browser/oxide_browser_context.h",
+    "browser/oxide_browser_context_delegate.h",
+    "browser/oxide_browser_context_destroyer.cc",
+    "browser/oxide_browser_context_destroyer.h",
+    "browser/oxide_browser_context_observer.cc",
+    "browser/oxide_browser_context_observer.h",
+    "browser/oxide_browser_main_parts.cc",
+    "browser/oxide_browser_main_parts.h",
+    "browser/oxide_browser_platform_integration.cc",
+    "browser/oxide_browser_platform_integration.h",
+    "browser/oxide_browser_platform_integration_observer.cc",
+    "browser/oxide_browser_platform_integration_observer.h",
+    "browser/oxide_browser_process_main.cc",
+    "browser/oxide_browser_process_main.h",
+    "browser/oxide_content_browser_client.cc",
+    "browser/oxide_content_browser_client.h",
+    "browser/oxide_content_types.h",
+    "browser/oxide_cookie_store_ui_proxy.cc",
+    "browser/oxide_cookie_store_ui_proxy.h",
+    "browser/oxide_devtools_http_handler_delegate.cc",
+    "browser/oxide_devtools_http_handler_delegate.h",
+    "browser/oxide_devtools_manager.cc",
+    "browser/oxide_devtools_manager.h",
+    "browser/oxide_download_manager_delegate.cc",
+    "browser/oxide_download_manager_delegate.h",
+    "browser/oxide_drag_source.h",
+    "browser/oxide_drag_source_client.h",
+    "browser/oxide_event_utils.cc",
+    "browser/oxide_event_utils.h",
+    "browser/oxide_favicon_helper.cc",
+    "browser/oxide_favicon_helper.h",
+    "browser/oxide_file_picker.cc",
+    "browser/oxide_file_picker.h",
+    "browser/oxide_find_controller.cc",
+    "browser/oxide_find_controller.h",
+    "browser/oxide_find_controller_client.h",
+    "browser/oxide_form_factor_detection.cc",
+    "browser/oxide_form_factor_detection.h",
+    "browser/oxide_form_factor_detection_linux.cc",
+    "browser/oxide_fullscreen_helper.cc",
+    "browser/oxide_fullscreen_helper.h",
+    "browser/oxide_fullscreen_helper_client.h",
+    "browser/oxide_gesture_provider.cc",
+    "browser/oxide_gesture_provider.h",
+    "browser/oxide_gpu_info_collector_linux.cc",
+    "browser/oxide_gpu_info_collector_linux.h",
+    "browser/oxide_http_user_agent_settings.cc",
+    "browser/oxide_http_user_agent_settings.h",
+    "browser/oxide_io_thread.cc",
+    "browser/oxide_io_thread.h",
+    "browser/oxide_javascript_dialog.cc",
+    "browser/oxide_javascript_dialog.h",
+    "browser/oxide_javascript_dialog_manager.cc",
+    "browser/oxide_javascript_dialog_manager.h",
+    "browser/oxide_lifecycle_observer.cc",
+    "browser/oxide_lifecycle_observer.h",
+    "browser/oxide_message_pump.cc",
+    "browser/oxide_message_pump.h",
+    "browser/oxide_navigation_intercept_resource_throttle.cc",
+    "browser/oxide_navigation_intercept_resource_throttle.h",
+    "browser/oxide_network_delegate.cc",
+    "browser/oxide_network_delegate.h",
+    "browser/oxide_platform_run_loop.cc",
+    "browser/oxide_platform_run_loop.h",
+    "browser/oxide_power_save_blocker_linux.cc",
+    "browser/oxide_power_save_blocker.h",
+    "browser/oxide_quota_permission_context.cc",
+    "browser/oxide_quota_permission_context.h",
+    "browser/oxide_redirection_intercept_throttle.cc",
+    "browser/oxide_redirection_intercept_throttle.h",
+    "browser/oxide_render_object_id.h",
+    "browser/oxide_render_message_filter.cc",
+    "browser/oxide_render_message_filter.h",
+    "browser/oxide_render_process_initializer.cc",
+    "browser/oxide_render_process_initializer.h",
+    "browser/oxide_render_widget_host_view.cc",
+    "browser/oxide_render_widget_host_view.h",
+    "browser/oxide_render_widget_host_view_container.h",
+    "browser/oxide_resource_dispatcher_host_delegate.cc",
+    "browser/oxide_resource_dispatcher_host_delegate.h",
+    "browser/oxide_resource_dispatcher_host_login_delegate.cc",
+    "browser/oxide_resource_dispatcher_host_login_delegate.h",
+    "browser/oxide_script_message_contents_helper.cc",
+    "browser/oxide_script_message_contents_helper.h",
+    "browser/oxide_script_message_impl_browser.cc",
+    "browser/oxide_script_message_impl_browser.h",
+    "browser/oxide_script_message_request_impl_browser.cc",
+    "browser/oxide_script_message_request_impl_browser.h",
+    "browser/oxide_script_message_target.h",
+    "browser/oxide_mouse_event_state.cc",
+    "browser/oxide_mouse_event_state.h",
+    "browser/oxide_url_request_context.cc",
+    "browser/oxide_url_request_context.h",
+    "browser/oxide_url_request_delegated_job.cc",
+    "browser/oxide_url_request_delegated_job.h",
+    "browser/oxide_url_request_delegated_job_factory.cc",
+    "browser/oxide_url_request_delegated_job_factory.h",
+    "browser/oxide_user_agent_settings.cc",
+    "browser/oxide_user_agent_settings.h",
+    "browser/oxide_user_script_master.cc",
+    "browser/oxide_user_script_master.h",
+    "browser/oxide_web_contents_unloader.cc",
+    "browser/oxide_web_contents_unloader.h",
+    "browser/oxide_web_contents_view.cc",
+    "browser/oxide_web_contents_view.h",
+    "browser/oxide_web_contents_view_client.cc",
+    "browser/oxide_web_contents_view_client.h",
+    "browser/oxide_web_context_menu.cc",
+    "browser/oxide_web_context_menu.h",
+    "browser/oxide_web_frame.cc",
+    "browser/oxide_web_frame.h",
+    "browser/oxide_web_frame_tree.cc",
+    "browser/oxide_web_frame_tree.h",
+    "browser/oxide_web_frame_tree_observer.cc",
+    "browser/oxide_web_frame_tree_observer.h",
+    "browser/oxide_web_popup_menu.h",
+    "browser/oxide_web_popup_menu_client.h",
+    "browser/oxide_web_popup_menu_impl.cc",
+    "browser/oxide_web_popup_menu_impl.h",
+    "browser/oxide_web_preferences.cc",
+    "browser/oxide_web_preferences.h",
+    "browser/oxide_web_preferences_observer.cc",
+    "browser/oxide_web_preferences_observer.h",
+    "browser/oxide_web_view.cc",
+    "browser/oxide_web_view.h",
+    "browser/oxide_web_view_client.cc",
+    "browser/oxide_web_view_client.h",
+    "browser/oxide_web_view_contents_helper.cc",
+    "browser/oxide_web_view_contents_helper.h",
+    "browser/permissions/oxide_permission_manager.cc",
+    "browser/permissions/oxide_permission_manager.h",
+    "browser/permissions/oxide_permission_request.cc",
+    "browser/permissions/oxide_permission_request.h",
+    "browser/permissions/oxide_permission_request_dispatcher.cc",
+    "browser/permissions/oxide_permission_request_dispatcher.h",
+    "browser/permissions/oxide_permission_request_dispatcher_client.h",
+    "browser/permissions/oxide_permission_request_response.h",
+    "browser/permissions/oxide_temporary_saved_permission_context.cc",
+    "browser/permissions/oxide_temporary_saved_permission_context.h",
+    "browser/ssl/oxide_certificate_error.cc",
+    "browser/ssl/oxide_certificate_error.h",
+    "browser/ssl/oxide_certificate_error_dispatcher.cc",
+    "browser/ssl/oxide_certificate_error_dispatcher.h",
+    "browser/ssl/oxide_certificate_error_placeholder_page.cc",
+    "browser/ssl/oxide_certificate_error_placeholder_page.h",
+    "browser/ssl/oxide_certificate_error_proxy.cc",
+    "browser/ssl/oxide_certificate_error_proxy.h",
+    "browser/ssl/oxide_security_status.cc",
+    "browser/ssl/oxide_security_status.h",
+    "browser/ssl/oxide_security_types.h",
+    "browser/ssl/oxide_ssl_config_service.cc",
+    "browser/ssl/oxide_ssl_config_service.h",
+    "browser/ssl/oxide_ssl_host_state_delegate.cc",
+    "browser/ssl/oxide_ssl_host_state_delegate.h",
+    "common/oxide_constants.cc",
+    "common/oxide_constants.h",
+    "common/oxide_content_client.cc",
+    "common/oxide_content_client.h",
+    "common/oxide_core_export.h",
+    "common/oxide_cross_thread_data_stream.cc",
+    "common/oxide_cross_thread_data_stream.h",
+    "common/oxide_enum_flags.h",
+    "common/oxide_export.h",
+    "common/oxide_file_utils.cc",
+    "common/oxide_file_utils.h",
+    "common/oxide_form_factor.cc",
+    "common/oxide_form_factor.h",
+    "common/oxide_id_allocator.cc",
+    "common/oxide_id_allocator.h",
+    "common/oxide_message_enums.h",
+    "common/oxide_message_generator.cc",
+    "common/oxide_message_generator.h",
+    "common/oxide_messages.h",
+    "common/oxide_net_resource_provider.cc",
+    "common/oxide_net_resource_provider.h",
+    "common/oxide_param_traits.cc",
+    "common/oxide_param_traits.h",
+    "common/oxide_paths.cc",
+    "common/oxide_paths.h",
+    "common/oxide_script_message.cc",
+    "common/oxide_script_message.h",
+    "common/oxide_script_message_handler.cc",
+    "common/oxide_script_message_handler.h",
+    "common/oxide_script_message_params.cc",
+    "common/oxide_script_message_params.h",
+    "common/oxide_script_message_request.cc",
+    "common/oxide_script_message_request.h",
+    "common/oxide_shared_export.h",
+    "common/oxide_unowned_user_data.h",
+    "common/oxide_user_agent.cc",
+    "common/oxide_user_agent.h",
+    "common/oxide_user_agent_override_set.cc",
+    "common/oxide_user_agent_override_set.h",
+    "common/oxide_user_script.cc",
+    "common/oxide_user_script.h",
+    "gpu/oxide_gl_context_dependent.cc",
+    "gpu/oxide_gl_context_dependend.h",
+    "renderer/external_popup_menu.cc",
+    "renderer/external_popup_menu.h",
+    "renderer/oxide_content_renderer_client.cc",
+    "renderer/oxide_content_renderer_client.h",
+    "renderer/oxide_isolated_world_map.cc",
+    "renderer/oxide_isolated_world_map.h",
+    "renderer/oxide_object_backed_native_handler.cc",
+    "renderer/oxide_object_backed_native_handler.h",
+    "renderer/oxide_renderer_user_agent_settings.cc",
+    "renderer/oxide_renderer_user_agent_settings.h",
+    "renderer/oxide_script_message_dispatcher_renderer.cc",
+    "renderer/oxide_script_message_dispatcher_renderer.h",
+    "renderer/oxide_script_message_handler_renderer.cc",
+    "renderer/oxide_script_message_handler_renderer.h",
+    "renderer/oxide_script_message_impl_renderer.cc",
+    "renderer/oxide_script_message_impl_renderer.h",
+    "renderer/oxide_script_message_manager.cc",
+    "renderer/oxide_script_message_manager.h",
+    "renderer/oxide_script_message_object_handler.cc",
+    "renderer/oxide_script_message_object_handler.h",
+    "renderer/oxide_script_message_request_impl_renderer.cc",
+    "renderer/oxide_script_message_request_impl_renderer.h",
+    "renderer/oxide_script_message_request_object_handler.cc",
+    "renderer/oxide_script_message_request_object_handler.h",
+    "renderer/oxide_script_referenced_object.cc",
+    "renderer/oxide_script_referenced_object.h",
+    "renderer/oxide_top_controls_handler.cc",
+    "renderer/oxide_top_controls_handler.h",
+    "renderer/oxide_user_script_scheduler.cc",
+    "renderer/oxide_user_script_scheduler.h",
+    "renderer/oxide_user_script_slave.cc",
+    "renderer/oxide_user_script_slave.h",
+    "renderer/oxide_v8_scoped_persistent.h",
+    "renderer/oxide_web_content_settings_client.cc",
+    "renderer/oxide_web_content_settings_client.h",
+  ]
+
+  if (is_linux) {
+    deps += [ "//dbus" ]
+  }
+
+  if (enable_plugins) {
+    deps += [
+      "//ppapi/host",
+      "//ppapi/proxy",
+      "//ppapi/shared_impl"
+    ]
+
+    sources += [
+      "browser/pepper/oxide_pepper_host_factory_browser.cc",
+      "browser/pepper/oxide_pepper_host_factory_browser.h",
+      "browser/pepper/oxide_pepper_flash_browser_host.cc",
+      "browser/pepper/oxide_pepper_flash_browser_host.h",
+      "renderer/pepper/oxide_pepper_renderer_host_factory.cc",
+      "renderer/pepper/oxide_pepper_renderer_host_factory.h",
+      "renderer/pepper/oxide_pepper_render_frame_observer.cc",
+      "renderer/pepper/oxide_pepper_render_frame_observer.h",
+      "renderer/pepper/oxide_pepper_flash_font_file_host.cc",
+      "renderer/pepper/oxide_pepper_flash_font_file_host.h",
+      "renderer/pepper/oxide_pepper_flash_fullscreen_host.cc",
+      "renderer/pepper/oxide_pepper_flash_fullscreen_host.h",
+      "renderer/pepper/oxide_pepper_flash_renderer_host.cc",
+      "renderer/pepper/oxide_pepper_flash_renderer_host.h",
+      "renderer/pepper/oxide_pepper_flash_menu_host.cc",
+      "renderer/pepper/oxide_pepper_flash_menu_host.h",
+      "renderer/pepper/oxide_pepper_shared_memory_message_filter.cc",
+      "renderer/pepper/oxide_pepper_shared_memory_message_filter.h",
+    ]
+  }
+
+  if (enable_mediahub) {
+    assert(is_linux)
+    defines += [ "ENABLE_MEDIAHUB" ]
+
+    deps += [
+      ":mediahub_shim",
+      "//media/blink"
+    ]
+
+    sources += [
+      "browser/media/oxide_browser_media_player_manager.cc",
+      "browser/media/oxide_browser_media_player_manager.h",
+      "browser/media/oxide_player_media_hub.cc",
+      "browser/media/oxide_player_media_hub.h",
+      "browser/media/oxide_media_player.cc",
+      "browser/media/oxide_media_player.h",
+      "browser/media/oxide_media_web_contents_observer.cc",
+      "browser/media/oxide_media_web_contents_observer.h",
+      "renderer/media/oxide_renderer_media_player_manager.cc",
+      "renderer/media/oxide_renderer_media_player_manager.h",
+      "renderer/media/oxide_web_media_player.cc",
+      "renderer/media/oxide_web_media_player.h",
+      "renderer/media/oxide_media_info_loader.cc",
+      "renderer/media/oxide_media_info_loader.h",
+    ]
+  }
+
+  if (enable_hybris) {
+    assert(is_linux)
+    defines += [ "ENABLE_HYBRIS" ]
+
+    configs += [
+      "//oxide/build/config/linux:android_properties"
+    ]
+
+    sources += [
+      "browser/oxide_hybris_utils.cc",
+      "browser/oxide_hybris_utils.h"
+    ]
+
+    if (enable_hybris_camera) {
+      defines += [ "ENABLE_HYBRIS_CAMERA" ]
+
+      configs += [
+        "//oxide/build/config/linux:hybris_camera"
+      ]
+
+      sources += [
+        "browser/media/oxide_video_capture_device_hybris.cc",
+        "browser/media/oxide_video_capture_device_hybris.h"
+      ]
+    }
+  }
+}
+
+source_set("shared_testutils") {
+  testonly = true
+
+  deps = [
+    ":shared",
+    "//base",
+    "//content/public/browser",
+    "//content/test:test_support",
+    "//testing/gtest",
+    "//ui/gfx/geometry"
+  ]
+
+  sources = [
+    "test/oxide_mock_cert_store.cc",
+    "test/oxide_mock_cert_store.h",
+    "test/oxide_test_browser_thread_bundle.cc",
+    "test/oxide_test_browser_thread_bundle.h",
+    "test/oxide_test_suite.cc",
+    "test/oxide_test_suite.h",
+    "test/oxide_test_web_contents_view.cc",
+    "test/oxide_test_web_contents_view.h"
+  ]
+}
+
+executable("shared_unittests") {
+  output_name = "oxide_shared_unittests"
+  testonly = true
+
+  deps = [
+    ":shared",
+    ":shared_testutils",
+    "//base",
+    "//base/test:test_support",
+    "//content/public/browser",
+    "//content/public/common",
+    "//content/test:test_support",
+    "//mojo/edk/system",
+    "//net",
+    "//testing/gtest",
+    "//url"
+  ]
+
+  sources = [
+    "browser/ssl/oxide_certificate_error_unittest.cc",
+    "browser/ssl/oxide_certificate_error_dispatcher_unittest.cc",
+    "browser/ssl/oxide_security_status_unittest.cc",
+    "browser/ssl/oxide_ssl_host_state_delegate_unittest.cc",
+    "test/run_all_unittests.cc"
+  ]
+}

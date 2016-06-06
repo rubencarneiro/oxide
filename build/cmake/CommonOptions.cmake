@@ -16,10 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(DEFINED _OxideCommonOptions_INCLUDED_)
+if(DEFINED _Oxide_CommonOptions_INCLUDED_)
   return()
 endif()
-set(_OxideCommonOptions_INCLUDED_ TRUE)
+set(_Oxide_CommonOptions_INCLUDED_ TRUE)
 
 option(OXIDE_PLATFORM "The Oxide project to build")
 option(ENABLE_COMPONENT_BUILD
@@ -39,11 +39,23 @@ unset(_ENABLE_PLUGINS_DEFAULT)
 
 option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
 option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
-option(ENABLE_HYBRIS "Enable code that uses libhybris" ON)
+
+set(_ENABLE_HYBRIS_DEFAULT OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(_ENABLE_HYBRIS_DEFAULT ON)
+endif()
+option(ENABLE_HYBRIS "Enable code that uses libhybris" ${_ENABLE_HYBRIS_DEFAULT})
+unset(_ENABLE_HYBRIS_DEFAULT)
+
 option(ENABLE_HYBRIS_CAMERA
        "Enable support for the camera compatibility layer in Ubuntu's libhybris"
        OFF)
 
+option(USE_GN "Use Generate Ninja instead of gyp" OFF)
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ENABLE_HYBRIS)
+  message(FATAL_ERROR "ENABLE_HYBRIS is a Linux only option")
+endif()
 if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
 endif()

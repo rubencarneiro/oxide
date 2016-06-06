@@ -86,7 +86,8 @@ void WebContextMenu::SaveLink() const {
       content::BrowserContext::GetDownloadManager(context);
   const GURL& url = params_.link_url;
   std::unique_ptr<content::DownloadUrlParameters> dl_params(
-      content::DownloadUrlParameters::FromWebContents(web_contents(), url));
+      content::DownloadUrlParameters::CreateForWebContentsMainFrame(
+          web_contents(), url));
   dl_params->set_referrer(CreateSaveAsReferrer(url, params_));
   dl_params->set_referrer_encoding(params_.frame_charset);
   dl_params->set_suggested_name(params_.suggested_filename);

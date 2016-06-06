@@ -1,0 +1,90 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+import("//build/config/linux/pkg_config.gni")
+
+template("qt_private_includes") {
+  module = invoker.module
+  package = "Qt5${module}"
+  name = "Qt${module}"
+
+  config(target_name) {
+    rootdir = exec_script(pkg_config_script,
+                          pkg_config_args + [ "--includedir", package ],
+                          "string")
+    version = exec_script(pkg_config_script,
+                          pkg_config_args + [ "--modversion", package ],
+                          "string")
+
+    include_dirs = [
+      "$rootdir/$name/$version",
+      "$rootdir/$name/$version/$name"
+    ]  
+  }
+}
+
+qt_private_includes("Qt5Core_private_includes") {
+  module = "Core"
+}
+
+qt_private_includes("Qt5Gui_private_includes") {
+  module = "Gui"
+}
+
+pkg_config("Qt5Core") {
+  visibility = [ "//oxide/build/config/Qt5:Core",
+                 ":Qt5Core_Private" ]
+  packages = [ "Qt5Core" ]
+}
+
+group("Qt5Core_Private") {
+  visibility = [ "//oxide/build/config/Qt5:Core_Private" ]
+  public_configs = [
+    ":Qt5Core",
+    ":Qt5Core_private_includes"
+  ]
+}
+
+pkg_config("Qt5Feedback") {
+  visibility = [ "//oxide/build/config/Qt5:Feedback" ]
+  packages = [ "Qt5Feedback" ]
+}
+
+pkg_config("Qt5Gui") {
+  visibility = [ "//oxide/build/config/Qt5:Gui",
+                 ":Qt5Gui_Private" ]
+  packages = [ "Qt5Gui" ]
+}
+
+group("Qt5Gui_Private") {
+  visibility = [ "//oxide/build/config/Qt5:Gui_Private" ]
+  public_configs = [
+    ":Qt5Gui",
+    ":Qt5Gui_private_includes"
+  ]
+}
+
+pkg_config("Qt5Network") {
+  visibility = [ "//oxide/build/config/Qt5:Network" ]
+  packages = [ "Qt5Network" ]
+}
+
+pkg_config("Qt5Positioning") {
+  visibility = [ "//oxide/build/config/Qt5:Positioning" ]
+  packages = [ "Qt5Positioning" ]
+}

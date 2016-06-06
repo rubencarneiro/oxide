@@ -25,7 +25,7 @@ namespace oxide {
 void GLContextDependent::OnSetSwapInterval(int interval) {}
 
 GLContextDependent::GLContextDependent(GLContextDependent* other)
-    : gfx::GLContext(nullptr),
+    : gl::GLContext(nullptr),
       handle_(other->GetHandle()),
       was_allocated_using_robustness_extension_(
         other->WasAllocatedUsingRobustnessExtension()) {}
@@ -33,7 +33,7 @@ GLContextDependent::GLContextDependent(GLContextDependent* other)
 GLContextDependent::GLContextDependent(
     void* handle,
     bool was_allocated_using_robustness_extension)
-    : gfx::GLContext(nullptr),
+    : gl::GLContext(nullptr),
       handle_(handle),
       was_allocated_using_robustness_extension_(
         was_allocated_using_robustness_extension) {}
@@ -46,19 +46,19 @@ scoped_refptr<GLContextDependent> GLContextDependent::CloneFrom(
   return make_scoped_refptr(new GLContextDependent(other));
 }
 
-bool GLContextDependent::Initialize(gfx::GLSurface* compatible_surface,
-                                    gfx::GpuPreference gpu_preference) {
+bool GLContextDependent::Initialize(gl::GLSurface* compatible_surface,
+                                    gl::GpuPreference gpu_preference) {
   return true;
 }
 
-bool GLContextDependent::MakeCurrent(gfx::GLSurface* surface) {
+bool GLContextDependent::MakeCurrent(gl::GLSurface* surface) {
   NOTREACHED();
   return false;
 }
 
-void GLContextDependent::ReleaseCurrent(gfx::GLSurface* surface) {}
+void GLContextDependent::ReleaseCurrent(gl::GLSurface* surface) {}
 
-bool GLContextDependent::IsCurrent(gfx::GLSurface* surface) {
+bool GLContextDependent::IsCurrent(gl::GLSurface* surface) {
   return false;
 }
 
@@ -70,7 +70,7 @@ bool GLContextDependent::WasAllocatedUsingRobustnessExtension() {
   return was_allocated_using_robustness_extension_;
 }
 
-scoped_refptr<gfx::GPUTimingClient> GLContextDependent::CreateGPUTimingClient() {
+scoped_refptr<gl::GPUTimingClient> GLContextDependent::CreateGPUTimingClient() {
   return nullptr;
 }
 

@@ -594,7 +594,7 @@ CompositingMode CompositorUtilsImpl::GetCompositingMode() const {
     return COMPOSITING_MODE_SOFTWARE;
   }
 
-  if (gfx::GetGLImplementation() == gfx::kGLImplementationEGLGLES2 &&
+  if (gl::GetGLImplementation() == gl::kGLImplementationEGLGLES2 &&
       GpuUtils::CanUseEGLImage()) {
     return COMPOSITING_MODE_EGLIMAGE;
   }
