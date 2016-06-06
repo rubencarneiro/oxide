@@ -57,8 +57,8 @@ function(run_generate_ninja)
     message(FATAL_ERROR "One or more parameters are missing from the build")
   endif()
 
-  find_program(GN_OXIDE gn.oxide)
-  if(GN_OXIDE STREQUAL "GN_OXIDE-NOTFOUND")
+  find_program(GN gn)
+  if(GN STREQUAL "GN-NOTFOUND")
     message(FATAL_ERROR
             "Can't find gn binary. Did you check out the source following "
             "the instructions at https://wiki.ubuntu.com/Oxide/GetTheCode?")
@@ -222,7 +222,7 @@ function(run_generate_ninja)
     message(FATAL_ERROR "Failed to write Generate Ninja configuration")
   endif()
 
-  set(GN_CMD ${GN_OXIDE} gen ${CHROMIUM_OUTPUT_DIR})
+  set(GN_CMD ${GN} gen ${CHROMIUM_OUTPUT_DIR})
   message(STATUS "Running Generate Ninja")
   execute_process(COMMAND ${GN_CMD}
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
