@@ -52,12 +52,16 @@ option(ENABLE_HYBRIS_CAMERA
        OFF)
 
 option(USE_GN "Use Generate Ninja instead of gyp" OFF)
+option(BOOTSTRAP_GN "Bootstrap a Generate Ninja binary" OFF)
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS is a Linux only option")
 endif()
 if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
+endif()
+if(BOOTSTRAP_GN AND NOT USE_GN)
+  message(FATAL_ERROR "BOOTSTRAP_GN is requires USE_GN")
 endif()
 
 if(NOT OXIDE_PLATFORM)

@@ -26,6 +26,37 @@ include(CommonOptions)
 include(CommonProperties)
 include(LibFilenameUtils)
 
+find_program(NINJA_EXE ninja)
+if(NINJA_EXE STREQUAL "NINJA_EXE-NOTFOUND")
+  message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
+endif()
+
+macro(_bootstrap_gn)
+  if(NOT EXISTS "${CHROMIUM_PRODUCT_DIR}/buildtools/gn")
+    set(BOOTSTRAP_CMD ${CMAKE_COMMAND}
+        -DPYTHON=${PYTHON} -DCMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -DCHROMIUM_OUTPUT_DIR=${CHROMIUM_OUTPUT_DIR}
+        -DCHROMIUM_PRODUCT_DIR=${CHROMIUM_PRODUCT_DIR}
+        -DNINJA_EXE=${NINJA_EXE}
+        -DCMAKE_VERBOSE_MAKEFILE=${CMAKE_VERBOSE_MAKEFILE})
+    if(CMAKE_CROSSCOMPILING)
+      list(APPEND BOOTSTRAP_CMD -DCC=${CHROMIUM_C_HOST_COMPILER})
+      list(APPEND BOOTSTRAP_CMD -DCXX=${CHROMIUM_CXX_HOST_COMPILER})
+    else()
+      list(APPEND BOOTSTRAP_CMD -DCC=${CMAKE_C_COMPILER})
+      list(APPEND BOOTSTRAP_CMD -DCXX=${CMAKE_CXX_COMPILER})
+    endif()
+    list(APPEND BOOTSTRAP_CMD -P ${OXIDE_SOURCE_DIR}/build/scripts/bootstrap-gn.cmake)
+    message(STATUS "Bootstrapping Generate Ninja binary")
+    execute_process(COMMAND ${BOOTSTRAP_CMD}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    RESULT_VARIABLE BOOTSTRAP_RESULT)
+    if(NOT BOOTSTRAP_RESULT EQUAL 0)
+      message(FATAL_ERROR "Failed to bootstrap Generate Ninja binary")
+    endif()
+  endif()
+endmacro()
+
 macro(_determine_compiler _out _compiler_id)
   if (${_compiler_id} STREQUAL "GNU")
     set(${_out} "gcc")
@@ -35,11 +66,7 @@ macro(_determine_compiler _out _compiler_id)
 endmacro()
 
 function(add_chromium_build_all_target name)
-  find_program(NINJA ninja)
-  if(NINJA STREQUAL "NINJA-NOTFOUND")
-    message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
-  endif()
-  set(NINJA_CMD ${NINJA} -C ${CHROMIUM_OUTPUT_DIR})
+  set(NINJA_CMD ${NINJA_EXE} -C ${CHROMIUM_OUTPUT_DIR})
   if(CMAKE_VERBOSE_MAKEFILE)
     list(APPEND NINJA_CMD -v)
   endif()
@@ -55,13 +82,6 @@ function(run_generate_ninja)
      NOT DEFINED OXIDE_LIB_VERSION OR
      NOT DEFINED OXIDE_RENDERER)
     message(FATAL_ERROR "One or more parameters are missing from the build")
-  endif()
-
-  find_program(GN gn)
-  if(GN STREQUAL "GN-NOTFOUND")
-    message(FATAL_ERROR
-            "Can't find gn binary. Did you check out the source following "
-            "the instructions at https://wiki.ubuntu.com/Oxide/GetTheCode?")
   endif()
 
   set(MAKE_GN_ARGS_CMD
@@ -214,6 +234,12 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
   endif()
 
+  if(BOOTSTRAP_GN)
+    list(APPEND MAKE_GN_ARGS_CMD -Denable_gn_build=true)
+  else()
+    list(APPEND MAKE_GN_ARGS_CMD -Denable_gn_build=false)
+  endif()
+
   message(STATUS "Writing Generate Ninja configuration")
   execute_process(COMMAND ${MAKE_GN_ARGS_CMD}
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -222,8 +248,20 @@ function(run_generate_ninja)
     message(FATAL_ERROR "Failed to write Generate Ninja configuration")
   endif()
 
+  if(BOOTSTRAP_GN)
+    set(GN ${CHROMIUM_PRODUCT_DIR}/buildtools/gn)
+    _bootstrap_gn()
+  else()
+    find_program(GN gn)
+    if(GN STREQUAL "GN-NOTFOUND")
+      message(FATAL_ERROR
+              "Can't find gn binary. Did you check out the source following "
+              "the instructions at https://wiki.ubuntu.com/Oxide/GetTheCode?")
+    endif()
+  endif()
+
   set(GN_CMD ${GN} gen ${CHROMIUM_OUTPUT_DIR})
-  message(STATUS "Running Generate Ninja")
+  message(STATUS "Generating Ninja build files")
   execute_process(COMMAND ${GN_CMD}
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                   RESULT_VARIABLE GN_RESULT)
