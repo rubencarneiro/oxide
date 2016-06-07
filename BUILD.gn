@@ -17,6 +17,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 declare_args() {
+  enable_gn_build = false
+
   enable_tests = false
 
   oxide_platform = false
@@ -28,11 +30,33 @@ import("//oxide/$oxide_platform/config.gni")
 
 assert(defined(oxide_platform_targets))
 
+copy("copy_host_gn") {
+  deps = [ "//tools/gn($host_toolchain)" ]
+
+  source_dir = get_label_info("//tools/gn($host_toolchain)", "root_out_dir")
+  sources = [ "$source_dir/gn" ]
+
+  outputs = [ "$root_out_dir/buildtools/{{source_file_part}}" ]
+}
+
+group("host_gn") {
+  deps = [
+    "//tools/gn($host_toolchain)",
+    ":copy_host_gn"
+  ]
+}
+
 group("oxide_all") {
   # FIXME: Split test targets out of this one
   testonly = true
 
-  deps = oxide_platform_targets
+  deps = []
+
+  if (enable_gn_build) {
+    deps += [ ":host_gn" ]
+  }
+
+  deps += oxide_platform_targets
 
   if (is_linux) {
     deps += [

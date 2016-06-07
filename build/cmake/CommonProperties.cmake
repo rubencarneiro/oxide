@@ -77,6 +77,18 @@ if(NOT _RESULT EQUAL 0)
 endif()
 
 set(CHROMIUM_OUTPUT_DIR ${CMAKE_BINARY_DIR}/chromium)
+if(DEFINED CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(CHROMIUM_BUILD_TYPE Debug)
+else()
+  set(CHROMIUM_BUILD_TYPE Release)
+endif()
+if(USE_GN)
+  set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR})
+  set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR})
+else()
+  set(CHROMIUM_PRODUCT_DIR ${CHROMIUM_OUTPUT_DIR}/${CHROMIUM_BUILD_TYPE})
+  set(CHROMIUM_LIB_DIR ${CHROMIUM_PRODUCT_DIR}/lib)
+endif()
 
 # for dh_translations to extract the domain
 # (regarding syntax consistency, see http://pad.lv/1181187)
