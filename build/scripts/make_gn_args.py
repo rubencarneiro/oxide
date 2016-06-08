@@ -63,6 +63,23 @@ def GetToolchain(system, toolset, compiler, arch):
 
   return toolchain
 
+def GetV8SnapshotArch(host_arch, target_arch):
+  if host_arch == target_arch:
+    return host_arch
+
+  if host_arch == "x64":
+    if target_arch == "x86" or target_arch == "arm":
+      return "x86"
+    elif target_arch == "arm64":
+      return "x64"
+  elif host_arch == "x86":
+    if target_arch == "arm":
+      return "x86"
+    elif target_arch == "x64":
+      return "x64"
+
+  raise Exception("Failed to detect arch for compiling V8 snapshot")
+
 class Options(OptionParser):
   def __init__(self):
     OptionParser.__init__(self)
@@ -152,21 +169,6 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_basic_printing", False)
   writer.WriteBool("enable_print_preview", False)
   writer.WriteBool("enable_extensions", True)
-
-def GetV8SnapshotArch(host_arch, target_arch):
-  if host_arch == target_arch:
-    return host_arch
-
-  if host_arch == "x64":
-    if target_arch == "x86" or target_arch == "arm":
-      return "x86"
-  elif host_arch == "x86":
-    if target_arch == "arm":
-      return "x86"
-    elif target_arch == "x64":
-      return "x64"
-
-  raise Exception("Failed to detect arch for compiling V8 snapshot")
 
 def WriteConfigurableArgs(writer, options):
   try:
