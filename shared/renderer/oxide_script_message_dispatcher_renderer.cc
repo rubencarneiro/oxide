@@ -132,6 +132,10 @@ void ScriptMessageDispatcherRenderer::ReturnError(
   Send(new OxideHostMsg_SendMessage(routing_id(), params));
 }
 
+void ScriptMessageDispatcherRenderer::OnDestruct() {
+  delete this;
+}
+
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int extension_id,

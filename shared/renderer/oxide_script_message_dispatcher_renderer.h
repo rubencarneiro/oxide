@@ -60,6 +60,7 @@ class ScriptMessageDispatcherRenderer : public content::RenderFrameObserver {
                    const ScriptMessageParams& orig);
 
   // content::RenderFrameObserver implementation
+  void OnDestruct() override;
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int extension_group,
                               int world_id) override;

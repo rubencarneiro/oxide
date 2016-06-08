@@ -38,6 +38,7 @@ class UserScriptScheduler : public content::RenderViewObserver {
   void DoIdleInject();
 
   // content::RenderViewObserver implementation
+  void OnDestruct() override;
   void DidFinishLoad(blink::WebLocalFrame* frame) override;
   void FrameDetached(blink::WebFrame* frame) override;
 

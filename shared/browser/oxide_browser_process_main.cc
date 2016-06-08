@@ -49,7 +49,7 @@
 #include "content/public/common/main_function_params.h"
 #include "content/renderer/in_process_renderer_thread.h"
 #include "content/utility/in_process_utility_thread.h"
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
 #include "crypto/nss_util.h"
 #endif
 #ifdef V8_USE_EXTERNAL_STARTUP_DATA
@@ -386,7 +386,7 @@ BrowserProcessMain::StartParams::~StartParams() {}
 
 BrowserProcessMain::StartParams::StartParams(StartParams&& other)
     : delegate(std::move(other.delegate)),
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
       nss_db_path(std::move(other.nss_db_path)),
 #endif
       gl_implementation(std::move(other.gl_implementation)),
@@ -455,7 +455,7 @@ void BrowserProcessMainImpl::Start(StartParams params) {
       base::CommandLine::ForCurrentProcess()->HasSwitch(
         switches::kSingleProcess));
 
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
   if (!params.nss_db_path.empty()) {
     // Used for testing
     PathService::OverrideAndCreateIfNeeded(crypto::DIR_NSSDB,

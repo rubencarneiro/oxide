@@ -56,6 +56,9 @@ class ExternalPopupMenu
   void show(const blink::WebRect& bounds) override;
   void close() override;
 
+  // content::RenderFrameObserver implementation
+  void OnDestruct() override;
+
   // IPC::Listener implementation
   bool OnMessageReceived(const IPC::Message& message) override;
 

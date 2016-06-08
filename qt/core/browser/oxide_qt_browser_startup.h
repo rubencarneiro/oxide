@@ -57,7 +57,7 @@ class BrowserStartup final {
   static void AddShutdownCallback(const base::Closure& callback);
 
  private:
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
   base::FilePath nss_db_path_;
 #endif
 

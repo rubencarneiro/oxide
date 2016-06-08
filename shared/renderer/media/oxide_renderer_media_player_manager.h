@@ -34,8 +34,6 @@ class RendererMediaPlayerManager :
   explicit RendererMediaPlayerManager(content::RenderFrame* render_frame);
   ~RendererMediaPlayerManager();
 
-  bool OnMessageReceived(const IPC::Message& msg) override;
-
   void Initialize(OxideHostMsg_MediaPlayer_Initialize_Type type,
                   int player_id,
                   const GURL& url,
@@ -75,6 +73,12 @@ class RendererMediaPlayerManager :
   WebMediaPlayer* GetMediaPlayer(int player_id);
 
  private:
+  // content::RenderFrameObserver implementation
+  void OnDestruct() override;
+
+  // IPC::Listener implementation
+  bool OnMessageReceived(const IPC::Message& msg) override;
+
   // Message handlers.
   void OnMediaMetadataChanged(int player_id,
                               base::TimeDelta duration,
