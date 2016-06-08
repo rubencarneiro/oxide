@@ -25,14 +25,8 @@ import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
 declare_args() {
-  enable_hybris = false
-
-  enable_hybris_camera = false
-
   enable_mediahub = false
 }
-
-assert(!enable_hybris_camera || enable_hybris)
 
 subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
 
