@@ -100,8 +100,9 @@ void VideoCaptureDeviceHybris::OnError() {
 void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
   const base::TimeTicks now = base::TimeTicks::Now();
 
-  if (first_ref_time_.is_null())
+  if (first_ref_time_.is_null()) {
     first_ref_time_ = now;
+  }
 
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
