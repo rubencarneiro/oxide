@@ -98,11 +98,17 @@ void VideoCaptureDeviceHybris::OnError() {
 }
 
 void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
+  const base::TimeTicks now = base::TimeTicks::Now();
+
+  if (first_ref_time_.is_null())
+    first_ref_time_ = now;
+
   client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
                                   size,
                                   capture_format_,
                                   GetRotation(position_, orientation_),
-                                  base::TimeTicks::Now());
+                                  now,
+                                  now - first_ref_time_);
 }
 
 void VideoCaptureDeviceHybris::AllocateAndStart(
@@ -115,10 +121,12 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
 
   task_runner_ = base::ThreadTaskRunnerHandle::Get();
 
-  if (gfx::GetGLImplementation() != gfx::kGLImplementationEGLGLES2) {
+  if (gl::GetGLImplementation() != gl::kGLImplementationEGLGLES2) {
     client_->OnError(FROM_HERE, "Unsupported GL implementation");
     return;
   }
+
+  first_ref_time_ = base::TimeTicks();
 
   listener_.reset(new CameraControlListener());
   memset(listener_.get(), 0, sizeof(CameraControlListener));
