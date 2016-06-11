@@ -111,7 +111,7 @@ WebView* WebViewClient::CreateNewWebView(
   return nullptr;
 }
 
-FilePicker* WebViewClient::CreateFilePicker(content::RenderViewHost* rvh) {
+FilePicker* WebViewClient::CreateFilePicker(content::RenderFrameHost* rfh) {
   return nullptr;
 }
 

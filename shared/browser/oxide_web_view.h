@@ -347,7 +347,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                          bool* proceed_to_fire_unload) override;
   content::JavaScriptDialogManager* GetJavaScriptDialogManager(
       content::WebContents* source) override;
-  void RunFileChooser(content::WebContents* web_contents,
+  void RunFileChooser(content::RenderFrameHost* render_frame_host,
                       const content::FileChooserParams& params) override;
   bool EmbedsFullscreenWidget() const override;
   void EnterFullscreenModeForTab(content::WebContents* source,

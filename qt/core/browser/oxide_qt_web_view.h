@@ -151,7 +151,7 @@ class WebView : public oxide::WebViewClient,
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
       std::unique_ptr<content::WebContents> contents) override;
-  oxide::FilePicker* CreateFilePicker(content::RenderViewHost* rvh) override;
+  oxide::FilePicker* CreateFilePicker(content::RenderFrameHost* rfh) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;

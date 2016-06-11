@@ -31,7 +31,7 @@ template <typename T> class DeleteHelper;
 }
 
 namespace content {
-class RenderViewHost;
+class RenderFrameHost;
 struct FileChooserFileInfo;
 struct FileChooserParams;
 }
@@ -48,16 +48,16 @@ class OXIDE_SHARED_EXPORT FilePicker : public content::WebContentsObserver {
  protected:
   friend class base::DeleteHelper<FilePicker>;
 
-  FilePicker(content::RenderViewHost* rvh);
+  FilePicker(content::RenderFrameHost* rfh);
   virtual ~FilePicker();
 
  private:
   virtual void Hide();
 
   // content::WebContentsObserver implementation
-  void RenderViewDeleted(content::RenderViewHost* rvh) override;
+  void RenderFrameDeleted(content::RenderFrameHost* rfh) override;
 
-  content::RenderViewHost* render_view_host_;
+  content::RenderFrameHost* render_frame_host_;
 
   DISALLOW_COPY_AND_ASSIGN(FilePicker);
 };

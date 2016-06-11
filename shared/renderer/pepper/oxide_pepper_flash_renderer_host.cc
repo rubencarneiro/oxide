@@ -36,11 +36,11 @@
 #include "ppapi/proxy/serialized_structs.h"
 #include "ppapi/thunk/enter.h"
 #include "ppapi/thunk/ppb_image_data_api.h"
-#include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkMatrix.h"
 #include "third_party/skia/include/core/SkPaint.h"
 #include "third_party/skia/include/core/SkRect.h"
+#include "third_party/skia/include/core/SkRefCnt.h"
 #include "third_party/skia/include/core/SkScalar.h"
 #include "third_party/skia/include/core/SkTypeface.h"
 #include "ui/gfx/geometry/rect.h"
@@ -125,10 +125,10 @@ int32_t PepperFlashRendererHost::OnDrawGlyphs(
   if (params.font_desc.italic) {
     style |= SkTypeface::kItalic;
   }
-  skia::RefPtr<SkTypeface> typeface =
-      skia::AdoptRef(SkTypeface::CreateFromName(
-        params.font_desc.face.c_str(),
-        static_cast<SkTypeface::Style>(style)));
+  sk_sp<SkTypeface> typeface =
+      sk_ref_sp(SkTypeface::CreateFromName(
+          params.font_desc.face.c_str(),
+          static_cast<SkTypeface::Style>(style)));
   if (!typeface) {
     return PP_ERROR_FAILED;
   }

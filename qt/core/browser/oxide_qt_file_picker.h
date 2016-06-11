@@ -33,7 +33,7 @@ class FilePickerProxy;
 class FilePicker : public oxide::FilePicker,
                    public FilePickerProxyClient {
  public:
-  FilePicker(content::RenderViewHost* rvh);
+  FilePicker(content::RenderFrameHost* rfh);
 
   void SetProxy(FilePickerProxy* proxy);
 
