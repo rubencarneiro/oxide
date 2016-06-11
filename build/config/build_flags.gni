@@ -17,6 +17,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 declare_args() {
+  enable_hybris = false
+
+  enable_hybris_camera = false
+
   enable_tcmalloc = false
 
   oxide_gettext_domain = false
@@ -29,6 +33,8 @@ declare_args() {
 
   oxide_renderer_name = false
 }
+
+assert(!enable_hybris_camera || enable_hybris)
 
 assert(oxide_gettext_domain != false, "oxide_gettext_domain must be defined by CMake")
 assert(oxide_libexec_subdir != false, "oxide_libexec_subdir must be defined by CMake")

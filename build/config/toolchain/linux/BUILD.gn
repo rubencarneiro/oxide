@@ -75,6 +75,10 @@ host_gcc_toolchain("host_gcc_arm") {
   toolchain_cpu = "arm"
 }
 
+host_gcc_toolchain("host_gcc_arm64") {
+  toolchain_cpu = "arm64"
+}
+
 if (oxide_enable_cross_toolchains) {
   cross_gcc_toolchain("cross_gcc_x86") {
     toolchain_cpu = "x86"
@@ -86,5 +90,9 @@ if (oxide_enable_cross_toolchains) {
 
   cross_gcc_toolchain("cross_gcc_arm") {
     toolchain_cpu = "arm"
+  }
+
+  cross_gcc_toolchain("cross_gcc_arm64") {
+    toolchain_cpu = "arm64"
   }
 }

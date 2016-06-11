@@ -17,10 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import("//build/config/linux/pkg_config.gni")
-
-pkg_config("android_properties") {
-  packages = [ "libandroid-properties" ]
-}
+import("//oxide/build/config/build_flags.gni")
 
 pkg_config("gdkpixbuf") {
   packages = [ "gdk-pixbuf-2.0" ]
@@ -35,10 +32,18 @@ pkg_config("glib") {
   ]
 }
 
-pkg_config("hybris_camera") {
-  packages = [ "libcamera" ]
-}
-
 pkg_config("libnotify") {
   packages = [ "libnotify" ]
+}
+
+if (enable_hybris) {
+  pkg_config("android_properties") {
+    packages = [ "libandroid-properties" ]
+  }
+
+  if (enable_hybris_camera) {
+    pkg_config("hybris_camera") {
+      packages = [ "libcamera" ]
+    }
+  }
 }

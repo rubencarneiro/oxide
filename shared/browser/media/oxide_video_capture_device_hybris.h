@@ -34,7 +34,7 @@ namespace base {
 class SingleThreadTaskRunner;
 }
 
-namespace gfx {
+namespace gl {
 class GLContext;
 class GLSurface;
 }
@@ -76,6 +76,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
   scoped_refptr<gl::GLSurface> gl_surface_;
   scoped_refptr<gl::GLContext> gl_context_;
   GLuint preview_texture_;
+  base::TimeTicks first_ref_time_;
 
   CameraControl* camera_control_;
 

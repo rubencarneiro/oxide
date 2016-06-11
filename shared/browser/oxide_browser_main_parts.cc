@@ -89,6 +89,7 @@ std::unique_ptr<base::MessagePump> CreateUIMessagePump() {
 }
 
 bool CanUseSharedGLContext() {
+#if defined(ENABLE_HYBRIS)
   if (!HybrisUtils::IsUsingAndroidEGL()) {
     return true;
   }
@@ -100,6 +101,7 @@ bool CanUseSharedGLContext() {
     // are to be used for this driver
     return false;
   }
+#endif
 
   return true;
 }
