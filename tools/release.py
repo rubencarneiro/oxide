@@ -91,6 +91,11 @@ class OptionParser(optparse.OptionParser):
     self.description = """
 Tool for handling release tasks.
 """
+    self.add_option("--platform", dest="platform",
+                    help="The Oxide platform to create a release for",
+                    default="qt")
+    self.add_option("-v", "--verbose", action="store_true",
+                    help="Verbose output")
 
 @subcommand.Command("make-tarball")
 @subcommand.CommandOption("--deb", dest="deb", action="store_true",
@@ -99,8 +104,6 @@ Tool for handling release tasks.
 @subcommand.CommandOption("-f", "--force", dest="force", action="store_true",
                           help="Create a tarball even if the tree has "
                                "uncommitted changes")
-@subcommand.CommandOption("-v", "--verbose", action="store_true",
-                          help="Enable logging")
 def cmd_make_tarball(options, args):
   """Create a tarball.
 
@@ -116,9 +119,10 @@ def cmd_make_tarball(options, args):
   # Make sure we have an up-to-date Chromium checkout
   CheckCall(["tools/update-checkout.py"], OXIDESRC_DIR)
 
-  # XXX: Qt-specific
-  v = VersionFileParser(os.path.join(OXIDESRC_DIR, "qt", "VERSION"))
-  basename = "oxide-qt"
+  platform = options.platform
+
+  v = VersionFileParser(os.path.join(OXIDESRC_DIR, platform, "VERSION"))
+  basename = "oxide-%s" % platform
   topsrcdir = basename
 
   if options.deb:
@@ -132,8 +136,7 @@ def cmd_make_tarball(options, args):
   tags = StringIO(CheckOutput(["git", "tag", "--points-at", "HEAD"], OXIDESRC_DIR))
   for tag in tags.readlines():
     tag = tag.strip()
-    # XXX: Qt-specific
-    if re.match(r'QT_[0-9]+_[0-9]+_[0-9]+', tag):
+    if re.match(r'%s_[0-9]+_[0-9]+_[0-9]+' % platform.upper(), tag):
       is_release = True
       break
 
@@ -187,6 +190,8 @@ def cmd_make_tarball(options, args):
     print("Compressing tarball")
   CheckCall(["xz", "-9", output_path], TOP_DIR)
 
+@subcommand.CommandOption("--no-push", dest="no_push", action="store_true",
+                          help="Don't push changes to the remote repository")
 @subcommand.Command("release")
 def cmd_tag(options, args):
   """Create a release from the current revision.
@@ -195,44 +200,94 @@ def cmd_tag(options, args):
   the version number. Only for non-trunk branches
   """
 
-  print("This command needs to be updated for GIT!", file=sys.stderr)
-  sys.exit(1)
+  if len(CheckOutput(["git", "status", "--porcelain"], OXIDESRC_DIR)) > 0:
+    print("Cannot tag release - this branch has uncommitted changes",
+          file=sys.stderr)
+    return 1
 
-  from bzrlib.branch import Branch
-  from bzrlib.errors import (
-    NoSuchTag,
-    TagAlreadyExists
-  )
-  from bzrlib.workingtree import WorkingTree
+  if not os.path.isfile(os.path.join(OXIDESRC_DIR, ".relbranch")):
+    print("This command is only valid for release branches", file=sys.stderr)
+    return 1
 
-  # XXX: Qt-specific
-  v = VersionFileParser(os.path.join(TOPSRCDIR, "qt", "VERSION"))
-
-  branch = Branch.open(TOPSRCDIR)
-  lock = branch.lock_write()
+  with open(os.path.join(OXIDESRC_DIR, ".relbranch"), "r") as fd:
+    relbranch = fd.read().strip()
+    if options.verbose:
+      print("Detected release branch '%s'" % relbranch)
 
   try:
-    # XXX: Qt-specific
-    tag = "QT_%s_%s_%s" % (v.major, v.minor, v.patch)
-    rev_id = branch.last_revision()
-    try:
-      existing_tag = branch.tags.lookup_tag(tag)
-    except NoSuchTag:
-      existing_tag = None
-    if existing_tag is not None:
-      raise TagAlreadyExists(tag)
+    local_branch = CheckOutput(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "@"],
+                               OXIDESRC_DIR).strip()
+    if options.verbose:
+      print("Detected local branch '%s'" % local_branch)
+  except:
+    print("Cannot tag a release on a branch that is in 'detached HEAD' state",
+          file=sys.stderr)
+    return 1
 
-    branch.tags.set_tag(tag, rev_id)
-  finally:
-    lock.unlock()
+  if local_branch != relbranch:
+    print("Cannot tag release - unexpected branch '%s', (expected 'refs/heads/%s')\n" %
+          (local_branch, relbranch), file=sys.stderr)
+    return 1
+
+  remote_branch = None
+  try:
+    remote_branch = CheckOutput(["git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "@{u}"],
+                                OXIDESRC_DIR).strip()
+    if options.verbose:
+      print("Detected remote branch '%s'" % remote_branch)
+  except:
+    print("Cannot tag release - no remote tracking branch for the current branch",
+          file=sys.stderr)
+    return 1
+
+  if (remote_branch and
+      CheckOutput(["git", "rev-parse", remote_branch], OXIDESRC_DIR).strip() !=
+      CheckOutput(["git", "rev-parse", "@"], OXIDESRC_DIR).strip()):
+    print("Cannot tag release - current branch is behind remote tracking branch",
+          file=sys.stderr)
+    return 1
+
+  platform = options.platform
+
+  v = VersionFileParser(os.path.join(OXIDESRC_DIR, platform, "VERSION"))
+  tag = "%s_%s_%s_%s" % (platform.upper(), v.major, v.minor, v.patch)
+
+  if options.verbose:
+    print("Tagging release with the tag '%s'" % tag)
+
+  try:
+    CheckCall(["git", "tag", tag], OXIDESRC_DIR)
+  except:
+    print("Failed to create tag '%s'\n" % tag, file=sys.stderr)
+    return 1
 
   v.patch = str(int(v.patch) + 1)
+
+  if options.verbose:
+    print("Bumping version to '%s'" % str(v))
+
   v.update()
 
-  tree = WorkingTree.open(TOPSRCDIR)
-  # XXX: Qt-specific
-  tree.commit(message="Bump qt revision to %s" % str(v),
-              allow_pointless=False)
+  CheckCall(["git", "commit", "-am", "Bump %s revision to %s" % (platform, str(v))],
+            OXIDESRC_DIR)
+
+  if options.no_push:
+    return 0
+
+  r = re.match(r'^([^\/]+)\/(.+)', remote_branch)
+
+  if options.verbose:
+    print("Pushing changes to remote repository")
+
+  try:
+    CheckCall(["git", "push", "--tags", r.groups()[0],
+               "%s:%s" % (local_branch, r.groups()[1])], OXIDESRC_DIR)
+  except:
+    print("Failed to push to remote repository. This is probably caused by a "
+          "race with another push", file=sys.stderr)
+    print("Rolling back local changes", file=sys.stderr)
+    CheckCall(["git", "reset", "--hard", remote_branch], OXIDESRC_DIR)
+    CheckCall(["git", "tag", "-d", tag], OXIDESRC_DIR)
 
 def main(argv):
   return subcommand.Dispatcher.execute(argv, OptionParser())
