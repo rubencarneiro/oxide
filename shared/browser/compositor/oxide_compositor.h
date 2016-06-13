@@ -41,9 +41,9 @@ class SingleThreadTaskRunner;
 }
 
 namespace cc {
+class Display;
 class Layer;
 class LayerTreeHost;
-class OnscreenDisplayClient;
 class SurfaceIdAllocator;
 }
 
@@ -177,7 +177,7 @@ class Compositor : public cc::LayerTreeHostClient,
 
   // Both of these need to outlive |layer_tree_host_|
   std::unique_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
-  std::unique_ptr<cc::OnscreenDisplayClient> display_client_;
+  std::unique_ptr<cc::Display> display_;
 
   bool layer_tree_host_eviction_pending_;
   bool can_evict_layer_tree_host_;

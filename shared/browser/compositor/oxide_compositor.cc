@@ -28,8 +28,9 @@
 #include "cc/output/context_provider.h"
 #include "cc/output/renderer_settings.h"
 #include "cc/scheduler/begin_frame_source.h"
-#include "cc/surfaces/onscreen_display_client.h"
+#include "cc/surfaces/display.h"
 #include "cc/surfaces/surface_display_output_surface.h"
+#include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h"
@@ -318,24 +319,24 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
   cc::SurfaceManager* manager =
       CompositorUtils::GetInstance()->GetSurfaceManager();
-  display_client_.reset(
-      new cc::OnscreenDisplayClient(
-          std::move(surface),
-          manager,
-          content::HostSharedBitmapManager::current(),
-          content::BrowserGpuMemoryBufferManager::current(),
-          cc::RendererSettings(),
-          base::ThreadTaskRunnerHandle::Get(),
-          surface_id_allocator_->id_namespace()));
+  display_.reset(
+      new cc::Display(manager,
+                      content::HostSharedBitmapManager::current(),
+                      content::BrowserGpuMemoryBufferManager::current(),
+                      cc::RendererSettings(),
+                      surface_id_allocator_->id_namespace(),
+                      base::ThreadTaskRunnerHandle::Get().get(),
+                      std::move(surface)));
+
   std::unique_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
           surface_id_allocator_.get(),
+          display_.get(),
           context_provider,
           nullptr));
-  display_client_->set_surface_output_surface(output_surface.get());
-  output_surface->set_display_client(display_client_.get());
-  display_client_->display()->Resize(layer_tree_host_->device_viewport_size());
+
+  display_->Resize(layer_tree_host_->device_viewport_size());
 
   return std::move(output_surface);
 }
@@ -391,7 +392,7 @@ void Compositor::MaybeEvictLayerTreeHost() {
   can_evict_layer_tree_host_ = false;
 
   layer_tree_host_.reset();
-  display_client_.reset();
+  display_.reset();
 }
 
 void Compositor::GetTextureFromMailboxResponse(uint32_t surface_id,
@@ -711,8 +712,8 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
   if (layer_tree_host_) {
     layer_tree_host_->SetViewportSize(size);
   }
-  if (display_client_) {
-    display_client_->display()->Resize(size);
+  if (display_) {
+    display_->Resize(size);
   }
   root_layer_->SetBounds(size);
 }
