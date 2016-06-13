@@ -27,7 +27,7 @@
 
 #include "shared/common/oxide_shared_export.h"
 
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
 namespace base {
 class FilePath;
 }
@@ -61,7 +61,7 @@ class OXIDE_SHARED_EXPORT BrowserProcessMain {
     StartParams(StartParams&& other);
 
     std::unique_ptr<PlatformDelegate> delegate;
-#if defined(USE_NSS_CERTS)
+#if defined(OS_LINUX)
     base::FilePath nss_db_path;
 #endif
     gl::GLImplementation gl_implementation;

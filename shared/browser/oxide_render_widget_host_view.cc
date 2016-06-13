@@ -28,7 +28,6 @@
 #include "cc/output/compositor_frame.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
-#include "cc/output/viewport_selection_bound.h"
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_id_allocator.h"
@@ -44,11 +43,11 @@
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "ui/base/touch/selection_bound.h"
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
+#include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
@@ -86,34 +85,6 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
       frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
-}
-
-ui::SelectionBound::Type ConvertSelectionBoundType(
-    cc::SelectionBoundType type) {
-  switch (type) {
-    case cc::SELECTION_BOUND_LEFT:
-      return ui::SelectionBound::LEFT;
-    case cc::SELECTION_BOUND_RIGHT:
-      return ui::SelectionBound::RIGHT;
-    case cc::SELECTION_BOUND_CENTER:
-      return ui::SelectionBound::CENTER;
-    case cc::SELECTION_BOUND_EMPTY:
-      return ui::SelectionBound::EMPTY;
-  }
-  NOTREACHED() << "Unknown selection bound type";
-  return ui::SelectionBound::EMPTY;
-}
-
-// Copied from content/browser/renderer_host/input/ui_touch_selection_helper.cc,
-// because that helper is not part of content’s public API.
-ui::SelectionBound ConvertSelectionBound(
-    const cc::ViewportSelectionBound& bound) {
-  ui::SelectionBound ui_bound;
-  ui_bound.set_type(ConvertSelectionBoundType(bound.type));
-  ui_bound.set_visible(bound.visible);
-  if (ui_bound.type() != ui::SelectionBound::EMPTY)
-    ui_bound.SetEdge(bound.edge_top, bound.edge_bottom);
-  return ui_bound;
 }
 
 void SatisfyCallback(cc::SurfaceManager* manager,
@@ -341,12 +312,11 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
   }
 
-  const cc::ViewportSelection& selection = metadata.selection;
+  const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
   selection_controller_->OnSelectionEditable(selection.is_editable);
   selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
-  selection_controller_->OnSelectionBoundsChanged(
-      ConvertSelectionBound(selection.start),
-      ConvertSelectionBound(selection.end));
+  selection_controller_->OnSelectionBoundsChanged(selection.start,
+                                                  selection.end);
 }
 
 void RenderWidgetHostView::ClearCompositorFrame() {

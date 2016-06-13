@@ -13,20 +13,8 @@
 
 namespace oxide {
 
-RendererMediaPlayerManager::RendererMediaPlayerManager(
-    content::RenderFrame* render_frame)
-    : RenderFrameObserver(render_frame)
-    , RenderFrameObserverTracker<RendererMediaPlayerManager>(render_frame)
-    , next_media_player_id_(0) {
-}
-
-RendererMediaPlayerManager::~RendererMediaPlayerManager() {
-  std::map<int, WebMediaPlayer*>::iterator player_it;
-  for (player_it = media_players_.begin();
-      player_it != media_players_.end(); ++player_it) {
-    WebMediaPlayer* player = player_it->second;
-    player->Detach();
-  }
+void RendererMediaPlayerManager::OnDestruct() {
+  delete this;
 }
 
 bool RendererMediaPlayerManager::OnMessageReceived(const IPC::Message& msg) {
@@ -52,59 +40,6 @@ bool RendererMediaPlayerManager::OnMessageReceived(const IPC::Message& msg) {
   IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
   return handled;
-}
-
-void RendererMediaPlayerManager::Initialize(
-    OxideHostMsg_MediaPlayer_Initialize_Type type,
-    int player_id,
-    const GURL& url,
-    const GURL& first_party_for_cookies) {
-
-  OxideHostMsg_MediaPlayer_Initialize_Params params;
-  params.type = type;
-  params.player_id = player_id;
-  params.url = url;
-  params.first_party_for_cookies = first_party_for_cookies;
-
-  Send(new OxideHostMsg_MediaPlayer_Initialize(
-      routing_id(), params));
-}
-
-void RendererMediaPlayerManager::Start(int player_id) {
-  Send(new OxideHostMsg_MediaPlayer_Start(routing_id(), player_id));
-}
-
-void RendererMediaPlayerManager::Pause(
-    int player_id,
-    bool is_media_related_action) {
-  Send(new OxideHostMsg_MediaPlayer_Pause(
-      routing_id(), player_id, is_media_related_action));
-}
-
-void RendererMediaPlayerManager::Seek(
-    int player_id,
-    const base::TimeDelta& time) {
-  Send(new OxideHostMsg_MediaPlayer_Seek(routing_id(), player_id, time));
-}
-
-void RendererMediaPlayerManager::SetVolume(int player_id, double volume) {
-  Send(new OxideHostMsg_MediaPlayer_SetVolume(routing_id(), player_id, volume));
-}
-
-void RendererMediaPlayerManager::SetRate(int player_id, double rate) {
-  Send(new OxideHostMsg_MediaPlayer_SetRate(routing_id(), player_id, rate));
-}
-
-void RendererMediaPlayerManager::SetPoster(int player_id, const GURL& poster) {
-  Send(new OxideHostMsg_MediaPlayer_SetPoster(routing_id(), player_id, poster));
-}
-
-void RendererMediaPlayerManager::ReleaseResources(int player_id) {
-  Send(new OxideHostMsg_MediaPlayer_Release(routing_id(), player_id));
-}
-
-void RendererMediaPlayerManager::DestroyPlayer(int player_id) {
-  Send(new OxideHostMsg_MediaPlayer_DestroyMediaPlayer(routing_id(), player_id));
 }
 
 void RendererMediaPlayerManager::OnMediaMetadataChanged(
@@ -201,16 +136,6 @@ void RendererMediaPlayerManager::OnPauseVideo() {
   ReleaseVideoResources();
 }
 
-int RendererMediaPlayerManager::RegisterMediaPlayer(
-    WebMediaPlayer* player) {
-  media_players_[next_media_player_id_] = player;
-  return next_media_player_id_++;
-}
-
-void RendererMediaPlayerManager::UnregisterMediaPlayer(int player_id) {
-  media_players_.erase(player_id);
-}
-
 void RendererMediaPlayerManager::ReleaseVideoResources() {
   std::map<int, WebMediaPlayer*>::iterator player_it;
   for (player_it = media_players_.begin(); player_it != media_players_.end();
@@ -222,6 +147,85 @@ void RendererMediaPlayerManager::ReleaseVideoResources() {
       player->ReleaseMediaResources();
     }
   }
+}
+
+RendererMediaPlayerManager::RendererMediaPlayerManager(
+    content::RenderFrame* render_frame)
+    : RenderFrameObserver(render_frame)
+    , RenderFrameObserverTracker<RendererMediaPlayerManager>(render_frame)
+    , next_media_player_id_(0) {
+}
+
+RendererMediaPlayerManager::~RendererMediaPlayerManager() {
+  std::map<int, WebMediaPlayer*>::iterator player_it;
+  for (player_it = media_players_.begin();
+      player_it != media_players_.end(); ++player_it) {
+    WebMediaPlayer* player = player_it->second;
+    player->Detach();
+  }
+}
+
+void RendererMediaPlayerManager::Initialize(
+    OxideHostMsg_MediaPlayer_Initialize_Type type,
+    int player_id,
+    const GURL& url,
+    const GURL& first_party_for_cookies) {
+
+  OxideHostMsg_MediaPlayer_Initialize_Params params;
+  params.type = type;
+  params.player_id = player_id;
+  params.url = url;
+  params.first_party_for_cookies = first_party_for_cookies;
+
+  Send(new OxideHostMsg_MediaPlayer_Initialize(
+      routing_id(), params));
+}
+
+void RendererMediaPlayerManager::Start(int player_id) {
+  Send(new OxideHostMsg_MediaPlayer_Start(routing_id(), player_id));
+}
+
+void RendererMediaPlayerManager::Pause(
+    int player_id,
+    bool is_media_related_action) {
+  Send(new OxideHostMsg_MediaPlayer_Pause(
+      routing_id(), player_id, is_media_related_action));
+}
+
+void RendererMediaPlayerManager::Seek(
+    int player_id,
+    const base::TimeDelta& time) {
+  Send(new OxideHostMsg_MediaPlayer_Seek(routing_id(), player_id, time));
+}
+
+void RendererMediaPlayerManager::SetVolume(int player_id, double volume) {
+  Send(new OxideHostMsg_MediaPlayer_SetVolume(routing_id(), player_id, volume));
+}
+
+void RendererMediaPlayerManager::SetRate(int player_id, double rate) {
+  Send(new OxideHostMsg_MediaPlayer_SetRate(routing_id(), player_id, rate));
+}
+
+void RendererMediaPlayerManager::SetPoster(int player_id, const GURL& poster) {
+  Send(new OxideHostMsg_MediaPlayer_SetPoster(routing_id(), player_id, poster));
+}
+
+void RendererMediaPlayerManager::ReleaseResources(int player_id) {
+  Send(new OxideHostMsg_MediaPlayer_Release(routing_id(), player_id));
+}
+
+void RendererMediaPlayerManager::DestroyPlayer(int player_id) {
+  Send(new OxideHostMsg_MediaPlayer_DestroyMediaPlayer(routing_id(), player_id));
+}
+
+int RendererMediaPlayerManager::RegisterMediaPlayer(
+    WebMediaPlayer* player) {
+  media_players_[next_media_player_id_] = player;
+  return next_media_player_id_++;
+}
+
+void RendererMediaPlayerManager::UnregisterMediaPlayer(int player_id) {
+  media_players_.erase(player_id);
 }
 
 WebMediaPlayer* RendererMediaPlayerManager::GetMediaPlayer(

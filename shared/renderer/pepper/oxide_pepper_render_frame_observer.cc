@@ -28,14 +28,12 @@
 
 namespace oxide {
 
-PepperRenderFrameObserver::PepperRenderFrameObserver(
-    content::RenderFrame* render_frame)
-    : RenderFrameObserver(render_frame) {}
+void PepperRenderFrameObserver::OnDestruct() {
+  delete this;
+}
 
-PepperRenderFrameObserver::~PepperRenderFrameObserver() {}
-
-void PepperRenderFrameObserver::DidCreatePepperPlugin(content::RendererPpapiHost* host) {
-
+void PepperRenderFrameObserver::DidCreatePepperPlugin(
+    content::RendererPpapiHost* host) {
   host->GetPpapiHost()->AddHostFactoryFilter(
       base::WrapUnique(new PepperRendererHostFactory(host)));
 
@@ -43,5 +41,11 @@ void PepperRenderFrameObserver::DidCreatePepperPlugin(content::RendererPpapiHost
       base::WrapUnique(new ::PepperSharedMemoryMessageFilter(host)));
 
 }
+
+PepperRenderFrameObserver::PepperRenderFrameObserver(
+    content::RenderFrame* render_frame)
+    : RenderFrameObserver(render_frame) {}
+
+PepperRenderFrameObserver::~PepperRenderFrameObserver() {}
 
 } // namespace oxide

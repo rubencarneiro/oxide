@@ -29,6 +29,10 @@
 
 namespace oxide {
 
+void WebContentSettingsClient::OnDestruct() {
+  delete this;
+}
+
 void WebContentSettingsClient::DidCommitProvisionalLoad(
     bool is_new_navigation,
     bool is_same_page_navigation) {

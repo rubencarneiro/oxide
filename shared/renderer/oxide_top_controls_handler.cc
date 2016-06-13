@@ -36,6 +36,10 @@ void TopControlsHandler::OnUpdateTopControlsState(
   view->updateTopControlsState(constraints, current, animate);
 }
 
+void TopControlsHandler::OnDestruct() {
+  delete this;
+}
+
 bool TopControlsHandler::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(TopControlsHandler, message)

@@ -23,6 +23,7 @@
 #include "base/memory/ptr_util.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "base/trace_event/trace_event.h"
+#include "cc/animation/animation_host.h"
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/renderer_settings.h"
@@ -367,6 +368,7 @@ void Compositor::EnsureLayerTreeHost() {
       CompositorUtils::GetInstance()->GetTaskGraphRunner();
   params.settings = &settings;
   params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
+  params.animation_host = cc::AnimationHost::CreateMainInstance();
 
   layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
   DCHECK(layer_tree_host_);

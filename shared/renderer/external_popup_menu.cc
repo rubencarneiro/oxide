@@ -93,6 +93,10 @@ void ExternalPopupMenu::close() {
   delete this;
 }
 
+void ExternalPopupMenu::OnDestruct() {
+  delete this;
+}
+
 bool ExternalPopupMenu::OnMessageReceived(const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ExternalPopupMenu, message)

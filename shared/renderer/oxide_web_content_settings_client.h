@@ -31,26 +31,27 @@ class RenderFrame;
 
 namespace oxide {
 
-class WebContentSettingsClient final :
-    public content::RenderFrameObserver,
-    public content::RenderFrameObserverTracker<WebContentSettingsClient>,
-    public blink::WebContentSettingsClient {
+class WebContentSettingsClient
+    : public content::RenderFrameObserver,
+      public content::RenderFrameObserverTracker<WebContentSettingsClient>,
+      public blink::WebContentSettingsClient {
  public:
   WebContentSettingsClient(content::RenderFrame* render_frame);
   ~WebContentSettingsClient();
 
  private:
   // content::RenderFrameObserver implementation
+  void OnDestruct() override;
   void DidCommitProvisionalLoad(bool is_new_navigation,
-                                bool is_same_page_navigation) final;
-  bool OnMessageReceived(const IPC::Message& message) final;
+                                bool is_same_page_navigation) override;
+  bool OnMessageReceived(const IPC::Message& message) override;
 
   // blink::WebContentSettingsClient implementation
   bool allowDisplayingInsecureContent(bool enabled_per_settings,
-                                      const blink::WebURL& url) final;
+                                      const blink::WebURL& url) override;
   bool allowRunningInsecureContent(bool enabled_per_settings,
                                    const blink::WebSecurityOrigin& origin,
-                                   const blink::WebURL& url) final;
+                                   const blink::WebURL& url) override;
 
   void OnSetAllowDisplayingInsecureContent(bool allow);
   void OnSetAllowRunningInsecureContent(bool allow);

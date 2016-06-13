@@ -49,6 +49,10 @@ UserScriptScheduler::UserScriptScheduler(content::RenderView* render_view) :
     idle_posted_(false),
     weak_factory_(this) {}
 
+void UserScriptScheduler::OnDestruct() {
+  delete this;
+}
+
 void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
   pending_idle_frames_.insert(frame);
 

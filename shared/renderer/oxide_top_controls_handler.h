@@ -24,7 +24,7 @@
 
 namespace oxide {
 
-class TopControlsHandler final : public content::RenderViewObserver {
+class TopControlsHandler : public content::RenderViewObserver {
  public:
   TopControlsHandler(content::RenderView* render_view);
   ~TopControlsHandler();
@@ -34,8 +34,11 @@ class TopControlsHandler final : public content::RenderViewObserver {
                                 blink::WebTopControlsState current,
                                 bool animate);
 
+  // content::RenderViewObserver implementation
+  void OnDestruct() override;
+
   // IPC::Listener implementation
-  bool OnMessageReceived(const IPC::Message& message) final;
+  bool OnMessageReceived(const IPC::Message& message) override;
 
   DISALLOW_COPY_AND_ASSIGN(TopControlsHandler);
 };
