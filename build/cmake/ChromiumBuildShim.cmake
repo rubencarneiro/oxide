@@ -31,6 +31,17 @@ if(NINJA_EXE STREQUAL "NINJA_EXE-NOTFOUND")
   message(FATAL_ERROR "Could not find ninja, which is required for building Oxide")
 endif()
 
+if(BOOTSTRAP_GN)
+  set(GN_EXE ${CHROMIUM_PRODUCT_DIR}/buildtools/gn)
+else()
+  find_program(GN_EXE gn)
+  if(GN_EXE STREQUAL "GN_EXE-NOTFOUND")
+    message(FATAL_ERROR
+            "Can't find gn binary. Did you check out the source following "
+            "the instructions at https://wiki.ubuntu.com/Oxide/GetTheCode?")
+  endif()
+endif()
+
 macro(_bootstrap_gn)
   if(NOT EXISTS "${CHROMIUM_PRODUCT_DIR}/buildtools/gn")
     set(BOOTSTRAP_CMD ${CMAKE_COMMAND}
@@ -66,6 +77,12 @@ macro(_determine_compiler _out _compiler_id)
 endmacro()
 
 function(add_chromium_build_all_target name)
+  add_custom_target(
+      ${name}_gncheck ALL
+      COMMAND ${GN_EXE} check ${CHROMIUM_OUTPUT_DIR}
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      COMMENT "Running gn check")
+
   set(NINJA_CMD ${NINJA_EXE} -C ${CHROMIUM_OUTPUT_DIR})
   if(CMAKE_VERBOSE_MAKEFILE)
     list(APPEND NINJA_CMD -v)
@@ -73,6 +90,7 @@ function(add_chromium_build_all_target name)
   list(APPEND NINJA_CMD oxide_all)
   add_custom_target(
       ${name} ALL COMMAND ${NINJA_CMD}
+      DEPENDS ${name}_gncheck
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       COMMENT "Running the Chromium build all target")
 endfunction()
@@ -249,18 +267,10 @@ function(run_generate_ninja)
   endif()
 
   if(BOOTSTRAP_GN)
-    set(GN ${CHROMIUM_PRODUCT_DIR}/buildtools/gn)
     _bootstrap_gn()
-  else()
-    find_program(GN gn)
-    if(GN STREQUAL "GN-NOTFOUND")
-      message(FATAL_ERROR
-              "Can't find gn binary. Did you check out the source following "
-              "the instructions at https://wiki.ubuntu.com/Oxide/GetTheCode?")
-    endif()
   endif()
 
-  set(GN_CMD ${GN} gen ${CHROMIUM_OUTPUT_DIR})
+  set(GN_CMD ${GN_EXE} gen ${CHROMIUM_OUTPUT_DIR})
   message(STATUS "Generating Ninja build files")
   execute_process(COMMAND ${GN_CMD}
                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

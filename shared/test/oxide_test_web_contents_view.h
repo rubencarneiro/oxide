@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_TEST_TEST_WEB_CONTENTS_VIEW_H_
 #define _OXIDE_SHARED_TEST_TEST_WEB_CONTENTS_VIEW_H_
 
-#include "content/browser/web_contents/web_contents_view_oxide.h"
+#include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "ui/gfx/geometry/size.h"
 
 namespace content {

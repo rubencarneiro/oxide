@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "chrome/renderer/pepper/pepper_shared_memory_message_filter.h"
+#include "oxide_pepper_shared_memory_message_filter.h"
 
 #include <memory>
 #include <utility>

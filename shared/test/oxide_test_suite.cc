@@ -17,7 +17,7 @@
 
 #include "oxide_test_suite.h"
 
-#include "content/browser/web_contents/web_contents_view_oxide.h"
+#include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/test/test_content_client_initializer.h"
 #include "testing/gtest/include/gtest/gtest.h"
 

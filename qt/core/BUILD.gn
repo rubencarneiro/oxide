@@ -103,6 +103,7 @@ source_set("core_sources") {
     "//skia",
     "//third_party/WebKit/public:blink",
     "//ui/base",
+    "//ui/base/ime:text_input_types",
     "//ui/display",
     "//ui/events",
     "//ui/events:gesture_detection",
@@ -110,6 +111,7 @@ source_set("core_sources") {
     "//ui/gfx/geometry",
     "//ui/gfx/range",
     "//ui/gl",
+    "//ui/touch_selection",
     "//url"
   ]
 
@@ -143,10 +145,8 @@ source_set("core_sources") {
     "api/oxideqhttpauthenticationrequest_p.h",
     "api/oxideqloadevent.cc",
     "api/oxideqloadevent.h",
-    "api/oxideqloadevent_p.h",
     "api/oxideqmediacapturedevices.cc",
     "api/oxideqmediacapturedevices.h",
-    "api/oxideqmediacapturedevices_p.h",
     "api/oxideqnetworkcallbackevents.cc",
     "api/oxideqnetworkcallbackevents_p.h",
     "api/oxideqnetworkcallbackevents_p_p.h",

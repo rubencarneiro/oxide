@@ -32,13 +32,13 @@
 #include "cc/surfaces/surface_display_output_surface.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
-#include "content/browser/gpu/browser_gpu_channel_host_factory.h"
-#include "content/browser/gpu/browser_gpu_memory_buffer_manager.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
-#include "content/common/gpu/client/command_buffer_metrics.h"
-#include "content/common/gpu/client/context_provider_command_buffer.h"
-#include "content/common/gpu_process_launch_causes.h"
-#include "content/common/host_shared_bitmap_manager.h"
+#include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
+#include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
+#include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
+#include "content/common/gpu/client/command_buffer_metrics.h" // nogncheck
+#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
+#include "content/common/gpu_process_launch_causes.h" // nogncheck
+#include "content/common/host_shared_bitmap_manager.h" // nogncheck
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/command_buffer/client/shared_memory_limits.h"
