@@ -24,6 +24,7 @@
 #include <QString>
 #include <QUrl>
 
+#include "base/files/file_path.h"
 #include "base/logging.h"
 #include "base/numerics/safe_conversions.h"
 #include "base/pickle.h"
@@ -31,6 +32,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/common/drop_data.h"
 #include "url/gurl.h"
+#include "ui/base/dragdrop/file_info.h"
 #include "ui/events/event_constants.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/vector2d.h"
@@ -95,7 +97,15 @@ void ToDropData(const QMimeData* mime_data, content::DropData* drop_data) {
           base::UTF8ToUTF16(mime_data->text().toStdString()), false);
   }
   if (mime_data->hasUrls()) {
-    drop_data->url = GURL(mime_data->urls()[0].toString().toStdString());
+    for (const auto& url : mime_data->urls()) {
+      if (url.isLocalFile()) {
+        ui::FileInfo file_info;
+        file_info.path = base::FilePath(url.toLocalFile().toStdString());
+        drop_data->filenames.push_back(file_info);
+      } else if (drop_data->url.is_empty()) {
+        drop_data->url = GURL(url.toString().toStdString());
+      }
+    }
   }
   if (mime_data->hasHtml()) {
     drop_data->html =
@@ -134,10 +144,18 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
         QString::fromStdString(base::UTF16ToUTF8(drop_data.text.string()));
     mime_data->setText(text);
   }
+
+  QList<QUrl> urls;
   if (drop_data.url.is_valid()) {
-    QUrl url = QUrl(QString::fromStdString(drop_data.url.spec()));
-    mime_data->setUrls(QList<QUrl>() << url);
+    urls.push_back(QUrl(QString::fromStdString(drop_data.url.spec())));
   }
+  if (!drop_data.filenames.empty()) {
+    for (const auto& filename : drop_data.filenames) {
+      urls.push_back(QUrl::fromLocalFile(QString::fromStdString(filename.path.value())));
+    }
+  }
+  mime_data->setUrls(urls);
+
   if (!drop_data.html.string().empty()) {
     mime_data->setHtml(
         QString::fromStdString(base::UTF16ToUTF8(drop_data.html.string())));

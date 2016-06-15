@@ -31,8 +31,8 @@
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_factory_client.h"
 #include "cc/surfaces/surface_id.h"
-#include "content/browser/renderer_host/render_widget_host_view_oxide.h"
-#include "content/common/cursors/webcursor.h"
+#include "content/browser/renderer_host/render_widget_host_view_oxide.h" // nogncheck
+#include "content/common/cursors/webcursor.h" // nogncheck
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 

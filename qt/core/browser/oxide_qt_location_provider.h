@@ -23,7 +23,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "base/threading/non_thread_safe.h"
-#include "content/browser/geolocation/location_provider_base.h"
+#include "content/browser/geolocation/location_provider_base.h" // nogncheck
 #include "content/public/common/geoposition.h"
 
 namespace oxide {

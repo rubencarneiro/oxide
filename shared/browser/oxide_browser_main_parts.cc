@@ -24,9 +24,9 @@
 #include "base/memory/ptr_util.h"
 #include "base/message_loop/message_loop.h"
 #include "base/scoped_native_library.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
-#include "content/browser/power_save_blocker_oxide.h"
-#include "content/browser/web_contents/web_contents_view_oxide.h"
+#include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
+#include "content/browser/power_save_blocker_oxide.h" // nogncheck
+#include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/ipc/service/gpu_service_shim_oxide.h"

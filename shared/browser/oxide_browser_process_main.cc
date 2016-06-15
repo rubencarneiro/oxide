@@ -37,18 +37,18 @@
 #include "base/posix/global_descriptors.h"
 #include "base/strings/string_util.h"
 #include "cc/base/switches.h"
-#include "content/app/mojo/mojo_init.h"
-#include "content/browser/gpu/gpu_process_host.h"
-#include "content/browser/renderer_host/render_process_host_impl.h"
-#include "content/browser/utility_process_host_impl.h"
-#include "content/common/url_schemes.h"
-#include "content/gpu/in_process_gpu_thread.h"
+#include "content/app/mojo/mojo_init.h" // nogncheck
+#include "content/browser/gpu/gpu_process_host.h" // nogncheck
+#include "content/browser/renderer_host/render_process_host_impl.h" // nogncheck
+#include "content/browser/utility_process_host_impl.h" // nogncheck
+#include "content/common/url_schemes.h" // nogncheck
+#include "content/gpu/in_process_gpu_thread.h" // nogncheck
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/common/content_paths.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/main_function_params.h"
-#include "content/renderer/in_process_renderer_thread.h"
-#include "content/utility/in_process_utility_thread.h"
+#include "content/renderer/in_process_renderer_thread.h" // nogncheck
+#include "content/utility/in_process_utility_thread.h" // nogncheck
 #if defined(OS_LINUX)
 #include "crypto/nss_util.h"
 #endif

@@ -17,7 +17,7 @@
 
 #include "oxide_ime_bridge_impl.h"
 
-#include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
 #include "ui/events/keycodes/keyboard_codes.h"

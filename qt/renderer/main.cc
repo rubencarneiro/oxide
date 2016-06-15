@@ -19,7 +19,7 @@
 #include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h"
 #endif
 #if defined(COMPONENT_BUILD)
-#include "content/public/common/content_client.h"
+#include "content/public/common/content_client.h" // nogncheck
 #endif
 
 #include "qt/core/app/oxide_qt_main.h"

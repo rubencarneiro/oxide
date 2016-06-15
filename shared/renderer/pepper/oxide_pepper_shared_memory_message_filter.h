@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef CHROME_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_
-#define CHROME_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_
+#ifndef _OXIDE_SHARED_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_
+#define _OXIDE_SHARED_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_
 
 #include "base/macros.h"
 #include "ppapi/c/pp_instance.h"
@@ -44,4 +44,4 @@ class PepperSharedMemoryMessageFilter
   DISALLOW_COPY_AND_ASSIGN(PepperSharedMemoryMessageFilter);
 };
 
-#endif  // CHROME_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_
+#endif  // OXIDE_SHARED_RENDERER_PEPPER_PEPPER_SHARED_MEMORY_MESSAGE_FILTER_H_

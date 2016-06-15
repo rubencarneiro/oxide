@@ -27,7 +27,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
-#include "content/browser/web_contents/web_contents_view_oxide.h"
+#include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
 #include "ui/gfx/geometry/rect.h"

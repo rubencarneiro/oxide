@@ -24,7 +24,7 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "content/browser/power_save_blocker_oxide.h"
+#include "content/browser/power_save_blocker_oxide.h" // nogncheck
 #include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"

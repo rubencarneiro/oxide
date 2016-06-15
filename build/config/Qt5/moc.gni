@@ -29,6 +29,8 @@ template("moc_action_foreach") {
     script = "$moc_script"
     sources = invoker.sources
 
+    check_includes = false
+
     output = "${root_gen_dir}/{{source_root_relative_dir}}/${invoker.output_prefix}{{source_name_part}}.${invoker.output_extension}"
     outputs = [ output ]
 

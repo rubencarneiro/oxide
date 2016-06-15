@@ -32,9 +32,9 @@
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_manager.h"
-#include "content/browser/renderer_host/render_widget_host_delegate.h"
-#include "content/browser/renderer_host/render_widget_host_impl.h"
-#include "content/common/text_input_state.h"
+#include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
+#include "content/common/text_input_state.h" // nogncheck
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"

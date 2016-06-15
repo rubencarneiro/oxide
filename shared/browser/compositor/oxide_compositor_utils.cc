@@ -29,9 +29,9 @@
 #include "cc/raster/single_thread_task_graph_runner.h"
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_manager.h"
-#include "content/browser/gpu/browser_gpu_channel_host_factory.h"
-#include "content/browser/gpu/gpu_data_manager_impl.h"
-#include "content/common/gpu/client/context_provider_command_buffer.h"
+#include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
+#include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
+#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
 #include "gpu/command_buffer/common/command_buffer_id.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/ipc/client/command_buffer_proxy_impl.h"

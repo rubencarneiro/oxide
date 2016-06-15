@@ -21,7 +21,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "content/browser/frame_host/render_frame_host_impl.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/download_manager.h"
@@ -67,7 +66,7 @@ WebContextMenu::WebContextMenu(content::RenderFrameHost* rfh,
                                const content::ContextMenuParams& params)
     : content::WebContentsObserver(content::WebContents::FromRenderFrameHost(rfh)),
       params_(params),
-      render_frame_host_(static_cast<content::RenderFrameHostImpl *>(rfh)) {}
+      render_frame_host_(rfh) {}
 
 WebContextMenu::~WebContextMenu() {
   DCHECK(!render_frame_host_);

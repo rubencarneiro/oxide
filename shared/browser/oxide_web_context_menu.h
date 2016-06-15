@@ -34,7 +34,6 @@ template <typename T> class DeleteHelper;
 namespace content {
 class ContextMenuParams;
 class RenderFrameHost;
-class RenderFrameHostImpl;
 }
 
 namespace gfx {
@@ -65,7 +64,7 @@ class OXIDE_SHARED_EXPORT WebContextMenu : public content::WebContentsObserver {
 
   virtual void Hide();
 
-  content::RenderFrameHostImpl* render_frame_host_;
+  content::RenderFrameHost* render_frame_host_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
 };
