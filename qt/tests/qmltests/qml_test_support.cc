@@ -24,6 +24,7 @@
 #include <QLatin1String>
 #include <QList>
 #include <QQmlContext>
+#include <QQmlEngine>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -213,7 +214,12 @@ WebViewTestSupport* TestSupport::createWebViewTestSupport(
 }
 
 QVariant TestSupport::getAppProperty(const QString& property) {
-  return QCoreApplication::instance()->property(property.toStdString().c_str());
+  QVariant rv =
+      QCoreApplication::instance()->property(property.toStdString().c_str());
+  if (QObject* qobject = rv.value<QObject*>()) {
+    QQmlEngine::setObjectOwnership(qobject, QQmlEngine::CppOwnership);
+  }
+  return rv;
 }
 
 void TestSupport::setAppProperty(const QString& property,
