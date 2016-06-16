@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -71,6 +71,7 @@ class ContextMenuContext : public QObject {
   OxideQQuickWebView::EditCapabilities editFlags() const;
   OxideQQuickWebView::MediaStatus mediaFlags() const;
 
+  Q_INVOKABLE void copyImage() const;
   Q_INVOKABLE void saveLink() const;
   Q_INVOKABLE void saveMedia() const;
 
@@ -212,6 +213,22 @@ OxideQQuickWebView::MediaStatus ContextMenuContext::mediaFlags() const {
         static_cast<OxideQQuickWebView::MediaStatusFlags>(oxide::qt::MEDIA_STATUS_CAN_ROTATE));
 
   return static_cast<OxideQQuickWebView::MediaStatus>(client_->mediaFlags());
+}
+
+void ContextMenuContext::copyImage() const {
+  OxideQQuickWebView::MediaType media_type = mediaType();
+  if (media_type != OxideQQuickWebView::MediaTypeImage &&
+      media_type != OxideQQuickWebView::MediaTypeCanvas) {
+    qWarning() << "ContextMenuContext::copyImage(): not an image";
+    return;
+  }
+
+  if (!hasImageContents()) {
+    qWarning() << "ContextMenuContext::copyImage(): image has no contents";
+    return;
+  }
+
+  client_->copyImage();
 }
 
 void ContextMenuContext::saveLink() const {

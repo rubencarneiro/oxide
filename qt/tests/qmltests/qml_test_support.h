@@ -58,6 +58,8 @@ class ClipboardTestUtils : public QObject {
  public:
   ClipboardTestUtils();
 
+  Q_INVOKABLE bool hasImage() const;
+
   Q_INVOKABLE void copyToClipboard(const QString& mimeType,
                                    const QString& data);
 
