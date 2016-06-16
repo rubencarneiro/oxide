@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -63,6 +63,8 @@ void ImeBridgeImpl::CommitText(const base::string16& text,
     return;
   }
 
+  rwhv_->OnUserInput();
+
   content::RenderWidgetHostImpl* rwhi =
       content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
@@ -77,6 +79,8 @@ void ImeBridgeImpl::SetComposingText(
   if (!rwhv_->GetRenderWidgetHost()) {
     return;
   }
+
+  rwhv_->OnUserInput();
 
   content::RenderWidgetHostImpl* rwhi =
       content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());

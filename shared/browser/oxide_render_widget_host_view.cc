@@ -568,6 +568,13 @@ void RenderWidgetHostView::OnGestureEvent(
   host_->ForwardGestureEvent(event);
 }
 
+void RenderWidgetHostView::OnUserInput() const {
+  if (selection_controller_->active_status() ==
+          ui::TouchSelectionController::INSERTION_ACTIVE) {
+    selection_controller_->HideAndDisallowShowingAutomatically();
+  }
+}
+
 bool RenderWidgetHostView::HandleContextMenu(
     const content::ContextMenuParams& params) {
   if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&

@@ -830,6 +830,8 @@ void WebContentsView::HandleKeyEvent(
     return;
   }
 
+  GetRenderWidgetHostView()->OnUserInput();
+
   host->ForwardKeyboardEvent(event);
 }
 
@@ -842,6 +844,8 @@ void WebContentsView::HandleMouseEvent(const blink::WebMouseEvent& event) {
   if (!host) {
     return;
   }
+
+  GetRenderWidgetHostView()->OnUserInput();
 
   host->ForwardMouseEvent(e);
 }
@@ -861,6 +865,8 @@ void WebContentsView::HandleWheelEvent(
   if (!host) {
     return;
   }
+
+  GetRenderWidgetHostView()->OnUserInput();
 
   host->ForwardWheelEvent(event);
 }
