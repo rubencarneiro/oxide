@@ -13,26 +13,25 @@ TestWebView {
     when: windowShown
 
     function _getMockApi() {
-      var mockApi;
-
-      TestUtils.waitFor(function() {
-        mockApi = TestSupport.getAppProperty("_oxide_feedback_mock_api");
-        return !!mockApi;
-      });
-
-      return mockApi;
+      return TestSupport.getAppProperty("_oxide_feedback_mock_api");
     }
 
-    function _primeQtFeedback() {
+    function initTestCase() {
       // Prime QtFeedback so that it creates our mock backend
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
       webView.getTestApi().evaluateCode("navigator.vibrate(1000);");
+
+      TestUtils.waitFor(function() {
+        var mockApi = _getMockApi();
+        return !!mockApi;
+      });
     }
 
     function test_Vibration1_simple() {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
-      _primeQtFeedback();
       var mockApi = _getMockApi();
 
       var effectRan = false;
@@ -56,7 +55,6 @@ TestWebView {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
-      _primeQtFeedback();
       var mockApi = _getMockApi();
 
       var effectRan = false;
@@ -74,6 +72,34 @@ TestWebView {
       TestUtils.waitFor(function() { return effectRan; });
       compare(effectDuration, 10000);
       compare(effectIntensity, 1.0);
+    }
+
+    function test_Vibration3_cancel() {
+      webView.url = "http://testsuite/tst_Vibration_subframe.html";
+      verify(webView.waitForLoadSucceeded());
+
+      var mockApi = _getMockApi();
+
+      var effectId;
+      var gotEffectCancel = false;
+      mockApi.effectStarted.connect(function(id, duration, intensity) {
+        effectId = id;
+      });
+
+      mockApi.effectStopped.connect(function(id) {
+        if (id == effectId) {
+          gotEffectCancel = true;
+        }
+      });
+
+      var frame = webView.rootFrame.childFrames[0];
+      webView.getTestApiForFrame(frame).evaluateCode("navigator.vibrate(10000);");
+      webView.getTestApi().evaluateCode("
+var e = document.getElementById(\"subframe\");
+e.parentNode.removeChild(e);");
+
+      TestUtils.waitFor(function() { return gotEffectCancel; })
+      verify(gotEffectCancel);
     }
   }
 }
