@@ -34,16 +34,17 @@ class NetworkDelegate final : public net::NetworkDelegate {
                          const net::CompletionCallback& callback,
                          GURL* new_url) final;
 
-  int OnBeforeSendHeaders(net::URLRequest* request,
-                          const net::CompletionCallback& callback,
-                          net::HttpRequestHeaders* headers) final;
+  int OnBeforeStartTransaction(net::URLRequest* request,
+                               const net::CompletionCallback& callback,
+                               net::HttpRequestHeaders* headers) final;
 
-  void OnBeforeSendProxyHeaders(net::URLRequest* request,
-                                const net::ProxyInfo& proxy_info,
-                                net::HttpRequestHeaders* headers) final;
+  void OnBeforeSendHeaders(net::URLRequest* request,
+                           const net::ProxyInfo& proxy_info,
+                           const net::ProxyRetryInfoMap& proxy_retry_info,
+                           net::HttpRequestHeaders* headers) final;
 
-  void OnSendHeaders(net::URLRequest* request,
-                     const net::HttpRequestHeaders& headers) final;
+  void OnStartTransaction(net::URLRequest* request,
+                          const net::HttpRequestHeaders& headers) final;
 
   int OnHeadersReceived(
       net::URLRequest* request,

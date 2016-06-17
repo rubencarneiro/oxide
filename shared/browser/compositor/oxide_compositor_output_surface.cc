@@ -20,11 +20,13 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "cc/output/begin_frame_args.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
 #include "cc/scheduler/begin_frame_source.h"
+#include "cc/scheduler/delay_based_time_source.h"
 
 #include "oxide_compositor.h"
 #include "oxide_compositor_frame_data.h"
@@ -41,9 +43,9 @@ CompositorOutputSurface::CompositorOutputSurface(
       listener_(listener),
       surface_id_(surface_id),
       begin_frame_source_(
-          new cc::SyntheticBeginFrameSource(
-              base::ThreadTaskRunnerHandle::Get().get(),
-              cc::BeginFrameArgs::DefaultInterval())) {}
+          new cc::DelayBasedBeginFrameSource(
+              base::MakeUnique<cc::DelayBasedTimeSource>(
+                  base::ThreadTaskRunnerHandle::Get().get()))) {}
 
 void CompositorOutputSurface::DoSwapBuffers(
     std::unique_ptr<CompositorFrameData> frame) {

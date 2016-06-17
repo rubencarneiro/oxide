@@ -109,7 +109,8 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
       std::string* os_version) override;
   void RegisterRenderProcessMojoServices(
-      content::ServiceRegistry* registry) override;
+      content::ServiceRegistry* registry,
+      content::RenderProcessHost* render_process_host) override;
 
   std::string application_locale_;
   std::unique_ptr<BrowserPlatformIntegration> platform_integration_;

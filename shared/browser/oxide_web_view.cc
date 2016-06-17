@@ -117,11 +117,9 @@ void FillLoadURLParamsFromOpenURLParams(
   load_params->should_replace_current_entry =
       params.should_replace_current_entry;
 
-  if (params.uses_post && !params.is_renderer_initiated) {
-    load_params->load_type =
-        content::NavigationController::LOAD_TYPE_BROWSER_INITIATED_HTTP_POST;
-    load_params->browser_initiated_post_data =
-        params.browser_initiated_post_data;
+  if (params.uses_post) {
+    load_params->load_type = content::NavigationController::LOAD_TYPE_HTTP_POST;
+    load_params->post_data = params.post_data;
   }
 }
 

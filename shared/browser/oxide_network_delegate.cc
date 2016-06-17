@@ -50,7 +50,7 @@ int NetworkDelegate::OnBeforeURLRequest(
   return delegate->OnBeforeURLRequest(request, callback, new_url);
 }
 
-int NetworkDelegate::OnBeforeSendHeaders(
+int NetworkDelegate::OnBeforeStartTransaction(
     net::URLRequest* request,
     const net::CompletionCallback& callback,
     net::HttpRequestHeaders* headers) {
@@ -62,13 +62,15 @@ int NetworkDelegate::OnBeforeSendHeaders(
   return delegate->OnBeforeSendHeaders(request, callback, headers);
 }
 
-void NetworkDelegate::OnBeforeSendProxyHeaders(
+void NetworkDelegate::OnBeforeSendHeaders(
     net::URLRequest* request,
     const net::ProxyInfo& proxy_info,
+    const net::ProxyRetryInfoMap& proxy_retry_info,
     net::HttpRequestHeaders* headers) {}
 
-void NetworkDelegate::OnSendHeaders(net::URLRequest* request,
-                                    const net::HttpRequestHeaders& headers) {}
+void NetworkDelegate::OnStartTransaction(
+    net::URLRequest* request,
+    const net::HttpRequestHeaders& headers) {}
 
 int NetworkDelegate::OnHeadersReceived(
     net::URLRequest* request,

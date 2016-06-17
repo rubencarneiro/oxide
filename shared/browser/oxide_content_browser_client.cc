@@ -299,7 +299,8 @@ ContentBrowserClient::GetApplicationLocale() {
 }
 
 void ContentBrowserClient::RegisterRenderProcessMojoServices(
-      content::ServiceRegistry* registry) {
+      content::ServiceRegistry* registry,
+      content::RenderProcessHost* render_process_host) {
   DCHECK(registry);
   registry->AddService(base::Bind(&CreateVibrationManager));
 }

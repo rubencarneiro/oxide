@@ -947,7 +947,10 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
       BrowserPlatformIntegration::GetInstance()
         ->GetScreenClient()
         ->GetCursorScreenPoint();
-  rvh->DragTargetDrop(location, screen_location, key_modifiers);
+  rvh->DragTargetDrop(*current_drop_data_,
+                      location,
+                      screen_location,
+                      key_modifiers);
 
   return current_drag_op_;
 }

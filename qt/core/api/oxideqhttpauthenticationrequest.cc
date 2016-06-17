@@ -15,22 +15,30 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "oxideqhttpauthenticationrequest.h"
+#include "oxideqhttpauthenticationrequest_p.h"
+
 #include "base/bind.h"
 #include "base/callback.h"
+#include "base/strings/string_number_conversions.h"
+#include "url/origin.h"
 
 #include "shared/browser/oxide_resource_dispatcher_host_login_delegate.h"
 #include "qt/core/browser/oxide_qt_web_view.h"
-
-#include "oxideqhttpauthenticationrequest.h"
-#include "oxideqhttpauthenticationrequest_p.h"
 
 OxideQHttpAuthenticationRequestPrivate::OxideQHttpAuthenticationRequestPrivate(
     OxideQHttpAuthenticationRequest* q,
     oxide::ResourceDispatcherHostLoginDelegate* login_delegate)
     : q_ptr(q),
       login_delegate_(login_delegate),
-      host_(QString::fromStdString(login_delegate->Host())),
-      realm_(QString::fromStdString(login_delegate->Realm())) {
+      realm_(QString::fromStdString(login_delegate->realm())) {
+  // This is wrong - see https://launchpad.net/bugs/1593670
+  // We should just provide the origin (via a new property)
+  std::string host = login_delegate->challenger().host();
+  host += ":";
+  host += base::UintToString(login_delegate->challenger().port());
+  host_ = QString::fromStdString(host);
+
   // Use of base::Unretained is safe here because we clear the callback
   // in the destructor, so that it can not called back on a deleted object
   login_delegate->SetCancelledCallback(
