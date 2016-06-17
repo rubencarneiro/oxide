@@ -18,7 +18,6 @@
 #ifndef _OXIDE_QT_TESTS_MOCK_FEEDBACK_PLUGIN_H_
 #define _OXIDE_QT_TESTS_MOCK_FEEDBACK_PLUGIN_H_
 
-#include <QFeedbackEffect>
 #include <QFeedbackInterface>
 #include <QObject>
 
@@ -30,6 +29,7 @@
 
 QT_BEGIN_NAMESPACE
 class QFeedbackActuator;
+class QFeedbackHapticsEffect;
 class QTimer;
 QT_END_NAMESPACE
 
@@ -70,16 +70,12 @@ class FeedbackHapticsMock : public QObject,
     ~EffectData();
 
     int id;
-    QFeedbackEffect::State state;
     std::unique_ptr<QTimer> timer;
     int remaining_time;
   };
 
   void killEffectTimer(const QFeedbackHapticsEffect* effect);
-  void startEffectTimer(const QFeedbackHapticsEffect* effect,
-                        bool resume);
-
-  void ensureEffectData(const QFeedbackHapticsEffect* effect);
+  void startEffectTimer(const QFeedbackHapticsEffect* effect);
 
   std::unique_ptr<QFeedbackActuator> actuator_;
   FeedbackHapticsMockProxy proxy_;

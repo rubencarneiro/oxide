@@ -19,22 +19,20 @@
 
 #include <QCoreApplication>
 #include <QFeedbackActuator>
+#include <QFeedbackEffect>
 #include <QTimer>
 #include <QVariant>
 
 FeedbackHapticsMock::EffectData::EffectData()
     : id(-1),
-      state(QFeedbackEffect::Stopped),
       remaining_time(0) {}
 
 FeedbackHapticsMock::EffectData::EffectData(int id)
     : id(id),
-      state(QFeedbackEffect::Stopped),
       remaining_time(0) {}
 
 FeedbackHapticsMock::EffectData::EffectData(EffectData&& other)
     : id(std::move(other.id)),
-      state(std::move(other.state)),
       timer(std::move(other.timer)),
       remaining_time(std::move(other.remaining_time)) {}
 
@@ -44,42 +42,25 @@ void FeedbackHapticsMock::killEffectTimer(
     const QFeedbackHapticsEffect* effect) {
   EffectData& data = effect_data_[effect];
 
-  if (!data.timer) {
-    return;
-  }
-
   data.remaining_time = data.timer->remainingTime();
   data.timer->stop();
 }
 
-void FeedbackHapticsMock::startEffectTimer(const QFeedbackHapticsEffect* effect,
-                                           bool resume) {
+void FeedbackHapticsMock::startEffectTimer(
+    const QFeedbackHapticsEffect* effect) {
   EffectData& data = effect_data_[effect];
 
+  bool resume = false;
   if (!data.timer) {
     data.timer.reset(new QTimer());
     connect(data.timer.get(), &QTimer::timeout, [this, effect] {
-      effect_data_[effect].state = QFeedbackEffect::Stopped;
       killEffectTimer(effect);
-
       Q_EMIT const_cast<QFeedbackHapticsEffect*>(effect)->stateChanged();
     });
+    resume = true;
   }
 
   data.timer->start(resume ? data.remaining_time : effect->duration());
-}
-
-void FeedbackHapticsMock::ensureEffectData(const QFeedbackHapticsEffect* effect) {
-  if (effect_data_.find(effect) != effect_data_.end()) {
-    return;
-  }
-
-  static int g_next_id = 0;
-  effect_data_.insert(std::make_pair(effect, EffectData(g_next_id++)));
-
-  connect(effect, &QFeedbackHapticsEffect::destroyed, [this, effect] {
-    effect_data_.erase(effect);
-  });
 }
 
 FeedbackHapticsMock::FeedbackHapticsMock(QObject* parent)
@@ -130,38 +111,48 @@ void FeedbackHapticsMock::updateEffectProperty(
 
 void FeedbackHapticsMock::setEffectState(const QFeedbackHapticsEffect* effect,
                                          QFeedbackEffect::State state) {
-  ensureEffectData(effect);
-
-  EffectData& data = effect_data_[effect];
-
-  if (state == data.state) {
-    return;
-  }
-
-  bool was_paused = data.state == QFeedbackEffect::Paused;
-
-  data.state = state;
+  static int g_next_id = 0;
 
   switch (state) {
-    case QFeedbackEffect::Stopped:
+    case QFeedbackEffect::Stopped: {
+      EffectData& data = effect_data_[effect];
+      killEffectTimer(effect);
       Q_EMIT proxy_.effectStopped(data.id);
-      // Fallthrough
-    case QFeedbackEffect::Paused:
-    case QFeedbackEffect::Loading:
+      effect_data_.erase(effect);
+      break;
+    }
+
+    case QFeedbackEffect::Paused: {
+      EffectData& data = effect_data_[effect];
       killEffectTimer(effect);
       break;
-    case QFeedbackEffect::Running:
-      startEffectTimer(effect, was_paused);
-      Q_EMIT proxy_.effectStarted(data.id,
+    }
+
+    case QFeedbackEffect::Running: {
+      auto it = effect_data_.find(effect);
+      if (it == effect_data_.end()) {
+        effect_data_.insert(std::make_pair(effect, EffectData(g_next_id++)));
+      }
+      startEffectTimer(effect);
+      Q_EMIT proxy_.effectStarted(effect_data_[effect].id,
                                   effect->duration(),
                                   effect->intensity());
       break;
+    }
   }
 }
 
 QFeedbackEffect::State FeedbackHapticsMock::effectState(
     const QFeedbackHapticsEffect* effect) {
-  ensureEffectData(effect);
+  if (effect_data_.find(effect) == effect_data_.end()) {
+    return QFeedbackEffect::Stopped;
+  }
 
-  return effect_data_[effect].state;
+  const EffectData& data = effect_data_[effect];
+
+  if (!data.timer->isActive()) {
+    return QFeedbackEffect::Paused;
+  }
+
+  return QFeedbackEffect::Running;
 }
