@@ -241,6 +241,7 @@
         '<(DEPTH)/content/content.gyp:content_utility',
         '<(DEPTH)/crypto/crypto.gyp:crypto',
         '<(DEPTH)/dbus/dbus.gyp:dbus',
+        '<(DEPTH)/device/power_save_blocker/power_save_blocker.gyp:device_power_save_blocker',
         '<(DEPTH)/device/vibration/vibration.gyp:device_vibration_mojo_bindings',
         '<(DEPTH)/gin/gin.gyp:gin',
         '<(DEPTH)/gpu/command_buffer/command_buffer.gyp:gles2_utils',

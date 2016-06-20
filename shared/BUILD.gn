@@ -169,6 +169,7 @@ component("shared") {
     "//content/public/renderer",
     "//content/public/utility",
     "//crypto",
+    "//device/power_save_blocker",
     "//device/vibration",
     "//device/vibration:mojo_bindings",
     "//extensions/common",

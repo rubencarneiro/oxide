@@ -20,13 +20,8 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "base/memory/ptr_util.h"
-#include "base/threading/thread_task_runner_handle.h"
-#include "cc/output/begin_frame_args.h"
 #include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
-#include "cc/scheduler/begin_frame_source.h"
-#include "cc/scheduler/delay_based_time_source.h"
 
 #include "oxide_compositor.h"
 #include "oxide_compositor_frame_data.h"
@@ -41,11 +36,7 @@ CompositorOutputSurface::CompositorOutputSurface(
     CompositorOutputSurfaceListener* listener)
     : cc::OutputSurface(context_provider, nullptr, std::move(software_device)),
       listener_(listener),
-      surface_id_(surface_id),
-      begin_frame_source_(
-          new cc::DelayBasedBeginFrameSource(
-              base::MakeUnique<cc::DelayBasedTimeSource>(
-                  base::ThreadTaskRunnerHandle::Get().get()))) {}
+      surface_id_(surface_id) {}
 
 void CompositorOutputSurface::DoSwapBuffers(
     std::unique_ptr<CompositorFrameData> frame) {
@@ -59,8 +50,6 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   if (!cc::OutputSurface::BindToClient(client)) {
     return false;
   }
-
-  client->SetBeginFrameSource(begin_frame_source_.get());
 
   listener_->OutputSurfaceBound(this);
   return true;

@@ -20,18 +20,26 @@
 
 #include <string>
 
-#include "content/public/browser/power_save_blocker.h"
+#include "base/memory/ref_counted.h"
+#include "device/power_save_blocker/power_save_blocker.h"
 
-namespace content {
+namespace base {
+class SequencedTaskRunner;
+class SingleThreadTaskRunner;
+}
+
+namespace device {
 class PowerSaveBlockerOxideDelegate;
 }
 
 namespace oxide {
 
-content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
-    content::PowerSaveBlocker::PowerSaveBlockerType type,
-    content::PowerSaveBlocker::Reason reason,
-    const std::string& description);
+device::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
+    device::PowerSaveBlocker::PowerSaveBlockerType type,
+    device::PowerSaveBlocker::Reason reason,
+    const std::string& description,
+    scoped_refptr<base::SequencedTaskRunner> ui_task_runner,
+    scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner);
 
 } // namespace oxide
 

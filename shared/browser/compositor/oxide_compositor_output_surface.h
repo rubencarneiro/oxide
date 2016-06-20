@@ -27,7 +27,6 @@
 
 namespace cc {
 class ContextProvider;
-class SyntheticBeginFrameSource;
 }
 
 namespace oxide {
@@ -72,8 +71,6 @@ class CompositorOutputSurface : public cc::OutputSurface {
   CompositorOutputSurfaceListener* listener_; // Owns us via LayerTreeHost
 
   uint32_t surface_id_;
-
-  std::unique_ptr<cc::SyntheticBeginFrameSource> begin_frame_source_;
 
   DISALLOW_COPY_AND_ASSIGN(CompositorOutputSurface);
 };

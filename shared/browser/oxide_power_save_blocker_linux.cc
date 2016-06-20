@@ -24,12 +24,11 @@
 
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
-#include "content/browser/power_save_blocker_oxide.h" // nogncheck
-#include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
+#include "device/power_save_blocker/power_save_blocker_oxide.h"
 
 #include "shared/common/oxide_form_factor.h"
 
@@ -53,10 +52,13 @@ const char kDefaultInhibitReason[] = "Active Application";
 
 }
 
-class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
+class PowerSaveBlocker : public device::PowerSaveBlockerOxideDelegate,
                          public BrowserPlatformIntegrationObserver {
  public:
-  PowerSaveBlocker(const std::string& description);
+  PowerSaveBlocker(
+      const std::string& description,
+      scoped_refptr<base::SequencedTaskRunner> ui_task_runner,
+      scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner);
 
  private:
   virtual ~PowerSaveBlocker() {}
@@ -76,7 +78,11 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
   // BrowserPlatformIntegrationObserver implementation
   void ApplicationStateChanged() final;
 
-  oxide::FormFactor form_factor_;
+  FormFactor form_factor_;
+
+  scoped_refptr<base::SequencedTaskRunner> ui_task_runner_;
+  scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner_;
+
   scoped_refptr<dbus::Bus> bus_;
   union {
     int32_t unity_cookie_;
@@ -88,22 +94,20 @@ class PowerSaveBlocker : public content::PowerSaveBlockerOxideDelegate,
 void PowerSaveBlocker::Init() {
   if (BrowserPlatformIntegration::GetInstance()->GetApplicationState() !=
       BrowserPlatformIntegration::APPLICATION_STATE_SUSPENDED) {
-    content::BrowserThread::PostTask(
-        content::BrowserThread::FILE,
+    blocking_task_runner_->PostTask(
         FROM_HERE,
         base::Bind(&PowerSaveBlocker::ApplyBlock, this));
   }
 }
 
 void PowerSaveBlocker::CleanUp() {
-  content::BrowserThread::PostTask(
-      content::BrowserThread::FILE,
+  blocking_task_runner_->PostTask(
       FROM_HERE,
       base::Bind(&PowerSaveBlocker::RemoveBlock, this));
 }
 
 void PowerSaveBlocker::ApplyBlock() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
+  DCHECK(blocking_task_runner_->RunsTasksOnCurrentThread());
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
@@ -114,7 +118,7 @@ void PowerSaveBlocker::ApplyBlock() {
 }
 
 void PowerSaveBlocker::RemoveBlock() {
-  DCHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::FILE));
+  DCHECK(blocking_task_runner_->RunsTasksOnCurrentThread());
 
   if (form_factor_ == oxide::FORM_FACTOR_PHONE ||
       form_factor_ == oxide::FORM_FACTOR_TABLET) {
@@ -254,17 +258,23 @@ void PowerSaveBlocker::ApplicationStateChanged() {
   }
 }
 
-PowerSaveBlocker::PowerSaveBlocker(const std::string& description)
-    : form_factor_(oxide::GetFormFactorHint())
-    , unity_cookie_(kInvalidCookie)
-    , description_(description)
-{}
+PowerSaveBlocker::PowerSaveBlocker(
+    const std::string& description,
+    scoped_refptr<base::SequencedTaskRunner> ui_task_runner,
+    scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner)
+    : form_factor_(GetFormFactorHint()),
+      ui_task_runner_(ui_task_runner),
+      blocking_task_runner_(blocking_task_runner),
+      unity_cookie_(kInvalidCookie),
+      description_(description) {}
 
-content::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
-    content::PowerSaveBlocker::PowerSaveBlockerType type,
-    content::PowerSaveBlocker::Reason reason,
-    const std::string& description) {
-  return new PowerSaveBlocker(description);
+device::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
+    device::PowerSaveBlocker::PowerSaveBlockerType type,
+    device::PowerSaveBlocker::Reason reason,
+    const std::string& description,
+    scoped_refptr<base::SequencedTaskRunner> ui_task_runner,
+    scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner) {
+  return new PowerSaveBlocker(description, ui_task_runner, blocking_task_runner);
 }
 
 } // namespace oxide

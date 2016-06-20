@@ -27,8 +27,11 @@
 #include "cc/layers/layer.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/renderer_settings.h"
+#include "cc/output/texture_mailbox_deleter.h"
 #include "cc/scheduler/begin_frame_source.h"
+#include "cc/scheduler/delay_based_time_source.h"
 #include "cc/surfaces/display.h"
+#include "cc/surfaces/display_scheduler.h"
 #include "cc/surfaces/surface_display_output_surface.h"
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree_host.h"
@@ -300,35 +303,54 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
   uint32_t output_surface_id = next_output_surface_id_++;
 
   scoped_refptr<cc::ContextProvider> context_provider;
-  std::unique_ptr<cc::OutputSurface> surface;
+  std::unique_ptr<cc::OutputSurface> display_surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     context_provider = CreateOffscreenContextProvider();
     if (!context_provider.get()) {
       return nullptr;
     }
-    surface.reset(new CompositorOutputSurfaceGL(output_surface_id,
-                                                context_provider,
-                                                this));
+    display_surface =
+        base::MakeUnique<CompositorOutputSurfaceGL>(output_surface_id,
+                                                    context_provider,
+                                                    this);
   } else {
     std::unique_ptr<CompositorSoftwareOutputDevice> output_device(
         new CompositorSoftwareOutputDevice());
-    surface.reset(new CompositorOutputSurfaceSoftware(output_surface_id,
-                                                      std::move(output_device),
-                                                      this));
+    display_surface =
+        base::MakeUnique<CompositorOutputSurfaceSoftware>(
+            output_surface_id,
+            std::move(output_device),
+            this);
   }
+
+  std::unique_ptr<cc::BeginFrameSource> begin_frame_source(
+      new cc::DelayBasedBeginFrameSource(
+          base::MakeUnique<cc::DelayBasedTimeSource>(
+              base::ThreadTaskRunnerHandle::Get().get())));
+
+  std::unique_ptr<cc::DisplayScheduler> scheduler(
+      new cc::DisplayScheduler(
+          begin_frame_source.get(),
+          base::ThreadTaskRunnerHandle::Get().get(),
+          display_surface->capabilities().max_frames_pending));
 
   cc::SurfaceManager* manager =
       CompositorUtils::GetInstance()->GetSurfaceManager();
-  display_.reset(
-      new cc::Display(manager,
-                      content::HostSharedBitmapManager::current(),
-                      content::BrowserGpuMemoryBufferManager::current(),
-                      cc::RendererSettings(),
-                      surface_id_allocator_->id_namespace(),
-                      base::ThreadTaskRunnerHandle::Get().get(),
-                      std::move(surface)));
 
-  std::unique_ptr<cc::SurfaceDisplayOutputSurface> output_surface(
+  display_ =
+      base::MakeUnique<cc::Display>(
+          manager,
+          content::HostSharedBitmapManager::current(),
+          content::BrowserGpuMemoryBufferManager::current(),
+          cc::RendererSettings(),
+          surface_id_allocator_->id_namespace(),
+          std::move(begin_frame_source),
+          std::move(display_surface),
+          std::move(scheduler),
+          base::MakeUnique<cc::TextureMailboxDeleter>(
+              base::ThreadTaskRunnerHandle::Get().get()));
+
+  std::unique_ptr<cc::SurfaceDisplayOutputSurface> surface(
       new cc::SurfaceDisplayOutputSurface(
           manager,
           surface_id_allocator_.get(),
@@ -338,7 +360,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
   display_->Resize(layer_tree_host_->device_viewport_size());
 
-  return std::move(output_surface);
+  return std::move(surface);
 }
 
 void Compositor::AddObserver(CompositorObserver* observer) {
