@@ -39,7 +39,6 @@ class CompositorFrameMetadata;
 namespace content {
 struct ContextMenuParams;
 class RenderFrameHost;
-class RenderViewHost;
 class WebContents;
 }
 
@@ -137,7 +136,7 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
       WindowOpenDisposition disposition,
       std::unique_ptr<content::WebContents> contents);
 
-  virtual FilePicker* CreateFilePicker(content::RenderViewHost* rvh);
+  virtual FilePicker* CreateFilePicker(content::RenderFrameHost* rfh);
 
   // TODO(chrisccoulson): Rename to BlockedContentChanged or something
   // TODO(chrisccoulson): Move content tracking to a separate class with its

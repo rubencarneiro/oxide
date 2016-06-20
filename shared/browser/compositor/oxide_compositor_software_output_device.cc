@@ -22,7 +22,6 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted_memory.h"
 #include "cc/resources/shared_bitmap.h"
-#include "skia/ext/refptr.h"
 #include "third_party/skia/include/core/SkBitmap.h"
 #include "third_party/skia/include/core/SkCanvas.h"
 #include "third_party/skia/include/core/SkImageInfo.h"

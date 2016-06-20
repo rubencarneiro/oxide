@@ -134,8 +134,8 @@ void FilePicker::done(const QFileInfoList& files,
   Done(selection, permissions);
 }
 
-FilePicker::FilePicker(content::RenderViewHost* rvh)
-    : oxide::FilePicker(rvh) {}
+FilePicker::FilePicker(content::RenderFrameHost* rfh)
+    : oxide::FilePicker(rfh) {}
 
 void FilePicker::SetProxy(FilePickerProxy* proxy) {
   proxy_.reset(proxy);

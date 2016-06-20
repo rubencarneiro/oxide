@@ -722,15 +722,12 @@ content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
   return JavaScriptDialogManager::GetInstance();
 }
 
-void WebView::RunFileChooser(content::WebContents* source,
+void WebView::RunFileChooser(content::RenderFrameHost* render_frame_host,
                              const content::FileChooserParams& params) {
-  DCHECK_VALID_SOURCE_CONTENTS
-
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  FilePicker* file_picker = client_->CreateFilePicker(rvh);
+  FilePicker* file_picker = client_->CreateFilePicker(render_frame_host);
   if (!file_picker) {
     std::vector<content::FileChooserFileInfo> empty;
-    rvh->FilesSelectedInChooser(empty, params.mode);
+    render_frame_host->FilesSelectedInChooser(empty, params.mode);
     return;
   }
 

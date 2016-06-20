@@ -492,7 +492,8 @@ void CompositorUtilsImpl::Shutdown() {
       GpuUtils::GetTaskRunner();
   if (gpu_task_runner.get()) {
     base::ThreadRestrictions::ScopedAllowWait allow_wait;
-    base::WaitableEvent event(false, false);
+    base::WaitableEvent event(base::WaitableEvent::ResetPolicy::AUTOMATIC,
+                              base::WaitableEvent::InitialState::NOT_SIGNALED);
     gpu_task_runner->PostTask(
         FROM_HERE,
         base::Bind(&CompositorUtilsImpl::ShutdownOnGpuThread,
