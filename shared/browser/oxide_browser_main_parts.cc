@@ -26,7 +26,7 @@
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
-#include "device/power_save_blocker/power_save_blocker_impl.h"
+#include "device/power_save_blocker/power_save_blocker.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/ipc/service/gpu_service_shim_oxide.h"
@@ -227,7 +227,7 @@ class Screen : public display::Screen {
 
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
-  device::PowerSaveBlockerImpl::SetDelegateFactory(CreatePowerSaveBlocker);
+  device::PowerSaveBlocker::SetOxideDelegateFactory(CreatePowerSaveBlocker);
 #if defined(OS_LINUX)
   media::SetVideoCaptureDeviceFactoryOverrideDelegate(
       OverrideVideoCaptureDeviceFactory);
