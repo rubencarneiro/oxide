@@ -100,6 +100,32 @@ TAR_INCLUDE_EXTENSIONS = [
   '.isolate'
 ]
 
+def GenerateAngleCommitH(tmpdir):
+  angle = os.path.join("third_party", "angle")
+  angle_src = os.path.join(angle, "src")
+  commit_id_h = os.path.join(angle_src, "commit.h")
+
+  os.makedirs(os.path.join(tmpdir, angle_src))
+
+  CheckCall([sys.executable,
+             os.path.join(TOPSRC_DIR, angle_src, "commit_id.py"),
+             "gen", os.path.join(TOPSRC_DIR, angle),
+             os.path.join(tmpdir, commit_id_h)],
+            TOPSRC_DIR)
+
+def GenerateGNLastCommitPositionH(tmpdir):
+  gn = os.path.join("tools", "gn")
+  last_commit_position_h = os.path.join(gn, "last_commit_position.h.no-git")
+
+  os.makedirs(os.path.join(tmpdir, gn))
+
+  CheckCall([sys.executable,
+             os.path.join(TOPSRC_DIR, gn, "last_commit_position.py"),
+             TOPSRC_DIR,
+             os.path.join(tmpdir, last_commit_position_h),
+             "TOOLS_GN_LAST_COMMIT_POSITION_H_"],
+            TOPSRC_DIR)
+
 class OptionParser(optparse.OptionParser):
   def __init__(self):
     optparse.OptionParser.__init__(self)
@@ -204,17 +230,14 @@ def cmd_make_tarball(options, args):
               filter=tar_filter, recursive=True)
 
     with ScopedTmpdir() as tmpdir:
-      angle = os.path.join("third_party", "angle")
-      angle_src = os.path.join(angle, "src")
-      commit_id_h = os.path.join(angle_src, "commit.h")
       if options.verbose:
-        print("Generating %s" % commit_id_h)
-      os.makedirs(os.path.join(tmpdir, angle_src))
-      CheckCall([sys.executable,
-                 os.path.join(TOPSRC_DIR, angle_src, "commit_id.py"),
-                 "gen", os.path.join(TOPSRC_DIR, angle),
-                 os.path.join(tmpdir, commit_id_h)],
-                TOPSRC_DIR)
+        print("Generating Angle commit.h")
+      GenerateAngleCommitH(tmpdir)
+
+      if options.verbose:
+        print("Generating GN last_commit_position.h")
+      GenerateGNLastCommitPositionH(tmpdir)
+
       for name in os.listdir(tmpdir):
         tar.add(os.path.join(tmpdir, name), os.path.join(topsrcdir, name),
                 recursive=True)
