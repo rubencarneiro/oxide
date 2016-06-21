@@ -77,7 +77,7 @@ macro(_determine_compiler _out _compiler_id)
 endmacro()
 
 function(add_chromium_build_all_target name)
-  set(SKIP_GN_CHECK False)
+  set(SKIP_GN_CHECK True) # https://launchpad.net/bugs/1594962
   if(NOT ENABLE_PLUGINS)
     # There are failures in //chrome with enable_plugins=false
     set(SKIP_GN_CHECK true)
