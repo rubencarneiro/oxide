@@ -40,20 +40,27 @@ from utils import (
 )
 import subcommand
 
+# Contents of paths matching any of these entries will be excluded from the
+#  tarball, with the exception of build files with extensions matching any
+#  of those in TAR_INCLUDE_EXTENSIONS
+TAR_EXCLUDE_CONTENTS_PATHS = [
+  'chrome/test/data',
+  'v8/test'
+]
+
+# Paths matching any of these entries will be excluded from the tarball
 TAR_EXCLUDE_PATHS = [
   'breakpad/src/processor/testdata',
-  'chrome/browser/resources/tracing/tests',
   'chrome/common/extensions/docs',
   'courgette/testdata',
   'native_client/src/trusted/service_runtime/testdata',
   'native_client/toolchain',
-  'oxide/.relbranch',
   'out',
-  'ppapi/examples',
+  'oxide/.relbranch',
   'ppapi/native_client/tests',
-  'third_party/angle/samples/gles2_book',
   'third_party/hunspell/tests',
   'third_party/mesa/src/src/gallium/state_trackers/d3d1x/w32api',
+  'third_party/sqlite/src/test',
   'third_party/xdg-utils/tests',
   'third_party/yasm/source/patched-yasm/modules/arch/x86/tests',
   'third_party/yasm/source/patched-yasm/modules/dbgfmts/dwarf2/tests',
@@ -68,10 +75,9 @@ TAR_EXCLUDE_PATHS = [
   'third_party/WebKit/LayoutTests',
   'third_party/WebKit/Tools/Scripts',
   'tools/gyp/test',
-  'v8/test',
-  'webkit/tools/test/reference_build',
 ]
 
+# Paths matching any of these expressions will be excluded from the tarball
 TAR_EXCLUDE_REGEXPS = [
   r'^objdir.*',
   r'(^|\/)\.git(\/|$)',
@@ -82,6 +88,15 @@ TAR_EXCLUDE_REGEXPS = [
   r'\.o$',
   r'\.so(|\..*)$',
   r'\.pyc$',
+]
+
+TAR_INCLUDE_EXTENSIONS = [
+  '.gn',
+  '.gni',
+  '.grd',
+  '.gyp',
+  '.gypi',
+  '.isolate'
 ]
 
 class OptionParser(optparse.OptionParser):
@@ -117,7 +132,7 @@ def cmd_make_tarball(options, args):
     print("Updating checkout...")
 
   # Make sure we have an up-to-date Chromium checkout
-  CheckCall(["tools/update-checkout.py"], OXIDESRC_DIR)
+  #CheckCall(["tools/update-checkout.py"], OXIDESRC_DIR)
 
   platform = options.platform
 
@@ -167,13 +182,14 @@ def cmd_make_tarball(options, args):
 
   def tar_filter(info):
     (root, ext) = os.path.splitext(info.name)
-    if ext == ".gyp" or ext == ".gypi":
-      print_added_file(info.name)
-      return info
-    if any(os.path.relpath(info.name, topsrcdir).startswith(r) for r in TAR_EXCLUDE_PATHS):
+    if (any(os.path.relpath(info.name, topsrcdir).startswith(r) for r in TAR_EXCLUDE_PATHS) or
+        any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in re_excludes)):
       print_skipped_file(info.name)
       return None
-    if any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in re_excludes):
+    if ext in TAR_INCLUDE_EXTENSIONS or info.isdir():
+      print_added_file(info.name)
+      return info
+    if any(os.path.relpath(os.path.dirname(info.name), topsrcdir).startswith(r) for r in TAR_EXCLUDE_CONTENTS_PATHS):
       print_skipped_file(info.name)
       return None
     print_added_file(info.name)
