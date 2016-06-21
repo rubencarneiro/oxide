@@ -159,7 +159,7 @@ def cmd_make_tarball(options, args):
     print("Updating checkout...")
 
   # Make sure we have an up-to-date Chromium checkout
-  #CheckCall(["tools/update-checkout.py"], OXIDESRC_DIR)
+  CheckCall(["tools/update-checkout.py"], OXIDESRC_DIR)
 
   platform = options.platform
 
