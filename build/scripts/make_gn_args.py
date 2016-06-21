@@ -36,8 +36,10 @@ def HostArch():
     if platform.architecture()[0] == "32bit":
       return "x86"
     return "x64"
-  elif host_arch.startswith("arm"):
+  elif machine.startswith("arm"):
     return "arm"
+  elif machine == "aarch64":
+    return "arm64"
 
   raise Exception
 
