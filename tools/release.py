@@ -36,6 +36,7 @@ from constants import (
 from utils import (
   CheckCall,
   CheckOutput,
+  ScopedTmpdir,
   VersionFileParser
 )
 import subcommand
@@ -201,6 +202,22 @@ def cmd_make_tarball(options, args):
     for name in os.listdir(TOPSRC_DIR):
       tar.add(os.path.join(TOPSRC_DIR, name), os.path.join(topsrcdir, name),
               filter=tar_filter, recursive=True)
+
+    with ScopedTmpdir() as tmpdir:
+      angle = os.path.join("third_party", "angle")
+      angle_src = os.path.join(angle, "src")
+      commit_id_h = os.path.join(angle_src, "commit.h")
+      if options.verbose:
+        print("Generating %s" % commit_id_h)
+      os.makedirs(os.path.join(tmpdir, angle_src))
+      CheckCall([sys.executable,
+                 os.path.join(TOPSRC_DIR, angle_src, "commit_id.py"),
+                 "gen", os.path.join(TOPSRC_DIR, angle),
+                 os.path.join(tmpdir, commit_id_h)],
+                TOPSRC_DIR)
+      for name in os.listdir(tmpdir):
+        tar.add(os.path.join(tmpdir, name), os.path.join(topsrcdir, name),
+                recursive=True)
 
   if options.verbose:
     print("Compressing tarball")
