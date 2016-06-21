@@ -182,6 +182,7 @@ component("shared") {
     "//gpu/ipc/service",
     "//ipc",
     "//media",
+    "//media/capture",
     "//mojo/common",
     "//mojo/edk/system",
     "//net",

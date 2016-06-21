@@ -25,7 +25,6 @@
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/download_manager.h"
 #include "content/public/browser/render_frame_host.h"
-#include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "net/http/http_request_headers.h"
 
@@ -100,7 +99,7 @@ void WebContextMenu::SaveMedia() const {
   if ((params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) ||
       ((params_.media_type == blink::WebContextMenuData::MediaTypeImage) &&
           is_large_data_url)) {
-    render_frame_host_->GetRenderViewHost()->SaveImageAt(params_.x, params_.y);
+    render_frame_host_->SaveImageAt(params_.x, params_.y);
   } else {
     const GURL& url = params_.src_url;
     content::Referrer referrer = CreateSaveAsReferrer(url, params_);

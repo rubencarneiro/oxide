@@ -412,7 +412,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           new net::DefaultChannelIDStore(nullptr),
           base::WorkerPool::GetTaskRunner(true))));
 
-  context->set_http_server_properties(http_server_properties_->GetWeakPtr());
+  context->set_http_server_properties(http_server_properties_.get());
 
   DCHECK(cookie_store_.get());
   context->set_cookie_store(cookie_store_.get());

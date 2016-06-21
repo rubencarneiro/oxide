@@ -37,6 +37,7 @@
 #include "ppapi/thunk/enter.h"
 #include "ppapi/thunk/ppb_image_data_api.h"
 #include "third_party/skia/include/core/SkCanvas.h"
+#include "third_party/skia/include/core/SkFontStyle.h"
 #include "third_party/skia/include/core/SkMatrix.h"
 #include "third_party/skia/include/core/SkPaint.h"
 #include "third_party/skia/include/core/SkRect.h"
@@ -126,9 +127,8 @@ int32_t PepperFlashRendererHost::OnDrawGlyphs(
     style |= SkTypeface::kItalic;
   }
   sk_sp<SkTypeface> typeface =
-      sk_ref_sp(SkTypeface::CreateFromName(
-          params.font_desc.face.c_str(),
-          static_cast<SkTypeface::Style>(style)));
+      SkTypeface::MakeFromName(params.font_desc.face.c_str(),
+                               SkFontStyle::FromOldStyle(style));
   if (!typeface) {
     return PP_ERROR_FAILED;
   }
@@ -182,7 +182,7 @@ int32_t PepperFlashRendererHost::OnDrawGlyphs(
   paint.setAntiAlias(true);
   paint.setHinting(SkPaint::kFull_Hinting);
   paint.setTextSize(SkIntToScalar(params.font_desc.size));
-  paint.setTypeface(typeface.get());  // Takes a ref and manages lifetime.
+  paint.setTypeface(typeface);  // Takes a ref and manages lifetime.
   if (params.allow_subpixel_aa) {
     paint.setSubpixelText(true);
     paint.setLCDRenderText(true);
