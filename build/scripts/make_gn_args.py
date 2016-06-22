@@ -89,7 +89,7 @@ def GetV8SnapshotArch(host_arch, target_arch):
   elif host_arch == "x86":
     if target_arch == "arm":
       return "x86"
-    elif target_arch == "x64":
+    elif target_arch == "x64" or target_arch == "arm64":
       return "x64"
 
   raise Exception("Failed to detect arch for compiling V8 snapshot")
