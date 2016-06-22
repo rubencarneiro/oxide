@@ -42,7 +42,7 @@ def HostArch():
   elif machine == "aarch64":
     return "arm64"
 
-  raise Exception
+  raise Exception("Failed to detect host architecture")
 
 def GetSymbolLevel(enabled, host_arch, is_component_build):
   if not enabled:
@@ -185,10 +185,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_extensions", True)
 
 def WriteConfigurableArgs(writer, options):
-  try:
-    host_arch = HostArch()
-  except:
-    raise Exception("Failed to detect host architecture")
+  host_arch = HostArch()
 
   writer.WriteInt("symbol_level",
                   GetSymbolLevel(options.enable_debug_symbols,
