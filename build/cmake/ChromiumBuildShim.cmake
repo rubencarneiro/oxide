@@ -221,7 +221,6 @@ function(run_generate_ninja)
 
   if(ENABLE_TCMALLOC)
     list(APPEND MAKE_GN_ARGS_CMD -Denable_tcmalloc=true)
-    message(WARNING "ENABLE_TCMALLOC is currently not implemented with USE_GN builds")
   else()
     list(APPEND MAKE_GN_ARGS_CMD -Denable_tcmalloc=false)
   endif()

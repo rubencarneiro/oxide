@@ -15,19 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#if defined(ENABLE_TCMALLOC)
-#include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h"
+#include "qt/core/app/oxide_qt_main.h"
+#include "shared/allocator/features.h"
+
+#if BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
+#include "base/allocator/allocator_shim.h"
 #endif
 #if defined(COMPONENT_BUILD)
 #include "content/public/common/content_client.h" // nogncheck
 #endif
+#if BUILDFLAG(USE_TCMALLOC)
+#include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h" // nogncheck
+#endif
 
-#include "qt/core/app/oxide_qt_main.h"
-
-#if defined(ENABLE_TCMALLOC)
+#if BUILDFLAG(USE_TCMALLOC)
+#if !BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
 extern "C" {
 int tc_set_new_mode(int mode);
 }
+#endif
 
 static void ReleaseFreeMemoryThunk() {
   MallocExtension::instance()->ReleaseFreeMemory();
@@ -35,7 +41,9 @@ static void ReleaseFreeMemoryThunk() {
 #endif
 
 int main(int argc, const char* argv[]) {
-#if defined(ENABLE_TCMALLOC)
+#if BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
+  base::allocator::SetCallNewHandlerOnMallocFailure(true);
+#elif BUILDFLAG(USE_TCMALLOC)
   tc_set_new_mode(1);
 #endif
 
@@ -46,7 +54,7 @@ int main(int argc, const char* argv[]) {
 #endif
 
   oxide::qt::ReleaseFreeMemoryFunction release_free_memory_function = nullptr;
-#if defined(ENABLE_TCMALLOC)
+#if BUILDFLAG(USE_TCMALLOC)
   release_free_memory_function = ReleaseFreeMemoryThunk;
 #endif
 

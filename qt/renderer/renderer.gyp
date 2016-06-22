@@ -34,7 +34,6 @@
       },
       'conditions': [
         ['enable_tcmalloc==1', {
-          'defines': ['ENABLE_TCMALLOC'],
           'dependencies': [
             '../../shared/allocator.gyp:allocator',
           ],
