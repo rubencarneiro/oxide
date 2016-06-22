@@ -21,6 +21,7 @@ from __future__ import print_function
 from optparse import OptionParser
 import os
 import platform
+import psutil
 import re
 from StringIO import StringIO
 import sys
@@ -46,7 +47,18 @@ def HostArch():
 def GetSymbolLevel(enabled, host_arch, is_component_build):
   if not enabled:
     return 0
-  if (host_arch == "arm" or host_arch == "x86") and not is_component_build:
+  if is_component_build:
+    # We should be able to cope with maximium debug info in component
+    # builds everywhere
+    return 2
+  if host_arch == "arm" or host_arch == "x86":
+    # Reduce debug info in 32-bit native builds
+    return 1
+  if psutil.virtual_memory().total < 8589934592L:
+    # Reduce debug info if we have less than 8GB of RAM
+    return 1
+  if (psutil.virtual_memory().total + psutil.swap_memory().total < 17179869184L):
+    # Reduce debug info if we have less than 16GB of combined RAM and swap
     return 1
   return 2
 
