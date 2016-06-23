@@ -77,11 +77,21 @@ macro(_determine_compiler _out _compiler_id)
 endmacro()
 
 function(add_chromium_build_all_target name)
-  add_custom_target(
-      ${name}_gncheck ALL
-      COMMAND ${GN_EXE} check ${CHROMIUM_OUTPUT_DIR}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      COMMENT "Running gn check")
+  set(SKIP_GN_CHECK True) # https://launchpad.net/bugs/1594962
+  if(NOT ENABLE_PLUGINS)
+    # There are failures in //chrome with enable_plugins=false
+    set(SKIP_GN_CHECK true)
+  endif()
+
+  set(GN_CHECK_TARGET)
+  if(NOT SKIP_GN_CHECK)
+    set(GN_CHECK_TARGET ${name}_gncheck)
+    add_custom_target(
+        ${GN_CHECK_TARGET} ALL
+        COMMAND ${GN_EXE} check ${CHROMIUM_OUTPUT_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running gn check")
+  endif()
 
   set(NINJA_CMD ${NINJA_EXE} -C ${CHROMIUM_OUTPUT_DIR})
   if(CMAKE_VERBOSE_MAKEFILE)
@@ -90,7 +100,7 @@ function(add_chromium_build_all_target name)
   list(APPEND NINJA_CMD oxide_all)
   add_custom_target(
       ${name} ALL COMMAND ${NINJA_CMD}
-      DEPENDS ${name}_gncheck
+      DEPENDS ${GNCHECK_TARGET}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       COMMENT "Running the Chromium build all target")
 endfunction()
@@ -211,7 +221,6 @@ function(run_generate_ninja)
 
   if(ENABLE_TCMALLOC)
     list(APPEND MAKE_GN_ARGS_CMD -Denable_tcmalloc=true)
-    message(WARNING "ENABLE_TCMALLOC is currently not implemented with USE_GN builds")
   else()
     list(APPEND MAKE_GN_ARGS_CMD -Denable_tcmalloc=false)
   endif()

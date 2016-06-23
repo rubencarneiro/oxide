@@ -70,17 +70,17 @@
 #include "pepper/oxide_pepper_host_factory_browser.h"
 #endif
 
+namespace oxide {
+
 namespace {
 
 void CreateVibrationManager(
-      mojo::InterfaceRequest<device::VibrationManager> request) {
-  oxide::BrowserPlatformIntegration::GetInstance()
-    ->CreateVibrationManager(std::move(request));
+    mojo::InterfaceRequest<device::VibrationManager> request) {
+  BrowserPlatformIntegration::GetInstance()
+      ->CreateVibrationManager(std::move(request));
 }
 
 }
-
-namespace oxide {
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
@@ -270,6 +270,13 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
   return platform_integration_->CreateLocationProvider().release();
 }
 
+void ContentBrowserClient::RegisterRenderFrameMojoServices(
+    content::ServiceRegistry* registry,
+    content::RenderFrameHost* render_frame_host) {
+  DCHECK(registry);
+  registry->AddService(base::Bind(&CreateVibrationManager));
+}
+
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
 #if defined(ENABLE_PLUGINS)
   host->GetPpapiHost()->AddHostFactoryFilter(
@@ -296,13 +303,6 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 std::string
 ContentBrowserClient::GetApplicationLocale() {
   return application_locale_;
-}
-
-void ContentBrowserClient::RegisterRenderProcessMojoServices(
-      content::ServiceRegistry* registry,
-      content::RenderProcessHost* render_process_host) {
-  DCHECK(registry);
-  registry->AddService(base::Bind(&CreateVibrationManager));
 }
 
 ContentBrowserClient::ContentBrowserClient(

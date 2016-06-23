@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_APP_MAIN_H_
-#define _OXIDE_QT_CORE_APP_MAIN_H_
+#ifndef _OXIDE_QT_TESTS_MOCK_FEEDBACK_PROXY_H_
+#define _OXIDE_QT_TESTS_MOCK_FEEDBACK_PROXY_H_
 
+#include <QObject>
 #include <QtGlobal>
 
-namespace oxide {
-namespace qt {
+QT_BEGIN_NAMESPACE
+class QFeedbackHapticsEffect;
+QT_END_NAMESPACE
 
-class AllocatorExtension {
+class FeedbackHapticsMockProxy : public QObject {
+  Q_OBJECT
+
  public:
-  virtual ~AllocatorExtension() {}
+  FeedbackHapticsMockProxy();
+  ~FeedbackHapticsMockProxy() override;
 
-  virtual void ReleaseFreeMemory() = 0;
-
-  virtual void* UncheckedAlloc(size_t size) = 0;
-
-  virtual void EnableTerminationOnOutOfMemory() = 0;
+ Q_SIGNALS:
+  void effectStarted(int id, int duration, qreal intensity);
+  void effectStopped(int id);
 };
 
-Q_DECL_EXPORT int OxideMain(
-    int argc,
-    const char** argv,
-    AllocatorExtension* allocator_extension);
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_APP_MAIN_H_
+#endif // _OXIDE_QT_TESTS_MOCK_FEEDBACK_PROXY_H_

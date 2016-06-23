@@ -171,5 +171,16 @@
           '-Wl,-u_ZN15HeapLeakChecker12IgnoreObjectEPKv,-u_ZN15HeapLeakChecker14UnIgnoreObjectEPKv',
       ]},
     },
+    {
+      'target_name': 'allocator_features',
+      'includes': [ '../../build/buildflag_header.gypi' ],
+      'variables': {
+        'buildflag_header_path': 'oxide/shared/allocator/features.h',
+        'buildflag_flags': [
+          'USE_UNIFIED_ALLOCATOR_SHIM=0',
+          'USE_TCMALLOC=<(enable_tcmalloc)'
+        ],
+      },
+    }
   ],
 }

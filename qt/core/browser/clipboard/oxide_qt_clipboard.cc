@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,8 @@
 #include <QMimeData>
 #include <QObject>
 #include <QString>
+
+#include "qt/core/browser/oxide_qt_skutils.h"
 
 #define GET_CLIPBOARD_DATA(c) \
   c->mimeData( \
@@ -300,32 +302,7 @@ void Clipboard::WriteWebSmartPaste() {
 
 void Clipboard::WriteBitmap(const SkBitmap& bitmap) {
   DCHECK(CalledOnValidThread());
-  QImage image;
-  if (bitmap.info().colorType() != kN32_SkColorType) {
-    SkImageInfo info =
-        SkImageInfo::MakeN32(bitmap.width(),
-                             bitmap.height(),
-                             bitmap.alphaType());
-
-    SkBitmap convertedBitmap;
-    if (!convertedBitmap.tryAllocPixels(info)) {
-      return;
-    }
-
-    bitmap.readPixels(info, convertedBitmap.getPixels(), 0, 0, 0);
-
-    image = QImage(reinterpret_cast<const uchar *>(convertedBitmap.getPixels()),
-                   bitmap.width(),
-                   bitmap.height(),
-                   QImage::Format_RGBA8888);
-  } else {
-    image = QImage(reinterpret_cast<const uchar *>(bitmap.getPixels()),
-                   bitmap.width(),
-                   bitmap.height(),
-                   QImage::Format_RGBA8888);
-  }
-
-  write_mime_data_acc_->setImageData(image.copy());
+  write_mime_data_acc_->setImageData(QImageFromSkBitmap(bitmap));
 }
 
 void Clipboard::WriteData(const FormatType& format,

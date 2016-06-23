@@ -21,8 +21,6 @@ declare_args() {
 
   enable_hybris_camera = false
 
-  enable_tcmalloc = false
-
   oxide_gettext_domain = false
 
   oxide_libexec_subdir = ""

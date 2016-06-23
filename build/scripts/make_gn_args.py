@@ -21,6 +21,7 @@ from __future__ import print_function
 from optparse import OptionParser
 import os
 import platform
+import psutil
 import re
 from StringIO import StringIO
 import sys
@@ -36,15 +37,28 @@ def HostArch():
     if platform.architecture()[0] == "32bit":
       return "x86"
     return "x64"
-  elif host_arch.startswith("arm"):
+  elif machine.startswith("arm"):
     return "arm"
+  elif machine == "aarch64":
+    return "arm64"
 
-  raise Exception
+  raise Exception("Failed to detect host architecture")
 
 def GetSymbolLevel(enabled, host_arch, is_component_build):
   if not enabled:
     return 0
-  if (host_arch == "arm" or host_arch == "x86") and not is_component_build:
+  if is_component_build:
+    # We should be able to cope with maximium debug info in component
+    # builds everywhere
+    return 2
+  if host_arch == "arm" or host_arch == "x86":
+    # Reduce debug info in 32-bit native builds
+    return 1
+  if psutil.virtual_memory().total < 8589934592L:
+    # Reduce debug info if we have less than 8GB of RAM
+    return 1
+  if (psutil.virtual_memory().total + psutil.swap_memory().total < 17179869184L):
+    # Reduce debug info if we have less than 16GB of combined RAM and swap
     return 1
   return 2
 
@@ -75,7 +89,7 @@ def GetV8SnapshotArch(host_arch, target_arch):
   elif host_arch == "x86":
     if target_arch == "arm":
       return "x86"
-    elif target_arch == "x64":
+    elif target_arch == "x64" or target_arch == "arm64":
       return "x64"
 
   raise Exception("Failed to detect arch for compiling V8 snapshot")
@@ -171,10 +185,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_extensions", True)
 
 def WriteConfigurableArgs(writer, options):
-  try:
-    host_arch = HostArch()
-  except:
-    raise Exception("Failed to detect host architecture")
+  host_arch = HostArch()
 
   writer.WriteInt("symbol_level",
                   GetSymbolLevel(options.enable_debug_symbols,

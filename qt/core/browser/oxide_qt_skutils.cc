@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -102,12 +102,16 @@ QImage QImageFromSkBitmap(const SkBitmap& bitmap) {
       QImageFormatFromSkColorType(color, alpha == kPremul_SkAlphaType);
   if (format != QImage::Format_Invalid) {
     SkAutoLockPixels lock(bitmap);
-    return QImage(reinterpret_cast<const uchar*>(bitmap.getPixels()),
-                  bitmap.width(), bitmap.height(), format);
+    QImage image(reinterpret_cast<const uchar*>(bitmap.getPixels()),
+                 bitmap.width(), bitmap.height(), format);
+    image.detach();
+    return image;
   }
 
   if (color == kBGRA_8888_SkColorType) {
-    return QImageFromSkBitmap_BGRA_8888(bitmap);
+    QImage image = QImageFromSkBitmap_BGRA_8888(bitmap);
+    image.detach();
+    return image;
   }
 
   LOG(WARNING) <<

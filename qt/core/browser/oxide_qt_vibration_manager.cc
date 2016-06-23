@@ -29,7 +29,8 @@ const double kVibrationIntensity = 1.0;
 }
 
 // static
-void VibrationManager::Create(mojo::InterfaceRequest<device::VibrationManager> request) {
+void VibrationManager::Create(
+    mojo::InterfaceRequest<device::VibrationManager> request) {
   new VibrationManager(std::move(request));
 }
 
@@ -42,10 +43,14 @@ VibrationManager::~VibrationManager() {}
 
 void VibrationManager::Vibrate(int64_t milliseconds,
                                const VibrateCallback& callback) {
+  // This comes directly from the renderer - don't trust the value it gives us
+  int64_t sanitized_duration =
+      std::max(int64_t(1), std::min(milliseconds, int64_t(10000)));
+
   vibration_->stop();
 
   vibration_->setIntensity(kVibrationIntensity);
-  vibration_->setDuration(milliseconds);
+  vibration_->setDuration(sanitized_duration);
   vibration_->start();
 
   callback.Run();

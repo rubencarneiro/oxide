@@ -105,12 +105,12 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            content::WebPreferences* prefs) override;
   content::LocationProvider* OverrideSystemLocationProvider() override;
+  void RegisterRenderFrameMojoServices(
+      content::ServiceRegistry* registry,
+      content::RenderFrameHost* render_frame_host) override;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) override;
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(
       std::string* os_version) override;
-  void RegisterRenderProcessMojoServices(
-      content::ServiceRegistry* registry,
-      content::RenderProcessHost* render_process_host) override;
 
   std::string application_locale_;
   std::unique_ptr<BrowserPlatformIntegration> platform_integration_;

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_APP_MAIN_H_
-#define _OXIDE_QT_CORE_APP_MAIN_H_
+#include "proxy.h"
 
-#include <QtGlobal>
+FeedbackHapticsMockProxy::FeedbackHapticsMockProxy() {}
 
-namespace oxide {
-namespace qt {
-
-class AllocatorExtension {
- public:
-  virtual ~AllocatorExtension() {}
-
-  virtual void ReleaseFreeMemory() = 0;
-
-  virtual void* UncheckedAlloc(size_t size) = 0;
-
-  virtual void EnableTerminationOnOutOfMemory() = 0;
-};
-
-Q_DECL_EXPORT int OxideMain(
-    int argc,
-    const char** argv,
-    AllocatorExtension* allocator_extension);
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_SHARED_APP_MAIN_H_
+FeedbackHapticsMockProxy::~FeedbackHapticsMockProxy() {}

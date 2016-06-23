@@ -30,6 +30,9 @@ declare_args() {
 
 subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
 
+# TODO: Finish the mediahub bits
+enable_mediahub = false
+
 # TODO: All includes should be a fully qualified path from the source root,
 #  then we can remove this
 config("shared_include_dirs") {

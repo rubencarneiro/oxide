@@ -107,6 +107,8 @@ class RenderWidgetHostView
     return selection_controller_.get();
   }
 
+  void OnUserInput() const;
+
   bool HandleContextMenu(const content::ContextMenuParams& params);
 
  private:

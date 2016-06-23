@@ -79,9 +79,9 @@ TestWebView {
               "model.elementRect.x is wrong");
       compare(webView.currentPopupMenu.popupModel.elementRect.y, r.y,
               "model.elementRect.y is wrong");
-      compare(webView.currentPopupMenu.popupModel.elementRect.width, r.width,
+      compare(webView.currentPopupMenu.popupModel.elementRect.width, Math.round(r.width),
               "model.elementRect.width is wrong");
-      compare(webView.currentPopupMenu.popupModel.elementRect.height, r.height,
+      compare(webView.currentPopupMenu.popupModel.elementRect.height, Math.round(r.height),
               "model.elementRect.height is wrong");
 
       compare(webView.currentPopupMenu.popupModel.allowMultiSelect, false,

@@ -36,24 +36,32 @@ from constants import (
 from utils import (
   CheckCall,
   CheckOutput,
+  ScopedTmpdir,
   VersionFileParser
 )
 import subcommand
 
+# Contents of paths matching any of these entries will be excluded from the
+#  tarball, with the exception of build files with extensions matching any
+#  of those in TAR_INCLUDE_EXTENSIONS
+TAR_EXCLUDE_CONTENTS_PATHS = [
+  'chrome/test/data',
+  'v8/test'
+]
+
+# Paths matching any of these entries will be excluded from the tarball
 TAR_EXCLUDE_PATHS = [
   'breakpad/src/processor/testdata',
-  'chrome/browser/resources/tracing/tests',
   'chrome/common/extensions/docs',
   'courgette/testdata',
   'native_client/src/trusted/service_runtime/testdata',
   'native_client/toolchain',
-  'oxide/.relbranch',
   'out',
-  'ppapi/examples',
+  'oxide/.relbranch',
   'ppapi/native_client/tests',
-  'third_party/angle/samples/gles2_book',
   'third_party/hunspell/tests',
   'third_party/mesa/src/src/gallium/state_trackers/d3d1x/w32api',
+  'third_party/sqlite/src/test',
   'third_party/xdg-utils/tests',
   'third_party/yasm/source/patched-yasm/modules/arch/x86/tests',
   'third_party/yasm/source/patched-yasm/modules/dbgfmts/dwarf2/tests',
@@ -68,10 +76,9 @@ TAR_EXCLUDE_PATHS = [
   'third_party/WebKit/LayoutTests',
   'third_party/WebKit/Tools/Scripts',
   'tools/gyp/test',
-  'v8/test',
-  'webkit/tools/test/reference_build',
 ]
 
+# Paths matching any of these expressions will be excluded from the tarball
 TAR_EXCLUDE_REGEXPS = [
   r'^objdir.*',
   r'(^|\/)\.git(\/|$)',
@@ -83,6 +90,41 @@ TAR_EXCLUDE_REGEXPS = [
   r'\.so(|\..*)$',
   r'\.pyc$',
 ]
+
+TAR_INCLUDE_EXTENSIONS = [
+  '.gn',
+  '.gni',
+  '.grd',
+  '.gyp',
+  '.gypi',
+  '.isolate'
+]
+
+def GenerateAngleCommitH(tmpdir):
+  angle = os.path.join("third_party", "angle")
+  angle_src = os.path.join(angle, "src")
+  commit_id_h = os.path.join(angle_src, "commit.h")
+
+  os.makedirs(os.path.join(tmpdir, angle_src))
+
+  CheckCall([sys.executable,
+             os.path.join(TOPSRC_DIR, angle_src, "commit_id.py"),
+             "gen", os.path.join(TOPSRC_DIR, angle),
+             os.path.join(tmpdir, commit_id_h)],
+            TOPSRC_DIR)
+
+def GenerateGNLastCommitPositionH(tmpdir):
+  gn = os.path.join("tools", "gn")
+  last_commit_position_h = os.path.join(gn, "last_commit_position.h.no-git")
+
+  os.makedirs(os.path.join(tmpdir, gn))
+
+  CheckCall([sys.executable,
+             os.path.join(TOPSRC_DIR, gn, "last_commit_position.py"),
+             TOPSRC_DIR,
+             os.path.join(tmpdir, last_commit_position_h),
+             "TOOLS_GN_LAST_COMMIT_POSITION_H_"],
+            TOPSRC_DIR)
 
 class OptionParser(optparse.OptionParser):
   def __init__(self):
@@ -167,13 +209,14 @@ def cmd_make_tarball(options, args):
 
   def tar_filter(info):
     (root, ext) = os.path.splitext(info.name)
-    if ext == ".gyp" or ext == ".gypi":
-      print_added_file(info.name)
-      return info
-    if any(os.path.relpath(info.name, topsrcdir).startswith(r) for r in TAR_EXCLUDE_PATHS):
+    if (any(os.path.relpath(info.name, topsrcdir).startswith(r) for r in TAR_EXCLUDE_PATHS) or
+        any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in re_excludes)):
       print_skipped_file(info.name)
       return None
-    if any(r.search(os.path.relpath(info.name, topsrcdir)) is not None for r in re_excludes):
+    if ext in TAR_INCLUDE_EXTENSIONS or info.isdir():
+      print_added_file(info.name)
+      return info
+    if any(os.path.relpath(os.path.dirname(info.name), topsrcdir).startswith(r) for r in TAR_EXCLUDE_CONTENTS_PATHS):
       print_skipped_file(info.name)
       return None
     print_added_file(info.name)
@@ -185,6 +228,19 @@ def cmd_make_tarball(options, args):
     for name in os.listdir(TOPSRC_DIR):
       tar.add(os.path.join(TOPSRC_DIR, name), os.path.join(topsrcdir, name),
               filter=tar_filter, recursive=True)
+
+    with ScopedTmpdir() as tmpdir:
+      if options.verbose:
+        print("Generating Angle commit.h")
+      GenerateAngleCommitH(tmpdir)
+
+      if options.verbose:
+        print("Generating GN last_commit_position.h")
+      GenerateGNLastCommitPositionH(tmpdir)
+
+      for name in os.listdir(tmpdir):
+        tar.add(os.path.join(tmpdir, name), os.path.join(topsrcdir, name),
+                recursive=True)
 
   if options.verbose:
     print("Compressing tarball")

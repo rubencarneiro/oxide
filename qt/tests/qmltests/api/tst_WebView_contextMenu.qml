@@ -96,6 +96,14 @@ TestWebView {
       compare(model.isEditable, data.isEditable);
     }
 
+    function test_WebView_contextMenu_copyImage() {
+      ClipboardTestUtils.clearClipboard();
+      verify(!ClipboardTestUtils.hasImage());
+      invokeContextMenu("image");
+      webView.currentContextMenu.contextModel.copyImage();
+      verify(TestUtils.waitFor(ClipboardTestUtils.hasImage));
+    }
+
     function test_WebView_contextMenu_saveLink() {
       invokeContextMenu("hyperlink");
       var model = webView.currentContextMenu.contextModel;

@@ -23,7 +23,9 @@ executable("renderer") {
 
   deps = [
     "//oxide/build/config/Qt5:Core",
-    "//oxide/qt/core"
+    "//oxide/qt/core",
+    "//oxide/shared/allocator",
+    "//oxide/shared/allocator:features"
   ]
 
   sources = [ "main.cc" ]

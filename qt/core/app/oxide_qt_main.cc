@@ -26,10 +26,34 @@
 namespace oxide {
 namespace qt {
 
+namespace {
+
+AllocatorExtension* g_allocator_extension;
+
+void ReleaseFreeMemoryThunk() {
+  g_allocator_extension->ReleaseFreeMemory();
+}
+
+void* UncheckedAllocThunk(size_t size) {
+  return g_allocator_extension->UncheckedAlloc(size);
+}
+
+void EnableTerminationOnOutOfMemoryThunk() {
+  g_allocator_extension->EnableTerminationOnOutOfMemory();
+}
+
+}
+
 int OxideMain(int argc,
               const char** argv,
-              ReleaseFreeMemoryFunction release_free_memory_function) {
-  base::allocator::SetReleaseFreeMemoryFunction(release_free_memory_function);
+              AllocatorExtension* allocator_extension) {
+  g_allocator_extension = allocator_extension;
+  if (g_allocator_extension) {
+    base::allocator::oxide::SetReleaseFreeMemoryFunc(ReleaseFreeMemoryThunk);
+    base::allocator::oxide::SetUncheckedAllocFunc(UncheckedAllocThunk);
+    base::allocator::oxide::SetEnableTerminationOnOOMFunc(
+        EnableTerminationOnOutOfMemoryThunk);
+  }
 
   PlatformDelegate delegate;
 

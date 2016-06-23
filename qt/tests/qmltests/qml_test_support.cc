@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 #include <QLatin1String>
 #include <QList>
 #include <QQmlContext>
+#include <QQmlEngine>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -67,6 +68,10 @@ void ExternalProtocolHandler::setScheme(const QString& scheme) {
 }
 
 ClipboardTestUtils::ClipboardTestUtils() {}
+
+bool ClipboardTestUtils::hasImage() const {
+  return QGuiApplication::clipboard()->mimeData()->hasImage();
+}
 
 void ClipboardTestUtils::copyToClipboard(const QString& mimeType,
                                          const QString& data) {
@@ -209,7 +214,12 @@ WebViewTestSupport* TestSupport::createWebViewTestSupport(
 }
 
 QVariant TestSupport::getAppProperty(const QString& property) {
-  return QCoreApplication::instance()->property(property.toStdString().c_str());
+  QVariant rv =
+      QCoreApplication::instance()->property(property.toStdString().c_str());
+  if (QObject* qobject = rv.value<QObject*>()) {
+    QQmlEngine::setObjectOwnership(qobject, QQmlEngine::CppOwnership);
+  }
+  return rv;
 }
 
 void TestSupport::setAppProperty(const QString& property,
