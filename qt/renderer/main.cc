@@ -19,44 +19,49 @@
 #include "shared/allocator/features.h"
 
 #if BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
-#include "base/allocator/allocator_shim.h"
+#include "base/allocator/allocator_shim.h" // nogncheck
 #endif
 #if defined(COMPONENT_BUILD)
 #include "content/public/common/content_client.h" // nogncheck
 #endif
 #if BUILDFLAG(USE_TCMALLOC)
+#include "third_party/tcmalloc/chromium/src/gperftools/tcmalloc.h" // nogncheck
 #include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h" // nogncheck
 #endif
 
-#if BUILDFLAG(USE_TCMALLOC)
-#if !BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
-extern "C" {
-int tc_set_new_mode(int mode);
-}
+class AllocatorExtensionImpl : public oxide::qt::AllocatorExtension {
+ public:
+  void ReleaseFreeMemory() override {
+#if defined(USE_TCMALLOC)
+    MallocExtension::instance()->ReleaseFreeMemory();
 #endif
+  }
 
-static void ReleaseFreeMemoryThunk() {
-  MallocExtension::instance()->ReleaseFreeMemory();
-}
+  void* UncheckedAlloc(size_t size) override {
+#if defined(USE_TCMALLOC)
+    return tc_malloc_skip_new_handler(size);
+#else
+    return malloc(size);
 #endif
+  }
+
+  void EnableTerminationOnOutOfMemory() override {
+#if BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
+    base::allocator::SetCallNewHandlerOnMallocFailure(true);
+#elif BUILDFLAG(USE_TCMALLOC)
+    tc_set_new_mode(1);
+#endif
+  }
+};
 
 int main(int argc, const char* argv[]) {
-#if BUILDFLAG(USE_UNIFIED_ALLOCATOR_SHIM)
-  base::allocator::SetCallNewHandlerOnMallocFailure(true);
-#elif BUILDFLAG(USE_TCMALLOC)
-  tc_set_new_mode(1);
-#endif
-
 #if defined(COMPONENT_BUILD)
   // Gross hack for component build
   // see https://code.google.com/p/chromium/issues/detail?id=374712
   content::SetContentClient(nullptr);
 #endif
 
-  oxide::qt::ReleaseFreeMemoryFunction release_free_memory_function = nullptr;
-#if BUILDFLAG(USE_TCMALLOC)
-  release_free_memory_function = ReleaseFreeMemoryThunk;
-#endif
+  AllocatorExtensionImpl allocator_extension;
 
-  return oxide::qt::OxideMain(argc, argv, release_free_memory_function);
+  return oxide::qt::OxideMain(argc, argv, &allocator_extension);
 }
