@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 #include <QByteArray>
+#include <QCryptographicHash>
+#include <QSsl>
+#include <QSslCertificate>
 
 #include "base/logging.h"
 #include "base/time/time.h"
@@ -213,10 +216,16 @@ QString OxideQSslCertificate::fingerprintSHA1() const {
     return QString();
   }
 
-  const net::SHA1HashValue& hash = d->x509_cert_->fingerprint();
-  QByteArray ba(reinterpret_cast<const char *>(hash.data), sizeof(hash.data));
+  std::string der;
+  if (!net::X509Certificate::GetDEREncoded(d->x509_cert_->os_cert_handle(),
+                                           &der)) {
+    return QString();
+  }
 
-  return QString::fromUtf8(ba.toHex());
+  QByteArray qder(der.data(), der.size());
+  QSslCertificate qcert(qder, QSsl::Der);
+
+  return QString::fromUtf8(qcert.digest(QCryptographicHash::Sha1).toHex());
 }
 
 bool OxideQSslCertificate::isExpired() const {

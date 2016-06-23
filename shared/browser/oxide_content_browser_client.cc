@@ -37,6 +37,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
+#include "services/shell/public/cpp/interface_registry.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -270,11 +271,11 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
   return platform_integration_->CreateLocationProvider().release();
 }
 
-void ContentBrowserClient::RegisterRenderFrameMojoServices(
-    content::ServiceRegistry* registry,
+void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
+    shell::InterfaceRegistry* registry,
     content::RenderFrameHost* render_frame_host) {
   DCHECK(registry);
-  registry->AddService(base::Bind(&CreateVibrationManager));
+  registry->AddInterface(base::Bind(&CreateVibrationManager));
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

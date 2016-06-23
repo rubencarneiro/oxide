@@ -32,6 +32,8 @@ template <typename T> struct DefaultSingletonTraits;
 namespace net {
 
 class CertVerifier;
+class CTPolicyEnforcer;
+class CTVerifier;
 class HostResolver;
 class HttpAuthHandlerFactory;
 class NetLog;
@@ -58,6 +60,8 @@ class IOThread final : public content::BrowserThreadDelegate {
     net::HttpAuthHandlerFactory* http_auth_handler_factory() const;
     net::ProxyService* proxy_service() const;
     net::URLRequestThrottlerManager* throttler_manager() const;
+    net::CTVerifier* cert_transparency_verifier() const;
+    net::CTPolicyEnforcer* ct_policy_enforcer() const;
 
     URLRequestContext* system_request_context() const;
 
@@ -73,6 +77,8 @@ class IOThread final : public content::BrowserThreadDelegate {
     std::unique_ptr<net::HttpAuthHandlerFactory> http_auth_handler_factory_;
     std::unique_ptr<net::ProxyService> proxy_service_;
     std::unique_ptr<net::URLRequestThrottlerManager> throttler_manager_;
+    std::unique_ptr<net::CTVerifier> cert_transparency_verifier_;
+    std::unique_ptr<net::CTPolicyEnforcer> ct_policy_enforcer_;
 
     std::unique_ptr<URLRequestContext> system_request_context_;
 

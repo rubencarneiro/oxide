@@ -64,7 +64,6 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
     content::ResourceContext* resource_context,
     int child_id,
     int route_id,
-    int request_id,
     bool is_content_initiated,
     bool must_download,
     const std::string& suggested_filename,
