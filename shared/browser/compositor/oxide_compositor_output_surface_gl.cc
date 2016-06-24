@@ -28,6 +28,7 @@
 #include "cc/output/output_surface_client.h"
 #include "cc/resources/resource_format.h"
 #include "cc/resources/resource_provider.h"
+#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/command_buffer/common/sync_token.h"
 
@@ -173,6 +174,12 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
                            GL_TEXTURE_2D,
                            back_buffer_->texture_id,
                            0);
+}
+
+uint32_t CompositorOutputSurfaceGL::GetFramebufferCopyTextureFormat() {
+  content::ContextProviderCommandBuffer* gl =
+      static_cast<content::ContextProviderCommandBuffer*>(context_provider());
+  return gl->GetCopyTextureInternalFormat();
 }
 
 void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {

@@ -45,6 +45,7 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
                float scale_factor,
                bool has_alpha) override;
   void BindFramebuffer() override;
+  uint32_t GetFramebufferCopyTextureFormat() override;
   void SwapBuffers(cc::CompositorFrame* frame) override;
 
   // CompositorOutputSurface implementation

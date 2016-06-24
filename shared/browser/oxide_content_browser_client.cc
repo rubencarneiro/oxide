@@ -271,6 +271,10 @@ ContentBrowserClient::OverrideSystemLocationProvider() {
   return platform_integration_->CreateLocationProvider().release();
 }
 
+bool ContentBrowserClient::UseNetworkLocationProviders() {
+  return false;
+}
+
 void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
     shell::InterfaceRegistry* registry,
     content::RenderFrameHost* render_frame_host) {

@@ -105,6 +105,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            content::WebPreferences* prefs) override;
   content::LocationProvider* OverrideSystemLocationProvider() override;
+  bool UseNetworkLocationProviders() override;
   void RegisterRenderFrameMojoInterfaces(
       shell::InterfaceRegistry* registry,
       content::RenderFrameHost* render_frame_host) override;

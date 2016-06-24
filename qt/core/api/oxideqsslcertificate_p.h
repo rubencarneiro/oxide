@@ -45,6 +45,7 @@ class OXIDE_QTCORE_EXPORT OxideQSslCertificateData : public QSharedData {
                                                const QString& issuer,
                                                const QDateTime& effective_date,
                                                const QDateTime& expiry_date);
+
  private:
   friend class OxideQSslCertificate;
 
