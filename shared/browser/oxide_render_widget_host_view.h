@@ -155,7 +155,6 @@ class RenderWidgetHostView
   bool CanCopyToVideoFrame() const override;
   bool HasAcceleratedSurface(const gfx::Size& desired_size) override;
   void GetScreenInfo(blink::WebScreenInfo* results) override;
-  bool GetScreenColorProfile(std::vector<char>* color_profile) override;
   gfx::Rect GetBoundsInRootWindow() override;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) override;
