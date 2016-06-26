@@ -182,12 +182,12 @@ uint32_t CompositorOutputSurfaceGL::GetFramebufferCopyTextureFormat() {
   return gl->GetCopyTextureInternalFormat();
 }
 
-void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
-  DCHECK(frame->gl_frame_data);
+void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame frame) {
+  DCHECK(frame.gl_frame_data);
   DCHECK(back_buffer_);
   DCHECK(!back_buffer_->mailbox.IsZero());
   DCHECK(surface_size_ == back_buffer_->size);
-  DCHECK(frame->gl_frame_data->size == back_buffer_->size);
+  DCHECK(frame.gl_frame_data->size == back_buffer_->size);
   DCHECK(!back_buffer_->size.IsEmpty());
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();

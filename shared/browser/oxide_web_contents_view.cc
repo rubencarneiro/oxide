@@ -578,7 +578,7 @@ void WebContentsView::CompositorDidCommit() {
   // XXX: Not sure if the behaviour here when there's no view is correct
   committed_frame_metadata_ =
       GetRenderWidgetHostView() ?
-        GetRenderWidgetHostView()->last_submitted_frame_metadata()
+        GetRenderWidgetHostView()->last_submitted_frame_metadata().Clone()
         : cc::CompositorFrameMetadata();
 }
 

@@ -125,9 +125,8 @@ class RenderWidgetHostView
   bool DoTopControlsShrinkBlinkSize() const override;
   float GetTopControlsHeight() const override;
   void FocusedNodeChanged(bool is_editable_node) override;
-  void OnSwapCompositorFrame(
-      uint32_t output_surface_id,
-      std::unique_ptr<cc::CompositorFrame> frame) override;
+  void OnSwapCompositorFrame(uint32_t output_surface_id,
+                             cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) override;

@@ -200,16 +200,15 @@ void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
   ime_bridge_.FocusedNodeChanged(is_editable_node);
 }
 
-void RenderWidgetHostView::OnSwapCompositorFrame(
-    uint32_t output_surface_id,
-    std::unique_ptr<cc::CompositorFrame> frame) {
-  if (!frame->delegated_frame_data) {
+void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
+                                                 cc::CompositorFrame frame) {
+  if (!frame.delegated_frame_data) {
     DLOG(ERROR) << "Non delegated renderer path is not supported";
     host_->GetProcess()->ShutdownForBadMessage();
     return;
   }
 
-  cc::DelegatedFrameData* frame_data = frame->delegated_frame_data.get();
+  cc::DelegatedFrameData* frame_data = frame.delegated_frame_data.get();
 
   if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
@@ -232,7 +231,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
                  output_surface_id);
   ack_callbacks_.push(ack_callback);
 
-  float device_scale_factor = frame->metadata.device_scale_factor;
+  cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
+
+  float device_scale_factor = metadata.device_scale_factor;
   cc::RenderPass* root_pass = frame_data->render_pass_list.back().get();
 
   gfx::Size frame_size = root_pass->output_rect.size();
@@ -243,8 +244,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
       gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
                      1.0f / device_scale_factor));
-
-  cc::CompositorFrameMetadata metadata = frame->metadata;
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -283,13 +282,12 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
+    std::unique_ptr<cc::CompositorFrame> frame_copy =
+        base::MakeUnique<cc::CompositorFrame>(std::move(frame));
     surface_factory_->SubmitCompositorFrame(surface_id_,
-                                            std::move(frame),
+                                            std::move(frame_copy),
                                             ack_callback);
   }
-
-  last_submitted_frame_metadata_ = metadata;
-  last_frame_size_dip_ = frame_size_dip;
 
   if (layer_.get()) {
     layer_->SetNeedsDisplayRect(damage_rect_dip);
@@ -317,6 +315,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
   selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
   selection_controller_->OnSelectionBoundsChanged(selection.start,
                                                   selection.end);
+
+  last_submitted_frame_metadata_ = std::move(metadata);
+  last_frame_size_dip_ = frame_size_dip;
 }
 
 void RenderWidgetHostView::ClearCompositorFrame() {
@@ -500,13 +501,13 @@ bool RenderWidgetHostView::LockMouse() {
 void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::CompositorDidCommit() {
-  committed_frame_metadata_ = last_submitted_frame_metadata_;
+  committed_frame_metadata_ = std::move(last_submitted_frame_metadata_);
   RunAckCallbacks(cc::SurfaceDrawStatus::DRAWN);
 }
 
 void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
-  cc::CompositorFrameMetadata old = displayed_frame_metadata_;
-  displayed_frame_metadata_ = committed_frame_metadata_;
+  cc::CompositorFrameMetadata old = std::move(displayed_frame_metadata_);
+  displayed_frame_metadata_ = std::move(committed_frame_metadata_);
 
   if (!container_) {
     return;

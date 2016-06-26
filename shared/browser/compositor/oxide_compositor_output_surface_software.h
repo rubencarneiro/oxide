@@ -37,7 +37,7 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
  private:
   // cc::OutputSurface implementation
   uint32_t GetFramebufferCopyTextureFormat() override;
-  void SwapBuffers(cc::CompositorFrame* frame) override;
+  void SwapBuffers(cc::CompositorFrame frame) override;
 
   // CompositorOutputSurface implementation
   void ReclaimResources(const CompositorFrameAck& ack) override;
