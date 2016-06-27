@@ -81,7 +81,7 @@ void WebContextMenu::Close() {
 void WebContextMenu::CopyImage() const {
   if ((params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) ||
       (params_.media_type == blink::WebContextMenuData::MediaTypeImage)) {
-    render_frame_host_->GetRenderViewHost()->CopyImageAt(params_.x, params_.y);
+    render_frame_host_->CopyImageAt(params_.x, params_.y);
   }
 }
 
