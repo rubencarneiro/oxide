@@ -38,7 +38,7 @@ ResourceDispatcherHostLoginDelegate::ResourceDispatcherHostLoginDelegate(
     : request_(request) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
 
-  host_ = auth_info->challenger.ToString();
+  challenger_ = auth_info->challenger;
   realm_ = auth_info->realm;
 
   int render_process_id;
@@ -143,14 +143,6 @@ void ResourceDispatcherHostLoginDelegate::DispatchRequest(
   }
 
   webview->HttpAuthenticationRequested(this);
-}
-
-std::string ResourceDispatcherHostLoginDelegate::Host() const {
-  return host_;
-}
-
-std::string ResourceDispatcherHostLoginDelegate::Realm() const {
-  return realm_;
 }
 
 } // namespace oxide

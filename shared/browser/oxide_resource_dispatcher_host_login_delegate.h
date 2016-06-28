@@ -20,6 +20,7 @@
 
 #include "base/callback.h"
 #include "content/public/browser/resource_dispatcher_host_login_delegate.h"
+#include "url/origin.h"
 
 #include "shared/common/oxide_shared_export.h"
 
@@ -45,8 +46,8 @@ class OXIDE_SHARED_EXPORT ResourceDispatcherHostLoginDelegate
 
   void SetCancelledCallback(const base::Closure& cancelled_callback);
 
-  std::string Host() const;
-  std::string Realm() const;
+  url::Origin challenger() const { return challenger_; }
+  std::string realm() const { return realm_; }
 
 private:
   friend class ResourceDispatcherHostDelegate;
@@ -55,7 +56,7 @@ private:
   void OnRequestCancelled() override;
 
   net::URLRequest* request_;
-  std::string host_;
+  url::Origin challenger_;
   std::string realm_;
   base::Closure cancelled_callback_;
 };
