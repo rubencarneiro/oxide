@@ -146,6 +146,8 @@ Tool for handling release tasks.
 @subcommand.CommandOption("-f", "--force", dest="force", action="store_true",
                           help="Create a tarball even if the tree has "
                                "uncommitted changes")
+@subcommand.CommandOption("--basename", dest="basename",
+                          help="Override the basename of the resulting tarball")
 def cmd_make_tarball(options, args):
   """Create a tarball.
 
@@ -164,7 +166,11 @@ def cmd_make_tarball(options, args):
   platform = options.platform
 
   v = VersionFileParser(os.path.join(OXIDESRC_DIR, platform, "VERSION"))
+
   basename = "oxide-%s" % platform
+  if options.basename:
+    basename = options.basename
+
   topsrcdir = basename
 
   if options.deb:
