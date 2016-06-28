@@ -30,7 +30,9 @@ if (false) {
   use_unified_allocator_shim = false
 }
 
-base_allocator_dir = "//base/allocator"
+if (use_unified_allocator_shim || enable_tcmalloc) {
+  base_allocator_dir = "//base/allocator"
+}
 
 # This "allocator" meta-target will forward to the default allocator according
 # to the build settings.

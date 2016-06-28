@@ -37,7 +37,16 @@ option(ENABLE_PLUGINS
        ${_ENABLE_PLUGINS_DEFAULT})
 unset(_ENABLE_PLUGINS_DEFAULT)
 
-option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ON)
+set(_ENABLE_TCMALLOC_DEFAULT OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(_ENABLE_TCMALLOC_DEFAULT ON)
+endif()
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  set(_ENABLE_TCMALLOC_DEFAULT OFF)
+endif()
+option(ENABLE_TCMALLOC "Use TCMalloc in the renderer executable" ${_ENABLE_TCMALLOC_DEFAULT})
+unset(_ENABLE_TCMALLOC_DEFAULT)
+
 option(USE_SYSTEM_PROTOBUF "Use the system protobuf" OFF)
 
 set(_ENABLE_HYBRIS_DEFAULT OFF)
