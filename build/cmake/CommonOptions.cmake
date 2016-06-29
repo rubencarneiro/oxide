@@ -60,8 +60,12 @@ option(ENABLE_HYBRIS_CAMERA
        "Enable support for the camera compatibility layer in Ubuntu's libhybris"
        OFF)
 
-option(USE_GN "Use Generate Ninja instead of gyp" OFF)
+option(USE_GYP "Use gyp instead of Generate Ninja (unsupported, and will be removed soon" OFF)
 option(BOOTSTRAP_GN "Bootstrap a Generate Ninja binary" OFF)
+
+if(USE_GYP)
+  message(WARNING "The gyp build is unsupported, may not work and will be removed soon")
+endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS is a Linux only option")
@@ -69,8 +73,8 @@ endif()
 if(ENABLE_HYBRIS_CAMERA AND NOT ENABLE_HYBRIS)
   message(FATAL_ERROR "ENABLE_HYBRIS_CAMERA requires ENABLE_HYBRIS")
 endif()
-if(BOOTSTRAP_GN AND NOT USE_GN)
-  message(FATAL_ERROR "BOOTSTRAP_GN is requires USE_GN")
+if(BOOTSTRAP_GN AND USE_GYP)
+  message(FATAL_ERROR "BOOTSTRAP_GN cannot be used with USE_GYP")
 endif()
 
 if(NOT OXIDE_PLATFORM)
