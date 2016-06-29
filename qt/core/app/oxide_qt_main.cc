@@ -21,6 +21,7 @@
 
 #include "shared/app/oxide_main.h"
 
+#include "oxide_qt_allocator_hooks.h"
 #include "oxide_qt_platform_delegate.h"
 
 namespace oxide {
@@ -28,27 +29,27 @@ namespace qt {
 
 namespace {
 
-AllocatorExtension* g_allocator_extension;
+AllocatorHooks* g_allocator_hooks;
 
 void ReleaseFreeMemoryThunk() {
-  g_allocator_extension->ReleaseFreeMemory();
+  g_allocator_hooks->ReleaseFreeMemory();
 }
 
 void* UncheckedAllocThunk(size_t size) {
-  return g_allocator_extension->UncheckedAlloc(size);
+  return g_allocator_hooks->UncheckedAlloc(size);
 }
 
 void EnableTerminationOnOutOfMemoryThunk() {
-  g_allocator_extension->EnableTerminationOnOutOfMemory();
+  g_allocator_hooks->EnableTerminationOnOutOfMemory();
 }
 
 }
 
 int OxideMain(int argc,
               const char** argv,
-              AllocatorExtension* allocator_extension) {
-  g_allocator_extension = allocator_extension;
-  if (g_allocator_extension) {
+              AllocatorHooks* allocator_hooks) {
+  g_allocator_hooks = allocator_hooks;
+  if (g_allocator_hooks) {
     base::allocator::oxide::SetReleaseFreeMemoryFunc(ReleaseFreeMemoryThunk);
     base::allocator::oxide::SetUncheckedAllocFunc(UncheckedAllocThunk);
     base::allocator::oxide::SetEnableTerminationOnOOMFunc(

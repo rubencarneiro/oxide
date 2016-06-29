@@ -136,6 +136,7 @@
         'api/oxideqwebpreferences.cc',
         'api/oxideqwebpreferences.h',
         'api/oxideqwebpreferences_p.h',
+        'app/oxide_qt_allocator_hooks.h',
         'app/oxide_qt_main.cc',
         'app/oxide_qt_main.h',
         'app/oxide_qt_platform_delegate.cc',

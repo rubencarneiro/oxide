@@ -15,6 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+#include "qt/core/app/oxide_qt_allocator_hooks.h"
 #include "qt/core/app/oxide_qt_main.h"
 #include "shared/allocator/features.h"
 
@@ -29,7 +30,7 @@
 #include "third_party/tcmalloc/chromium/src/gperftools/malloc_extension.h" // nogncheck
 #endif
 
-class AllocatorExtensionImpl : public oxide::qt::AllocatorExtension {
+class AllocatorHooksImpl : public oxide::qt::AllocatorHooks {
  public:
   void ReleaseFreeMemory() override {
 #if defined(USE_TCMALLOC)
@@ -61,7 +62,7 @@ int main(int argc, const char* argv[]) {
   content::SetContentClient(nullptr);
 #endif
 
-  AllocatorExtensionImpl allocator_extension;
+  AllocatorHooksImpl allocator_hooks;
 
-  return oxide::qt::OxideMain(argc, argv, &allocator_extension);
+  return oxide::qt::OxideMain(argc, argv, &allocator_hooks);
 }

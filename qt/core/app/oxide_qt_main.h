@@ -23,21 +23,11 @@
 namespace oxide {
 namespace qt {
 
-class AllocatorExtension {
- public:
-  virtual ~AllocatorExtension() {}
+class AllocatorHooks;
 
-  virtual void ReleaseFreeMemory() = 0;
-
-  virtual void* UncheckedAlloc(size_t size) = 0;
-
-  virtual void EnableTerminationOnOutOfMemory() = 0;
-};
-
-Q_DECL_EXPORT int OxideMain(
-    int argc,
-    const char** argv,
-    AllocatorExtension* allocator_extension);
+Q_DECL_EXPORT int OxideMain(int argc,
+                            const char** argv,
+                            AllocatorHooks* allocator_hooks);
 
 } // namespace qt
 } // namespace oxide
