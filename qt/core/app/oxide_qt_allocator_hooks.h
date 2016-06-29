@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,21 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_APP_MAIN_H_
-#define _OXIDE_QT_CORE_APP_MAIN_H_
+#ifndef _OXIDE_QT_CORE_APP_ALLOCATOR_HOOKS_H_
+#define _OXIDE_QT_CORE_APP_ALLOCATOR_HOOKS_H_
 
-#include <QtGlobal>
+#include <stddef.h>
 
 namespace oxide {
 namespace qt {
 
-class AllocatorHooks;
+class AllocatorHooks {
+ public:
+  virtual ~AllocatorHooks() {}
 
-Q_DECL_EXPORT int OxideMain(int argc,
-                            const char** argv,
-                            AllocatorHooks* allocator_hooks);
+  virtual void ReleaseFreeMemory() = 0;
+
+  virtual void* UncheckedAlloc(size_t size) = 0;
+
+  virtual void EnableTerminationOnOutOfMemory() = 0;
+};
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_APP_MAIN_H_
+#endif // _OXIDE_QT_CORE_APP_ALLOCATOR_HOOKS_H_

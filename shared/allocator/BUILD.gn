@@ -23,14 +23,15 @@ enable_debugallocation = is_debug
 # TODO: Make the unified allocator shim work. Unforunately this depends on
 #  //base, which kind-of sucks because we don't want executables to depend
 #  on that.
-#if ((is_linux || is_android) && !is_asan && !is_lsan && !is_tsan && !is_msan) {
-if (false) {
+if ((is_linux || is_android) && !is_asan && !is_lsan && !is_tsan && !is_msan) {
   use_unified_allocator_shim = true
 } else {
   use_unified_allocator_shim = false
 }
 
-base_allocator_dir = "//base/allocator"
+if (use_unified_allocator_shim || enable_tcmalloc) {
+  base_allocator_dir = "//base/allocator"
+}
 
 # This "allocator" meta-target will forward to the default allocator according
 # to the build settings.
@@ -289,6 +290,8 @@ if (use_unified_allocator_shim) {
     configs += [ "//base:base_implementation" ]  # for BASE_EXPORT
     visibility = [ ":allocator" ]
 
+    deps = [ "//base" ]
+
     sources = [
       "$base_allocator_dir/allocator_shim.cc",
       "$base_allocator_dir/allocator_shim.h",
@@ -301,7 +304,7 @@ if (use_unified_allocator_shim) {
         "$base_allocator_dir/allocator_shim_default_dispatch_to_tcmalloc.cc",
         "$base_allocator_dir/allocator_shim_override_glibc_weak_symbols.h",
       ]
-      deps = [
+      deps += [
         ":tcmalloc",
       ]
     } else if (is_linux) {
