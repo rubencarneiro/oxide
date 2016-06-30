@@ -282,10 +282,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
-    std::unique_ptr<cc::CompositorFrame> frame_copy =
-        base::MakeUnique<cc::CompositorFrame>(std::move(frame));
     surface_factory_->SubmitCompositorFrame(surface_id_,
-                                            std::move(frame_copy),
+                                            std::move(frame),
                                             ack_callback);
   }
 

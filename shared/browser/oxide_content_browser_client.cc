@@ -27,8 +27,6 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
-#include "content/public/browser/geolocation_provider.h"
-#include "content/public/browser/location_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -47,11 +45,11 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
 
-#include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_geolocation_delegate.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -218,8 +216,9 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
       resource_dispatcher_host_delegate_.get());
 }
 
-content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
-  return new AccessTokenStore();
+content::GeolocationProvider::Delegate*
+ContentBrowserClient::CreateGeolocationDelegate() {
+  return new GeolocationDelegate();
 }
 
 void ContentBrowserClient::OverrideWebkitPrefs(
@@ -264,15 +263,6 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (view) {
     prefs->supports_multiple_windows = view->CanCreateWindows();
   }
-}
-
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  return platform_integration_->CreateLocationProvider().release();
-}
-
-bool ContentBrowserClient::UseNetworkLocationProviders() {
-  return false;
 }
 
 void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(

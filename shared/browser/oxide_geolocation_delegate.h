@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,27 +15,27 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_ACCESS_TOKEN_STORE_H_
-#define _OXIDE_SHARED_ACCESS_TOKEN_STORE_H_
+#ifndef _OXIDE_SHARED_BROWSER_GEOLOCATION_DELEGATE_H_
+#define _OXIDE_SHARED_BROWSER_GEOLOCATION_DELEGATE_H_
 
-#include "content/public/browser/access_token_store.h"
+#include "base/macros.h"
+#include "content/public/browser/geolocation_provider.h"
 
 namespace oxide {
 
-class AccessTokenStore : public content::AccessTokenStore
-{
+class GeolocationDelegate : public content::GeolocationProvider::Delegate {
  public:
-  AccessTokenStore();
-
-  virtual void LoadAccessTokens(
-      const LoadAccessTokensCallback& callback) override;
-  virtual void SaveAccessToken(
-      const GURL& server_url, const base::string16& access_token) override;
+  GeolocationDelegate() = default;
 
  private:
-  DISALLOW_COPY_AND_ASSIGN(AccessTokenStore);
+  // content::GeolocationProvider::Delegate implementation
+  bool UseNetworkLocationProviders() override;
+  content::AccessTokenStore* CreateAccessTokenStore() override;
+  content::LocationProvider* OverrideSystemLocationProvider() override;
+
+  DISALLOW_COPY_AND_ASSIGN(GeolocationDelegate);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_ACCESS_TOKEN_STORE_H_
+#endif // _OXIDE_SHARED_BROWSER_GEOLOCATION_DELEGATE_H_

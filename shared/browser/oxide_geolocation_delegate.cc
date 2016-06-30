@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,28 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_access_token_store.h"
+#include "oxide_geolocation_delegate.h"
 
-#include "base/logging.h"
+#include "content/public/browser/location_provider.h"
 
-#include "oxide_io_thread.h"
+#include "oxide_browser_platform_integration.h"
 
 namespace oxide {
 
-AccessTokenStore::AccessTokenStore() {}
-
-void AccessTokenStore::LoadAccessTokens(
-    const LoadAccessTokensCallback& callback) {
-  NOTIMPLEMENTED();
-  AccessTokenStore::AccessTokenMap map;
-  net::URLRequestContextGetter* context =
-      IOThread::instance()->GetSystemURLRequestContext();
-  callback.Run(map, context);
+bool GeolocationDelegate::UseNetworkLocationProviders() {
+  return false;
 }
 
-void AccessTokenStore::SaveAccessToken(
-    const GURL& server_url, const base::string16& access_token) {
-  NOTIMPLEMENTED();
+content::AccessTokenStore* GeolocationDelegate::CreateAccessTokenStore() {
+  return nullptr;
+}
+
+content::LocationProvider*
+GeolocationDelegate::OverrideSystemLocationProvider() {
+  return BrowserPlatformIntegration::GetInstance()
+      ->CreateLocationProvider().release();
 }
 
 } // namespace oxide
