@@ -69,7 +69,7 @@
 #include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_cookie_store_ui_proxy.h"
+#include "oxide_cookie_store_proxy.h"
 #include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
@@ -282,24 +282,6 @@ class OTRBrowserContextIODataImpl : public BrowserContextIOData {
   BrowserContextIODataImpl* original_io_data_;
 };
 
-void BrowserContextIOData::Init() {
-  // FIXME(chrisccoulson): net::CookieStore is not thread-safe - we need to be
-  //  creating this on the IO thread. Whilst this is sort-of ok for now (we
-  //  guarantee that there are no concurrent accesses here), it will break
-  //  if net::CookieMonster is modified to assert that it's only accessed on
-  //  a single thread
-  DCHECK(!cookie_store_.get());
-
-  base::FilePath cookie_path;
-  if (!IsOffTheRecord() && !GetPath().empty()) {
-    cookie_path = GetPath().Append(kCookiesFilename);
-  }
-  cookie_store_ = content::CreateCookieStore(
-      content::CookieStoreConfig(cookie_path,
-                                 GetSessionCookieMode(),
-                                 nullptr, nullptr));
-}
-
 BrowserContextIOData::BrowserContextIOData()
     : resource_context_(new ResourceContext(this)),
       temporary_saved_permission_context_(
@@ -365,6 +347,17 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
   DCHECK(!main_request_context_);
 
+  base::FilePath cookie_path;
+  if (!IsOffTheRecord() && !GetPath().empty()) {
+    cookie_path = GetPath().Append(kCookiesFilename);
+  }
+  std::unique_ptr<net::CookieStore> cookie_store =
+      content::CreateCookieStore(
+          content::CookieStoreConfig(cookie_path,
+                                     GetSessionCookieMode(),
+                                     nullptr, nullptr));
+  cookie_store_owner_->set_store(std::move(cookie_store));
+
   IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
 
   ssl_config_service_ = new SSLConfigService();
@@ -414,8 +407,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   context->set_http_server_properties(http_server_properties_.get());
 
-  DCHECK(cookie_store_.get());
-  context->set_cookie_store(cookie_store_.get());
+  context->set_cookie_store(cookie_store_owner_->store());
 
   context->set_transport_security_state(transport_security_state_.get());
 
@@ -545,7 +537,7 @@ UserAgentSettingsIOData* BrowserContextIOData::GetUserAgentSettings() const {
 
 net::CookieStore* BrowserContextIOData::GetCookieStore() const {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
-  return cookie_store_.get();
+  return cookie_store_owner_->store();
 }
 
 class BrowserContextImpl;
@@ -748,9 +740,14 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
 
   g_all_contexts.Get().insert(this);
 
-  // Make sure that the cookie store is properly created
-  io_data->Init();
-  cookie_store_.reset(new CookieStoreUIProxy(io_data->cookie_store_.get()));
+  io_data->cookie_store_owner_ = base::MakeUnique<CookieStoreOwner>();
+  cookie_store_ =
+      base::MakeUnique<CookieStoreProxy>(
+          io_data->cookie_store_owner_->GetWeakPtr(),
+          content::BrowserThread::GetMessageLoopProxyForThread(
+              content::BrowserThread::UI),
+          content::BrowserThread::GetMessageLoopProxyForThread(
+              content::BrowserThread::IO));
 
   content::BrowserContext::Initialize(this, io_data->GetPath());
   content::BrowserContext::EnsureResourceContextInitialized(this);

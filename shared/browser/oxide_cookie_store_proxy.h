@@ -15,21 +15,47 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_COOKIE_STORE_UI_PROXY_H_
-#define _OXIDE_SHARED_BROWSER_COOKIE_STORE_UI_PROXY_H_
+#ifndef _OXIDE_SHARED_BROWSER_COOKIE_STORE_PROXY_H_
+#define _OXIDE_SHARED_BROWSER_COOKIE_STORE_PROXY_H_
 
+#include "base/bind.h"
+#include "base/callback.h"
+#include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "base/memory/weak_ptr.h"
+#include "base/single_thread_task_runner.h"
 #include "net/cookies/cookie_store.h"
 
 #include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
-class OXIDE_SHARED_EXPORT CookieStoreUIProxy : public net::CookieStore {
+class CookieStoreOwner {
  public:
-  CookieStoreUIProxy(net::CookieStore* store);
-  ~CookieStoreUIProxy() override;
+  CookieStoreOwner();
+  ~CookieStoreOwner();
+
+  base::WeakPtr<CookieStoreOwner> GetWeakPtr();
+
+  net::CookieStore* store() const { return store_.get(); }
+  void set_store(std::unique_ptr<net::CookieStore> store) {
+    store_ = std::move(store);
+  }
+
+ private:
+  std::unique_ptr<net::CookieStore> store_;
+
+  base::WeakPtrFactory<CookieStoreOwner> weak_ptr_factory_;
+};
+
+class OXIDE_SHARED_EXPORT CookieStoreProxy : public net::CookieStore {
+ public:
+  CookieStoreProxy(
+      base::WeakPtr<CookieStoreOwner> store_owner,
+      scoped_refptr<base::SingleThreadTaskRunner> client_task_runner,
+      scoped_refptr<base::SingleThreadTaskRunner> cookie_task_runner);
+  ~CookieStoreProxy() override;
 
   void SetCookieWithOptionsAsync(const GURL& url,
                                  const std::string& cookie_line,
@@ -80,12 +106,56 @@ class OXIDE_SHARED_EXPORT CookieStoreUIProxy : public net::CookieStore {
   bool IsEphemeral() override;
 
  private:
+  bool IsOnClientThread() const;
+
+  void PostTaskToCookieThread(const base::Closure& task);
+
+  base::Closure WrapClosure(const base::Closure& callback);
+  void RunClosure(base::Closure callback);
+
+  template <typename T>
+  void RunCallback(base::Callback<void(T)> callback, T result) {
+    DCHECK(IsOnClientThread());
+    callback.Run(result);
+  }
+
+  template <typename T>
+  static void CallbackThunk(
+      base::WeakPtr<CookieStoreProxy> cookie_store,
+      scoped_refptr<base::SingleThreadTaskRunner> task_runner,
+      base::Callback<void(T)> callback,
+      T result) {
+    task_runner->PostTask(FROM_HERE,
+                          base::Bind(&CookieStoreProxy::RunCallback<T>,
+                                     cookie_store,
+                                     callback,
+                                     result));
+  }
+
+  template <typename T>
+  base::Callback<void(T)> WrapCallback(
+      const base::Callback<void(T)>& callback) {
+    if (callback.is_null()) {
+      return base::Callback<void(T)>();
+    }
+
+    return base::Bind(&CookieStoreProxy::CallbackThunk<T>,
+                      weak_ptr_factory_.GetWeakPtr(),
+                      client_task_runner_,
+                      callback);
+  }
+
   class Core;
   scoped_refptr<Core> core_;
 
-  DISALLOW_COPY_AND_ASSIGN(CookieStoreUIProxy);
+  scoped_refptr<base::SingleThreadTaskRunner> client_task_runner_;
+  scoped_refptr<base::SingleThreadTaskRunner> cookie_task_runner_;
+
+  base::WeakPtrFactory<CookieStoreProxy> weak_ptr_factory_;
+
+  DISALLOW_COPY_AND_ASSIGN(CookieStoreProxy);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_COOKIE_STORE_UI_PROXY_H_
+#endif // _OXIDE_SHARED_BROWSER_COOKIE_STORE_PROXY_H_

@@ -61,7 +61,8 @@ class BrowserContextImpl;
 class BrowserContextObserver;
 class BrowserContextSharedData;
 class BrowserContextSharedIOData;
-class CookieStoreUIProxy;
+class CookieStoreOwner;
+class CookieStoreProxy;
 class GeolocationPermissionContext;
 class PermissionManager;
 class ResourceContext;
@@ -120,9 +121,7 @@ class BrowserContextIOData {
   virtual const BrowserContextSharedIOData& GetSharedData() const = 0;
 
  private:
-  friend class BrowserContext; // For Init(), GetSharedData() and various members
-
-  void Init();
+  friend class BrowserContext; // For GetSharedData() and various members
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   std::unique_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
@@ -137,7 +136,7 @@ class BrowserContextIOData {
 
   std::unique_ptr<URLRequestContext> main_request_context_;
   std::unique_ptr<ResourceContext> resource_context_;
-  std::unique_ptr<net::CookieStore> cookie_store_;
+  std::unique_ptr<CookieStoreOwner> cookie_store_owner_;
 
   std::unique_ptr<net::HostMappingRules> host_mapping_rules_;
 
@@ -275,7 +274,7 @@ class OXIDE_SHARED_EXPORT BrowserContext
   std::unique_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   std::unique_ptr<PermissionManager> permission_manager_;
 
-  std::unique_ptr<CookieStoreUIProxy> cookie_store_;
+  std::unique_ptr<CookieStoreProxy> cookie_store_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserContext);
 };
