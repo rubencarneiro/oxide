@@ -218,8 +218,6 @@ void CompositorOutputSurfaceGL::ReclaimResources(
   if (unavailable_count == 0) {
     listener()->AllFramesReturnedFromClient();
   }
-
-  CompositorOutputSurface::ReclaimResources(ack);
 }
 
 CompositorOutputSurfaceGL::BufferData&
