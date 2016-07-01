@@ -63,9 +63,6 @@ void CompositorOutputSurface::DidSwapBuffers() {
   client_->DidSwapBuffersComplete();
 }
 
-void CompositorOutputSurface::ReclaimResources(const CompositorFrameAck& ack) {
-  cc::CompositorFrameAck unused; // Not used for the GL or software renderer
-  cc::OutputSurface::ReclaimResources(&unused);
-}
+void CompositorOutputSurface::ReclaimResources(const CompositorFrameAck& ack) {}
 
 } // namespace oxide

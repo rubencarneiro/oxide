@@ -234,9 +234,6 @@ void BrowserMainParts::PreEarlyInitialization() {
 #endif
   ui::SetClipboardOxideFactory(CreateClipboard);
 
-  gfx::InitializeOxideNativeDisplay(
-      BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
-
 #if defined(OS_LINUX)
   gpu_info_collector_.reset(CreateGpuInfoCollectorLinux());
   gpu::SetGpuInfoCollectorOxideLinux(gpu_info_collector_.get());
@@ -248,6 +245,9 @@ void BrowserMainParts::PreEarlyInitialization() {
 }
 
 int BrowserMainParts::PreCreateThreads() {
+  gfx::InitializeOxideNativeDisplay(
+      BrowserPlatformIntegration::GetInstance()->GetNativeDisplay());
+
   {
     // When using EGL, we need GLES for surfaceless contexts. Whilst the
     // default API is GLES and this will be the selected API on the GPU

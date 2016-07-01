@@ -52,7 +52,6 @@ void CompositorOutputSurfaceSoftware::ReclaimResources(
 
   static_cast<CompositorSoftwareOutputDevice*>(software_device())
       ->ReclaimResources(ack.software_frame_id);
-  CompositorOutputSurface::ReclaimResources(ack);
 }
 
 CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
