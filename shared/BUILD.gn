@@ -272,6 +272,8 @@ component("shared") {
     "browser/media/oxide_media_capture_devices_dispatcher_observer.h",
     "browser/media/oxide_video_capture_device_factory_linux.cc",
     "browser/media/oxide_video_capture_device_factory_linux.h",
+    "browser/net/oxide_cookie_store_proxy.cc",
+    "browser/net/oxide_cookie_store_proxy.h",
     "browser/notifications/oxide_notification_data.h",
     "browser/notifications/oxide_notification_delegate_proxy.cc",
     "browser/notifications/oxide_notification_delegate_proxy.h",
@@ -301,8 +303,6 @@ component("shared") {
     "browser/oxide_content_browser_client.cc",
     "browser/oxide_content_browser_client.h",
     "browser/oxide_content_types.h",
-    "browser/oxide_cookie_store_proxy.cc",
-    "browser/oxide_cookie_store_proxy.h",
     "browser/oxide_devtools_http_handler_delegate.cc",
     "browser/oxide_devtools_http_handler_delegate.h",
     "browser/oxide_devtools_manager.cc",
@@ -649,6 +649,7 @@ executable("shared_unittests") {
   ]
 
   sources = [
+    "browser/net/oxide_cookie_store_proxy_unittest.cc",
     "browser/ssl/oxide_certificate_error_unittest.cc",
     "browser/ssl/oxide_certificate_error_dispatcher_unittest.cc",
     "browser/ssl/oxide_security_status_unittest.cc",

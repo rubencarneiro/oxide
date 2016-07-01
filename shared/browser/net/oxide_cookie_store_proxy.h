@@ -31,7 +31,7 @@
 
 namespace oxide {
 
-class CookieStoreOwner {
+class OXIDE_SHARED_EXPORT CookieStoreOwner {
  public:
   CookieStoreOwner();
   ~CookieStoreOwner();

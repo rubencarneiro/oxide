@@ -58,6 +58,7 @@
 #include "net/url_request/url_request_intercepting_job_factory.h"
 #include "net/url_request/url_request_job_factory_impl.h"
 
+#include "shared/browser/net/oxide_cookie_store_proxy.h"
 #include "shared/browser/permissions/oxide_permission_manager.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 #include "shared/browser/ssl/oxide_ssl_config_service.h"
@@ -69,7 +70,6 @@
 #include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_cookie_store_proxy.h"
 #include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
 #include "oxide_io_thread.h"
