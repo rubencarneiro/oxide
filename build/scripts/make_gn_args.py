@@ -164,6 +164,7 @@ def WriteStaticArgs(writer):
   # XXX(chrisccoulson): Remove this.
   # There is a strict-overflow warning in third_party/WebKit/Source/wtf/dtoa/bignum.cc
   writer.WriteBool("treat_warnings_as_errors", False)
+  writer.WriteBool("fatal_linker_warnings", False)
 
   # XXX(chrisccoulson): This produces an error:
   #  "ERROR at //build/toolchain/gcc_toolchain.gni:520:30: Clobbering existing value."

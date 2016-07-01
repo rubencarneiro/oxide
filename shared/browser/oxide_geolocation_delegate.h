@@ -19,16 +19,16 @@
 #define _OXIDE_SHARED_BROWSER_GEOLOCATION_DELEGATE_H_
 
 #include "base/macros.h"
-#include "content/public/browser/geolocation_provider.h"
+#include "content/public/browser/geolocation_delegate.h"
 
 namespace oxide {
 
-class GeolocationDelegate : public content::GeolocationProvider::Delegate {
+class GeolocationDelegate : public content::GeolocationDelegate {
  public:
   GeolocationDelegate() = default;
 
  private:
-  // content::GeolocationProvider::Delegate implementation
+  // content::GeolocationDelegate implementation
   bool UseNetworkLocationProviders() override;
   content::AccessTokenStore* CreateAccessTokenStore() override;
   content::LocationProvider* OverrideSystemLocationProvider() override;
