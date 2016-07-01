@@ -35,7 +35,8 @@ base::WeakPtr<CookieStoreOwner> CookieStoreOwner::GetWeakPtr() {
 
 class CookieStoreProxy::Core : public base::RefCountedThreadSafe<Core> {
  public:
-  Core(base::WeakPtr<CookieStoreOwner> store_owner);
+  Core(base::WeakPtr<CookieStoreOwner> store_owneri,
+       scoped_refptr<base::SingleThreadTaskRunner> cookie_task_runner);
 
   void SetCookieWithDetailsAsync(
       const GURL& url,
@@ -93,8 +94,11 @@ net::CookieStore* CookieStoreProxy::Core::GetStore() const {
   return store_owner_->store();
 }
 
-CookieStoreProxy::Core::Core(base::WeakPtr<CookieStoreOwner> store_owner)
-    : store_owner_(store_owner) {}
+CookieStoreProxy::Core::Core(
+    base::WeakPtr<CookieStoreOwner> store_owner,
+    scoped_refptr<base::SingleThreadTaskRunner> cookie_task_runner)
+    : cookie_task_runner_(cookie_task_runner),
+      store_owner_(store_owner) {}
 
 void CookieStoreProxy::Core::SetCookieWithDetailsAsync(
     const GURL& url,
@@ -227,7 +231,7 @@ CookieStoreProxy::CookieStoreProxy(
     base::WeakPtr<CookieStoreOwner> store_owner,
     scoped_refptr<base::SingleThreadTaskRunner> client_task_runner,
     scoped_refptr<base::SingleThreadTaskRunner> cookie_task_runner)
-    : core_(new Core(store_owner)),
+    : core_(new Core(store_owner, cookie_task_runner)),
       client_task_runner_(client_task_runner),
       cookie_task_runner_(cookie_task_runner),
       weak_ptr_factory_(this) {}
