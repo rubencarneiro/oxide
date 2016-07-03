@@ -22,9 +22,11 @@
       'dependencies': [
         '../core/core.gyp:<(oxide_lib)',
         '../build/system.gyp:Qt5Core',
+        '../../shared/allocator.gyp:allocator_features',
       ],
       'include_dirs': [
         '../..',
+        '<(SHARED_INTERMEDIATE_DIR)/oxide',
       ],
       'sources': [
         'main.cc'

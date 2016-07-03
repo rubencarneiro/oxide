@@ -189,6 +189,7 @@ component("shared") {
     "//mojo/common",
     "//mojo/edk/system",
     "//net",
+    "//services/shell/public/cpp",
     "//skia",
     "//storage/common",
     "//third_party/libXNVCtrl",
