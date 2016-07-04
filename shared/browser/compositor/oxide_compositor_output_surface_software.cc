@@ -30,7 +30,12 @@
 
 namespace oxide {
 
-void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame* frame) {
+uint32_t CompositorOutputSurfaceSoftware::GetFramebufferCopyTextureFormat() {
+  NOTREACHED();
+  return 0;
+}
+
+void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame frame) {
   std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
   data->software_frame_data = base::WrapUnique(new SoftwareFrameData());
 

@@ -437,6 +437,9 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   session_params.channel_id_service = context->channel_id_service();
   session_params.transport_security_state =
       context->transport_security_state();
+  session_params.cert_transparency_verifier =
+      context->cert_transparency_verifier();
+  session_params.ct_policy_enforcer = context->ct_policy_enforcer();
   session_params.proxy_service = context->proxy_service();
   session_params.ssl_config_service = context->ssl_config_service();
   session_params.http_auth_handler_factory =

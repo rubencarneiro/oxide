@@ -27,8 +27,6 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
-#include "content/public/browser/geolocation_provider.h"
-#include "content/public/browser/location_provider.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -37,6 +35,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
+#include "services/shell/public/cpp/interface_registry.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -46,11 +45,11 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
 
-#include "oxide_access_token_store.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_geolocation_delegate.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -217,8 +216,9 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
       resource_dispatcher_host_delegate_.get());
 }
 
-content::AccessTokenStore* ContentBrowserClient::CreateAccessTokenStore() {
-  return new AccessTokenStore();
+content::GeolocationProvider::Delegate*
+ContentBrowserClient::CreateGeolocationDelegate() {
+  return new GeolocationDelegate();
 }
 
 void ContentBrowserClient::OverrideWebkitPrefs(
@@ -265,16 +265,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 }
 
-content::LocationProvider*
-ContentBrowserClient::OverrideSystemLocationProvider() {
-  return platform_integration_->CreateLocationProvider().release();
-}
-
-void ContentBrowserClient::RegisterRenderFrameMojoServices(
-    content::ServiceRegistry* registry,
+void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
+    shell::InterfaceRegistry* registry,
     content::RenderFrameHost* render_frame_host) {
   DCHECK(registry);
-  registry->AddService(base::Bind(&CreateVibrationManager));
+  registry->AddInterface(base::Bind(&CreateVibrationManager));
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {

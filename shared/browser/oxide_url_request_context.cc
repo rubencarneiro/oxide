@@ -34,6 +34,9 @@ URLRequestContext::URLRequestContext() :
       io_thread_globals->http_auth_handler_factory());
   set_proxy_service(io_thread_globals->proxy_service());
   set_throttler_manager(io_thread_globals->throttler_manager());
+  set_cert_transparency_verifier(
+      io_thread_globals->cert_transparency_verifier());
+  set_ct_policy_enforcer(io_thread_globals->ct_policy_enforcer());
 }
 
 URLRequestContext::~URLRequestContext() {}

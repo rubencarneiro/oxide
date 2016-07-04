@@ -46,7 +46,6 @@ class ContentClient final : public content::ContentClient {
   base::StringPiece GetDataResource(int resource_id,
                                     ui::ScaleFactor scale_factor) const final;
   base::RefCountedMemory* GetDataResourceBytes(int resource_id) const final;
-  bool ShouldOptimizeForMemoryUsage() const final;
 
   DISALLOW_COPY_AND_ASSIGN(ContentClient);
 };

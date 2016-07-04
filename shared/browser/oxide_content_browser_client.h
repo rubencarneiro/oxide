@@ -101,12 +101,11 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                        int opener_render_frame_id,
                        bool* no_javascript_access) override;
   void ResourceDispatcherHostCreated() override;
-  content::AccessTokenStore* CreateAccessTokenStore() override;
+  content::GeolocationProvider::Delegate* CreateGeolocationDelegate() override;
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            content::WebPreferences* prefs) override;
-  content::LocationProvider* OverrideSystemLocationProvider() override;
-  void RegisterRenderFrameMojoServices(
-      content::ServiceRegistry* registry,
+  void RegisterRenderFrameMojoInterfaces(
+      shell::InterfaceRegistry* registry,
       content::RenderFrameHost* render_frame_host) override;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) override;
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(

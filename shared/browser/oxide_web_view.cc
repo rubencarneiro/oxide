@@ -399,10 +399,10 @@ const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
 }
 
 void WebView::CompositorWillRequestSwapFrame() {
-  cc::CompositorFrameMetadata old = compositor_frame_metadata_;
+  cc::CompositorFrameMetadata old = std::move(compositor_frame_metadata_);
   compositor_frame_metadata_ =
       WebContentsView::FromWebContents(web_contents_.get())
-        ->committed_frame_metadata();
+        ->committed_frame_metadata().Clone();
 
   if (IsFullscreen()) {
     // Ensure that the location bar is always hidden in fullscreen. This

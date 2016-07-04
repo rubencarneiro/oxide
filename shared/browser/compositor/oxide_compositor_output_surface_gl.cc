@@ -28,6 +28,7 @@
 #include "cc/output/output_surface_client.h"
 #include "cc/resources/resource_format.h"
 #include "cc/resources/resource_provider.h"
+#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/command_buffer/common/sync_token.h"
 
@@ -175,12 +176,18 @@ void CompositorOutputSurfaceGL::BindFramebuffer() {
                            0);
 }
 
-void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame* frame) {
-  DCHECK(frame->gl_frame_data);
+uint32_t CompositorOutputSurfaceGL::GetFramebufferCopyTextureFormat() {
+  content::ContextProviderCommandBuffer* gl =
+      static_cast<content::ContextProviderCommandBuffer*>(context_provider());
+  return gl->GetCopyTextureInternalFormat();
+}
+
+void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame frame) {
+  DCHECK(frame.gl_frame_data);
   DCHECK(back_buffer_);
   DCHECK(!back_buffer_->mailbox.IsZero());
   DCHECK(surface_size_ == back_buffer_->size);
-  DCHECK(frame->gl_frame_data->size == back_buffer_->size);
+  DCHECK(frame.gl_frame_data->size == back_buffer_->size);
   DCHECK(!back_buffer_->size.IsEmpty());
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();

@@ -45,7 +45,6 @@
 #include "shared/common/oxide_paths.h"
 #endif
 
-#include "oxide_form_factor.h"
 #include "oxide_user_agent.h"
 
 namespace oxide {
@@ -190,14 +189,6 @@ base::RefCountedMemory* ContentClient::GetDataResourceBytes(
     int resource_id) const {
   return ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(
       resource_id);
-}
-
-bool ContentClient::ShouldOptimizeForMemoryUsage() const {
-  if (GetFormFactorHint() == FORM_FACTOR_DESKTOP) {
-    return false;
-  }
-
-  return true;
 }
 
 // static
