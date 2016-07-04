@@ -19,6 +19,7 @@
 import("//build/toolchain/toolchain.gni")
 import("//oxide/build/config/build_flags.gni")
 import("//oxide/build/config/Qt5/moc.gni")
+import("//oxide/build/config/test_executable.gni")
 import("//oxide/build/config/version.gni")
 
 # TODO: All includes should be a fully qualified path from the source root,
@@ -324,9 +325,8 @@ component("core_component") {
   ]
 }
 
-executable("core_unittests") {
+test_executable("core_unittests") {
   output_name = "oxide_qt_unittests"
-  testonly = true
 
   defines = [
     "GN_BUILD" # Remove this when we drop gyp support

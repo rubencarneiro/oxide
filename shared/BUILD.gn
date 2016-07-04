@@ -20,6 +20,7 @@ import("//build/config/features.gni")
 import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
 import("//oxide/build/config/repack_locales.gni")
+import("//oxide/build/config/test_executable.gni")
 import("//oxide/build/config/version.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
@@ -630,9 +631,8 @@ source_set("shared_testutils") {
   ]
 }
 
-executable("shared_unittests") {
+test_executable("shared_unittests") {
   output_name = "oxide_shared_unittests"
-  testonly = true
 
   deps = [
     ":shared",
