@@ -21,6 +21,8 @@ declare_args() {
 
   enable_hybris_camera = false
 
+  enable_mediahub = false
+
   oxide_gettext_domain = false
 
   oxide_libexec_subdir = ""

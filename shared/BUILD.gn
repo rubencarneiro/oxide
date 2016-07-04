@@ -25,14 +25,7 @@ import("//oxide/build/config/version.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
-declare_args() {
-  enable_mediahub = false
-}
-
 subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
-
-# TODO: Finish the mediahub bits
-enable_mediahub = false
 
 # TODO: All includes should be a fully qualified path from the source root,
 #  then we can remove this
@@ -123,6 +116,16 @@ version_header("chrome_version") {
   output_file = "$target_gen_dir/common/chrome_version.h"
 }
 
+source_set("mediahub_shim") {
+  configs -= [ "//build/config/gcc:no_exceptions" ]
+  configs += [ "//oxide/build/config/linux:media_hub_client" ]
+
+  sources = [
+    "browser/media/mediahub_player_shim.cc",
+    "browser/media/mediahub_player_shim.h"
+  ]
+}
+
 component("shared") {
   output_name = "oxide_shared"
 
@@ -190,6 +193,7 @@ component("shared") {
     "//mojo/common",
     "//mojo/edk/system",
     "//net",
+    "//services/shell/public/cpp",
     "//skia",
     "//storage/common",
     "//third_party/libXNVCtrl",

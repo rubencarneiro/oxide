@@ -47,3 +47,9 @@ if (enable_hybris) {
     }
   }
 }
+
+if (enable_mediahub) {
+  config("media_hub_client") {
+    libs = [ "media-hub-client" ]
+  }
+}
