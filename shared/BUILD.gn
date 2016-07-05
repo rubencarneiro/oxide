@@ -116,14 +116,16 @@ version_header("chrome_version") {
   output_file = "$target_gen_dir/common/chrome_version.h"
 }
 
-source_set("mediahub_shim") {
-  configs -= [ "//build/config/gcc:no_exceptions" ]
-  configs += [ "//oxide/build/config/linux:media_hub_client" ]
+if (enable_mediahub) {
+  source_set("mediahub_shim") {
+    configs -= [ "//build/config/gcc:no_exceptions" ]
+    configs += [ "//oxide/build/config/linux:media_hub_client" ]
 
-  sources = [
-    "browser/media/mediahub_player_shim.cc",
-    "browser/media/mediahub_player_shim.h"
-  ]
+    sources = [
+      "browser/media/mediahub_player_shim.cc",
+      "browser/media/mediahub_player_shim.h"
+    ]
+  }
 }
 
 component("shared") {
