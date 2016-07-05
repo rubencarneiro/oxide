@@ -117,6 +117,8 @@ class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcher
 
   base::ObserverList<MediaCaptureDevicesDispatcherObserver> observers_;
 
+  content::MediaStreamDevices current_video_capture_devices_;
+
   DISALLOW_COPY_AND_ASSIGN(MediaCaptureDevicesDispatcher);
 };
 
