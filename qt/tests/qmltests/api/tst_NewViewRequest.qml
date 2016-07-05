@@ -121,7 +121,7 @@ Column {
              "Timed out waiting for successful load");
 
       webView.getTestApi().evaluateCode(
-"var e = document.createEvent(\"HTMLEvents\");
+"var e = document.createEvent(\"MouseEvent\");
 e.initEvent(\"click\", true, false);
 document.querySelector(\"" + data.selector + "\").dispatchEvent(e);", true);
 

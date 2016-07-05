@@ -144,7 +144,7 @@ TestWebView {
               "Shouldn't get an onNavigationRequested signal for browser-initiated navigation");
 
       webView.getTestApi().evaluateCode(
-"var e = document.createEvent(\"HTMLEvents\");
+"var e = document.createEvent(\"MouseEvent\");
 e.initEvent(\"click\", true, false);
 document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
 

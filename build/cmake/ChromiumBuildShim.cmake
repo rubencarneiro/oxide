@@ -232,7 +232,6 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD -Denable_mediahub=false)
   else()
     list(APPEND MAKE_GN_ARGS_CMD -Denable_mediahub=true)
-    message(WARNING "mediahub support is currently not implemented with USE_GN builds")
   endif()
 
   if(USE_SYSTEM_PROTOBUF)

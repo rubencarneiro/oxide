@@ -20,18 +20,12 @@ import("//build/config/features.gni")
 import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
 import("//oxide/build/config/repack_locales.gni")
+import("//oxide/build/config/test_executable.gni")
 import("//oxide/build/config/version.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
-declare_args() {
-  enable_mediahub = false
-}
-
 subprocess_relpath = "$oxide_libexec_subdir/$oxide_renderer_name"
-
-# TODO: Finish the mediahub bits
-enable_mediahub = false
 
 # TODO: All includes should be a fully qualified path from the source root,
 #  then we can remove this
@@ -120,6 +114,18 @@ version_header("chrome_version") {
   input_file = "common/chrome_version.h.in"
   version_file = "//chrome/VERSION"
   output_file = "$target_gen_dir/common/chrome_version.h"
+}
+
+if (enable_mediahub) {
+  source_set("mediahub_shim") {
+    configs -= [ "//build/config/gcc:no_exceptions" ]
+    configs += [ "//oxide/build/config/linux:media_hub_client" ]
+
+    sources = [
+      "browser/media/mediahub_player_shim.cc",
+      "browser/media/mediahub_player_shim.h"
+    ]
+  }
 }
 
 component("shared") {
@@ -631,9 +637,8 @@ source_set("shared_testutils") {
   ]
 }
 
-executable("shared_unittests") {
+test_executable("shared_unittests") {
   output_name = "oxide_shared_unittests"
-  testonly = true
 
   deps = [
     ":shared",
