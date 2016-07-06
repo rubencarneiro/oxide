@@ -132,6 +132,7 @@ int PermissionManager::RequestPermission(
     content::PermissionType permission,
     content::RenderFrameHost* render_frame_host,
     const GURL& requesting_origin,
+    bool user_gesture,
     const base::Callback<void(blink::mojom::PermissionStatus)>& callback) {
   if (!IsPermissionTypeSupported(permission)) {
     callback.Run(blink::mojom::PermissionStatus::DENIED);
@@ -209,6 +210,7 @@ int PermissionManager::RequestPermissions(
     const std::vector<content::PermissionType>& permissions,
     content::RenderFrameHost* render_frame_host,
     const GURL& requesting_origin,
+    bool user_gesture,
     const base::Callback<void(
         const std::vector<blink::mojom::PermissionStatus>&)>& callback) {
   NOTIMPLEMENTED();
