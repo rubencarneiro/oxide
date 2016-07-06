@@ -179,6 +179,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("use_cups", False)
   writer.WriteBool("use_gconf", False)
   writer.WriteBool("use_ozone", True)
+  writer.WriteBool("use_pango", True)
   writer.WriteBool("toolkit_views", False)
   writer.WriteBool("enable_basic_printing", False)
   writer.WriteBool("enable_print_preview", False)
