@@ -146,9 +146,9 @@ component("shared") {
 
   if (is_linux) {
     configs += [
+      "//build/config/linux:glib",
       "//build/config/linux:x11",
       "//oxide/build/config/linux:gdkpixbuf",
-      "//oxide/build/config/linux:glib",
       "//oxide/build/config/linux:libnotify"
     ]
   }
