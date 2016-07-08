@@ -96,7 +96,6 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
           gpu::GpuStreamPriority::NORMAL,
           gpu::kNullSurfaceHandle,
           GURL(),
-          gl::PreferIntegratedGpu,
           false, // automatic_flushes
           false, // support_locking
           gpu::SharedMemoryLimits(),

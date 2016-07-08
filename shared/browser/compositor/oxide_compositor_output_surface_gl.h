@@ -43,6 +43,7 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   void DiscardBackbuffer() override;
   void Reshape(const gfx::Size& size,
                float scale_factor,
+               const gfx::ColorSpace& color_space,
                bool has_alpha) override;
   void BindFramebuffer() override;
   uint32_t GetFramebufferCopyTextureFormat() override;

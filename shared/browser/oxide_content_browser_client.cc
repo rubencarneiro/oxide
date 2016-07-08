@@ -25,7 +25,6 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
-#include "content/public/common/service_registry.h"
 #include "content/public/browser/certificate_request_result_type.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
@@ -216,7 +215,7 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
       resource_dispatcher_host_delegate_.get());
 }
 
-content::GeolocationProvider::Delegate*
+content::GeolocationDelegate*
 ContentBrowserClient::CreateGeolocationDelegate() {
   return new GeolocationDelegate();
 }
