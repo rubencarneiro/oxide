@@ -484,7 +484,6 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   result.modifiers |=
       oxide::LocationModifiersFromWindowsKeyCode(windowsKeyCode);
   result.nativeKeyCode = event->nativeVirtualKey();
-  result.setKeyIdentifierFromWindowsKeyCode();
 
   const unsigned short* text = event->text().utf16();
   memcpy(result.unmodifiedText, text, qMin(sizeof(result.unmodifiedText), sizeof(*text)));
