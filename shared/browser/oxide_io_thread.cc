@@ -214,9 +214,9 @@ void IOThread::Init() {
 
   std::unique_ptr<net::ProxyConfigService> proxy_config_service =
       net::ProxyService::CreateSystemProxyConfigService(
-          content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::GetTaskRunnerForThread(
               content::BrowserThread::IO),
-          content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::GetTaskRunnerForThread(
               content::BrowserThread::FILE));
 
   globals()->proxy_service_ =

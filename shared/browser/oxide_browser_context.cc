@@ -377,7 +377,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       new net::TransportSecurityPersister(
         transport_security_state_.get(),
         GetPath(),
-        content::BrowserThread::GetMessageLoopProxyForThread(
+        content::BrowserThread::GetTaskRunnerForThread(
           content::BrowserThread::FILE),
         IsOffTheRecord()));
 
@@ -427,7 +427,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
           net::CACHE_BACKEND_SIMPLE,
           GetCachePath().Append(kCacheDirname2),
           GetMaxCacheSizeHint() * 1024 * 1024, // MB -> bytes
-          content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::GetTaskRunnerForThread(
               content::BrowserThread::CACHE)));
   }
 
@@ -480,7 +480,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       oxide::kFileScheme,
       base::WrapUnique(
           new net::FileProtocolHandler(
-              content::BrowserThread::GetMessageLoopProxyForThread(
+              content::BrowserThread::GetTaskRunnerForThread(
                   content::BrowserThread::FILE))));
   DCHECK(set_protocol);
   set_protocol = job_factory->SetProtocolHandler(
@@ -747,9 +747,9 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
   cookie_store_ =
       base::MakeUnique<CookieStoreProxy>(
           io_data->cookie_store_owner_->GetWeakPtr(),
-          content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::GetTaskRunnerForThread(
               content::BrowserThread::UI),
-          content::BrowserThread::GetMessageLoopProxyForThread(
+          content::BrowserThread::GetTaskRunnerForThread(
               content::BrowserThread::IO));
 
   content::BrowserContext::Initialize(this, io_data->GetPath());
