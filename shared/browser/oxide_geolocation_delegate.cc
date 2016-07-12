@@ -31,10 +31,9 @@ content::AccessTokenStore* GeolocationDelegate::CreateAccessTokenStore() {
   return nullptr;
 }
 
-content::LocationProvider*
+std::unique_ptr<content::LocationProvider>
 GeolocationDelegate::OverrideSystemLocationProvider() {
-  return BrowserPlatformIntegration::GetInstance()
-      ->CreateLocationProvider().release();
+  return BrowserPlatformIntegration::GetInstance()->CreateLocationProvider();
 }
 
 } // namespace oxide
