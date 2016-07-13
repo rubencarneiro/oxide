@@ -5,8 +5,7 @@ import Oxide.testsupport 1.0
 
 WebView {
   id: webView
-  width: 200
-  height: 200
+  focus: true
 
   context: SingletonTestWebContext
 

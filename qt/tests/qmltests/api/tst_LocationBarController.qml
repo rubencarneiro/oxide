@@ -5,8 +5,7 @@ import Oxide.testsupport 1.0
 
 Item {
   id: top
-  width: 200
-  height: 200
+  focus: true
 
   Component {
     id: webViewFactory

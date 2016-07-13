@@ -3,7 +3,7 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
-Column {
+Item {
   WebPreferences {
     id: p
     localStorageEnabled: true
@@ -11,16 +11,14 @@ Column {
 
   TestWebView {
     id: webView1
-    width: 200
-    height: 200
+    anchors.fill: parent
 
     preferences: p
   }
 
   TestWebView {
     id: webView2
-    width: 200
-    height: 200
+    anchors.fill: parent
 
     preferences: p
   }
@@ -31,9 +29,11 @@ Column {
     when: windowShown
 
     function test_UnloadHandlers1() {
+      webView1.z = 1;
       webView1.url = "http://testsuite/tst_UnloadHandlers.html";
       verify(webView1.waitForLoadSucceeded());
 
+      webView2.z = 2;
       webView2.url = "http://testsuite/empty.html";
       verify(webView2.waitForLoadSucceeded());
 

@@ -5,8 +5,6 @@ import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
-  width: 200
-  height: 200
 
   property string lastRequestUrl: ""
   property int lastRequestDisposition: NavigationRequest.DispositionCurrentTab

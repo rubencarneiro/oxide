@@ -4,8 +4,6 @@ import com.canonical.Oxide 1.0
 
 WebView {
   id: webview
-  width: 800
-  height: 600
   url: "about:blank"
 
   TestCase {
