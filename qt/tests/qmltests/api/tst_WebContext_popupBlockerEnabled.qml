@@ -3,9 +3,8 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
-Column {
-  id: column
-  focus: true
+Item {
+  id: toplevel
 
   Component {
     id: webViewFactory
@@ -14,11 +13,11 @@ Column {
 
   TestWebView {
     id: webView
-    width: 200
-    height: 200
+    focus: true
+    anchors.fill: parent
 
     onNewViewRequested: {
-      webViewFactory.createObject(column, { request: request, width: 200, height: 200 });
+      webViewFactory.createObject(toplevel, { request: request });
     }
   }
 

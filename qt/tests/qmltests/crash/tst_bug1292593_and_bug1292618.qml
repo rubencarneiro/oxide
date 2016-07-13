@@ -3,8 +3,6 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 
 Item {
-  focus: true
-
   WebContext {
     id: context
   }
@@ -16,8 +14,7 @@ Item {
   }
 
   WebView {
-    width: 200
-    height: 200
+    anchors.fill: parent
     context: context
   }
 }

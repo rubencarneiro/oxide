@@ -79,7 +79,7 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
   return new ClipboardTestUtils();
 }
 
-QJSValue BuildTestConstants(QJSEngine* engine, bool single_process) {
+static QJSValue BuildTestConstants(QJSEngine* engine, bool single_process) {
   QJSValue constants = engine->newObject();
   constants.setProperty(QStringLiteral("SINGLE_PROCESS"), single_process);
   return constants;
@@ -142,7 +142,7 @@ static void RecordCompileError(const QFileInfo& fi, QQuickView* view) {
   RecordCompileError(fi.baseName(), view->errors(), view->engine());
 }
 
-QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
+static QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
   QString component_data("import Oxide.testsupport 1.0\nTestWebContext {\n");
   component_data.append("  dataPath: \"");
   component_data.append(data_url.toString());
@@ -163,7 +163,7 @@ QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
   return context;
 }
 
-QSet<QString> LoadExcludeList(const QString& path) {
+static QSet<QString> LoadExcludeList(const QString& path) {
   QSet<QString> rv;
 
   QFile file(path);
@@ -180,6 +180,26 @@ QSet<QString> LoadExcludeList(const QString& path) {
   }
 
   return rv;
+}
+
+bool WaitForSizeToBeAllocatedForRootObject(QQuickView* view) {
+  QQuickItem* root = view->rootObject();
+
+  QElapsedTimer timer;
+  timer.start();
+
+  while (root->width() < 10.f || root->height() < 10.f) {
+    int remaining = 5000 - timer.elapsed();
+    if (remaining <= 0) {
+      return false;
+    }
+ 
+    QCoreApplication::processEvents(QEventLoop::AllEvents, remaining);
+    QCoreApplication::sendPostedEvents(0, QEvent::DeferredDelete);
+    QTest::qSleep(10);
+  }
+
+  return !(root->width() < 10.f || root->height() < 10.f);
 }
 
 static QString stripQuotes(const QString& in) {
@@ -436,6 +456,7 @@ int main(int argc, char** argv) {
           test_web_context.data());
     }
 
+    view.setResizeMode(QQuickView::SizeViewToRootObject);
     view.setObjectName(fi.baseName());
     view.setTitle(view.objectName());
 
@@ -455,17 +476,22 @@ int main(int argc, char** argv) {
 
     if (!QTestRootObject::instance()->hasQuit()) {
       view.setFramePosition(QPoint(50, 50));
-      if (view.size().isEmpty()) {
-        qWarning().nospace() <<
-            "Test '" << QDir::toNativeSeparators(path) << "' has invalid "
-            "size " << view.size() << ", resizing.";
-        view.resize(200, 200);
+      if (qFuzzyCompare(view.rootObject()->width(), qreal(0)) &&
+          qFuzzyCompare(view.rootObject()->height(), qreal(0))) {
+        view.resize(600, 400);
+        view.setResizeMode(QQuickView::SizeRootObjectToView);
       }
       view.show(); 
       if (!QTest::qWaitForWindowExposed(&view)) {
         qWarning().nospace() <<
             "Test '" << QDir::toNativeSeparators(path) << "' window not "
             "exposed after show().";
+      }
+      if (view.resizeMode() == QQuickView::SizeRootObjectToView &&
+          !WaitForSizeToBeAllocatedForRootObject(&view)) {
+        qWarning().nospace() <<
+            "Test '" << QDir::toNativeSeparators(path) << "' root item not "
+            "greater than 0x0 after resize().";
       }
       view.requestActivate();
       if (!QTest::qWaitForWindowActive(&view)) {

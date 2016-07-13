@@ -3,14 +3,13 @@ import QtTest 1.0
 import com.canonical.Oxide 1.4
 import Oxide.testsupport 1.0
 
-Column {
-  id: column
+Item {
+  id: toplevel
 
   Component {
     id: webViewFactory
     TestWebView {
-      width: 200
-      height: 200
+      anchors.fill: parent
       context: WebContext {}
     }
   }
@@ -19,11 +18,11 @@ Column {
 
   TestWebView {
     id: webView
-    width: 200
-    height: 200
+    focus: true
+    anchors.fill: parent
 
     onNewViewRequested: {
-      created = webViewFactory.createObject(column, { request: request });
+      created = webViewFactory.createObject(toplevel, { request: request });
     }
   }
 
@@ -95,11 +94,11 @@ Column {
       webView.context.popupBlockerEnabled = false;
 
       webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
-      TestUtils.waitFor(function() { return column.created != null; });
+      TestUtils.waitFor(function() { return toplevel.created != null; });
 
       webView.context.popupBlockerEnabled = true;
 
-      var created = column.created;
+      var created = toplevel.created;
       spy.target = created;
 
       verify(!created.preferences.allowScriptsToCloseWindows);

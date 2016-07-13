@@ -96,8 +96,7 @@ TestCase {
     id: webViewComponent
     TestWebView {
       focus: true
-      width: 200
-      height: 200
+      anchors.fill: parent
     }
   }
 

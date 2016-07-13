@@ -3,14 +3,13 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
-Column {
-  id: column
+Item {
+  id: toplevel
   focus: true
 
   TestWebView {
     id: webView
-    width: 200
-    height: 200
+    anchors.fill: parent
 
     property rect lastRequestPosition: Qt.rect(0,0,0,0)
     property int lastRequestDisposition: NewViewRequest.DispositionCurrentTab

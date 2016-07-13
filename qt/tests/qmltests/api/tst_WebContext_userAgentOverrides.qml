@@ -4,8 +4,7 @@ import Oxide.testsupport 1.0
 
 TestWebView {
   id: webView
-  width: 200
-  height: 200
+  focus: true
 
   SignalSpy {
     id: spy

@@ -3,9 +3,8 @@ import QtTest 1.0
 import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
-Column {
-  id: column
-  focus: true
+Item {
+  id: toplevel
 
   Component {
     id: webViewFactory
@@ -20,18 +19,16 @@ Column {
 
   TestWebView {
     id: webView1
-    width: 200
-    height: 200
+    anchors.fill: parent
 
     onNewViewRequested: {
-      created = webViewFactory.createObject(column, { request: request, width: 200, height: 50 });
+      created = webViewFactory.createObject(toplevel, { request: request });
     }
   }
 
   TestWebView {
     id: webView2
-    width: 200
-    height: 200
+    anchors.fill: parent
   }
 
   SignalSpy {
@@ -58,10 +55,13 @@ Column {
       }
       spy.clear();
       navigationSpy.clear();
+      webView1.z = 0;
+      webView2.z = 0;
     }
 
     // Test that WebView.newViewRequested is emitted when window.open() is called
     function test_WebView_newViewRequested1_correct() {
+      webView1.z = 1;
       navigationSpy.target = webView1;
 
       webView1.url = "http://testsuite/tst_WebView_newViewRequested.html";
@@ -85,6 +85,7 @@ Column {
     // Test that a top-level navigation occurs when window.open() is called and
     // there are no handlers for WebView.newViewRequested
     function test_WebView_newViewRequested3_no_handler() {
+      webView2.z = 1;
       navigationSpy.target = webView2;
 
       webView2.url = "http://testsuite/tst_WebView_newViewRequested.html";
@@ -104,6 +105,7 @@ Column {
     // Test that WebView.newViewRequested is emitted for non CurrentTab navigations
     // (clicking on a link with keyboard modifiers pressed)
     function test_WebView_newViewRequested4_from_navigation() {
+      webView1.z = 1;
       navigationSpy.target = webView1;
 
       webView1.url = "http://testsuite/tst_WebView_newViewRequested2.html";
@@ -129,6 +131,7 @@ Column {
     }
 
     function test_WebView_newViewRequested5_no_handler_from_navigation() {
+      webView2.z = 1;
       navigationSpy.target = webView2;
 
       webView2.url = "http://testsuite/tst_WebView_newViewRequested2.html";
@@ -146,6 +149,7 @@ Column {
 
     // Test that dynamically attaching a handler for WebView.newViewRequested works
     function test_WebView_newViewRequested6_dynamic() {
+      webView2.z = 1;
       webView2.url = "http://testsuite/tst_WebView_newViewRequested3.html";
       verify(webView2.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
@@ -159,7 +163,7 @@ Column {
 
       spy.target = webView2;
       var handler = function(request) {
-        created = webViewFactory.createObject(column, { request: request, width: 200, height: 50 });
+        created = webViewFactory.createObject(toplevel, { request: request });
       };
       webView2.newViewRequested.connect(handler);
 

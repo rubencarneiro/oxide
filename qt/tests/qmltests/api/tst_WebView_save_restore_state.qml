@@ -5,8 +5,6 @@ import Oxide.testsupport 1.0
 
 Item {
   id: root
-  width: 200
-  height: 200
 
   property var webView
 

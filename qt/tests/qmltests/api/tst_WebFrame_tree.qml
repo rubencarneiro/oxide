@@ -6,8 +6,6 @@ import Oxide.testsupport 1.0
 TestWebView {
   id: webView
   focus: true
-  width: 200
-  height: 200
 
   readonly property alias frameEvents: webView.qtest_frameEvents
 

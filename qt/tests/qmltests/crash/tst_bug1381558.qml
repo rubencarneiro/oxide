@@ -4,11 +4,9 @@ import com.canonical.Oxide 1.0
 import Oxide.testsupport 1.0
 
 Item {
-  width: 200
-  height: 200
-
   TestWebView {
     id: webView
+    focus: true
     anchors.fill: parent
   }
 
