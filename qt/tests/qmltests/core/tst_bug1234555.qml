@@ -16,6 +16,10 @@ TestWebView {
     name: "bug1234555"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     property var numberSent: 0
     property var errorsReceived: []
 

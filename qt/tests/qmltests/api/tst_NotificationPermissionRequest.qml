@@ -47,6 +47,10 @@ TestWebView {
     name: "NotificationPermissionRequest"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function _test_accept(req) {
       req.allow();
     }

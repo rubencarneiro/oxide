@@ -29,6 +29,10 @@ TestWebView {
     name: "WebFrame_sendMessageNoReply"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function init() {
       webView.lastMessagePayload = null;
       webView.waitingForMessage = true;

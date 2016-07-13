@@ -64,8 +64,8 @@ WebContext {
   }
 
   function clearTestUserScripts() {
-    while (userScripts().length > 1) {
-      var script = userScripts()[1];
+    while (userScripts.length > 1) {
+      var script = userScripts[1];
       removeUserScript(script);
       script.destroy();
     }

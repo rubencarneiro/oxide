@@ -23,6 +23,10 @@ TestWebView {
     name: "ScriptMessageRoutingToBrowser_errors"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function init() {
       while (webView.rootFrame.messageHandlers.length > 0) {
         webView.rootFrame.removeMessageHandler(webView.rootFrame.messageHandlers[0]);

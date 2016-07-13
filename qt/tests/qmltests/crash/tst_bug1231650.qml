@@ -18,6 +18,10 @@ TestWebView {
 
     property var requests: []
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function test_bug1231650() {
       webView.url = "http://testsuite/tst_bug1231650.html";
       verify(webView.waitForLoadSucceeded(),

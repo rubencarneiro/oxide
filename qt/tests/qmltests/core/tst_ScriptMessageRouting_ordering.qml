@@ -29,6 +29,10 @@ TestWebView {
     name: "ScriptMessageRouting_ordering"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function test_ScriptMessageRouting_ordering() {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),

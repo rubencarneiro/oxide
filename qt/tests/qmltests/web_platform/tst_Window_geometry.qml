@@ -40,6 +40,10 @@ Item {
       webView.resizeEvents = 0;
     }
 
+    function cleanupTestCase() {
+      SingletonTestWebContext.clearTestUserScripts();
+    }
+
     // Verify that Window.inner{Height,Width} work correctly
     function test_Window_geometry1_inner() {
       webView.x = 0;
