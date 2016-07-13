@@ -342,7 +342,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
-          surface_id_allocator_->id_namespace(),
+          surface_id_allocator_->client_id(),
           std::move(begin_frame_source),
           std::move(display_surface),
           std::move(scheduler),

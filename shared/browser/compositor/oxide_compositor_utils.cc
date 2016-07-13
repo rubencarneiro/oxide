@@ -49,7 +49,7 @@ namespace oxide {
 
 namespace {
 
-uint32_t g_surface_id_namespace = 0;
+uint32_t g_surface_client_id = 0;
 
 void WakeUpGpuThread() {}
 
@@ -618,8 +618,8 @@ cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
 std::unique_ptr<cc::SurfaceIdAllocator>
 CompositorUtilsImpl::CreateSurfaceIdAllocator() {
   std::unique_ptr<cc::SurfaceIdAllocator> allocator(
-      new cc::SurfaceIdAllocator(++g_surface_id_namespace));
-  allocator->RegisterSurfaceIdNamespace(GetSurfaceManager());
+      new cc::SurfaceIdAllocator(++g_surface_client_id));
+  allocator->RegisterSurfaceClientId(GetSurfaceManager());
   return allocator;
 }
 
