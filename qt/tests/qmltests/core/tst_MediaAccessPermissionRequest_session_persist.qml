@@ -49,6 +49,10 @@ Item {
     name: "MediaAccessPermissionRequest_session_persist"
     when: windowShown
 
+    function cleanupTestCase() {
+      SingletonTestWebContext.clearTestUserScripts();
+    }
+
     function _test_accept(req) {
       req.allow();
     }

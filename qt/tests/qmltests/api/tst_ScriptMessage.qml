@@ -46,6 +46,10 @@ TestWebView {
     name: "ScriptMessage"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function init() {
       webView.lastMessageFrameSource = null;
       webView.lastMessage = null;

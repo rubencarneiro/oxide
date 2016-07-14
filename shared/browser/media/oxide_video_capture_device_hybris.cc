@@ -43,18 +43,6 @@ namespace {
 
 void DummyOnPreviewTextureNeedsUpdateCallback(void* context) {}
 
-int32_t GetCameraId(const media::VideoCaptureDevice::Name& device_name) {
-  std::string device_id_format =
-      base::StringPrintf("%s%%d",
-                         VideoCaptureDeviceHybris::GetDeviceIdPrefix());
-  int32_t camera_id = -1;
-  int rv =
-      sscanf(device_name.id().c_str(), device_id_format.c_str(), &camera_id);
-  CHECK_EQ(rv, 1);
-
-  return camera_id;
-}
-
 int GetRotation(CameraType position, int orientation) {
   int display_rotation =
       BrowserPlatformIntegration::GetInstance()
@@ -77,6 +65,21 @@ int GetRotation(CameraType position, int orientation) {
   return (orientation + display_rotation) % 360;
 }
 
+}
+
+// static
+int32_t VideoCaptureDeviceHybris::GetCameraIdfromDeviceId(
+    const std::string& device_id) {
+  std::string device_id_format =
+      base::StringPrintf("%s%%d",
+                         VideoCaptureDeviceHybris::GetDeviceIdPrefix());
+
+  int32_t camera_id = -1;
+  int rv =
+      sscanf(device_id.c_str(), device_id_format.c_str(), &camera_id);
+  CHECK_EQ(rv, 1);
+
+  return camera_id;
 }
 
 // static
@@ -137,7 +140,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
       &DummyOnPreviewTextureNeedsUpdateCallback;
   listener_->on_preview_frame_cb = &OnPreviewFrameCallback;
 
-  int32_t camera_id = GetCameraId(device_name_);
+  int32_t camera_id = GetCameraIdfromDeviceId(device_name_.id());
 
   if (android_camera_get_device_info(camera_id,
                                      reinterpret_cast<int*>(&position_),

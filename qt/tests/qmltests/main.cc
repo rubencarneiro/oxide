@@ -56,6 +56,106 @@
 // quick_test_main() is duplicated here because we still use other bits of the
 // QtQuickTest module
 
+struct Options {
+  QString import_path;
+  QString plugin_path;
+  QString nss_db_path;
+  QString tmp_path;
+  QString name;
+  QStringList test_file_names;
+  QString exclude_list_path;
+  bool single_process = false;
+};
+
+static QString StripQuotes(const QString& in) {
+  if (in.length() >= 2 && in.startsWith("\"") && in.endsWith("\"")) {
+    return in.mid(1, in.length() - 2);
+  }
+
+  return in;
+}
+
+static Options ParseOptions(int& argc, char** argv) {
+  Options options;
+
+  int index = 1;
+  int outargc = 1;
+
+  while (index < argc) {
+    auto handle_string_option = [&index, argc, argv](const char* option,
+                                                     QString* out) {
+      if (QLatin1String(argv[index]) == QLatin1String(option) &&
+          (index + 1) < argc) {
+        if (!out->isEmpty()) {
+          qFatal("Can't specify %s more than once", option);
+        }
+        *out = StripQuotes(QString::fromLatin1(argv[index + 1]));
+        index += 2;
+        return true;
+      }
+      return false;
+    };
+
+    auto handle_stringlist_option = [&index, argc, argv](const char* option,
+                                                         QStringList* out) {
+      if (QLatin1String(argv[index]) == QLatin1String(option) &&
+          (index + 1) < argc) {
+        out->push_back(StripQuotes(QString::fromLatin1(argv[index + 1])));
+        index += 2;
+        return true;
+      }
+      return false;
+    };
+
+    auto handle_bool_option = [&index, argv](const char* option,
+                                             bool* out) {
+      if (QLatin1String(argv[index]) == QLatin1String(option)) {
+        *out = true;
+        ++index;
+        return true;
+      }
+      return false;
+    };
+
+    if (handle_string_option("--qml-import-path", &options.import_path)) {
+      continue;
+    }
+    if (handle_string_option("--qt-plugin-path", &options.plugin_path)) {
+      continue;
+    }
+    if (handle_string_option("--nss-db-path", &options.nss_db_path)) {
+      continue;
+    }
+    if (handle_string_option("--tmpdir", &options.tmp_path)) {
+      continue;
+    }
+    if (handle_string_option("--name", &options.name)) {
+      continue;
+    }
+    if (handle_stringlist_option("--file", &options.test_file_names)) {
+      continue;
+    }
+    if (handle_string_option("--exclude-list", &options.exclude_list_path)) {
+      continue;
+    }
+    if (handle_bool_option("--single-process", &options.single_process)) {
+      continue;
+    }
+
+    if (index != outargc) {
+      argv[outargc++] = argv[index++];
+    } else {
+      outargc++;
+      index++;
+    }
+  }
+
+  argv[outargc] = nullptr;
+  argc = outargc;
+
+  return std::move(options);
+}
+
 static QObject* GetTestRootObject(QQmlEngine* engine, QJSEngine* js_engine)
 {
   Q_UNUSED(engine);
@@ -79,9 +179,35 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
   return new ClipboardTestUtils();
 }
 
-static QJSValue BuildTestConstants(QJSEngine* engine, bool single_process) {
+static void RegisterQmlTypes() {
+  qmlRegisterSingletonType<QTestRootObject>(
+      "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
+
+  qmlRegisterSingletonType<TestSupport>(
+      "Oxide.testsupport", 1, 0, "TestSupport", GetTestSupport);
+  qmlRegisterSingletonType<ClipboardTestUtils>(
+      "Oxide.testsupport", 1, 0, "ClipboardTestUtils", GetClipboardTestUtils);
+  qmlRegisterUncreatableType<QObjectTestHelper>(
+      "Oxide.testsupport", 1, 0, "QObjectTestHelper",
+      "Create this with TestSupport.createQObjectTestHelper()");
+  qmlRegisterType<ExternalProtocolHandler>(
+      "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
+  qmlRegisterUncreatableType<WebContextTestSupport>(
+      "Oxide.testsupport", 1, 0, "WebContextTestSupport",
+      "Create this with TestSupport.createWebContextTestSupport()");
+  qmlRegisterUncreatableType<WebViewTestSupport>(
+      "Oxide.testsupport", 1, 0, "WebViewTestSupport",
+      "Create this with TestSupport.createWebViewTestSupport()");
+
+  qmlRegisterSingletonType<TestSupport>(
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
+}
+
+static QJSValue CreateCommonTestConstants(QQmlEngine* engine,
+                                          const Options& options) {
   QJSValue constants = engine->newObject();
-  constants.setProperty(QStringLiteral("SINGLE_PROCESS"), single_process);
+  constants.setProperty(QStringLiteral("SINGLE_PROCESS"),
+                        options.single_process);
   return constants;
 }
 
@@ -163,12 +289,17 @@ static QObject* CreateTestWebContext(const QUrl& data_url, QQmlEngine* engine) {
   return context;
 }
 
-static QSet<QString> LoadExcludeList(const QString& path) {
+static QSet<QString> LoadExcludeList(const Options& options) {
   QSet<QString> rv;
 
-  QFile file(path);
+  if (options.exclude_list_path.isEmpty()) {
+    return rv;
+  }
+
+  QFile file(options.exclude_list_path);
   if (!file.open(QIODevice::ReadOnly)) {
-    qFatal("Failed to open exclude list '%s'", qPrintable(path));
+    qFatal("Failed to open exclude list '%s'",
+           qPrintable(options.exclude_list_path));
     return rv;
   }
 
@@ -182,7 +313,7 @@ static QSet<QString> LoadExcludeList(const QString& path) {
   return rv;
 }
 
-bool WaitForSizeToBeAllocatedForRootObject(QQuickView* view) {
+static bool WaitForSizeToBeAllocatedForRootObject(QQuickView* view) {
   QQuickItem* root = view->rootObject();
 
   QElapsedTimer timer;
@@ -202,139 +333,25 @@ bool WaitForSizeToBeAllocatedForRootObject(QQuickView* view) {
   return !(root->width() < 10.f || root->height() < 10.f);
 }
 
-static QString stripQuotes(const QString& in) {
-  if (in.length() >= 2 && in.startsWith("\"") && in.endsWith("\"")) {
-    return in.mid(1, in.length() - 2);
-  }
-
-  return in;
-}
-
-int main(int argc, char** argv) {
-  QString test_path(QLatin1String(QML_TEST_PATH));
-
-  QString plugin_path;
-  QString import_path;
-  QString tmp_path;
-  QString test_name;
-
-  QStringList test_file_names;
-
-  QString exclude_list_file_path;
-
-  bool single_process = false;
-
-  int index = 1;
-  int outargc = 1;
-  while (index < argc) {
-    char* arg = argv[index];
-    if (QLatin1String(arg) == QLatin1String("--qml-import-path") && (index + 1) < argc) {
-      if (!import_path.isEmpty()) {
-        qFatal("Can only specify --qml-import-path once");
-      }
-      import_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--qt-plugin-path") && (index + 1) < argc) {
-      if (!plugin_path.isEmpty()) {
-        qFatal("Can only specify --qt-plugin-path once");
-      }
-      plugin_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--nss-db-path") && (index + 1) < argc) {
-      if (!oxideGetNSSDbPath().isEmpty()) {
-        qFatal("Can only specify --nss-db-path once");
-      }
-      oxideSetNSSDbPath(stripQuotes(QString::fromLatin1(argv[index + 1])));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--tmpdir") && (index + 1) < argc) {
-      if (!tmp_path.isEmpty()) {
-        qFatal("Can only specify --tmpdir once");
-      }
-      tmp_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--name") && (index + 1) < argc) {
-      if (!test_name.isEmpty()) {
-        qFatal("Can only specify --name once");
-      }
-      test_name = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--file") && (index + 1) < argc) {
-      test_file_names.append(stripQuotes(QString::fromLatin1(argv[index + 1])));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--exclude-list") && (index + 1) < argc) {
-      if (!exclude_list_file_path.isEmpty()) {
-        qFatal("Can only specify --exclude-list once");
-      }
-      exclude_list_file_path = stripQuotes(QString::fromLatin1(argv[index + 1]));
-      index += 2;
-    } else if (QLatin1String(arg) == QLatin1String("--single-process")) {
-      single_process = true;
-      index += 1;
-    } else if (index != outargc) {
-      argv[outargc++] = argv[index++];
-    } else {
-      outargc++;
-      index++;
-    }
-  }
-
-  if (test_name.isEmpty()) {
-    qFatal("Didn't specify a test name!");
-  }
-
-  argv[outargc] = nullptr;
-
-  QGuiApplication app(outargc, argv);
-
-  if (single_process) {
-    oxideSetProcessModel(OxideProcessModelSingleProcess);
-  }
-
-  QOpenGLContext context;
-  context.create();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-  qt_gl_set_global_share_context(&context);
-#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
-  QOpenGLContextPrivate::setGlobalShareContext(&context);
-#else
-  QSGContext::setSharedOpenGLContext(&context);
-#endif
-
-  if (!plugin_path.isEmpty()) {
-    app.addLibraryPath(plugin_path);
-  }
-
-  QuickTestResult::setCurrentAppname(argv[0]);
-  QByteArray test_name_ba = test_name.toUtf8();
-  QuickTestResult::setProgramName(test_name_ba.constData());
-  QuickTestResult::parseArgs(outargc, argv);
-
-  if (!QFile::exists(test_path)) {
-    test_path = QCoreApplication::applicationDirPath();
-  }
-
-  if (tmp_path.isEmpty()) {
-    tmp_path = QDir::currentPath();
-  }
-
-  QDir test_dir;
+static QStringList BuildTestList(const QString& test_path,
+                                 const Options& options) {
   QStringList files;
 
   QFileInfo test_path_info(test_path);
+
   if (test_path_info.isFile()) {
-    if (!test_file_names.isEmpty()) {
+    if (!options.test_file_names.isEmpty()) {
       qFatal("--file option is invalid for this test");
     }
-    test_dir = test_path_info.dir();
     if (!test_path.endsWith(".qml")) {
       qFatal("Test file '%s' does not end with '.qml'", qPrintable(test_path));
     }
     files.append(test_path);
-  } else if (!test_file_names.isEmpty()) {
+  } else if (!options.test_file_names.isEmpty()) {
     Q_ASSERT(test_path_info.isDir());
-    test_dir.cd(test_path);
+    QDir test_dir(test_path);
 
-    for (const auto& file_name : test_file_names) {
+    for (const auto& file_name : options.test_file_names) {
       if (!file_name.endsWith(".qml")) {
         qFatal("Test file '%s' does not end with '.qml'", qPrintable(file_name));
       }
@@ -346,7 +363,6 @@ int main(int argc, char** argv) {
     }
   } else {
     Q_ASSERT(test_path_info.isDir());
-    test_dir.cd(test_path);
 
     const QStringList filters(QStringLiteral("tst_*.qml"));
     QDirIterator iter(test_path, filters, QDir::Files,
@@ -362,34 +378,162 @@ int main(int argc, char** argv) {
     }
   }
 
-  QSet<QString> exclude_list;
-  if (!exclude_list_file_path.isEmpty()) {
-    exclude_list = LoadExcludeList(exclude_list_file_path);
+  return files;
+}
+
+static void RunTest(QQuickView* view,
+                    const QFileInfo& file_info,
+                    const QDir& tmp_dir,
+                    QJSValue* test_constants,
+                    QObject* test_web_context) {
+  QQmlEngine* engine = view->engine();
+
+  test_constants->setProperty(
+      QStringLiteral("TMPDIR"),
+      engine->toScriptValue(QUrl::fromLocalFile(tmp_dir.absolutePath())));
+
+  QScopedPointer<QObject> local_test_web_context;
+  if (!test_web_context) {
+    local_test_web_context.reset(
+        CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
+                             engine));
+    test_web_context = local_test_web_context.data();
+  }
+  engine->rootContext()->setContextProperty(
+      QStringLiteral("SingletonTestWebContext"),
+      test_web_context);
+
+  view->setResizeMode(QQuickView::SizeViewToRootObject);
+  view->setObjectName(file_info.baseName());
+  view->setTitle(view->objectName());
+
+  QTestRootObject::instance()->reset();
+
+  QString path = file_info.absoluteFilePath();
+  view->setSource(QUrl::fromLocalFile(path));
+
+  if (QTest::printAvailableFunctions) {
+    return;
   }
 
-  qmlRegisterSingletonType<QTestRootObject>(
-      "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
+  if (view->status() == QQuickView::Error) {
+    RecordCompileError(file_info, view);
+    return;
+  }
 
-  qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport", 1, 0, "TestSupport", GetTestSupport);
-  qmlRegisterSingletonType<ClipboardTestUtils>(
-      "Oxide.testsupport", 1, 0, "ClipboardTestUtils", GetClipboardTestUtils);
-  qmlRegisterUncreatableType<QObjectTestHelper>(
-      "Oxide.testsupport", 1, 0, "QObjectTestHelper",
-      "Create this with TestSupport.createQObjectTestHelper()");
-  qmlRegisterType<ExternalProtocolHandler>(
-      "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
-  qmlRegisterUncreatableType<WebContextTestSupport>(
-      "Oxide.testsupport", 1, 0, "WebContextTestSupport",
-      "Create this with TestSupport.createWebContextTestSupport()");
-  qmlRegisterUncreatableType<WebViewTestSupport>(
-      "Oxide.testsupport", 1, 0, "WebViewTestSupport",
-      "Create this with TestSupport.createWebViewTestSupport()");
+  if (QTestRootObject::instance()->hasQuit()) {
+    return;
+  }
 
-  qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
+  view->setFramePosition(QPoint(50, 50));
+  if (view->initialSize().isEmpty()) {
+    view->resize(600, 400);
+    view->setResizeMode(QQuickView::SizeRootObjectToView);
+  }
+
+  view->show(); 
+  if (!QTest::qWaitForWindowExposed(view)) {
+    qWarning().nospace() <<
+        "Test '" << QDir::toNativeSeparators(path) << "' window not "
+        "exposed after show().";
+  }
+
+  if (view->resizeMode() == QQuickView::SizeRootObjectToView &&
+      !WaitForSizeToBeAllocatedForRootObject(view)) {
+    qWarning().nospace() <<
+        "Test '" << QDir::toNativeSeparators(path) << "' root item not "
+        "greater than 0x0 after resize().";
+  }
+
+  view->requestActivate();
+  if (!QTest::qWaitForWindowActive(view)) {
+    qWarning().nospace() <<
+        "Test '" << QDir::toNativeSeparators(path) << "' window not active "
+        "after requestActivate().";
+  }
+
+  if (view->isExposed()) {
+    QTestRootObject::instance()->setWindowShown(true);
+  } else {
+    qWarning().nospace() <<
+        "Test '" << QDir::toNativeSeparators(path) << "' window was never "
+        "exposed! If the test case was expecting windowShown, it will "
+        "hang.";
+  }
+
+  if (QTestRootObject::instance()->hasQuit()) {
+    return;
+  }
+
+  if (!QTestRootObject::instance()->hasTestCase()) {
+    return;
+  }
 
   QEventLoop event_loop;
+  QObject::connect(view->engine(), SIGNAL(quit()),
+                   &event_loop, SLOT(quit()));
+  event_loop.exec();
+}
+
+int main(int argc, char** argv) {
+  QString test_path(QML_TEST_PATH);
+
+  Options options = ParseOptions(argc, argv);
+
+  if (options.name.isEmpty()) {
+    qFatal("Didn't specify a test name!");
+  }
+
+  QGuiApplication app(argc, argv);
+
+  if (!options.nss_db_path.isEmpty()) {
+    oxideSetNSSDbPath(options.nss_db_path);
+  }
+  if (!options.plugin_path.isEmpty()) {
+    app.addLibraryPath(options.plugin_path);
+  }
+  if (options.single_process) {
+    oxideSetProcessModel(OxideProcessModelSingleProcess);
+  }
+
+  QOpenGLContext context;
+  context.create();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  qt_gl_set_global_share_context(&context);
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
+  QOpenGLContextPrivate::setGlobalShareContext(&context);
+#else
+  QSGContext::setSharedOpenGLContext(&context);
+#endif
+
+  QuickTestResult::setCurrentAppname(argv[0]);
+  QByteArray test_name_ba = options.name.toUtf8();
+  QuickTestResult::setProgramName(test_name_ba.constData());
+  QuickTestResult::parseArgs(argc, argv);
+
+  if (!QFile::exists(test_path)) {
+    test_path = QCoreApplication::applicationDirPath();
+  }
+
+  if (options.tmp_path.isEmpty()) {
+    options.tmp_path = QDir::currentPath();
+  }
+
+  QDir test_dir;
+  {
+    QFileInfo fi(test_path);
+    if (fi.isDir()) {
+      test_dir.cd(fi.absoluteFilePath());
+    } else {
+      test_dir = fi.absoluteDir();
+    }
+  }
+
+  QStringList files = BuildTestList(test_path, options);
+
+  QSet<QString> exclude_list = LoadExcludeList(options);
+
+  RegisterQmlTypes();
 
   // |num_factory| should outlive |engine|
   TestNetworkAccessManagerFactory nam_factory(test_dir);
@@ -397,24 +541,21 @@ int main(int argc, char** argv) {
   QQmlEngine engine;
   engine.setNetworkAccessManagerFactory(&nam_factory);
 
-  if (!import_path.isEmpty()) {
-    engine.addImportPath(import_path);
+  if (!options.import_path.isEmpty()) {
+    engine.addImportPath(options.import_path);
   }
 
-  QJSValue test_constants = BuildTestConstants(&engine, single_process);
+  QJSValue test_constants = CreateCommonTestConstants(&engine, options);
   engine.rootContext()->setContextProperty(
       QStringLiteral("TestConstants"),
       QVariant::fromValue(test_constants));
 
   QScopedPointer<QObject> single_process_web_context;
-  if (single_process) {
-    QDir tmp_dir(tmp_path);
+  if (options.single_process) {
+    QDir tmp_dir(options.tmp_path);
     single_process_web_context.reset(
         CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
                              &engine));
-    engine.rootContext()->setContextProperty(
-        QStringLiteral("SingletonTestWebContext"),
-        single_process_web_context.data());
   }
 
   QQuickView view(&engine, nullptr);
@@ -424,8 +565,6 @@ int main(int argc, char** argv) {
 
   QObject::connect(view.engine(), SIGNAL(quit()),
                    QTestRootObject::instance(), SLOT(quit()));
-  QObject::connect(view.engine(), SIGNAL(quit()),
-                   &event_loop, SLOT(quit()));
 
   for (QStringList::iterator it = files.begin(); it != files.end(); ++it) {
     const QFileInfo fi(*it);
@@ -437,87 +576,13 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    QDir tmp_dir(tmp_path);
+    QDir tmp_dir(options.tmp_path);
     if (files.size() > 1) {
-      tmp_dir = tmp_path + QDir::separator() + fi.fileName();
+      tmp_dir = options.tmp_path + QDir::separator() + fi.fileName();
     }
 
-    test_constants.setProperty(
-        QStringLiteral("TMPDIR"),
-        engine.toScriptValue(QUrl::fromLocalFile(tmp_dir.absolutePath())));
-
-    QScopedPointer<QObject> test_web_context;
-    if (!single_process) {
-      test_web_context.reset(
-          CreateTestWebContext(QUrl::fromLocalFile(tmp_dir.absolutePath()),
-                               &engine));
-      engine.rootContext()->setContextProperty(
-          QStringLiteral("SingletonTestWebContext"),
-          test_web_context.data());
-    }
-
-    view.setResizeMode(QQuickView::SizeViewToRootObject);
-    view.setObjectName(fi.baseName());
-    view.setTitle(view.objectName());
-
-    QTestRootObject::instance()->reset();
-
-    QString path = fi.absoluteFilePath();
-    view.setSource(QUrl::fromLocalFile(path));
-
-    if (QTest::printAvailableFunctions) {
-      continue;
-    }
-
-    if (view.status() == QQuickView::Error) {
-      RecordCompileError(fi, &view);
-      continue;
-    }
-
-    if (!QTestRootObject::instance()->hasQuit()) {
-      view.setFramePosition(QPoint(50, 50));
-      if (qFuzzyCompare(view.rootObject()->width(), qreal(0)) &&
-          qFuzzyCompare(view.rootObject()->height(), qreal(0))) {
-        view.resize(600, 400);
-        view.setResizeMode(QQuickView::SizeRootObjectToView);
-      }
-      view.show(); 
-      if (!QTest::qWaitForWindowExposed(&view)) {
-        qWarning().nospace() <<
-            "Test '" << QDir::toNativeSeparators(path) << "' window not "
-            "exposed after show().";
-      }
-      if (view.resizeMode() == QQuickView::SizeRootObjectToView &&
-          !WaitForSizeToBeAllocatedForRootObject(&view)) {
-        qWarning().nospace() <<
-            "Test '" << QDir::toNativeSeparators(path) << "' root item not "
-            "greater than 0x0 after resize().";
-      }
-      view.requestActivate();
-      if (!QTest::qWaitForWindowActive(&view)) {
-        qWarning().nospace() <<
-            "Test '" << QDir::toNativeSeparators(path) << "' window not active "
-            "after requestActivate().";
-      }
-      if (view.isExposed()) {
-        QTestRootObject::instance()->setWindowShown(true);
-      } else {
-        qWarning().nospace() <<
-            "Test '" << QDir::toNativeSeparators(path) << "' window was never "
-            "exposed! If the test case was expecting windowShown, it will "
-            "hang.";
-      }
-
-      if (QTestRootObject::instance()->hasQuit()) {
-        continue;
-      }
-
-      if (!QTestRootObject::instance()->hasTestCase()) {
-        continue;
-      }
-
-      event_loop.exec();
-    }
+    RunTest(&view, fi, tmp_dir, &test_constants,
+            single_process_web_context.data());
   }
 
   QuickTestResult::setProgramName(nullptr);

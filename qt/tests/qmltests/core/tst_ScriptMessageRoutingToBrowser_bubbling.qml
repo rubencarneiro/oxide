@@ -32,6 +32,10 @@ TestWebView {
     name: "ScriptMessageRoutingToBrowser_bubbling"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function init() {
       webView.url = "http://testsuite/tst_ScriptMessageRoutingToBrowser_bubbling.html";
       verify(webView.waitForLoadSucceeded(),

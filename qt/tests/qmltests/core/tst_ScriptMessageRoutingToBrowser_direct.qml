@@ -38,6 +38,10 @@ TestWebView {
              "Timed out waiting for a successful load");
     }
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function _test_direct(frame) {
       var handler = messageHandler.createObject(
           frame,

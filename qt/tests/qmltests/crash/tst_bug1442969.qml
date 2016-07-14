@@ -33,6 +33,10 @@ TestWebView {
     name: "bug1442969"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function test_bug1442969() {
       webView.url = "http://testsuite/tst_bug1442969.html";
       verify(webView.waitForLoadSucceeded(),

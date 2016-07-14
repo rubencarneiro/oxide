@@ -47,6 +47,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
   ~VideoCaptureDeviceHybris() override;
 
   static const char* GetDeviceIdPrefix();
+  static int32_t GetCameraIdfromDeviceId(const std::string& device_id);
 
  private:
   static void OnMsgErrorCallback(void* context);

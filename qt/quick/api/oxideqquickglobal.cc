@@ -43,8 +43,10 @@ QVariant VideoCaptureDeviceToVariant(const OxideQVideoCaptureDevice& device) {
   switch (device.position()) {
     case OxideQVideoCaptureDevice::PositionFrontFace:
       rv["position"] = "frontface";
+      break;
     case OxideQVideoCaptureDevice::PositionBackFace:
       rv["position"] = "backface";
+      break;
     default:
       rv["position"] = "unspecified";
   }

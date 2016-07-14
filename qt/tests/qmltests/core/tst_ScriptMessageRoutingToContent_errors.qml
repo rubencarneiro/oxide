@@ -16,6 +16,10 @@ TestWebView {
     name: "ScriptMessageRoutingToContent_errors"
     when: windowShown
 
+    function cleanupTestCase() {
+      webView.context.clearTestUserScripts();
+    }
+
     function init() {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded(),

@@ -17,6 +17,10 @@
 
 #include "oxide_media_capture_devices_dispatcher.h"
 
+#if defined(ENABLE_HYBRIS_CAMERA)
+#include <hybris/camera/camera_compatibility_layer_capabilities.h>
+#endif
+
 #include "base/bind.h"
 #include "base/callback.h"
 #include "base/location.h"
@@ -29,12 +33,19 @@
 
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
+#if defined(ENABLE_HYBRIS_CAMERA)
+#include "shared/browser/oxide_hybris_utils.h"
+#endif
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
 
 #include "oxide_media_capture_devices_context.h"
 #include "oxide_media_capture_devices_dispatcher_observer.h"
+
+#if defined(ENABLE_HYBRIS_CAMERA)
+#include "oxide_video_capture_device_hybris.h"
+#endif
 
 namespace oxide {
 
@@ -197,6 +208,46 @@ PermissionRequestCallback WrapMediaResponseCallback(
                     embedding_origin);
 }
 
+void UpdateMediaStreamDeviceFacing(content::MediaStreamDevices& devices) {
+#ifdef ENABLE_HYBRIS_CAMERA
+  if (!HybrisUtils::IsCameraCompatAvailable()) {
+    return;
+  }
+
+  for (auto& device : devices) {
+    if (device.id.find(
+          VideoCaptureDeviceHybris::GetDeviceIdPrefix()) != 0) {
+      continue;
+    }
+
+    int32_t camera_id =
+        oxide::VideoCaptureDeviceHybris::GetCameraIdfromDeviceId(
+            device.id);
+
+    CameraType type;
+    int orientation;
+    if (android_camera_get_device_info(camera_id,
+                                       reinterpret_cast<int*>(&type),
+                                       &orientation) != 0) {
+      LOG(ERROR) << "Failed to get device info for camera with ID "
+                 << camera_id;
+      continue;
+    }
+
+    switch(type) {
+      case BACK_FACING_CAMERA_TYPE:
+        device.video_facing = content::MEDIA_VIDEO_FACING_ENVIRONMENT;
+        break;
+      case FRONT_FACING_CAMERA_TYPE:
+        device.video_facing = content::MEDIA_VIDEO_FACING_USER;
+        break;
+      default:
+        break;
+    }
+  }
+#endif
+}
+
 }
 
 MediaCaptureDevicesDispatcher::MediaCaptureDevicesDispatcher() {}
@@ -237,6 +288,11 @@ void MediaCaptureDevicesDispatcher::OnAudioCaptureDevicesChanged() {
 }
 
 void MediaCaptureDevicesDispatcher::OnVideoCaptureDevicesChanged() {
+  current_video_capture_devices_ =
+      content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
+
+  UpdateMediaStreamDeviceFacing(current_video_capture_devices_);
+
   content::BrowserThread::PostTask(
       content::BrowserThread::UI,
       FROM_HERE,
@@ -290,7 +346,14 @@ MediaCaptureDevicesDispatcher::GetVideoCaptureDevices() {
     return EmptyDevices();
   }
 
-  return content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
+  if (current_video_capture_devices_.empty()) {
+    current_video_capture_devices_ =
+        content::MediaCaptureDevices::GetInstance()->GetVideoCaptureDevices();
+
+    UpdateMediaStreamDeviceFacing(current_video_capture_devices_);
+  }
+
+  return current_video_capture_devices_;
 }
 
 const content::MediaStreamDevice*
