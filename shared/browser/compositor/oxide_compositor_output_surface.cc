@@ -43,7 +43,6 @@ void CompositorOutputSurface::DoSwapBuffers(
   DCHECK(frame->gl_frame_data || frame->software_frame_data);
 
   listener_->SwapCompositorFrame(std::move(frame));
-  client_->DidSwapBuffers();
 }
 
 bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
