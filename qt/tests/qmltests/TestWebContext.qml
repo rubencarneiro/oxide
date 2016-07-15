@@ -4,8 +4,6 @@ import com.canonical.Oxide 1.3
 import Oxide.testsupport 1.0
 
 WebContext {
-  property var qtest_contextTestSupport: TestSupport.createWebContextTestSupport(this)
-
   userScripts: [
     UserScript {
       context: "oxide://testutils/"
@@ -51,7 +49,7 @@ WebContext {
   }
 
   function clearTemporarySavedPermissionStatuses() {
-    qtest_contextTestSupport.clearTemporarySavedPermissionStatuses();
+    WebContextTestSupport.clearTemporarySavedPermissionStatuses();
   }
 
   property var qtest_UserScriptFactory: Component {

@@ -94,10 +94,8 @@ WebView {
 
   context: SingletonTestWebContext
 
-  property QtObject qtest_webViewTestSupport: TestSupport.createWebViewTestSupport(this)
-
   function killWebProcess(crash) {
-    qtest_webViewTestSupport.killWebProcess(crash);
+    WebViewTestSupport.killWebProcess(crash);
   }
 
   Connections {

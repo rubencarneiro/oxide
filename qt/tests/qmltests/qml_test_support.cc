@@ -143,12 +143,14 @@ QObject* QObjectTestHelper::parent() const {
   return parent_;
 }
 
-WebContextTestSupport::WebContextTestSupport(OxideQQuickWebContext* context)
-    : context_(context) {}
+WebContextTestSupportAttached::WebContextTestSupportAttached(
+    QObject* attachee)
+    : QObject(attachee),
+      context_(qobject_cast<OxideQQuickWebContext*>(attachee)) {}
 
-void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
+void WebContextTestSupportAttached::clearTemporarySavedPermissionStatuses() {
   if (!context_) {
-    qWarning() << "Associated context has already been deleted";
+    qWarning() << "Object is not a WebContext";
     return;
   }
 
@@ -156,16 +158,29 @@ void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
       ->clearTemporarySavedPermissionStatuses();
 }
 
-WebViewTestSupport::WebViewTestSupport(OxideQQuickWebView* view)
-    : view_(view) {}
+// static
+WebContextTestSupportAttached* WebContextTestSupport::qmlAttachedProperties(
+    QObject* attachee) {
+  return new WebContextTestSupportAttached(attachee);
+}
 
-void WebViewTestSupport::killWebProcess(bool crash) {
+WebViewTestSupportAttached::WebViewTestSupportAttached(QObject* attachee)
+    : QObject(attachee),
+      view_(qobject_cast<OxideQQuickWebView*>(attachee)) {}
+
+void WebViewTestSupportAttached::killWebProcess(bool crash) {
   if (!view_) {
-    qWarning() << "Associated view has already been deleted";
+    qWarning() << "Object is not a WebView";
     return;
   }
 
   OxideQQuickWebViewPrivate::get(view_)->killWebProcess(crash);
+}
+
+// static
+WebViewTestSupportAttached* WebViewTestSupport::qmlAttachedProperties(
+    QObject* attachee) {
+  return new WebViewTestSupportAttached(attachee);
 }
 
 TestSupport::TestSupport() {}
@@ -192,25 +207,6 @@ QObjectTestHelper* TestSupport::createQObjectTestHelper(QObject* object) {
   }
 
   return new QObjectTestHelper(object);
-}
-
-WebContextTestSupport* TestSupport::createWebContextTestSupport(
-    OxideQQuickWebContext* context) {
-  if (!context) {
-    qWarning() << "NULL WebContext";
-    return nullptr;
-  }
-
-  return new WebContextTestSupport(context);
-}
-
-WebViewTestSupport* TestSupport::createWebViewTestSupport(
-    OxideQQuickWebView* view) {
-  if (!view) {
-    return nullptr;
-  }
-
-  return new WebViewTestSupport(view);
 }
 
 QVariant TestSupport::getAppProperty(const QString& property) {

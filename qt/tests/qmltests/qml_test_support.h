@@ -22,6 +22,7 @@
 #include <QPointer>
 #include <QQmlParserStatus>
 #include <QString>
+#include <QtQml>
 #include <QVariant>
 #include <signal.h>
 
@@ -97,29 +98,49 @@ class QObjectTestHelper : public QObject {
   bool destroyed_;
 };
 
-class WebContextTestSupport : public QObject {
+class WebContextTestSupportAttached : public QObject {
   Q_OBJECT
 
  public:
-  WebContextTestSupport(OxideQQuickWebContext* context);
+  WebContextTestSupportAttached(QObject* attachee);
 
   Q_INVOKABLE void clearTemporarySavedPermissionStatuses();
 
  private:
-  QPointer<OxideQQuickWebContext> context_;
+  OxideQQuickWebContext* context_;
+};
+
+class WebContextTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  static WebContextTestSupportAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(WebContextTestSupport)
+QML_DECLARE_TYPEINFO(WebContextTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+class WebViewTestSupportAttached : public QObject {
+  Q_OBJECT
+
+ public:
+  WebViewTestSupportAttached(QObject* attachee);
+
+  Q_INVOKABLE void killWebProcess(bool crash);
+
+ private:
+  OxideQQuickWebView* view_;
 };
 
 class WebViewTestSupport : public QObject {
   Q_OBJECT
 
  public:
-  WebViewTestSupport(OxideQQuickWebView* view);
-
-  Q_INVOKABLE void killWebProcess(bool crash);
-
- private:
-  QPointer<OxideQQuickWebView> view_;
+  static WebViewTestSupportAttached* qmlAttachedProperties(QObject* attachee);
 };
+
+QML_DECLARE_TYPE(WebViewTestSupport)
+QML_DECLARE_TYPEINFO(WebViewTestSupport, QML_HAS_ATTACHED_PROPERTIES)
 
 class TestSupport : public QObject {
   Q_OBJECT
@@ -132,12 +153,6 @@ class TestSupport : public QObject {
   Q_INVOKABLE void destroyQObjectNow(QObject* object);
 
   Q_INVOKABLE QObjectTestHelper* createQObjectTestHelper(QObject* object);
-
-  Q_INVOKABLE WebContextTestSupport* createWebContextTestSupport(
-      OxideQQuickWebContext* context);
-
-  Q_INVOKABLE WebViewTestSupport* createWebViewTestSupport(
-      OxideQQuickWebView* view);
 
   Q_INVOKABLE QVariant getAppProperty(const QString& property);
   Q_INVOKABLE void setAppProperty(const QString& property,
