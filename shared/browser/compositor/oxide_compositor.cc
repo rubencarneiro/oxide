@@ -333,16 +333,11 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           base::ThreadTaskRunnerHandle::Get().get(),
           display_surface->capabilities().max_frames_pending));
 
-  cc::SurfaceManager* manager =
-      CompositorUtils::GetInstance()->GetSurfaceManager();
-
   display_ =
       base::MakeUnique<cc::Display>(
-          manager,
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
-          surface_id_allocator_->client_id(),
           std::move(begin_frame_source),
           std::move(display_surface),
           std::move(scheduler),
@@ -351,7 +346,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
 
   std::unique_ptr<cc::SurfaceDisplayOutputSurface> surface(
       new cc::SurfaceDisplayOutputSurface(
-          manager,
+          CompositorUtils::GetInstance()->GetSurfaceManager(),
           surface_id_allocator_.get(),
           display_.get(),
           context_provider,
