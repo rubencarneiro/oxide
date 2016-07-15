@@ -36,6 +36,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
+#include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/base/switches.h"
@@ -388,6 +389,31 @@ void InitializeCommandLine(const std::string& argv0,
   command_line->AppendSwitchPath(switches::kSharedMemoryOverridePath,
                                  GetSharedMemoryPath(env));
 #endif
+
+  // verbose logging
+  const std::string& verbose_log_level =
+      GetEnvironmentOption("VERBOSE_LOG_LEVEL", env);
+  if (!verbose_log_level.empty()) {
+    command_line->AppendSwitch(switches::kEnableLogging);
+    command_line->AppendSwitchASCII(switches::kV, verbose_log_level);
+  }
+
+  const std::string& extra_cmd_arg_list =
+      GetEnvironmentOption("EXTRA_CMD_ARGS", env);
+  if (!extra_cmd_arg_list.empty()) {
+    std::vector<std::string> args =
+        base::SplitString(extra_cmd_arg_list,
+                          base::kWhitespaceASCII,
+                          base::KEEP_WHITESPACE,
+                          base::SPLIT_WANT_NONEMPTY);
+
+    base::CommandLine::StringVector new_args;
+    new_args.push_back(command_line->argv()[0]);
+    new_args.insert(new_args.end(), args.begin(), args.end());
+
+    base::CommandLine extra_cmd_line(new_args);
+    command_line->AppendArguments(extra_cmd_line, false);
+  }
 }
 
 void AddFormFactorSpecificCommandLineArguments() {

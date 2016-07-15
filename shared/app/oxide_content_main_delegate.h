@@ -47,6 +47,8 @@ class ContentMainDelegate final : public content::ContentMainDelegate {
   content::ContentUtilityClient* CreateContentUtilityClient() final;
 
  private:
+  void InitVLogging();
+
   PlatformDelegate* delegate_;
   std::unique_ptr<ContentBrowserClient> content_browser_client_;
   std::unique_ptr<ContentRendererClient> content_renderer_client_;
