@@ -26,6 +26,10 @@
 #include <QVariant>
 #include <signal.h>
 
+QT_BEGIN_NAMESPACE
+class QQuickItem;
+QT_END_NAMESPACE
+
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
 
@@ -141,6 +145,56 @@ class WebViewTestSupport : public QObject {
 
 QML_DECLARE_TYPE(WebViewTestSupport)
 QML_DECLARE_TYPEINFO(WebViewTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+class ItemTestSupportAttached : public QObject {
+  Q_OBJECT
+
+ public:
+  ItemTestSupportAttached(QObject* attachee);
+
+  Q_INVOKABLE QPointF mapToScene(const QPointF& point) const;
+
+ private:
+  QQuickItem* item_;
+};
+
+class ItemTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  static ItemTestSupportAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(ItemTestSupport)
+QML_DECLARE_TYPEINFO(ItemTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+// This exists because the Window.window attached property does not exist
+// until Qt5.7, and the other attached Window properties available in
+// QtQuick.Window don't provide the functionality we require
+class TestWindowAttached : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(int x READ x)
+  Q_PROPERTY(int y READ y)
+
+ public:
+  TestWindowAttached(QObject* attachee);
+
+  int x() const;
+  int y() const;
+
+ private:
+  QQuickItem* item_;
+};
+
+class TestWindow : public QObject {
+  Q_OBJECT
+
+ public:
+  static TestWindowAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(TestWindow)
+QML_DECLARE_TYPEINFO(TestWindow, QML_HAS_ATTACHED_PROPERTIES)
 
 class TestSupport : public QObject {
   Q_OBJECT

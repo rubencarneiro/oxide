@@ -25,6 +25,8 @@
 #include <QList>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -181,6 +183,72 @@ void WebViewTestSupportAttached::killWebProcess(bool crash) {
 WebViewTestSupportAttached* WebViewTestSupport::qmlAttachedProperties(
     QObject* attachee) {
   return new WebViewTestSupportAttached(attachee);
+}
+
+TestWindowAttached::TestWindowAttached(QObject* attachee)
+    : QObject(attachee),
+      item_(nullptr) {
+  QObject* o = attachee;
+  while (o) {
+    item_ = qobject_cast<QQuickItem*>(o);
+    if (item_) {
+      break;
+    }
+    o = o->parent();
+  }
+  if (!item_) {
+    qWarning() << "Can't determine item from object";
+  }
+}
+
+int TestWindowAttached::x() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->x();
+}
+
+int TestWindowAttached::y() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->y();
+}
+
+// static
+TestWindowAttached* TestWindow::qmlAttachedProperties(QObject* attachee) {
+  return new TestWindowAttached(attachee);
+}
+
+ItemTestSupportAttached::ItemTestSupportAttached(QObject* attachee)
+    : QObject(attachee),
+      item_(nullptr) {
+  QObject* o = attachee;
+  while (o) {
+    item_ = qobject_cast<QQuickItem*>(o);
+    if (item_) {
+      break;
+    }
+    o = o->parent();
+  }
+  if (!item_) {
+    qWarning() << "Can't determine item from object";
+  }
+}
+
+QPointF ItemTestSupportAttached::mapToScene(const QPointF& point) const {
+  if (!item_) {
+    return QPointF();
+  }
+
+  return item_->mapToScene(point);
+}
+
+// static
+ItemTestSupportAttached* ItemTestSupport::qmlAttachedProperties(QObject* attachee) {
+  return new ItemTestSupportAttached(attachee);
 }
 
 TestSupport::TestSupport() {}

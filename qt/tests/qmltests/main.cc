@@ -194,10 +194,16 @@ static void RegisterQmlTypes() {
       "Oxide.testsupport", 1, 0, "ExternalProtocolHandler");
   qmlRegisterUncreatableType<WebContextTestSupport>(
       "Oxide.testsupport", 1, 0, "WebContextTestSupport",
-      "Create this with TestSupport.createWebContextTestSupport()");
+      "WebContextTestSupport only exists to provide attached properties");
   qmlRegisterUncreatableType<WebViewTestSupport>(
       "Oxide.testsupport", 1, 0, "WebViewTestSupport",
-      "Create this with TestSupport.createWebViewTestSupport()");
+      "WebViewTestSupport only exists to provide attached properties");
+  qmlRegisterUncreatableType<TestWindow>(
+      "Oxide.testsupport", 1, 0, "TestWindow",
+      "TestWindow only exists to provide attached properties");
+  qmlRegisterUncreatableType<ItemTestSupport>(
+      "Oxide.testsupport", 1, 0, "ItemTestSupport",
+      "ItemTestSupport only exists to provide attached properties");
 
   qmlRegisterSingletonType<TestSupport>(
       "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
