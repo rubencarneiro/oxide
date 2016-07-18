@@ -26,7 +26,6 @@
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
-#include "cc/output/compositor_frame_ack.h"
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
@@ -732,28 +731,25 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
 }
 
 void RenderWidgetHostView::SendDelegatedFrameAck(uint32_t surface_id) {
-  cc::CompositorFrameAck ack;
-  ack.resources.swap(surface_returned_resources_);
-
-  content::RenderWidgetHostImpl::SendSwapCompositorFrameAck(
+  content::RenderWidgetHostImpl::SendReclaimCompositorResources(
       host_->GetRoutingID(),
       surface_id,
       host_->GetProcess()->GetID(),
-      ack);
+      true, // is_swap_ack
+      surface_returned_resources_);
+  surface_returned_resources_.clear();
 }
 
 void RenderWidgetHostView::SendReturnedDelegatedResources() {
   DCHECK(host_);
 
-  cc::CompositorFrameAck ack;
-  DCHECK(!surface_returned_resources_.empty());
-  ack.resources.swap(surface_returned_resources_);
-
   content::RenderWidgetHostImpl::SendReclaimCompositorResources(
       host_->GetRoutingID(),
       last_output_surface_id_,
       host_->GetProcess()->GetID(),
-      ack);
+      false, // is_swap_ack
+      surface_returned_resources_);
+  surface_returned_resources_.clear();
 }
 
 void RenderWidgetHostView::RunAckCallbacks(cc::SurfaceDrawStatus status) {

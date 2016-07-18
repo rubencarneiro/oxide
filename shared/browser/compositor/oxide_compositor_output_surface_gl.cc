@@ -22,7 +22,6 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "cc/output/compositor_frame.h"
-#include "cc/output/compositor_frame_ack.h"
 #include "cc/output/context_provider.h"
 #include "cc/output/gl_frame_data.h"
 #include "cc/output/output_surface_client.h"

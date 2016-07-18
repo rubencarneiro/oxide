@@ -1,7 +1,7 @@
 {
   "src": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/chromium", 
-    "rev": "898521108276dc9ccbb7ab6e51fd18011f448f66", 
+    "rev": "ae1ab2eae73fd61aa23a22ae64e69c137591acfe", 
     "upstream": "https://chromium.googlesource.com/chromium/src.git"
   }, 
   "src/third_party/ffmpeg": {
