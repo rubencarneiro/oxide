@@ -316,7 +316,6 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsync) {
   const CookieChangeVector& changes = cookie_changes();
 
   EXPECT_EQ(1U, changes.size());
-  EXPECT_EQ(GURL("https://www.google.com/"), std::get<0>(changes[0]).Source());
   EXPECT_EQ("foo", std::get<0>(changes[0]).Name());
   EXPECT_EQ("bar", std::get<0>(changes[0]).Value());
   EXPECT_EQ("www.google.com", std::get<0>(changes[0]).Domain());
@@ -352,7 +351,6 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsyncNoCallback) {
 
   EXPECT_TRUE(callback.WaitForCallback());
   EXPECT_EQ(1U, callback.result().size());
-  EXPECT_EQ(GURL("https://www.google.com/"), callback.result()[0].Source());
   EXPECT_EQ("foo", callback.result()[0].Name());
   EXPECT_EQ("bar", callback.result()[0].Value());
   EXPECT_EQ("www.google.com", callback.result()[0].Domain());
@@ -442,7 +440,6 @@ TEST_F(CookieStoreProxyTest, GetCookieListWithOptionsAsync) {
 
   EXPECT_TRUE(callback.WaitForCallback());
   EXPECT_EQ(1U, callback.result().size());
-  EXPECT_EQ(GURL("https://www.google.com/"), callback.result()[0].Source());
   EXPECT_EQ("foo", callback.result()[0].Name());
   EXPECT_EQ("bar", callback.result()[0].Value());
   EXPECT_EQ("www.google.com", callback.result()[0].Domain());
@@ -483,7 +480,6 @@ TEST_F(CookieStoreProxyTest, GetAllCookiesAsync) {
 
   EXPECT_TRUE(callback.WaitForCallback());
   EXPECT_EQ(1U, callback.result().size());
-  EXPECT_EQ(GURL("https://www.google.com/"), callback.result()[0].Source());
   EXPECT_EQ("foo", callback.result()[0].Name());
   EXPECT_EQ("bar", callback.result()[0].Value());
   EXPECT_EQ("www.google.com", callback.result()[0].Domain());
