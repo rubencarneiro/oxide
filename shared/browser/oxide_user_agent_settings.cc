@@ -97,10 +97,14 @@ void UserAgentSettingsIOData::SetUserAgentOverrides(
 
 UserAgentSettingsIOData::UserAgentSettingsIOData(BrowserContextIOData* context)
     : context_(context) {
- accept_langs_ = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
- if (accept_langs_ == "AcceptLanguage") {
-   accept_langs_ = kDefaultAcceptLanguage;
- }
+  // TRANSLATORS: AcceptLanguage is a special token that should not be
+  // translated as such. The expected value is a comma-separated list of
+  // language codes in order of decreasing preference (e.g. "es-ES,es,en,*").
+  // See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4.
+  accept_langs_ = dgettext(OXIDE_GETTEXT_DOMAIN, "AcceptLanguage");
+  if (accept_langs_ == "AcceptLanguage") {
+    accept_langs_ = kDefaultAcceptLanguage;
+  }
 }
 
 UserAgentSettingsIOData::~UserAgentSettingsIOData() {}
