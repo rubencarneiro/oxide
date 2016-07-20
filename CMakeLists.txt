@@ -54,6 +54,12 @@ string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\3" PROJECT_VERSION_P
 
 add_definitions(-DOXIDE_GETTEXT_DOMAIN="${GETTEXT_PACKAGE}")
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  add_definitions(-DOS_LINUX)
+else()
+  message(FATAL_ERROR "Unsupported CMAKE_SYSTEM_NAME")
+endif()
+
 # Check we have a new enough compiler
 if(CMAKE_COMPILER_ID STREQUAL "GNU" AND
    CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)

@@ -1,22 +1,34 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Canonical Ltd.
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Spanish translation for oxide
+# Copyright (c) 2014 Rosetta Contributors and Canonical Ltd 2014
+# This file is distributed under the same license as the oxide package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: oxide-qt\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-08-13 14:45-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Project-Id-Version: oxide\n"
+"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2016-04-28 17:50+0200\n"
+"PO-Revision-Date: 2016-05-04 23:50+0000\n"
+"Last-Translator: Olivier Tilloy <olivier.tilloy@canonical.com>\n"
+"Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Launchpad-Export-Date: 2016-07-13 08:56+0000\n"
+"X-Generator: Launchpad (build 18115)\n"
 
-#: shared/browser/oxide_browser_context.cc:204
+#: qt/quick/oxide_qquick_before_unload_dialog.cc:58
+msgid "Changes you made may not be saved."
+msgstr "Puede que no se guarden los cambios que realice."
+
+#: shared/browser/media/oxide_video_capture_device_factory_linux.cc:51
+msgid "Rear camera"
+msgstr "Cámara trasera"
+
+#: shared/browser/media/oxide_video_capture_device_factory_linux.cc:53
+msgid "Front camera"
+msgstr "Cámara frontal"
+
+#: shared/browser/oxide_user_agent_settings.cc:100
 msgid "AcceptLanguage"
 msgstr "es-ES,es,en,*"

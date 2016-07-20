@@ -23,8 +23,12 @@
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
+#include <QPointer>
 #include <QQmlContext>
 #include <QQmlEngine>
+#include <QQuickItem>
+#include <QQuickWindow>
+#include <QScreen>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -143,12 +147,14 @@ QObject* QObjectTestHelper::parent() const {
   return parent_;
 }
 
-WebContextTestSupport::WebContextTestSupport(OxideQQuickWebContext* context)
-    : context_(context) {}
+WebContextTestSupportAttached::WebContextTestSupportAttached(
+    QObject* attachee)
+    : QObject(attachee),
+      context_(qobject_cast<OxideQQuickWebContext*>(attachee)) {}
 
-void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
+void WebContextTestSupportAttached::clearTemporarySavedPermissionStatuses() {
   if (!context_) {
-    qWarning() << "Associated context has already been deleted";
+    qWarning() << "Object is not a WebContext";
     return;
   }
 
@@ -156,19 +162,144 @@ void WebContextTestSupport::clearTemporarySavedPermissionStatuses() {
       ->clearTemporarySavedPermissionStatuses();
 }
 
-WebViewTestSupport::WebViewTestSupport(OxideQQuickWebView* view)
-    : view_(view) {}
+// static
+WebContextTestSupportAttached* WebContextTestSupport::qmlAttachedProperties(
+    QObject* attachee) {
+  return new WebContextTestSupportAttached(attachee);
+}
 
-void WebViewTestSupport::killWebProcess(bool crash) {
+WebViewTestSupportAttached::WebViewTestSupportAttached(QObject* attachee)
+    : QObject(attachee),
+      view_(qobject_cast<OxideQQuickWebView*>(attachee)) {}
+
+void WebViewTestSupportAttached::killWebProcess(bool crash) {
   if (!view_) {
-    qWarning() << "Associated view has already been deleted";
+    qWarning() << "Object is not a WebView";
     return;
   }
 
   OxideQQuickWebViewPrivate::get(view_)->killWebProcess(crash);
 }
 
-TestSupport::TestSupport() {}
+// static
+WebViewTestSupportAttached* WebViewTestSupport::qmlAttachedProperties(
+    QObject* attachee) {
+  return new WebViewTestSupportAttached(attachee);
+}
+
+TestWindowAttached::TestWindowAttached(QObject* attachee)
+    : QObject(attachee),
+      item_(nullptr) {
+  QObject* o = attachee;
+  while (o) {
+    item_ = qobject_cast<QQuickItem*>(o);
+    if (item_) {
+      break;
+    }
+    o = o->parent();
+  }
+  if (!item_) {
+    qWarning() << "Can't determine item from object";
+  }
+}
+
+int TestWindowAttached::x() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->x();
+}
+
+int TestWindowAttached::y() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->y();
+}
+
+QScreen* TestWindowAttached::screen() const {
+  if (!item_ || !item_->window()) {
+    return nullptr;
+  }
+
+  return item_->window()->screen();
+}
+
+void TestWindowAttached::setScreen(QScreen* screen) {
+  if (!item_ || !item_->window()) {
+    qWarning() << "Can't set screen on item with no window";
+    return;
+  }
+
+  item_->window()->setScreen(screen);
+}
+
+// static
+TestWindowAttached* TestWindow::qmlAttachedProperties(QObject* attachee) {
+  return new TestWindowAttached(attachee);
+}
+
+ItemTestSupportAttached::ItemTestSupportAttached(QObject* attachee)
+    : QObject(attachee),
+      item_(nullptr) {
+  QObject* o = attachee;
+  while (o) {
+    item_ = qobject_cast<QQuickItem*>(o);
+    if (item_) {
+      break;
+    }
+    o = o->parent();
+  }
+  if (!item_) {
+    qWarning() << "Can't determine item from object";
+  }
+}
+
+QPointF ItemTestSupportAttached::mapToScene(const QPointF& point) const {
+  if (!item_) {
+    return QPointF();
+  }
+
+  return item_->mapToScene(point);
+}
+
+// static
+ItemTestSupportAttached* ItemTestSupport::qmlAttachedProperties(QObject* attachee) {
+  return new ItemTestSupportAttached(attachee);
+}
+
+TestSupport::TestSupport()
+    : test_loaded_(false) {}
+
+// static
+TestSupport* TestSupport::instance() {
+  static QPointer<TestSupport> object = new TestSupport();
+  Q_ASSERT(object);
+  return object;
+}
+
+void TestSupport::reset() {
+  test_loaded_ = false;
+}
+
+bool TestSupport::testLoaded() const {
+  return test_loaded_;
+}
+
+void TestSupport::setTestLoaded(bool loaded) {
+  test_loaded_ = loaded;
+  Q_EMIT testLoadedChanged();
+}
+
+QVariantList TestSupport::screens() const {
+  QVariantList rv;
+  for (auto screen : QGuiApplication::screens()) {
+    rv.push_back(QVariant::fromValue(screen));
+  }
+  return rv;
+}
 
 QObject* TestSupport::qObjectParent(QObject* object) {
   if (!object) {
@@ -192,25 +323,6 @@ QObjectTestHelper* TestSupport::createQObjectTestHelper(QObject* object) {
   }
 
   return new QObjectTestHelper(object);
-}
-
-WebContextTestSupport* TestSupport::createWebContextTestSupport(
-    OxideQQuickWebContext* context) {
-  if (!context) {
-    qWarning() << "NULL WebContext";
-    return nullptr;
-  }
-
-  return new WebContextTestSupport(context);
-}
-
-WebViewTestSupport* TestSupport::createWebViewTestSupport(
-    OxideQQuickWebView* view) {
-  if (!view) {
-    return nullptr;
-  }
-
-  return new WebViewTestSupport(view);
 }
 
 QVariant TestSupport::getAppProperty(const QString& property) {

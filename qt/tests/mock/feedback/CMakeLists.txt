@@ -28,4 +28,7 @@ target_link_libraries(${PLUGIN}
     ${Qt5Core_LIBRARIES}
     ${Qt5Feedback_LIBRARIES})
 target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
-set_target_properties(${PLUGIN} PROPERTIES AUTOMOC TRUE)
+set_target_properties(
+    ${PLUGIN} PROPERTIES
+    AUTOMOC TRUE
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/feedback)

@@ -70,7 +70,9 @@ FeedbackHapticsMock::FeedbackHapticsMock(QObject* parent)
                                             QVariant::fromValue(&proxy_));
 }
 
-FeedbackHapticsMock::~FeedbackHapticsMock() {}
+FeedbackHapticsMock::~FeedbackHapticsMock() {
+  Q_ASSERT(!QCoreApplication::instance());
+}
 
 QList<QFeedbackActuator*> FeedbackHapticsMock::actuators() {
   return QList<QFeedbackActuator*>() << actuator_.get();

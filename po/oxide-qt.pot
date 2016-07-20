@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: oxide-qt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-28 17:50+0200\n"
+"POT-Creation-Date: 2016-07-13 11:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,6 +29,10 @@ msgstr ""
 msgid "Front camera"
 msgstr ""
 
-#: shared/browser/oxide_user_agent_settings.cc:100
+#. TRANSLATORS: AcceptLanguage is a special token that should not be
+#. translated as such. The expected value is a comma-separated list of
+#. language codes in order of decreasing preference (e.g. "es-ES,es,en,*").
+#. See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4.
+#: shared/browser/oxide_user_agent_settings.cc:104
 msgid "AcceptLanguage"
 msgstr ""

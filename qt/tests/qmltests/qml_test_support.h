@@ -22,8 +22,15 @@
 #include <QPointer>
 #include <QQmlParserStatus>
 #include <QString>
+#include <QtQml>
 #include <QVariant>
+#include <QVariantList>
 #include <signal.h>
+
+QT_BEGIN_NAMESPACE
+class QQuickItem;
+class QScreen;
+QT_END_NAMESPACE
 
 class OxideQQuickWebContext;
 class OxideQQuickWebView;
@@ -97,35 +104,120 @@ class QObjectTestHelper : public QObject {
   bool destroyed_;
 };
 
-class WebContextTestSupport : public QObject {
+class WebContextTestSupportAttached : public QObject {
   Q_OBJECT
 
  public:
-  WebContextTestSupport(OxideQQuickWebContext* context);
+  WebContextTestSupportAttached(QObject* attachee);
 
   Q_INVOKABLE void clearTemporarySavedPermissionStatuses();
 
  private:
-  QPointer<OxideQQuickWebContext> context_;
+  OxideQQuickWebContext* context_;
+};
+
+class WebContextTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  static WebContextTestSupportAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(WebContextTestSupport)
+QML_DECLARE_TYPEINFO(WebContextTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+class WebViewTestSupportAttached : public QObject {
+  Q_OBJECT
+
+ public:
+  WebViewTestSupportAttached(QObject* attachee);
+
+  Q_INVOKABLE void killWebProcess(bool crash);
+
+ private:
+  OxideQQuickWebView* view_;
 };
 
 class WebViewTestSupport : public QObject {
   Q_OBJECT
 
  public:
-  WebViewTestSupport(OxideQQuickWebView* view);
-
-  Q_INVOKABLE void killWebProcess(bool crash);
-
- private:
-  QPointer<OxideQQuickWebView> view_;
+  static WebViewTestSupportAttached* qmlAttachedProperties(QObject* attachee);
 };
 
-class TestSupport : public QObject {
+QML_DECLARE_TYPE(WebViewTestSupport)
+QML_DECLARE_TYPEINFO(WebViewTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+class ItemTestSupportAttached : public QObject {
   Q_OBJECT
 
  public:
+  ItemTestSupportAttached(QObject* attachee);
+
+  Q_INVOKABLE QPointF mapToScene(const QPointF& point) const;
+
+ private:
+  QQuickItem* item_;
+};
+
+class ItemTestSupport : public QObject {
+  Q_OBJECT
+
+ public:
+  static ItemTestSupportAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(ItemTestSupport)
+QML_DECLARE_TYPEINFO(ItemTestSupport, QML_HAS_ATTACHED_PROPERTIES)
+
+// This exists because the Window.window attached property does not exist
+// until Qt5.7, and the other attached Window properties available in
+// QtQuick.Window don't provide the functionality we require
+class TestWindowAttached : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(int x READ x)
+  Q_PROPERTY(int y READ y)
+  Q_PROPERTY(QScreen* screen READ screen WRITE setScreen)
+
+ public:
+  TestWindowAttached(QObject* attachee);
+
+  int x() const;
+  int y() const;
+
+  QScreen* screen() const;
+  void setScreen(QScreen* screen);
+
+ private:
+  QQuickItem* item_;
+};
+
+class TestWindow : public QObject {
+  Q_OBJECT
+
+ public:
+  static TestWindowAttached* qmlAttachedProperties(QObject* attachee);
+};
+
+QML_DECLARE_TYPE(TestWindow)
+QML_DECLARE_TYPEINFO(TestWindow, QML_HAS_ATTACHED_PROPERTIES)
+
+class TestSupport : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(bool testLoaded READ testLoaded NOTIFY testLoadedChanged)
+  Q_PROPERTY(QVariantList screens READ screens)
+
+ public:
   TestSupport();
+
+  static TestSupport* instance();
+
+  void reset();
+
+  bool testLoaded() const;
+  void setTestLoaded(bool loaded);
+
+  QVariantList screens() const;
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object);
 
@@ -133,18 +225,18 @@ class TestSupport : public QObject {
 
   Q_INVOKABLE QObjectTestHelper* createQObjectTestHelper(QObject* object);
 
-  Q_INVOKABLE WebContextTestSupport* createWebContextTestSupport(
-      OxideQQuickWebContext* context);
-
-  Q_INVOKABLE WebViewTestSupport* createWebViewTestSupport(
-      OxideQQuickWebView* view);
-
   Q_INVOKABLE QVariant getAppProperty(const QString& property);
   Q_INVOKABLE void setAppProperty(const QString& property,
                                   const QVariant& value);
   Q_INVOKABLE void removeAppProperty(const QString& property);
 
   Q_INVOKABLE void wait(int ms);
+
+ Q_SIGNALS:
+  void testLoadedChanged();
+
+ private:
+  bool test_loaded_;
 };
 
 #endif // _OXIDE_QT_TESTS_QMLTEST_QML_TEST_SUPPORT_H_
