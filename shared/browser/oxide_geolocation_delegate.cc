@@ -17,6 +17,7 @@
 
 #include "oxide_geolocation_delegate.h"
 
+#include "content/public/browser/access_token_store.h"
 #include "content/public/browser/location_provider.h"
 
 #include "oxide_browser_platform_integration.h"
@@ -27,7 +28,8 @@ bool GeolocationDelegate::UseNetworkLocationProviders() {
   return false;
 }
 
-content::AccessTokenStore* GeolocationDelegate::CreateAccessTokenStore() {
+scoped_refptr<content::AccessTokenStore>
+GeolocationDelegate::CreateAccessTokenStore() {
   return nullptr;
 }
 

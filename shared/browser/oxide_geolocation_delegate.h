@@ -30,7 +30,7 @@ class GeolocationDelegate : public content::GeolocationDelegate {
  private:
   // content::GeolocationDelegate implementation
   bool UseNetworkLocationProviders() override;
-  content::AccessTokenStore* CreateAccessTokenStore() override;
+  scoped_refptr<content::AccessTokenStore> CreateAccessTokenStore() override;
   std::unique_ptr<content::LocationProvider>
   OverrideSystemLocationProvider() override;
 
