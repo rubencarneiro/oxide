@@ -27,6 +27,7 @@
 #include <QQmlEngine>
 #include <QQmlError>
 #include <QQuickView>
+#include <QScreen>
 #include <QSet>
 #include <QString>
 #include <QStringList>
@@ -50,6 +51,9 @@
 #include "qml_test_support.h"
 #include "quick_test_compat.h"
 #include "test_nam_factory.h"
+
+Q_DECLARE_METATYPE(QScreen*)
+Q_DECLARE_METATYPE(QList<QScreen*>)
 
 // We don't use quick_test_main() here for running the qmltest binary as we
 // want to be able to have a per-test datadir. However, some of
@@ -168,6 +172,13 @@ static QObject* GetTestSupport(QQmlEngine* engine, QJSEngine* js_engine) {
   Q_UNUSED(engine);
   Q_UNUSED(js_engine);
 
+  return TestSupport::instance();
+}
+
+static QObject* GetTestSupportHack(QQmlEngine* engine, QJSEngine* js_engine) {
+  Q_UNUSED(engine);
+  Q_UNUSED(js_engine);
+
   return new TestSupport();
 }
 
@@ -180,6 +191,9 @@ static QObject* GetClipboardTestUtils(QQmlEngine* engine,
 }
 
 static void RegisterQmlTypes() {
+  qRegisterMetaType<QScreen*>();
+  qRegisterMetaType<QList<QScreen*>>();
+
   qmlRegisterSingletonType<QTestRootObject>(
       "Qt.test.qtestroot", 1, 0, "QTestRootObject", GetTestRootObject);
 
@@ -206,7 +220,7 @@ static void RegisterQmlTypes() {
       "ItemTestSupport only exists to provide attached properties");
 
   qmlRegisterSingletonType<TestSupport>(
-      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupport);
+      "Oxide.testsupport.hack", 1, 0, "TestSupport", GetTestSupportHack);
 }
 
 static QJSValue CreateCommonTestConstants(QQmlEngine* engine,
@@ -414,6 +428,7 @@ static void RunTest(QQuickView* view,
   view->setTitle(view->objectName());
 
   QTestRootObject::instance()->reset();
+  TestSupport::instance()->reset();
 
   QString path = file_info.absoluteFilePath();
   view->setSource(QUrl::fromLocalFile(path));
@@ -431,6 +446,12 @@ static void RunTest(QQuickView* view,
     return;
   }
 
+  TestSupport::instance()->setTestLoaded(true);
+
+  if (QTestRootObject::instance()->hasQuit()) {
+    return;
+  }
+  
   view->setFramePosition(QPoint(50, 50));
   if (view->initialSize().isEmpty()) {
     view->resize(600, 400);

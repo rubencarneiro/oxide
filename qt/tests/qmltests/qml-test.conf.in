@@ -1,5 +1,6 @@
 exec: @QML_TEST_EXEC@
 http_server_dir: @HTTP_SERVER_DIR@
+mock_qpa: @MOCK_QPA@
 qml_import_path: @QML_IMPORT_PATH@
 qt_plugin_path: @QT_PLUGIN_PATH@
 single_process: @SINGLE_PROCESS@

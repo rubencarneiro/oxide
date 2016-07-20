@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014-2015 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,20 +16,38 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+include(FindPkgConfig)
+
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
-find_package(Qt5Positioning REQUIRED)
+pkg_check_modules(Qt5PlatformSupport REQUIRED Qt5PlatformSupport)
 
-set(PLUGIN mock_position)
+set(Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS
+    ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}
+    ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}/QtPlatformSupport)
+
+set(PLUGIN mock_qpa)
 
 set(PLUGIN_SRCS
-    source.cc
-    plugin.cc)
+    backingstore.cc
+    integration.cc
+    plugin.cc
+    screen.cc
+    shimapi.cc)
 
 add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
 target_link_libraries(${PLUGIN}
     ${Qt5Core_LIBRARIES}
     ${Qt5Gui_LIBRARIES}
-    ${Qt5Positioning_LIBRARIES})
+    ${Qt5PlatformSupport_LIBRARIES})
 target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
-set_target_properties(${PLUGIN} PROPERTIES AUTOMOC TRUE)
+target_include_directories(
+    ${PLUGIN} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Gui_PRIVATE_INCLUDE_DIRS}
+    ${Qt5PlatformSupport_INCLUDE_DIRS}
+    ${Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS})
+set_target_properties(
+    ${PLUGIN} PROPERTIES
+    AUTOMOC TRUE
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/platforms)

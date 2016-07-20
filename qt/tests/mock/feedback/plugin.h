@@ -25,7 +25,7 @@
 #include <memory>
 #include <utility>
 
-#include "qt/tests/mock/plugins/feedback/proxy.h"
+#include "qt/tests/mock/feedback/proxy.h"
 
 QT_BEGIN_NAMESPACE
 class QFeedbackActuator;

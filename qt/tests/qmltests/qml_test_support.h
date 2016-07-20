@@ -24,10 +24,12 @@
 #include <QString>
 #include <QtQml>
 #include <QVariant>
+#include <QVariantList>
 #include <signal.h>
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
+class QScreen;
 QT_END_NAMESPACE
 
 class OxideQQuickWebContext;
@@ -175,12 +177,16 @@ class TestWindowAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(int x READ x)
   Q_PROPERTY(int y READ y)
+  Q_PROPERTY(QScreen* screen READ screen WRITE setScreen)
 
  public:
   TestWindowAttached(QObject* attachee);
 
   int x() const;
   int y() const;
+
+  QScreen* screen() const;
+  void setScreen(QScreen* screen);
 
  private:
   QQuickItem* item_;
@@ -198,9 +204,20 @@ QML_DECLARE_TYPEINFO(TestWindow, QML_HAS_ATTACHED_PROPERTIES)
 
 class TestSupport : public QObject {
   Q_OBJECT
+  Q_PROPERTY(bool testLoaded READ testLoaded NOTIFY testLoadedChanged)
+  Q_PROPERTY(QVariantList screens READ screens)
 
  public:
   TestSupport();
+
+  static TestSupport* instance();
+
+  void reset();
+
+  bool testLoaded() const;
+  void setTestLoaded(bool loaded);
+
+  QVariantList screens() const;
 
   Q_INVOKABLE QObject* qObjectParent(QObject* object);
 
@@ -214,6 +231,12 @@ class TestSupport : public QObject {
   Q_INVOKABLE void removeAppProperty(const QString& property);
 
   Q_INVOKABLE void wait(int ms);
+
+ Q_SIGNALS:
+  void testLoadedChanged();
+
+ private:
+  bool test_loaded_;
 };
 
 #endif // _OXIDE_QT_TESTS_QMLTEST_QML_TEST_SUPPORT_H_

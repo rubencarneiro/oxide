@@ -23,10 +23,12 @@
 #include <QGuiApplication>
 #include <QLatin1String>
 #include <QList>
+#include <QPointer>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QString>
 #include <QtGlobal>
 #include <QtTest>
@@ -217,6 +219,23 @@ int TestWindowAttached::y() const {
   return item_->window()->y();
 }
 
+QScreen* TestWindowAttached::screen() const {
+  if (!item_ || !item_->window()) {
+    return nullptr;
+  }
+
+  return item_->window()->screen();
+}
+
+void TestWindowAttached::setScreen(QScreen* screen) {
+  if (!item_ || !item_->window()) {
+    qWarning() << "Can't set screen on item with no window";
+    return;
+  }
+
+  item_->window()->setScreen(screen);
+}
+
 // static
 TestWindowAttached* TestWindow::qmlAttachedProperties(QObject* attachee) {
   return new TestWindowAttached(attachee);
@@ -251,7 +270,36 @@ ItemTestSupportAttached* ItemTestSupport::qmlAttachedProperties(QObject* attache
   return new ItemTestSupportAttached(attachee);
 }
 
-TestSupport::TestSupport() {}
+TestSupport::TestSupport()
+    : test_loaded_(false) {}
+
+// static
+TestSupport* TestSupport::instance() {
+  static QPointer<TestSupport> object = new TestSupport();
+  Q_ASSERT(object);
+  return object;
+}
+
+void TestSupport::reset() {
+  test_loaded_ = false;
+}
+
+bool TestSupport::testLoaded() const {
+  return test_loaded_;
+}
+
+void TestSupport::setTestLoaded(bool loaded) {
+  test_loaded_ = loaded;
+  Q_EMIT testLoadedChanged();
+}
+
+QVariantList TestSupport::screens() const {
+  QVariantList rv;
+  for (auto screen : QGuiApplication::screens()) {
+    rv.push_back(QVariant::fromValue(screen));
+  }
+  return rv;
+}
 
 QObject* TestSupport::qObjectParent(QObject* object) {
   if (!object) {
