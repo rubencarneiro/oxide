@@ -83,6 +83,10 @@ if(ENABLE_COMPONENT_BUILD)
 endif()
 
 if(ENABLE_TESTS)
+  if(ENABLE_CHROMIUM_TESTS)
+    add_test(NAME base_unittests
+             COMMAND ${CHROMIUM_PRODUCT_DIR}/base_unittests)
+  endif()
   add_test(NAME shared_unittests
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)
 endif()
