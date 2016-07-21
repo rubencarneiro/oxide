@@ -26,6 +26,7 @@ option(ENABLE_COMPONENT_BUILD
        "Build all components of the core library as shared objects"
        OFF)
 option(ENABLE_TESTS "Enable the tests" OFF)
+option(ENABLE_CHROMIUM_TESTS "Enable Chromium tests" ON)
 option(ENABLE_PROPRIETARY_CODECS "Enable support for MP3, H.264 and AAC" OFF)
 
 set(_ENABLE_PLUGINS_DEFAULT OFF)

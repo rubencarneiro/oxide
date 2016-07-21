@@ -21,6 +21,8 @@ declare_args() {
 
   enable_tests = false
 
+  enable_chromium_tests = false
+
   oxide_platform = false
 }
 
@@ -69,5 +71,9 @@ group("oxide_all") {
       deps += oxide_platform_test_targets
     }
     deps += [ "//oxide/shared:shared_unittests" ]
+  }
+
+  if (enable_chromium_tests) {
+    deps += [ "//base:base_unittests" ]
   }
 }
