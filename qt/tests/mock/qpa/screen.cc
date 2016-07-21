@@ -74,9 +74,16 @@ void MockScreen::overrideGeometry(const QRect& geometry,
                                   const QRect& available_geometry) {
   override_geometry_ = geometry;
   override_available_geometry_ = available_geometry;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   QWindowSystemInterface::handleScreenGeometryChange(screen(),
                                                      this->geometry(),
                                                      availableGeometry());
+#else
+  QWindowSystemInterface::handleScreenGeometryChange(screen(),
+                                                     this->geometry());
+  QWindowSystemInterface::handleScreenAvailableGeometryChange(
+      screen(), availableGeometry());
+#endif
 }
 
 void MockScreen::setOrientation(Qt::ScreenOrientation orientation) {
@@ -89,9 +96,16 @@ void MockScreen::reset() {
   override_geometry_ = QRect();
   override_available_geometry_ = QRect();
   orientation_ = native_orientation_;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   QWindowSystemInterface::handleScreenGeometryChange(screen(),
                                                      geometry(),
                                                      availableGeometry());
+#else
+  QWindowSystemInterface::handleScreenGeometryChange(screen(),
+                                                     geometry());
+  QWindowSystemInterface::handleScreenAvailableGeometryChange(
+      screen(), availableGeometry());
+#endif
   QWindowSystemInterface::handleScreenOrientationChange(screen(),
                                                         orientation());
 }

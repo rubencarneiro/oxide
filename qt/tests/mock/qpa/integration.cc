@@ -66,12 +66,12 @@ MockPlatformIntegration::MockPlatformIntegration() {
   MockScreen* screen =
       new MockScreen(QRect(0, 0, 540,960), QRect(0, 50, 540, 910), 32,
                      QImage::Format_ARGB32_Premultiplied, 2.f);
-  screenAdded(screen, true);
+  screenAdded(screen);
   screens_.push_back(screen);
 
   screen = new MockScreen(QRect(540, 0, 1920, 1080), QRect(540, 50, 1920, 1030),
                           32, QImage::Format_ARGB32_Premultiplied, 1.f);
-  screenAdded(screen, false);
+  screenAdded(screen);
   screens_.push_back(screen);
 }
 
@@ -79,7 +79,11 @@ MockPlatformIntegration::~MockPlatformIntegration() {
   while (screens_.size() > 0) {
     MockScreen* screen = screens_.front();
     screens_.pop_front();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     destroyScreen(screen);
+#else
+    delete screen;
+#endif
   }
 
   g_instance = nullptr;
