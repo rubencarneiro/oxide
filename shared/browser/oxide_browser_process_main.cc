@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -349,6 +349,23 @@ void AddFormFactorSpecificCommandLineArguments() {
   command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
 }
 
+base::FilePath GetSharedMemoryPath() {
+  // snap packages
+  const char* tmp = getenv("SNAP_NAME");
+  if (tmp) {
+    return base::FilePath(std::string("/dev/shm/snap.") + tmp + ".oxide");
+  }
+
+  // click packages
+  tmp = getenv("APP_PKGNAME");
+  if (tmp) {
+    return base::FilePath(std::string("/dev/shm/") + tmp + ".oxide");
+  }
+
+  // default
+  return base::FilePath("/dev/shm");
+}
+
 bool IsUnsupportedProcessModel(ProcessModel process_model) {
   switch (process_model) {
     case PROCESS_MODEL_MULTI_PROCESS:
@@ -444,6 +461,10 @@ void BrowserProcessMainImpl::Start(StartParams params) {
   // renderer, as various bits of Chrome use this to find other resources
   PathService::Override(base::FILE_EXE, subprocess_exe);
   PathService::Override(base::FILE_MODULE, subprocess_exe);
+
+  base::CommandLine::ForCurrentProcess()
+      ->AppendSwitchPath(switches::kSharedMemoryOverridePath,
+                         GetSharedMemoryPath());
 
   int exit_code;
   CHECK(!main_delegate_->BasicStartupComplete(&exit_code));
