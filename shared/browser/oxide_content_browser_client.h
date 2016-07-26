@@ -101,7 +101,6 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                        int opener_render_frame_id,
                        bool* no_javascript_access) override;
   void ResourceDispatcherHostCreated() override;
-  content::GeolocationDelegate* CreateGeolocationDelegate() override;
   void OverrideWebkitPrefs(content::RenderViewHost* render_view_host,
                            content::WebPreferences* prefs) override;
   void RegisterRenderFrameMojoInterfaces(

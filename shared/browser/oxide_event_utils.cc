@@ -19,8 +19,8 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
-#include "third_party/WebKit/public/web/WebTouchPoint.h"
+#include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebTouchPoint.h"
 #include "ui/events/gesture_detection/gesture_event_data.h"
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/events/keycodes/keyboard_codes.h"
@@ -209,7 +209,7 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
 
   result.touchesLength = std::min(
       event.GetPointerCount(),
-      static_cast<size_t>(blink::WebTouchEvent::touchesLengthCap));
+      static_cast<size_t>(blink::WebTouchEvent::kTouchesLengthCap));
   DCHECK_GT(result.touchesLength, 0U);
 
   for (size_t i = 0; i < result.touchesLength; ++i) {

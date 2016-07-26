@@ -113,7 +113,8 @@ Compositor::Compositor(CompositorClient* client)
       output_surface_(nullptr),
       mailbox_buffer_map_(mode_),
       surface_id_allocator_(
-          CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
+          new cc::SurfaceIdAllocator(
+              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
@@ -124,7 +125,10 @@ Compositor::Compositor(CompositorClient* client)
       pending_swaps_(0),
       frames_waiting_for_completion_(0),
       mailbox_resource_fetches_in_progress_(0),
-      weak_factory_(this) {}
+      weak_factory_(this) {
+  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
+      surface_id_allocator_->client_id());
+}
 
 bool Compositor::SurfaceIdIsCurrent(uint32_t surface_id) {
   return output_surface_ && output_surface_->surface_id() == surface_id;
@@ -676,6 +680,10 @@ std::unique_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 
 Compositor::~Compositor() {
   FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
+
+  CompositorUtils::GetInstance()
+      ->GetSurfaceManager()
+      ->InvalidateSurfaceClientId(surface_id_allocator_->client_id());
 }
 
 void Compositor::SetVisibility(bool visible) {

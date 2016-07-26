@@ -50,7 +50,7 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
 }
 
 base::string16 ImeBridgeImpl::GetSelectionText() const {
-  return rwhv_->selection_text();
+  return rwhv_->GetSelectionText();
 }
 
 base::string16 ImeBridgeImpl::GetSelectedText() const {

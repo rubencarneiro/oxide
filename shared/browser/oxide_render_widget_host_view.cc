@@ -122,22 +122,27 @@ void RenderWidgetHostView::OnSelectionBoundsChanged(
     const gfx::Rect& anchor_rect,
     const gfx::Rect& focus_rect,
     bool is_anchor_first) {
-  gfx::Rect caret_rect = gfx::UnionRects(anchor_rect, focus_rect);
+  gfx::Rect caret_rect;
+  if (anchor_rect == focus_rect) {
+    caret_rect = anchor_rect;
+  }
 
   size_t selection_cursor_position = 0;
   size_t selection_anchor_position = 0;
 
-  if (selection_range_.IsValid()) {
+  const content::TextInputManager::TextSelection* selection =
+      GetTextInputManager()->GetTextSelection();
+  if (selection && selection->range.IsValid()) {
     if (is_anchor_first) {
       selection_cursor_position =
-          selection_range_.GetMax() - selection_text_offset_;
+          selection->range.GetMax() - selection->offset;
       selection_anchor_position =
-          selection_range_.GetMin() - selection_text_offset_;
+          selection->range.GetMin() - selection->offset;
     } else {
       selection_cursor_position =
-          selection_range_.GetMin() - selection_text_offset_;
+          selection->range.GetMin() - selection->offset;
       selection_anchor_position =
-          selection_range_.GetMax() - selection_text_offset_;
+          selection->range.GetMax() - selection->offset;
     }
   }
 
@@ -304,7 +309,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
       !has_fixed_page_scale && !has_mobile_viewport);
 
   if (host_->is_hidden()) {
-    RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
+    RunAckCallbacks();
   }
 
   const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
@@ -361,19 +366,6 @@ void RenderWidgetHostView::SetIsLoading(bool is_loading) {
 
   is_loading_ = is_loading;
   UpdateCurrentCursor();
-}
-
-void RenderWidgetHostView::TextInputStateChanged(
-    const content::TextInputState& params) {
-  ime_bridge_.TextInputStateChanged(params.type, params.show_ime_if_needed);
-}
-
-void RenderWidgetHostView::ImeCancelComposition() {
-  if (!ime_bridge_.context()) {
-    return;
-  }
-
-  ime_bridge_.context()->CancelComposition();
 }
 
 void RenderWidgetHostView::RenderProcessGone(base::TerminationStatus status,
@@ -440,10 +432,6 @@ void RenderWidgetHostView::UnlockCompositingSurface() {
   NOTIMPLEMENTED();
 }
 
-void RenderWidgetHostView::ImeCompositionRangeChanged(
-    const gfx::Range& range,
-    const std::vector<gfx::Rect>& character_bounds) {}
-
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {}
 
 gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
@@ -499,7 +487,7 @@ void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::CompositorDidCommit() {
   committed_frame_metadata_ = std::move(last_submitted_frame_metadata_);
-  RunAckCallbacks(cc::SurfaceDrawStatus::DRAWN);
+  RunAckCallbacks();
 }
 
 void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
@@ -641,6 +629,32 @@ void RenderWidgetHostView::ReturnResources(
 void RenderWidgetHostView::SetBeginFrameSource(
     cc::BeginFrameSource* begin_frame_source) {}
 
+void RenderWidgetHostView::OnUpdateTextInputStateCalled(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view,
+    bool did_update_state) {
+  if (!did_update_state || updated_view != this) {
+    return;
+  }
+
+  const content::TextInputState* state =
+      GetTextInputManager()->GetTextInputState();
+
+  ime_bridge_.TextInputStateChanged(
+      state ? state->type : ui::TEXT_INPUT_TYPE_NONE,
+      state ? state->show_ime_if_needed : false);
+}
+
+void RenderWidgetHostView::OnImeCancelComposition(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view) {
+  if (ime_bridge_.context() || updated_view != this) {
+    return;
+  }
+
+  ime_bridge_.context()->CancelComposition();
+}
+
 bool RenderWidgetHostView::SupportsAnimation() const {
   return false;
 }
@@ -752,7 +766,7 @@ void RenderWidgetHostView::SendReturnedDelegatedResources() {
   surface_returned_resources_.clear();
 }
 
-void RenderWidgetHostView::RunAckCallbacks(cc::SurfaceDrawStatus status) {
+void RenderWidgetHostView::RunAckCallbacks() {
   while (!ack_callbacks_.empty()) {
     ack_callbacks_.front().Run();
     ack_callbacks_.pop();
@@ -786,7 +800,8 @@ RenderWidgetHostView::RenderWidgetHostView(
     : host_(host),
       container_(nullptr),
       id_allocator_(
-          CompositorUtils::GetInstance()->CreateSurfaceIdAllocator()),
+          new cc::SurfaceIdAllocator(
+              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
       last_output_surface_id_(0),
       ime_bridge_(this),
       is_loading_(false),
@@ -809,12 +824,27 @@ RenderWidgetHostView::RenderWidgetHostView(
   tsc_config.enable_longpress_drag_selection = false;
   selection_controller_.reset(
       new ui::TouchSelectionController(this, tsc_config));
+
+  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
+      id_allocator_->client_id());
+
+  if (GetTextInputManager()) {
+    GetTextInputManager()->AddObserver(this);
+  }
 }
 
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(!layer_);
   DCHECK(!surface_factory_);
   DCHECK(surface_id_.is_null());
+
+  if (text_input_manager_) {
+    text_input_manager_->RemoveObserver(this);
+  }
+
+  CompositorUtils::GetInstance()
+      ->GetSurfaceManager()
+      ->InvalidateSurfaceClientId(id_allocator_->client_id());
 }
 
 void RenderWidgetHostView::SetContainer(
@@ -836,6 +866,24 @@ void RenderWidgetHostView::SetContainer(
 
   host_->SendScreenRects();
   host_->WasResized();
+}
+
+base::string16 RenderWidgetHostView::GetSelectionText() const {
+  auto* self = const_cast<RenderWidgetHostView*>(this);
+  if (!self->GetTextInputManager() ||
+      !self->GetTextInputManager()->GetTextSelection()) {
+    return base::string16();
+  }
+  return self->GetTextInputManager()->GetTextSelection()->text;
+}
+
+gfx::Range RenderWidgetHostView::GetSelectionRange() const {
+  auto* self = const_cast<RenderWidgetHostView*>(this);
+  if (!self->GetTextInputManager() ||
+      !self->GetTextInputManager()->GetTextSelection()) {
+    return gfx::Range();
+  }
+  return self->GetTextInputManager()->GetTextSelection()->range;
 }
 
 void RenderWidgetHostView::Blur() {
@@ -920,7 +968,7 @@ void RenderWidgetHostView::Hide() {
     layer_->SetHideLayerAndSubtree(true);
   }
 
-  RunAckCallbacks(cc::SurfaceDrawStatus::DRAW_SKIPPED);
+  RunAckCallbacks();
 
   if (!host_ || host_->is_hidden()) {
     return;
