@@ -178,6 +178,7 @@ component("shared") {
     "//content/public/renderer",
     "//content/public/utility",
     "//crypto",
+    "//device/geolocation:device_geolocation",
     "//device/power_save_blocker",
     "//device/vibration",
     "//device/vibration:mojo_bindings",

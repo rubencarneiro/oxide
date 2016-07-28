@@ -26,7 +26,7 @@
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
-#include "content/public/browser/geolocation_provider.h"
+#include "device/geolocation/geolocation_provider.h"
 #include "device/power_save_blocker/power_save_blocker.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
@@ -272,7 +272,7 @@ int BrowserMainParts::PreCreateThreads() {
 }
 
 void BrowserMainParts::PreMainMessageLoopRun() {
-  content::GeolocationProvider::SetGeolocationDelegate(
+  device::GeolocationProvider::SetGeolocationDelegate(
       new GeolocationDelegate());
 
   media::AudioManager::SetGlobalAppName(

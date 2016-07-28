@@ -90,6 +90,7 @@ source_set("core_sources") {
     "//components/sessions",
     "//content/public/browser",
     "//content/public/common",
+    "//device/geolocation:device_geolocation",
     "//device/vibration",
     "//device/vibration:mojo_bindings",
     "//net",

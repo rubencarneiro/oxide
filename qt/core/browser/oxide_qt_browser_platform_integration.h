@@ -59,7 +59,7 @@ class BrowserPlatformIntegration : public QObject,
   std::unique_ptr<oxide::MessagePump> CreateUIMessagePump() override;
   oxide::Clipboard* CreateClipboard() override;
   void BrowserThreadInit(content::BrowserThread::ID id) override;
-  std::unique_ptr<content::LocationProvider> CreateLocationProvider() override;
+  std::unique_ptr<device::LocationProvider> CreateLocationProvider() override;
   ApplicationState GetApplicationState() override;
   virtual int GetClickInterval() override;
   std::string GetApplicationName() override;

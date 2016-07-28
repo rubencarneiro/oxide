@@ -23,15 +23,15 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "base/threading/non_thread_safe.h"
-#include "content/browser/geolocation/location_provider_base.h" // nogncheck
-#include "content/public/common/geoposition.h"
+#include "device/geolocation/geoposition.h"
+#include "device/geolocation/location_provider_base.h"
 
 namespace oxide {
 namespace qt {
 
 class LocationSourceProxy;
 
-class LocationProvider final : public content::LocationProviderBase,
+class LocationProvider final : public device::LocationProviderBase,
                                public base::NonThreadSafe,
                                public base::SupportsWeakPtr<LocationProvider> {
  public:
@@ -45,18 +45,18 @@ class LocationProvider final : public content::LocationProviderBase,
   bool StartProvider(bool high_accuracy) final;
   void StopProvider() final;
 
-  void GetPosition(content::Geoposition* position) final;
+  void GetPosition(device::Geoposition* position) final;
 
   void RequestRefresh() final;
 
   void OnPermissionGranted() final;
 
-  void NotifyPositionUpdated(const content::Geoposition& position);
+  void NotifyPositionUpdated(const device::Geoposition& position);
 
   bool running_;
   bool is_permission_granted_;
   scoped_refptr<LocationSourceProxy> source_;
-  content::Geoposition position_;
+  device::Geoposition position_;
 
   DISALLOW_COPY_AND_ASSIGN(LocationProvider);
 };

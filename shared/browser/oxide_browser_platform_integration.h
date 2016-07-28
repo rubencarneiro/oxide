@@ -30,7 +30,7 @@
 
 class GURL;
 
-namespace content {
+namespace device {
 class LocationProvider;
 }
 
@@ -100,7 +100,7 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
 
   // Create a LocationProvider for determining location information from
   // the toolkit. Can return nullptr. Called on the geolocation thread
-  virtual std::unique_ptr<content::LocationProvider> CreateLocationProvider();
+  virtual std::unique_ptr<device::LocationProvider> CreateLocationProvider();
 
   // Get the current application state. Called on the UI thread
   virtual ApplicationState GetApplicationState();

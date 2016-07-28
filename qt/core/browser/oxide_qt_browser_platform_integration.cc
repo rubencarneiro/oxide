@@ -156,7 +156,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
   g_io_thread.Get() = thread;
 }
 
-std::unique_ptr<content::LocationProvider>
+std::unique_ptr<device::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   // Give the geolocation thread a Qt event dispatcher, so that we can use
   // Queued signals / slots between it and the IO thread

@@ -18,8 +18,8 @@
 #include "oxide_permission_manager.h"
 
 #include "base/bind.h"
-#include "content/public/browser/geolocation_provider.h"
 #include "content/public/browser/permission_type.h"
+#include "device/geolocation/geolocation_provider.h"
 
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
@@ -110,7 +110,7 @@ void PermissionManager::RespondToPermissionRequest(
     PermissionRequestResponse response) {
   if (permission == content::PermissionType::GEOLOCATION &&
       response == PERMISSION_REQUEST_RESPONSE_ALLOW) {
-    content::GeolocationProvider::GetInstance()
+    device::GeolocationProvider::GetInstance()
         ->UserDidOptIntoLocationServices();
   }
 
