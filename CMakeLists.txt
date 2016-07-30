@@ -86,6 +86,10 @@ if(ENABLE_TESTS)
   if(ENABLE_CHROMIUM_TESTS)
     add_test(NAME base_unittests
              COMMAND ${CHROMIUM_PRODUCT_DIR}/base_unittests)
+    add_test(NAME crypto_unittests
+             COMMAND ${CHROMIUM_PRODUCT_DIR}/crypto_unittests)
+    add_test(NAME ipc_tests
+             COMMAND ${CHROMIUM_PRODUCT_DIR}/ipc_tests)
   endif()
   add_test(NAME shared_unittests
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_shared_unittests)

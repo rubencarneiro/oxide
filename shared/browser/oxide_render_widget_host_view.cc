@@ -871,19 +871,19 @@ void RenderWidgetHostView::SetContainer(
 base::string16 RenderWidgetHostView::GetSelectionText() const {
   auto* self = const_cast<RenderWidgetHostView*>(this);
   if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection()) {
+      !self->GetTextInputManager()->GetTextSelection(self)) {
     return base::string16();
   }
-  return self->GetTextInputManager()->GetTextSelection()->text;
+  return self->GetTextInputManager()->GetTextSelection(self)->text;
 }
 
 gfx::Range RenderWidgetHostView::GetSelectionRange() const {
   auto* self = const_cast<RenderWidgetHostView*>(this);
   if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection()) {
+      !self->GetTextInputManager()->GetTextSelection(self)) {
     return gfx::Range();
   }
-  return self->GetTextInputManager()->GetTextSelection()->range;
+  return self->GetTextInputManager()->GetTextSelection(self)->range;
 }
 
 void RenderWidgetHostView::Blur() {

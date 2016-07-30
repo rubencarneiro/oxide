@@ -74,6 +74,10 @@ group("oxide_all") {
   }
 
   if (enable_chromium_tests) {
-    deps += [ "//base:base_unittests" ]
+    deps += [
+      "//base:base_unittests",
+      "//crypto:crypto_unittests",
+      "//ipc:ipc_tests",
+    ]
   }
 }

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -72,6 +72,12 @@ void ContentMainDelegate::PreSandboxStartup() {
   // to a different place to make GN happy
   PathService::Override(ui::DIR_LOCALES,
                         dir_exe.Append(FILE_PATH_LITERAL("chromium_l10n")));
+
+  if (command_line->HasSwitch(switches::kSharedMemoryOverridePath)) {
+    base::PathService::Override(
+        base::DIR_SHARED_MEMORY,
+        command_line->GetSwitchValuePath(switches::kSharedMemoryOverridePath));
+  }
 
   std::string app_locale;
   if (command_line->HasSwitch(switches::kLang)) {

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -101,7 +101,8 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   static const char* const kSwitchNames[] = {
     switches::kEnableMediaHubAudio,
     switches::kFormFactor,
-    switches::kMediaHubFixedSessionDomains
+    switches::kMediaHubFixedSessionDomains,
+    switches::kSharedMemoryOverridePath
   };
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kSwitchNames, arraysize(kSwitchNames));

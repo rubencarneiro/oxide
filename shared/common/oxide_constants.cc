@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@ const char kFormFactorPhone[] = "phone";
 const char kIncognito[] = "incognito";
 const char kEnableMediaHubAudio[] = "enable-media-hub-audio";
 const char kMediaHubFixedSessionDomains[] = "media-hub-fixed-session-domains";
+const char kSharedMemoryOverridePath[] = "shared-memory-override-path";
 
 } // namespace switches
 
