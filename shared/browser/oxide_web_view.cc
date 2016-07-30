@@ -365,7 +365,7 @@ void WebView::EditingCapabilitiesChanged() {
   ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
   bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
   bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
-  bool has_selection = !rwhv->selection_range().is_empty();
+  bool has_selection = !rwhv->GetSelectionRange().is_empty();
 
   // XXX: if editable, can we determine whether undo/redo is available?
   if (editable && readable && has_selection) {

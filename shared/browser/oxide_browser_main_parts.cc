@@ -26,6 +26,7 @@
 #include "base/scoped_native_library.h"
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
+#include "device/geolocation/geolocation_provider.h"
 #include "device/power_save_blocker/power_save_blocker.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
@@ -50,6 +51,7 @@
 #include "oxide_browser_context.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_geolocation_delegate.h"
 #include "oxide_gpu_info_collector_linux.h"
 #include "oxide_hybris_utils.h"
 #include "oxide_io_thread.h"
@@ -270,6 +272,9 @@ int BrowserMainParts::PreCreateThreads() {
 }
 
 void BrowserMainParts::PreMainMessageLoopRun() {
+  device::GeolocationProvider::SetGeolocationDelegate(
+      new GeolocationDelegate());
+
   media::AudioManager::SetGlobalAppName(
       BrowserPlatformIntegration::GetInstance()->GetApplicationName());
 

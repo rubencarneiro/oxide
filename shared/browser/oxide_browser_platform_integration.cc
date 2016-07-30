@@ -18,7 +18,7 @@
 #include "oxide_browser_platform_integration.h"
 
 #include "base/logging.h"
-#include "content/public/browser/location_provider.h"
+#include "device/geolocation/location_provider.h"
 
 #include "shared/browser/clipboard/oxide_clipboard_dummy_impl.h"
 
@@ -74,7 +74,7 @@ void BrowserPlatformIntegration::BrowserThreadInit(
 void BrowserPlatformIntegration::BrowserThreadCleanUp(
     content::BrowserThread::ID id) {}
 
-std::unique_ptr<content::LocationProvider>
+std::unique_ptr<device::LocationProvider>
 BrowserPlatformIntegration::CreateLocationProvider() {
   return nullptr;
 }

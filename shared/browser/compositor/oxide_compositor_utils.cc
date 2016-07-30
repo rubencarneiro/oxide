@@ -17,6 +17,8 @@
 
 #include "oxide_compositor_utils.h"
 
+#include <memory>
+
 #include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/containers/hash_tables.h"
@@ -27,7 +29,6 @@
 #include "base/threading/thread_task_runner_handle.h"
 #include "cc/output/context_provider.h"
 #include "cc/raster/single_thread_task_graph_runner.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
@@ -49,7 +50,7 @@ namespace oxide {
 
 namespace {
 
-uint32_t g_surface_id_namespace = 0;
+uint32_t g_next_surface_client_id = 0;
 
 void WakeUpGpuThread() {}
 
@@ -163,7 +164,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
   cc::SurfaceManager* GetSurfaceManager() const override;
-  std::unique_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() override;
+  uint32_t AllocateSurfaceClientId() override;
 
   bool CalledOnMainThread() const;
   bool CalledOnGpuThread() const;
@@ -615,12 +616,8 @@ cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
   return main().surface_manager.get();
 }
 
-std::unique_ptr<cc::SurfaceIdAllocator>
-CompositorUtilsImpl::CreateSurfaceIdAllocator() {
-  std::unique_ptr<cc::SurfaceIdAllocator> allocator(
-      new cc::SurfaceIdAllocator(++g_surface_id_namespace));
-  allocator->RegisterSurfaceIdNamespace(GetSurfaceManager());
-  return allocator;
+uint32_t CompositorUtilsImpl::AllocateSurfaceClientId() {
+  return g_next_surface_client_id++;
 }
 
 bool CompositorUtilsImpl::CalledOnMainThread() const {

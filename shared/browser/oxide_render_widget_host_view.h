@@ -32,6 +32,7 @@
 #include "cc/surfaces/surface_factory_client.h"
 #include "cc/surfaces/surface_id.h"
 #include "content/browser/renderer_host/render_widget_host_view_oxide.h" // nogncheck
+#include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/common/cursors/webcursor.h" // nogncheck
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
@@ -66,6 +67,7 @@ class RenderWidgetHostView
       public CompositorObserver,
       public GestureProviderClient,
       public cc::SurfaceFactoryClient,
+      public content::TextInputManager::Observer,
       public ui::TouchSelectionControllerClient,
       public base::SupportsWeakPtr<RenderWidgetHostView> {
  public:
@@ -76,13 +78,8 @@ class RenderWidgetHostView
 
   ImeBridgeImpl* ime_bridge() { return &ime_bridge_; }
 
-  const base::string16& selection_text() const {
-    return selection_text_;
-  }
-
-  const gfx::Range& selection_range() const {
-    return selection_range_;
-  }
+  base::string16 GetSelectionText() const;
+  gfx::Range GetSelectionRange() const;
 
   const cc::CompositorFrameMetadata& last_submitted_frame_metadata() const {
     return last_submitted_frame_metadata_;
@@ -136,8 +133,6 @@ class RenderWidgetHostView
       content::RenderWidgetHostView* reference_host_view) override;
   void UpdateCursor(const content::WebCursor& cursor) override;
   void SetIsLoading(bool is_loading) override;
-  void TextInputStateChanged(const content::TextInputState& params) override;
-  void ImeCancelComposition() override;
   void RenderProcessGone(base::TerminationStatus status,
                          int error_code) override;
   void Destroy() override;
@@ -159,9 +154,6 @@ class RenderWidgetHostView
                                const SkBitmap& zoomed_bitmap) override;
   void LockCompositingSurface() override;
   void UnlockCompositingSurface() override;
-  void ImeCompositionRangeChanged(
-      const gfx::Range& range,
-      const std::vector<gfx::Rect>& character_bounds) override;
 
   // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) override;
@@ -187,6 +179,15 @@ class RenderWidgetHostView
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;
   void SetBeginFrameSource(cc::BeginFrameSource* begin_frame_source) override;
 
+  // content::TextInputManager::Observer implementation
+  void OnUpdateTextInputStateCalled(
+      content::TextInputManager* text_input_manager,
+      content::RenderWidgetHostViewBase* updated_view,
+      bool did_update_state) override;
+  void OnImeCancelComposition(
+      content::TextInputManager* text_input_manager,
+      content::RenderWidgetHostViewBase* updated_view) override;
+
   // ui::TouchSelectionControllerClient implementation
   bool SupportsAnimation() const override;
   void SetNeedsAnimate() override;
@@ -204,7 +205,7 @@ class RenderWidgetHostView
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32_t surface_id);
   void SendReturnedDelegatedResources();
-  void RunAckCallbacks(cc::SurfaceDrawStatus status);
+  void RunAckCallbacks();
   void AttachLayer();
   void DetachLayer();
 

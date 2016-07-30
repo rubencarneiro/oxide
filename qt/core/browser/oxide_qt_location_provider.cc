@@ -44,8 +44,8 @@ Q_DECLARE_METATYPE(QGeoPositionInfoSource::Error)
 namespace oxide {
 namespace qt {
 
-static content::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
-  content::Geoposition position;
+static device::Geoposition geopositionFromQt(const QGeoPositionInfo& info) {
+  device::Geoposition position;
   QGeoCoordinate coord = info.coordinate();
   position.latitude = coord.latitude();
   position.longitude = coord.longitude();
@@ -117,7 +117,7 @@ class LocationSourceProxy
   static bool IsCurrentlyOnIOThread();
   void InitializeOnIOThread();
 
-  void SendNotifyPositionUpdated(const content::Geoposition& position);
+  void SendNotifyPositionUpdated(const device::Geoposition& position);
 
   base::PlatformThreadId geolocation_thread_id_;
   scoped_refptr<base::SingleThreadTaskRunner> geolocation_thread_task_runner_;
@@ -140,8 +140,8 @@ void LocationSourceProxy::positionUpdated(const QGeoPositionInfo& info) {
   if (info.isValid()) {
     SendNotifyPositionUpdated(geopositionFromQt(info));
   } else {
-    content::Geoposition error;
-    error.error_code = content::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
+    device::Geoposition error;
+    error.error_code = device::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
     SendNotifyPositionUpdated(error);
   }
 }
@@ -149,14 +149,14 @@ void LocationSourceProxy::positionUpdated(const QGeoPositionInfo& info) {
 void LocationSourceProxy::error(QGeoPositionInfoSource::Error error) {
   DCHECK(IsCurrentlyOnGeolocationThread());
 
-  content::Geoposition position;
+  device::Geoposition position;
   switch (error) {
     case QGeoPositionInfoSource::AccessError:
     case QGeoPositionInfoSource::ClosedError:
-      position.error_code = content::Geoposition::ERROR_CODE_PERMISSION_DENIED;
+      position.error_code = device::Geoposition::ERROR_CODE_PERMISSION_DENIED;
       break;
     case QGeoPositionInfoSource::UnknownSourceError:
-      position.error_code = content::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
+      position.error_code = device::Geoposition::ERROR_CODE_POSITION_UNAVAILABLE;
       break;
     case QGeoPositionInfoSource::NoError:
     default:
@@ -224,7 +224,7 @@ void LocationSourceProxy::InitializeOnIOThread() {
 }
 
 void LocationSourceProxy::SendNotifyPositionUpdated(
-    const content::Geoposition& position) {
+    const device::Geoposition& position) {
   DCHECK(IsCurrentlyOnGeolocationThread());
 
   if (!provider_) {
@@ -334,7 +334,7 @@ void LocationProvider::StopProvider() {
   source_->StopUpdates();
 }
 
-void LocationProvider::GetPosition(content::Geoposition* position) {
+void LocationProvider::GetPosition(device::Geoposition* position) {
   DCHECK(CalledOnValidThread());
   DCHECK(position);
 
@@ -361,7 +361,7 @@ void LocationProvider::OnPermissionGranted() {
 }
 
 void LocationProvider::NotifyPositionUpdated(
-    const content::Geoposition& position) {
+    const device::Geoposition& position) {
   DCHECK(CalledOnValidThread());
 
   position_ = position;

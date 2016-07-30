@@ -22,8 +22,6 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 
-#include <memory>
-
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
@@ -36,7 +34,6 @@ class SingleThreadTaskRunner;
 
 namespace cc {
 class ContextProvider;
-class SurfaceIdAllocator;
 class SurfaceManager;
 class TaskGraphRunner;
 }
@@ -92,7 +89,7 @@ class CompositorUtils {
 
   virtual cc::SurfaceManager* GetSurfaceManager() const = 0;
 
-  virtual std::unique_ptr<cc::SurfaceIdAllocator> CreateSurfaceIdAllocator() = 0;
+  virtual uint32_t AllocateSurfaceClientId() = 0;
 
  protected:
   virtual ~CompositorUtils();

@@ -48,7 +48,6 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
-#include "oxide_geolocation_delegate.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -214,11 +213,6 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
   resource_dispatcher_host_delegate_.reset(new ResourceDispatcherHostDelegate());
   content::ResourceDispatcherHost::Get()->SetDelegate(
       resource_dispatcher_host_delegate_.get());
-}
-
-content::GeolocationDelegate*
-ContentBrowserClient::CreateGeolocationDelegate() {
-  return new GeolocationDelegate();
 }
 
 void ContentBrowserClient::OverrideWebkitPrefs(

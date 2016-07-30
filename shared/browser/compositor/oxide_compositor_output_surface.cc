@@ -20,7 +20,6 @@
 #include <utility>
 
 #include "base/logging.h"
-#include "cc/output/compositor_frame_ack.h"
 #include "cc/output/output_surface_client.h"
 
 #include "oxide_compositor.h"
@@ -43,7 +42,6 @@ void CompositorOutputSurface::DoSwapBuffers(
   DCHECK(frame->gl_frame_data || frame->software_frame_data);
 
   listener_->SwapCompositorFrame(std::move(frame));
-  client_->DidSwapBuffers();
 }
 
 bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {

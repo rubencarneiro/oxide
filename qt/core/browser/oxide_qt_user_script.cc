@@ -94,8 +94,8 @@ UserScript::UserScript(UserScriptProxyClient* client,
   setHandle(handle);
 
   load_job_.reset(oxide::FileUtils::GetFileContents(
-      content::BrowserThread::GetMessageLoopProxyForThread(
-        content::BrowserThread::FILE).get(),
+      content::BrowserThread::GetTaskRunnerForThread(
+          content::BrowserThread::FILE).get(),
       base::FilePath(url.toLocalFile().toStdString()),
       base::Bind(&UserScript::OnGotFileContents,
                  // The callback won't run after |this| is deleted because

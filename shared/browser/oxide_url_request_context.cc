@@ -47,8 +47,8 @@ URLRequestContextGetter::GetNetworkTaskRunner() const {
 }
 
 URLRequestContextGetter::URLRequestContextGetter() :
-    network_task_runner_(content::BrowserThread::GetMessageLoopProxyForThread(
-      content::BrowserThread::IO)) {}
+    network_task_runner_(content::BrowserThread::GetTaskRunnerForThread(
+        content::BrowserThread::IO)) {}
 
 URLRequestContextGetter::~URLRequestContextGetter() {}
 
