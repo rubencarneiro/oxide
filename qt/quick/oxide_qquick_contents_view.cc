@@ -95,12 +95,8 @@ void ContentsView::didUpdatePaintNode() {
   }
 }
 
-QScreen* ContentsView::GetScreen() const {
-  if (!item_->window()) {
-    return nullptr;
-  }
-
-  return item_->window()->screen();
+QWindow* ContentsView::GetWindow() const {
+  return item_->window();
 }
 
 bool ContentsView::IsVisible() const {
@@ -210,8 +206,7 @@ ContentsView::ContentsView(QQuickItem* item)
       last_composited_frame_type_(
           oxide::qt::CompositorFrameHandle::TYPE_INVALID),
       handling_unhandled_key_event_(false) {
-  connect(item_, SIGNAL(windowChanged(QQuickWindow*)),
-          SLOT(windowChanged(QQuickWindow*)));
+  connect(item_, SIGNAL(windowChanged(QQuickWindow*)), SLOT(windowChanged()));
 }
 
 ContentsView::~ContentsView() {}
@@ -235,73 +230,12 @@ void ContentsView::handleItemChange(QQuickItem::ItemChange change) {
   }
 }
 
-void ContentsView::windowChanged(QQuickWindow* window) {
-  if (window_) {
-    window_->disconnect(this);
-  }
-  window_ = window;
-  if (window_) {
-    connect(window_, SIGNAL(screenChanged(QScreen*)),
-            SLOT(screenChanged(QScreen*)));
-  }
-
-  screenChangedHelper(window_ ? window_->screen() : nullptr);
-
+void ContentsView::windowChanged() {
   if (!proxy()) {
     return;
   }
 
-  proxy()->screenUpdated();
-  proxy()->wasResized();
-}
-
-void ContentsView::screenChanged(QScreen* screen) {
-  screenChangedHelper(screen);
-
-  if (!proxy()) {
-    return;
-  }
-
-  proxy()->screenUpdated();
-}
-
-void ContentsView::screenChangedHelper(QScreen* screen) {
-  if (screen_) {
-    screen_->disconnect(this);
-  }
-  screen_ = screen;
-  if (screen_) {
-    screen_->setOrientationUpdateMask(
-        Qt::PortraitOrientation |
-        Qt::InvertedPortraitOrientation |
-        Qt::LandscapeOrientation |
-        Qt::InvertedLandscapeOrientation);
-    connect(screen_, SIGNAL(virtualGeometryChanged(const QRect&)),
-            SLOT(screenGeometryChanged(const QRect&)));
-    connect(screen_, SIGNAL(geometryChanged(const QRect&)),
-            SLOT(screenGeometryChanged(const QRect&)));
-    connect(screen_, SIGNAL(orientationChanged(Qt::ScreenOrientation)),
-            SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
-    connect(screen_, SIGNAL(primaryOrientationChanged(Qt::ScreenOrientation)),
-            SLOT(screenOrientationChanged(Qt::ScreenOrientation)));
-  }
-}
-
-void ContentsView::screenGeometryChanged(const QRect& geometry) {
-  if (!proxy()) {
-    return;
-  }
-
-  proxy()->screenUpdated();
-}
-
-void ContentsView::screenOrientationChanged(
-    Qt::ScreenOrientation orientation) {
-  if (!proxy()) {
-    return;
-  }
-
-  proxy()->screenUpdated();
+  proxy()->windowChanged();
 }
 
 void ContentsView::handleKeyPressEvent(QKeyEvent* event) {

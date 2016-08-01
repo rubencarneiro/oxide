@@ -59,14 +59,18 @@
 #include "oxide_message_pump.h"
 #include "oxide_power_save_blocker.h"
 #include "oxide_render_process_initializer.h"
-#include "oxide_screen_client.h"
 #include "oxide_web_contents_view.h"
+#include "screen.h"
 
 #if defined(OS_LINUX)
 #include "gpu/config/gpu_info_collector.h"
 #include "gpu/config/gpu_info_collector_oxide_linux.h"
 
 #include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
+#endif
+
+#if defined(ENABLE_HYBRIS_CAMERA)
+#include "shared/browser/media/oxide_video_capture_device_hybris.h"
 #endif
 
 namespace oxide {
@@ -107,6 +111,8 @@ bool CanUseSharedGLContext() {
 
   return true;
 }
+
+} // namespace
 
 class ScopedBindGLESAPI {
  public:
@@ -164,7 +170,9 @@ ScopedBindGLESAPI::~ScopedBindGLESAPI() {
   eglBindAPI(orig_api_);
 }
 
-class Screen : public display::Screen {
+namespace display {
+
+class Screen : public ::display::Screen {
  public:
   Screen() {}
 
@@ -188,44 +196,44 @@ class Screen : public display::Screen {
     return 1;
   }
 
-  std::vector<display::Display> GetAllDisplays() const override {
+  std::vector<::display::Display> GetAllDisplays() const override {
     NOTREACHED();
-    return std::vector<display::Display>();
+    return std::vector<::display::Display>();
   }
 
-  display::Display GetDisplayNearestWindow(gfx::NativeView view) const override {
+  ::display::Display GetDisplayNearestWindow(gfx::NativeView view) const override {
     // XXX(chrisccoulson): This gets called when a drag starts. |view|
     //  is the NativeView for the corresponding RenderWidgetHostView. It would
     //  be nice to find a way to cleverly map this to the associated RWHV and
     //  get the correct display
-    return display::Display();
+    return ::display::Display();
   }
 
-  display::Display GetDisplayNearestPoint(const gfx::Point& point) const override {
+  ::display::Display GetDisplayNearestPoint(const gfx::Point& point) const override {
     NOTREACHED();
-    return display::Display();
+    return ::display::Display();
   }
 
-  display::Display GetDisplayMatching(const gfx::Rect& match_rect) const override {
+  ::display::Display GetDisplayMatching(const gfx::Rect& match_rect) const override {
     NOTREACHED();
-    return display::Display();
+    return ::display::Display();
   }
 
-  display::Display GetPrimaryDisplay() const override {
+  ::display::Display GetPrimaryDisplay() const override {
     return BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
+        ->GetScreen()
         ->GetPrimaryDisplay();
   }
 
-  void AddObserver(display::DisplayObserver* observer) override {
+  void AddObserver(::display::DisplayObserver* observer) override {
     NOTREACHED();
   }
-  void RemoveObserver(display::DisplayObserver* observer) override {
+  void RemoveObserver(::display::DisplayObserver* observer) override {
     NOTREACHED();
   }
 };
 
-} // namespace
+} // namespace display
 
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
@@ -263,8 +271,8 @@ int BrowserMainParts::PreCreateThreads() {
     gl::init::InitializeGLOneOff();
   }
 
-  primary_screen_.reset(new Screen());
-  display::Screen::SetScreenInstance(primary_screen_.get());
+  primary_screen_.reset(new display::Screen());
+  ::display::Screen::SetScreenInstance(primary_screen_.get());
 
   io_thread_.reset(new IOThread());
 
@@ -292,6 +300,10 @@ void BrowserMainParts::PreMainMessageLoopRun() {
       gpu::oxide_shim::SetGLShareGroup(gl_share_context_->share_group());
     }
   }
+
+#if defined(ENABLE_HYBRIS_CAMERA)
+  VideoCaptureDeviceHybris::Initialize();
+#endif
 
   // Collect all graphics info. Ideally we would do this with
   // GpuDataManager::RequestCompleteGpuInfoIfNeeded, which would also start

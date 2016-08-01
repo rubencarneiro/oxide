@@ -15,47 +15,60 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_SCREEN_CLIENT_H_
-#define _OXIDE_QT_CORE_BROWSER_SCREEN_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_SCREEN_H_
+#define _OXIDE_QT_CORE_BROWSER_SCREEN_H_
+
+#include <map>
 
 #include <QObject>
 #include <QtGlobal>
-#include <QtGui/qpa/qplatformnativeinterface.h>
-#include <QtGui/qpa/qplatformscreen.h>
 
 #include "base/macros.h"
-#include "base/synchronization/lock.h"
 
-#include "shared/browser/oxide_screen_client.h"
+#include "qt/core/common/oxide_qt_export.h"
+#include "shared/browser/screen.h"
+
+QT_BEGIN_NAMESPACE
+class QPlatformScreen;
+class QScreen;
+QT_END_NAMESPACE
 
 namespace oxide {
 namespace qt {
 
-class ScreenClient : public QObject,
-                     public oxide::ScreenClient {
+class OXIDE_QT_EXPORT Screen : public QObject,
+                               public oxide::Screen {
   Q_OBJECT
 
  public:
-  ScreenClient();
-  ~ScreenClient() override;
+  Screen();
+  ~Screen() override;
 
- private Q_SLOTS:
-  void OnScreenGeometryChanged(const QRect& geometry);
-  void OnScreenOrientationChanged(Qt::ScreenOrientation orientation);
-  void OnScreenPropertyChanged(QPlatformScreen* screen, const QString& propertyName);
+  static Screen* GetInstance();
 
- private:
-  void UpdatePrimaryDisplay();
+  display::Display DisplayFromQScreen(QScreen* screen);
 
-  // oxide::ScreenClient implementation
+  // oxide::Screen implementation
   display::Display GetPrimaryDisplay() override;
+  std::vector<display::Display> GetAllDisplays() override;
   gfx::Point GetCursorScreenPoint() override;
 
-  base::Lock primary_display_lock_;
-  display::Display primary_display_;
+ private Q_SLOTS:
+  void OnScreenAdded(QScreen* screen);
+  void OnScreenRemoved(QScreen* screen);
+  void OnPrimaryScreenChanged(QScreen* screen);
+  void OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
+                                       const QString& property_name);
+
+ private:
+  void UpdateDisplayForScreen(QScreen* screen, bool notify);
+
+  std::map<QScreen*, display::Display> displays_;
+
+  display::Display* primary_display_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_SCREEN_CLIENT_H_
+#endif // _OXIDE_QT_CORE_BROWSER_SCREEN_H_

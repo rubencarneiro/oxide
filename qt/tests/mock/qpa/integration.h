@@ -38,14 +38,19 @@ class MockPlatformIntegration : public QPlatformIntegration {
 
   static MockPlatformIntegration* instance();
 
-  void overrideScreenGeometry(QScreen* screen,
-                              const QRect& geometry,
-                              const QRect& available_geometry);
+  QList<MockScreen*> screens() const { return screens_; }
+
+  void setScreenGeometry(QScreen* screen,
+                         const QRect& geometry,
+                         const QRect& work_area_in_screen);
   void setScreenOrientation(QScreen* screen,
                             Qt::ScreenOrientation orientation);
   void resetScreens();
 
  private:
+  void freeScreens();
+  void initializeScreens();
+
   // QPlatformIntegration implementation
   QPlatformWindow* createPlatformWindow(QWindow* window) const override;
   QPlatformBackingStore* createPlatformBackingStore(

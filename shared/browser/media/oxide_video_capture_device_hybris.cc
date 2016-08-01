@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/singleton.h"
 #include "base/single_thread_task_runner.h"
 #include "base/strings/stringprintf.h"
 #include "base/threading/thread_task_runner_handle.h"
@@ -35,19 +36,55 @@
 
 #include "shared/browser/oxide_browser_platform_integration.h"
 #include "shared/browser/oxide_hybris_utils.h"
-#include "shared/browser/oxide_screen_client.h"
+#include "shared/browser/screen.h"
+#include "shared/browser/screen_observer.h"
 
 namespace oxide {
 
-namespace {
+class RotationHelper : public ScreenObserver {
+ public:
+  static RotationHelper* GetInstance();
 
-void DummyOnPreviewTextureNeedsUpdateCallback(void* context) {}
+  int GetRotation(CameraType position, int orientation);
 
-int GetRotation(CameraType position, int orientation) {
-  int display_rotation =
-      BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetPrimaryDisplay().RotationAsDegree();
+ private:
+  friend class base::DefaultSingletonTraits<RotationHelper>;
+  RotationHelper();
+
+  // ScreenObserver implementation
+  void OnDisplayPropertiesChanged(const display::Display& display);
+
+  base::Lock lock_;
+
+  display::Display primary_display_;
+};
+
+RotationHelper::RotationHelper()
+    : primary_display_(Screen::GetInstance()->GetPrimaryDisplay()) {}
+
+void RotationHelper::OnDisplayPropertiesChanged(
+    const display::Display& display) {
+  display::Display primary_display = Screen::GetInstance()->GetPrimaryDisplay();
+  if (display.id() != primary_display.id()) {
+    return;
+  }
+
+  base::AutoLock lock(lock_);
+  primary_display_ = primary_display;
+}
+
+// static
+RotationHelper* RotationHelper::GetInstance() {
+  return base::Singleton<RotationHelper>::get();
+}
+
+int RotationHelper::GetRotation(CameraType position, int orientation) {
+  int display_rotation;
+  {
+    base::AutoLock lock(lock_);
+    display_rotation = primary_display_.RotationAsDegree();
+  }
+
   if (position == FRONT_FACING_CAMERA_TYPE) {
     display_rotation = 360 - display_rotation;
   }
@@ -63,23 +100,11 @@ int GetRotation(CameraType position, int orientation) {
   }
 
   return (orientation + display_rotation) % 360;
-}
 
 }
 
-// static
-int32_t VideoCaptureDeviceHybris::GetCameraIdfromDeviceId(
-    const std::string& device_id) {
-  std::string device_id_format =
-      base::StringPrintf("%s%%d",
-                         VideoCaptureDeviceHybris::GetDeviceIdPrefix());
-
-  int32_t camera_id = -1;
-  int rv =
-      sscanf(device_id.c_str(), device_id_format.c_str(), &camera_id);
-  CHECK_EQ(rv, 1);
-
-  return camera_id;
+namespace {
+void DummyOnPreviewTextureNeedsUpdateCallback(void* context) {}
 }
 
 // static
@@ -107,12 +132,13 @@ void VideoCaptureDeviceHybris::OnFrameAvailable(void* data, uint32_t size) {
     first_ref_time_ = now;
   }
 
-  client_->OnIncomingCapturedData(static_cast<uint8_t*>(data),
-                                  size,
-                                  capture_format_,
-                                  GetRotation(position_, orientation_),
-                                  now,
-                                  now - first_ref_time_);
+  client_->OnIncomingCapturedData(
+      static_cast<uint8_t*>(data),
+      size,
+      capture_format_,
+      RotationHelper::GetInstance()->GetRotation(position_, orientation_),
+      now,
+      now - first_ref_time_);
 }
 
 void VideoCaptureDeviceHybris::AllocateAndStart(
@@ -230,8 +256,30 @@ VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {
 }
 
 // static
+void VideoCaptureDeviceHybris::Initialize() {
+  // This must be done on the UI thread. It's kind of ugly tbh, but is needed
+  // so that we can remove the synchronization from Screen
+  RotationHelper::GetInstance();
+}
+
+// static
 const char* VideoCaptureDeviceHybris::GetDeviceIdPrefix() {
   return "Hybris";
+}
+
+// static
+int32_t VideoCaptureDeviceHybris::GetCameraIdfromDeviceId(
+    const std::string& device_id) {
+  std::string device_id_format =
+      base::StringPrintf("%s%%d",
+                         VideoCaptureDeviceHybris::GetDeviceIdPrefix());
+
+  int32_t camera_id = -1;
+  int rv =
+      sscanf(device_id.c_str(), device_id_format.c_str(), &camera_id);
+  CHECK_EQ(rv, 1);
+
+  return camera_id;
 }
 
 } // namespace oxide

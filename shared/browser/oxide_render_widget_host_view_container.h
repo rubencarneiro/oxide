@@ -22,7 +22,7 @@
 
 #include "base/memory/ref_counted.h"
 #include "content/public/common/menu_item.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/display/display.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
@@ -59,8 +59,7 @@ class RenderWidgetHostViewContainer {
 
   virtual gfx::Rect GetViewBounds() const = 0;
 
-  // TODO(chrisccoulson): Return a gfx::Display here
-  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+  virtual display::Display GetDisplay() const = 0;
 
   virtual bool HasFocus() const = 0;
 

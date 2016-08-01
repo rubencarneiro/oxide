@@ -17,21 +17,36 @@
 
 #include "screen.h"
 
+#include <QRect>
+#include <QSize>
 #include <QtDebug>
 #include <QtGui/qpa/qwindowsysteminterface.h>
+#include <QTextStream>
+
+#include "integration.h"
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+# error "This code needs updating for changes to DPI handling in Qt 5.6"
+#endif
 
 QRect MockScreen::geometry() const {
-  if (!override_geometry_.isNull()) {
-    return override_geometry_;
+  QRect geometry = geometry_;
+  int rotation = angleBetween(nativeOrientation(), orientation_);
+  if (rotation == 90 || rotation == 270) {
+    geometry = QRect(geometry.topLeft(), geometry.size().transposed());
   }
-  return geometry_;
+
+  // Qt < 5.6 expects scaled geometry from the platform plugin
+  return QRect(geometry.topLeft(), geometry.size() / dpr_);
 }
 
 QRect MockScreen::availableGeometry() const {
-  if (!override_available_geometry_.isNull()) {
-    return override_available_geometry_;
-  }
-  return available_geometry_;
+  int l = work_area_in_screen_.x() / dpr_;
+  int r = (geometry_.width() - work_area_in_screen_.width() - work_area_in_screen_.x()) / dpr_;
+  int t = work_area_in_screen_.y() / dpr_;
+  int b = (geometry_.height() - work_area_in_screen_.height() - work_area_in_screen_.y()) / dpr_;
+
+  return geometry().adjusted(l, t, -r, -b);
 }
 
 int MockScreen::depth() const {
@@ -47,33 +62,50 @@ qreal MockScreen::devicePixelRatio() const {
 }
 
 Qt::ScreenOrientation MockScreen::nativeOrientation() const {
-  return native_orientation_;
+  return geometry_.width() > geometry_.height() ?
+      Qt::LandscapeOrientation : Qt::PortraitOrientation;
 }
 
 Qt::ScreenOrientation MockScreen::orientation() const {
   return orientation_;
 }
 
-MockScreen::MockScreen(const QRect& geometry,
-                       const QRect& available_geometry,
+QList<QPlatformScreen*> MockScreen::virtualSiblings() const {
+  QList<QPlatformScreen*> rv;
+  for (auto* screen : MockPlatformIntegration::instance()->screens()) {
+    rv << screen;
+  }
+  return rv;
+}
+
+QString MockScreen::name() const {
+  QString rv;
+  QTextStream stream(&rv);
+  stream << "TEST" << id_;
+  return rv;
+}
+
+MockScreen::MockScreen(int id,
+                       const QRect& geometry,
+                       const QRect& work_area_in_screen,
                        int depth,
                        QImage::Format format,
                        qreal dpr)
-    : geometry_(geometry),
-      available_geometry_(available_geometry),
+    : id_(id),
+      geometry_(geometry),
+      work_area_in_screen_(work_area_in_screen),
       depth_(depth),
       format_(format),
       dpr_(dpr) {
-  native_orientation_ = orientation_ = geometry.width() > geometry.height() ?
-      Qt::LandscapeOrientation : Qt::PortraitOrientation;
+  orientation_ = nativeOrientation();
 }
 
 MockScreen::~MockScreen() = default;
 
-void MockScreen::overrideGeometry(const QRect& geometry,
-                                  const QRect& available_geometry) {
-  override_geometry_ = geometry;
-  override_available_geometry_ = available_geometry;
+void MockScreen::setGeometry(const QRect& geometry,
+                             const QRect& work_area_in_screen) {
+  geometry_ = geometry;
+  work_area_in_screen_ = work_area_in_screen;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   QWindowSystemInterface::handleScreenGeometryChange(screen(),
                                                      this->geometry(),
@@ -88,14 +120,6 @@ void MockScreen::overrideGeometry(const QRect& geometry,
 
 void MockScreen::setOrientation(Qt::ScreenOrientation orientation) {
   orientation_ = orientation;
-  QWindowSystemInterface::handleScreenOrientationChange(screen(),
-                                                        this->orientation());
-}
-
-void MockScreen::reset() {
-  override_geometry_ = QRect();
-  override_available_geometry_ = QRect();
-  orientation_ = native_orientation_;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   QWindowSystemInterface::handleScreenGeometryChange(screen(),
                                                      geometry(),
@@ -107,5 +131,5 @@ void MockScreen::reset() {
       screen(), availableGeometry());
 #endif
   QWindowSystemInterface::handleScreenOrientationChange(screen(),
-                                                        orientation());
+                                                        this->orientation());
 }

@@ -77,9 +77,9 @@ class ContentsViewProxy {
   virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
   virtual void didCommitCompositorFrame() = 0;
 
+  virtual void windowChanged() = 0;
   virtual void wasResized() = 0;
   virtual void visibilityChanged() = 0;
-  virtual void screenUpdated() = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 

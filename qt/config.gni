@@ -22,5 +22,6 @@ oxide_platform_targets = [
 ]
 
 oxide_platform_test_targets = [
-  "//oxide/qt/core:core_unittests"
+  "//oxide/qt/core:core_unittests",
+  "//oxide/qt/core:core_screen_unittests",
 ]

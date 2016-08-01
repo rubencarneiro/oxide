@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
 
 #include <memory>
+#include <QObject>
 #include <QPointer>
 #include <QSharedPointer>
 #include <QtGlobal>
@@ -32,8 +33,8 @@
 #include "shared/browser/oxide_web_contents_view_client.h"
 
 QT_BEGIN_NAMESPACE
-class QObject;
 class QScreen;
+class QWindow;
 QT_END_NAMESPACE
 
 namespace content {
@@ -47,9 +48,12 @@ class CompositorFrameHandle;
 class ContentsViewProxyClient;
 class InputMethodContext;
 
-class ContentsView : public ContentsViewProxy,
+class ContentsView : public QObject,
+                     public ContentsViewProxy,
                      public InputMethodContextClient,
                      public oxide::WebContentsViewClient {
+  Q_OBJECT
+
  public:
   ContentsView(ContentsViewProxyClient* client,
                QObject* native_view);
@@ -71,9 +75,9 @@ class ContentsView : public ContentsViewProxy,
   // ContentsViewProxy implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
+  void windowChanged() override;
   void wasResized() override;
   void visibilityChanged() override;
-  void screenUpdated() override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
@@ -96,7 +100,7 @@ class ContentsView : public ContentsViewProxy,
   void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebContentsViewClient implementation
-  blink::WebScreenInfo GetScreenInfo() const override;
+  display::Display GetDisplay() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
   gfx::RectF GetBounds() const override;
@@ -121,9 +125,15 @@ class ContentsView : public ContentsViewProxy,
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
 
+ private Q_SLOTS:
+  void OnScreenChanged();
+
+ private:
   ContentsViewProxyClient* client_;
 
   QPointer<QObject> native_view_;
+
+  QPointer<QWindow> window_;
 
   MotionEventFactory motion_event_factory_;
 

@@ -25,17 +25,17 @@
 
 class MockScreen : public QPlatformScreen {
  public:
-  MockScreen(const QRect& geometry,
-             const QRect& available_geometry,
+  MockScreen(int id,
+             const QRect& geometry,
+             const QRect& work_area_in_screen,
              int depth,
              QImage::Format format,
              qreal dpr);
   ~MockScreen() override;
 
-  void overrideGeometry(const QRect& geometry,
-                        const QRect& available_geometry);
+  void setGeometry(const QRect& geometry,
+                   const QRect& work_area_in_screen);
   void setOrientation(Qt::ScreenOrientation orientation);
-  void reset();
 
  private:
   // QPlatformScreen implementation
@@ -46,17 +46,22 @@ class MockScreen : public QPlatformScreen {
   qreal devicePixelRatio() const override;
   Qt::ScreenOrientation nativeOrientation() const override;
   Qt::ScreenOrientation orientation() const override;
+  QList<QPlatformScreen*> virtualSiblings() const override;
+  QString name() const override;
 
+  int id_;
+
+  // The screen's geometry in its native orientation in physical pixels
   QRect geometry_;
-  QRect available_geometry_;
+
+  // The work area in |geometry_|
+  QRect work_area_in_screen_;
+
   int depth_;
   QImage::Format format_;
   qreal dpr_;
-  Qt::ScreenOrientation native_orientation_;
-  Qt::ScreenOrientation orientation_;
 
-  QRect override_geometry_;
-  QRect override_available_geometry_;
+  Qt::ScreenOrientation orientation_; // The current orientation
 };
 
 #endif // _OXIDE_QT_TESTS_MOCK_QPA_SCREEN_H_

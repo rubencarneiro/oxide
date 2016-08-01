@@ -41,6 +41,7 @@
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
+#include "shared/browser/screen_observer.h"
 #include "shared/common/oxide_shared_export.h"
 
 struct OxideHostMsg_ShowPopup_Params;
@@ -83,7 +84,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
       public CompositorObserver,
       public DragSourceClient,
       public InputMethodContextObserver,
-      public RenderWidgetHostViewContainer {
+      public RenderWidgetHostViewContainer,
+      public ScreenObserver {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -109,7 +111,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   gfx::Size GetSizeInPixels() const;
   gfx::Rect GetBounds() const;
 
-  blink::WebScreenInfo GetScreenInfo() const;
+  display::Display GetDisplay() const;
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
   void HandleMouseEvent(const blink::WebMouseEvent& event);
@@ -140,7 +142,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
-  void ScreenUpdated();
+  void ScreenChanged();
 
   void HideTouchSelectionController();
 
@@ -244,6 +246,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
                              bool handle_drag_in_progress,
                              bool insertion_handle_tapped) const override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
+
+  // ScreenObserver implementation
+  void OnDisplayPropertiesChanged(const display::Display& display) override;
 
   WebContentsViewClient* client_;
   base::Closure editing_capabilities_changed_callback_;

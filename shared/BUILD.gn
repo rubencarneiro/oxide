@@ -431,6 +431,10 @@ component("shared") {
     "browser/permissions/oxide_permission_request_response.h",
     "browser/permissions/oxide_temporary_saved_permission_context.cc",
     "browser/permissions/oxide_temporary_saved_permission_context.h",
+    "browser/screen.cc",
+    "browser/screen.h",
+    "browser/screen_observer.cc",
+    "browser/screen_observer.h",
     "browser/ssl/oxide_certificate_error.cc",
     "browser/ssl/oxide_certificate_error.h",
     "browser/ssl/oxide_certificate_error_dispatcher.cc",
@@ -627,6 +631,7 @@ source_set("shared_testutils") {
   ]
 
   sources = [
+    "test/mock_screen_observer.h",
     "test/oxide_mock_cert_store.cc",
     "test/oxide_mock_cert_store.h",
     "test/oxide_test_browser_thread_bundle.cc",
@@ -651,12 +656,14 @@ test_executable("shared_unittests") {
     "//content/test:test_support",
     "//mojo/edk/system",
     "//net",
+    "//testing/gmock",
     "//testing/gtest",
     "//url"
   ]
 
   sources = [
     "browser/net/oxide_cookie_store_proxy_unittest.cc",
+    "browser/screen_unittest.cc",
     "browser/ssl/oxide_certificate_error_unittest.cc",
     "browser/ssl/oxide_certificate_error_dispatcher_unittest.cc",
     "browser/ssl/oxide_security_status_unittest.cc",

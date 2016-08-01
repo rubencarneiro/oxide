@@ -21,6 +21,7 @@ include(GNUInstallDirs)
 include(CommonProperties)
 include(PackageConfigHelper)
 
+set(OXIDE_MOCK_QTPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests/mock/plugins)
 set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 
 set(OXIDE_QUICKLIB OxideQtQuick)
@@ -110,6 +111,8 @@ endif()
 if(ENABLE_TESTS)
   add_test(NAME qt_unittests
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_unittests)
+  add_test(NAME qt_screen_unittests
+           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_screen_unittests -platformpluginpath ${OXIDE_MOCK_QTPLUGIN_DIR} -platform mock_qpa --single-process-tests)
   add_subdirectory(tests)
 endif()
 

@@ -35,6 +35,40 @@ const char* kShimApiKey = "_oxide_mock_qpa_shim_api";
 MockPlatformIntegration* g_instance;
 }
 
+void MockPlatformIntegration::freeScreens() {
+  while (screens_.size() > 0) {
+    MockScreen* screen = screens_.front();
+    screens_.pop_front();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+    destroyScreen(screen);
+#else
+    delete screen;
+#endif
+  }
+}
+
+void MockPlatformIntegration::initializeScreens() {
+  Q_ASSERT(screens_.isEmpty());
+
+  MockScreen* screen =
+      new MockScreen(0, QRect(0, 0, 1080, 1920), QRect(0, 50, 1080, 1870), 32,
+                     QImage::Format_ARGB32_Premultiplied, 2.f);
+  screens_.push_back(screen);
+  screenAdded(screen);
+
+  screen =
+      new MockScreen(1, QRect(1080, 0, 1920, 1080), QRect(0, 25, 1920, 1055),
+                     32, QImage::Format_ARGB32_Premultiplied, 1.f);
+  screens_.push_back(screen);
+  screenAdded(screen);
+
+  screen =
+      new MockScreen(2, QRect(3000, 0, 3840, 2160), QRect(0, 50, 3840, 2110),
+                     32, QImage::Format_ARGB32_Premultiplied, 2.f);
+  screens_.push_back(screen);
+  screenAdded(screen);
+}
+
 QPlatformWindow* MockPlatformIntegration::createPlatformWindow(
     QWindow* window) const {
   return new QPlatformWindow(window);
@@ -63,29 +97,11 @@ MockPlatformIntegration::MockPlatformIntegration() {
 
   QWindowSystemInterface::setSynchronousWindowsSystemEvents(true);
 
-  MockScreen* screen =
-      new MockScreen(QRect(0, 0, 540,960), QRect(0, 50, 540, 910), 32,
-                     QImage::Format_ARGB32_Premultiplied, 2.f);
-  screenAdded(screen);
-  screens_.push_back(screen);
-
-  screen = new MockScreen(QRect(540, 0, 1920, 1080), QRect(540, 50, 1920, 1030),
-                          32, QImage::Format_ARGB32_Premultiplied, 1.f);
-  screenAdded(screen);
-  screens_.push_back(screen);
+  initializeScreens();
 }
 
 MockPlatformIntegration::~MockPlatformIntegration() {
-  while (screens_.size() > 0) {
-    MockScreen* screen = screens_.front();
-    screens_.pop_front();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
-    destroyScreen(screen);
-#else
-    delete screen;
-#endif
-  }
-
+  freeScreens();
   g_instance = nullptr;
 }
 
@@ -94,12 +110,12 @@ MockPlatformIntegration* MockPlatformIntegration::instance() {
   return g_instance;
 }
 
-void MockPlatformIntegration::overrideScreenGeometry(
+void MockPlatformIntegration::setScreenGeometry(
     QScreen* screen,
     const QRect& geometry,
-    const QRect& available_geometry) {
-  static_cast<MockScreen*>(screen->handle())->overrideGeometry(
-      geometry, available_geometry);
+    const QRect& work_area_in_screen) {
+  static_cast<MockScreen*>(screen->handle())->setGeometry(geometry,
+                                                          work_area_in_screen);
 }
 
 void MockPlatformIntegration::setScreenOrientation(
@@ -109,7 +125,6 @@ void MockPlatformIntegration::setScreenOrientation(
 }
 
 void MockPlatformIntegration::resetScreens() {
-  for (auto screen : screens_) {
-    screen->reset();
-  }
+  freeScreens();
+  initializeScreens();
 }

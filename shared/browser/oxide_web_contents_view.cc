@@ -51,11 +51,11 @@
 #include "oxide_drag_source.h"
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
-#include "oxide_screen_client.h"
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_context_menu.h"
 #include "oxide_web_popup_menu_impl.h"
 #include "oxide_web_view.h"
+#include "screen.h"
 
 namespace oxide {
 
@@ -160,7 +160,7 @@ gfx::RectF WebContentsView::GetBoundsF() const {
   }
 
   if (ViewSizeShouldBeScreenSize()) {
-    return gfx::RectF(GetScreenInfo().rect);
+    return gfx::RectF(GetDisplay().bounds());
   }
 
   return client_->GetBounds();
@@ -196,7 +196,7 @@ bool WebContentsView::ViewSizeShouldBeScreenSize() const {
 }
 
 void WebContentsView::ResizeCompositorViewport() {
-  compositor_->SetDeviceScaleFactor(GetScreenInfo().deviceScaleFactor);
+  compositor_->SetDeviceScaleFactor(GetDisplay().device_scale_factor());
   compositor_->SetViewportSize(GetSizeInPixels());
 }
 
@@ -369,7 +369,7 @@ void WebContentsView::StartDragging(
   // Recreate it with the correct scale and dimenstions
   gfx::ImageSkia new_image =
       gfx::ImageSkia(gfx::ImageSkiaRep(image.GetRepresentation(1).sk_bitmap(),
-                                       GetScreenInfo().deviceScaleFactor));
+                                       GetDisplay().device_scale_factor()));
 
   drag_source_->StartDragging(web_contents(),
                               drop_data,
@@ -598,7 +598,7 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
 
   gfx::Point screen_point =
       BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
+        ->GetScreen()
         ->GetCursorScreenPoint();
   gfx::Point view_point =
       screen_point - gfx::Vector2d(GetBounds().origin().x(),
@@ -721,6 +721,15 @@ void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {
   }
 }
 
+void WebContentsView::OnDisplayPropertiesChanged(
+    const display::Display& display) {
+  if (display.id() != GetDisplay().id()) {
+    return;
+  }
+
+  ScreenChanged();
+}
+
 WebContentsView::~WebContentsView() {
   if (client_) {
     DCHECK_EQ(client_->view_, this);
@@ -777,7 +786,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
   WasResized();
   VisibilityChanged();
   FocusChanged();
-  ScreenUpdated();
+  ScreenChanged();
 
   // Update client from view
   CursorChanged(GetRenderWidgetHostView());
@@ -806,21 +815,22 @@ gfx::Size WebContentsView::GetSize() const {
 
 gfx::Size WebContentsView::GetSizeInPixels() const {
   return gfx::ToRoundedSize(
-      gfx::ScaleSize(GetBoundsF().size(), GetScreenInfo().deviceScaleFactor));
+      gfx::ScaleSize(GetBoundsF().size(), GetDisplay().device_scale_factor()));
 }
 
 gfx::Rect WebContentsView::GetBounds() const {
   return gfx::ToEnclosingRect(GetBoundsF());
 }
 
-blink::WebScreenInfo WebContentsView::GetScreenInfo() const {
-  if (!client_) {
-    blink::WebScreenInfo result;
-    content::RenderWidgetHostViewBase::GetDefaultScreenInfo(&result);
-    return result;
+display::Display WebContentsView::GetDisplay() const {
+  if (client_) {
+    display::Display display = client_->GetDisplay();
+    if (display.is_valid()) {
+      return display;
+    }
   }
 
-  return client_->GetScreenInfo();
+  return Screen::GetInstance()->GetPrimaryDisplay();
 }
 
 void WebContentsView::HandleKeyEvent(
@@ -884,8 +894,8 @@ void WebContentsView::HandleDragEnter(
 
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
-        ->GetCursorScreenPoint();
+          ->GetScreen()
+          ->GetCursorScreenPoint();
   rvh->DragTargetDragEnter(*current_drop_data_,
                            location,
                            screen_location,
@@ -910,7 +920,7 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
 
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
+        ->GetScreen()
         ->GetCursorScreenPoint();
   rvh->DragTargetDragOver(location,
                           screen_location,
@@ -951,7 +961,7 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
 
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
-        ->GetScreenClient()
+        ->GetScreen()
         ->GetCursorScreenPoint();
   rvh->DragTargetDrop(*current_drop_data_,
                       location,
@@ -1021,7 +1031,7 @@ void WebContentsView::FocusChanged() {
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
-void WebContentsView::ScreenUpdated() {
+void WebContentsView::ScreenChanged() {
   // If the device scale has changed, then the compositor viewport size
   // and scale needs updating
   // See https://launchpad.net/bugs/1575216

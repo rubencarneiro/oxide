@@ -37,8 +37,6 @@ class QKeyEvent;
 class QMouseEvent;
 class QQmlComponent;
 class QQuickItem;
-class QQuickWindow;
-class QScreen;
 class QSGNode;
 class QTouchEvent;
 class QWheelEvent;
@@ -103,15 +101,10 @@ class ContentsView : public QObject,
   void hideTouchSelectionController() const;
 
  private Q_SLOTS:
-  void windowChanged(QQuickWindow* window);
-  void screenChanged(QScreen* screen);
-  void screenGeometryChanged(const QRect& geometry);
-  void screenOrientationChanged(Qt::ScreenOrientation orientation);
+  void windowChanged();
 
  private:
   friend class UpdatePaintNodeScope;
-
-  void screenChangedHelper(QScreen* screen);
 
   void handleKeyEvent(QKeyEvent* event);
   void handleMouseEvent(QMouseEvent* event);
@@ -121,7 +114,7 @@ class ContentsView : public QObject,
   void didUpdatePaintNode();
 
   // oxide::qt::ContentsViewProxyClient implementation
-  QScreen* GetScreen() const override;
+  QWindow* GetWindow() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
   QRect GetBounds() const override;
@@ -146,9 +139,6 @@ class ContentsView : public QObject,
 
   QPointer<QQuickItem> item_;
   QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
-
-  QPointer<QQuickWindow> window_;
-  QPointer<QScreen> screen_;
 
   QPointer<QQmlComponent> context_menu_;
   QPointer<QQmlComponent> popup_menu_;

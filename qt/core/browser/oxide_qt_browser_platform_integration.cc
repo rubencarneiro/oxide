@@ -44,8 +44,8 @@
 #include "oxide_qt_drag_source.h"
 #include "oxide_qt_location_provider.h"
 #include "oxide_qt_message_pump.h"
-#include "oxide_qt_screen_client.h"
 #include "oxide_qt_vibration_manager.h"
+#include "qt_screen.h"
 
 namespace oxide {
 namespace qt {
@@ -126,8 +126,8 @@ intptr_t BrowserPlatformIntegration::GetNativeDisplay() {
                                    QGuiApplication::primaryScreen()));
 }
 
-oxide::ScreenClient* BrowserPlatformIntegration::GetScreenClient() {
-  return screen_client_.get();
+oxide::Screen* BrowserPlatformIntegration::GetScreen() {
+  return screen_.get();
 }
 
 oxide::GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
@@ -202,7 +202,7 @@ BrowserPlatformIntegration::BrowserPlatformIntegration()
     : application_name_(qApp->applicationName().toStdString()),
       suspended_(false),
       state_(CalculateApplicationState(false)),
-      screen_client_(new ScreenClient()) {
+      screen_(new Screen()) {
   connect(qApp, SIGNAL(applicationStateChanged(Qt::ApplicationState)),
           SLOT(OnApplicationStateChanged()));
   if (QGuiApplication::platformName().startsWith("ubuntu")) {

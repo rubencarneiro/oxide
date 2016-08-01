@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "base/macros.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
+#include "ui/display/display.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -55,8 +55,7 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
  public:
   virtual ~WebContentsViewClient();
 
-  // XXX(chrisccoulson) This should return a gfx::Display handle
-  virtual blink::WebScreenInfo GetScreenInfo() const = 0;
+  virtual display::Display GetDisplay() const = 0;
 
   virtual bool IsVisible() const = 0;
 

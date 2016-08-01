@@ -46,12 +46,13 @@ TestWebView {
       SingletonTestWebContext.clearTestUserScripts();
     }
 
-    function validateOrientation() {
+    function validateOrientation(msg) {
       var types = [ "portrait-primary",
                     "landscape-primary",
                     "portrait-secondary",
                     "landscape-secondary" ];
 
+      // QML doesn't have Math.log2
       var ln2 = function(a) {
         return Math.log(a) / Math.log(2);
       };
@@ -59,14 +60,14 @@ TestWebView {
       var angles = [ 0, 90, 180, 270 ];
 
       compare(webView.getTestApi().evaluateCode("window.screen.orientation.type"),
-              types[ln2(TestWindow.screen.orientation)]);
+              types[ln2(TestWindow.screen.orientation)], msg);
       var rotation = ln2(TestWindow.screen.orientation) - ln2(TestWindow.screen.nativeOrientation) % 3;
       if (rotation < 0) {
         rotation += 4;
       }
 
       compare(webView.getTestApi().evaluateCode("window.screen.orientation.angle"),
-              angles[rotation]);
+              angles[rotation], msg);
     }
 
     // Test that the orientation is reported correctly
@@ -85,7 +86,7 @@ TestWebView {
         webView.orientationEvents = 0;
         getMockQPAShim().setScreenOrientation(TestWindow.screen, i);
         verify(TestUtils.waitFor(function() { return webView.orientationEvents > 0; }));
-        validateOrientation();
+        validateOrientation("Primary screen with orientation " + i);
       });
 
       TestWindow.screen = TestSupport.screens[1];
@@ -95,7 +96,7 @@ TestWebView {
         webView.orientationEvents = 0;
         getMockQPAShim().setScreenOrientation(TestWindow.screen, i);
         verify(TestUtils.waitFor(function() { return webView.orientationEvents > 0; }));
-        validateOrientation();
+        validateOrientation("Second screen with orientation " + i);
       });
     }
 
@@ -103,14 +104,14 @@ TestWebView {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
-      validateOrientation();
+      validateOrientation("Before screen switch");
 
       TestWindow.screen = TestSupport.screens[1];
       compare(TestWindow.screen, TestSupport.screens[1]);
 
       verify(TestUtils.waitFor(function() { return webView.orientationEvents > 0; }));
 
-      validateOrientation();
+      validateOrientation("After screen switch");
     }
   }
 }

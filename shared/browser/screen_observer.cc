@@ -15,23 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SCREEN_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_SCREEN_CLIENT_H_
+#include "screen_observer.h"
 
-#include "ui/display/display.h"
-#include "ui/gfx/geometry/point.h"
+#include "oxide_browser_platform_integration.h"
+#include "screen.h"
 
 namespace oxide {
 
-class ScreenClient {
- public:
-  virtual ~ScreenClient() {}
+void ScreenObserver::OnScreenDestruction() {
+  screen_ = nullptr;
+}
 
-  virtual display::Display GetPrimaryDisplay() = 0;
+ScreenObserver::ScreenObserver()
+    : screen_(Screen::GetInstance()) {
+  screen_->AddObserver(this);
+}
 
-  virtual gfx::Point GetCursorScreenPoint() = 0;
-};
+ScreenObserver::~ScreenObserver() {
+  if (screen_) {
+    screen_->RemoveObserver(this);
+  }
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_SCREEN_CLIENT_H_

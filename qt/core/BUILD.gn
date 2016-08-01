@@ -55,9 +55,10 @@ qtmoc("core_moc_gen") {
     "browser/oxide_qt_browser_platform_integration.h",
     "browser/clipboard/oxide_qt_clipboard.h",
     "browser/input/oxide_qt_input_method_context.h",
-    "browser/oxide_qt_screen_client.h",
+    "browser/oxide_qt_contents_view.h",
     "browser/oxide_qt_location_provider.cc",
-    "browser/oxide_qt_url_request_delegated_job.cc"
+    "browser/oxide_qt_url_request_delegated_job.cc",
+    "browser/qt_screen.h",
   ]
 }
 
@@ -131,10 +132,11 @@ source_set("core_sources") {
     "$target_gen_dir/api/moc_oxideqsecuritystatus.cc",
     "$target_gen_dir/api/moc_oxideqsslcertificate.cc",
     "$target_gen_dir/api/moc_oxideqwebpreferences.cc",
-    "$target_gen_dir/browser/moc_oxide_qt_browser_platform_integration.cc",
     "$target_gen_dir/browser/clipboard/moc_oxide_qt_clipboard.cc",
     "$target_gen_dir/browser/input/moc_oxide_qt_input_method_context.cc",
-    "$target_gen_dir/browser/moc_oxide_qt_screen_client.cc",
+    "$target_gen_dir/browser/moc_oxide_qt_browser_platform_integration.cc",
+    "$target_gen_dir/browser/moc_oxide_qt_contents_view.cc",
+    "$target_gen_dir/browser/moc_qt_screen.cc",
     "api/oxideqcertificateerror.cc",
     "api/oxideqcertificateerror.h",
     "api/oxideqcertificateerror_p.h",
@@ -210,8 +212,6 @@ source_set("core_sources") {
     "browser/oxide_qt_message_pump.h",
     "browser/oxide_qt_motion_event_factory.cc",
     "browser/oxide_qt_motion_event_factory.h",
-    "browser/oxide_qt_screen_client.cc",
-    "browser/oxide_qt_screen_client.h",
     "browser/oxide_qt_screen_utils.cc",
     "browser/oxide_qt_screen_utils.h",
     "browser/oxide_qt_script_message.cc",
@@ -245,6 +245,8 @@ source_set("core_sources") {
     "browser/oxide_qt_web_preferences.h",
     "browser/oxide_qt_web_view.cc",
     "browser/oxide_qt_web_view.h",
+    "browser/qt_screen.cc",
+    "browser/qt_screen.h",
     "browser/ssl/oxide_qt_security_status.cc",
     "browser/ssl/oxide_qt_security_status.h",
     "common/oxide_qt_export.h",
@@ -330,7 +332,8 @@ test_executable("core_unittests") {
   output_name = "oxide_qt_unittests"
 
   defines = [
-    "GN_BUILD" # Remove this when we drop gyp support
+    "GN_BUILD", # Remove this when we drop gyp support
+    "QT_NO_SIGNALS_SLOTS_KEYWORDS",
   ]
 
   deps = [
@@ -345,12 +348,37 @@ test_executable("core_unittests") {
     "//net",
     "//testing/gtest",
     "//oxide/build/config/Qt5:Core",
+    "//oxide/build/config/Qt5:Gui",
     "//oxide/shared",
     "//oxide/shared:shared_testutils"
   ]
 
   sources = [
     "browser/ssl/oxide_qt_security_status_unittest.cc",
+    "test/run_all_unittests.cc",
+  ]
+}
+
+test_executable("core_screen_unittests") {
+  output_name = "oxide_qt_screen_unittests"
+
+  defines = [
+    "QT_NO_SIGNALS_SLOTS_KEYWORDS",
+  ]
+
+  deps = [
+    ":core_component",
+    "//oxide/build/config/Qt5:Core",
+    "//oxide/build/config/Qt5:Gui",
+    "//oxide/shared",
+    "//oxide/shared:shared_testutils",
+    "//testing/gmock",
+    "//testing/gtest",
+    "//ui/display",
+  ]
+
+  sources = [
+    "browser/qt_screen_unittest.cc",
     "test/run_all_unittests.cc",
   ]
 }
