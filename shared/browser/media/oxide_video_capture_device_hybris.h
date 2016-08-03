@@ -27,6 +27,7 @@
 #include "base/memory/ref_counted.h"
 #include "media/base/video_capture_types.h"
 #include "media/capture/video/video_capture_device.h"
+#include "media/capture/video/video_capture_device_descriptor.h"
 
 typedef unsigned int GLuint;
 
@@ -43,7 +44,8 @@ namespace oxide {
 
 class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
  public:
-  VideoCaptureDeviceHybris(const Name& device_name);
+  VideoCaptureDeviceHybris(
+      const media::VideoCaptureDeviceDescriptor& device_descriptor);
   ~VideoCaptureDeviceHybris() override;
 
   static const char* GetDeviceIdPrefix();
@@ -61,7 +63,7 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
                         std::unique_ptr<Client> client) override;
   void StopAndDeAllocate() override;
 
-  Name device_name_;
+  media::VideoCaptureDeviceDescriptor device_descriptor_;
 
   CameraType position_;
   int orientation_;

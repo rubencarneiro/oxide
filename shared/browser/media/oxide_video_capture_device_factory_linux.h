@@ -22,11 +22,12 @@
 #include <memory>
 
 #include "base/macros.h"
+#include "media/capture/video/video_capture_device_descriptor.h"
 #include "media/capture/video/video_capture_device_factory.h"
 
 namespace oxide {
 
-typedef base::Callback<void(std::unique_ptr<media::VideoCaptureDevice::Names>)>
+typedef base::Callback<void(std::unique_ptr<media::VideoCaptureDeviceDescriptors>)>
     EnumerateDevicesCallback;
 
 class VideoCaptureDeviceFactoryLinux
@@ -38,13 +39,15 @@ class VideoCaptureDeviceFactoryLinux
 
  private:
   // media::VideoCaptureDeviceFactory implementation
-  std::unique_ptr<media::VideoCaptureDevice> Create(
-      const media::VideoCaptureDevice::Name& device_name) override;
-  void EnumerateDeviceNames(const EnumerateDevicesCallback& callback) override;
-  void GetDeviceSupportedFormats(
-      const media::VideoCaptureDevice::Name& device,
+  std::unique_ptr<media::VideoCaptureDevice> CreateDevice(
+      const media::VideoCaptureDeviceDescriptor& device_descriptor) override;
+  void EnumerateDeviceDescriptors(
+      const EnumerateDevicesCallback& callback) override;
+  void GetSupportedFormats(
+      const media::VideoCaptureDeviceDescriptor& device_descriptor,
       media::VideoCaptureFormats* supported_formats) override;
-  void GetDeviceNames(media::VideoCaptureDevice::Names* device_names) override;
+  void GetDeviceDescriptors(
+      media::VideoCaptureDeviceDescriptors* device_descriptors) override;
 
   std::unique_ptr<media::VideoCaptureDeviceFactory> platform_factory_;
 
