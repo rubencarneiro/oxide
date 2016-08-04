@@ -467,10 +467,8 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
 
   main().surface_manager.reset(new cc::SurfaceManager());
 
-  content::CauseForGpuLaunch cause =
-      content::CAUSE_FOR_GPU_LAUNCH_BROWSER_STARTUP;
   scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
-      content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
+      content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync());
   if (gpu_channel_host.get()) {
     GpuUtils::GetTaskRunner()->PostTask(
         FROM_HERE,

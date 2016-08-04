@@ -41,7 +41,6 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/common/gpu/client/command_buffer_metrics.h" // nogncheck
 #include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
-#include "content/common/gpu_process_launch_causes.h" // nogncheck
 #include "content/common/host_shared_bitmap_manager.h" // nogncheck
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
@@ -72,10 +71,8 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
     return nullptr;
   }
 
-  content::CauseForGpuLaunch cause =
-      content::CAUSE_FOR_GPU_LAUNCH_DISPLAY_COMPOSITOR_CONTEXT;
   scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
-      content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync(cause));
+      content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync());
   if (!gpu_channel_host.get()) {
     return nullptr;
   }
