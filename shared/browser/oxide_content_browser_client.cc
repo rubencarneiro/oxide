@@ -243,6 +243,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
         render_view_host->GetProcess()->GetBrowserContext())
         ->IsPopupBlockerEnabled();
 
+  prefs->double_tap_to_zoom_enabled = true;
+
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
@@ -251,6 +253,15 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->default_maximum_page_scale_factor = 5.f;
     prefs->viewport_meta_enabled = true;
     prefs->viewport_style = content::ViewportStyle::MOBILE;
+    prefs->allow_custom_scrollbar_in_main_frame = false;
+  } else {
+    prefs->shrinks_standalone_images_to_fit = true;
+    prefs->shrinks_viewport_contents_to_fit = false;
+    prefs->default_minimum_page_scale_factor = 1.0f;
+    prefs->default_maximum_page_scale_factor = 4.f;
+    prefs->viewport_meta_enabled = false;
+    prefs->viewport_style = content::ViewportStyle::DEFAULT;
+    prefs->allow_custom_scrollbar_in_main_frame = true;
   }
 
   prefs->supports_multiple_windows = false;
