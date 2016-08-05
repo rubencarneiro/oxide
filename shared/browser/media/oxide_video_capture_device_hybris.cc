@@ -53,10 +53,11 @@ int GetRotation(CameraType position, int orientation) {
   }
 
   if (position == FRONT_FACING_CAMERA_TYPE &&
-      HybrisUtils::GetDeviceProperties().product == "krillin") {
-    // Krillin lies to us - the top of the front facing camera points to the
-    // right of the screen (viewed from the front), which means the camera
-    // image needs rotating by 270deg with the device in its natural
+      (HybrisUtils::GetDeviceProperties().device == "krillin" ||
+       HybrisUtils::GetDeviceProperties().device == "vegetahd")) {
+    // krillin / vegetahd lies to us - the top of the front facing camera
+    // points to the right of the screen (viewed from the front), which means
+    // the camera image needs rotating by 270deg with the device in its natural
     // orientation (portrait). It tells us the camera orientation is 90deg
     // though (see https://launchpad.net/bugs/1567542)
     orientation = 270;
