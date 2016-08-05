@@ -252,6 +252,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
+    prefs->shrinks_viewport_contents_to_fit = true;
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
     prefs->viewport_meta_enabled = true;

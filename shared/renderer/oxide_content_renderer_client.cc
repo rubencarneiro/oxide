@@ -108,7 +108,6 @@ void ContentRendererClient::RenderViewCreated(
     settings->setAllowCustomScrollbarInMainFrame(false);
     settings->setUseWideViewport(true);
     settings->setMainFrameClipsContent(false);
-    settings->setShrinksViewportContentToFit(true);
   }
 }
 
