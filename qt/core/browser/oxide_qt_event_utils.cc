@@ -26,6 +26,7 @@
 #include <Qt>
 #include <QWheelEvent>
 
+#include "base/environment.h"
 #include "base/logging.h"
 #include "base/time/time.h"
 #include "ui/events/keycodes/keyboard_codes.h"
@@ -86,7 +87,15 @@ blink::WebUChar GetControlCharacter(int key_code, bool shift) {
 }
 
 double QInputEventTimeToWebEventTime(QInputEvent* qevent) {
-  if (getenv("OXIDE_TESTING_MODE")) {
+  static bool g_testing_mode = []() {
+    std::unique_ptr<base::Environment> env = base::Environment::Create();
+    std::string result;
+    return env->GetVar("OXIDE_TESTING_MODE", &result) &&
+               result.size() > 0 &&
+               result[0] != '0';
+  }();
+
+  if (g_testing_mode) {
     // We don't have timestamps in testing
     return base::TimeDelta(base::TimeTicks::Now() - base::TimeTicks())
         .InSecondsF();

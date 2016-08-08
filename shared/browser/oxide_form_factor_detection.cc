@@ -17,6 +17,7 @@
 
 #include "oxide_form_factor_detection.h"
 
+#include "base/environment.h"
 #include "base/logging.h"
 
 namespace oxide {
@@ -24,13 +25,14 @@ namespace oxide {
 FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size);
 
 FormFactor DetectFormFactorHint(const gfx::Size& primary_screen_size) {
-  const char* force = getenv("OXIDE_FORCE_FORM_FACTOR");
-  if (force) {
-    if (!strcmp(force, "desktop")) {
+  std::unique_ptr<base::Environment> env = base::Environment::Create();
+  std::string force;
+  if (env->GetVar("OXIDE_FORCE_FORM_FACTOR", &force)) {
+    if (force == "desktop") {
       return FORM_FACTOR_DESKTOP;
-    } else if (!strcmp(force, "tablet")) {
+    } else if (force == "tablet") {
       return FORM_FACTOR_TABLET;
-    } else if (!strcmp(force, "phone")) {
+    } else if (force == "phone") {
       return FORM_FACTOR_PHONE;
     } else {
       LOG(ERROR) << "Unrecognized value for OXIDE_FORCE_FORM_FACTOR";
