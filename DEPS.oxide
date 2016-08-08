@@ -8,15 +8,5 @@
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/ffmpeg", 
     "rev": "5bfe766be646d03a80779c3cc7ab0f86eb963368", 
     "upstream": "https://chromium.googlesource.com/chromium/third_party/ffmpeg.git"
-  }, 
-  "src/third_party/icu": {
-    "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/icu", 
-    "rev": "acf231690cd4f0911d39df59ab5c56886066df9c", 
-    "upstream": "https://chromium.googlesource.com/chromium/deps/icu"
-  }, 
-  "src/tools/gyp": {
-    "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/gyp", 
-    "rev": "96d6f5a0b3434a92b17c6c3832521efbc73f7aea", 
-    "upstream": "https://chromium.googlesource.com/external/gyp.git"
   }
 }
