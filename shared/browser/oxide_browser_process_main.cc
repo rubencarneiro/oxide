@@ -341,7 +341,6 @@ void AddFormFactorSpecificCommandLineArguments() {
   }
 
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
   // Note, overlay scrollbars do not work properly on desktop yet
   // see https://launchpad.net/bugs/1426567
   command_line->AppendSwitch(switches::kEnableOverlayScrollbar);

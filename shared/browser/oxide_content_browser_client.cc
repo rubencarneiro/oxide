@@ -266,10 +266,12 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (Screen::GetShellMode() == ShellMode::NonWindowed) {
     prefs->shrinks_viewport_contents_to_fit = true;
     prefs->viewport_enabled = true;
+    prefs->main_frame_resizes_are_orientation_changes = true;
   } else {
     prefs->shrinks_viewport_contents_to_fit = false;
     prefs->default_minimum_page_scale_factor = 1.0f;
     prefs->viewport_enabled = false;
+    prefs->main_frame_resizes_are_orientation_changes = false;
   }
 
   prefs->supports_multiple_windows = false;
