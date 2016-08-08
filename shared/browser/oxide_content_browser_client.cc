@@ -102,7 +102,6 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   // This can be called on the UI or IO thread
   static const char* const kSwitchNames[] = {
     switches::kEnableMediaHubAudio,
-    switches::kFormFactor,
     switches::kMediaHubFixedSessionDomains,
     switches::kSharedMemoryOverridePath
   };
