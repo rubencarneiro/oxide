@@ -65,15 +65,6 @@ namespace {
 
 const float kMobileViewportWidthEpsilon = 0.15f;
 
-bool ShouldSendPinchGesture() {
-  static bool pinch_allowed =
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnableViewport) ||
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnablePinch);
-  return pinch_allowed;
-}
-
 bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
   return frame_metadata.min_page_scale_factor ==
          frame_metadata.max_page_scale_factor;
@@ -521,13 +512,6 @@ void RenderWidgetHostView::CompositorEvictResources() {
 void RenderWidgetHostView::OnGestureEvent(
     const blink::WebGestureEvent& event) {
   if (!host_) {
-    return;
-  }
-
-  if ((event.type == blink::WebInputEvent::GesturePinchBegin ||
-       event.type == blink::WebInputEvent::GesturePinchUpdate ||
-       event.type == blink::WebInputEvent::GesturePinchEnd) &&
-      !ShouldSendPinchGesture()) {
     return;
   }
 
