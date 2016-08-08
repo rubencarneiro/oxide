@@ -249,13 +249,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
-    prefs->shrinks_standalone_images_to_fit = false;
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
     prefs->allow_custom_scrollbar_in_main_frame = false;
     prefs->viewport_style = content::ViewportStyle::MOBILE;
   } else {
-    prefs->shrinks_standalone_images_to_fit = true;
     prefs->default_minimum_page_scale_factor = 1.0f;
     prefs->default_maximum_page_scale_factor = 4.f;
     prefs->allow_custom_scrollbar_in_main_frame = true;

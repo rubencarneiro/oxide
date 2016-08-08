@@ -106,7 +106,6 @@ WebPreferences::WebPreferences() :
   // ATTR_PASSWORD_ECHO_ENABLED
 
   SetAttribute(ATTR_LOADS_IMAGES_AUTOMATICALLY, true);
-  SetAttribute(ATTR_SHRINKS_STANDALONE_IMAGES_TO_FIT, true);
 
   SetAttribute(ATTR_TEXT_AREAS_ARE_RESIZABLE, true);
 
@@ -255,8 +254,6 @@ void WebPreferences::ApplyToWebkitPrefs(content::WebPreferences* prefs) {
 
   prefs->loads_images_automatically =
       attributes_[ATTR_LOADS_IMAGES_AUTOMATICALLY];
-  prefs->shrinks_standalone_images_to_fit =
-      attributes_[ATTR_SHRINKS_STANDALONE_IMAGES_TO_FIT];
 
   prefs->text_areas_are_resizable = attributes_[ATTR_TEXT_AREAS_ARE_RESIZABLE];
 
