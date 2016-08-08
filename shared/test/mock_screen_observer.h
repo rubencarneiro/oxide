@@ -34,6 +34,7 @@ class MockScreenObserver : public ScreenObserver {
   MOCK_METHOD1(OnDisplayAdded, void(const display::Display& display));
   MOCK_METHOD1(OnDisplayRemoved, void(const display::Display& display));
   MOCK_METHOD1(OnDisplayPropertiesChanged, void(const display::Display& display));
+  MOCK_METHOD0(OnShellModeChanged, void());
 };
 
 class DisplayEqMatcher

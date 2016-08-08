@@ -25,6 +25,7 @@
 
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
+#include "shared/browser/screen_observer.h"
 
 namespace content {
 class RenderViewHost;
@@ -37,6 +38,7 @@ class BrowserContext;
 class WebPreferences;
 
 class WebViewContentsHelper final : private BrowserContextObserver,
+                                    private ScreenObserver,
                                     private WebPreferencesObserver,
                                     private base::SupportsUserData::Data {
  public:
@@ -62,6 +64,9 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   // BrowserContextObserver implementation
   void NotifyPopupBlockerEnabledChanged() final;
   void NotifyDoNotTrackChanged() final;
+
+  // ScreenObserver
+  void OnShellModeChanged() final;
 
   // WebPreferencesObserver implementation
   void WebPreferencesValueChanged() final;

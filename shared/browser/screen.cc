@@ -17,11 +17,16 @@
 
 #include "screen.h"
 
+#include <string>
+
+#include "base/environment.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/threading/thread_checker.h"
 
+#include "oxide_hybris_utils.h"
 #include "screen_observer.h"
+#include "shell_mode.h"
 
 namespace oxide {
 
@@ -55,6 +60,10 @@ void Screen::NotifyDisplayPropertiesChanged(const display::Display& display) {
                     OnDisplayPropertiesChanged(display));
 }
 
+void Screen::NotifyShellModeChanged() {
+  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnShellModeChanged());
+}
+
 void Screen::AddObserver(ScreenObserver* observer) {
   observers_.AddObserver(observer);
 }
@@ -75,6 +84,30 @@ Screen::~Screen() {
   DCHECK_EQ(g_instance, this);
   FOR_EACH_OBSERVER(ScreenObserver, observers_, OnScreenDestruction());
   g_instance = nullptr;
+}
+
+// static
+ShellMode Screen::GetShellMode() {
+  std::unique_ptr<base::Environment> env = base::Environment::Create();
+  std::string override_mode;
+  if (env->GetVar("OXIDE_FORCE_SHELL_MODE", &override_mode)) {
+    if (override_mode == "windowed") {
+      return ShellMode::Windowed;
+    } else if (override_mode == "non-windowed") {
+      return ShellMode::NonWindowed;
+    }
+    LOG(WARNING) << "Unrecognized value for OXIDE_FORCE_SHELL_MODE";
+  }
+
+  // FIXME: This is based on the same thing that DetectFormFactorHintImpl does,
+  //  but it's not really correct. And it needs to be dynamic
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::HasDeviceProperties()) {
+    return ShellMode::NonWindowed;
+  }
+#endif
+
+  return ShellMode::Windowed;
 }
 
 } // namespace oxide

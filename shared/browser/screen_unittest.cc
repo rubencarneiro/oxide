@@ -41,6 +41,9 @@ class MockScreen : public Screen {
   void TestDisplayPropertiesChanged(const display::Display& display) {
     NotifyDisplayPropertiesChanged(display);
   }
+  void TestShellModeChanged() {
+    NotifyShellModeChanged();
+  }
 
  private:
   // Screen implementation
@@ -111,6 +114,16 @@ TEST_F(ScreenTest, DisplayPropertyChanged) {
   EXPECT_CALL(obs2, OnDisplayPropertiesChanged(DisplayEq(display)));
 
   screen()->TestDisplayPropertiesChanged(display);
+}
+
+TEST_F(ScreenTest, ShellModeChanged) {
+  MockScreenObserver obs1;
+  MockScreenObserver obs2;
+
+  EXPECT_CALL(obs1, OnShellModeChanged());
+  EXPECT_CALL(obs2, OnShellModeChanged());
+
+  screen()->TestShellModeChanged();
 }
 
 TEST_F(ScreenTest, Removal) {

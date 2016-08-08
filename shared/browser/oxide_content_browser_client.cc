@@ -55,6 +55,8 @@
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
+#include "screen.h"
+#include "shell_mode.h"
 
 #if defined(ENABLE_HYBRIS)
 #include "oxide_hybris_utils.h"
@@ -244,24 +246,30 @@ void ContentBrowserClient::OverrideWebkitPrefs(
         ->IsPopupBlockerEnabled();
 
   prefs->double_tap_to_zoom_enabled = true;
+  prefs->viewport_meta_enabled = true;
 
   FormFactor form_factor = GetFormFactorHint();
   if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
     prefs->shrinks_standalone_images_to_fit = false;
-    prefs->shrinks_viewport_contents_to_fit = true;
     prefs->default_minimum_page_scale_factor = 0.25f;
     prefs->default_maximum_page_scale_factor = 5.f;
-    prefs->viewport_meta_enabled = true;
-    prefs->viewport_style = content::ViewportStyle::MOBILE;
     prefs->allow_custom_scrollbar_in_main_frame = false;
+    prefs->viewport_style = content::ViewportStyle::MOBILE;
   } else {
     prefs->shrinks_standalone_images_to_fit = true;
-    prefs->shrinks_viewport_contents_to_fit = false;
     prefs->default_minimum_page_scale_factor = 1.0f;
     prefs->default_maximum_page_scale_factor = 4.f;
-    prefs->viewport_meta_enabled = false;
-    prefs->viewport_style = content::ViewportStyle::DEFAULT;
     prefs->allow_custom_scrollbar_in_main_frame = true;
+    prefs->viewport_style = content::ViewportStyle::DEFAULT;
+  }
+
+  if (Screen::GetShellMode() == ShellMode::NonWindowed) {
+    prefs->shrinks_viewport_contents_to_fit = true;
+    prefs->viewport_enabled = true;
+  } else {
+    prefs->shrinks_viewport_contents_to_fit = false;
+    prefs->default_minimum_page_scale_factor = 1.0f;
+    prefs->viewport_enabled = false;
   }
 
   prefs->supports_multiple_windows = false;

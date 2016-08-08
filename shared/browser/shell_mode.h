@@ -15,42 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_SCREEN_OBSERVER_H_
-#define _OXIDE_SHARED_BROWSER_SCREEN_OBSERVER_H_
-
-#include "shared/common/oxide_shared_export.h"
-
-namespace display {
-class Display;
-}
+#ifndef _OXIDE_SHARED_BROWSER_SHELL_MODE_H_
+#define _OXIDE_SHARED_BROWSER_SHELL_MODE_H_
 
 namespace oxide {
 
-class Screen;
+enum class ShellMode {
+  // Windowed is like traditional desktop UIs
+  Windowed,
 
-class OXIDE_SHARED_EXPORT ScreenObserver {
- public:
-  ScreenObserver();
-  virtual ~ScreenObserver();
-
-  virtual void OnPrimaryDisplayChanged() {}
-
-  virtual void OnDisplayAdded(const display::Display& display) {}
-
-  virtual void OnDisplayRemoved(const display::Display& display) {}
-
-  virtual void OnDisplayPropertiesChanged(const display::Display& display) {}
-
-  virtual void OnShellModeChanged() {}
-
- private:
-  friend class Screen;
-
-  void OnScreenDestruction();
-
-  Screen* screen_;
+  // NonWindowed is like UIs used on mobile devices where applications
+  // occupy a fixed area on the screen and the shell only shows one app at
+  // a time
+  NonWindowed
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_SCREEN_OBSERVER_H_
+#endif // _OXIDE_SHARED_BROWSER_SHELL_MODE_H_

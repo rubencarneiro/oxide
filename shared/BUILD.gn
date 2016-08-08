@@ -435,6 +435,7 @@ component("shared") {
     "browser/screen.h",
     "browser/screen_observer.cc",
     "browser/screen_observer.h",
+    "browser/shell_mode.h",
     "browser/ssl/oxide_certificate_error.cc",
     "browser/ssl/oxide_certificate_error.h",
     "browser/ssl/oxide_certificate_error_dispatcher.cc",

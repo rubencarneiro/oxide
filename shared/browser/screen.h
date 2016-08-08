@@ -29,6 +29,7 @@
 namespace oxide {
 
 class ScreenObserver;
+enum class ShellMode;
 
 // A central place to track screen state - we have to provide access to the
 // default display anyway, so this avoids having to duplicate work for
@@ -45,6 +46,8 @@ class OXIDE_SHARED_EXPORT Screen {
 
   virtual gfx::Point GetCursorScreenPoint() = 0;
 
+  static ShellMode GetShellMode();
+
  protected:
   Screen();
 
@@ -52,6 +55,7 @@ class OXIDE_SHARED_EXPORT Screen {
   void NotifyDisplayAdded(const display::Display& display);
   void NotifyDisplayRemoved(const display::Display& display);
   void NotifyDisplayPropertiesChanged(const display::Display& display);
+  void NotifyShellModeChanged();
 
  private:
   friend class ScreenObserver;
