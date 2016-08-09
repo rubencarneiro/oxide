@@ -47,6 +47,7 @@
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebDragOperation.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -722,6 +723,15 @@ void WebView::ExitFullscreenMode() {
   client_->ToggleFullscreenMode(false);
 }
 
+void WebView::OnDisplayPropertiesChanged(const display::Display& display) {
+  if (display.id() != web_view_->GetDisplay().id()) {
+    return;
+  }
+
+  // Recalculate location bar height if scale changed
+  setLocationBarHeight(location_bar_height_);
+}
+
 QUrl WebView::url() const {
   return QUrl(QString::fromStdString(web_view_->GetURL().spec()));
 }
@@ -951,11 +961,6 @@ void WebView::setLocationBarHeight(int height) {
   web_view_->SetLocationBarHeight(
       DpiUtils::ConvertQtPixelsToChromium(height,
                                           contents_view_->GetScreen()));
-}
-
- // FIXME: called on screen change, to recalculate location bar height if scale changed
-void WebView::RescaleLocationBarHeight() {
-  setLocationBarHeight(location_bar_height_);
 }
 
 int WebView::locationBarOffset() const {

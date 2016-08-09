@@ -34,6 +34,7 @@
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
+#include "shared/browser/screen_observer.h"
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -62,6 +63,7 @@ class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::FullscreenHelperClient,
+                public oxide::ScreenObserver,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
@@ -85,8 +87,6 @@ class WebView : public oxide::WebViewClient,
   static WebView* FromView(oxide::WebView* view);
 
   WebContext* GetContext() const;
-
-  void RescaleLocationBarHeight(); //FIXME: called on screen change only
 
  private:
   WebView(WebViewProxyClient* client,
@@ -182,6 +182,9 @@ class WebView : public oxide::WebViewClient,
   // oxide::FullscreenHelperClient
   void EnterFullscreenMode(const GURL& origin) override;
   void ExitFullscreenMode() override;
+
+  // oxide::ScreenObserver implementation
+  void OnDisplayPropertiesChanged(const display::Display& display) override;
 
   // WebViewProxy implementation
   QUrl url() const override;

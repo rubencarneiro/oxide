@@ -27,6 +27,7 @@
 #include "base/base_paths.h"
 #include "base/base_switches.h"
 #include "base/command_line.h"
+#include "base/environment.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/i18n/icu_util.h"
@@ -134,20 +135,30 @@ class BrowserProcessMainImpl : public BrowserProcessMain {
 
 namespace {
 
-bool IsEnvironmentOptionEnabled(base::StringPiece option) {
+bool IsEnvironmentOptionEnabled(base::StringPiece option,
+                                base::Environment* env) {
   std::string name("OXIDE_");
   name += option.data();
 
-  base::StringPiece val(getenv(name.c_str()));
+  std::string result;
+  if (!env->GetVar(name, &result)) {
+    return false;
+  }
 
-  return !val.empty() && val == "1";
+  return result.size() > 0 && result[0] != '0';
 }
 
-base::StringPiece GetEnvironmentOption(base::StringPiece option) {
+std::string GetEnvironmentOption(base::StringPiece option,
+                                 base::Environment* env) {
   std::string name("OXIDE_");
   name += option.data();
 
-  return getenv(name.c_str());
+  // An environment variable can be set to an empty string, but we don't
+  // expose this to callers
+  std::string result;
+  env->GetVar(name, &result);
+
+  return result;
 }
 
 #if defined(OS_POSIX)
@@ -172,12 +183,14 @@ void SetupAndVerifySignalHandlers() {
 }
 #endif
 
-base::FilePath GetSubprocessPath() {
-  base::StringPiece subprocess_path = GetEnvironmentOption("SUBPROCESS_PATH");
-  if (!subprocess_path.empty()) {
+base::FilePath GetSubprocessPath(base::Environment* env) {
+  std::string override_subprocess_path =
+      GetEnvironmentOption("SUBPROCESS_PATH", env);
+  if (!override_subprocess_path.empty()) {
     // Make sure that we have a properly formed absolute path
     // there are some load issues if not.
-    return base::MakeAbsoluteFilePath(base::FilePath(subprocess_path.data()));
+    return base::MakeAbsoluteFilePath(
+        base::FilePath().AppendASCII(override_subprocess_path));
   }
 
   base::FilePath subprocess_exe =
@@ -220,9 +233,29 @@ const char* GetGLImplName(gl::GLImplementation impl) {
   }
 }
 
+#if defined(OS_POSIX)
+base::FilePath GetSharedMemoryPath(base::Environment* env) {
+  // snap packages
+  std::string snap_name;
+  if (env->GetVar("SNAP_NAME", &snap_name)) {
+    return base::FilePath(std::string("/dev/shm/snap.") + snap_name + ".oxide");
+  }
+
+  // click packages
+  std::string app_pkgname;
+  if (env->GetVar("APP_PKGNAME", &app_pkgname)) {
+    return base::FilePath(std::string("/dev/shm/") + app_pkgname + ".oxide");
+  }
+
+  // default
+  return base::FilePath("/dev/shm");
+}
+#endif
+
 void InitializeCommandLine(const base::FilePath& subprocess_path,
                            ProcessModel process_model,
-                           gl::GLImplementation gl_impl) {
+                           gl::GLImplementation gl_impl,
+                           base::Environment* env) {
   CHECK(base::CommandLine::Init(0, nullptr)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
@@ -255,48 +288,50 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
                                   switches::kProfilerTimingDisabledValue);
 
   if (gl_impl == gl::kGLImplementationNone ||
-      IsEnvironmentOptionEnabled("DISABLE_GPU")) {
+      IsEnvironmentOptionEnabled("DISABLE_GPU", env)) {
     command_line->AppendSwitch(switches::kDisableGpu);
   } else {
     command_line->AppendSwitchASCII(switches::kUseGL,
                                     GetGLImplName(gl_impl));
   }
 
-  if (IsEnvironmentOptionEnabled("DISABLE_GPU_COMPOSITING")) {
+  if (IsEnvironmentOptionEnabled("DISABLE_GPU_COMPOSITING", env)) {
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
 
-  base::StringPiece renderer_cmd_prefix =
-      GetEnvironmentOption("RENDERER_CMD_PREFIX");
+  std::string renderer_cmd_prefix =
+      GetEnvironmentOption("RENDERER_CMD_PREFIX", env);
   if (!renderer_cmd_prefix.empty()) {
     command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
-                                    renderer_cmd_prefix.data());
+                                    renderer_cmd_prefix);
   }
-  if (IsEnvironmentOptionEnabled("NO_SANDBOX")) {
+  if (IsEnvironmentOptionEnabled("NO_SANDBOX", env)) {
     command_line->AppendSwitch(switches::kNoSandbox);
   } else {
     // See https://launchpad.net/bugs/1447311
     command_line->AppendSwitch(switches::kDisableNamespaceSandbox);
 
-    if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX")) {
+    if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX", env)) {
       command_line->AppendSwitch(switches::kDisableSetuidSandbox);
     }
-    if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX")) {
+    if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX",
+                                   env)) {
       command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
     }
   }
 
-  if (IsEnvironmentOptionEnabled("IGNORE_GPU_BLACKLIST")) {
+  if (IsEnvironmentOptionEnabled("IGNORE_GPU_BLACKLIST", env)) {
     command_line->AppendSwitch(switches::kIgnoreGpuBlacklist);
   }
-  if (IsEnvironmentOptionEnabled("DISABLE_GPU_DRIVER_BUG_WORKAROUNDS")) {
+  if (IsEnvironmentOptionEnabled("DISABLE_GPU_DRIVER_BUG_WORKAROUNDS",
+                                 env)) {
     command_line->AppendSwitch(switches::kDisableGpuDriverBugWorkarounds);
   }
 
-  if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING")) {
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_SERVICE_LOGGING", env)) {
     command_line->AppendSwitch(switches::kEnableGPUServiceLogging);
   }
-  if (IsEnvironmentOptionEnabled("ENABLE_GPU_DEBUGGING")) {
+  if (IsEnvironmentOptionEnabled("ENABLE_GPU_DEBUGGING", env)) {
     command_line->AppendSwitch(switches::kEnableGPUDebugging);
   }
 
@@ -313,26 +348,31 @@ void InitializeCommandLine(const base::FilePath& subprocess_path,
            process_model == PROCESS_MODEL_MULTI_PROCESS);
   }
 
-  if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING")) {
+  if (IsEnvironmentOptionEnabled("ALLOW_SANDBOX_DEBUGGING", env)) {
     command_line->AppendSwitch(switches::kAllowSandboxDebugging);
   }
 
-  if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+  if (IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO", env)) {
     command_line->AppendSwitch(switches::kEnableMediaHubAudio);
   }
-  base::StringPiece mediahub_fixed_session_domains =
-      GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS");
+  std::string mediahub_fixed_session_domains =
+      GetEnvironmentOption("MEDIA_HUB_FIXED_SESSION_DOMAINS", env);
   if (!mediahub_fixed_session_domains.empty()) {
     command_line->AppendSwitchASCII(switches::kMediaHubFixedSessionDomains,
-                                    mediahub_fixed_session_domains.data());
-    if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO")) {
+                                    mediahub_fixed_session_domains);
+    if (!IsEnvironmentOptionEnabled("ENABLE_MEDIA_HUB_AUDIO", env)) {
       command_line->AppendSwitch(switches::kEnableMediaHubAudio);
     }
   }
 
-  if (IsEnvironmentOptionEnabled("TESTING_MODE")) {
+  if (IsEnvironmentOptionEnabled("TESTING_MODE", env)) {
     command_line->AppendSwitch(switches::kUseFakeDeviceForMediaStream);
   }
+
+#if defined(OS_POSIX)
+  command_line->AppendSwitchPath(switches::kSharedMemoryOverridePath,
+                                 GetSharedMemoryPath(env));
+#endif
 }
 
 void AddFormFactorSpecificCommandLineArguments() {
@@ -341,29 +381,9 @@ void AddFormFactorSpecificCommandLineArguments() {
   }
 
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
-  command_line->AppendSwitch(switches::kEnableViewport);
-  command_line->AppendSwitch(switches::kMainFrameResizesAreOrientationChanges);
-  command_line->AppendSwitch(switches::kEnablePinch);
   // Note, overlay scrollbars do not work properly on desktop yet
   // see https://launchpad.net/bugs/1426567
   command_line->AppendSwitch(switches::kEnableOverlayScrollbar);
-}
-
-base::FilePath GetSharedMemoryPath() {
-  // snap packages
-  const char* tmp = getenv("SNAP_NAME");
-  if (tmp) {
-    return base::FilePath(std::string("/dev/shm/snap.") + tmp + ".oxide");
-  }
-
-  // click packages
-  tmp = getenv("APP_PKGNAME");
-  if (tmp) {
-    return base::FilePath(std::string("/dev/shm/") + tmp + ".oxide");
-  }
-
-  // default
-  return base::FilePath("/dev/shm");
 }
 
 bool IsUnsupportedProcessModel(ProcessModel process_model) {
@@ -446,9 +466,13 @@ void BrowserProcessMainImpl::Start(StartParams params) {
 
   exit_manager_.reset(new base::AtExitManager());
 
-  base::FilePath subprocess_exe = GetSubprocessPath();
-  InitializeCommandLine(subprocess_exe, process_model_,
-                        params.gl_implementation);
+  std::unique_ptr<base::Environment> env = base::Environment::Create();
+
+  base::FilePath subprocess_exe = GetSubprocessPath(env.get());
+  InitializeCommandLine(subprocess_exe,
+                        process_model_,
+                        params.gl_implementation,
+                        env.get());
 
   FormFactor form_factor =
       DetectFormFactorHint(params.primary_screen_size);
@@ -461,10 +485,6 @@ void BrowserProcessMainImpl::Start(StartParams params) {
   // renderer, as various bits of Chrome use this to find other resources
   PathService::Override(base::FILE_EXE, subprocess_exe);
   PathService::Override(base::FILE_MODULE, subprocess_exe);
-
-  base::CommandLine::ForCurrentProcess()
-      ->AppendSwitchPath(switches::kSharedMemoryOverridePath,
-                         GetSharedMemoryPath());
 
   int exit_code;
   CHECK(!main_delegate_->BasicStartupComplete(&exit_code));
@@ -560,25 +580,27 @@ ProcessModel BrowserProcessMain::GetProcessModelOverrideFromEnv() {
 
   g_initialized = true;
 
-  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS")) {
+  std::unique_ptr<base::Environment> env = base::Environment::Create();
+
+  if (IsEnvironmentOptionEnabled("SINGLE_PROCESS", env.get())) {
     g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
   } else {
-    base::StringPiece env = GetEnvironmentOption("PROCESS_MODEL");
-    if (!env.empty()) {
-      if (env == "multi-process") {
+    std::string model = GetEnvironmentOption("PROCESS_MODEL", env.get());
+    if (!model.empty()) {
+      if (model == "multi-process") {
         g_process_model = PROCESS_MODEL_MULTI_PROCESS;
-      } else if (env == "single-process") {
+      } else if (model == "single-process") {
         g_process_model = PROCESS_MODEL_SINGLE_PROCESS;
-      } else if (env == "process-per-site-instance") {
+      } else if (model == "process-per-site-instance") {
         g_process_model = PROCESS_MODEL_PROCESS_PER_SITE_INSTANCE;
-      } else if (env == "process-per-view") {
+      } else if (model == "process-per-view") {
         g_process_model = PROCESS_MODEL_PROCESS_PER_VIEW;
-      } else if (env == "process-per-site") {
+      } else if (model == "process-per-site") {
         g_process_model = PROCESS_MODEL_PROCESS_PER_SITE;
-      } else if (env == "site-per-process") {
+      } else if (model == "site-per-process") {
         g_process_model = PROCESS_MODEL_SITE_PER_PROCESS;
       } else {
-        LOG(WARNING) << "Invalid process mode: " << env.data();
+        LOG(WARNING) << "Invalid process mode: " << model;
       }
     }
   }

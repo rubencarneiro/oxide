@@ -23,15 +23,15 @@ TestWebView {
       getMockQPAShim().resetScreens();
     }
 
-    function validateScreenGeometry() {
+    function validateScreenGeometry(msg) {
       compare(webView.getTestApi().evaluateCode("window.screen.width"),
-              TestWindow.screen.geometry.width);
+              TestWindow.screen.geometry.width, msg);
       compare(webView.getTestApi().evaluateCode("window.screen.height"),
-              TestWindow.screen.geometry.height);
+              TestWindow.screen.geometry.height, msg);
       compare(webView.getTestApi().evaluateCode("window.screen.availWidth"),
-              TestWindow.screen.availableGeometry.width);
+              TestWindow.screen.availableGeometry.width, msg);
       compare(webView.getTestApi().evaluateCode("window.screen.availHeight"),
-              TestWindow.screen.availableGeometry.height);
+              TestWindow.screen.availableGeometry.height, msg);
     }
 
     // Verify that screen geometry is reported correctly
@@ -48,12 +48,12 @@ TestWebView {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
-      validateScreenGeometry();
+      validateScreenGeometry("Before screen switch");
 
       TestWindow.screen = TestSupport.screens[1];
       compare(TestWindow.screen, TestSupport.screens[1]);
 
-      validateScreenGeometry();
+      validateScreenGeometry("After screen switch");
     }
 
     // Verify that the screen geometry is reported correctly after the
@@ -62,15 +62,15 @@ TestWebView {
       webView.url = "http://testsuite/empty.html";
       verify(webView.waitForLoadSucceeded());
 
-      validateScreenGeometry();
+      validateScreenGeometry("With origin screen geometry");
 
-      getMockQPAShim().overrideScreenGeometry(
+      getMockQPAShim().setScreenGeometry(
           TestWindow.screen,
-          Qt.rect(0, 0, 1080, 1920),
-          Qt.rect(0, 100, 1080, 1820));
+          Qt.rect(0, 0, 2160, 3840),
+          Qt.rect(0, 100, 2160, 3740));
       compare(TestWindow.screen.geometry.width, 1080);
 
-      validateScreenGeometry();
+      validateScreenGeometry("With modified screen geometry");
     }
   }
 }

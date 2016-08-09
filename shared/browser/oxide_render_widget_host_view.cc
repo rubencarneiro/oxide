@@ -57,21 +57,13 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_event_utils.h"
 #include "oxide_render_widget_host_view_container.h"
+#include "screen.h"
 
 namespace oxide {
 
 namespace {
 
 const float kMobileViewportWidthEpsilon = 0.15f;
-
-bool ShouldSendPinchGesture() {
-  static bool pinch_allowed =
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnableViewport) ||
-      base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnablePinch);
-  return pinch_allowed;
-}
 
 bool HasFixedPageScale(const cc::CompositorFrameMetadata& frame_metadata) {
   return frame_metadata.min_page_scale_factor ==
@@ -408,12 +400,15 @@ bool RenderWidgetHostView::HasAcceleratedSurface(
 }
 
 void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
+  display::Display display;
   if (!container_) {
-    RenderWidgetHostViewOxide::GetDefaultScreenInfo(result);
-    return;
+    display = Screen::GetInstance()->GetPrimaryDisplay();
+  } else {
+    display = container_->GetDisplay();
   }
 
-  *result = container_->GetScreenInfo();
+  content::RenderWidgetHostViewOxide::GetWebScreenInfoForDisplay(display,
+                                                                 result);
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
@@ -517,13 +512,6 @@ void RenderWidgetHostView::CompositorEvictResources() {
 void RenderWidgetHostView::OnGestureEvent(
     const blink::WebGestureEvent& event) {
   if (!host_) {
-    return;
-  }
-
-  if ((event.type == blink::WebInputEvent::GesturePinchBegin ||
-       event.type == blink::WebInputEvent::GesturePinchUpdate ||
-       event.type == blink::WebInputEvent::GesturePinchEnd) &&
-      !ShouldSendPinchGesture()) {
     return;
   }
 

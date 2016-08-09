@@ -30,13 +30,11 @@
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-#include "third_party/WebKit/public/web/WebSettings.h"
 #include "third_party/WebKit/public/web/WebView.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/common/chrome_version.h"
 #include "shared/common/oxide_constants.h"
-#include "shared/common/oxide_form_factor.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
 #include "external_popup_menu.h"
@@ -99,17 +97,6 @@ void ContentRendererClient::RenderViewCreated(
   //      notifications we're interested in to RenderView. Make this
   //      a RenderFrameObserver when it grows the features we need
   new UserScriptScheduler(render_view);
-
-  blink::WebSettings* settings = render_view->GetWebView()->settings();
-  settings->setDoubleTapToZoomEnabled(true); // XXX: Make this configurable
-
-  if (GetFormFactorHint() == FORM_FACTOR_TABLET ||
-      GetFormFactorHint() == FORM_FACTOR_PHONE) {
-    settings->setAllowCustomScrollbarInMainFrame(false);
-    settings->setUseWideViewport(true);
-    settings->setMainFrameClipsContent(false);
-    settings->setShrinksViewportContentToFit(true);
-  }
 }
 
 void ContentRendererClient::AddImageContextMenuProperties(

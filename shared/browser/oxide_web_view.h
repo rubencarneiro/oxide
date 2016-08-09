@@ -33,9 +33,9 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
+#include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -237,7 +237,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
 
-  blink::WebScreenInfo GetScreenInfo() const;
+  display::Display GetDisplay() const;
 
   JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type);

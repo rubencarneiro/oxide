@@ -34,7 +34,7 @@ QT_END_NAMESPACE;
 namespace oxide {
 namespace qt {
 
-class ScreenClient;
+class Screen;
 
 class BrowserPlatformIntegration : public QObject,
                                    public oxide::BrowserPlatformIntegration {
@@ -54,7 +54,7 @@ class BrowserPlatformIntegration : public QObject,
   bool LaunchURLExternally(const GURL& url) override;
   bool IsTouchSupported() override;
   intptr_t GetNativeDisplay() override;
-  oxide::ScreenClient* GetScreenClient() override;
+  oxide::Screen* GetScreen() override;
   oxide::GLContextDependent* GetGLShareContext() override;
   std::unique_ptr<oxide::MessagePump> CreateUIMessagePump() override;
   oxide::Clipboard* CreateClipboard() override;
@@ -92,7 +92,7 @@ class BrowserPlatformIntegration : public QObject,
   // when the state really does change
   ApplicationState state_;
 
-  std::unique_ptr<ScreenClient> screen_client_;
+  std::unique_ptr<Screen> screen_;
 
   DISALLOW_COPY_AND_ASSIGN(BrowserPlatformIntegration);
 };

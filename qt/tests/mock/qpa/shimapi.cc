@@ -23,11 +23,11 @@ void ShimApi::resetScreens() {
   MockPlatformIntegration::instance()->resetScreens();
 }
 
-void ShimApi::overrideScreenGeometry(QScreen* screen,
-                                     const QRect& geometry,
-                                     const QRect& available_geometry) {
-  MockPlatformIntegration::instance()->overrideScreenGeometry(
-      screen, geometry, available_geometry);
+void ShimApi::setScreenGeometry(QScreen* screen,
+                                const QRect& geometry,
+                                const QRect& work_area_in_screen) {
+  MockPlatformIntegration::instance()->setScreenGeometry(
+      screen, geometry, work_area_in_screen);
 }
 
 void ShimApi::setScreenOrientation(QScreen* screen,

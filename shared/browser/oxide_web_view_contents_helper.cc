@@ -72,6 +72,10 @@ void WebViewContentsHelper::NotifyDoNotTrackChanged() {
   rvh->SyncRendererPrefs();
 }
 
+void WebViewContentsHelper::OnShellModeChanged() {
+  UpdateWebPreferences();
+}
+
 WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
                                              content::WebContents* opener)
     : BrowserContextObserver(

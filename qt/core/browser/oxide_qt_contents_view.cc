@@ -26,6 +26,7 @@
 #include <QPixmap>
 #include <QRect>
 #include <QTouchEvent>
+#include <QWindow>
 
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
@@ -56,6 +57,7 @@
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
 #include "oxide_qt_web_view.h"
+#include "qt_screen.h"
 
 namespace oxide {
 namespace qt {
@@ -266,21 +268,32 @@ void ContentsView::didCommitCompositorFrame() {
   view()->DidCommitCompositorFrame();
 }
 
+void ContentsView::windowChanged() {
+  if (window_) {
+    window_->disconnect(this);
+  }
+
+  window_ = client_->GetWindow();
+
+  if (window_) {
+    connect(window_, SIGNAL(screenChanged(QScreen*)),
+            SLOT(OnScreenChanged()));
+  }
+
+  if (!view()) {
+    return;
+  }
+
+  view()->ScreenChanged();
+  view()->WasResized();
+}
+
 void ContentsView::wasResized() {
   view()->WasResized();
 }
 
 void ContentsView::visibilityChanged() {
   view()->VisibilityChanged();
-}
-
-void ContentsView::screenUpdated() {
-  view()->ScreenUpdated();
-
-  // FIXME - need to recalculate location bar height in case scale changed
-  oxide::qt::WebView::FromView(
-    oxide::WebView::FromWebContents(view()->GetWebContents()))
-      ->RescaleLocationBarHeight();
 }
 
 QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
@@ -435,13 +448,8 @@ void ContentsView::hideTouchSelectionController() {
   view()->HideTouchSelectionController();
 }
 
-blink::WebScreenInfo ContentsView::GetScreenInfo() const {
-  QScreen* screen = client_->GetScreen();
-  if (!screen) {
-    screen = QGuiApplication::primaryScreen();
-  }
-
-  return GetWebScreenInfoFromQScreen(screen);
+display::Display ContentsView::GetDisplay() const {
+  return Screen::GetInstance()->DisplayFromQScreen(GetScreen());
 }
 
 float ContentsView::GetLocationBarContentOffset() const {
@@ -583,6 +591,10 @@ void ContentsView::UnhandledKeyboardEvent(
   client_->HandleUnhandledKeyboardEvent(key_event);
 }
 
+void ContentsView::OnScreenChanged() {
+  view()->ScreenChanged();
+}
+
 ContentsView::ContentsView(ContentsViewProxyClient* client,
                            QObject* native_view)
     : client_(client),
@@ -590,6 +602,8 @@ ContentsView::ContentsView(ContentsViewProxyClient* client,
       input_method_context_(new InputMethodContext(this)) {
   DCHECK(!client_->proxy_);
   client_->proxy_ = this;
+
+  windowChanged();
 }
 
 ContentsView::~ContentsView() {
@@ -618,7 +632,10 @@ content::WebContents* ContentsView::GetWebContents() const {
 }
 
 QScreen* ContentsView::GetScreen() const {
-  QScreen* screen = client_->GetScreen();
+  QScreen* screen = nullptr;
+  if (window_) {
+    screen = window_->screen();
+  }
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }

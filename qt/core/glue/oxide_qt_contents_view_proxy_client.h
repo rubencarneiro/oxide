@@ -29,7 +29,7 @@ class QCursor;
 class QKeyEvent;
 template <typename T> class QList;
 class QRectF;
-class QScreen;
+class QWindow;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -50,7 +50,7 @@ class ContentsViewProxyClient {
 
   ContentsViewProxy* proxy() const { return proxy_; }
 
-  virtual QScreen* GetScreen() const = 0;
+  virtual QWindow* GetWindow() const = 0;
 
   virtual bool IsVisible() const = 0;
 

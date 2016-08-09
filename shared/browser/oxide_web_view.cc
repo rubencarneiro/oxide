@@ -1458,8 +1458,8 @@ void WebView::HttpAuthenticationRequested(
   client_->HttpAuthenticationRequested(login_delegate);
 }
 
-blink::WebScreenInfo WebView::GetScreenInfo() const {
-  return WebContentsView::FromWebContents(web_contents_.get())->GetScreenInfo();
+display::Display WebView::GetDisplay() const {
+  return WebContentsView::FromWebContents(web_contents_.get())->GetDisplay();
 }
 
 JavaScriptDialog* WebView::CreateJavaScriptDialog(

@@ -478,8 +478,4 @@ URLRequestDelegatedJob::~URLRequestDelegatedJob() {
 } // namespace qt
 } // namespace oxide
 
-#if defined(GN_BUILD)
 #include "qt/core/browser/oxide_qt_url_request_delegated_job.moc"
-#else
-#include "oxide_qt_url_request_delegated_job.moc"
-#endif

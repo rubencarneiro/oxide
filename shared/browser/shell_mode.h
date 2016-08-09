@@ -15,29 +15,21 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
-#define _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+#ifndef _OXIDE_SHARED_BROWSER_SHELL_MODE_H_
+#define _OXIDE_SHARED_BROWSER_SHELL_MODE_H_
 
-#include <QObject>
-#include <Qt>
+namespace oxide {
 
-QT_BEGIN_NAMESPACE
-class QRect;
-class QScreen;
-QT_END_NAMESPACE
+enum class ShellMode {
+  // Windowed is like traditional desktop UIs
+  Windowed,
 
-class ShimApi : public QObject {
-  Q_OBJECT
-
- public:
-  Q_INVOKABLE void resetScreens();
-
-  Q_INVOKABLE void setScreenGeometry(QScreen* screen,
-                                     const QRect& geometry,
-                                     const QRect& work_area_in_screen);
-
-  Q_INVOKABLE void setScreenOrientation(QScreen* screen,
-                                        Qt::ScreenOrientation orientation);
+  // NonWindowed is like UIs used on mobile devices where applications
+  // occupy a fixed area on the screen and the shell only shows one app at
+  // a time
+  NonWindowed
 };
 
-#endif // _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_SHELL_MODE_H_

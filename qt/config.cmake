@@ -44,5 +44,3 @@ endif()
 set(OXIDE_LIB OxideQtCore)
 set(OXIDE_LIB_VERSION 0)
 set(OXIDE_RENDERER oxide-renderer)
-
-list(APPEND OXIDE_GYP_EXTRA_ARGS -Dqt_moc_executable=${QT_MOC_EXECUTABLE})

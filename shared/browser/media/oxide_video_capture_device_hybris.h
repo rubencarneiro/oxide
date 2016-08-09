@@ -48,6 +48,8 @@ class VideoCaptureDeviceHybris : public media::VideoCaptureDevice {
       const media::VideoCaptureDeviceDescriptor& device_descriptor);
   ~VideoCaptureDeviceHybris() override;
 
+  static void Initialize();
+
   static const char* GetDeviceIdPrefix();
   static int32_t GetCameraIdfromDeviceId(const std::string& device_id);
 

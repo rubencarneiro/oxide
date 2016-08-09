@@ -42,7 +42,7 @@ class DragSource;
 class DragSourceClient;
 class GLContextDependent;
 class MessagePump;
-class ScreenClient;
+class Screen;
 
 // An abstract interface allowing toolkit-independent code to integrate with
 // toolkit-specific features
@@ -78,9 +78,9 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
   // Called on the UI thread
   virtual intptr_t GetNativeDisplay() = 0;
 
-  // Get the ScreenClient implementation. Can be called on any thread
+  // Get the Screen implementation. Can be called on any thread
   // FIXME(chrisccoulson): Make this UI thread only
-  virtual ScreenClient* GetScreenClient() = 0;
+  virtual Screen* GetScreen() = 0;
 
   // Return the shared GL context provided by the application, if one exists.
   // This will be used for sharing resources between the webview and UI
