@@ -167,7 +167,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
       &DummyOnPreviewTextureNeedsUpdateCallback;
   listener_->on_preview_frame_cb = &OnPreviewFrameCallback;
 
-  int32_t camera_id = GetCameraIdfromDeviceId(device_name_.id());
+  int32_t camera_id = GetCameraIdfromDeviceId(device_descriptor_.device_id);
 
   if (android_camera_get_device_info(camera_id,
                                      reinterpret_cast<int*>(&position_),
@@ -240,8 +240,9 @@ void VideoCaptureDeviceHybris::StopAndDeAllocate() {
   }
 }
 
-VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(const Name& device_name)
-    : device_name_(device_name),
+VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(
+    const media::VideoCaptureDeviceDescriptor& device_descriptor)
+    : device_descriptor_(device_descriptor),
       position_(BACK_FACING_CAMERA_TYPE),
       orientation_(0),
       camera_control_(nullptr) {

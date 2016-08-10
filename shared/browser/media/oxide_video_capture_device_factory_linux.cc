@@ -57,13 +57,14 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
   return "";
 }
 
-std::unique_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
+std::unique_ptr<media::VideoCaptureDeviceDescriptors>
+GetDeviceDescriptorsFromHybris() {
   DCHECK(HybrisUtils::GetInstance()->IsCameraCompatAvailable());
 
   int32_t number_of_devices = android_camera_get_number_of_devices();
 
-  std::unique_ptr<media::VideoCaptureDevice::Names> names(
-      new media::VideoCaptureDevice::Names());
+  std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors(
+      new media::VideoCaptureDeviceDescriptors());
 
   for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
     CameraType type;
@@ -81,26 +82,25 @@ std::unique_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
                            VideoCaptureDeviceHybris::GetDeviceIdPrefix(),
                            camera_id);
 
-    names->push_back(
-        media::VideoCaptureDevice::Name(
+    descriptors->push_back(
+        media::VideoCaptureDeviceDescriptor(
           // XXX: We should append an integer to this when there are multiple
           // cameras facing the same direction
           GetDeviceNameFromCameraType(type),
-          device_id,
-          media::VideoCaptureDevice::Name::API_TYPE_UNKNOWN));
+          device_id));
   }
 
-  return names;
+  return descriptors;
 }
 
-bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
-                    media::VideoCaptureDevice::Names* names) {
+bool IsDeviceDescriptorIn(const media::VideoCaptureDeviceDescriptor& descriptor,
+                          media::VideoCaptureDeviceDescriptors* descriptors) {
   return std::find_if(
-      names->begin(),
-      names->end(),
-      [name](const media::VideoCaptureDevice::Name& i) {
-        return name.id() == i.id();
-      }) != names->end();
+      descriptors->begin(),
+      descriptors->end(),
+      [descriptor](const media::VideoCaptureDeviceDescriptor& i) {
+        return descriptor.device_id == i.device_id;
+      }) != descriptors->end();
 }
 
 #endif
@@ -108,45 +108,45 @@ bool IsDeviceNameIn(const media::VideoCaptureDevice::Name& name,
 }
 
 std::unique_ptr<media::VideoCaptureDevice>
-VideoCaptureDeviceFactoryLinux::Create(
-    const media::VideoCaptureDevice::Name& device_name) {
+VideoCaptureDeviceFactoryLinux::CreateDevice(
+    const media::VideoCaptureDeviceDescriptor& device_descriptor) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (!HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
-    return platform_factory_->Create(device_name);
+    return platform_factory_->CreateDevice(device_descriptor);
   }
 
-  std::unique_ptr<media::VideoCaptureDevice::Names> names =
-      GetDeviceNamesFromHybris();
-  if (!names) {
+  std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors =
+      GetDeviceDescriptorsFromHybris();
+  if (!descriptors) {
     return nullptr;
   }
 
-  if (!IsDeviceNameIn(device_name, names.get())) {
+  if (!IsDeviceDescriptorIn(device_descriptor, descriptors.get())) {
     return nullptr;
   }
 
-  return base::WrapUnique(new VideoCaptureDeviceHybris(device_name));
+  return base::WrapUnique(new VideoCaptureDeviceHybris(device_descriptor));
 #else
-  return platform_factory_->Create(device_name);
+  return platform_factory_->CreateDevice(device_descriptor);
 #endif
 }
 
-void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
+void VideoCaptureDeviceFactoryLinux::EnumerateDeviceDescriptors(
     const EnumerateDevicesCallback& callback) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
-    std::unique_ptr<media::VideoCaptureDevice::Names> names =
-        GetDeviceNamesFromHybris();
-    callback.Run(std::move(names));
+    std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors =
+        GetDeviceDescriptorsFromHybris();
+    callback.Run(std::move(descriptors));
   } else
 #endif
   {
-    platform_factory_->EnumerateDeviceNames(callback);
+    platform_factory_->EnumerateDeviceDescriptors(callback);
   }
 }
 
-void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
-    const media::VideoCaptureDevice::Name& device,
+void VideoCaptureDeviceFactoryLinux::GetSupportedFormats(
+    const media::VideoCaptureDeviceDescriptor& device_descriptor,
     media::VideoCaptureFormats* supported_formats) {
 #if defined(ENABLE_HYBRIS_CAMERA)
   if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
@@ -154,11 +154,11 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
   }
 #endif
 
-  platform_factory_->GetDeviceSupportedFormats(device, supported_formats);
+  platform_factory_->GetSupportedFormats(device_descriptor, supported_formats);
 }
 
-void VideoCaptureDeviceFactoryLinux::GetDeviceNames(
-    media::VideoCaptureDevice::Names* device_names) {
+void VideoCaptureDeviceFactoryLinux::GetDeviceDescriptors(
+    media::VideoCaptureDeviceDescriptors* device_descriptors) {
   NOTREACHED();
 }
 
