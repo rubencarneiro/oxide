@@ -26,9 +26,12 @@
 
 QT_BEGIN_NAMESPACE
 class QRect;
+class QPlatformScreen;
 class QScreen;
+class QString;
 QT_END_NAMESPACE
 
+class MockPlatformNativeInterface;
 class MockScreen;
 
 class MockPlatformIntegration : public QPlatformIntegration {
@@ -40,12 +43,9 @@ class MockPlatformIntegration : public QPlatformIntegration {
 
   QList<MockScreen*> screens() const { return screens_; }
 
-  void setScreenGeometry(QScreen* screen,
-                         const QRect& geometry,
-                         const QRect& work_area_in_screen);
-  void setScreenOrientation(QScreen* screen,
-                            Qt::ScreenOrientation orientation);
   void resetScreens();
+  void screenPropertyChanged(QPlatformScreen* screen,
+                             const QString& property_name);
 
  private:
   void freeScreens();
@@ -56,8 +56,11 @@ class MockPlatformIntegration : public QPlatformIntegration {
   QPlatformBackingStore* createPlatformBackingStore(
       QWindow* window) const override;
   QAbstractEventDispatcher* createEventDispatcher() const override;
+  QPlatformNativeInterface* nativeInterface() const override;
 
   QList<MockScreen*> screens_;
+
+  QScopedPointer<MockPlatformNativeInterface> native_interface_;
 
   ShimApi shim_;
 };

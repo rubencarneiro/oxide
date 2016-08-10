@@ -31,6 +31,7 @@ set(PLUGIN mock_qpa)
 set(PLUGIN_SRCS
     backingstore.cc
     integration.cc
+    platformnativeinterface.cc
     plugin.cc
     screen.cc
     shimapi.cc)

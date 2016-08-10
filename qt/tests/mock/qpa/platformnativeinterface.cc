@@ -15,32 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
-#define _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+#include "platformnativeinterface.h"
 
-#include <QObject>
-#include <Qt>
+#include <QByteArray>
+#include <QScreen>
 
-QT_BEGIN_NAMESPACE
-class QRect;
-class QScreen;
-QT_END_NAMESPACE
+#include "screen.h"
 
-class ShimApi : public QObject {
-  Q_OBJECT
+void* MockPlatformNativeInterface::nativeResourceForScreen(
+    const QByteArray& resource,
+    QScreen* screen) {
+  if (resource != "formfactor") {
+    return nullptr;
+  }
 
- public:
-  Q_INVOKABLE void resetScreens();
-
-  Q_INVOKABLE void setScreenGeometry(QScreen* screen,
-                                     const QRect& geometry,
-                                     const QRect& work_area_in_screen);
-
-  Q_INVOKABLE void setScreenOrientation(QScreen* screen,
-                                        Qt::ScreenOrientation orientation);
-
-  Q_INVOKABLE void setScreenFormFactor(QScreen* screen,
-                                       int form_factor);
-};
-
-#endif // _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+  return static_cast<MockScreen*>(screen->handle())->form_factor();
+}

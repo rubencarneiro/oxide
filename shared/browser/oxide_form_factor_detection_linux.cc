@@ -24,14 +24,14 @@
 #include "shared/common/oxide_form_factor.h"
 
 #if defined(ENABLE_HYBRIS)
-#include "oxide_hybris_utils.h"
+#include "hybris_utils.h"
 #endif
 
 namespace oxide {
 
 FormFactor DetectFormFactorHintImpl(const gfx::Size& primary_screen_size) {
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::HasDeviceProperties()) {
+  if (HybrisUtils::GetInstance()->HasDeviceProperties()) {
     // Ubuntu on phones and tablets currently uses an Android kernel and EGL
     // stack. If we detect these, assume we are a phone or tablet. The screen
     // size check here is basically the same as Chrome for Android, where

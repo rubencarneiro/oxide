@@ -28,6 +28,7 @@
 #endif
 
 #include "backingstore.h"
+#include "platformnativeinterface.h"
 #include "screen.h"
 
 namespace {
@@ -52,19 +53,19 @@ void MockPlatformIntegration::initializeScreens() {
 
   MockScreen* screen =
       new MockScreen(0, QRect(0, 0, 1080, 1920), QRect(0, 50, 1080, 1870), 32,
-                     QImage::Format_ARGB32_Premultiplied, 2.f);
+                     QImage::Format_ARGB32_Premultiplied, 2.f, 1);
   screens_.push_back(screen);
   screenAdded(screen);
 
   screen =
       new MockScreen(1, QRect(1080, 0, 1920, 1080), QRect(0, 25, 1920, 1055),
-                     32, QImage::Format_ARGB32_Premultiplied, 1.f);
+                     32, QImage::Format_ARGB32_Premultiplied, 1.f, 3);
   screens_.push_back(screen);
   screenAdded(screen);
 
   screen =
       new MockScreen(2, QRect(3000, 0, 3840, 2160), QRect(0, 50, 3840, 2110),
-                     32, QImage::Format_ARGB32_Premultiplied, 2.f);
+                     32, QImage::Format_ARGB32_Premultiplied, 2.f, 4);
   screens_.push_back(screen);
   screenAdded(screen);
 }
@@ -88,7 +89,12 @@ MockPlatformIntegration::createEventDispatcher() const {
 #endif
 }
 
-MockPlatformIntegration::MockPlatformIntegration() {
+QPlatformNativeInterface* MockPlatformIntegration::nativeInterface() const {
+  return native_interface_.data();
+}
+
+MockPlatformIntegration::MockPlatformIntegration()
+    : native_interface_(new MockPlatformNativeInterface()) {
   Q_ASSERT(!g_instance);
   g_instance = this;
 
@@ -110,21 +116,13 @@ MockPlatformIntegration* MockPlatformIntegration::instance() {
   return g_instance;
 }
 
-void MockPlatformIntegration::setScreenGeometry(
-    QScreen* screen,
-    const QRect& geometry,
-    const QRect& work_area_in_screen) {
-  static_cast<MockScreen*>(screen->handle())->setGeometry(geometry,
-                                                          work_area_in_screen);
-}
-
-void MockPlatformIntegration::setScreenOrientation(
-    QScreen* screen,
-    Qt::ScreenOrientation orientation) {
-  static_cast<MockScreen*>(screen->handle())->setOrientation(orientation);
-}
-
 void MockPlatformIntegration::resetScreens() {
   freeScreens();
   initializeScreens();
+}
+
+void MockPlatformIntegration::screenPropertyChanged(
+    QPlatformScreen* screen,
+    const QString& property_name) {
+  Q_EMIT native_interface_->screenPropertyChanged(screen, property_name);
 }

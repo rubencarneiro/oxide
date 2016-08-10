@@ -17,7 +17,10 @@
 
 #include "shimapi.h"
 
+#include <QScreen>
+
 #include "integration.h"
+#include "screen.h"
 
 void ShimApi::resetScreens() {
   MockPlatformIntegration::instance()->resetScreens();
@@ -26,12 +29,17 @@ void ShimApi::resetScreens() {
 void ShimApi::setScreenGeometry(QScreen* screen,
                                 const QRect& geometry,
                                 const QRect& work_area_in_screen) {
-  MockPlatformIntegration::instance()->setScreenGeometry(
-      screen, geometry, work_area_in_screen);
+  static_cast<MockScreen*>(screen->handle())->setGeometry(geometry,
+                                                          work_area_in_screen);
 }
 
 void ShimApi::setScreenOrientation(QScreen* screen,
                                    Qt::ScreenOrientation orientation) {
-  MockPlatformIntegration::instance()->setScreenOrientation(screen,
-                                                            orientation);
+  static_cast<MockScreen*>(screen->handle())->setOrientation(orientation);
+}
+
+void ShimApi::setScreenFormFactor(QScreen* screen, int form_factor) {
+  static_cast<MockScreen*>(screen->handle())->setFormFactor(form_factor);
+  MockPlatformIntegration::instance()->screenPropertyChanged(
+      screen->handle(), "formfactor");
 }

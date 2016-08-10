@@ -63,7 +63,7 @@
 #include "ui/gl/egl_util.h"
 #include "ui/gl/gl_bindings.h"
 
-#include "oxide_hybris_utils.h"
+#include "hybris_utils.h"
 #endif
 
 namespace oxide {
@@ -314,7 +314,8 @@ gpu::CollectInfoResult CollectBasicGraphicsInfoAndroid(
     gpu::GPUInfo* gpu_info) {
   gpu_info->can_lose_context = false;
 
-  gpu_info->machine_model_name = HybrisUtils::GetDeviceProperties().model;
+  gpu_info->machine_model_name =
+      HybrisUtils::GetInstance()->GetDeviceProperties().model;
 
   // Create a short-lived context on the UI thread to collect the GL strings.
   gpu::CollectInfoResult result = CollectDriverInfo(gpu_info);
@@ -604,7 +605,7 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(
   *device_id = 0;
 
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::IsUsingAndroidEGL()) {
+  if (HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     return gpu::kCollectInfoNonFatalFailure;
   }
 #endif
@@ -622,7 +623,7 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectGpuID(
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectContextGraphicsInfo(
     gpu::GPUInfo* gpu_info) {
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::IsUsingAndroidEGL()) {
+  if (HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     return CollectContextGraphicsInfoAndroid(gpu_info);
   }
 #endif
@@ -633,7 +634,7 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectContextGraphicsInfo(
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectBasicGraphicsInfo(
     gpu::GPUInfo* gpu_info) {
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::IsUsingAndroidEGL()) {
+  if (HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     return CollectBasicGraphicsInfoAndroid(gpu_info);
   }
 #endif
@@ -644,7 +645,7 @@ gpu::CollectInfoResult GpuInfoCollectorLinux::CollectBasicGraphicsInfo(
 gpu::CollectInfoResult GpuInfoCollectorLinux::CollectDriverInfoGL(
     gpu::GPUInfo* gpu_info) {
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::IsUsingAndroidEGL()) {
+  if (HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     return CollectDriverInfoGLAndroid(gpu_info);
   }
 #endif

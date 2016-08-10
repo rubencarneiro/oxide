@@ -15,32 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
-#define _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+#ifndef _OXIDE_SHARED_BROWSER_DISPLAY_FORM_FACTOR_H_
+#define _OXIDE_SHARED_BROWSER_DISPLAY_FORM_FACTOR_H_
 
-#include <QObject>
-#include <Qt>
+namespace oxide {
 
-QT_BEGIN_NAMESPACE
-class QRect;
-class QScreen;
-QT_END_NAMESPACE
+enum class DisplayFormFactor {
+  Monitor,
 
-class ShimApi : public QObject {
-  Q_OBJECT
+  Mobile,
 
- public:
-  Q_INVOKABLE void resetScreens();
-
-  Q_INVOKABLE void setScreenGeometry(QScreen* screen,
-                                     const QRect& geometry,
-                                     const QRect& work_area_in_screen);
-
-  Q_INVOKABLE void setScreenOrientation(QScreen* screen,
-                                        Qt::ScreenOrientation orientation);
-
-  Q_INVOKABLE void setScreenFormFactor(QScreen* screen,
-                                       int form_factor);
+  Television
 };
 
-#endif // _OXIDE_QT_TESTS_MOCK_QPA_SHIMAPI_H_
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_DISPLAY_FORM_FACTOR_H_

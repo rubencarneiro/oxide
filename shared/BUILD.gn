@@ -36,6 +36,10 @@ config("shared_include_dirs") {
   ]
 }
 
+config("hybris_camera_defines") {
+  defines = [ "ENABLE_HYBRIS_CAMERA" ]
+}
+
 grit("shared_resources") {
   source = "oxide_resources.grd"
   outputs = [
@@ -263,6 +267,7 @@ component("shared") {
     "browser/compositor/oxide_compositor_utils.h",
     "browser/compositor/oxide_mailbox_buffer_map.cc",
     "browser/compositor/oxide_mailbox_buffer_map.h",
+    "browser/display_form_factor.h",
     "browser/input/oxide_ime_bridge.cc",
     "browser/input/oxide_ime_bridge.h",
     "browser/input/oxide_ime_bridge_impl.cc",
@@ -600,15 +605,17 @@ component("shared") {
     ]
 
     sources += [
-      "browser/oxide_hybris_utils.cc",
-      "browser/oxide_hybris_utils.h"
+      "browser/hybris_utils.cc",
+      "browser/hybris_utils.h"
     ]
 
     if (enable_hybris_camera) {
-      defines += [ "ENABLE_HYBRIS_CAMERA" ]
-
       configs += [
         "//oxide/build/config/linux:hybris_camera"
+      ]
+
+      public_configs += [
+        ":hybris_camera_defines"
       ]
 
       sources += [

@@ -34,7 +34,7 @@
 #include "base/memory/ptr_util.h"
 #include "base/strings/stringprintf.h"
 
-#include "shared/browser/oxide_hybris_utils.h"
+#include "shared/browser/hybris_utils.h"
 
 #include "oxide_video_capture_device_hybris.h"
 #endif
@@ -58,7 +58,7 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
 }
 
 std::unique_ptr<media::VideoCaptureDevice::Names> GetDeviceNamesFromHybris() {
-  DCHECK(HybrisUtils::IsCameraCompatAvailable());
+  DCHECK(HybrisUtils::GetInstance()->IsCameraCompatAvailable());
 
   int32_t number_of_devices = android_camera_get_number_of_devices();
 
@@ -111,7 +111,7 @@ std::unique_ptr<media::VideoCaptureDevice>
 VideoCaptureDeviceFactoryLinux::Create(
     const media::VideoCaptureDevice::Name& device_name) {
 #if defined(ENABLE_HYBRIS_CAMERA)
-  if (!HybrisUtils::IsCameraCompatAvailable()) {
+  if (!HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
     return platform_factory_->Create(device_name);
   }
 
@@ -134,7 +134,7 @@ VideoCaptureDeviceFactoryLinux::Create(
 void VideoCaptureDeviceFactoryLinux::EnumerateDeviceNames(
     const EnumerateDevicesCallback& callback) {
 #if defined(ENABLE_HYBRIS_CAMERA)
-  if (HybrisUtils::IsCameraCompatAvailable()) {
+  if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
     std::unique_ptr<media::VideoCaptureDevice::Names> names =
         GetDeviceNamesFromHybris();
     callback.Run(std::move(names));
@@ -149,7 +149,7 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceSupportedFormats(
     const media::VideoCaptureDevice::Name& device,
     media::VideoCaptureFormats* supported_formats) {
 #if defined(ENABLE_HYBRIS_CAMERA)
-  if (HybrisUtils::IsCameraCompatAvailable()) {
+  if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
     return;
   }
 #endif

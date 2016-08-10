@@ -22,9 +22,12 @@
 
 #include "base/macros.h"
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace oxide {
 
-class HybrisUtils {
+// Threadsafe class for retreiving device information on devices with libhybris
+class OXIDE_SHARED_EXPORT HybrisUtils {
  public:
 
   struct DeviceProperties {
@@ -36,18 +39,28 @@ class HybrisUtils {
     std::string os_version; // Parsed version of ro.build.version.release
   };
 
-  static bool HasDeviceProperties();
+  virtual ~HybrisUtils();
+  static HybrisUtils* GetInstance();
 
-  static const DeviceProperties& GetDeviceProperties();
+  virtual bool HasDeviceProperties() = 0;
 
-  static bool IsUsingAndroidEGL();
+  virtual const DeviceProperties& GetDeviceProperties() = 0;
+
+  virtual bool IsUsingAndroidEGL() = 0;
 
 #if defined(ENABLE_HYBRIS_CAMERA)
-  static bool IsCameraCompatAvailable();
+  virtual bool IsCameraCompatAvailable() = 0;
 #endif
 
+  // Provide a fake HybrisUtils for testing. Note that this is *NOT*
+  // threadsafe
+  static void OverrideForTesting(HybrisUtils* fake);
+
+ protected:
+  HybrisUtils();
+
  private:
-  DISALLOW_IMPLICIT_CONSTRUCTORS(HybrisUtils);
+  DISALLOW_COPY_AND_ASSIGN(HybrisUtils);
 };
 
 } // namespace oxide

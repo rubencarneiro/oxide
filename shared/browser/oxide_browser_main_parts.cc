@@ -53,7 +53,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_geolocation_delegate.h"
 #include "oxide_gpu_info_collector_linux.h"
-#include "oxide_hybris_utils.h"
 #include "oxide_io_thread.h"
 #include "oxide_lifecycle_observer.h"
 #include "oxide_message_pump.h"
@@ -67,6 +66,10 @@
 #include "gpu/config/gpu_info_collector_oxide_linux.h"
 
 #include "shared/browser/media/oxide_video_capture_device_factory_linux.h"
+#endif
+
+#if defined(ENABLE_HYBRIS)
+#include "hybris_utils.h"
 #endif
 
 #if defined(ENABLE_HYBRIS_CAMERA)
@@ -96,7 +99,7 @@ std::unique_ptr<base::MessagePump> CreateUIMessagePump() {
 
 bool CanUseSharedGLContext() {
 #if defined(ENABLE_HYBRIS)
-  if (!HybrisUtils::IsUsingAndroidEGL()) {
+  if (!HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     return true;
   }
 

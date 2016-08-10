@@ -31,11 +31,11 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/media_stream_request.h"
 
+#if defined(ENABLE_HYBRIS_CAMERA)
+#include "shared/browser/hybris_utils.h"
+#endif
 #include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_process_main.h"
-#if defined(ENABLE_HYBRIS_CAMERA)
-#include "shared/browser/oxide_hybris_utils.h"
-#endif
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
@@ -210,7 +210,7 @@ PermissionRequestCallback WrapMediaResponseCallback(
 
 void UpdateMediaStreamDeviceFacing(content::MediaStreamDevices& devices) {
 #ifdef ENABLE_HYBRIS_CAMERA
-  if (!HybrisUtils::IsCameraCompatAvailable()) {
+  if (!HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
     return;
   }
 

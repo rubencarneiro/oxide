@@ -28,14 +28,19 @@
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/rect.h"
 
+#include "shared/browser/display_form_factor.h"
+
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_type_conversions.h"
+
+using oxide::DisplayFormFactor;
 
 namespace oxide {
 namespace qt {
 
 namespace {
+bool g_enable_qtubuntu_integration_for_testing = false;
 int64_t g_next_id = 0;
 }
 
@@ -110,9 +115,22 @@ void Screen::OnPrimaryScreenChanged(QScreen* screen) {
 
 void Screen::OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
                                              const QString& property_name) {
-  if (property_name == QStringLiteral("scale")) {
+  if (property_name == QStringLiteral("scale") ||
+      property_name == QStringLiteral("formfactor")) {
     UpdateDisplayForScreen(screen->screen(), true);
   }
+}
+
+QScreen* Screen::QScreenFromDisplay(const display::Display& display) const {
+  auto it =
+      std::find_if(
+          displays_.begin(), displays_.end(),
+          [&display](std::map<QScreen*, display::Display>::value_type v) {
+        return display.id() == v.second.id();
+      });
+  DCHECK(it != displays_.end());
+
+  return it->first;
 }
 
 void Screen::UpdateDisplayForScreen(QScreen* screen,
@@ -168,7 +186,8 @@ Screen::Screen()
           SLOT(OnPrimaryScreenChanged(QScreen*)));
 
   QString platform = QGuiApplication::platformName();
-  if (platform.startsWith("ubuntu") || platform == "mirserver") {
+  if (platform.startsWith("ubuntu") || platform == "mirserver" ||
+      g_enable_qtubuntu_integration_for_testing) {
     connect(QGuiApplication::platformNativeInterface(),
             SIGNAL(screenPropertyChanged(QPlatformScreen*, const QString&)),
             SLOT(OnPlatformScreenPropertyChanged(QPlatformScreen*,
@@ -188,13 +207,13 @@ Screen* Screen::GetInstance() {
   return static_cast<Screen*>(oxide::Screen::GetInstance());
 }
 
-display::Display Screen::DisplayFromQScreen(QScreen* screen) {
+display::Display Screen::DisplayFromQScreen(QScreen* screen) const {
   if (!screen) {
     return display::Display();
   }
 
   DCHECK(displays_.find(screen) != displays_.end());
-  return displays_[screen];
+  return displays_.at(screen);
 }
 
 display::Display Screen::GetPrimaryDisplay() {
@@ -221,6 +240,44 @@ std::vector<display::Display> Screen::GetAllDisplays() {
 gfx::Point Screen::GetCursorScreenPoint() {
   QPoint point = QCursor::pos();
   return gfx::Point(point.x(), point.y());
+}
+
+DisplayFormFactor Screen::GetDisplayFormFactor(
+    const display::Display& display) {
+  QString platform = QGuiApplication::platformName();
+  if (!platform.startsWith("ubuntu") && platform != "mirserver" &&
+      !g_enable_qtubuntu_integration_for_testing) {
+    return oxide::Screen::GetDisplayFormFactor(display);
+  }
+
+  QScreen* q_screen = QScreenFromDisplay(display);
+
+  QPlatformNativeInterface* interface =
+      QGuiApplication::platformNativeInterface();
+  void* data =
+      interface->nativeResourceForScreen(QByteArray("formfactor"), q_screen);
+  if (!data) {
+    return oxide::Screen::GetDisplayFormFactor(display);
+  }
+
+  switch (*reinterpret_cast<int*>(data)) {
+    case 1: // mir_form_factor_phone
+    case 2: // mir_form_factor_tablet
+      return DisplayFormFactor::Mobile;
+    case 3: // mir_form_factor_monitor
+      return DisplayFormFactor::Monitor;
+    case 4: // mir_form_factor_tv
+      return DisplayFormFactor::Television;
+    case 0: // mir_form_factor_unknown
+    case 5: // mir_form_factor_projector
+    default:
+      return oxide::Screen::GetDisplayFormFactor(display);
+  }
+}
+
+// static
+void Screen::SetEnableQtUbuntuIntegrationForTesting(bool enable) {
+  g_enable_qtubuntu_integration_for_testing = enable;
 }
 
 } // namespace qt

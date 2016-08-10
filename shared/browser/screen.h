@@ -29,6 +29,7 @@
 namespace oxide {
 
 class ScreenObserver;
+enum class DisplayFormFactor;
 enum class ShellMode;
 
 // A central place to track screen state - we have to provide access to the
@@ -45,6 +46,9 @@ class OXIDE_SHARED_EXPORT Screen {
   virtual std::vector<display::Display> GetAllDisplays() = 0;
 
   virtual gfx::Point GetCursorScreenPoint() = 0;
+
+  virtual DisplayFormFactor GetDisplayFormFactor(
+      const display::Display& display);
 
   static ShellMode GetShellMode();
 

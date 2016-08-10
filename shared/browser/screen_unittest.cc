@@ -24,12 +24,39 @@
 
 #include "shared/test/mock_screen_observer.h"
 
+#include "display_form_factor.h"
+#include "hybris_utils.h"
 #include "screen.h"
 #include "screen_observer.h"
+#include "shell_mode.h"
 
 namespace oxide {
 
-class MockScreen : public Screen {
+class FakeHybrisUtils : public HybrisUtils {
+ public:
+  FakeHybrisUtils(bool has_properties)
+      : has_properties_(has_properties) {
+    OverrideForTesting(this);
+  }
+
+  ~FakeHybrisUtils() override { OverrideForTesting(nullptr); }
+
+ private:
+  // HybrisUtils implementation
+  bool HasDeviceProperties() override { return has_properties_; }
+  const DeviceProperties& GetDeviceProperties() override {
+    static DeviceProperties g_props;
+    return g_props;
+  }
+  bool IsUsingAndroidEGL() override { return false; }
+#if defined(ENABLE_HYBRIS_CAMERA)
+  bool IsCameraCompatAvailable() override { return false; }
+#endif
+
+  bool has_properties_;
+};
+
+class FakeScreen : public Screen {
  public:
   void TestPrimaryDisplayChanged() { NotifyPrimaryDisplayChanged(); }
   void TestDisplayAdded(const display::Display& display) {
@@ -47,7 +74,7 @@ class MockScreen : public Screen {
 
  private:
   // Screen implementation
-  display::Display GetPrimaryDisplay() override { return display::Display(); }
+  display::Display GetPrimaryDisplay() override { return display::Display(1); }
   std::vector<display::Display> GetAllDisplays() override {
     return std::vector<display::Display>();
   }
@@ -59,16 +86,16 @@ class ScreenTest : public testing::Test {
   ScreenTest();
 
  protected:
-  MockScreen* screen() const { return screen_.get(); }
+  FakeScreen* screen() const { return screen_.get(); }
 
   void ResetScreen() { screen_.reset(); }
 
  private:
-  std::unique_ptr<MockScreen> screen_;
+  std::unique_ptr<FakeScreen> screen_;
 };
 
 ScreenTest::ScreenTest()
-    : screen_(new MockScreen()) {}
+    : screen_(new FakeScreen()) {}
 
 TEST_F(ScreenTest, PrimaryDisplayChanged) {
   MockScreenObserver obs1;
@@ -158,6 +185,38 @@ TEST_F(ScreenTest, ScreenDeleted) {
   ResetScreen();
   EXPECT_EQ(nullptr, Screen::GetInstance());
   // Shouldn't crash
+}
+
+TEST_F(ScreenTest, GetShellMode) {
+  {
+    FakeHybrisUtils hybris_utils(false);
+    EXPECT_EQ(ShellMode::Windowed, Screen::GetShellMode());
+  }
+
+  {
+    FakeHybrisUtils hybris_utils(true);
+    EXPECT_EQ(ShellMode::NonWindowed, Screen::GetShellMode());
+  }
+}
+
+TEST_F(ScreenTest, GetDisplayFormFactor) {
+  {
+    FakeHybrisUtils hybris_utils(false);
+    EXPECT_EQ(DisplayFormFactor::Monitor,
+              Screen::GetInstance()->GetDisplayFormFactor(
+                  Screen::GetInstance()->GetPrimaryDisplay()));
+    EXPECT_EQ(DisplayFormFactor::Monitor,
+              Screen::GetInstance()->GetDisplayFormFactor(display::Display(2)));
+  }
+
+  {
+    FakeHybrisUtils hybris_utils(true);
+    EXPECT_EQ(DisplayFormFactor::Mobile,
+              Screen::GetInstance()->GetDisplayFormFactor(
+                  Screen::GetInstance()->GetPrimaryDisplay()));
+    EXPECT_EQ(DisplayFormFactor::Monitor,
+              Screen::GetInstance()->GetDisplayFormFactor(display::Display(2)));
+  }
 }
 
 } // namespace oxide

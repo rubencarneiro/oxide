@@ -46,12 +46,16 @@ class OXIDE_QT_EXPORT Screen : public QObject,
 
   static Screen* GetInstance();
 
-  display::Display DisplayFromQScreen(QScreen* screen);
+  display::Display DisplayFromQScreen(QScreen* screen) const;
 
   // oxide::Screen implementation
   display::Display GetPrimaryDisplay() override;
   std::vector<display::Display> GetAllDisplays() override;
   gfx::Point GetCursorScreenPoint() override;
+  oxide::DisplayFormFactor GetDisplayFormFactor(
+      const display::Display& display) override;
+
+  static void SetEnableQtUbuntuIntegrationForTesting(bool enable);
 
  private Q_SLOTS:
   void OnScreenAdded(QScreen* screen);
@@ -61,6 +65,7 @@ class OXIDE_QT_EXPORT Screen : public QObject,
                                        const QString& property_name);
 
  private:
+  QScreen* QScreenFromDisplay(const display::Display& display) const;
   void UpdateDisplayForScreen(QScreen* screen, bool notify);
 
   std::map<QScreen*, display::Display> displays_;
