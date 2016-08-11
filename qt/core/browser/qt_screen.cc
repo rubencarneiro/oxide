@@ -64,10 +64,17 @@ void Screen::OnScreenAdded(QScreen* screen) {
                                    Qt::PortraitOrientation |
                                    Qt::InvertedLandscapeOrientation |
                                    Qt::InvertedPortraitOrientation);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   connect(screen, &QScreen::availableGeometryChanged,
           this, [=] (const QRect&) {
     UpdateDisplayForScreen(screen, true);
   });
+#else
+  connect(screen, &QScreen::virtualGeometryChanged,
+          this, [=] (const QRect&) {
+    UpdateDisplayForScreen(screen, true);
+  });
+#endif
   connect(screen, &QScreen::geometryChanged,
           this, [=] (const QRect&) {
     UpdateDisplayForScreen(screen, true);

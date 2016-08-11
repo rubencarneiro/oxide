@@ -31,7 +31,11 @@
 
 QRect MockScreen::geometry() const {
   QRect geometry = geometry_;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
   int rotation = angleBetween(nativeOrientation(), orientation_);
+#else
+  int rotation = screen()->angleBetween(nativeOrientation(), orientation_);
+#endif
   if (rotation == 90 || rotation == 270) {
     geometry = QRect(geometry.topLeft(), geometry.size().transposed());
   }
