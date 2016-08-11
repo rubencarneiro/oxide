@@ -239,8 +239,10 @@ Screen::Screen() {
 #endif
 
   QString platform = QGuiApplication::platformName();
-  if (platform.startsWith("ubuntu") || platform == "mirserver" ||
-      g_enable_qtubuntu_integration_for_testing) {
+  if ((platform.startsWith("ubuntu") || platform == "mirserver" ||
+       g_enable_qtubuntu_integration_for_testing) &&
+      QGuiApplication::platformNativeInterface()->metaObject()->indexOfSignal(
+          "screenPropertyChanged(QPlatformScreen*,QString)") != -1) {
     connect(QGuiApplication::platformNativeInterface(),
             SIGNAL(screenPropertyChanged(QPlatformScreen*, const QString&)),
             SLOT(OnPlatformScreenPropertyChanged(QPlatformScreen*,
