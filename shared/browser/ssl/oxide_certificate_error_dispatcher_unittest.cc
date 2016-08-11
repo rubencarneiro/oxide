@@ -69,10 +69,15 @@ class CertificateErrorDispatcherTest : public testing::Test {
 
   CertificateError* last_error() const { return last_error_.get(); }
 
-  int response_count() const { return response_count_; }
-  bool last_response() const { return last_response_; }
+  void ClearLastError();
 
-  base::Callback<void(bool)> CreateResponseCallback();
+  int response_count() const { return response_count_; }
+  content::CertificateRequestResultType last_response() const {
+    return last_response_;
+  }
+
+  base::Callback<void(content::CertificateRequestResultType)>
+  CreateResponseCallback();
 
   void AttachCertificateErrorCallback(content::WebContents* contents,
                                       bool save = true);
@@ -83,7 +88,7 @@ class CertificateErrorDispatcherTest : public testing::Test {
 
   void OnCertificateError(bool save,
                           std::unique_ptr<CertificateError> error);
-  void OnResponse(bool response);
+  void OnResponse(content::CertificateRequestResultType response);
 
   TestBrowserThreadBundle browser_thread_bundle_;
   content::TestBrowserContext browser_context_;
@@ -94,14 +99,18 @@ class CertificateErrorDispatcherTest : public testing::Test {
   std::unique_ptr<CertificateError> last_error_;
 
   int response_count_;
-  bool last_response_;
+  content::CertificateRequestResultType last_response_;
 };
 
 content::WebContents* CertificateErrorDispatcherTest::CreateWebContents() {
   return web_contents_factory_.CreateWebContents(&browser_context_);
 }
 
-base::Callback<void(bool)>
+void CertificateErrorDispatcherTest::ClearLastError() {
+  last_error_.reset();
+}
+
+base::Callback<void(content::CertificateRequestResultType)>
 CertificateErrorDispatcherTest::CreateResponseCallback() {
   return base::Bind(&CertificateErrorDispatcherTest::OnResponse,
                     base::Unretained(this));
@@ -133,7 +142,8 @@ void CertificateErrorDispatcherTest::OnCertificateError(
   last_error_ = std::move(error);
 }
 
-void CertificateErrorDispatcherTest::OnResponse(bool response) {
+void CertificateErrorDispatcherTest::OnResponse(
+    content::CertificateRequestResultType response) {
   ++response_count_;
   last_response_ = response;
 }
@@ -141,7 +151,7 @@ void CertificateErrorDispatcherTest::OnResponse(bool response) {
 CertificateErrorDispatcherTest::CertificateErrorDispatcherTest()
     : web_contents_(nullptr),
       response_count_(0),
-      last_response_(false) {}
+      last_response_(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY) {}
 
 CertificateErrorDispatcherTest::~CertificateErrorDispatcherTest() {
   web_contents_ = nullptr;
@@ -153,8 +163,6 @@ TEST_F(CertificateErrorDispatcherTest, NoDispatcher) {
   content::WebContents* contents = CreateWebContents();
   ASSERT_EQ(CertificateErrorDispatcher::FromWebContents(contents), nullptr);
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -166,18 +174,15 @@ TEST_F(CertificateErrorDispatcherTest, NoDispatcher) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
-  EXPECT_EQ(0, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, last_response());
+  EXPECT_EQ(1, response_count());
 }
 
 // Test that we deny an error if there is no client callback registered with
 // the WebContents
 TEST_F(CertificateErrorDispatcherTest, NullCallback) {
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -189,11 +194,10 @@ TEST_F(CertificateErrorDispatcherTest, NullCallback) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
-  EXPECT_EQ(0, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, last_response());
+  EXPECT_EQ(1, response_count());
 }
 
 // Test that the dispatcher creates a CertificateError with is_main_frame set
@@ -201,8 +205,6 @@ TEST_F(CertificateErrorDispatcherTest, NullCallback) {
 TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
   AttachCertificateErrorCallback(web_contents());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -214,10 +216,9 @@ TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(0, response_count());
   ASSERT_NE(nullptr, last_error());
   EXPECT_TRUE(last_error()->is_main_frame());
   EXPECT_FALSE(last_error()->is_subresource());
@@ -228,6 +229,10 @@ TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
   EXPECT_FALSE(last_error()->strict_enforcement());
   EXPECT_FALSE(last_error()->IsCancelled());
 
+  ClearLastError();
+  EXPECT_EQ(1, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, last_response());
+
   CertificateErrorDispatcher::AllowCertificateError(
       web_contents(),
       false, // is_main_frame
@@ -237,10 +242,10 @@ TEST_F(CertificateErrorDispatcherTest, is_main_frame) {
       content::RESOURCE_TYPE_SUB_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
+  EXPECT_EQ(2, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, last_response());
   EXPECT_FALSE(last_error()->is_main_frame());
   EXPECT_FALSE(last_error()->is_subresource());
   EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
@@ -404,8 +409,6 @@ TEST_P(CertificateErrorDispatcherCertErrorConversionTest, ToCertError) {
 
   const CertErrorRow& row = GetParam();
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate(row.expired_cert);
   CertificateErrorDispatcher::AllowCertificateError(
@@ -417,10 +420,9 @@ TEST_P(CertificateErrorDispatcherCertErrorConversionTest, ToCertError) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(0, response_count());
   ASSERT_NE(nullptr, last_error());
   EXPECT_TRUE(last_error()->is_main_frame());
   EXPECT_FALSE(last_error()->is_subresource());
@@ -499,8 +501,6 @@ TEST_P(CertificateErrorDispatcherResourceTypeTest, TestResourceType) {
 
   const ResourceTypeRow& row = GetParam();
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   bool is_main_frame =
@@ -514,10 +514,12 @@ TEST_P(CertificateErrorDispatcherResourceTypeTest, TestResourceType) {
       row.resource_type,
       row.overridable_in,
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(row.result, result);
+  EXPECT_EQ(row.overridable_out ? 0 : 1, response_count());
+  if (!row.overridable_out) {
+    EXPECT_EQ(row.result, last_response());
+  }
   ASSERT_NE(nullptr, last_error());
   EXPECT_EQ(is_main_frame, last_error()->is_main_frame());
   EXPECT_EQ(row.is_subresource, last_error()->is_subresource());
@@ -534,8 +536,6 @@ TEST_P(CertificateErrorDispatcherResourceTypeTest, TestResourceType) {
 TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
   AttachCertificateErrorCallback(web_contents());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -547,10 +547,9 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(0, response_count());
   ASSERT_NE(nullptr, last_error());
   EXPECT_TRUE(last_error()->is_main_frame());
   EXPECT_FALSE(last_error()->is_subresource());
@@ -560,7 +559,11 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
   EXPECT_TRUE(last_error()->overridable());
   EXPECT_FALSE(last_error()->strict_enforcement());
   EXPECT_FALSE(last_error()->IsCancelled());
-  
+
+  ClearLastError();
+  EXPECT_EQ(1, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, last_response());
+
   CertificateErrorDispatcher::AllowCertificateError(
       web_contents(),
       true, // is_main_frame
@@ -570,10 +573,10 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       false, // overridable
       true, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, result);
+  EXPECT_EQ(2, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, last_response());
   EXPECT_TRUE(last_error()->is_main_frame());
   EXPECT_FALSE(last_error()->is_subresource());
   EXPECT_EQ(CERT_ERROR_BAD_IDENTITY, last_error()->cert_error());
@@ -589,8 +592,6 @@ TEST_F(CertificateErrorDispatcherTest, strict_enforcement) {
 TEST_F(CertificateErrorDispatcherTest, Response) {
   AttachCertificateErrorCallback(web_contents());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -602,16 +603,15 @@ TEST_F(CertificateErrorDispatcherTest, Response) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(0, response_count());
   ASSERT_NE(nullptr, last_error());
 
   last_error()->Allow();
 
   EXPECT_EQ(1, response_count());
-  EXPECT_TRUE(last_response());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, last_response());
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(content::InvalidateTypes)
@@ -652,8 +652,6 @@ TEST_F(CertificateErrorDispatcherTest, PlaceholderPage) {
       base::WrapUnique(new TestWebContentsDelegate());
   web_contents()->SetDelegate(delegate.get());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -665,10 +663,9 @@ TEST_F(CertificateErrorDispatcherTest, PlaceholderPage) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
+  EXPECT_EQ(0, response_count());
   EXPECT_NE(nullptr, last_error());
   EXPECT_EQ(content::INVALIDATE_TYPE_ALL, delegate->changed_flags());
   EXPECT_EQ(GURL("https://www.foo.com/"), web_contents()->GetVisibleURL());
@@ -686,8 +683,6 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderPageForNonMainFrame) {
       base::WrapUnique(new TestWebContentsDelegate());
   web_contents()->SetDelegate(delegate.get());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -699,10 +694,10 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderPageForNonMainFrame) {
       content::RESOURCE_TYPE_SCRIPT,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, result);
+  EXPECT_EQ(1, response_count());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY, last_response());
   EXPECT_NE(nullptr, last_error());
   EXPECT_EQ(static_cast<content::InvalidateTypes>(0),
             delegate->changed_flags());
@@ -721,8 +716,6 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderForSyncResponse) {
       base::WrapUnique(new TestWebContentsDelegate());
   web_contents()->SetDelegate(delegate.get());
 
-  content::CertificateRequestResultType result =
-      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE;
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
@@ -734,12 +727,10 @@ TEST_F(CertificateErrorDispatcherTest, NoPlaceholderForSyncResponse) {
       content::RESOURCE_TYPE_MAIN_FRAME,
       true, // overridable
       false, // strict_enforcement
-      CreateResponseCallback(),
-      &result);
+      CreateResponseCallback());
 
-  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE, result);
   EXPECT_EQ(1, response_count());
-  EXPECT_FALSE(last_response());
+  EXPECT_EQ(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL, last_response());
   EXPECT_EQ(static_cast<content::InvalidateTypes>(0),
             delegate->changed_flags());
   EXPECT_NE(GURL("https://www.foo.com/"), web_contents()->GetVisibleURL());

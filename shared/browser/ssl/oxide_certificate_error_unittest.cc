@@ -71,7 +71,7 @@ class CertificateErrorTest : public testing::Test {
   scoped_refptr<net::X509Certificate> cert_;
 
   int responded_count_;
-  int last_response_;
+  bool last_response_;
 };
 
 void CertificateErrorTest::OnResponse(bool response) {

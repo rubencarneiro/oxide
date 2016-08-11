@@ -60,8 +60,7 @@ class OXIDE_SHARED_EXPORT CertificateErrorDispatcher
       content::ResourceType resource_type,
       bool overridable,
       bool strict_enforcement,
-      const base::Callback<void(bool)>& callback,
-      content::CertificateRequestResultType* result);
+      const base::Callback<void(content::CertificateRequestResultType)>& callback);
 
   using Callback = base::Callback<void(std::unique_ptr<CertificateError>)>;
 

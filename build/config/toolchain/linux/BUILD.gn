@@ -35,9 +35,12 @@ template("host_gcc_toolchain") {
 
     ld = cxx
 
-    toolchain_os = "linux"
-    toolchain_cpu = "${invoker.toolchain_cpu}"
-    is_clang = false
+    toolchain_args = {
+      forward_variables_from(invoker.toolchain_args, "*")
+
+      current_os = "linux"
+      is_clang = false
+    }
   }
 }
 
@@ -57,42 +60,61 @@ template("cross_gcc_toolchain") {
 
     ld = cxx
 
-    toolchain_os = "linux"
-    toolchain_cpu = "${invoker.toolchain_cpu}"
-    is_clang = false
+    toolchain_args = {
+      forward_variables_from(invoker.toolchain_args, "*")
+
+      current_os = "linux"
+      is_clang = false
+    }
   }
 }
 
 host_gcc_toolchain("host_gcc_x86") {
-  toolchain_cpu = "x86"
+  toolchain_args = {
+    current_cpu = "x86"
+  }
 }
 
 host_gcc_toolchain("host_gcc_x64") {
-  toolchain_cpu = "x64"
+  toolchain_args = {
+    current_cpu = "x64"
+  }
 }
 
 host_gcc_toolchain("host_gcc_arm") {
-  toolchain_cpu = "arm"
+  toolchain_args = {
+    current_cpu = "arm"
+  }
 }
 
 host_gcc_toolchain("host_gcc_arm64") {
-  toolchain_cpu = "arm64"
+  toolchain_args = {
+    current_cpu = "arm64"
+  }
 }
 
 if (oxide_enable_cross_toolchains) {
   cross_gcc_toolchain("cross_gcc_x86") {
-    toolchain_cpu = "x86"
+    toolchain_args = {
+      current_cpu = "x86"
+    }
   }
 
   cross_gcc_toolchain("cross_gcc_x64") {
-    toolchain_cpu = "x64"
+    toolchain_args = {
+      current_cpu = "x64"
+    }
   }
 
   cross_gcc_toolchain("cross_gcc_arm") {
-    toolchain_cpu = "arm"
+    toolchain_args = {
+      current_cpu = "arm"
+    }
   }
 
   cross_gcc_toolchain("cross_gcc_arm64") {
-    toolchain_cpu = "arm64"
+    toolchain_args = {
+      current_cpu = "arm64"
+    }
   }
 }

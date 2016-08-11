@@ -161,8 +161,7 @@ void ContentBrowserClient::AllowCertificateError(
     bool overridable,
     bool strict_enforcement,
     bool expired_previous_decision,
-    const base::Callback<void(bool)>& callback,
-    content::CertificateRequestResultType* result) {
+    const base::Callback<void(content::CertificateRequestResultType)>& callback) {
   CertificateErrorDispatcher::AllowCertificateError(contents,
                                                     is_main_frame,
                                                     cert_error,
@@ -171,8 +170,7 @@ void ContentBrowserClient::AllowCertificateError(
                                                     resource_type,
                                                     overridable,
                                                     strict_enforcement,
-                                                    callback,
-                                                    result);
+                                                    callback);
 }
 
 content::MediaObserver* ContentBrowserClient::GetMediaObserver() {

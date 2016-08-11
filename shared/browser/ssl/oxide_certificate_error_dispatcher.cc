@@ -72,6 +72,14 @@ CertError ToCertError(int error, net::X509Certificate* cert) {
   }
 }
 
+void DispatchCallback(
+    const base::Callback<void(content::CertificateRequestResultType)>& callback,
+    bool result) {
+  callback.Run(result ?
+      content::CERTIFICATE_REQUEST_RESULT_TYPE_CONTINUE
+      : content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL);
+}
+
 }
 
 DEFINE_WEB_CONTENTS_USER_DATA_KEY(CertificateErrorDispatcher);
@@ -115,8 +123,7 @@ void CertificateErrorDispatcher::AllowCertificateError(
     content::ResourceType resource_type,
     bool overridable,
     bool strict_enforcement,
-    const base::Callback<void(bool)>& callback,
-    content::CertificateRequestResultType* result) {
+    const base::Callback<void(content::CertificateRequestResultType)>& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   DCHECK(!callback.is_null());
   DCHECK(!strict_enforcement || !overridable);
@@ -130,12 +137,12 @@ void CertificateErrorDispatcher::AllowCertificateError(
   CertificateErrorDispatcher* dispatcher = FromWebContents(contents);
 
   if (!dispatcher) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+    callback.Run(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
     return;
   }
 
   if (!dispatcher->CanDispatch()) {
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+    callback.Run(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
     return;
   }
 
@@ -146,17 +153,19 @@ void CertificateErrorDispatcher::AllowCertificateError(
     // the only case where we trust the application to be able to display a
     // meaningful UI
     overridable = false;
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY;
+    callback.Run(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY);
   } else if (!overridable) {
     // Don't load an error page for main frame document errors, as we're going
     // to load a placeholder transient page
-    *result = content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL;
+    callback.Run(content::CERTIFICATE_REQUEST_RESULT_TYPE_CANCEL);
   }
 
 
   scoped_refptr<CertificateErrorProxy> proxy =
       new CertificateErrorProxy(
-        overridable ? callback : base::Callback<void(bool)>());
+          overridable ?
+              base::Bind(&DispatchCallback, callback) :
+              base::Callback<void(bool)>());
   std::unique_ptr<CertificateError> error(
       new CertificateError(is_main_frame,
                            !content::IsResourceTypeFrame(resource_type),

@@ -42,8 +42,6 @@ class OXIDE_QTCORE_EXPORT OxideQCertificateErrorPrivate final {
       std::unique_ptr<oxide::CertificateError> error,
       QObject* parent = nullptr);
 
-  typedef void (*ResponseCallback)(bool);
-
   static std::unique_ptr<OxideQCertificateError> CreateForTesting(
       bool is_main_frame,
       bool is_subresource,
