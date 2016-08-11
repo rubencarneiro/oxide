@@ -19,6 +19,7 @@
 
 #include <QCursor>
 #include <QGuiApplication>
+#include <QMetaObject>
 #include <QRect>
 #include <QScreen>
 #include <QtGui/qpa/qplatformnativeinterface.h>
@@ -189,8 +190,16 @@ Screen::Screen()
           SLOT(OnScreenAdded(QScreen*)));
   connect(QGuiApplication::instance(), SIGNAL(screenRemoved(QScreen*)),
           SLOT(OnScreenRemoved(QScreen*)));
-  connect(QGuiApplication::instance(), SIGNAL(primaryScreenChanged(QScreen*)),
-          SLOT(OnPrimaryScreenChanged(QScreen*)));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+  // QGuiApplication::primaryScreenChanged was added in Qt5.6, but Ubuntu
+  // shipped it as a patch with Qt5.5. We should probably have a compile
+  // time check for this
+  if (QGuiApplication::instance()->metaObject()->indexOfSignal(
+          "primaryScreenChanged(QScreen*)") != -1) {
+    connect(QGuiApplication::instance(), SIGNAL(primaryScreenChanged(QScreen*)),
+            SLOT(OnPrimaryScreenChanged(QScreen*)));
+  }
+#endif
 
   QString platform = QGuiApplication::platformName();
   if (platform.startsWith("ubuntu") || platform == "mirserver" ||
