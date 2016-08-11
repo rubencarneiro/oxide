@@ -66,11 +66,11 @@ class OXIDE_QT_EXPORT Screen : public QObject,
 
  private:
   QScreen* QScreenFromDisplay(const display::Display& display) const;
-  void UpdateDisplayForScreen(QScreen* screen, bool notify);
+  void UpdateDisplayForScreen(QScreen* screen);
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   std::map<QScreen*, display::Display> displays_;
-
-  display::Display* primary_display_;
+#endif
 };
 
 } // namespace qt

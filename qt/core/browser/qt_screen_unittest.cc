@@ -205,9 +205,20 @@ TEST_F(ScreenTest, GeometryChange) {
 
   display::Display display = oxide::Screen::GetInstance()->GetPrimaryDisplay();
   display.set_bounds(gfx::Rect(0, 0, 1080, 1920));
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+  testing::InSequence sequence;
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
+
   display.set_work_area(gfx::Rect(0, 50, 1080, 1870));
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
 
   SetScreenGeometry(QGuiApplication::primaryScreen(),
                     QRect(0, 0, 2160, 3840),
@@ -296,26 +307,58 @@ TEST_P(ScreenOrientationTest, OrientationChange) {
     testing::InSequence dummy;
 
     display.set_bounds(row.bounds[0]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[0]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[0]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[1]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[1]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[1]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[2]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[2]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[2]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[3]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[3]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[3]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
   }

@@ -41,111 +41,17 @@ namespace oxide {
 namespace qt {
 
 namespace {
+
 bool g_enable_qtubuntu_integration_for_testing = false;
 int64_t g_next_id = 0;
-}
 
-void Screen::OnScreenAdded(QScreen* screen) {
-  DCHECK(displays_.find(screen) == displays_.end());
-
-  if (displays_.size() > 0) {
-    QScreen* existing_screen = displays_.begin()->first;
-    QList<QScreen*> virtual_siblings = screen->virtualSiblings();
-    auto it = std::find(virtual_siblings.begin(), virtual_siblings.end(),
-                        existing_screen);
-    if (it == virtual_siblings.end()) {
-      LOG(WARNING) <<
-          "More than one virtual screen detected - this is not " <<
-          "supported in Oxide";
-      return;
-    }
-  }
-
-  screen->setOrientationUpdateMask(Qt::LandscapeOrientation |
-                                   Qt::PortraitOrientation |
-                                   Qt::InvertedLandscapeOrientation |
-                                   Qt::InvertedPortraitOrientation);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
-  connect(screen, &QScreen::availableGeometryChanged,
-          this, [=] (const QRect&) {
-    UpdateDisplayForScreen(screen, true);
-  });
-#else
-  connect(screen, &QScreen::virtualGeometryChanged,
-          this, [=] (const QRect&) {
-    UpdateDisplayForScreen(screen, true);
-  });
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+const char* kDisplayIdName = "__oxide_display_id";
 #endif
-  connect(screen, &QScreen::geometryChanged,
-          this, [=] (const QRect&) {
-    UpdateDisplayForScreen(screen, true);
-  });
-  connect(screen, &QScreen::orientationChanged,
-          this, [=] (Qt::ScreenOrientation) {
-    UpdateDisplayForScreen(screen, true);
-  });
-  connect(screen, &QScreen::physicalDotsPerInchChanged,
-          this, [=] (qreal) {
-    UpdateDisplayForScreen(screen, true);
-  });
 
-  display::Display display;
-  display.set_id(g_next_id++);
+display::Display ConstructDisplay(QScreen* screen, int64_t id) {
+  display::Display display(id);
   display.set_touch_support(display::Display::TOUCH_SUPPORT_UNKNOWN);
-
-  displays_[screen] = std::move(display);
-
-  UpdateDisplayForScreen(screen, false);
-  NotifyDisplayAdded(displays_[screen]);
-}
-
-void Screen::OnScreenRemoved(QScreen* screen) {
-  DCHECK(displays_.find(screen) != displays_.end());
-
-  display::Display display = displays_[screen];
-  displays_.erase(screen);
-
-  NotifyDisplayRemoved(display);
-}
-
-void Screen::OnPrimaryScreenChanged(QScreen* screen) {
-  DCHECK_EQ(screen, QGuiApplication::primaryScreen());
-
-  primary_display_ = nullptr;
-
-  if (screen) {
-    DCHECK(displays_.find(screen) != displays_.end());
-    primary_display_ = &displays_[screen];
-  }
-
-  NotifyPrimaryDisplayChanged();
-}
-
-void Screen::OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
-                                             const QString& property_name) {
-  if (property_name == QStringLiteral("scale") ||
-      property_name == QStringLiteral("formfactor")) {
-    UpdateDisplayForScreen(screen->screen(), true);
-  }
-}
-
-QScreen* Screen::QScreenFromDisplay(const display::Display& display) const {
-  auto it =
-      std::find_if(
-          displays_.begin(), displays_.end(),
-          [&display](std::map<QScreen*, display::Display>::value_type v) {
-        return display.id() == v.second.id();
-      });
-  DCHECK(it != displays_.end());
-
-  return it->first;
-}
-
-void Screen::UpdateDisplayForScreen(QScreen* screen,
-                                    bool notify) {
-  DCHECK(displays_.find(screen) != displays_.end());
-
-  display::Display& display = displays_[screen];
 
   display.set_device_scale_factor(DpiUtils::GetScaleFactorForScreen(screen));
 
@@ -177,19 +83,150 @@ void Screen::UpdateDisplayForScreen(QScreen* screen,
       screen->angleBetween(screen->nativeOrientation(),
                            screen->orientation()));
 
-  if (!notify) {
-    return;
+  return display;
+}
+
+}
+
+void Screen::OnScreenAdded(QScreen* screen) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  DCHECK(displays_.find(screen) == displays_.end());
+
+  if (displays_.size() > 0) {
+    QScreen* existing_screen = displays_.begin()->first;
+    QList<QScreen*> virtual_siblings = screen->virtualSiblings();
+    auto it = std::find(virtual_siblings.begin(), virtual_siblings.end(),
+                        existing_screen);
+    if (it == virtual_siblings.end()) {
+      LOG(WARNING) <<
+          "More than one virtual screen detected - this is not " <<
+          "supported in Oxide";
+      return;
+    }
+  }
+#else
+  DCHECK(!screen->property(kDisplayIdName).isValid());
+#endif
+
+  screen->setOrientationUpdateMask(Qt::LandscapeOrientation |
+                                   Qt::PortraitOrientation |
+                                   Qt::InvertedLandscapeOrientation |
+                                   Qt::InvertedPortraitOrientation);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  connect(screen, &QScreen::availableGeometryChanged,
+          this, [=] (const QRect&) {
+    UpdateDisplayForScreen(screen);
+  });
+#else
+  connect(screen, &QScreen::virtualGeometryChanged,
+          this, [=] (const QRect&) {
+    UpdateDisplayForScreen(screen);
+  });
+#endif
+  connect(screen, &QScreen::geometryChanged,
+          this, [=] (const QRect&) {
+    UpdateDisplayForScreen(screen);
+  });
+  connect(screen, &QScreen::orientationChanged,
+          this, [=] (Qt::ScreenOrientation) {
+    UpdateDisplayForScreen(screen);
+  });
+  connect(screen, &QScreen::physicalDotsPerInchChanged,
+          this, [=] (qreal) {
+    UpdateDisplayForScreen(screen);
+  });
+
+  display::Display display = ConstructDisplay(screen, g_next_id++);
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  displays_[screen] = std::move(display);
+  NotifyDisplayAdded(displays_[screen]);
+#else
+  screen->setProperty(kDisplayIdName, static_cast<qlonglong>(display.id()));
+  NotifyDisplayAdded(display);
+#endif
+
+}
+
+void Screen::OnScreenRemoved(QScreen* screen) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  DCHECK(displays_.find(screen) != displays_.end());
+
+  display::Display display = displays_[screen];
+  displays_.erase(screen);
+
+  NotifyDisplayRemoved(display);
+#else
+  NOTREACHED();
+#endif
+}
+
+void Screen::OnPrimaryScreenChanged(QScreen* screen) {
+  DCHECK_EQ(screen, QGuiApplication::primaryScreen());
+
+  NotifyPrimaryDisplayChanged();
+}
+
+void Screen::OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
+                                             const QString& property_name) {
+  if (property_name == QStringLiteral("scale") ||
+      property_name == QStringLiteral("formfactor")) {
+    UpdateDisplayForScreen(screen->screen());
+  }
+}
+
+QScreen* Screen::QScreenFromDisplay(const display::Display& display) const {
+  if (!display.is_valid()) {
+    return nullptr;
   }
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  auto it =
+      std::find_if(
+          displays_.begin(), displays_.end(),
+          [&display](std::map<QScreen*, display::Display>::value_type v) {
+        return display.id() == v.second.id();
+      });
+  DCHECK(it != displays_.end());
+
+  return it->first;
+#else
+  QList<QScreen*> q_screens = QGuiApplication::screens();
+  auto it = std::find_if(q_screens.begin(), q_screens.end(),
+                         [&display](QScreen* q_screen) {
+    QVariant id = q_screen->property(kDisplayIdName);
+    return id.type() == QVariant::LongLong &&
+           id.value<qlonglong>() == display.id();
+  });
+  DCHECK(it != q_screens.end());
+
+  return *it;
+#endif
+}
+
+void Screen::UpdateDisplayForScreen(QScreen* screen) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  DCHECK(displays_.find(screen) != displays_.end());
+  display::Display& display = displays_[screen];
+  display = ConstructDisplay(screen, display.id());
+#else
+  QVariant id = screen->property(kDisplayIdName);
+  DCHECK_EQ(id.type(), QVariant::LongLong);
+  display::Display display = ConstructDisplay(screen, id.value<qlonglong>());
+#endif
   NotifyDisplayPropertiesChanged(display);
 }
 
-Screen::Screen()
-    : primary_display_(nullptr) {
-  connect(QGuiApplication::instance(), SIGNAL(screenAdded(QScreen*)),
-          SLOT(OnScreenAdded(QScreen*)));
-  connect(QGuiApplication::instance(), SIGNAL(screenRemoved(QScreen*)),
-          SLOT(OnScreenRemoved(QScreen*)));
+Screen::Screen() {
+  connect(static_cast<QGuiApplication*>(QGuiApplication::instance()),
+          &QGuiApplication::screenAdded,
+          this, &Screen::OnScreenAdded);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+  connect(static_cast<QGuiApplication*>(QGuiApplication::instance()),
+          &QGuiApplication::screenRemoved,
+          this, &Screen::OnScreenRemoved);
+#endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
   // QGuiApplication::primaryScreenChanged was added in Qt5.6, but Ubuntu
   // shipped it as a patch with Qt5.5. We should probably have a compile
@@ -228,29 +265,33 @@ display::Display Screen::DisplayFromQScreen(QScreen* screen) const {
     return display::Display();
   }
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   DCHECK(displays_.find(screen) != displays_.end());
   return displays_.at(screen);
+#else
+  QVariant id = screen->property(kDisplayIdName);
+  DCHECK_EQ(id.type(), QVariant::LongLong);
+  return ConstructDisplay(screen, id.value<qlonglong>());
+#endif
 }
 
 display::Display Screen::GetPrimaryDisplay() {
-  if (!primary_display_) {
-    return display::Display();
-  }
-
-  return *primary_display_;
+  return DisplayFromQScreen(QGuiApplication::primaryScreen());
 }
 
 std::vector<display::Display> Screen::GetAllDisplays() {
-  std::vector<display::Display> rv;
-  for (const auto& value : displays_) {
-    rv.push_back(value.second);
+  std::vector<display::Display> displays;
+
+  QList<QScreen*> q_screens = QGuiApplication::screens();
+  for (auto* q_screen : q_screens) {
+    displays.push_back(DisplayFromQScreen(q_screen));
   }
 
-  if (rv.empty()) {
-    rv.push_back(display::Display());
+  if (displays.empty()) {
+    displays.push_back(display::Display());
   }
 
-  return rv;
+  return displays;
 }
 
 gfx::Point Screen::GetCursorScreenPoint() {
