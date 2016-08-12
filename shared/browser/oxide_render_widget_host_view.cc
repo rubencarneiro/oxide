@@ -57,7 +57,6 @@
 #include "oxide_browser_process_main.h"
 #include "oxide_event_utils.h"
 #include "oxide_render_widget_host_view_container.h"
-#include "screen.h"
 
 namespace oxide {
 
@@ -397,18 +396,6 @@ bool RenderWidgetHostView::CanCopyToVideoFrame() const {
 bool RenderWidgetHostView::HasAcceleratedSurface(
     const gfx::Size& desired_size) {
   return false;
-}
-
-void RenderWidgetHostView::GetScreenInfo(blink::WebScreenInfo* result) {
-  display::Display display;
-  if (!container_) {
-    display = Screen::GetInstance()->GetPrimaryDisplay();
-  } else {
-    display = container_->GetDisplay();
-  }
-
-  content::RenderWidgetHostViewOxide::GetWebScreenInfoForDisplay(display,
-                                                                 result);
 }
 
 gfx::Rect RenderWidgetHostView::GetBoundsInRootWindow() {
