@@ -36,6 +36,10 @@ config("shared_include_dirs") {
   ]
 }
 
+config("hybris_defines") {
+  defines = [ "ENABLE_HYBRIS" ]
+}
+
 config("hybris_camera_defines") {
   defines = [ "ENABLE_HYBRIS_CAMERA" ]
 }
@@ -598,7 +602,9 @@ component("shared") {
 
   if (enable_hybris) {
     assert(is_linux)
-    defines += [ "ENABLE_HYBRIS" ]
+    public_configs += [
+      ":hybris_defines"
+    ]
 
     configs += [
       "//oxide/build/config/linux:android_properties"

@@ -30,6 +30,7 @@
 #include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/display_form_factor.h"
+#include "shared/browser/hybris_utils.h"
 
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_screen_utils.h"
@@ -48,6 +49,29 @@ int64_t g_next_id = 0;
 #if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
 const char* kDisplayIdName = "__oxide_display_id";
 #endif
+
+Qt::ScreenOrientation GetNativeOrientation(QScreen* screen) {
+  Qt::ScreenOrientation native_orientation = screen->nativeOrientation();
+
+#if defined(ENABLE_HYBRIS)
+  // FIXME : Remove below hack once #1612659 is fixed
+  std::string device_name;
+  oxide::HybrisUtils* instance = oxide::HybrisUtils::GetInstance();
+  if (instance->HasDeviceProperties()) {
+    device_name = instance->GetDeviceProperties().device;
+  }
+
+  if ((device_name == "cooler" || device_name == "frieza") &&
+      screen == QGuiApplication::primaryScreen()) {
+    // The native orientation returned by qt for M10 devices
+    // is portrait which is wrong. It should be landscape.
+    // See https://launchpad.net/bugs/1601887
+    native_orientation = Qt::LandscapeOrientation;
+  }
+#endif
+
+  return native_orientation;
+}
 
 display::Display ConstructDisplay(QScreen* screen, int64_t id) {
   display::Display display(id);
@@ -80,7 +104,7 @@ display::Display ConstructDisplay(QScreen* screen, int64_t id) {
                                                     screen)));
 
   display.SetRotationAsDegree(
-      screen->angleBetween(screen->nativeOrientation(),
+      screen->angleBetween(GetNativeOrientation(screen),
                            screen->orientation()));
 
   return display;
