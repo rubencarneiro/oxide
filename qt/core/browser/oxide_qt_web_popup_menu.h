@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
 
 #include <memory>
+#include <vector>
 
 #include "base/macros.h"
 

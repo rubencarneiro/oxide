@@ -31,7 +31,11 @@
 
 QRect MockScreen::geometry() const {
   QRect geometry = geometry_;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
   int rotation = angleBetween(nativeOrientation(), orientation_);
+#else
+  int rotation = screen()->angleBetween(nativeOrientation(), orientation_);
+#endif
   if (rotation == 90 || rotation == 270) {
     geometry = QRect(geometry.topLeft(), geometry.size().transposed());
   }
@@ -90,13 +94,15 @@ MockScreen::MockScreen(int id,
                        const QRect& work_area_in_screen,
                        int depth,
                        QImage::Format format,
-                       qreal dpr)
+                       qreal dpr,
+                       int form_factor)
     : id_(id),
       geometry_(geometry),
       work_area_in_screen_(work_area_in_screen),
       depth_(depth),
       format_(format),
-      dpr_(dpr) {
+      dpr_(dpr),
+      form_factor_(form_factor) {
   orientation_ = nativeOrientation();
 }
 
@@ -132,4 +138,8 @@ void MockScreen::setOrientation(Qt::ScreenOrientation orientation) {
 #endif
   QWindowSystemInterface::handleScreenOrientationChange(screen(),
                                                         this->orientation());
+}
+
+void MockScreen::setFormFactor(int form_factor) {
+  form_factor_ = form_factor;
 }

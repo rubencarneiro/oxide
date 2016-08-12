@@ -21,10 +21,12 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/renderer_preferences.h"
+#include "ui/display/display.h"
 
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 
@@ -72,6 +74,16 @@ void WebViewContentsHelper::NotifyDoNotTrackChanged() {
   rvh->SyncRendererPrefs();
 }
 
+void WebViewContentsHelper::OnDisplayPropertiesChanged(
+    const display::Display& display) {
+  if (display.id() !=
+      WebContentsView::FromWebContents(web_contents_)->GetDisplay().id()) {
+    return;
+  }
+
+  UpdateWebPreferences();
+}
+
 void WebViewContentsHelper::OnShellModeChanged() {
   UpdateWebPreferences();
 }
@@ -116,6 +128,9 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
 // static
 WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
     content::WebContents* contents) {
+  if (!contents) {
+    return nullptr;
+  }
   return static_cast<WebViewContentsHelper *>(
       contents->GetUserData(kWebViewContentsHelperKey));
 }

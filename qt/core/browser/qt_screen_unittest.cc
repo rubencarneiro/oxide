@@ -34,10 +34,12 @@
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/rect.h"
 
+#include "shared/browser/display_form_factor.h"
 #include "shared/test/mock_screen_observer.h"
 
 #include "qt_screen.h"
 
+using oxide::DisplayFormFactor;
 using testing::_;
 
 namespace oxide {
@@ -45,7 +47,7 @@ namespace qt {
 
 class ScreenTest : public testing::Test {
  public:
-  ScreenTest();
+  ScreenTest(bool enable_qtubuntu_integration = false);
   ~ScreenTest() override;
 
  protected:
@@ -54,6 +56,7 @@ class ScreenTest : public testing::Test {
                          const QRect& work_area_in_screen);
   void SetScreenOrientation(QScreen* screen,
                             Qt::ScreenOrientation orientation);
+  void SetScreenFormFactor(QScreen* screen, int form_factor);
 
  private:
   // testing::Test implementation
@@ -82,6 +85,13 @@ void ScreenTest::SetScreenOrientation(QScreen* screen,
                             Q_ARG(Qt::ScreenOrientation, orientation));
 }
 
+void ScreenTest::SetScreenFormFactor(QScreen* screen, int form_factor) {
+  QMetaObject::invokeMethod(mock_qpa_shim_, "setScreenFormFactor",
+                            Qt::DirectConnection,
+                            Q_ARG(QScreen*, screen),
+                            Q_ARG(int, form_factor));
+}
+
 void ScreenTest::SetUp() {
   QVariant v =
       QCoreApplication::instance()->property("_oxide_mock_qpa_shim_api");
@@ -91,14 +101,17 @@ void ScreenTest::SetUp() {
   ASSERT_NE(nullptr, mock_qpa_shim_);
 }
 
-ScreenTest::ScreenTest()
-    : screen_(new Screen()) {}
+ScreenTest::ScreenTest(bool enable_qtubuntu_integration) {
+  Screen::SetEnableQtUbuntuIntegrationForTesting(enable_qtubuntu_integration);
+  screen_.reset(new Screen());
+}
 
 ScreenTest::~ScreenTest() {
   if (mock_qpa_shim_) {
     QMetaObject::invokeMethod(mock_qpa_shim_, "resetScreens",
                               Qt::DirectConnection);
   }
+  Screen::SetEnableQtUbuntuIntegrationForTesting(false);
 }
 
 TEST_F(ScreenTest, PrimaryDisplay) {
@@ -192,9 +205,20 @@ TEST_F(ScreenTest, GeometryChange) {
 
   display::Display display = oxide::Screen::GetInstance()->GetPrimaryDisplay();
   display.set_bounds(gfx::Rect(0, 0, 1080, 1920));
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+  testing::InSequence sequence;
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
+
   display.set_work_area(gfx::Rect(0, 50, 1080, 1870));
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
 
   SetScreenGeometry(QGuiApplication::primaryScreen(),
                     QRect(0, 0, 2160, 3840),
@@ -283,26 +307,58 @@ TEST_P(ScreenOrientationTest, OrientationChange) {
     testing::InSequence dummy;
 
     display.set_bounds(row.bounds[0]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[0]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[0]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[1]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[1]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[1]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[2]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[2]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[2]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
 
     display.set_bounds(row.bounds[3]);
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_work_area(row.work_areas[3]);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(3);
+#else
+    EXPECT_CALL(obs, OnDisplayPropertiesChanged(_)).Times(3);
+#endif
     display.set_rotation(row.expected[3]);
     EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display)));
   }
@@ -333,6 +389,65 @@ TEST_F(ScreenTest, NullQScreen) {
   EXPECT_FALSE(display.is_valid());
 
   EXPECT_EQ(3U, Screen::GetInstance()->GetAllDisplays().size());
+}
+
+class ScreenTestWithQtUbuntuIntegration : public ScreenTest {
+ public:
+  ScreenTestWithQtUbuntuIntegration() : ScreenTest(true) {}
+};
+
+struct DisplayFormFactorTestRow {
+  DisplayFormFactorTestRow(const char* name,
+                           DisplayFormFactor form_factor)
+      : name(name),
+        form_factor(form_factor) {}
+
+  const char* name;
+  DisplayFormFactor form_factor;
+};
+
+class DisplayFormFactorTest
+    : public ScreenTestWithQtUbuntuIntegration,
+      public testing::WithParamInterface<DisplayFormFactorTestRow> {};
+
+INSTANTIATE_TEST_CASE_P(
+    Displays,
+    DisplayFormFactorTest,
+    testing::Values(
+        DisplayFormFactorTestRow("TEST0", DisplayFormFactor::Mobile),
+        DisplayFormFactorTestRow("TEST1", DisplayFormFactor::Monitor),
+        DisplayFormFactorTestRow("TEST2", DisplayFormFactor::Television)));
+
+TEST_P(DisplayFormFactorTest, DisplayFormFactor) {
+  const DisplayFormFactorTestRow& row = GetParam();
+
+  QList<QScreen*> q_screens = QGuiApplication::screens();
+  auto it = std::find_if(q_screens.begin(), q_screens.end(),
+                         [&row](QScreen* screen) {
+    return QString(row.name) == screen->name();
+  });
+  ASSERT_NE(q_screens.end(), it);
+
+  QScreen* q_screen = *it;
+  display::Display display = Screen::GetInstance()->DisplayFromQScreen(q_screen);
+
+  EXPECT_EQ(row.form_factor,
+            Screen::GetInstance()->GetDisplayFormFactor(display));
+}
+
+TEST_F(ScreenTestWithQtUbuntuIntegration, FormFactorChange) {
+  MockScreenObserver obs;
+
+  display::Display display = Screen::GetInstance()->GetPrimaryDisplay();
+  EXPECT_CALL(obs, OnDisplayPropertiesChanged(DisplayEq(display))).Times(2);
+
+  SetScreenFormFactor(QGuiApplication::primaryScreen(), 3);
+  EXPECT_EQ(DisplayFormFactor::Monitor,
+            Screen::GetInstance()->GetDisplayFormFactor(display));
+
+  SetScreenFormFactor(QGuiApplication::primaryScreen(), 2);
+  EXPECT_EQ(DisplayFormFactor::Mobile,
+            Screen::GetInstance()->GetDisplayFormFactor(display));
 }
 
 } // namespace qt

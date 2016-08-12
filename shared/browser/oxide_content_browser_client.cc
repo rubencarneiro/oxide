@@ -26,6 +26,7 @@
 #include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/certificate_request_result_type.h"
+#include "content/public/browser/interstitial_page.h"
 #include "content/public/browser/permission_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
@@ -35,6 +36,7 @@
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
 #include "services/shell/public/cpp/interface_registry.h"
+#include "ui/display/display.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -42,8 +44,8 @@
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_content_client.h"
-#include "shared/common/oxide_form_factor.h"
 
+#include "display_form_factor.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
@@ -52,6 +54,7 @@
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_user_agent_settings.h"
+#include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "oxide_web_view_contents_helper.h"
@@ -59,7 +62,7 @@
 #include "shell_mode.h"
 
 #if defined(ENABLE_HYBRIS)
-#include "oxide_hybris_utils.h"
+#include "hybris_utils.h"
 #endif
 
 #if defined(ENABLE_PLUGINS)
@@ -218,14 +221,22 @@ void ContentBrowserClient::ResourceDispatcherHostCreated() {
 void ContentBrowserClient::OverrideWebkitPrefs(
     content::RenderViewHost* render_view_host,
     content::WebPreferences* prefs) {
+  content::WebContents* contents =
+      content::WebContents::FromRenderViewHost(render_view_host);
+  if (!contents) {
+    content::InterstitialPage* interstitial =
+        content::InterstitialPage::FromRenderFrameHost(
+            render_view_host->GetMainFrame());
+    if (interstitial) {
+      contents = interstitial->GetWebContents();
+    }
+  }
+
   WebViewContentsHelper* contents_helper =
-      WebViewContentsHelper::FromRenderViewHost(render_view_host);
+      WebViewContentsHelper::FromWebContents(contents);
 
   WebPreferences* web_prefs = nullptr;
   if (contents_helper) {
-    // If RVH is for an InterstitialPage, we can't map to WebContents
-    // XXX: If we ever expose transient pages in the public API, we should find
-    //  a way around this, so that transient pages get the same preferences
     web_prefs = contents_helper->GetWebPreferences();
   }
   if (!web_prefs) {
@@ -243,21 +254,36 @@ void ContentBrowserClient::OverrideWebkitPrefs(
         render_view_host->GetProcess()->GetBrowserContext())
         ->IsPopupBlockerEnabled();
 
+  prefs->allow_custom_scrollbar_in_main_frame = false;
   prefs->double_tap_to_zoom_enabled = true;
   prefs->viewport_meta_enabled = true;
 
-  FormFactor form_factor = GetFormFactorHint();
-  if (form_factor == FORM_FACTOR_TABLET || form_factor == FORM_FACTOR_PHONE) {
-    prefs->default_minimum_page_scale_factor = 0.25f;
-    prefs->default_maximum_page_scale_factor = 5.f;
-    prefs->allow_custom_scrollbar_in_main_frame = false;
-    prefs->viewport_style = content::ViewportStyle::MOBILE;
+  display::Display display;
+  if (contents) {
+    display = WebContentsView::FromWebContents(contents)->GetDisplay();
   } else {
-    prefs->default_minimum_page_scale_factor = 1.0f;
-    prefs->default_maximum_page_scale_factor = 4.f;
-    prefs->allow_custom_scrollbar_in_main_frame = true;
-    prefs->viewport_style = content::ViewportStyle::DEFAULT;
+    display = Screen::GetInstance()->GetPrimaryDisplay();
   }
+
+  DisplayFormFactor form_factor =
+      Screen::GetInstance()->GetDisplayFormFactor(display);
+  switch (form_factor) {
+    case DisplayFormFactor::Monitor:
+      prefs->default_minimum_page_scale_factor = 1.0f;
+      prefs->default_maximum_page_scale_factor = 4.f;
+      prefs->viewport_style = content::ViewportStyle::DEFAULT;
+      break;
+    case DisplayFormFactor::Mobile:
+      prefs->default_minimum_page_scale_factor = 0.25f;
+      prefs->default_maximum_page_scale_factor = 5.f;
+      prefs->viewport_style = content::ViewportStyle::MOBILE;
+      break;
+    case DisplayFormFactor::Television:
+      prefs->default_minimum_page_scale_factor = 0.25f;
+      prefs->default_maximum_page_scale_factor = 5.f;
+      prefs->viewport_style = content::ViewportStyle::TELEVISION;
+      break;
+  };
 
   if (Screen::GetShellMode() == ShellMode::NonWindowed) {
     prefs->shrinks_viewport_contents_to_fit = true;
@@ -295,12 +321,12 @@ gpu::GpuControlList::OsType
 ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
     std::string* os_version) {
 #if defined(ENABLE_HYBRIS)
-  if (!HybrisUtils::IsUsingAndroidEGL()) {
+  if (!HybrisUtils::GetInstance()->IsUsingAndroidEGL()) {
     // Use the platform defaults in this case
     return gpu::GpuControlList::kOsAny;
   }
 
-  *os_version = HybrisUtils::GetDeviceProperties().os_version;
+  *os_version = HybrisUtils::GetInstance()->GetDeviceProperties().os_version;
   return gpu::GpuControlList::kOsAndroid;
 #else
   return gpu::GpuControlList::kOsAny;

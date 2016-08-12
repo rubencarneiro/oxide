@@ -34,8 +34,8 @@
 #include "ui/gl/gl_surface.h"
 #include "ui/gl/init/gl_factory.h"
 
+#include "shared/browser/hybris_utils.h"
 #include "shared/browser/oxide_browser_platform_integration.h"
-#include "shared/browser/oxide_hybris_utils.h"
 #include "shared/browser/screen.h"
 #include "shared/browser/screen_observer.h"
 
@@ -90,8 +90,8 @@ int RotationHelper::GetRotation(CameraType position, int orientation) {
   }
 
   if (position == FRONT_FACING_CAMERA_TYPE &&
-      (HybrisUtils::GetDeviceProperties().device == "krillin" ||
-       HybrisUtils::GetDeviceProperties().device == "vegetahd")) {
+      (HybrisUtils::GetInstance()->GetDeviceProperties().device == "krillin" ||
+       HybrisUtils::GetInstance()->GetDeviceProperties().device == "vegetahd")) {
     // krillin / vegetahd lies to us - the top of the front facing camera
     // points to the right of the screen (viewed from the front), which means
     // the camera image needs rotating by 270deg with the device in its natural
@@ -246,7 +246,7 @@ VideoCaptureDeviceHybris::VideoCaptureDeviceHybris(
       position_(BACK_FACING_CAMERA_TYPE),
       orientation_(0),
       camera_control_(nullptr) {
-  DCHECK(HybrisUtils::IsCameraCompatAvailable());
+  DCHECK(HybrisUtils::GetInstance()->IsCameraCompatAvailable());
 }
 
 VideoCaptureDeviceHybris::~VideoCaptureDeviceHybris() {

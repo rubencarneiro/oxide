@@ -24,7 +24,8 @@
 #include "base/logging.h"
 #include "base/threading/thread_checker.h"
 
-#include "oxide_hybris_utils.h"
+#include "display_form_factor.h"
+#include "hybris_utils.h"
 #include "screen_observer.h"
 #include "shell_mode.h"
 
@@ -86,6 +87,22 @@ Screen::~Screen() {
   g_instance = nullptr;
 }
 
+DisplayFormFactor Screen::GetDisplayFormFactor(
+    const display::Display& display) {
+#if defined(ENABLE_HYBRIS)
+  if (HybrisUtils::GetInstance()->HasDeviceProperties() &&
+      display.id() == GetPrimaryDisplay().id()) {
+    // Ubuntu on phones and tablets currently uses an Android kernel and EGL
+    // stack. If we detect these, assume that the primary display is a mobile
+    // display
+    return DisplayFormFactor::Mobile;
+  }
+#endif
+
+  // If this is not an Ubuntu mobile device, assume desktop for now
+  return DisplayFormFactor::Monitor;
+}
+
 // static
 ShellMode Screen::GetShellMode() {
   std::unique_ptr<base::Environment> env = base::Environment::Create();
@@ -99,10 +116,10 @@ ShellMode Screen::GetShellMode() {
     LOG(WARNING) << "Unrecognized value for OXIDE_FORCE_SHELL_MODE";
   }
 
-  // FIXME: This is based on the same thing that DetectFormFactorHintImpl does,
+  // FIXME: This is based on the same thing that GetDisplayFormFactor does,
   //  but it's not really correct. And it needs to be dynamic
 #if defined(ENABLE_HYBRIS)
-  if (HybrisUtils::HasDeviceProperties()) {
+  if (HybrisUtils::GetInstance()->HasDeviceProperties()) {
     return ShellMode::NonWindowed;
   }
 #endif

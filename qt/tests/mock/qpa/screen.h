@@ -30,12 +30,16 @@ class MockScreen : public QPlatformScreen {
              const QRect& work_area_in_screen,
              int depth,
              QImage::Format format,
-             qreal dpr);
+             qreal dpr,
+             int form_factor);
   ~MockScreen() override;
+
+  int* form_factor() { return &form_factor_; }
 
   void setGeometry(const QRect& geometry,
                    const QRect& work_area_in_screen);
   void setOrientation(Qt::ScreenOrientation orientation);
+  void setFormFactor(int form_factor);
 
  private:
   // QPlatformScreen implementation
@@ -60,6 +64,8 @@ class MockScreen : public QPlatformScreen {
   int depth_;
   QImage::Format format_;
   qreal dpr_;
+
+  int form_factor_;
 
   Qt::ScreenOrientation orientation_; // The current orientation
 };

@@ -66,6 +66,7 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   void NotifyDoNotTrackChanged() final;
 
   // ScreenObserver
+  void OnDisplayPropertiesChanged(const display::Display& display) final;
   void OnShellModeChanged() final;
 
   // WebPreferencesObserver implementation

@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_hybris_utils.h"
+#include "hybris_utils.h"
 
 #include <cstdio>
 #include <hybris/properties/properties.h>
@@ -23,6 +23,7 @@
 #include "base/files/file_path.h"
 #include "base/lazy_instance.h"
 #include "base/logging.h"
+#include "base/memory/singleton.h"
 #include "base/native_library.h"
 #include "base/strings/stringprintf.h"
 
@@ -47,7 +48,7 @@ class LazyHybrisValue {
 
 struct DevicePropertyData {
   HybrisUtils::DeviceProperties properties;
-  bool available;
+  bool available = false;
 };
 
 namespace {
@@ -150,29 +151,67 @@ base::LazyInstance<LazyHybrisValue<bool, CameraCompatAvailable>>
     g_camera_compat_available = LAZY_INSTANCE_INITIALIZER;
 #endif
 
+HybrisUtils* g_fake_hybris_utils;
+
 }
 
+class HybrisUtilsImpl : public HybrisUtils {
+ public:
+  static HybrisUtilsImpl* GetInstance();
+
+  bool HasDeviceProperties() override;
+  const DeviceProperties& GetDeviceProperties() override;
+  bool IsUsingAndroidEGL() override;
+#if defined(ENABLE_HYBRIS_CAMERA)
+  bool IsCameraCompatAvailable() override;
+#endif
+
+ private:
+  friend class base::DefaultSingletonTraits<HybrisUtilsImpl>;
+  HybrisUtilsImpl() {}
+};
+
 // static
-bool HybrisUtils::HasDeviceProperties() {
+HybrisUtilsImpl* HybrisUtilsImpl::GetInstance() {
+  return base::Singleton<HybrisUtilsImpl,
+                         base::LeakySingletonTraits<HybrisUtilsImpl>>::get();
+}
+
+bool HybrisUtilsImpl::HasDeviceProperties() {
   return g_device_properties.Get().value().available;
 }
 
-// static
-const HybrisUtils::DeviceProperties& HybrisUtils::GetDeviceProperties() {
+const HybrisUtils::DeviceProperties& HybrisUtilsImpl::GetDeviceProperties() {
   DCHECK(HasDeviceProperties());
   return g_device_properties.Get().value().properties;
 }
 
-// static
-bool HybrisUtils::IsUsingAndroidEGL() {
+bool HybrisUtilsImpl::IsUsingAndroidEGL() {
   return g_using_android_egl.Get().value();
 }
 
 #if defined(ENABLE_HYBRIS_CAMERA)
-// static
-bool HybrisUtils::IsCameraCompatAvailable() {
+bool HybrisUtilsImpl::IsCameraCompatAvailable() {
   return g_camera_compat_available.Get().value();
 }
 #endif
+
+HybrisUtils::HybrisUtils() {}
+
+HybrisUtils::~HybrisUtils() {}
+
+// static
+HybrisUtils* HybrisUtils::GetInstance() {
+  if (g_fake_hybris_utils) {
+    return g_fake_hybris_utils;
+  }
+
+  return HybrisUtilsImpl::GetInstance();
+}
+
+void HybrisUtils::OverrideForTesting(HybrisUtils* fake) {
+  DCHECK(!fake || !g_fake_hybris_utils);
+  g_fake_hybris_utils = fake;
+}
 
 } // namespace oxide
