@@ -37,16 +37,20 @@ content::SSLHostStateDelegate::CertJudgment SSLHostStateDelegate::QueryPolicy(
   return DENIED;
 }
 
-void SSLHostStateDelegate::HostRanInsecureContent(const std::string& host,
-                                                  int pid) {
+void SSLHostStateDelegate::HostRanInsecureContent(
+    const std::string& host,
+    int pid,
+    InsecureContentType content_type) {
   // We need this because SSLPolicy::UpdateEntry uses the response of
   // DidHostRunInsecureContent to set the appropriate content status
   // XXX: We should clear out processes as they die
   ran_insecure_content_hosts_.insert(BrokenHostEntry(host, pid));
 }
 
-bool SSLHostStateDelegate::DidHostRunInsecureContent(const std::string& host,
-                                                     int pid) const {
+bool SSLHostStateDelegate::DidHostRunInsecureContent(
+    const std::string& host,
+    int pid,
+    InsecureContentType content_type) const {
   return ran_insecure_content_hosts_.count(BrokenHostEntry(host, pid)) != 0;
 }
 

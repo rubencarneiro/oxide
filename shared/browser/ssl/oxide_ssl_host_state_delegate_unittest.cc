@@ -64,38 +64,59 @@ TEST_F(SSLHostStateDelegateTest, QueryPolicy) {
 }
 
 TEST_F(SSLHostStateDelegateTest, HostRanInsecureContent) {
-  ssl_host_state_delegate()->HostRanInsecureContent("www.google.com", 1);
-  ssl_host_state_delegate()->HostRanInsecureContent("www.example.co.uk", 3);
+  ssl_host_state_delegate()->HostRanInsecureContent(
+      "www.google.com", 1,
+      content::SSLHostStateDelegate::MIXED_CONTENT);
+  ssl_host_state_delegate()->HostRanInsecureContent(
+      "www.example.co.uk", 3,
+      content::SSLHostStateDelegate::CERT_ERRORS_CONTENT);
 
   EXPECT_TRUE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.com",
-                                                           1));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.com", 1,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
+  EXPECT_TRUE(
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.com", 1,
+          content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.com",
-                                                           2));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.com", 2,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.com",
-                                                           3));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.com", 3,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
 
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.example.co.uk",
-                                                           1));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.example.co.uk", 1,
+          content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.example.co.uk",
-                                                           2));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.example.co.uk", 2,
+          content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
   EXPECT_TRUE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.example.co.uk",
-                                                           3));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.example.co.uk", 3,
+          content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
+  EXPECT_TRUE(
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.example.co.uk", 3,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
   
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.co.uk",
-                                                           1));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.co.uk", 1,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.co.uk",
-                                                           2));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.co.uk", 2,
+          content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
   EXPECT_FALSE(
-      ssl_host_state_delegate()->DidHostRunInsecureContent("www.google.co.uk",
-                                                           3));
+      ssl_host_state_delegate()->DidHostRunInsecureContent(
+          "www.google.co.uk", 3,
+          content::SSLHostStateDelegate::MIXED_CONTENT));
 }
 
 TEST_F(SSLHostStateDelegateTest, HasAllowException) {
