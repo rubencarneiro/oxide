@@ -370,6 +370,11 @@
             ],
           },
         }],
+        ['enable_hybris==1', {
+          'defines': [
+            'ENABLE_HYBRIS=1',
+          ]
+        }],
       ],
     },
     {

@@ -19,6 +19,7 @@
 #define _OXIDE_QT_CORE_BROWSER_SCREEN_UTILS_H_
 
 #include <QtGlobal>
+#include <QScreen>
 
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
@@ -30,6 +31,7 @@ namespace oxide {
 namespace qt {
 
 blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen);
+Qt::ScreenOrientation GetNativeOrientation(QScreen* screen);
 
 } // namespace qt
 } // namespace oxide
