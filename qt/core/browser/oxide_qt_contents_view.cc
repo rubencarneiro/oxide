@@ -257,7 +257,8 @@ QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
           view()->GetCompositorFrameHandle(),
-          view()->committed_frame_metadata().location_bar_content_translation.y(),
+          view()->committed_frame_metadata().top_controls_height *
+              view()->committed_frame_metadata().top_controls_shown_ratio,
           GetScreen()));
   }
 

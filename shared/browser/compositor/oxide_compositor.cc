@@ -34,6 +34,7 @@
 #include "cc/surfaces/display_scheduler.h"
 #include "cc/surfaces/surface_display_output_surface.h"
 #include "cc/surfaces/surface_id_allocator.h"
+#include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
@@ -353,7 +354,8 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           context_provider,
           nullptr));
 
-  display_->Resize(layer_tree_host_->device_viewport_size());
+  display_->Resize(layer_tree_host_->GetLayerTree()->device_viewport_size());
+  display_->SetVisible(layer_tree_host_->visible());
 
   return std::move(surface);
 }
@@ -393,10 +395,10 @@ void Compositor::EnsureLayerTreeHost() {
 
   can_evict_layer_tree_host_ = true;
 
-  layer_tree_host_->SetRootLayer(root_layer_);
+  layer_tree_host_->GetLayerTree()->SetRootLayer(root_layer_);
   layer_tree_host_->SetVisible(visible_);
-  layer_tree_host_->SetViewportSize(size_);
-  layer_tree_host_->SetDeviceScaleFactor(device_scale_factor_);
+  layer_tree_host_->GetLayerTree()->SetViewportSize(size_);
+  layer_tree_host_->GetLayerTree()->SetDeviceScaleFactor(device_scale_factor_);
 }
 
 void Compositor::MaybeEvictLayerTreeHost() {
@@ -698,6 +700,9 @@ void Compositor::SetVisibility(bool visible) {
   DCHECK(!layer_tree_host_eviction_pending_);
 
   layer_tree_host_->SetVisible(visible);
+  if (display_) {
+    display_->SetVisible(visible);
+  }
 
   if (!visible) {
     layer_tree_host_eviction_pending_ = true;
@@ -716,7 +721,7 @@ void Compositor::SetDeviceScaleFactor(float scale) {
   device_scale_factor_ = scale;
 
   if (layer_tree_host_) {
-    layer_tree_host_->SetDeviceScaleFactor(scale);
+    layer_tree_host_->GetLayerTree()->SetDeviceScaleFactor(scale);
   }
 }
 
@@ -728,7 +733,7 @@ void Compositor::SetViewportSize(const gfx::Size& size) {
   size_ = size;
 
   if (layer_tree_host_) {
-    layer_tree_host_->SetViewportSize(size);
+    layer_tree_host_->GetLayerTree()->SetViewportSize(size);
   }
   if (display_) {
     display_->Resize(size);

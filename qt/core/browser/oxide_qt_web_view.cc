@@ -471,12 +471,11 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
           web_view_->compositor_frame_metadata().scrollable_viewport_size.height()) {
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
-  if (old.location_bar_offset.y() !=
-      web_view_->compositor_frame_metadata().location_bar_offset.y()) {
+  if ((old.top_controls_height !=
+       web_view_->compositor_frame_metadata().top_controls_height) ||
+      (old.top_controls_shown_ratio !=
+       web_view_->compositor_frame_metadata().top_controls_shown_ratio)) {
     flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-  }
-  if (old.location_bar_content_translation.y() !=
-      web_view_->compositor_frame_metadata().location_bar_content_translation.y()) {
     flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
   if (old.device_scale_factor !=

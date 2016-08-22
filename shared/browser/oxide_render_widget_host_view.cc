@@ -97,11 +97,10 @@ void RequireCallback(cc::SurfaceManager* manager,
 
 bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
                                  const cc::CompositorFrameMetadata& current) {
-  if (old.location_bar_offset.y() != current.location_bar_offset.y()) {
+  if (old.top_controls_height != current.top_controls_height) {
     return true;
   }
-  if (old.location_bar_content_translation.y() !=
-      current.location_bar_content_translation.y()) {
+  if (old.top_controls_shown_ratio != current.top_controls_shown_ratio) {
     return true;
   }
   return false;
@@ -287,8 +286,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   }
 
   bool shrink =
-      metadata.location_bar_offset.y() == 0.0f &&
-      metadata.location_bar_content_translation.y() > 0.0f;
+      metadata.top_controls_height > 0.f &&
+      metadata.top_controls_shown_ratio == 1.f;
   if (shrink != top_controls_shrink_blink_size_) {
     top_controls_shrink_blink_size_ = shrink;
     host_->WasResized();

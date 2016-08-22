@@ -408,10 +408,8 @@ void WebView::CompositorWillRequestSwapFrame() {
     // Ensure that the location bar is always hidden in fullscreen. This
     // is required because fullscreen RenderWidgets don't have a mechanism
     // to control the location bar height
-    compositor_frame_metadata_.location_bar_content_translation =
-        gfx::Vector2dF();
-    compositor_frame_metadata_.location_bar_offset =
-        gfx::Vector2dF(0.0f, -GetLocationBarHeight());
+    compositor_frame_metadata_.top_controls_height = location_bar_height_;
+    compositor_frame_metadata_.top_controls_shown_ratio = 0.f;
   }
 
   client_->FrameMetadataUpdated(old);
@@ -1307,11 +1305,13 @@ gfx::Size WebView::GetCompositorFrameViewportSize() {
 }
 
 float WebView::GetLocationBarOffset() const {
-  return compositor_frame_metadata().location_bar_offset.y();
+  return GetLocationBarContentOffset() -
+         compositor_frame_metadata().top_controls_height;
 }
 
 float WebView::GetLocationBarContentOffset() const {
-  return compositor_frame_metadata().location_bar_content_translation.y();
+  return compositor_frame_metadata().top_controls_height *
+         compositor_frame_metadata().top_controls_shown_ratio;
 }
 
 float WebView::GetLocationBarHeight() const {
