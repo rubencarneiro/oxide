@@ -21,10 +21,11 @@
 #include <string>
 
 #include "base/macros.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
-class HybrisUtils {
+class OXIDE_SHARED_EXPORT HybrisUtils {
  public:
 
   struct DeviceProperties {

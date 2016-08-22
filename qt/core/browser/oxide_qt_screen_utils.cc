@@ -26,6 +26,10 @@
 #include "third_party/WebKit/public/platform/modules/screen_orientation/WebScreenOrientationType.h"
 #include "third_party/WebKit/public/platform/WebRect.h"
 
+#if defined(ENABLE_HYBRIS)
+#include "shared/browser/oxide_hybris_utils.h"
+#endif
+
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_type_conversions.h"
 
@@ -83,9 +87,31 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
 
   result.orientationAngle =
       screen->angleBetween(screen->orientation(),
-                           screen->nativeOrientation());
+                           GetNativeOrientation(screen));
 
   return result;
+}
+
+Qt::ScreenOrientation GetNativeOrientation(QScreen* screen) {
+  Qt::ScreenOrientation native_orientation = screen->nativeOrientation();
+
+#if defined(ENABLE_HYBRIS)
+  // FIXME : Remove below hack once #1612659 is fixed
+  std::string device_name;
+  if (oxide::HybrisUtils::HasDeviceProperties()) {
+    device_name = oxide::HybrisUtils::GetDeviceProperties().device;
+  }
+
+  if ((device_name == "cooler" || device_name == "frieza") &&
+      screen == QGuiApplication::primaryScreen()) {
+    // The native orientation returned by qt for M10 devices
+    // is portrait which is wrong. It should be landscape.
+    // See https://launchpad.net/bugs/1601887
+    native_orientation = Qt::LandscapeOrientation;
+  }
+#endif
+
+ return native_orientation;
 }
 
 } // namespace qt

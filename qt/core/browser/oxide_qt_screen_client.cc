@@ -70,7 +70,7 @@ void ScreenClient::UpdatePrimaryDisplay() {
         screen));
 
   primary_display_.SetRotationAsDegree(
-      screen->angleBetween(screen->nativeOrientation(),
+      screen->angleBetween(GetNativeOrientation(screen),
                            screen->orientation()));
 }
 
