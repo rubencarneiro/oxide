@@ -19,7 +19,7 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
-#include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebPointerProperties.h"
 #include "third_party/WebKit/public/platform/WebTouchPoint.h"
 #include "ui/events/gesture_detection/gesture_event_data.h"
 #include "ui/events/gesture_detection/motion_event.h"
@@ -33,6 +33,7 @@ blink::WebTouchPoint CreateWebTouchPoint(const ui::MotionEvent& event,
                                          size_t pointer_index) {
   blink::WebTouchPoint result;
 
+  result.pointerType = blink::WebPointerProperties::PointerType::Touch;
   result.id = event.GetPointerId(pointer_index);
 
   switch (event.GetAction()) {

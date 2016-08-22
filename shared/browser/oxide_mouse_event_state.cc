@@ -20,6 +20,7 @@
 #include <cstdlib>
 
 #include "base/logging.h"
+#include "third_party/WebKit/public/platform/WebInputEvent.h"
 
 #include "oxide_browser_platform_integration.h"
 
@@ -61,13 +62,13 @@ bool MouseEventState::IsConsecutiveClick(const blink::WebMouseEvent& event) {
 
 MouseEventState::MouseEventState()
     : mouse_entered_(false),
-      click_button_(blink::WebMouseEvent::ButtonNone),
+      click_button_(blink::WebPointerProperties::Button::NoButton),
       click_count_(0),
       last_click_event_time_(0) {}
 
 void MouseEventState::Reset() {
   click_count_ = 0;
-  click_button_ = blink::WebMouseEvent::ButtonNone;
+  click_button_ = blink::WebPointerProperties::Button::NoButton;
   click_position_ = gfx::Point();
   last_click_event_time_ = 0.f;
 }

@@ -18,7 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
 #define _OXIDE_SHARED_BROWSER_EVENT_UTILS_H_
 
-#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebInputEvent.h"
 
 #include "shared/common/oxide_shared_export.h"
 

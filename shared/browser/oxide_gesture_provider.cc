@@ -20,7 +20,6 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/memory/ptr_util.h"
-#include "third_party/WebKit/public/web/WebInputEvent.h"
 
 #include "ui/display/screen.h"
 #include "ui/events/gesture_detection/filtered_gesture_provider.h"

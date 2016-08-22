@@ -18,8 +18,12 @@
 #ifndef _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
 #define _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
 
-#include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebPointerProperties.h"
 #include "ui/gfx/geometry/point.h"
+
+namespace blink {
+class WebMouseEvent;
+}
 
 namespace oxide {
 
@@ -37,7 +41,7 @@ class MouseEventState {
   bool mouse_entered_;
   gfx::Point global_position_;
 
-  blink::WebMouseEvent::Button click_button_;
+  blink::WebPointerProperties::Button click_button_;
   int click_count_;
   gfx::Point click_position_;
   double last_click_event_time_;

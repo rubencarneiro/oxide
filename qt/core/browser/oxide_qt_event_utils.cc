@@ -29,6 +29,7 @@
 #include "base/environment.h"
 #include "base/logging.h"
 #include "base/time/time.h"
+#include "third_party/WebKit/public/platform/WebPointerProperties.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
 
@@ -519,6 +520,7 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QMouseEventStateToWebEventModifiers(event);
+  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
@@ -557,26 +559,26 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   if (event->type() != QEvent::MouseMove) {
     switch(event->button()) {
       case Qt::LeftButton:
-        result.button = blink::WebMouseEvent::ButtonLeft;
+        result.button = blink::WebPointerProperties::Button::Left;
         break;
       case Qt::MidButton:
-        result.button = blink::WebMouseEvent::ButtonMiddle;
+        result.button = blink::WebPointerProperties::Button::Middle;
         break;
       case Qt::RightButton:
-        result.button = blink::WebMouseEvent::ButtonRight;
+        result.button = blink::WebPointerProperties::Button::Right;
         break;
       default:
         NOTREACHED();
     }
   } else {
     if (event->buttons() & Qt::LeftButton) {
-      result.button = blink::WebMouseEvent::ButtonLeft;
+      result.button = blink::WebPointerProperties::Button::Left;
     }
     if (event->buttons() & Qt::MidButton) {
-      result.button = blink::WebMouseEvent::ButtonMiddle;
+      result.button = blink::WebPointerProperties::Button::Middle;
     }
     if (event->buttons() & Qt::RightButton) {
-      result.button = blink::WebMouseEvent::ButtonRight;
+      result.button = blink::WebPointerProperties::Button::Right;
     }
   }
 
@@ -590,6 +592,7 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   blink::WebMouseWheelEvent result;
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
+  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
 
   // In Chromium a wheel event is a type of mouse event, but this is not the
   // case in Qt (QWheelEvent is not derived from QMouseEvent). We create a
@@ -603,7 +606,7 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   result.modifiers = QMouseEventStateToWebEventModifiers(&dummy);
 
   result.type = blink::WebInputEvent::MouseWheel;
-  result.button = blink::WebMouseEvent::ButtonNone;
+  result.button = blink::WebPointerProperties::Button::NoButton;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
@@ -655,6 +658,7 @@ blink::WebMouseEvent MakeWebMouseEvent(
 
   result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
   result.modifiers = QInputEventStateToWebEventModifiers(event);
+  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
@@ -687,7 +691,7 @@ blink::WebMouseEvent MakeWebMouseEvent(
       NOTREACHED();
   }
 
-  result.button = blink::WebMouseEvent::ButtonNone;
+  result.button = blink::WebPointerProperties::Button::NoButton;
 
   return result;
 }
