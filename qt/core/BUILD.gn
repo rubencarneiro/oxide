@@ -183,6 +183,8 @@ source_set("core_sources") {
     "browser/input/oxide_qt_input_method_context.cc",
     "browser/input/oxide_qt_input_method_context.h",
     "browser/input/oxide_qt_input_method_context_client.h",
+    "browser/keyboard_code_conversion.cc",
+    "browser/keyboard_code_conversion.h",
     "browser/oxide_qt_browser_platform_integration.cc",
     "browser/oxide_qt_browser_platform_integration.h",
     "browser/oxide_qt_browser_startup.cc",
