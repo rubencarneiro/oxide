@@ -466,6 +466,8 @@ bool RenderWidgetHostView::LockMouse() {
 
 void RenderWidgetHostView::UnlockMouse() {}
 
+void RenderWidgetHostView::SetNeedsBeginFrames(bool needs_begin_frames) {}
+
 void RenderWidgetHostView::CompositorDidCommit() {
   committed_frame_metadata_ = std::move(last_submitted_frame_metadata_);
   RunAckCallbacks();

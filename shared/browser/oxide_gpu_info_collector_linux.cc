@@ -312,8 +312,6 @@ gpu::CollectInfoResult CollectDriverInfo(gpu::GPUInfo* gpu_info) {
 
 gpu::CollectInfoResult CollectBasicGraphicsInfoAndroid(
     gpu::GPUInfo* gpu_info) {
-  gpu_info->can_lose_context = false;
-
   gpu_info->machine_model_name =
       HybrisUtils::GetInstance()->GetDeviceProperties().model;
 
@@ -498,9 +496,6 @@ gpu::CollectInfoResult CollectPCIVideoCardInfo(gpu::GPUInfo* gpu_info) {
 
 gpu::CollectInfoResult CollectContextGraphicsInfoLinux(
     gpu::GPUInfo* gpu_info) {
-  gpu_info->can_lose_context =
-      (gl::GetGLImplementation() == gl::kGLImplementationEGLGLES2);
-
   gpu::CollectInfoResult result = CollectGraphicsInfoGL(gpu_info);
   gpu_info->context_info_state = result;
 

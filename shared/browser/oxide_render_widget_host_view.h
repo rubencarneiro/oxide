@@ -165,6 +165,7 @@ class RenderWidgetHostView
   gfx::Rect GetViewBounds() const override;
   bool LockMouse() override;
   void UnlockMouse() override;
+  void SetNeedsBeginFrames(bool needs_begin_frames) override;
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;
