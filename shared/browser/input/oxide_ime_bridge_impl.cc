@@ -20,6 +20,7 @@
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/web/WebInputEvent.h"
+#include "ui/events/keycodes/dom/dom_key.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/range/range.h"
 
@@ -44,6 +45,7 @@ void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
   fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
   fake_event.skip_in_browser = true;
   fake_event.type = type;
+  fake_event.domKey = ui::DomKey::Key::PROCESS;
   host->ForwardKeyboardEvent(fake_event);
 }
 

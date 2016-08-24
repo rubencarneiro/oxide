@@ -17,6 +17,7 @@
 
 #include <QtGlobal>
 
+#include "ui/events/keycodes/dom/dom_key.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 
 QT_BEGIN_NAMESPACE
@@ -27,6 +28,8 @@ namespace oxide {
 namespace qt {
 
 ui::KeyboardCode GetKeyboardCodeFromQKeyEvent(QKeyEvent* event);
+
+ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event);
 
 } // namespace qt
 } // namespace oxide
