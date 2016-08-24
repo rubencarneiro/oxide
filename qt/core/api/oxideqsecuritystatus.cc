@@ -42,13 +42,6 @@ STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::SecurityLevelWarning,
                             oxide::SECURITY_LEVEL_WARNING)
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::SecurityLevelError,
                             oxide::SECURITY_LEVEL_ERROR)
-STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::ContentStatusNormal,
-                            content::SSLStatus::NORMAL_CONTENT)
-STATIC_ASSERT_MATCHING_ENUM(
-    OxideQSecurityStatus::ContentStatusDisplayedInsecure,
-    content::SSLStatus::DISPLAYED_INSECURE_CONTENT)
-STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::ContentStatusRanInsecure,
-                            content::SSLStatus::RAN_INSECURE_CONTENT)
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::CertStatusOk,
                             oxide::CERT_STATUS_OK)
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::CertStatusBadIdentity,
@@ -111,7 +104,17 @@ OxideQSecurityStatus::ContentStatus
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  return static_cast<ContentStatus>(d->proxy_->GetContentStatus());
+  content::SSLStatus::ContentStatusFlags status = d->proxy_->GetContentStatus();
+  ContentStatus rv = ContentStatusNormal;
+
+  if (status & content::SSLStatus::DISPLAYED_INSECURE_CONTENT) {
+    rv |= ContentStatusDisplayedInsecure;
+  }
+  if (status & content::SSLStatus::RAN_INSECURE_CONTENT) {
+    rv |= ContentStatusRanInsecure;
+  }
+
+  return rv;
 }
 
 OxideQSecurityStatus::CertStatus OxideQSecurityStatus::certStatus() const {
