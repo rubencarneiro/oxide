@@ -72,6 +72,7 @@ Item {
       mouseClick(webView1, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
 
       spy.wait();
+      verify(created.waitForLoadCommitted());
 
       compare(navigationSpy.count, 1, "Should have had an onNavigationRequested");
       compare(created.url, "http://testsuite/empty.html", "Unexpected URL");
@@ -171,6 +172,7 @@ Item {
       mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton);
 
       spy.wait();
+      verify(created.waitForLoadCommitted());
 
       compare(spy.count, 1);
       compare(created.url, "http://testsuite/tst_WebView_newViewRequested3.html?2");
