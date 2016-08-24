@@ -621,7 +621,7 @@ void RenderWidgetHostView::OnUpdateTextInputStateCalled(
     content::TextInputManager* text_input_manager,
     content::RenderWidgetHostViewBase* updated_view,
     bool did_update_state) {
-  if (!did_update_state || updated_view != this) {
+  if (updated_view != this) {
     return;
   }
 
