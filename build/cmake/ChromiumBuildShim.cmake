@@ -144,8 +144,8 @@ function(run_generate_ninja)
       message(FATAL_ERROR "Your toolchain config must define CHROMIUM_TARGET_ARCH")
     endif()
 
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED CHROMIUM_PKG_CONFIG_PATH)
-      message(FATAL_ERROR "Your toolchain config must defined CHROMIUM_PKG_CONFIG_PATH")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT DEFINED CHROMIUM_PKG_CONFIG)
+      message(FATAL_ERROR "Your toolchain config must defined CHROMIUM_PKG_CONFIG")
     endif()
 
     _determine_compiler(HOST_COMPILER ${CHROMIUM_CXX_HOST_COMPILER_ID})
