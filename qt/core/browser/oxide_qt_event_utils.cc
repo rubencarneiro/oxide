@@ -28,6 +28,7 @@
 
 #include "base/logging.h"
 #include "base/time/time.h"
+#include "ui/events/keycodes/dom/keycode_converter.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/point_f.h"
 
@@ -485,6 +486,10 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
       oxide::LocationModifiersFromWindowsKeyCode(windowsKeyCode);
   result.nativeKeyCode = event->nativeVirtualKey();
   result.setKeyIdentifierFromWindowsKeyCode();
+
+  result.domCode = static_cast<int>(
+      ui::KeycodeConverter::NativeKeycodeToDomCode(event->nativeScanCode()));
+  result.domKey = GetDomKeyFromQKeyEvent(event);
 
   const unsigned short* text = event->text().utf16();
   memcpy(result.unmodifiedText, text, qMin(sizeof(result.unmodifiedText), sizeof(*text)));
