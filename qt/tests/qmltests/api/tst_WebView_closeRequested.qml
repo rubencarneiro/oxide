@@ -101,6 +101,7 @@ Item {
       var created = toplevel.created;
       spy.target = created;
 
+      verify(created.waitForLoadSucceeded());
       verify(!created.preferences.allowScriptsToCloseWindows);
 
       created.clearLoadEventCounters();
