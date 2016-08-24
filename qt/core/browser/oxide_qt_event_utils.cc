@@ -34,6 +34,7 @@
 
 #include "shared/browser/oxide_event_utils.h"
 
+#include "keyboard_code_conversion.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_type_conversions.h"
 
