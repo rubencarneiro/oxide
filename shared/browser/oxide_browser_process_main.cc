@@ -242,9 +242,13 @@ base::FilePath GetSharedMemoryPath(base::Environment* env) {
   }
 
   // click packages
+  // Ref: https://developer.ubuntu.com/en/phone/platform/guides/app-confinement/#Runtime_Environment
   std::string app_pkgname;
-  if (env->GetVar("APP_PKGNAME", &app_pkgname)) {
-    return base::FilePath(std::string("/dev/shm/") + app_pkgname + ".oxide");
+  if (env->GetVar("APP_ID", &app_pkgname)) {
+    app_pkgname = app_pkgname.substr(0, app_pkgname.find("_"));
+    if (!app_pkgname.empty()) {
+      return base::FilePath(std::string("/dev/shm/") + app_pkgname + ".oxide");
+    }
   }
 
   // default
