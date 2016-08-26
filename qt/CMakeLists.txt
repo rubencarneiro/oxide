@@ -19,6 +19,7 @@
 include(GNUInstallDirs)
 
 include(CommonProperties)
+include(Options)
 include(PackageConfigHelper)
 
 set(OXIDE_MOCK_QTPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests/mock/plugins)
@@ -26,33 +27,10 @@ set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 
 set(OXIDE_QUICKLIB OxideQtQuick)
 
-if(CMAKE_CROSSCOMPILING)
-  # Dummy targets - not used anywhere, but this stops Qt5CoreConfigExtras.cmake
-  # from creating them and checking if the binary exists, which is broken when
-  # cross-building because it checks for the target system binary. We need the
-  # host system binaries installed, because they are in the same package as the
-  # moc in Ubuntu (qtbase5-dev-tools), which is not currently multi-arch
-  if(NOT TARGET Qt5::qmake)
-    add_executable(Qt5::qmake IMPORTED)
-  endif()
-  if(NOT TARGET Qt5::rcc)
-    add_executable(Qt5::rcc IMPORTED)
-  endif()
-  if(NOT TARGET Qt5::uic)
-    add_executable(Qt5::uic IMPORTED)
-  endif()
-endif()
-
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 # 5.2.0 is required for us to be able to set a share context
 find_package(Qt5Quick 5.2.0 REQUIRED)
-
-set(_OXIDEQMLSCENE_DEFAULT OFF)
-if(${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
-  set(_OXIDEQMLSCENE_DEFAULT ON)
-endif()
-option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in

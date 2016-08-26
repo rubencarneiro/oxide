@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(OXIDE_LIB OxideQtCore)
-set(OXIDE_LIB_VERSION 0)
-set(OXIDE_RENDERER oxide-renderer)
+function(string_option name desc default)
+  get_property(_IS_SET CACHE ${name} PROPERTY VALUE SET)
+  if(NOT ${_IS_SET})
+    set(${name} ${default})
+  endif()
+  set(${name} ${${name}} CACHE STRING ${desc} FORCE)
+endfunction()

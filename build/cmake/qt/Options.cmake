@@ -1,6 +1,6 @@
 # vim:expandtab:shiftwidth=2:tabstop=2:
 
-# Copyright (C) 2014 Canonical Ltd.
+# Copyright (C) 2016 Canonical Ltd.
 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(OXIDE_LIB OxideQtCore)
-set(OXIDE_LIB_VERSION 0)
-set(OXIDE_RENDERER oxide-renderer)
+find_package(Qt5Quick)
+
+set(_OXIDEQMLSCENE_DEFAULT OFF)
+if(DEFINED ${Qt5Quick_VERSION_STRING} AND
+   ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
+  set(_OXIDEQMLSCENE_DEFAULT ON)
+endif()
+option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
+unset(${_OXIDEQMLSCENE_DEFAULT})
