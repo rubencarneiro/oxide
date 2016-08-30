@@ -31,9 +31,9 @@ namespace qt {
 
 class LocationSourceProxy;
 
-class LocationProvider final : public device::LocationProviderBase,
-                               public base::NonThreadSafe,
-                               public base::SupportsWeakPtr<LocationProvider> {
+class LocationProvider : public device::LocationProviderBase,
+                         public base::NonThreadSafe,
+                         public base::SupportsWeakPtr<LocationProvider> {
  public:
   LocationProvider();
   ~LocationProvider();
@@ -41,15 +41,11 @@ class LocationProvider final : public device::LocationProviderBase,
  private:
   friend class LocationSourceProxy;
 
-  // content::LocationProvider implementation
-  bool StartProvider(bool high_accuracy) final;
-  void StopProvider() final;
-
-  void GetPosition(device::Geoposition* position) final;
-
-  void RequestRefresh() final;
-
-  void OnPermissionGranted() final;
+  // device::LocationProvider implementation
+  bool StartProvider(bool high_accuracy) override;
+  void StopProvider() override;
+  const device::Geoposition& GetPosition() override;
+  void OnPermissionGranted() override;
 
   void NotifyPositionUpdated(const device::Geoposition& position);
 

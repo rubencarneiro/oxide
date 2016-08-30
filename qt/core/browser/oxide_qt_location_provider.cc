@@ -334,19 +334,10 @@ void LocationProvider::StopProvider() {
   source_->StopUpdates();
 }
 
-void LocationProvider::GetPosition(device::Geoposition* position) {
-  DCHECK(CalledOnValidThread());
-  DCHECK(position);
-
-  *position = position_;
-}
-
-void LocationProvider::RequestRefresh() {
+const device::Geoposition& LocationProvider::GetPosition() {
   DCHECK(CalledOnValidThread());
 
-  if (is_permission_granted_ && running_) {
-    source_->RequestUpdate();
-  }
+  return position_;
 }
 
 void LocationProvider::OnPermissionGranted() {
