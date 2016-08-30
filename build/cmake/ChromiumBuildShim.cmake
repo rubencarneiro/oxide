@@ -21,7 +21,7 @@ if(DEFINED _Oxide_ChromiumBuildShim_INCLUDED_)
 endif()
 set(_Oxide_ChromiumBuildShim_INCLUDED_ TRUE)
 
-include(CMakeParseArguments)
+include(CheckIncludeFileCXX)
 include(Options)
 include(CommonProperties)
 include(LibFilenameUtils)

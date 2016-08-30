@@ -18,13 +18,6 @@
 
 include(AutoGenerateHelper)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5Quick REQUIRED)
-find_package(Qt5QuickTest REQUIRED)
-find_package(Qt5Test REQUIRED)
-
 set(QML_SUPPORT_MODULE_NAME Oxide/testsupport)
 set(QML_SUPPORT_IMPORT_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(QML_SUPPORT_MODULE_DIR ${QML_SUPPORT_IMPORT_DIR}/${QML_SUPPORT_MODULE_NAME})

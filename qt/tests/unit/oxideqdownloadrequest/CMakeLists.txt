@@ -16,10 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Test REQUIRED)
-
 add_executable(tst_oxideqdownloadrequest tst_oxideqdownloadrequest.cc)
 target_link_libraries(tst_oxideqdownloadrequest
                       PRIVATE

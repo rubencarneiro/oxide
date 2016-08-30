@@ -16,10 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(GNUInstallDirs)
-
-include(CommonProperties)
-include(Options)
+include(FindPkgConfig)
 include(PackageConfigHelper)
 
 set(OXIDE_MOCK_QTPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests/mock/plugins)
@@ -27,10 +24,21 @@ set(OXIDE_QMLPLUGIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out/imports)
 
 set(OXIDE_QUICKLIB OxideQtQuick)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
+find_package(Qt5Core 5.2.0 REQUIRED)
+find_package(Qt5Gui 5.2.0 REQUIRED)
+find_package(Qt5Qml 5.2.0 REQUIRED)
 # 5.2.0 is required for us to be able to set a share context
 find_package(Qt5Quick 5.2.0 REQUIRED)
+if(ENABLE_TESTS)
+  find_package(Qt5Feedback REQUIRED)
+  find_package(Qt5Positioning REQUIRED)
+  find_package(Qt5Test REQUIRED)
+  find_package(Qt5QuickTest REQUIRED)
+  pkg_check_modules(Qt5PlatformSupport REQUIRED Qt5PlatformSupport)
+  set(Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS
+      ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}
+      ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}/QtPlatformSupport)
+endif()
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in

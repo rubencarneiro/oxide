@@ -22,7 +22,6 @@ include(ProjectInit)
 oxide_project_init()
 
 include(CheckCXXCompilerFlag)
-include(CheckIncludeFileCXX)
 include(GNUInstallDirs)
 
 include(ChromiumBuildShim)
