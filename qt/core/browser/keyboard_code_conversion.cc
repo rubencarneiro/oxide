@@ -422,10 +422,12 @@ ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event) {
       return ui::DomKey::Key::INSERT;
     case Qt::Key_Paste:
       return ui::DomKey::Key::PASTE;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     case Qt::Key_Redo:
       return ui::DomKey::Key::REDO;
     case Qt::Key_Undo:
       return ui::DomKey::Key::UNDO;
+#endif
 
     // =======
     // UI keys
@@ -439,8 +441,10 @@ ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event) {
       return ui::DomKey::Key::CONTEXT_MENU;
     case Qt::Key_Execute:
       return ui::DomKey::Key::EXECUTE;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     case Qt::Key_Find:
       return ui::DomKey::Key::FIND;
+#endif
     case Qt::Key_Help:
       return ui::DomKey::Key::HELP;
     case Qt::Key_Pause:
@@ -557,10 +561,12 @@ ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event) {
       return ui::DomKey::Key::MEDIA_TRACK_NEXT;
     case Qt::Key_MediaPrevious:
       return ui::DomKey::Key::MEDIA_TRACK_PREVIOUS;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     case Qt::Key_New:
       return ui::DomKey::Key::NEW;
     case Qt::Key_Open:
       return ui::DomKey::Key::OPEN;
+#endif
     case Qt::Key_Print:
       return ui::DomKey::Key::PRINT;
     case Qt::Key_Save:
@@ -601,10 +607,12 @@ ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event) {
     case Qt::Key_VolumeMute:
       return ui::DomKey::Key::AUDIO_VOLUME_MUTE;
     // MICROPHONE_TOGGLE
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
     case Qt::Key_MicVolumeDown:
       return ui::DomKey::Key::MICROPHONE_VOLUME_DOWN;
     case Qt::Key_MicVolumeUp:
       return ui::DomKey::Key::MICROPHONE_VOLUME_UP;
+#endif
     case Qt::Key_MicMute:
       return ui::DomKey::Key::MICROPHONE_VOLUME_MUTE;
 

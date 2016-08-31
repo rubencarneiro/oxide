@@ -21,8 +21,8 @@ if(DEFINED _Oxide_ChromiumBuildShim_INCLUDED_)
 endif()
 set(_Oxide_ChromiumBuildShim_INCLUDED_ TRUE)
 
-include(CMakeParseArguments)
-include(CommonOptions)
+include(CheckIncludeFileCXX)
+include(Options)
 include(CommonProperties)
 include(LibFilenameUtils)
 
@@ -262,7 +262,8 @@ function(run_generate_ninja)
     list(APPEND MAKE_GN_ARGS_CMD -Denable_chromium_tests=false)
   endif()
 
-  if(DEFINED QT_MOC_EXECUTABLE)
+  if(TARGET Qt5::moc)
+    get_target_property(QT_MOC_EXECUTABLE Qt5::moc LOCATION)
     list(APPEND MAKE_GN_ARGS_CMD -Dqt_moc_executable=${QT_MOC_EXECUTABLE})
   endif()
 

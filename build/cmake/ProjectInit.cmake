@@ -16,16 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(PLUGIN mock_feedback)
+include(StringOption)
 
-set(PLUGIN_SRCS plugin.cc proxy.cc)
+function(oxide_project_init)
+  string_option(OXIDE_PLATFORM "The Oxide project to build" "qt")
 
-add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
-target_link_libraries(${PLUGIN}
-    ${Qt5Core_LIBRARIES}
-    ${Qt5Feedback_LIBRARIES})
-target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
-set_target_properties(
-    ${PLUGIN} PROPERTIES
-    AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/feedback)
+  include(${OXIDE_PLATFORM}/ProjectInit OPTIONAL)
+endfunction()

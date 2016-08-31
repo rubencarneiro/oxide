@@ -37,6 +37,7 @@
 #include "base/path_service.h"
 #include "base/posix/global_descriptors.h"
 #include "base/strings/string_util.h"
+#include "base/strings/utf_string_conversions.h"
 #include "cc/base/switches.h"
 #include "content/app/mojo/mojo_init.h" // nogncheck
 #include "content/browser/gpu/gpu_process_host.h" // nogncheck
@@ -189,8 +190,12 @@ base::FilePath GetSubprocessPath(base::Environment* env) {
   if (!override_subprocess_path.empty()) {
     // Make sure that we have a properly formed absolute path
     // there are some load issues if not.
-    return base::MakeAbsoluteFilePath(
-        base::FilePath().AppendASCII(override_subprocess_path));
+#if defined(OS_POSIX)
+    base::FilePath subprocess_path(override_subprocess_path);
+#else
+    base::FilePath subprocess_path(base::UTF8ToUTF16(override_subprocess_path));
+#endif
+    return base::MakeAbsoluteFilePath(subprocess_path);
   }
 
   base::FilePath subprocess_exe =
@@ -242,9 +247,13 @@ base::FilePath GetSharedMemoryPath(base::Environment* env) {
   }
 
   // click packages
+  // Ref: https://developer.ubuntu.com/en/phone/platform/guides/app-confinement/#Runtime_Environment
   std::string app_pkgname;
-  if (env->GetVar("APP_PKGNAME", &app_pkgname)) {
-    return base::FilePath(std::string("/dev/shm/") + app_pkgname + ".oxide");
+  if (env->GetVar("APP_ID", &app_pkgname)) {
+    app_pkgname = app_pkgname.substr(0, app_pkgname.find("_"));
+    if (!app_pkgname.empty()) {
+      return base::FilePath(std::string("/dev/shm/") + app_pkgname + ".oxide");
+    }
   }
 
   // default

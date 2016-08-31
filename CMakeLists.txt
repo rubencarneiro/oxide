@@ -16,16 +16,18 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(CheckCXXCompilerFlag)
-include(CheckIncludeFileCXX)
-include(GNUInstallDirs)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
+include(ProjectInit)
+oxide_project_init()
+
+include(CheckCXXCompilerFlag)
+include(GNUInstallDirs)
+
 include(ChromiumBuildShim)
-include(CommonOptions)
 include(CommonProperties)
 include(LibFilenameUtils)
+include(Options)
 
 # Define variables used throughout the build
 set(OXIDE_OUTPUT_DIR ${CMAKE_BINARY_DIR}/out)

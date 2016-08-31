@@ -16,17 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(GNUInstallDirs)
-
-include(CommonProperties)
-include(LibFilenameUtils)
-include(PackageConfigHelper)
-
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5Quick REQUIRED)
-
 qt5_wrap_cpp(MOC_EXTRA
              api/oxideqquickwebcontextdelegateworker_p_p.h)
 

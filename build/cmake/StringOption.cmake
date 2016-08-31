@@ -16,16 +16,10 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(PLUGIN mock_feedback)
-
-set(PLUGIN_SRCS plugin.cc proxy.cc)
-
-add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
-target_link_libraries(${PLUGIN}
-    ${Qt5Core_LIBRARIES}
-    ${Qt5Feedback_LIBRARIES})
-target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
-set_target_properties(
-    ${PLUGIN} PROPERTIES
-    AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/feedback)
+function(string_option name desc default)
+  get_property(_IS_SET CACHE ${name} PROPERTY VALUE SET)
+  if(NOT ${_IS_SET})
+    set(${name} ${default})
+  endif()
+  set(${name} ${${name}} CACHE STRING ${desc} FORCE)
+endfunction()

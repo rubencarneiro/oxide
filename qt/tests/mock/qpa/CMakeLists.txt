@@ -16,16 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(FindPkgConfig)
-
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-pkg_check_modules(Qt5PlatformSupport REQUIRED Qt5PlatformSupport)
-
-set(Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS
-    ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}
-    ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}/QtPlatformSupport)
-
 set(PLUGIN mock_qpa)
 
 set(PLUGIN_SRCS

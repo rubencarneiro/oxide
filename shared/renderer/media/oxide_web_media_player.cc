@@ -281,7 +281,7 @@ double WebMediaPlayer::duration() const {
   if (ready_state_ == WebMediaPlayer::ReadyStateHaveNothing) {
     return std::numeric_limits<double>::quiet_NaN();
   }
-  if (duration_ == media::kInfiniteDuration()) {
+  if (duration_ == media::kInfiniteDuration) {
     return std::numeric_limits<double>::infinity();
   }
   return duration_.InSecondsF();

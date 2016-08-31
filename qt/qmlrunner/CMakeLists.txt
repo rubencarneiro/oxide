@@ -18,11 +18,6 @@
 
 set(OXIDE_QMLRUNNER oxideqmlscene)
 
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5Quick REQUIRED)
-
 set(OXIDE_QMLRUNNER_SRCS main.cc)
 
 add_executable(${OXIDE_QMLRUNNER} ${OXIDE_QMLRUNNER_SRCS})

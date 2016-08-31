@@ -22,7 +22,7 @@ endif()
 set(_Oxide_CommonProperties_INCLUDED_ TRUE)
 
 include(GNUInstallDirs)
-include(CommonOptions)
+include(Options)
 
 set(OXIDE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 

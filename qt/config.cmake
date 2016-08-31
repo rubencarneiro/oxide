@@ -16,31 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-if(CMAKE_CROSSCOMPILING)
-  # QT_MOC_EXECUTABLE is set by Qt5CoreConfigExtras, but it sets it to
-  # the target executable rather than the host executable, which is no
-  # use for cross-compiling. For cross-compiling, we have a guess and
-  # override it ourselves
-  if(NOT TARGET Qt5::moc)
-    find_program(
-        QT_MOC_EXECUTABLE moc
-        PATHS /usr/lib/qt5/bin /usr/lib/${OXIDE_LIBRARY_HOST_ARCHITECTURE}/qt5/bin
-        NO_DEFAULT_PATH)
-    if(QT_MOC_EXECUTABLE STREQUAL "QT_MOC_EXECUTABLE-NOTFOUND")
-      message(FATAL_ERROR "Can't find a moc executable for the host arch")
-    endif()
-    add_executable(Qt5::moc IMPORTED)
-    set_target_properties(Qt5::moc PROPERTIES
-        IMPORTED_LOCATION "${QT_MOC_EXECUTABLE}")
-  endif()
-else()
-  # This should be enough to initialize QT_MOC_EXECUTABLE
-  find_package(Qt5Core REQUIRED)
-  if(NOT DEFINED QT_MOC_EXECUTABLE)
-    message(FATAL_ERROR "Qt5Core didn't define QT_MOC_EXECUTABLE")
-  endif()
-endif()
-
 set(OXIDE_LIB OxideQtCore)
 set(OXIDE_LIB_VERSION 0)
 set(OXIDE_RENDERER oxide-renderer)

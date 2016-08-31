@@ -31,6 +31,7 @@
 #include "gpu/ipc/service/gpu_channel.h"
 #include "gpu/ipc/service/gpu_channel_manager.h"
 #include "gpu/ipc/service/gpu_command_buffer_stub.h"
+#include "ui/gl/egl_util.h"
 #include "ui/gl/gl_bindings.h"
 #include "ui/gl/gl_context.h"
 #include "ui/gl/gl_surface_egl.h"
@@ -254,8 +255,7 @@ EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
       reinterpret_cast<EGLClientBuffer>(texture->service_id()),
       attrib_list);
   if (egl_image == EGL_NO_IMAGE_KHR) {
-    EGLint error = eglGetError();
-    LOG(ERROR) << "Error creating EGLImage: " << error;
+    LOG(ERROR) << "Error creating EGLImage: " << ui::GetLastEGLErrorString();
     return EGL_NO_IMAGE_KHR;
   }
 

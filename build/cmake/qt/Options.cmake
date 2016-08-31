@@ -16,16 +16,12 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-set(PLUGIN mock_feedback)
+find_package(Qt5Quick)
 
-set(PLUGIN_SRCS plugin.cc proxy.cc)
-
-add_library(${PLUGIN} SHARED ${PLUGIN_SRCS})
-target_link_libraries(${PLUGIN}
-    ${Qt5Core_LIBRARIES}
-    ${Qt5Feedback_LIBRARIES})
-target_compile_definitions(${PLUGIN} PRIVATE -DQT_PLUGIN)
-set_target_properties(
-    ${PLUGIN} PROPERTIES
-    AUTOMOC TRUE
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/feedback)
+set(_OXIDEQMLSCENE_DEFAULT OFF)
+if(DEFINED ${Qt5Quick_VERSION_STRING} AND
+   ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.3.0")
+  set(_OXIDEQMLSCENE_DEFAULT ON)
+endif()
+option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
+unset(${_OXIDEQMLSCENE_DEFAULT})

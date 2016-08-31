@@ -72,24 +72,28 @@ template("cross_gcc_toolchain") {
 host_gcc_toolchain("host_gcc_x86") {
   toolchain_args = {
     current_cpu = "x86"
+    v8_current_cpu = target_cpu
   }
 }
 
 host_gcc_toolchain("host_gcc_x64") {
   toolchain_args = {
     current_cpu = "x64"
+    v8_current_cpu = target_cpu
   }
 }
 
 host_gcc_toolchain("host_gcc_arm") {
   toolchain_args = {
     current_cpu = "arm"
+    v8_current_cpu = target_cpu
   }
 }
 
 host_gcc_toolchain("host_gcc_arm64") {
   toolchain_args = {
     current_cpu = "arm64"
+    v8_current_cpu = target_cpu
   }
 }
 
