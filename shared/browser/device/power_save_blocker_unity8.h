@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,32 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_
-#define _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_
+#ifndef _OXIDE_SHARED_BROWSER_DEVICE_POWER_SAVE_BLOCKER_UNITY8_H_
+#define _OXIDE_SHARED_BROWSER_DEVICE_POWER_SAVE_BLOCKER_UNITY8_H_
 
-#include <string>
-
+#include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "device/power_save_blocker/power_save_blocker.h"
 
-namespace base {
-class SequencedTaskRunner;
-class SingleThreadTaskRunner;
-}
-
-namespace device {
-class PowerSaveBlockerOxideDelegate;
-}
+#include "shared/browser/device/power_save_blocker.h"
+#include "shared/browser/oxide_browser_platform_integration_observer.h"
 
 namespace oxide {
 
-device::PowerSaveBlockerOxideDelegate* CreatePowerSaveBlocker(
-    device::PowerSaveBlocker::PowerSaveBlockerType type,
-    device::PowerSaveBlocker::Reason reason,
-    const std::string& description,
-    scoped_refptr<base::SequencedTaskRunner> ui_task_runner,
-    scoped_refptr<base::SingleThreadTaskRunner> blocking_task_runner);
+class PowerSaveBlockerUnity8 : public PowerSaveBlocker,
+                               public BrowserPlatformIntegrationObserver {
+ public:
+  PowerSaveBlockerUnity8();
+  ~PowerSaveBlockerUnity8() override;
+
+ private:
+  // BrowserPlatformIntegrationObserver
+  void ApplicationStateChanged() override;
+
+  class Core;
+  scoped_refptr<Core> core_;
+
+  DISALLOW_COPY_AND_ASSIGN(PowerSaveBlockerUnity8);
+};
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_POWER_SAVE_BLOCKER_H_
+#endif // _OXIDE_SHARED_BROWSER_DEVICE_POWER_SAVE_BLOCKER_UNITY8_H_
