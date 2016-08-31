@@ -47,7 +47,11 @@ class MockScreen : public QPlatformScreen {
   QRect availableGeometry() const override;
   int depth() const override;
   QImage::Format format() const override;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+  qreal pixelDensity() const override;
+#else
   qreal devicePixelRatio() const override;
+#endif
   Qt::ScreenOrientation nativeOrientation() const override;
   Qt::ScreenOrientation orientation() const override;
   QList<QPlatformScreen*> virtualSiblings() const override;

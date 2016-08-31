@@ -101,7 +101,11 @@ MockPlatformIntegration::MockPlatformIntegration()
   QCoreApplication::instance()->setProperty(kShimApiKey,
                                             QVariant::fromValue(&shim_));
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+  QWindowSystemInterface::setSynchronousWindowSystemEvents(true);
+#else
   QWindowSystemInterface::setSynchronousWindowsSystemEvents(true);
+#endif
 
   initializeScreens();
 }

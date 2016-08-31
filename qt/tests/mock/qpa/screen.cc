@@ -25,10 +25,6 @@
 
 #include "integration.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-# error "This code needs updating for changes to DPI handling in Qt 5.6"
-#endif
-
 QRect MockScreen::geometry() const {
   QRect geometry = geometry_;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
@@ -40,15 +36,26 @@ QRect MockScreen::geometry() const {
     geometry = QRect(geometry.topLeft(), geometry.size().transposed());
   }
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+  return geometry;
+#else
   // Qt < 5.6 expects scaled geometry from the platform plugin
   return QRect(geometry.topLeft(), geometry.size() / dpr_);
+#endif
 }
 
 QRect MockScreen::availableGeometry() const {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+  int l = work_area_in_screen_.x();
+  int r = (geometry_.width() - work_area_in_screen_.width() - work_area_in_screen_.x());
+  int t = work_area_in_screen_.y();
+  int b = (geometry_.height() - work_area_in_screen_.height() - work_area_in_screen_.y());
+#else
   int l = work_area_in_screen_.x() / dpr_;
   int r = (geometry_.width() - work_area_in_screen_.width() - work_area_in_screen_.x()) / dpr_;
   int t = work_area_in_screen_.y() / dpr_;
   int b = (geometry_.height() - work_area_in_screen_.height() - work_area_in_screen_.y()) / dpr_;
+#endif
 
   return geometry().adjusted(l, t, -r, -b);
 }
@@ -61,7 +68,11 @@ QImage::Format MockScreen::format() const {
   return format_;
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+qreal MockScreen::pixelDensity() const {
+#else
 qreal MockScreen::devicePixelRatio() const {
+#endif
   return dpr_;
 }
 

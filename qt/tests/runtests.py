@@ -128,9 +128,7 @@ class Runner(object):
           "--nss-db-path", os.path.join(OXIDESRC_DIR, "qt/tests/ssldata/nss"),
           "--tmpdir", tmpdir ])
     if "mock_qpa" in config and config["mock_qpa"]:
-      test_args.extend([
-          "-platformpluginpath", config["qt_plugin_path"],
-          "-platform", "mock_qpa"])
+      test_args.extend(["-platform", "mock_qpa"])
     if "single_process" in config and config["single_process"]:
       test_args.append("--single-process")
     if "exclude_list" in config and config["exclude_list"]:
