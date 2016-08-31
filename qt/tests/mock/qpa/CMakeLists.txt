@@ -20,6 +20,11 @@ include(FindPkgConfig)
 
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
+
+# Hack to disable this on Qt >= 5.6
+# see https://launchpad.net/bugs/1615832
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.6.0")
+
 pkg_check_modules(Qt5PlatformSupport REQUIRED Qt5PlatformSupport)
 
 set(Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS
@@ -51,3 +56,5 @@ set_target_properties(
     ${PLUGIN} PROPERTIES
     AUTOMOC TRUE
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../plugins/platforms)
+
+endif()

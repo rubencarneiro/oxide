@@ -149,10 +149,12 @@ add_qml_test(EXEC qmltest_core NAME qml-core-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/core)
 add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform)
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.6.0")
 add_qml_test(EXEC qmltest_web_platform_screen
              NAME qml-web-platform-screen-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform_screen
              MOCK_QPA)
+endif()
 add_qml_test(EXEC qmltest_crash NAME qml-crash-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
 add_qml_test(EXEC qmltest_api NAME qml-api-single-process-test
@@ -165,9 +167,11 @@ add_qml_test(EXEC qmltest_core NAME qml-core-single-process-test
              EXCLUDE_LIST ${CMAKE_CURRENT_SOURCE_DIR}/core/single-process.exclude)
 add_qml_test(EXEC qmltest_web_platform NAME qml-web-platform-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform SINGLE_PROCESS)
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.6.0")
 add_qml_test(EXEC qmltest_web_platform_screen
              NAME qml-web-platform-screen-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/web_platform_screen
              MOCK_QPA SINGLE_PROCESS)
+endif()
 add_qml_test(EXEC qmltest_crash NAME qml-crash-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash SINGLE_PROCESS)
