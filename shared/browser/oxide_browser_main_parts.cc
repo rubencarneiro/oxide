@@ -27,7 +27,6 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "device/geolocation/geolocation_provider.h"
-#include "device/power_save_blocker/power_save_blocker.h"
 #include "EGL/egl.h"
 #include "gpu/config/gpu_driver_bug_workaround_type.h"
 #include "gpu/ipc/service/gpu_service_shim_oxide.h"
@@ -44,6 +43,7 @@
 
 #include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/device/oxide_device_client.h"
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_net_resource_provider.h"
 #include "shared/gpu/oxide_gl_context_dependent.h"
@@ -56,7 +56,6 @@
 #include "oxide_io_thread.h"
 #include "oxide_lifecycle_observer.h"
 #include "oxide_message_pump.h"
-#include "oxide_power_save_blocker.h"
 #include "oxide_render_process_initializer.h"
 #include "oxide_web_contents_view.h"
 #include "screen.h"
@@ -240,7 +239,6 @@ class Screen : public ::display::Screen {
 
 void BrowserMainParts::PreEarlyInitialization() {
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
-  device::PowerSaveBlocker::SetOxideDelegateFactory(CreatePowerSaveBlocker);
 #if defined(OS_LINUX)
   media::SetVideoCaptureDeviceFactoryOverrideDelegate(
       OverrideVideoCaptureDeviceFactory);
@@ -273,6 +271,8 @@ int BrowserMainParts::PreCreateThreads() {
     // see https://launchpad.net/bugs/1267893.
     gl::init::InitializeGLOneOff();
   }
+
+  device_client_.reset(new DeviceClient());
 
   primary_screen_.reset(new display::Screen());
   ::display::Screen::SetScreenInstance(primary_screen_.get());
@@ -349,6 +349,8 @@ void BrowserMainParts::PostDestroyThreads() {
       PROCESS_MODEL_SINGLE_PROCESS) {
     BrowserContext::AssertNoContextsExist();
   }
+
+  device_client_.reset();
 
   display::Screen::SetScreenInstance(nullptr);
   io_thread_.reset();

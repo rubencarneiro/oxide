@@ -16,7 +16,6 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-include(FindPkgConfig)
 include(PackageConfigHelper)
 
 set(OXIDE_MOCK_QTPLUGIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/tests/mock/plugins)
@@ -34,10 +33,7 @@ if(ENABLE_TESTS)
   find_package(Qt5Positioning REQUIRED)
   find_package(Qt5Test REQUIRED)
   find_package(Qt5QuickTest REQUIRED)
-  pkg_check_modules(Qt5PlatformSupport REQUIRED Qt5PlatformSupport)
-  set(Qt5PlatformSupport_PRIVATE_INCLUDE_DIRS
-      ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}
-      ${Qt5PlatformSupport_INCLUDEDIR}/QtPlatformSupport/${Qt5PlatformSupport_VERSION}/QtPlatformSupport)
+  find_package(Qt5PlatformSupport REQUIRED)
 endif()
 
 configure_file(
@@ -98,7 +94,7 @@ if(ENABLE_TESTS)
   add_test(NAME qt_unittests
            COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_unittests)
   add_test(NAME qt_screen_unittests
-           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_screen_unittests -platformpluginpath ${OXIDE_MOCK_QTPLUGIN_DIR} -platform mock_qpa --single-process-tests)
+           COMMAND ${CHROMIUM_PRODUCT_DIR}/oxide_qt_screen_unittests --qt-plugin-path=${OXIDE_MOCK_QTPLUGIN_DIR} -platform mock_qpa --single-process-tests)
   add_subdirectory(tests)
 endif()
 

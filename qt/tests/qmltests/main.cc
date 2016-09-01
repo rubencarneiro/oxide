@@ -511,13 +511,17 @@ int main(int argc, char** argv) {
     qFatal("Didn't specify a test name!");
   }
 
+  if (!options.plugin_path.isEmpty()) {
+    QCoreApplication::addLibraryPath(options.plugin_path);
+  }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
   QGuiApplication app(argc, argv);
 
   if (!options.nss_db_path.isEmpty()) {
     oxideSetNSSDbPath(options.nss_db_path);
-  }
-  if (!options.plugin_path.isEmpty()) {
-    app.addLibraryPath(options.plugin_path);
   }
   if (options.single_process) {
     oxideSetProcessModel(OxideProcessModelSingleProcess);
