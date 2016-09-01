@@ -1305,8 +1305,7 @@ gfx::Size WebView::GetCompositorFrameViewportSize() {
 }
 
 float WebView::GetLocationBarOffset() const {
-  return GetLocationBarContentOffset() -
-         compositor_frame_metadata().top_controls_height;
+  return GetLocationBarContentOffset() - GetLocationBarHeight();
 }
 
 float WebView::GetLocationBarContentOffset() const {
