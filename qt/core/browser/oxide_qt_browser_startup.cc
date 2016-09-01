@@ -180,6 +180,8 @@ void BrowserStartup::EnsureChromiumStarted() {
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(primary_screen->size()),
                                           primary_screen);
 
+  params.argv0 = QCoreApplication::arguments()[0].toStdString();
+
   oxide::BrowserProcessMain::GetInstance()->Start(std::move(params));
 
   qAddPostRoutine(ShutdownChromium);

@@ -19,6 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_BROWSER_PROCESS_MAIN_H_
 
 #include <memory>
+#include <string>
 
 #include "base/files/file_path.h"
 #include "base/macros.h"
@@ -67,6 +68,7 @@ class OXIDE_SHARED_EXPORT BrowserProcessMain {
     gl::GLImplementation gl_implementation;
     ProcessModel process_model;
     gfx::Size primary_screen_size;
+    std::string argv0;
   };
 
   virtual ~BrowserProcessMain();

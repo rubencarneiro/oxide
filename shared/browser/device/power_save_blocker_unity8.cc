@@ -23,6 +23,7 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
+#include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
 #include "dbus/object_path.h"
@@ -104,6 +105,8 @@ void PowerSaveBlockerUnity8::Core::ApplyBlockOnFileThread() {
 }
 
 void PowerSaveBlockerUnity8::Core::RemoveBlockOnFileThread() {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::FILE);
+
   if (cookie_ != kInvalidCookie) {
     DCHECK(bus_.get());
     scoped_refptr<dbus::ObjectProxy> object_proxy =

@@ -261,11 +261,17 @@ base::FilePath GetSharedMemoryPath(base::Environment* env) {
 }
 #endif
 
-void InitializeCommandLine(const base::FilePath& subprocess_path,
+void InitializeCommandLine(const std::string& argv0,
+                           const base::FilePath& subprocess_path,
                            ProcessModel process_model,
                            gl::GLImplementation gl_impl,
                            base::Environment* env) {
-  CHECK(base::CommandLine::Init(0, nullptr)) <<
+  const char* argv0_c = nullptr;
+  if (!argv0.empty()) {
+    argv0_c = argv0.c_str();
+  }
+  CHECK(base::CommandLine::Init(argv0_c ? 1 : 0,
+                                argv0_c ? &argv0_c : nullptr)) <<
       "CommandLine already exists. Did you call BrowserProcessMain::Start "
       "in a child process?";
 
@@ -428,16 +434,9 @@ BrowserProcessMain::StartParams::StartParams(
       gl_implementation(gl::kGLImplementationNone),
       process_model(PROCESS_MODEL_MULTI_PROCESS) {}
 
-BrowserProcessMain::StartParams::~StartParams() {}
+BrowserProcessMain::StartParams::~StartParams() = default;
 
-BrowserProcessMain::StartParams::StartParams(StartParams&& other)
-    : delegate(std::move(other.delegate)),
-#if defined(OS_LINUX)
-      nss_db_path(std::move(other.nss_db_path)),
-#endif
-      gl_implementation(std::move(other.gl_implementation)),
-      process_model(std::move(other.process_model)),
-      primary_screen_size(std::move(other.primary_screen_size)) {}
+BrowserProcessMain::StartParams::StartParams(StartParams&& other) = default;
 
 BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
@@ -478,7 +477,8 @@ void BrowserProcessMainImpl::Start(StartParams params) {
   std::unique_ptr<base::Environment> env = base::Environment::Create();
 
   base::FilePath subprocess_exe = GetSubprocessPath(env.get());
-  InitializeCommandLine(subprocess_exe,
+  InitializeCommandLine(params.argv0,
+                        subprocess_exe,
                         process_model_,
                         params.gl_implementation,
                         env.get());
