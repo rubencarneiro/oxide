@@ -456,19 +456,19 @@ content::WebContents* WebView::OpenURLFromTab(
   //  3) CURRENT_TAB navigations in new webviews. Asking the embedder whether
   //     to proceed is done via NavigationInterceptResourceThrottle
 
-  if (params.disposition != CURRENT_TAB &&
-      params.disposition != NEW_FOREGROUND_TAB &&
-      params.disposition != NEW_BACKGROUND_TAB &&
-      params.disposition != NEW_POPUP &&
-      params.disposition != NEW_WINDOW) {
+  if (params.disposition != WindowOpenDisposition::CURRENT_TAB &&
+      params.disposition != WindowOpenDisposition::NEW_FOREGROUND_TAB &&
+      params.disposition != WindowOpenDisposition::NEW_BACKGROUND_TAB &&
+      params.disposition != WindowOpenDisposition::NEW_POPUP &&
+      params.disposition != WindowOpenDisposition::NEW_WINDOW) {
     return nullptr;
   }
 
   // Block popups
-  if ((params.disposition == NEW_FOREGROUND_TAB ||
-       params.disposition == NEW_BACKGROUND_TAB ||
-       params.disposition == NEW_WINDOW ||
-       params.disposition == NEW_POPUP) &&
+  if ((params.disposition == WindowOpenDisposition::NEW_FOREGROUND_TAB ||
+       params.disposition == WindowOpenDisposition::NEW_BACKGROUND_TAB ||
+       params.disposition == WindowOpenDisposition::NEW_WINDOW ||
+       params.disposition == WindowOpenDisposition::NEW_POPUP) &&
       !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
     return nullptr;
   }
@@ -477,12 +477,13 @@ content::WebContents* WebView::OpenURLFromTab(
 
   // If we can't create new windows, this should be a CURRENT_TAB navigation
   // in the top-level frame
-  if (!CanCreateWindows() && disposition != CURRENT_TAB) {
-    disposition = CURRENT_TAB;
+  if (!CanCreateWindows() &&
+      disposition != WindowOpenDisposition::CURRENT_TAB) {
+    disposition = WindowOpenDisposition::CURRENT_TAB;
   }
 
   // Handle the CURRENT_TAB case now
-  if (disposition == CURRENT_TAB) {
+  if (disposition == WindowOpenDisposition::CURRENT_TAB) {
     // XXX: We have no way to propagate OpenURLParams::user_gesture here, so
     // ResourceRequestInfo::HasUserGesture will always return false in
     // NavigationInterceptResourceThrottle
@@ -503,7 +504,7 @@ content::WebContents* WebView::OpenURLFromTab(
   // Coerce all non CURRENT_TAB navigations that don't come from a user
   // gesture to NEW_POPUP
   if (!params.user_gesture) {
-    disposition = NEW_POPUP;
+    disposition = WindowOpenDisposition::NEW_POPUP;
   }
 
   // Give the application a chance to block the navigation if it is
@@ -522,7 +523,8 @@ content::WebContents* WebView::OpenURLFromTab(
       GetBrowserContext(),
       opener_suppressed ? nullptr : web_contents_->GetSiteInstance());
   contents_params.initial_size = GetViewSizeDip();
-  contents_params.initially_hidden = disposition == NEW_BACKGROUND_TAB;
+  contents_params.initially_hidden =
+      disposition == WindowOpenDisposition::NEW_BACKGROUND_TAB;
   contents_params.opener_render_process_id =
       web_contents_->GetRenderProcessHost()->GetID();
   // XXX(chrisccoulson): This is probably wrong, but we're going to revisit
@@ -595,10 +597,10 @@ bool WebView::ShouldCreateWebContents(
     bool user_gesture) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  if (disposition != NEW_FOREGROUND_TAB &&
-      disposition != NEW_BACKGROUND_TAB &&
-      disposition != NEW_POPUP &&
-      disposition != NEW_WINDOW) {
+  if (disposition != WindowOpenDisposition::NEW_FOREGROUND_TAB &&
+      disposition != WindowOpenDisposition::NEW_BACKGROUND_TAB &&
+      disposition != WindowOpenDisposition::NEW_POPUP &&
+      disposition != WindowOpenDisposition::NEW_WINDOW) {
     return false;
   }
 
@@ -610,7 +612,7 @@ bool WebView::ShouldCreateWebContents(
 
   return client_->ShouldHandleNavigation(
       target_url,
-      user_gesture ? disposition : NEW_POPUP,
+      user_gesture ? disposition : WindowOpenDisposition::NEW_POPUP,
       user_gesture);
 }
 
@@ -642,10 +644,11 @@ void WebView::AddNewContents(content::WebContents* source,
                              bool user_gesture,
                              bool* was_blocked) {
   DCHECK_VALID_SOURCE_CONTENTS
-  DCHECK(disposition == NEW_FOREGROUND_TAB ||
-         disposition == NEW_BACKGROUND_TAB ||
-         disposition == NEW_POPUP ||
-         disposition == NEW_WINDOW) << "Invalid disposition";
+  DCHECK(disposition == WindowOpenDisposition::NEW_FOREGROUND_TAB ||
+         disposition == WindowOpenDisposition::NEW_BACKGROUND_TAB ||
+         disposition == WindowOpenDisposition::NEW_POPUP ||
+         disposition == WindowOpenDisposition::NEW_WINDOW) <<
+             "Invalid disposition";
   DCHECK_EQ(GetBrowserContext(),
             BrowserContext::FromContent(new_contents->GetBrowserContext()));
 
@@ -656,9 +659,10 @@ void WebView::AddNewContents(content::WebContents* source,
   std::unique_ptr<content::WebContents> contents(new_contents);
 
   WebView* new_view =
-      client_->CreateNewWebView(initial_pos,
-                                user_gesture ? disposition : NEW_POPUP,
-                                std::move(contents));
+      client_->CreateNewWebView(
+          initial_pos,
+          user_gesture ? disposition : WindowOpenDisposition::NEW_POPUP,
+          std::move(contents));
   if (!new_view) {
     return;
   }
@@ -1477,7 +1481,7 @@ bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
   }
 
   return client_->ShouldHandleNavigation(url,
-                                         CURRENT_TAB,
+                                         WindowOpenDisposition::CURRENT_TAB,
                                          has_user_gesture);
 }
 

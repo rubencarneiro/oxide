@@ -524,19 +524,19 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   OxideQNavigationRequest::Disposition d = OxideQNavigationRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case CURRENT_TAB:
+    case WindowOpenDisposition::CURRENT_TAB:
       d = OxideQNavigationRequest::DispositionCurrentTab;
       break;
-    case NEW_FOREGROUND_TAB:
+    case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNavigationRequest::DispositionNewForegroundTab;
       break;
-    case NEW_BACKGROUND_TAB:
+    case WindowOpenDisposition::NEW_BACKGROUND_TAB:
       d = OxideQNavigationRequest::DispositionNewBackgroundTab;
       break;
-    case NEW_POPUP:
+    case WindowOpenDisposition::NEW_POPUP:
       d = OxideQNavigationRequest::DispositionNewPopup;
       break;
-    case NEW_WINDOW:
+    case WindowOpenDisposition::NEW_WINDOW:
       d = OxideQNavigationRequest::DispositionNewWindow;
       break;
     default:
@@ -558,19 +558,19 @@ oxide::WebView* WebView::CreateNewWebView(
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case CURRENT_TAB:
+    case WindowOpenDisposition::CURRENT_TAB:
       d = OxideQNewViewRequest::DispositionCurrentTab;
       break;
-    case NEW_FOREGROUND_TAB:
+    case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNewViewRequest::DispositionNewForegroundTab;
       break;
-    case NEW_BACKGROUND_TAB:
+    case WindowOpenDisposition::NEW_BACKGROUND_TAB:
       d = OxideQNewViewRequest::DispositionNewBackgroundTab;
       break;
-    case NEW_POPUP:
+    case WindowOpenDisposition::NEW_POPUP:
       d = OxideQNewViewRequest::DispositionNewPopup;
       break;
-    case NEW_WINDOW:
+    case WindowOpenDisposition::NEW_WINDOW:
       d = OxideQNewViewRequest::DispositionNewWindow;
       break;
     default:
