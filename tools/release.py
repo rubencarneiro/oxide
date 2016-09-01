@@ -52,6 +52,7 @@ TAR_EXCLUDE_CONTENTS_PATHS = [
 # Paths matching any of these entries will be excluded from the tarball
 TAR_EXCLUDE_PATHS = [
   'breakpad/src/processor/testdata',
+  'buildtools',
   'chrome/common/extensions/docs',
   'courgette/testdata',
   'native_client/src/trusted/service_runtime/testdata',
