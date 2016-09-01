@@ -37,15 +37,6 @@ std::unique_ptr<PowerSaveBlocker> PowerSaveBlocker::Create(
     const std::string& description) {
   std::unique_ptr<base::Environment> env = base::Environment::Create();
 
-  // This is kind of hacky - there's no way to identify that we're running on
-  // Unity 8, so we just assume that we are if QT_QPA_PLATFORM is set to
-  // "ubuntumirclient"
-  std::string qt_qpa_platform;
-  if (env->GetVar("QT_QPA_PLATFORM", &qt_qpa_platform) &&
-      qt_qpa_platform == "ubuntumirclient") {
-    return base::MakeUnique<PowerSaveBlockerUnity8>();
-  }
-
   base::nix::DesktopEnvironment de =
       base::nix::GetDesktopEnvironment(env.get());
   switch (de) {
@@ -56,10 +47,22 @@ std::unique_ptr<PowerSaveBlocker> PowerSaveBlocker::Create(
     case base::nix::DESKTOP_ENVIRONMENT_XFCE:
       // FIXME: Unity and Gnome don't support the FDO interface
       return base::MakeUnique<PowerSaveBlockerFDO>(type, description);
-    case base::nix::DESKTOP_ENVIRONMENT_OTHER:
+    case base::nix::DESKTOP_ENVIRONMENT_OTHER: {
+      // This is kind of hacky - there's no way to identify that we're running on
+      // Unity 8, so we just assume that we are if QT_QPA_PLATFORM is set to
+      // "ubuntumirclient"
+      std::string qt_qpa_platform;
+      if (env->GetVar("QT_QPA_PLATFORM", &qt_qpa_platform) &&
+          qt_qpa_platform == "ubuntumirclient") {
+        return base::MakeUnique<PowerSaveBlockerUnity8>();
+      }
+      return nullptr;
+    }
     case base::nix::DESKTOP_ENVIRONMENT_KDE3:
       return nullptr;
   }
+
+  return nullptr;
 }
 
 } // namespace oxide
