@@ -160,8 +160,6 @@ void ContentRendererClient::OverrideCompositorSettings(
     settings->scrollbar_fade_resize_delay_ms = 2000;
     settings->scrollbar_fade_duration_ms = 300;
   }
-
-  settings->use_external_begin_frame_source = false;
 }
 
 std::string ContentRendererClient::GetUserAgentOverrideForURL(

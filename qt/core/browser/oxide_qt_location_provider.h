@@ -24,14 +24,14 @@
 #include "base/memory/weak_ptr.h"
 #include "base/threading/non_thread_safe.h"
 #include "device/geolocation/geoposition.h"
-#include "device/geolocation/location_provider_base.h"
+#include "device/geolocation/location_provider.h"
 
 namespace oxide {
 namespace qt {
 
 class LocationSourceProxy;
 
-class LocationProvider : public device::LocationProviderBase,
+class LocationProvider : public device::LocationProvider,
                          public base::NonThreadSafe,
                          public base::SupportsWeakPtr<LocationProvider> {
  public:
@@ -42,6 +42,8 @@ class LocationProvider : public device::LocationProviderBase,
   friend class LocationSourceProxy;
 
   // device::LocationProvider implementation
+  void SetUpdateCallback(
+      const LocationProviderUpdateCallback& callback) override;
   bool StartProvider(bool high_accuracy) override;
   void StopProvider() override;
   const device::Geoposition& GetPosition() override;
@@ -49,6 +51,7 @@ class LocationProvider : public device::LocationProviderBase,
 
   void NotifyPositionUpdated(const device::Geoposition& position);
 
+  LocationProviderUpdateCallback callback_;
   bool running_;
   bool is_permission_granted_;
   scoped_refptr<LocationSourceProxy> source_;

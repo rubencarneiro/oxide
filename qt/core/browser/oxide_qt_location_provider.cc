@@ -297,6 +297,11 @@ void LocationSourceProxy::RequestUpdate() const {
   }
 }
 
+void LocationProvider::SetUpdateCallback(
+    const LocationProviderUpdateCallback& callback) {
+  callback_ = callback;
+}
+
 bool LocationProvider::StartProvider(bool high_accuracy) {
   DCHECK(CalledOnValidThread());
 
@@ -361,7 +366,11 @@ void LocationProvider::NotifyPositionUpdated(
     return;
   }
 
-  NotifyCallback(position_);
+  if (callback_.is_null()) {
+    return;
+  }
+
+  callback_.Run(this, position_);
 }
 
 LocationProvider::LocationProvider() :
