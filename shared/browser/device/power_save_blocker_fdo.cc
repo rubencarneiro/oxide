@@ -20,15 +20,16 @@
 #include <memory>
 
 #include "base/bind.h"
+#include "base/command_line.h"
+#include "base/files/file_path.h"
 #include "base/location.h"
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
+#include "content/public/browser/browser_thread.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
 #include "dbus/object_path.h"
 #include "dbus/object_proxy.h"
-
-#include "shared/browser/oxide_browser_platform_integration.h"
 
 namespace oxide {
 
@@ -60,8 +61,6 @@ class PowerSaveBlockerFDO::Core : public base::RefCountedThreadSafe<Core> {
   device::PowerSaveBlocker::PowerSaveBlockerType type_;
   std::string description_;
 
-  std::string application_name_;
-
   scoped_refptr<dbus::Bus> bus_;
 
   uint32_t cookie_;
@@ -92,7 +91,8 @@ void PowerSaveBlockerFDO::Core::ApplyBlock() {
                                          "Inhibit");
 
   dbus::MessageWriter message_writer(method_call.get());
-  message_writer.AppendString(application_name_);
+  message_writer.AppendString(
+      base::CommandLine::ForCurrentProcess()->GetProgram().value());
   message_writer.AppendString(description_);
 
   std::unique_ptr<dbus::Response> response =
@@ -135,9 +135,6 @@ void PowerSaveBlockerFDO::Core::RemoveBlock() {
 }
 
 void PowerSaveBlockerFDO::Core::Init() {
-  application_name_ =
-      BrowserPlatformIntegration::GetInstance()->GetApplicationName();
-
   content::BrowserThread::PostTask(content::BrowserThread::FILE,
                                    FROM_HERE,
                                    base::Bind(&Core::ApplyBlock, this));

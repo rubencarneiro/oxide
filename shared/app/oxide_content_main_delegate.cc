@@ -58,6 +58,7 @@ bool ContentMainDelegate::BasicStartupComplete(int* exit_code) {
   content_client_.reset(new ContentClient());
   content::SetContentClient(content_client_.get());
   RegisterPathProvider();
+  InitVLogging();
 
   return false;
 }
@@ -150,6 +151,12 @@ ContentMainDelegate::CreateContentUtilityClient() {
   content_utility_client_.reset(new content::ContentUtilityClient());
 
   return content_utility_client_.get();
+}
+
+void ContentMainDelegate::InitVLogging() {
+  logging::LoggingSettings settings;
+  settings.logging_dest = logging::LOG_TO_SYSTEM_DEBUG_LOG;
+  logging::InitLogging(settings);
 }
 
 } // namespace oxide

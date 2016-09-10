@@ -32,6 +32,8 @@
 
 namespace oxide {
 
+#if defined(ENABLE_HYBRIS)
+
 class FakeHybrisUtils : public HybrisUtils {
  public:
   FakeHybrisUtils(bool has_properties)
@@ -55,6 +57,8 @@ class FakeHybrisUtils : public HybrisUtils {
 
   bool has_properties_;
 };
+
+#endif
 
 class FakeScreen : public Screen {
  public:
@@ -188,6 +192,7 @@ TEST_F(ScreenTest, ScreenDeleted) {
 }
 
 TEST_F(ScreenTest, GetShellMode) {
+#if defined(ENABLE_HYBRIS)
   {
     FakeHybrisUtils hybris_utils(false);
     EXPECT_EQ(ShellMode::Windowed, Screen::GetShellMode());
@@ -197,9 +202,13 @@ TEST_F(ScreenTest, GetShellMode) {
     FakeHybrisUtils hybris_utils(true);
     EXPECT_EQ(ShellMode::NonWindowed, Screen::GetShellMode());
   }
+#else
+  EXPECT_EQ(ShellMode::Windowed, Screen::GetShellMode());
+#endif
 }
 
 TEST_F(ScreenTest, GetDisplayFormFactor) {
+#if defined(ENABLE_HYBRIS)
   {
     FakeHybrisUtils hybris_utils(false);
     EXPECT_EQ(DisplayFormFactor::Monitor,
@@ -217,6 +226,13 @@ TEST_F(ScreenTest, GetDisplayFormFactor) {
     EXPECT_EQ(DisplayFormFactor::Monitor,
               Screen::GetInstance()->GetDisplayFormFactor(display::Display(2)));
   }
+#else
+  EXPECT_EQ(DisplayFormFactor::Monitor,
+            Screen::GetInstance()->GetDisplayFormFactor(
+                Screen::GetInstance()->GetPrimaryDisplay()));
+  EXPECT_EQ(DisplayFormFactor::Monitor,
+            Screen::GetInstance()->GetDisplayFormFactor(display::Display(2)));
+#endif
 }
 
 } // namespace oxide

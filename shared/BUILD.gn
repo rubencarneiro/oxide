@@ -171,7 +171,6 @@ component("shared") {
     "//base",
     "//base:base_static",
     "//base:i18n",
-    "//build/linux/libpci",
     "//cc",
     "//cc/surfaces",
     "//components/devtools_http_handler",
@@ -208,7 +207,6 @@ component("shared") {
     "//services/shell/public/cpp",
     "//skia",
     "//storage/common",
-    "//third_party/libXNVCtrl",
     "//third_party/WebKit/public:blink",
     "//ui/base",
     "//ui/base/ime:text_input_types",
@@ -219,7 +217,6 @@ component("shared") {
     "//ui/gfx/geometry",
     "//ui/gfx/range",
     "//ui/gfx/ipc/geometry",
-    "//ui/gfx/x",
     "//ui/gl",
     "//ui/gl/init",
     "//ui/native_theme",
@@ -276,12 +273,8 @@ component("shared") {
     "browser/device/oxide_device_client.h",
     "browser/device/oxide_power_save_blocker_service.cc",
     "browser/device/oxide_power_save_blocker_service.h",
-    "browser/device/power_save_blocker_fdo.cc",
-    "browser/device/power_save_blocker_fdo.h",
     "browser/device/power_save_blocker.h",
     "browser/device/power_save_blocker_linux.cc",
-    "browser/device/power_save_blocker_unity8.cc",
-    "browser/device/power_save_blocker_unity8.h",
     "browser/display_form_factor.h",
     "browser/input/oxide_ime_bridge.cc",
     "browser/input/oxide_ime_bridge.h",
@@ -550,7 +543,19 @@ component("shared") {
   ]
 
   if (is_linux) {
-    deps += [ "//dbus" ]
+    deps += [
+      "//build/linux/libpci",
+      "//dbus",
+      "//third_party/libXNVCtrl",
+      "//ui/gfx/x",
+    ]
+
+    sources += [
+      "browser/device/power_save_blocker_fdo.cc",
+      "browser/device/power_save_blocker_fdo.h",
+      "browser/device/power_save_blocker_unity8.cc",
+      "browser/device/power_save_blocker_unity8.h",
+    ]
   }
 
   if (enable_plugins) {

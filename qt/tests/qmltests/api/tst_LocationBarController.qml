@@ -84,6 +84,9 @@ Item {
       var good = Math.abs(l.contentOffset - l.offset - l.height) <= 1;
       qtest_hadGoodUpdate |= good;
       if (qtest_hadGoodUpdate) {
+        if (!good) {
+          console.log("Bad properties, contentOffset: " + l.contentOffset + ", offset: " + l.offset + ", height: " + l.height);
+        }
         qtest_inconsistentPropertiesSeen |= !good
       }
 
