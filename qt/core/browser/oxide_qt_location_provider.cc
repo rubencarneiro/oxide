@@ -297,6 +297,11 @@ void LocationSourceProxy::RequestUpdate() const {
   }
 }
 
+void LocationProvider::SetUpdateCallback(
+    const LocationProviderUpdateCallback& callback) {
+  callback_ = callback;
+}
+
 bool LocationProvider::StartProvider(bool high_accuracy) {
   DCHECK(CalledOnValidThread());
 
@@ -334,19 +339,10 @@ void LocationProvider::StopProvider() {
   source_->StopUpdates();
 }
 
-void LocationProvider::GetPosition(device::Geoposition* position) {
-  DCHECK(CalledOnValidThread());
-  DCHECK(position);
-
-  *position = position_;
-}
-
-void LocationProvider::RequestRefresh() {
+const device::Geoposition& LocationProvider::GetPosition() {
   DCHECK(CalledOnValidThread());
 
-  if (is_permission_granted_ && running_) {
-    source_->RequestUpdate();
-  }
+  return position_;
 }
 
 void LocationProvider::OnPermissionGranted() {
@@ -370,7 +366,11 @@ void LocationProvider::NotifyPositionUpdated(
     return;
   }
 
-  NotifyCallback(position_);
+  if (callback_.is_null()) {
+    return;
+  }
+
+  callback_.Run(this, position_);
 }
 
 LocationProvider::LocationProvider() :

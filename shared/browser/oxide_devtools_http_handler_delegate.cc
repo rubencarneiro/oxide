@@ -34,18 +34,8 @@ std::string DevtoolsHttpHandlerDelegate::GetFrontendResource(
   return content::DevToolsFrontendHost::GetFrontendResource(path).as_string();
 }
 
-std::string DevtoolsHttpHandlerDelegate::GetPageThumbnailData(const GURL& url) {
-  return std::string();
-}
+DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() = default;
 
-content::DevToolsExternalAgentProxyDelegate*
-DevtoolsHttpHandlerDelegate::HandleWebSocketConnection(
-    const std::string& path) {
-  return nullptr;
-}
-
-DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() {}
-
-DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() {}
+DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() = default;
 
 }
