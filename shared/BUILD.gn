@@ -173,7 +173,6 @@ component("shared") {
     "//base:i18n",
     "//cc",
     "//cc/surfaces",
-    "//components/devtools_http_handler",
     "//components/keyed_service/content",
     "//components/keyed_service/core",
     "//components/sessions",
@@ -322,8 +321,8 @@ component("shared") {
     "browser/oxide_content_browser_client.cc",
     "browser/oxide_content_browser_client.h",
     "browser/oxide_content_types.h",
-    "browser/oxide_devtools_http_handler_delegate.cc",
-    "browser/oxide_devtools_http_handler_delegate.h",
+    "browser/oxide_devtools_manager_delegate.cc",
+    "browser/oxide_devtools_manager_delegate.h",
     "browser/oxide_devtools_manager.cc",
     "browser/oxide_devtools_manager.h",
     "browser/oxide_download_manager_delegate.cc",
@@ -660,8 +659,6 @@ source_set("shared_testutils") {
 
   sources = [
     "test/mock_screen_observer.h",
-    "test/oxide_mock_cert_store.cc",
-    "test/oxide_mock_cert_store.h",
     "test/oxide_test_browser_thread_bundle.cc",
     "test/oxide_test_browser_thread_bundle.h",
     "test/oxide_test_suite.cc",

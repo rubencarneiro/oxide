@@ -37,7 +37,7 @@ gfx::NativeWindow TestWebContentsView::GetTopLevelNativeWindow() const {
 }
 
 void TestWebContentsView::GetScreenInfo(
-    blink::WebScreenInfo* web_screen_info) const {}
+    content::ScreenInfo* screen_info) const {}
 
 void TestWebContentsView::GetContainerBounds(gfx::Rect* out) const {
   *out = gfx::Rect(size_);

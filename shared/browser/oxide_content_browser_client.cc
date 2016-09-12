@@ -50,6 +50,7 @@
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
+#include "oxide_devtools_manager_delegate.h"
 #include "oxide_quota_permission_context.h"
 #include "oxide_render_message_filter.h"
 #include "oxide_resource_dispatcher_host_delegate.h"
@@ -301,6 +302,11 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   if (view) {
     prefs->supports_multiple_windows = view->CanCreateWindows();
   }
+}
+
+content::DevToolsManagerDelegate*
+ContentBrowserClient::GetDevToolsManagerDelegate() {
+  return new DevToolsManagerDelegate();
 }
 
 void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(

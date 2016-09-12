@@ -212,7 +212,7 @@ GLuint GpuUtils::GetTextureFromMailbox(gpu::CommandBufferId command_buffer,
     return 0;
   }
 
-  gpu::gles2::Texture* texture =
+  gpu::gles2::TextureBase* texture =
       decoder->GetContextGroup()->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
     return 0;
@@ -230,7 +230,7 @@ EGLImageKHR GpuUtils::CreateEGLImageFromMailbox(
     return EGL_NO_IMAGE_KHR;
   }
 
-  gpu::gles2::Texture* texture =
+  gpu::gles2::TextureBase* texture =
       decoder->GetContextGroup()->mailbox_manager()->ConsumeTexture(mailbox);
   if (!texture) {
     return EGL_NO_IMAGE_KHR;

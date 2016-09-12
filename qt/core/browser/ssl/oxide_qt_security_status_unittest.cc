@@ -37,7 +37,6 @@
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
-#include "shared/test/oxide_mock_cert_store.h"
 #include "shared/test/oxide_test_browser_thread_bundle.h"
 
 #include "oxide_qt_security_status.h"
@@ -45,17 +44,14 @@
 namespace oxide {
 namespace qt {
 
-using oxide::MockCertStore;
 using oxide::TestBrowserThreadBundle;
 
 class SecurityStatusTest : public testing::Test {
  public:
   SecurityStatusTest();
 
-  int cert_id() const { return cert_id_; }
-  int expired_cert_id() const { return expired_cert_id_; }
-
-  content::CertStore* cert_store() { return &cert_store_; }
+  net::X509Certificate* cert() const { return cert_.get(); }
+  net::X509Certificate* expired_cert() const { return expired_cert_.get(); }
 
   OxideQSecurityStatus* status() const { return security_status_.get(); }
 
@@ -64,7 +60,6 @@ class SecurityStatusTest : public testing::Test {
  private:
   void SetUp() override;
 
-  MockCertStore cert_store_;
   TestBrowserThreadBundle browser_thread_bundle_;
   content::TestBrowserContext browser_context_;
   content::TestWebContentsFactory web_contents_factory_;
@@ -72,38 +67,32 @@ class SecurityStatusTest : public testing::Test {
   std::unique_ptr<OxideQSecurityStatus> security_status_;
   content::WebContents* web_contents_;
 
-  int cert_id_;
-  int expired_cert_id_;
+  scoped_refptr<net::X509Certificate> cert_;
+  scoped_refptr<net::X509Certificate> expired_cert_;
 };
 
 SecurityStatusTest::SecurityStatusTest()
-    : web_contents_(nullptr),
-      cert_id_(0),
-      expired_cert_id_(0) {}
+    : web_contents_(nullptr) {}
 
 void SecurityStatusTest::SetUp() {
   security_status_ = base::WrapUnique(OxideQSecurityStatusPrivate::Create());
   web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
   oxide::SecurityStatus::CreateForWebContents(web_contents_);
-  oxide::SecurityStatus::FromWebContents(web_contents_)->SetCertStoreForTesting(
-      &cert_store_);
 
   OxideQSecurityStatusPrivate::get(security_status_.get())->proxy()->Init(
       web_contents_);
 
-  scoped_refptr<net::X509Certificate> cert(
+  cert_ =
       new net::X509Certificate("https://www.google.com/",
                                "https://www.example.com/",
                                base::Time::UnixEpoch(),
-                               base::Time::Now() + base::TimeDelta::FromDays(1)));
-  cert_id_ = cert_store_.AddCertForTesting(cert.get());
+                               base::Time::Now() + base::TimeDelta::FromDays(1));
 
-  cert =
+  expired_cert_ =
       new net::X509Certificate("https://www.google.com/",
                                "https://www.example.com/",
                                base::Time::UnixEpoch(),
                                base::Time::Now() - base::TimeDelta::FromDays(1));
-  expired_cert_id_ = cert_store_.AddCertForTesting(cert.get());
 }
 
 TEST_F(SecurityStatusTest, Uninitialized) {
@@ -156,13 +145,10 @@ TEST_F(SecurityStatusTest, Secure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecure,
             status()->securityLevel());
@@ -173,7 +159,7 @@ TEST_F(SecurityStatusTest, Secure) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -186,14 +172,11 @@ TEST_F(SecurityStatusTest, Broken) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -205,7 +188,7 @@ TEST_F(SecurityStatusTest, Broken) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -218,14 +201,11 @@ TEST_F(SecurityStatusTest, RanInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -236,7 +216,7 @@ TEST_F(SecurityStatusTest, RanInsecure) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -249,14 +229,11 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelWarning,
             status()->securityLevel());
@@ -267,7 +244,7 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -280,16 +257,13 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status =
       content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
       content::SSLStatus::RAN_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -301,7 +275,7 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -314,14 +288,11 @@ TEST_F(SecurityStatusTest, MinorCertError) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelWarning,
             status()->securityLevel());
@@ -333,7 +304,7 @@ TEST_F(SecurityStatusTest, MinorCertError) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -346,14 +317,11 @@ TEST_F(SecurityStatusTest, SecureEV) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecureEV,
             status()->securityLevel());
@@ -364,7 +332,7 @@ TEST_F(SecurityStatusTest, SecureEV) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -595,11 +563,10 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   } else {
     ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   }
-  ssl_status.cert_id = row.expired_cert ? expired_cert_id() : cert_id();
+  ssl_status.certificate = row.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = row.cert_status_in;
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(ssl_status.cert_id, &cert));
+  scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -623,7 +590,7 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   EXPECT_EQ(QVariant::UserType, status()->certificate().type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(),
             status()->certificate().userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(expected_cert.get(),
             OxideQSslCertificateData::GetX509Certificate(
                 status()->certificate().value<OxideQSslCertificate>()));
 }
@@ -675,7 +642,7 @@ TEST_F(SecurityStatusTest, SecurityLevelUpdate) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -700,7 +667,7 @@ TEST_F(SecurityStatusTest, ContentStatusUpdate) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -726,7 +693,7 @@ TEST_F(SecurityStatusTest, CertStatusUpdate) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -752,7 +719,7 @@ TEST_F(SecurityStatusTest, CertUpdate) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -761,18 +728,15 @@ TEST_F(SecurityStatusTest, CertUpdate) {
   observer->connect(status(), SIGNAL(certificateChanged()),
                     SLOT(OnUpdate()));
 
-  ssl_status.cert_id = expired_cert_id();
+  ssl_status.certificate = expired_cert();
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
-
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(expired_cert_id(), &cert));
 
   EXPECT_EQ(1, observer->update_count);
   EXPECT_FALSE(observer->cert.isNull());
   EXPECT_EQ(QVariant::UserType, observer->cert.type());
   EXPECT_EQ(qMetaTypeId<OxideQSslCertificate>(), observer->cert.userType());
-  EXPECT_EQ(cert.get(),
+  EXPECT_EQ(expired_cert(),
             OxideQSslCertificateData::GetX509Certificate(
                 observer->cert.value<OxideQSslCertificate>()));
 }

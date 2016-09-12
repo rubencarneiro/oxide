@@ -36,6 +36,7 @@
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
+#include "cc/trees/layer_tree_host_interface.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
@@ -355,7 +356,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           nullptr));
 
   display_->Resize(layer_tree_host_->GetLayerTree()->device_viewport_size());
-  display_->SetVisible(layer_tree_host_->visible());
+  display_->SetVisible(layer_tree_host_->IsVisible());
 
   return std::move(surface);
 }
