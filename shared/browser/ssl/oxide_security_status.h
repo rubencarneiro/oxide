@@ -23,8 +23,8 @@
 #include "base/callback.h"
 #include "base/callback_list.h"
 #include "base/memory/ref_counted.h"
+#include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents_user_data.h"
-#include "content/public/common/ssl_status.h"
 
 #include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_shared_export.h"

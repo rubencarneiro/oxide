@@ -27,9 +27,9 @@
 #include "base/strings/string16.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/core/serialized_navigation_entry.h"
-#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
+#include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
@@ -123,7 +123,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
     BrowserContext* context;
     bool incognito;
     std::vector<sessions::SerializedNavigationEntry> restore_entries;
-    content::NavigationController::RestoreType restore_type;
+    content::RestoreType restore_type;
     int restore_index;
     gfx::Size initial_size;
     bool initially_hidden;
@@ -404,7 +404,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const content::LoadCommittedDetails& details,
       const content::FrameNavigateParams& params) override;
   void DidGetRedirectForResourceRequest(
-      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) override;
   void NavigationEntryCommitted(
       const content::LoadCommittedDetails& load_details) override;

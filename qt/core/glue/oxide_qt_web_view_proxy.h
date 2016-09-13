@@ -52,9 +52,9 @@ enum ContentTypeFlags {
 };
 
 enum RestoreType {
-  RESTORE_CURRENT_SESSION,
   RESTORE_LAST_SESSION_EXITED_CLEANLY,
   RESTORE_LAST_SESSION_CRASHED,
+  RESTORE_CURRENT_SESSION,
 };
 
 enum LocationBarMode {
