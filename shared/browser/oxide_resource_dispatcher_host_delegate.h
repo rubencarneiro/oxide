@@ -48,8 +48,6 @@ class ResourceDispatcherHostDelegate
   void DownloadStarting(
       net::URLRequest* request,
       content::ResourceContext* resource_context,
-      int child_id,
-      int route_id,
       bool is_content_initiated,
       bool must_download,
       ScopedVector<content::ResourceThrottle>* throttles) override;
@@ -64,8 +62,6 @@ class ResourceDispatcherHostDelegate
                                const bool use_prompt,
                                const content::Referrer& referrer,
                                const std::string& mime_type,
-                               int render_process_id,
-                               int render_view_id,
                                content::ResourceContext* resource_context,
                                net::URLRequest* url_request);
 

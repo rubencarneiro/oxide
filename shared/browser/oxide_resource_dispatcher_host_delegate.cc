@@ -54,16 +54,13 @@ struct ResourceDispatcherHostDelegate::DownloadRequestParams {
   bool use_prompt;
   GURL referrer;
   std::string mime_type;
-  int render_process_id;
-  int render_view_id;
   std::string user_agent;
+  content::ResourceRequestInfo::WebContentsGetter web_contents_getter;
 };
 
 void ResourceDispatcherHostDelegate::DownloadStarting(
     net::URLRequest* request,
     content::ResourceContext* resource_context,
-    int child_id,
-    int route_id,
     bool is_content_initiated,
     bool must_download,
     ScopedVector<content::ResourceThrottle>* throttles) {
@@ -109,8 +106,6 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
         false,
         referrer,
         mime_type,
-        child_id,
-        route_id,
         resource_context,
         request);
   }
@@ -124,8 +119,6 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
     const bool use_prompt,
     const content::Referrer& referrer,
     const std::string& mime_type,
-    int render_process_id,
-    int render_view_id,
     content::ResourceContext* resource_context,
     net::URLRequest* url_request) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
@@ -140,8 +133,9 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequest(
   params.use_prompt = use_prompt;
   params.referrer = referrer.url;
   params.mime_type = mime_type;
-  params.render_process_id = render_process_id;
-  params.render_view_id = render_view_id;
+  params.web_contents_getter =
+      content::ResourceRequestInfo::ForRequest(url_request)
+          ->GetWebContentsGetterForRequest();
 
   if (mime_type.empty()) {
     // XXX(oSoMoN): hack to ensure that downloading an image from the context
@@ -208,17 +202,18 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
                    params, cookies));
     return;
   }
-  content::RenderViewHost* rvh =
-      content::RenderViewHost::FromID(
-          params.render_process_id, params.render_view_id);
-  if (!rvh) {
-    LOG(ERROR) << "Invalid or non-existent render_process_id & render_view_id:"
-               << params.render_process_id << ", " << params.render_view_id
-               << "during download url delegate dispatch";
+
+  if (params.web_contents_getter.is_null()) {
     return;
   }
 
-  WebView* webview = WebView::FromRenderViewHost(rvh);
+  content::WebContents* contents = params.web_contents_getter.Run();
+  if (!contents) {
+    LOG(ERROR) << "No WebContents for download request";
+    return;
+  }
+
+  WebView* webview = WebView::FromWebContents(contents);
   if (!webview) {
     return;
   }
