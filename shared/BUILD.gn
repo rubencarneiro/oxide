@@ -185,7 +185,7 @@ component("shared") {
     "//content/public/utility",
     "//crypto",
     "//device/core",
-    "//device/geolocation:device_geolocation",
+    "//device/geolocation",
     "//device/power_save_blocker",
     "//device/vibration",
     "//device/vibration:mojo_bindings",
