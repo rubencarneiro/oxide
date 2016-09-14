@@ -298,7 +298,11 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
                                                  float location_bar_content_offset) {
   blink::WebMouseWheelEvent result;
 
-  result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
+  // The timestamp has be referenced to TimeTicks as ui::InputHandlerProxy uses
+  // this on the renderer side to compute a roundtrip delay.
+  result.timeStampSeconds =
+      (base::TimeTicks::Now() - base::TimeTicks()).InSecondsF();
+
   result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
 
   // In Chromium a wheel event is a type of mouse event, but this is not the
