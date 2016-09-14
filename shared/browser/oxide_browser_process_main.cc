@@ -581,7 +581,7 @@ void BrowserProcessMainImpl::Shutdown() {
 
   MessagePump::Get()->Stop();
 
-  WebContentsUnloader::GetInstance()->WaitForPendingUnloadsToFinish();
+  WebContentsUnloader::GetInstance()->Shutdown();
 
   if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
     // In single process mode, we do this check after destroying
