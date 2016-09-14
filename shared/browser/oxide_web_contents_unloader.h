@@ -20,7 +20,6 @@
 
 #include <memory>
 
-#include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/scoped_vector.h"
 #include "content/public/browser/web_contents_delegate.h"
@@ -49,9 +48,8 @@ class WebContentsUnloader : public content::WebContentsDelegate {
   // takes ownership of |contents| and deletes it when complete
   void Unload(std::unique_ptr<content::WebContents> contents);
 
-  // Creates a RunLoop and waits for all pending unloads to complete. This
-  // must not be called inside an existing Chromium event
-  void WaitForPendingUnloadsToFinish();
+  // Delete all WebContents that are currently closing
+  void Shutdown();
 
  private:
   friend class base::DefaultSingletonTraits<WebContentsUnloader>;
@@ -63,9 +61,6 @@ class WebContentsUnloader : public content::WebContentsDelegate {
 
   // The WebContents for which we are waiting to unload
   ScopedVector<content::WebContents> contents_unloading_;
-
-  // Closure to quit the wait loop created by WaitForPendingUnloadsToFinish
-  base::Closure wait_loop_quit_closure_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsUnloader);
 };

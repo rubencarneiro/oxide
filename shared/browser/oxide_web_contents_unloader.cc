@@ -21,8 +21,6 @@
 
 #include "base/logging.h"
 #include "base/memory/singleton.h"
-#include "base/message_loop/message_loop.h"
-#include "base/run_loop.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 
@@ -45,7 +43,7 @@ class WebContentsUnloaderObserver : public content::WebContentsObserver {
   }
 };
 
-WebContentsUnloader::WebContentsUnloader() {}
+WebContentsUnloader::WebContentsUnloader() = default;
 
 void WebContentsUnloader::CloseContents(content::WebContents* contents) {
   ScopedVector<content::WebContents>::iterator it =
@@ -55,17 +53,9 @@ void WebContentsUnloader::CloseContents(content::WebContents* contents) {
   DCHECK(it != contents_unloading_.end());
 
   contents_unloading_.erase(it);
-
-  if (contents_unloading_.size() != 0 || wait_loop_quit_closure_.is_null()) {
-    return;
-  }
-
-  wait_loop_quit_closure_.Run();
 }
 
-WebContentsUnloader::~WebContentsUnloader() {
-  DCHECK_EQ(contents_unloading_.size(), 0U);
-}
+WebContentsUnloader::~WebContentsUnloader() = default;
 
 // static
 WebContentsUnloader* WebContentsUnloader::GetInstance() {
@@ -94,17 +84,8 @@ void WebContentsUnloader::Unload(
   // Note: |c| might be deleted at this point
 }
 
-void WebContentsUnloader::WaitForPendingUnloadsToFinish() {
-  CHECK(!base::MessageLoop::current()->is_running());
-
-  if (contents_unloading_.empty()) {
-    return;
-  }
-
-  base::RunLoop wait_loop;
-  wait_loop_quit_closure_ = wait_loop.QuitClosure();
-
-  wait_loop.Run();
+void WebContentsUnloader::Shutdown() {
+  contents_unloading_.clear();
 }
 
 }
