@@ -36,14 +36,7 @@ class OXIDE_QTCORE_EXPORT OxideQLoadEvent {
   Q_PROPERTY(ErrorDomain errorDomain READ errorDomain CONSTANT)
   Q_PROPERTY(QString errorString READ errorString CONSTANT)
   Q_PROPERTY(int errorCode READ errorCode CONSTANT)
-  // The status code of the last known successful navigation.  If
-  // returns 0 that means that either:
-  //
-  //  - this navigation hasn't completed yet;
-  //  - a response wasn't received;
-  //  - or this navigation was restored and for some reason the
-  //    status code wasn't available.
-  //
+
   Q_PROPERTY(int httpStatusCode READ httpStatusCode CONSTANT)
 
   Q_PROPERTY(QUrl originalUrl READ originalUrl CONSTANT)

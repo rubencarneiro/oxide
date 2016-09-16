@@ -124,17 +124,76 @@ OxideQSslCertificate OxideQSslCertificateData::CreateForTesting(
   return Create(x509_cert.get());
 }
 
+/*!
+\class OxideQSslCertificate
+\inheaderfile oxideqsslcertificate.h
+\inmodule OxideQtCore
+
+\brief X.509 certificate
+
+OxideQSslCertificate represents a X.509 certificate provided by a remote server.
+
+Information about the subject of the certificate can be discovered by calling
+getSubjectInfo. Information about the issuer of the certificate (the entity
+that signed it) can be discovered by calling getIssuerInfo. For self-signed
+certificates, this will return the same as getSubjectInfo.
+
+For certificates that aren't self-signed, the issuer's certificate can be
+accessed via \l{issuer}.
+*/
+
+/*!
+\enum OxideQSslCertificate::PrincipalAttr
+
+This represents an issuer or subject field, which you can pass to
+getSubjectInfo or getIssuerInfo
+
+\value PrincipalAttrOrganizationName
+'O' - The name of the organization.
+
+\value PrincipalAttrCommonName
+'CN' - The Common Name. Generally used to store the host name.
+
+\value PrincipalAttrLocalityName
+'L' - The locality.
+
+\value PrincipalAttrOrganizationUnitName
+'OU' - The organizational unit name.
+
+\value PrincipalAttrCountryName
+'C' - The country name.
+
+\value PrincipalAttrStateOrProvinceName
+'ST' - The state or province name.
+*/
+
 OxideQSslCertificate::OxideQSslCertificate(
     const QSharedDataPointer<OxideQSslCertificateData>& dd)
     : d(dd) {}
 
+/*!
+\internal
+*/
+
 OxideQSslCertificate::OxideQSslCertificate()
     : d(new OxideQSslCertificateData()) {}
 
+/*!
+Destroys this certificate.
+*/
+
 OxideQSslCertificate::~OxideQSslCertificate() {}
+
+/*!
+Copy constructs a certificate from \a other.
+*/
 
 OxideQSslCertificate::OxideQSslCertificate(const OxideQSslCertificate& other)
     : d(other.d) {}
+
+/*!
+Assigns \a other to this certificate.
+*/
 
 OxideQSslCertificate OxideQSslCertificate::operator=(
     const OxideQSslCertificate& other) {
@@ -142,15 +201,30 @@ OxideQSslCertificate OxideQSslCertificate::operator=(
   return *this;
 }
 
+/*!
+Returns true if this certificate equals \a other. A certificate will only be
+equal to one that it was copied from.
+*/
+
 bool OxideQSslCertificate::operator==(
     const OxideQSslCertificate& other) const {
   return d == other.d;
 }
 
+/*!
+Returns true if this certificate does not equal \a other.
+*/
+
 bool OxideQSslCertificate::operator!=(
     const OxideQSslCertificate& other) const {
   return !(*this == other);
 }
+
+/*!
+Returns the serial number of this certificate as a hex encoded string.
+
+\sa QByteArray::toHex
+*/
 
 QString OxideQSslCertificate::serialNumber() const {
   if (!isValid()) {
@@ -163,6 +237,10 @@ QString OxideQSslCertificate::serialNumber() const {
   return QString::fromUtf8(ba.toHex());
 }
 
+/*!
+Returns the display name of the subject of this certificate.
+*/
+
 QString OxideQSslCertificate::subjectDisplayName() const {
   if (!isValid()) {
     return QString();
@@ -170,6 +248,10 @@ QString OxideQSslCertificate::subjectDisplayName() const {
 
   return QString::fromStdString(d->x509_cert_->subject().GetDisplayName());
 }
+
+/*!
+Returns the display name of the issuer of this certificate.
+*/
 
 QString OxideQSslCertificate::issuerDisplayName() const {
   if (!isValid()) {
@@ -179,6 +261,11 @@ QString OxideQSslCertificate::issuerDisplayName() const {
   return QString::fromStdString(d->x509_cert_->issuer().GetDisplayName());
 }
 
+/*!
+Returns the value of the field specified by \a attr for this certificate's
+subject.
+*/
+
 QStringList OxideQSslCertificate::getSubjectInfo(PrincipalAttr attr) const {
   if (!isValid()) {
     return QStringList();
@@ -186,6 +273,11 @@ QStringList OxideQSslCertificate::getSubjectInfo(PrincipalAttr attr) const {
 
   return GetPrincipalValue(d->x509_cert_->subject(), attr);
 }
+
+/*!
+Returns the value of the field specified by \a attr for this certificate's
+issuer.
+*/
 
 QStringList OxideQSslCertificate::getIssuerInfo(PrincipalAttr attr) const {
   if (!isValid()) {
@@ -195,6 +287,10 @@ QStringList OxideQSslCertificate::getIssuerInfo(PrincipalAttr attr) const {
   return GetPrincipalValue(d->x509_cert_->issuer(), attr);
 }
 
+/*!
+Returns the start date for this certificate.
+*/
+
 QDateTime OxideQSslCertificate::effectiveDate() const {
   if (!isValid()) {
     return QDateTime();
@@ -203,6 +299,10 @@ QDateTime OxideQSslCertificate::effectiveDate() const {
   return ToQDateTime(d->x509_cert_->valid_start());
 }
 
+/*!
+Returns the expiry date for this certificate.
+*/
+
 QDateTime OxideQSslCertificate::expiryDate() const {
   if (!isValid()) {
     return QDateTime();
@@ -210,6 +310,10 @@ QDateTime OxideQSslCertificate::expiryDate() const {
 
   return ToQDateTime(d->x509_cert_->valid_expiry());
 }
+
+/*!
+Returns the SHA1 fingerprint of this certificate as a hex encoded string.
+*/
 
 QString OxideQSslCertificate::fingerprintSHA1() const {
   if (!isValid()) {
@@ -228,6 +332,10 @@ QString OxideQSslCertificate::fingerprintSHA1() const {
   return QString::fromUtf8(qcert.digest(QCryptographicHash::Sha1).toHex());
 }
 
+/*!
+Returns true if this certificate has expired.
+*/
+
 bool OxideQSslCertificate::isExpired() const {
   if (!isValid()) {
     return false;
@@ -235,6 +343,14 @@ bool OxideQSslCertificate::isExpired() const {
 
   return d->x509_cert_->HasExpired();
 }
+
+/*!
+Returns the issuer of this certificate. If the certificate is not self-signed,
+this will be a valid OxideQSslCertificate. If the certificate is self-signed,
+this will be a null variant.
+
+\sa QVariant::isNull
+*/
 
 QVariant OxideQSslCertificate::issuer() const {
   if (!isValid()) {
@@ -270,9 +386,17 @@ QVariant OxideQSslCertificate::issuer() const {
   return QVariant::fromValue(*d->issuer_);
 }
 
+/*!
+\deprecated
+*/
+
 OxideQSslCertificate OxideQSslCertificate::copy() const {
   return OxideQSslCertificate(*this);
 }
+
+/*!
+Returns a PEM encoded version of this certificate.
+*/
 
 QString OxideQSslCertificate::toPem() const {
   if (!isValid()) {
@@ -287,6 +411,11 @@ QString OxideQSslCertificate::toPem() const {
 
   return QString::fromStdString(pem);
 }
+
+/*!
+Returns true if this is a valid certificate instance. Instances created with the
+default constructor are invalid.
+*/
 
 bool OxideQSslCertificate::isValid() const {
   return !!d->x509_cert_;

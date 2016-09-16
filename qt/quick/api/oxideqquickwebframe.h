@@ -57,10 +57,10 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebFrame : public QObject {
 
   Q_INVOKABLE OxideQQuickScriptMessageRequest*
       sendMessage(const QUrl& context,
-                  const QString& msg_id,
+                  const QString& msgId,
                   const QVariant& payload = QVariant());
   Q_INVOKABLE void sendMessageNoReply(const QUrl& context,
-                                      const QString& msg_id,
+                                      const QString& msgId,
                                       const QVariant& payload = QVariant());
 
  Q_SIGNALS:

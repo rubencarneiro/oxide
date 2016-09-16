@@ -1,0 +1,158 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype CertificateError
+\instantiates OxideQCertificateError
+\inqmlmodule com.canonical.Oxide 1.0
+\since OxideQt 1.2
+
+\brief CertificateError represents a certificate error
+
+CertificateError represents an individual certificate error.
+
+\l{url} indicates the URL of the connection that the error represents, and an
+error code is given by certError.
+
+For certificate errors that are overridable (\l{overridable} is true), calling
+\l{allow} will tell Oxide to proceed with the connection. Calling \l{deny} will
+tell Oxide to abort the connection.
+
+For non-overridable certificate errors (\l{overridable} is false), calling
+\l{allow} or \l{deny} will have no effect. The associated connection will
+already have been aborted (for main-frame document errors) or failed with an
+error (for sub-frame or subresource errors).
+
+For main-frame document errors (where isMainFrame is true and
+isSubresource is false), a blank transient page will be loaded for the life
+of the error, with the URL pointing to \l{url}. This is to ensure that
+navigation actions work correctly. It is assumed that an application will display
+its own error UI over this. The transient page will be destroyed after a call
+to \l{allow} or \l{deny} for overridable errors, and will be destroyed if the
+error instance is destroyed.
+
+Main-frame document errors can also be cancelled by Oxide (eg, if another
+navigation is started). In this case, isCancelled will change to true. The
+blank transient page will be destroyed automatically when this happens.
+
+If the application destroys an overridable certificate error before it has
+responded (by calling \l{allow} or \l{deny}), the associated connection will
+be aborted automatically.
+*/
+
+/*!
+\qmlproperty url CertificateError::url
+
+The URL associated with the certificate error.
+*/
+
+/*!
+\qmlproperty bool CertificateError::isCancelled
+
+Indicates whether this error has been cancelled by Oxide. This could occur if
+the application starts another navigation before responding to this error. If
+the application is displaying an error UI, it should hide it upon cancellation.
+*/
+
+/*!
+\qmlproperty bool CertificateError::isMainFrame
+
+Indicates whether this error originates from the main frame.
+*/
+
+/*!
+\qmlproperty bool CertificateError::isSubresource
+
+Indicates whether this error originates from a subresource within its frame.
+*/
+
+/*!
+\qmlproperty bool CertificateError::overridable
+
+Indicates whether this error is overridable. Only errors from main-frame
+document loads (where isMainFrame is true and isSubresource is false) can
+be overridable. Certain types of errors are never overridable.
+
+If the error is not overridable, calls to \l{allow} or \l{deny} are ignored.
+*/
+
+/*!
+\qmlproperty bool CertificateError::strictEnforcement
+
+Indicates whether this error is for a connection which is required to be secure
+due to HSTS policy. If this is true, \l{overridable} will be false.
+*/
+
+/*!
+\qmlproperty SslCertificate CertificateError::certificate
+
+The certificate associated with this error.
+*/
+
+/*!
+\qmlproperty enumeration CertificateError::certError
+
+The error code for this certificate error.
+
+Possible values are:
+\value CertificateError.ErrorBadIdentity
+The identity of the certificate does not match the identity of the site.
+
+\value CertificateError.ErrorExpired
+The certificate has expired.
+
+\value CertificateError.ErrorDateInvalid
+The certificate has a date that is invalid, eg, its start date is in the
+future.
+
+\value CertificateError.ErrorAuthorityInvalid
+The certificate is signed by an authority that isn't trusted.
+
+\value CertificateError.ErrorRevoked
+The certificate has been revoked.
+
+\value CertificateError.ErrorInvalid
+The certificate is invalid, eg, it has errors.
+
+\value CertificateError.ErrorInsecure
+The certificate is insecure, eg, it uses a weak signature algorithm or has a
+weak public key.
+
+\value CertificateError.ErrorGeneric
+This is used for all other unspecified errors.
+*/
+
+/*!
+\qmlmethod void CertificateError::allow()
+
+If this error is overridable (\l{overridable} is true), then calling this will
+allow the connection to proceed. Calling this has no effect if the error is not
+overridable.
+
+\sa deny
+*/
+
+/*!
+\qmlmethod void CertificateError::deny()
+
+If this error is overridable (\l{overridable} is true), then calling this will
+abort the connection. Calling this has no effect if the error is not
+overridable.
+
+\sa allow
+*/

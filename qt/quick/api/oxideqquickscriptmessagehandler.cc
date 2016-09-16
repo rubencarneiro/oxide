@@ -69,6 +69,28 @@ OxideQQuickScriptMessageHandlerPrivate::get(
   return message_handler->d_func();
 }
 
+/*!
+\class OxideQQuickScriptMessageHandler
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickscriptmessagehandler.h
+
+\brief A handler for messages from user scripts
+*/
+
+/*!
+\qmltype ScriptMessageHandler
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickScriptMessageHandler
+
+\brief A handler for messages from user scripts
+
+ScriptMessageHandler is a handler for JS messages sent from user scripts. The
+handler will intercept messages with the specified msgId, from JS contexts with
+URLs listed in \l{contexts}.
+
+Incoming messages will be passed to the application provided \l{callback}.
+*/
+
 void OxideQQuickScriptMessageHandler::classBegin() {}
 
 void OxideQQuickScriptMessageHandler::componentComplete() {
@@ -98,6 +120,12 @@ OxideQQuickScriptMessageHandler::~OxideQQuickScriptMessageHandler() {
   }
 }
 
+/*!
+\qmlproperty string ScriptMessageHandler::msgId
+
+Specify the ID of the messages to handle.
+*/
+
 QString OxideQQuickScriptMessageHandler::msgId() const {
   Q_D(const OxideQQuickScriptMessageHandler);
 
@@ -115,6 +143,12 @@ void OxideQQuickScriptMessageHandler::setMsgId(const QString& id) {
   emit msgIdChanged();
 }
 
+/*!
+\qmlproperty list<url> ScriptMessageHandler::contexts
+
+Specify a list of JS contexts from which to handle messages.
+*/
+
 QList<QUrl> OxideQQuickScriptMessageHandler::contexts() const {
   Q_D(const OxideQQuickScriptMessageHandler);
 
@@ -128,6 +162,14 @@ void OxideQQuickScriptMessageHandler::setContexts(
   d->proxy_->setContexts(contexts);
   emit contextsChanged();
 }
+
+/*!
+\qmlproperty value ScriptMessageHandler::callback
+
+Specify a JS callback that will be called when an incoming message is received.
+The callback will be called with a single argument - a ScriptMessage instance
+whose ownership will be transferred to the callback.
+*/
 
 QJSValue OxideQQuickScriptMessageHandler::callback() const {
   Q_D(const OxideQQuickScriptMessageHandler);

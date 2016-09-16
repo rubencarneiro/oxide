@@ -114,6 +114,35 @@ OxideQMediaAccessPermissionRequestPrivate::Create(
       *new OxideQMediaAccessPermissionRequestPrivate(std::move(request)));
 }
 
+/*!
+\class OxideQPermissionRequest
+\inmodule OxideQtCore
+\inheaderfile oxideqpermissionrequest.h
+
+\brief Generic permission request
+
+OxideQPermissionRequest represents a request for permission to access a specific
+resource. The permission request does not indicate the type of resource that the
+request is for, but instead, this is indicated by the source of the request.
+
+It is assumed that the application will display a UI to request permission from
+the user.
+
+The origin of the site that this request originates from can be accessed using
+\l{origin}.
+
+The application can respond to this request by calling \l{allow} (which will
+permit access to the resource) or \l{deny} (which will deny access to the
+resource).
+
+If the request instance is deleted before the application has called \l{allow}
+or \l{deny}, the request will be automatically declined.
+*/
+
+/*!
+\internal
+*/
+
 OxideQPermissionRequest::OxideQPermissionRequest(
     OxideQPermissionRequestPrivate& dd)
     : d_ptr(&dd) {
@@ -127,7 +156,19 @@ OxideQPermissionRequest::OxideQPermissionRequest(
                  base::Unretained(d)));
 }
 
+/*!
+Destroy this permission request. If the application has not yet responded by
+calling \l{allow} or \l{deny}, access to the resource will be automatically
+declined.
+*/
+
 OxideQPermissionRequest::~OxideQPermissionRequest() {}
+
+/*!
+\property OxideQPermissionRequest::origin
+
+The origin of the page requesting access to the resource.
+*/
 
 QUrl OxideQPermissionRequest::origin() const {
   Q_D(const OxideQPermissionRequest);
@@ -135,11 +176,26 @@ QUrl OxideQPermissionRequest::origin() const {
   return QUrl(QString::fromStdString(d->request_->origin().spec()));;
 }
 
+/*!
+\property OxideQPermissionRequest::embedder
+
+The origin of the top-level page that hosts the page requesting access to the
+resource.
+
+If the request originates from the main frame, this will be equal to
+\l{origin}.
+*/
+
 QUrl OxideQPermissionRequest::embedder() const {
   Q_D(const OxideQPermissionRequest);
 
   return QUrl(QString::fromStdString(d->request_->embedder().spec()));
 }
+
+/*!
+\property OxideQPermissionRequest::url
+\deprecated
+*/
 
 QUrl OxideQPermissionRequest::url() const {
   WARN_DEPRECATED_API_USAGE() <<
@@ -149,11 +205,26 @@ QUrl OxideQPermissionRequest::url() const {
   return origin();
 }
 
+/*!
+\property OxideQPermissionRequest::isCancelled
+
+The permission request has been cancelled. This could be because the originating
+frame navigated to another page or was deleted.
+
+If the application is displaying a permission request UI to the user, it should
+hide it when this property indicates that the request has been cancelled.
+*/
+
 bool OxideQPermissionRequest::isCancelled() const {
   Q_D(const OxideQPermissionRequest);
 
   return d->request_->is_cancelled();
 }
+
+/*!
+Permit access to the resource for which this permission request requests access,
+for the specified \l{origin} / \l{embedder} combination.
+*/
 
 void OxideQPermissionRequest::allow() {
   Q_D(OxideQPermissionRequest);
@@ -165,6 +236,11 @@ void OxideQPermissionRequest::allow() {
   d->request_->Allow();
 }
 
+/*!
+Decline access to the resource for which this permission request requests
+access.
+*/
+
 void OxideQPermissionRequest::deny() {
   Q_D(OxideQPermissionRequest);
 
@@ -175,11 +251,28 @@ void OxideQPermissionRequest::deny() {
   d->request_->Deny();
 }
 
+/*!
+\class OxideQGeolocationPermissionRequest
+\inmodule OxideQtCore
+\inheaderfile oxideqpermissionrequest.h
+
+\brief Geolocation permission request
+
+OxideQGeolocationPermissionRequest represents a request for permission to access
+the current location. This subclass exists purely for legacy purposes.
+
+Please refer to the documentation for OxideQPermissionRequest.
+*/
+
 OxideQGeolocationPermissionRequest::OxideQGeolocationPermissionRequest(
     OxideQGeolocationPermissionRequestPrivate& dd)
     : OxideQPermissionRequest(dd) {}
 
 OxideQGeolocationPermissionRequest::~OxideQGeolocationPermissionRequest() {}
+
+/*!
+\deprecated
+*/
 
 void OxideQGeolocationPermissionRequest::accept() {
   WARN_DEPRECATED_API_USAGE() <<
@@ -189,17 +282,46 @@ void OxideQGeolocationPermissionRequest::accept() {
   allow();
 }
 
+/*!
+\class OxideQMediaAccessPermissionRequest
+\inmodule OxideQtCore
+\inheaderfile oxideqpermissionrequest.h
+
+\brief Media-device access permission request
+
+OxideQMediaAccessPermissionRequest represents a request for permission to
+access media capture devices, via \e{MediaDevices.getUserMedia()}.
+
+Applications can use isForAudio and isForVideo to determine whether this is a
+request to access audio and/or video capture devices.
+
+This is a subclass of OxideQPermissionRequest. Please see the documentation for
+OxideQPermissionRequest for details of the inherited functionality.
+*/
+
 OxideQMediaAccessPermissionRequest::OxideQMediaAccessPermissionRequest(
     OxideQMediaAccessPermissionRequestPrivate& dd)
     : OxideQPermissionRequest(dd) {}
 
 OxideQMediaAccessPermissionRequest::~OxideQMediaAccessPermissionRequest() {}
 
+/*!
+\property OxideQMediaAccessPermissionRequest::isForAudio
+
+Whether this is a request to access audio capture devices.
+*/
+
 bool OxideQMediaAccessPermissionRequest::isForAudio() const {
   Q_D(const OxideQMediaAccessPermissionRequest);
 
   return d->request()->audio_requested();
 }
+
+/*!
+\property OxideQMediaAccessPermissionRequest::isForVideo
+
+Whether this is a request to access video capture devices.
+*/
 
 bool OxideQMediaAccessPermissionRequest::isForVideo() const {
   Q_D(const OxideQMediaAccessPermissionRequest);

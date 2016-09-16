@@ -62,10 +62,38 @@ OxideQQuickScriptMessageRequestPrivate* OxideQQuickScriptMessageRequestPrivate::
   return request->d_func();
 }
 
+/*!
+\class OxideQQuickScriptMessageRequest
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickscriptmessagerequest.h
+
+\brief The context of a message sent to a user script
+*/
+
+/*!
+\qmltype ScriptMessageRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickScriptMessageRequest
+
+\brief The context of a message sent to a user script
+
+ScriptMessageRequest represents the context of a message sent to a user script.
+The application can provide reply and error callbacks by setting the \l{onreply}
+and \l{onerror} callbacks accordingly.
+*/
+
 OxideQQuickScriptMessageRequest::OxideQQuickScriptMessageRequest() :
     d_ptr(new OxideQQuickScriptMessageRequestPrivate(this)) {}
 
 OxideQQuickScriptMessageRequest::~OxideQQuickScriptMessageRequest() {}
+
+/*!
+\qmlproperty value ScriptMessageRequest::onreply
+
+The reply callback. This will be invoked with a single argument (the message
+payload, which is application defined) when the user script replies to the
+message that the application sent it.
+*/
 
 QJSValue OxideQQuickScriptMessageRequest::replyCallback() const {
   Q_D(const OxideQQuickScriptMessageRequest);
@@ -89,6 +117,33 @@ void OxideQQuickScriptMessageRequest::setReplyCallback(
   d->reply_callback = callback;
   emit replyCallbackChanged();
 }
+
+/*!
+\qmlproperty value ScriptMessageRequest::onerror
+
+The error callback. This will be invoked with 2 arguments in the event of an
+error occuring with the message that the application sent.
+
+The first argument will be an error code, with the following possible values:
+
+\value ScriptMessageRequest.ErrorInvalidContext
+The frame that the message was sent to does not have a JS context with the
+specified ID.
+
+\value ScriptMessageRequest.ErrorUncaughtException
+The message handler provided by the user script threw an exception. Details of
+the exception will be provided in the second argument.
+
+\value ScriptMessageRequest.ErrorNoHandler
+There was no handler for the message.
+
+\value ScriptMessageRequest.ErrorHandlerReportedError
+Use of this is discouraged now.
+
+\value ScriptMessageRequest.ErrorHandlerDidNotRespond
+The message was successfully delivered to a handler provided by the user script,
+but it failed to respond.
+*/
 
 QJSValue OxideQQuickScriptMessageRequest::errorCallback() const {
   Q_D(const OxideQQuickScriptMessageRequest);

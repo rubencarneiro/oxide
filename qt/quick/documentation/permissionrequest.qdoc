@@ -1,0 +1,136 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype PermissionRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQPermissionRequest
+
+\brief Generic permission request
+
+PermissionRequest represents a request for permission to access a specific
+resource. The permission request does not indicate the type of resource that the
+request is for, but instead, this is indicated by the source of the request.
+
+It is assumed that the application will display a UI to request permission from
+the user.
+
+The origin of the site that this request originates from can be accessed using
+\l{origin}.
+
+The application can respond to this request by calling \l{allow} (which will
+permit access to the resource) or \l{deny} (which will deny access to the
+resource).
+
+If the request instance is deleted before the application has called \l{allow}
+or \l{deny}, the request will be automatically declined.
+*/
+
+/*!
+\qmlproperty url PermissionRequest::origin
+\since OxideQt 1.8
+
+The origin of the page requesting access to the resource.
+*/
+
+/*!
+\qmlproperty url PermissionRequest::embedder
+
+The origin of the top-level page that hosts the page requesting access to the
+resource.
+
+If the request originates from the main frame, this will be equal to
+\l{origin}.
+*/
+
+/*!
+\qmlproperty url PermissionRequest::url
+\deprecated
+*/
+
+/*!
+\qmlproperty bool PermissionRequest::isCancelled
+
+The permission request has been cancelled. This could be because the originating
+frame navigated to another page or was deleted.
+
+If the application is displaying a permission request UI to the user, it should
+hide it when this property indicates that the request has been cancelled.
+*/
+
+/*!
+\qmlmethod void PermissionRequest::allow()
+
+Permit access to the resource for which this permission request requests access,
+for the specified \l{origin} / \l{embedder} combination.
+*/
+
+/*!
+\qmlmethod void PermissionRequest::deny()
+
+Decline access to the resource for which this permission request requests
+access.
+*/
+
+/*!
+\qmltype GeolocationPermissionRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQGeolocationPermissionRequest
+
+\brief Geolocation permission request
+
+GeolocationPermissionRequest represents a request for permission to access
+the current location. This subclass exists purely for legacy purposes.
+
+Please refer to the documentation for PermissionRequest.
+*/
+
+/*!
+\qmlmethod void GeolocationPermissionRequest::accept()
+\deprecated
+*/
+
+/*!
+\qmltype MediaAccessPermissionRequest
+\inqmlmodule com.canonical.Oxide 1.8
+\instantiates OxideQMediaAccessPermissionRequest
+\since OxideQt 1.8
+
+\brief Media-device access permission request
+
+MediaAccessPermissionRequest represents a request for permission to
+access media capture devices, via \e{MediaDevices.getUserMedia()}.
+
+Applications can use isForAudio and isForVideo to determine whether this is a
+request to access audio and/or video capture devices.
+
+This is a subclass of PermissionRequest. Please see the documentation for
+PermissionRequest for details of the inherited functionality.
+*/
+
+/*!
+\qmlproperty bool MediaAccessPermissionRequest::isForAudio
+
+Whether this is a request to access audio capture devices.
+*/
+
+/*!
+\qmlproperty bool MediaAccessPermissionRequest::isForVideo
+
+Whether this is a request to access video capture devices.
+*/

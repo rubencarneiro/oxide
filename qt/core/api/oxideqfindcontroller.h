@@ -47,8 +47,9 @@ class OXIDE_QTCORE_EXPORT OxideQFindController : public QObject {
   int count() const;
   int current() const;
 
-  Q_INVOKABLE void next();
-  Q_INVOKABLE void previous();
+ public Q_SLOTS:
+  void next();
+  void previous();
 
  Q_SIGNALS:
   void textChanged() const;

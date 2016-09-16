@@ -254,25 +254,25 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   qreal contentY() const;
 
   QQmlComponent* contextMenu() const;
-  void setContextMenu(QQmlComponent* context_menu);
+  void setContextMenu(QQmlComponent* contextMenu);
 
   QQmlComponent* popupMenu() const;
-  void setPopupMenu(QQmlComponent* popup_menu);
+  void setPopupMenu(QQmlComponent* popupMenu);
 
   QQmlComponent* alertDialog() const;
-  void setAlertDialog(QQmlComponent* alert_dialog);
+  void setAlertDialog(QQmlComponent* alertDialog);
 
   QQmlComponent* confirmDialog() const;
-  void setConfirmDialog(QQmlComponent* confirm_dialog);
+  void setConfirmDialog(QQmlComponent* confirmDialog);
 
   QQmlComponent* promptDialog() const;
-  void setPromptDialog(QQmlComponent* prompt_dialog);
+  void setPromptDialog(QQmlComponent* promptDialog);
 
   QQmlComponent* beforeUnloadDialog() const;
-  void setBeforeUnloadDialog(QQmlComponent* before_unload_dialog);
+  void setBeforeUnloadDialog(QQmlComponent* beforeUnloadDialog);
 
   QQmlComponent* filePicker() const;
-  void setFilePicker(QQmlComponent* file_picker);
+  void setFilePicker(QQmlComponent* filePicker);
 
   OxideQQuickWebContext* context() const;
   void setContext(OxideQQuickWebContext* context);

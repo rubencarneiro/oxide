@@ -1,0 +1,96 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype DownloadRequest
+\instantiates OxideQDownloadRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\since OxideQt 1.1
+
+\brief Request to download a resource
+
+DownloadRequest represents a request to download a remote resource.
+
+\l{url} specifies the location of the remote resource to download.
+
+The application is responsible for performing the actual download.
+
+\note This API does not make it possible to download URLs that point to
+resources inside the web engine (eg, blob: or filesystem URLs).
+*/
+
+/*!
+\qmlproperty url DownloadRequest::url
+
+The url of the resource to download.
+*/
+
+/*!
+\qmlproperty string DownloadRequest::mimeType
+\deprecated
+
+A hint of the remote resource's mime-type.
+
+\note There are no scenarios in which this is useful to applications. In the
+case where a download request is triggered by clicking on an anchor element
+with a download attribute, the mime-type is guessed from the extension of
+the filename returned by suggestedFilename. The mime-type might be accurate in
+the case where a download request is triggered by the value of the
+\e{Content-Disposition} header in a response, but this response is discarded
+and the application might receive a different response when it tries to
+download the resource itself. Applications should not use this to make any
+decisions at all.
+*/
+
+/*!
+\qmlproperty bool DownloadRequest::shouldPrompt
+\deprecated
+
+This is always false.
+*/
+
+/*!
+\qmlproperty string DownloadRequest::suggestedFilename
+
+The suggested name of the destination file. This corresponds to the value of the
+\e{download} attribute if this download request is triggered from a HTML anchor
+element, or the value of the filename attribute if the download request is
+triggered by a response with a \e{Content-Disposition: attachment} header.
+*/
+
+/*!
+\qmlproperty list<string> DownloadRequest::cookies
+
+A list of cookies that the application should use when downloading the specified
+resource. The format of each cookie is a string that can be added to the
+\e{Cookie} header in a HTTP request.
+*/
+
+/*!
+\qmlproperty string DownloadRequest::referrer
+
+The spec of the referrer URL that the application should specify when
+downloading the resource.
+*/
+
+/*!
+\qmlproperty string DownloadRequest::userAgent
+
+The user agent string that the application should use when downloading
+the specified resource.
+*/

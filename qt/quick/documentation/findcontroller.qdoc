@@ -1,0 +1,77 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype FindController
+\inqmlmodule com.canonical.Oxide 1.8
+\instantiates OxideQFindController
+\since OxideQt 1.8
+
+\brief Find-in-page helper
+
+FindController provides a mechanism to allow an application to provide
+find-in-page functionality.
+
+Applications specify the search term by setting \l{text}. In response, the engine
+highlights any matches and updates \l{count} with the number of results. The
+application can then cycle through the results by calls to \l{previous} and
+\l{next}. The current position is indicated by \l{current}.
+
+The current find-in-page request can be terminated by setting \l{text} to an
+empty string.
+*/
+
+/*!
+\qmlproperty string FindController::text
+
+Set this to the desired search term to begin a search in the current page. Set
+it to an empty string to terminate the current search.
+*/
+
+/*!
+\qmlproperty bool FindController::caseSensitive
+
+Set this to true if the search should be case sensitive.
+*/
+
+/*!
+\qmlproperty int FindController::count
+
+The number of results found. This will be 0 if \l{text} is an empty string.
+*/
+
+/*!
+\qmlproperty int FindController::current
+
+The current position within the search results. This will be a number between 0
+and \l{count}, and will be 0 if \l{text} is an empty string.
+*/
+
+/*!
+\qmlmethod void FindController::next()
+
+Advance the document to the next search result. This will result in \l{current}
+being incremented by 1.
+*/
+
+/*!
+\qmlmethod void FindController::previous()
+
+Move the document back to the previous search result. This will result in
+\l{current} being decremented by 1.
+*/

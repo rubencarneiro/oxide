@@ -42,10 +42,40 @@ OxideQFindControllerPrivate* OxideQFindControllerPrivate::get(
   return q->d_func();
 }
 
+/*!
+\class OxideQFindController
+\inheaderfile oxideqfindcontroller.h
+\inmodule OxideQtCore
+
+\brief Find-in-page helper
+
+OxideQFindController provides a mechanism to allow an application to provide
+find-in-page functionality.
+
+Applications specify the search term by setting \l{text}. In response, the
+engine highlights any matches and updates \l{count} with the number of results.
+The application can then cycle through the results by calls to \l{previous} and
+\l{next}. The current position is indicated by \l{current}.
+
+The current find-in-page request can be terminated by setting \l{text} to an
+empty string.
+*/
+
 OxideQFindController::OxideQFindController()
     : d_ptr(new OxideQFindControllerPrivate(this)) {}
 
+/*!
+\internal
+*/
+
 OxideQFindController::~OxideQFindController() {}
+
+/*!
+\property OxideQFindController::text
+
+Set this to the desired search term to begin a search in the current page. Set
+it to an empty string to terminate the current search.
+*/
 
 QString OxideQFindController::text() const {
   Q_D(const OxideQFindController);
@@ -74,6 +104,12 @@ void OxideQFindController::setText(const QString& newText) {
   d->controller_->StartFinding(d->text_.toStdString(), d->case_sensitive_);
 }
 
+/*!
+\property OxideQFindController::caseSensitive
+
+Set this to true if the search should be case sensitive.
+*/
+
 bool OxideQFindController::caseSensitive() const {
   Q_D(const OxideQFindController);
 
@@ -101,17 +137,35 @@ void OxideQFindController::setCaseSensitive(bool newCaseSensitive) {
   d->controller_->StartFinding(d->text_.toStdString(), d->case_sensitive_);
 }
 
+/*!
+\property OxideQFindController::count
+
+The number of results found. This will be 0 if \l{text} is an empty string.
+*/
+
 int OxideQFindController::count() const {
   Q_D(const OxideQFindController);
 
   return d->controller_->GetResult().number_of_matches;
 }
 
+/*!
+\property OxideQFindController::current
+
+The current position within the search results. This will be a number between 0
+and \l{count}, and will be 0 if \l{text} is an empty string.
+*/
+
 int OxideQFindController::current() const {
   Q_D(const OxideQFindController);
 
   return d->controller_->GetResult().active_match_ordinal;
 }
+
+/*!
+Advance the document to the next search result. This will result in \l{current}
+being incremented by 1.
+*/
 
 void OxideQFindController::next() {
   Q_D(OxideQFindController);
@@ -125,6 +179,11 @@ void OxideQFindController::next() {
 
   d->controller_->GotoNextMatch();
 }
+
+/*!
+Move the document back to the previous search result. This will result in
+\l{current} being decremented by 1.
+*/
 
 void OxideQFindController::previous() {
   Q_D(OxideQFindController);

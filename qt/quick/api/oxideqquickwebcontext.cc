@@ -439,6 +439,44 @@ int OxideQQuickWebContextPrivate::deleteAllCookies() {
   return proxy_->deleteAllCookies();
 }
 
+/*!
+\class OxideQQuickWebContext
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickwebcontext.h
+
+\brief Manages state shared between web views
+*/
+
+/*!
+\qmltype WebContext
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickWebContext
+
+\brief Manages state shared between web views
+
+WebContext manages state shared between web views - this includes things like
+the cookie database, network cache and local storage. Applications can set
+dataPath and cachePath during construction to specify storage locations.
+
+Applications can loosely control the maximum size of the network cache by
+setting maxCacheSizeHint during construction.
+
+The user agent string used by web views can be customized using the userAgent
+and \l{product} properties. These control the \e{User-Agent} HTTP header and the
+value of \e{navigator.userAgent}. Per-URL user-agent string overrides can also
+be provided by using userAgentOverrides.
+
+WebContext also provides a mechanism to inject scripts in to web pages via
+userScripts, addUserScript and removeUserScript.
+
+WebContext allows some cookie behaviour to be configured, using
+sessionCookieMode and cookiePolicy.
+
+If Oxide::processModel is \e{Oxide.ProcessModelSingleProcess}, the first created
+WebContext will become the application default WebContext (the one provided by
+Oxide::defaultWebContext) if that hasn't already been created.
+*/
+
 void OxideQQuickWebContext::classBegin() {}
 
 void OxideQQuickWebContext::componentComplete() {
@@ -447,6 +485,10 @@ void OxideQQuickWebContext::componentComplete() {
   d->constructed_ = true;
   emit d->constructed();
 }
+
+/*!
+\internal
+*/
 
 OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent)
     : QObject(parent) {
@@ -466,6 +508,10 @@ OxideQQuickWebContext::OxideQQuickWebContext(QObject* parent)
     g_default_context_initialized = true;
   }
 }
+
+/*!
+Destroy this web context.
+*/
 
 OxideQQuickWebContext::~OxideQQuickWebContext() {
   Q_D(OxideQQuickWebContext);
@@ -514,6 +560,20 @@ OxideQQuickWebContext* OxideQQuickWebContext::defaultContext(bool create) {
   return g_default_context;
 }
 
+/*!
+\qmlproperty string WebContext::product
+
+The product name used to build the default user agent string. Setting this will
+cause userAgent to change if it is set to the default.
+
+The default value is "Chrome/X.X.X.X", where "X.X.X.X" is the Chromium version
+that this Oxide build is based on.
+
+Setting this to an empty string will restore the default value.
+
+\sa userAgent
+*/
+
 QString OxideQQuickWebContext::product() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -537,22 +597,48 @@ void OxideQQuickWebContext::setProduct(const QString& product) {
   }
 }
 
+/*!
+\qmlproperty string WebContext::userAgent
+
+The default user agent string used for the \e{User-Agent} header in HTTP
+requests and for \e{navigator.userAgent}. By default, this is the Chrome
+user-agent string, with the product name based on the value of \l{product}.
+
+Setting this to an empty string will restore the default value.
+
+\sa product
+*/
+
 QString OxideQQuickWebContext::userAgent() const {
   Q_D(const OxideQQuickWebContext);
 
   return d->proxy_->userAgent();
 }
 
-void OxideQQuickWebContext::setUserAgent(const QString& user_agent) {
+void OxideQQuickWebContext::setUserAgent(const QString& userAgent) {
   Q_D(OxideQQuickWebContext);
 
-  if (d->proxy_->userAgent() == user_agent) {
+  if (d->proxy_->userAgent() == userAgent) {
     return;
   }
 
-  d->proxy_->setUserAgent(user_agent);
+  d->proxy_->setUserAgent(userAgent);
   emit userAgentChanged();
 }
+
+/*!
+\qmlproperty url WebContext::dataPath
+
+The location of non-cache related persistent data files, such as the cookie
+database or local storage.
+
+This can be set during construction of the WebContext. Attempts to change it
+afterwards will be ignored.
+
+To define the location of non-cache related persistent data files, this must be
+set to a local (file:) URL. Non-local schemes are not supported, and will be
+ignored.
+*/
 
 QUrl OxideQQuickWebContext::dataPath() const {
   Q_D(const OxideQQuickWebContext);
@@ -560,7 +646,11 @@ QUrl OxideQQuickWebContext::dataPath() const {
   return d->proxy_->dataPath();
 }
 
-void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
+/*!
+\internal
+*/
+
+void OxideQQuickWebContext::setDataPath(const QUrl& dataUrl) {
   Q_D(OxideQQuickWebContext);
 
   if (d->proxy_->isInitialized()) {
@@ -569,18 +659,33 @@ void OxideQQuickWebContext::setDataPath(const QUrl& data_url) {
     return;
   }
 
-  if (dataPath() == data_url) {
+  if (dataPath() == dataUrl) {
     return;
   }
 
-  if (!data_url.isLocalFile() && !data_url.isEmpty()) {
+  if (!dataUrl.isLocalFile() && !dataUrl.isEmpty()) {
     qWarning() << "OxideQQuickWebContext: dataPath only supports local files";
     return;
   }
 
-  d->proxy_->setDataPath(data_url);
+  d->proxy_->setDataPath(dataUrl);
   emit dataPathChanged();
 }
+
+/*!
+\qmlproperty url WebContext::cachePath
+
+The location of cache related persistent data files, such as the network cache.
+
+This can be set during construction of the WebContext. Attempts to change it
+afterwards will be ignored.
+
+To define the location of cache related persistent data files, this must be
+set to a local (file:) URL. Non-local schemes are not supported, and will be
+ignored.
+
+If this is not set, Oxide will fall back to using dataPath if that is set.
+*/
 
 QUrl OxideQQuickWebContext::cachePath() const {
   Q_D(const OxideQQuickWebContext);
@@ -588,7 +693,11 @@ QUrl OxideQQuickWebContext::cachePath() const {
   return d->proxy_->cachePath();
 }
 
-void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
+/*!
+\internal
+*/
+
+void OxideQQuickWebContext::setCachePath(const QUrl& cacheUrl) {
   Q_D(OxideQQuickWebContext);
 
   if (d->proxy_->isInitialized()) {
@@ -596,18 +705,29 @@ void OxideQQuickWebContext::setCachePath(const QUrl& cache_url) {
     return;
   }
 
-  if (cachePath() == cache_url) {
+  if (cachePath() == cacheUrl) {
     return;
   }
 
-  if (!cache_url.isLocalFile() && !cache_url.isEmpty()) {
+  if (!cacheUrl.isLocalFile() && !cacheUrl.isEmpty()) {
     qWarning() << "OxideQQuickWebContext: cachePath only supports local files";
     return;
   }
 
-  d->proxy_->setCachePath(cache_url);
+  d->proxy_->setCachePath(cacheUrl);
   emit cachePathChanged();
 }
+
+/*!
+\qmlproperty string WebContext::acceptLangs
+
+The value used to determine the contents of the HTTP \e{Accept-Language} header.
+
+Applications can specify this by setting it to a comma delimited list of
+language codes in order of preference (starting with the most-preferred). Oxide
+will automatically convert this in to the format used by the HTTP
+\e{Accept-Language} header, including quality values.
+*/
 
 QString OxideQQuickWebContext::acceptLangs() const {
   Q_D(const OxideQQuickWebContext);
@@ -615,16 +735,23 @@ QString OxideQQuickWebContext::acceptLangs() const {
   return d->proxy_->acceptLangs();
 }
 
-void OxideQQuickWebContext::setAcceptLangs(const QString& accept_langs) {
+void OxideQQuickWebContext::setAcceptLangs(const QString& acceptLangs) {
   Q_D(OxideQQuickWebContext);
 
-  if (acceptLangs() == accept_langs) {
+  if (this->acceptLangs() == acceptLangs) {
     return;
   }
 
-  d->proxy_->setAcceptLangs(accept_langs);
+  d->proxy_->setAcceptLangs(acceptLangs);
   emit acceptLangsChanged();
 }
+
+/*!
+\qmlproperty list<UserScript> WebContext::userScripts
+
+This property holds the list of user scripts that will be injected in to web
+pages.
+*/
 
 QQmlListProperty<OxideQQuickUserScript>
 OxideQQuickWebContext::userScripts() {
@@ -636,58 +763,100 @@ OxideQQuickWebContext::userScripts() {
       OxideQQuickWebContextPrivate::userScript_clear);
 }
 
-void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* user_script) {
+/*!
+\qmlmethod void WebContext::addUserScript(UserScript script)
+
+Append \a{script} to the list of user scripts.
+
+If \a{script} doesn't have a parent, then this WebContext will set itself as
+the parent and assume ownership of it.
+
+If \a{script} already exists in the list of user scripts, then it will be moved
+to the end of the list.
+
+If \a{script} is deleted after being added to the list of scripts, then it will
+be removed from the list automatically.
+*/
+
+void OxideQQuickWebContext::addUserScript(OxideQQuickUserScript* script) {
   Q_D(OxideQQuickWebContext);
 
-  if (!user_script) {
+  if (!script) {
     qWarning() << "Must specify a user script";
     return;
   }
 
   OxideQQuickUserScriptPrivate* ud =
-      OxideQQuickUserScriptPrivate::get(user_script);
+      OxideQQuickUserScriptPrivate::get(script);
 
-  if (!d->proxy_->userScripts().contains(user_script)) {
-    connect(user_script, SIGNAL(scriptLoaded()),
+  if (!d->proxy_->userScripts().contains(script)) {
+    connect(script, SIGNAL(scriptLoaded()),
             this, SLOT(userScriptUpdated()));
-    connect(user_script, SIGNAL(scriptPropertyChanged()),
+    connect(script, SIGNAL(scriptPropertyChanged()),
             this, SLOT(userScriptUpdated()));
     connect(ud, SIGNAL(willBeDeleted()),
             this, SLOT(userScriptWillBeDeleted()));
   } else {
-    d->proxy_->userScripts().removeOne(user_script);
+    d->proxy_->userScripts().removeOne(script);
   }
 
-  if (!user_script->parent()) {
-    user_script->setParent(this);
+  if (!script->parent()) {
+    script->setParent(this);
   }
-  d->proxy_->userScripts().append(user_script);
+  d->proxy_->userScripts().append(script);
 
   emit userScriptsChanged();
 }
 
-void OxideQQuickWebContext::removeUserScript(
-    OxideQQuickUserScript* user_script) {
+/*!
+\qmlmethod void WebContext::removeUserScript(UserScript script)
+
+Remove \a{script} from the list of user scripts.
+
+If \a{script} is owned by this WebContext, then removing it will cause its
+parent to be cleared. This means that \a{script} will become unowned.
+*/
+
+void OxideQQuickWebContext::removeUserScript(OxideQQuickUserScript* script) {
   Q_D(OxideQQuickWebContext);
 
-  if (!user_script) {
+  if (!script) {
     qWarning() << "Must specify a user script";
     return;
   }
 
-  if (!d->proxy_->userScripts().contains(user_script)) {
+  if (!d->proxy_->userScripts().contains(script)) {
     return;
   }
 
-  d->detachUserScriptSignals(user_script);
-  if (user_script->parent() == this) {
-    user_script->setParent(nullptr);
+  d->detachUserScriptSignals(script);
+  if (script->parent() == this) {
+    script->setParent(nullptr);
   }
 
-  d->proxy_->userScripts().removeOne(user_script);
+  d->proxy_->userScripts().removeOne(script);
 
   emit userScriptsChanged();
 }
+
+/*!
+\qmlproperty enumeration WebContext::cookiePolicy
+
+The cookie policy. This can be set to one of the following values:
+
+\value WebContext.CookiePolicyAllowAll
+No cookie blocking is performed. This doesn't affect cookie blocking features
+for individual cookies (eg, Secure, HttpOnly, SameSite).
+
+\value WebContext.CookiePolicyBlockAll
+Block all cookies from being set or read.
+
+\value WebContext.CookiePolicyBlockThirdParty
+Prevent third-party cookies from being set or read. No cookie blocking is
+performed for first-party cookies.
+
+The default value is WebContext.CookiePolicyAllowAll
+*/
 
 OxideQQuickWebContext::CookiePolicy OxideQQuickWebContext::cookiePolicy() const {
   Q_D(const OxideQQuickWebContext);
@@ -723,6 +892,35 @@ void OxideQQuickWebContext::setCookiePolicy(CookiePolicy policy) {
   emit cookiePolicyChanged();
 }
 
+/*!
+\qmlproperty enumeration WebContext::sessionCookieMode
+
+Determines the restoration behaviour of session cookies. This can be set during
+construction only, and may be set to one of the following values:
+
+\value WebContext.SessionCookieModeEphemeral
+Session cookies that exist in the cookie database from the previous session are
+discarded, and no session cookies created during this session are persisted to
+the cookie database in a way that allows them to be restored.
+
+\value WebContext.SessionCookieModePersistent
+Session cookies that exist in the cookie database from the previous session are
+discarded. Session cookies created during this session are persisted to the
+cookie database in a way that allows them to be restored.
+
+\value WebContext.SessionCookieModeRestored
+Session cookies that exist in the cookie database from the previous session are
+restored, and session cookies created during this session are persisted to the
+cookie database in a way that allows them to be restored. This is intended to be
+used by applications to recover from an unclean shutdown or for a web browser to
+provide session restore functionality.
+
+Attempts to change this value after WebContext is constructed will have no
+effect.
+
+The default value is WebContext.SessionCookieModePersistent.
+*/
+
 OxideQQuickWebContext::SessionCookieMode
 OxideQQuickWebContext::sessionCookieMode() const {
   Q_D(const OxideQQuickWebContext);
@@ -741,6 +939,10 @@ OxideQQuickWebContext::sessionCookieMode() const {
         WebContextProxy::SessionCookieModeRestored));
   return static_cast<SessionCookieMode>(d->proxy_->sessionCookieMode());
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
   Q_D(OxideQQuickWebContext);
@@ -764,6 +966,13 @@ void OxideQQuickWebContext::setSessionCookieMode(SessionCookieMode mode) {
   emit sessionCookieModeChanged();
 }
 
+/*!
+\qmlproperty bool WebContext::popupBlockerEnabled
+
+Whether to prevent sites from creating new windows with \e{window.open()}
+without being initiated by a user action. The default is true.
+*/
+
 bool OxideQQuickWebContext::popupBlockerEnabled() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -781,6 +990,16 @@ void OxideQQuickWebContext::setPopupBlockerEnabled(bool enabled) {
 
   emit popupBlockerEnabledChanged();
 }
+
+/*!
+\property OxideQQuickWebContext::networkRequestDelegate
+\deprecated
+*/
+
+/*!
+\qmlproperty WebContextDelegateWorker WebContext::networkRequestDelegate
+\deprecated
+*/
 
 OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::networkRequestDelegate() const {
@@ -819,6 +1038,16 @@ void OxideQQuickWebContext::setNetworkRequestDelegate(
   emit networkRequestDelegateChanged();
 }
 
+/*!
+\property OxideQQuickWebContext::storageAccessPermissionDelegate
+\deprecated
+*/
+
+/*!
+\qmlproperty WebContextDelegateWorker WebContext::storageAccessPermissionDelegate
+\deprecated
+*/
+
 OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::storageAccessPermissionDelegate() const {
   Q_D(const OxideQQuickWebContext);
@@ -850,6 +1079,16 @@ void OxideQQuickWebContext::setStorageAccessPermissionDelegate(
 
   emit storageAccessPermissionDelegateChanged();
 }
+
+/*!
+\property OxideQQuickWebContext::userAgentOverrideDelegate
+\deprecated
+*/
+
+/*!
+\qmlproperty WebContextDelegateWorker WebContext::userAgentOverrideDelegate
+\deprecated
+*/
 
 OxideQQuickWebContextDelegateWorker*
 OxideQQuickWebContext::userAgentOverrideDelegate() const {
@@ -894,6 +1133,15 @@ void OxideQQuickWebContext::setUserAgentOverrideDelegate(
   emit userAgentOverrideDelegateChanged();
 }
 
+/*!
+\qmlproperty bool WebContext::devtoolsEnabled
+
+Whether to enable remote debugging. The default is false.
+
+\note Use this with caution, as this makes a remote debugging service available
+on the specified network interface.
+*/
+
 bool OxideQQuickWebContext::devtoolsEnabled() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -911,6 +1159,17 @@ void OxideQQuickWebContext::setDevtoolsEnabled(bool enabled) {
 
   emit devtoolsEnabledChanged();
 }
+
+/*!
+\qmlproperty int WebContext::devtoolsPort
+
+The port to run the remote debugging service on. This can be set to a value
+between 1024 and 65535.
+
+This can't be modified whilst devtoolsEnabled is true.
+
+The default value is 8484.
+*/
 
 int OxideQQuickWebContext::devtoolsPort() const {
   Q_D(const OxideQQuickWebContext);
@@ -947,6 +1206,17 @@ void OxideQQuickWebContext::setDevtoolsPort(int port) {
   emit devtoolsPortChanged();
 }
 
+/*!
+\qmlproperty string WebContext::devtoolsBindIp
+
+The IP address of the network interface to run the remote debugging service on.
+This must be set to a valid IPv4 or IPv6 string literal.
+
+This can't be modified whilst devtoolsEnabled is true.
+
+The default value is 127.0.0.1.
+*/
+
 QString OxideQQuickWebContext::devtoolsBindIp() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -979,6 +1249,11 @@ void OxideQQuickWebContext::setDevtoolsBindIp(const QString& bindIp) {
   emit devtoolsBindIpChanged();
 }
 
+/*!
+\qmlproperty CookieManager WebContext::cookieManager
+\since OxideQt 1.3
+*/
+
 OxideQQuickCookieManager*
 OxideQQuickWebContext::cookieManager() const {
   Q_D(const OxideQQuickWebContext);
@@ -993,11 +1268,35 @@ OxideQQuickWebContext::cookieManager() const {
   return d->cookie_manager_;
 }
 
+/*!
+\qmlproperty list<string> WebContext::hostMappingRules
+\since OxideQt 1.3
+
+This provides a mechanism to allow applications to map host:port pairs to other
+host:port pairs. Where a match exists, network connections to a host:port pair
+will be automatically mapped to the replacement host:port pair.
+
+This is mostly useful for automated testing.
+
+Each entry in this list is a string with a format that can be one of:
+\list
+  \li MAP <host>[:<port>] <replacement_host>[:<replacement_port>]
+  \li EXCLUDE <host>
+\endlist
+
+This can be set during construction only. Attempts to change this after
+WebContext is constructed will have no effect.
+*/
+
 QStringList OxideQQuickWebContext::hostMappingRules() const {
   Q_D(const OxideQQuickWebContext);
 
   return d->proxy_->hostMappingRules();
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
   Q_D(OxideQQuickWebContext);
@@ -1018,6 +1317,19 @@ void OxideQQuickWebContext::setHostMappingRules(const QStringList& rules) {
   emit hostMappingRulesChanged();
 }
 
+/*!
+\qmlproperty list<string> WebContext::allowedExtraUrlSchemes
+\since OxideQt 1.3
+
+Specifies a list of URL schemes for which requests will be delegated to Qt's
+networking stack. Requests will be performed with the QNetworkAccessManager
+provided by the QQmlEngine to which this WebContext belongs.
+
+Some URL schemes will be ignored and never delegated to Qt's networking stack.
+These are \e{about}, \e{blob}, \e{chrome}, \e{chrome-devtools}, \e{data},
+\e{file}, \e{ftp}, \e{http}, \e{https}, \e{ws} and \e{wss}.
+*/
+
 QStringList OxideQQuickWebContext::allowedExtraUrlSchemes() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -1034,11 +1346,27 @@ void OxideQQuickWebContext::setAllowedExtraUrlSchemes(
   emit allowedExtraUrlSchemesChanged();
 }
 
+/*!
+\qmlproperty int WebContext::maxCacheSizeHint
+\since OxideQt 1.6
+
+Specify a soft upper limit for the size of the network cache in MB. This can
+only be set during construction. Attempts to change it after WebContext is
+constructed will be ignored.
+
+By default this is 0, which means that Oxide will determine an appropriate value
+automatically.
+*/
+
 int OxideQQuickWebContext::maxCacheSizeHint() const {
   Q_D(const OxideQQuickWebContext);
 
   return d->proxy_->maxCacheSizeHint();
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
   Q_D(OxideQQuickWebContext);
@@ -1072,6 +1400,18 @@ void OxideQQuickWebContext::setMaxCacheSizeHint(int size) {
   emit maxCacheSizeHintChanged();
 }
 
+/*!
+\qmlproperty string WebContext::defaultAudioCaptureDeviceId
+\since OxideQt 1.9
+
+Allow the application to specify the default audio capture device used when
+handling calls to \e{MediaDevices.getUserMedia()}. This must be set to the ID of
+a currently detected audio capture device.
+
+By default this is empty, which means that Oxide will use the first audio
+capture device returned by Oxide::availableAudioCaptureDevices.
+*/
+
 QString OxideQQuickWebContext::defaultAudioCaptureDeviceId() const {
   Q_D(const OxideQQuickWebContext);
 
@@ -1094,6 +1434,19 @@ void OxideQQuickWebContext::setDefaultAudioCaptureDeviceId(const QString& id) {
   // Oxide loops back in to us to emit the signal, as the default will clear
   // if the actual device is removed
 }
+
+/*!
+\qmlproperty string WebContext::defaultVideoCaptureDeviceId
+\since OxideQt 1.9
+
+Allow the application to specify the default video capture device used when
+handling calls to \e{MediaDevices.getUserMedia()}. This must be set to the ID of
+a currently detected video capture device.
+
+By default this is empty, which means that Oxide will use the first front-facing
+video capture device returned by Oxide::availableAudioCaptureDevices (or the
+first device if no front-facing device is available).
+*/
 
 QString OxideQQuickWebContext::defaultVideoCaptureDeviceId() const {
   Q_D(const OxideQQuickWebContext);
@@ -1118,6 +1471,20 @@ void OxideQQuickWebContext::setDefaultVideoCaptureDeviceId(const QString& id) {
   // if the actual device is removed
 }
 
+/*!
+\qmlproperty list<variant> WebContext::userAgentOverrides
+\since OxideQt 1.9
+
+Allows the application to specify a list of per-URL overrides for the user-agent
+string.
+
+The format is a list of variants. Each variant is a list of 2 strings. The
+first string is a regular expression used to match URLs. The second string is
+the override user-agent string to use in the case that the regular expression
+is a match for a URL.
+
+Behaviour is unspecified for URLs that match more than one entry.
+*/
 
 QVariantList OxideQQuickWebContext::userAgentOverrides() const {
   Q_D(const OxideQQuickWebContext);
@@ -1131,12 +1498,6 @@ QVariantList OxideQQuickWebContext::userAgentOverrides() const {
   }
 
   return rv;
-}
-
-bool OxideQQuickWebContext::doNotTrack() const {
-  Q_D(const OxideQQuickWebContext);
-
-  return d->proxy_->doNotTrack();
 }
 
 void OxideQQuickWebContext::setUserAgentOverrides(
@@ -1164,6 +1525,27 @@ void OxideQQuickWebContext::setUserAgentOverrides(
   d->proxy_->setUserAgentOverrides(entries);
 
   emit userAgentOverridesChanged();
+}
+
+/*!
+\qmlproperty bool WebContext::doNotTrack
+\since OxideQt 1.9
+
+Whether to enable do-not-track. The default is false.
+
+Setting this to true will result in the \e{DNT} header being added and set to
+\e{1} in outgoing HTTP requests. It will also result in \e{navigator.doNotTrack}
+indicating that do-not-track is enabled.
+
+When set to false, Oxide behaves as if no preference has been specified (the
+\e{DNT} header is omitted from HTTP requests and \e{navigator.doNotTrack} is an
+undefined value.
+*/
+
+bool OxideQQuickWebContext::doNotTrack() const {
+  Q_D(const OxideQQuickWebContext);
+
+  return d->proxy_->doNotTrack();
 }
 
 void OxideQQuickWebContext::setDoNotTrack(bool dnt) {

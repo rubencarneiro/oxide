@@ -1,0 +1,60 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype NewViewRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQNewViewRequest
+
+\brief Request to open a new view
+
+NewViewRequest represents a request to open a new view. \l{disposition}
+provides a hint for the type of view that the application should create, and
+\l{position} provides a hint for the position of the new view.
+
+Applications should respond to this by creating a new view with this request as
+a construct parameter.
+*/
+
+/*!
+\qmlproperty rect NewViewRequest::position
+
+Position hint for the new view, in screen coordinates.
+*/
+
+/*!
+\qmlproperty enumeration NewViewRequest::disposition
+
+Disposition hint for the new view. This is a hint to the application for how the
+new view should be presented.
+
+Possible values are:
+
+\value NewViewRequest.DispositionNewForegroundTab
+The new view should be presented as a new foreground tab
+
+\value NewViewRequest.DispositionNewBackgroundTab
+The new view should be presented as a new background tab
+
+\value NewViewRequest.DispositionNewPopup
+The new view should be presented as a popup. This generally means a new window
+with reduced UI
+
+\value NewViewRequest.DispositionNewWindow
+The new view should be presented in a new window.
+*/

@@ -41,6 +41,33 @@ class OxideQQuickTouchSelectionControllerPrivate {
   OxideQQuickTouchSelectionController::Status status;
 };
 
+/*!
+\class OxideQQuickTouchSelectionController
+\inmodule OxideQtQuick
+\inheaderfile oxideqquicktouchselectioncontroller.h
+
+\brief Controller for coordinating a touch selection UI
+*/
+
+/*!
+\qmltype TouchSelectionController
+\inqmlmodule com.canonical.Oxide 1.12
+\instantiates OxideQQuickTouchSelectionController
+\since OxideQt 1.12
+
+\brief Controller for coordinating a touch selection UI
+*/
+
+/*!
+\qmlsignal void TouchSelectionController::insertionHandleTapped()
+\since OxideQt 1.15
+*/
+
+/*!
+\qmlsignal void TouchSelectionController::contextMenuIntercepted()
+\since OxideQt 1.15
+*/
+
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
     oxide::qquick::ContentsView* view)
     : d_ptr(new OxideQQuickTouchSelectionControllerPrivate()) {
@@ -49,13 +76,27 @@ OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
   d->view = view;
 }
 
+/*!
+\internal
+*/
+
 OxideQQuickTouchSelectionController::~OxideQQuickTouchSelectionController() {}
+
+/*!
+\qmlmethod void TouchSelectionController::hide()
+\since OxideQt 1.15
+*/
 
 void OxideQQuickTouchSelectionController::hide() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
   d->view->hideTouchSelectionController();
 }
+
+/*!
+\qmlproperty bool TouchSelectionController::active
+\deprecated
+*/
 
 bool OxideQQuickTouchSelectionController::active() const {
   Q_D(const OxideQQuickTouchSelectionController);
@@ -66,6 +107,10 @@ bool OxideQQuickTouchSelectionController::active() const {
 
   return (d->status != StatusInactive);
 }
+
+/*!
+\qmlproperty Component TouchSelectionController::handle
+*/
 
 QQmlComponent* OxideQQuickTouchSelectionController::handle() const {
   Q_D(const OxideQQuickTouchSelectionController);
@@ -84,17 +129,31 @@ void OxideQQuickTouchSelectionController::setHandle(QQmlComponent* handle) {
   Q_EMIT handleChanged();
 }
 
+/*!
+\qmlproperty rect TouchSelectionController::bounds
+*/
+
 const QRectF& OxideQQuickTouchSelectionController::bounds() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
   return d->bounds;
 }
 
+/*!
+\qmlproperty bool TouchSelectionController::handleDragInProgress
+\since OxideQt 1.15
+*/
+
 bool OxideQQuickTouchSelectionController::handleDragInProgress() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
   return d->handle_drag_in_progress;
 }
+
+/*!
+\qmlproperty enumeration TouchSelectionController::status
+\since OxideQt 1.15
+*/
 
 OxideQQuickTouchSelectionController::Status
 OxideQQuickTouchSelectionController::status() const {

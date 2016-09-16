@@ -1,0 +1,172 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype LoadEvent
+\instantiates OxideQLoadEvent
+\inqmlmodule com.canonical.Oxide 1.0
+
+\brief LoadEvent represents a load event
+
+LoadEvent represents a load event.
+
+Load events are associated with a \l{url}, and have a \l{type}.
+
+For load events where the \l{type} is \e{TypeFailed}, the event will provide
+details of the error via errorDomain, errorString and errorCode.
+
+For load events where the \l{type} is \e{TypeCommitted}, \e{TypeSucceeded} or
+\e{TypeRedirected}, and \l{url} is a http: or https: URL, httpStatusCode will
+indicate the HTTP status code returned from the server. Load events where
+\l{type} is \e{TypeFailed} may also provide the HTTP status code if the
+failure is post-commit.
+
+Load events where \l{type} is \e{TypeRedirected} will provide the original URL
+via originalUrl.
+*/
+
+/*!
+\qmlproperty url LoadEvent::url
+
+The url associated with this load event.
+*/
+
+/*!
+\qmlproperty enumeration LoadEvent::type
+
+The type of this load event.
+
+Possible values are:
+
+\value LoadEvent.TypeStarted
+A started event is the first event in a load event sequence. It occurs before
+any request is sent over the network. At this point, the previous document
+still exists.
+
+\value LoadEvent.TypeStopped
+A stopped event occurs when the load is stopped by the application, a
+non-overridable certificate error occurs in the main frame, a certificate
+error is denied by the application, or the load is cancelled by some other
+mechanism.
+
+\value LoadEvent.TypeSucceeded
+A succeeded event occurs when a load completes successfully.
+
+\value LoadEvent.TypeFailed
+A failed event occurs when a load fails.
+
+\value LoadEvent.TypeCommitted
+A committed event occurs when a response is received from the remote server.
+At this point, the new document has replaced the previous document. This value
+was added in OxideQt 1.3.
+
+\value LoadEvent.TypeRedirected
+A redirected event occurs when the server responds with a 3xx response. This
+value was added in OxideQt 1.3.
+*/
+
+/*!
+\qmlproperty enumeration LoadEvent::errorDomain
+
+The error domain for this load event. If \l{type} is not \e{TypeFailed},
+this will be \e{ErrorDomainNone}.
+
+Possible values are:
+
+\value LoadEvent.ErrorDomainNone
+No error.
+
+\value LoadEvent.ErrorDomainInternal
+An internal error occurred.
+
+\value LoadEvent.ErrorDomainConnection
+A connection error occurred, such as a SSL error, TCP protocol error or name
+resolution failure
+
+\value LoadEvent.ErrorDomainCertificate
+A certificate error occurred, such as the server responding with a certificate
+whose common name is invalid, is expired or signed by an authority that isn't
+trusted. This error won't be seen for main frame loads.
+
+\value LoadEvent.ErrorDomainHTTP
+A HTTP error occurred, such as a redirect loop or other invalid HTTP response.
+
+\value LoadEvent.ErrorDomainCache
+A cache error occurred
+
+\value LoadEvent.ErrorDomainFTP
+A FTP error occurred
+
+\value LoadEvent.ErrorDomainDNS
+An error occurred during name resolution, such as a timeout or invalid response
+
+\sa errorString, errorCode
+*/
+
+/*!
+\qmlproperty string LoadEvent::errorString
+
+A description of the error for this load event, suitable for display in an
+application UI. If \l{type} is not \e{TypeFailed}, this will
+be an empty string.
+
+\sa errorDomain, errorCode
+*/
+
+/*!
+\qmlproperty int LoadEvent::errorCode
+
+An error code for this load event. The error code matches the internal
+code provided by the Chromium networking stack.
+
+Applications shouldn't make any assumption about the meaning of these error
+codes, and shouldn't assume that specific errors will produce the same error
+code in future releases of Oxide.
+
+\sa errorDomain, errorString
+*/
+
+/*!
+\qmlproperty int LoadEvent::httpStatusCode
+
+The HTTP status code returned from the remote server for this load. This will
+be 0 for load events where \l{type} is \e{TypeStarted} or \e{TypeStopped}, or
+\l{url} is not a http: or https: URL. Itwill also be 0 for load events where
+\l{type} is \e{TypeFailed} and the load hasn't committed yet.
+
+\since OxideQt 1.8
+*/
+
+/*!
+\qmlproperty url LoadEvent::originalUrl
+
+The original URL for load events where \l{type} is
+\e{TypeRedirected}. For all other load events, this is an
+empty URL.
+
+\since OxideQt 1.3
+*/
+
+/*!
+\qmlproperty bool LoadEvent::isError
+
+Is true if the load event is associated with an error page. If a load
+fails, Chromium will proceed to load a (currently empty) error page.
+
+\since OxideQt 1.5
+*/

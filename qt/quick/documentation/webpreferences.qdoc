@@ -1,0 +1,245 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype WebPreferences
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQWebPreferences
+
+\brief Web settings
+
+WebPreferences contains a collection of settings for a webview.
+*/
+
+/*!
+\qmlproperty string WebPreferences::standardFontFamily
+
+The default standard font family for characters from the Unicode \e{Common}
+script.
+
+The default value is dependent on the system's font configuration.
+*/
+
+/*!
+\qmlproperty string WebPreferences::fixedFontFamily
+
+The default fixed font family for characters from the Unicode \e{Common} script.
+
+The default value is dependent on the system's font configuration.
+*/
+
+/*!
+\qmlproperty string WebPreferences::serifFontFamily
+
+The default Serif font family for characters from the Unicode \e{Common} script.
+
+The default value is dependent on the system's font configuration.
+*/
+
+/*!
+\qmlproperty string WebPreferences::sanSerifFontFamily
+
+The default Sans Serif font family for characters from the Unicode \e{Common}
+script.
+
+The default value is dependent on the system's font configuration.
+*/
+
+/*!
+\qmlproperty string WebPreferences::defaultEncoding
+
+The default character set, used for pages that don't define a character set.
+*/
+
+/*!
+\qmlproperty int WebPreferences::defaultFontSize
+
+The default font size in points.
+*/
+
+/*!
+\qmlproperty int WebPreferences::defaultFixedFontSize
+
+The default fixed font size in points.
+*/
+
+/*!
+\qmlproperty int WebPreferences::minimumFontSize
+
+The minimum font size in points.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::remoteFontsEnabled
+
+Whether support for remote web fonts is enabled. The default is true.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::javascriptEnabled
+
+Whether JavaScript is enabled. The default is true.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::allowScriptsToCloseWindows
+
+Whether web content can request to close a window via \e{window.close}. The
+default is false.
+
+\note Web content can always request to close windows that were opened by it via
+\e{window.open()}, regardless of this preference.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::javascriptCanAccessClipboard
+
+Whether javascript can use the various clipboard related editing commands via
+\e{document.execCommand()}. The default is false.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::hyperlinkAuditingEnabled
+
+Whether to notify the URLs specified by the \e{ping} attribute when a user
+clicks on an \e{anchor} element. The default is true.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::allowUniversalAccessFromFileUrls
+
+Whether to disable same-origin restrictions for pages loaded via file: URLs. The
+default is false.
+
+\note This is a dangerous option and should generally not be used in production
+code. Application developers should think carefully before enabling this option
+to ensure that they are fully aware of its consequences. This option should
+never be enabled in web browsers.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::allowFileAccessFromFileUrls
+
+Whether to disable same-origin restrictions between file: URLs. The default is
+false.
+
+By default, unique file: URLs are treated as unique origins for the purposes of
+the Same-origin policy. Enabling this causes all file: URLs to be treated as a
+single origin.
+
+\note This is a dangerous option and should generally not be used in production
+code. Application developers should think carefully before enabling this option
+to ensure that they are fully aware of its consequences. This option should
+never be enabled in web browsers.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::canDisplayInsecureContent
+
+Whether to allow the display of passive mixed content. The default is true.
+
+Passive mixed content includes images and videos loaded over an insecure
+connection in to a page that was loaded over a secure connection. Passive mixed
+content can't access other parts of a web page or change the behaviour of it,
+but an attacker could replace the content a user sees or otherwise infer the
+user's browsing habits because the connections aren't private.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::canRunInsecureContent
+
+Whether to allow the execution of active mixed content. The default is false.
+
+Active mixed content includes CSS and scripts loaded over an insecure connection
+in to a page that was loaded over a secure connection. Because active mixed
+content can change the behaviour of a page and steal sensitive information, it
+compromises the security of a page entirely.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::passwordEchoEnabled
+
+Whether password echo is enabled. The default is false.
+
+When password echo is enabled, actual characters are displayed when a user
+inputs text in to an \e{<input type="password">} element.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::loadsImagesAutomatically
+
+Whether to load images automatically when a page loads. The default is true.
+
+If this is set to false, images aren't loaded when a page loads, and image
+elements are replaced by a placeholder.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::shrinksStandaloneImagesToFit
+\deprecated
+
+Always true. Because of a bug, this preference has never had any effect.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::textAreasAreResizable
+
+Whether \e{<textarea>} elements are resizable. The default is true.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::localStorageEnabled
+
+Whether the DOM local storage API is enabled. The default is false.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::databasesEnabled
+\deprecated
+
+Always true. It is not possible to disable Web SQL Database using this API.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::appCacheEnabled
+
+Whether the offline application cache is enabled. The default is false.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::tabsToLinks
+
+Whether HTML \e{anchor} elements are keyboard focusable by pressing the \e{TAB}
+key. The default is true.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::caretBrowsingEnabled
+
+Whether to enable caret browsing. The default is false.
+
+When caret browsing is enabled, the content of a web page can be navigated using
+the keyboard.
+*/
+
+/*!
+\qmlproperty bool WebPreferences::touchEnabled
+\deprecated
+
+Always true. It is not possible to disable touch events using this API.
+*/

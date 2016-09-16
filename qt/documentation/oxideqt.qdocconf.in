@@ -1,0 +1,53 @@
+project = OxideQt
+description = OxideQt is a web engine library based on Chromium
+version = @PROJECT_VERSION@
+sourcedirs = \
+    @CMAKE_CURRENT_SOURCE_DIR@ \
+    @OXIDE_SOURCE_DIR@/qt/core/api \
+    @OXIDE_SOURCE_DIR@/qt/quick/api \
+    @OXIDE_SOURCE_DIR@/qt/quick/documentation
+headerdirs = \
+    @OXIDE_SOURCE_DIR@/qt/core/api \
+    @OXIDE_SOURCE_DIR@/qt/quick/api
+excludedirs = @OXIDE_SOURCE_DIR@/qt/core/api/includes
+sources.fileextensions = *.cc *.qdoc
+headers.fileextensions = *.h
+outputdir = @CMAKE_CURRENT_BINARY_DIR@/html
+outputformats = HTML
+
+Cpp.ignoredirectives = \
+    Q_DECLARE_PRIVATE \
+    Q_DISABLE_COPY \
+    Q_ENUMS \
+    Q_FLAGS \
+    Q_REVISION
+
+Cpp.ignoretokens = \
+    OXIDE_QTCORE_EXPORT \
+    Q_DECLARE_FLAGS \
+    Q_DECL_EXPORT \
+    Q_DECL_FINAL \
+    Q_DECL_IMPORT \
+    Q_DECL_OVERRIDE \
+    Q_INVOKABLE \
+    QT_BEGIN_NAMESPACE \
+    QT_END_NAMESPACE
+
+indexes = \
+    @QT_INSTALL_DOCS@/qtcore/qtcore.index \
+    @QT_INSTALL_DOCS@/qtnetwork/qtnetwork.index \
+    @QT_INSTALL_DOCS@/qtqml/qtqml.index \
+    @QT_INSTALL_DOCS@/qtquick/qtquick.index
+depends = qtcore qtnetwork qtqml qtquick
+
+syntaxhighlighting = true
+
+HTML.nonavigationbar = true
+HTML.stylesheets = \
+    @CMAKE_CURRENT_SOURCE_DIR@/css/base.css \
+    @CMAKE_CURRENT_SOURCE_DIR@/css/custom.css \
+    @CMAKE_CURRENT_SOURCE_DIR@/css/qtquick.css
+HTML.headerstyles = \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/qtquick.css\" />\n" \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/base.css\" />\n" \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/custom.css\" />\n"

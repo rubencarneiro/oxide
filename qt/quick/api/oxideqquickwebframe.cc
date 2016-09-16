@@ -109,7 +109,31 @@ OxideQQuickWebFramePrivate* OxideQQuickWebFramePrivate::get(
   return frame->d_func();
 }
 
+/*!
+\class OxideQQuickWebFrame
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickwebframe.h
+
+\brief Represents a frame in a web page
+*/
+
+/*!
+\qmltype WebFrame
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickWebFrame
+
+\brief Represents a frame in a web page
+
+WebFrame represents a frame in a web page. It provides a way to access the
+currently committed URL (via \l{url}) as well as a mechanism to communicate with
+user scripts that the application has injected (via WebContext::userScripts).
+*/
+
 OxideQQuickWebFrame::OxideQQuickWebFrame() {}
+
+/*!
+\internal
+*/
 
 OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   Q_D(OxideQQuickWebFrame);
@@ -119,11 +143,24 @@ OxideQQuickWebFrame::~OxideQQuickWebFrame() {
   }
 }
 
+/*!
+\qmlproperty url WebFrame::url
+
+The URL of the document that is currently displayed in this frame.
+*/
+
 QUrl OxideQQuickWebFrame::url() const {
   Q_D(const OxideQQuickWebFrame);
 
   return d->proxy_->url();
 }
+
+/*!
+\qmlproperty WebFrame WebFrame::parentFrame
+
+The WebFrame that this frame is a child of. This remains constant for the life
+of the frame.
+*/
 
 OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
   Q_D(const OxideQQuickWebFrame);
@@ -136,12 +173,25 @@ OxideQQuickWebFrame* OxideQQuickWebFrame::parentFrame() const {
   return qobject_cast<OxideQQuickWebFrame*>(p);
 }
 
+/*!
+\qmlproperty list<WebFrame> WebFrame::childFrames
+
+A list of WebFrames that are children of this frame.
+*/
+
 QQmlListProperty<OxideQQuickWebFrame> OxideQQuickWebFrame::childFrames() {
   return QQmlListProperty<OxideQQuickWebFrame>(
       this, nullptr,
       OxideQQuickWebFramePrivate::childFrame_count,
       OxideQQuickWebFramePrivate::childFrame_at);
 }
+
+/*!
+\qmlproperty list<ScriptMessageHandler> WebFrame::messageHandlers
+
+The list of script message handlers attached to this frame. These can handle
+messages from user scripts injected in to this frame.
+*/
 
 QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebFrame::messageHandlers() {
@@ -150,6 +200,23 @@ OxideQQuickWebFrame::messageHandlers() {
       OxideQQuickWebFramePrivate::messageHandler_count,
       OxideQQuickWebFramePrivate::messageHandler_at);
 }
+
+/*!
+\qmlmethod void WebFrame::addMessageHandler(ScriptMessageHandler handler)
+
+Add \a{handler} to the list of script message handlers attached to this frame.
+If \a{handler} is already attached to another WebView or WebFrame, then this
+will return without making any changes.
+
+If \a{handler} is already attached to this frame then it will be moved to the
+end of the list.
+
+This frame will assume ownership of \a{handle} by setting itself as the
+parent.
+
+If \a{handle} is deleted whilst it is attached to this frame, then it will
+automatically be detached.
+*/
 
 void OxideQQuickWebFrame::addMessageHandler(
     OxideQQuickScriptMessageHandler* handler) {
@@ -180,6 +247,15 @@ void OxideQQuickWebFrame::addMessageHandler(
   emit messageHandlersChanged();
 }
 
+/*!
+\qmlmethod void WebFrame::removeMessageHandler(ScriptMessageHandler handler)
+
+Remove \a{handler} from the list of script message handlers attached to this
+frame.
+
+This will unparent \a{handler}, giving ownership of it back to the application.
+*/
+
 void OxideQQuickWebFrame::removeMessageHandler(
     OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebFrame);
@@ -199,9 +275,23 @@ void OxideQQuickWebFrame::removeMessageHandler(
   emit messageHandlersChanged();
 }
 
+/*!
+\qmlmethod ScriptMessageRequest WebFrame::sendMessage(url context,
+                                                      string msgId,
+                                                      variant payload)
+
+Send a message to the handler for \a{msgId} provided by the user script injected
+in to the JS context identified by \a{context}. The message payload is supplied
+via \{payload}. \a{payload} must be a value, object or array that can be
+represented by JSON values.
+
+This returns a ScriptMessageRequest instance which is owned by the application
+and can be used to listen for a response.
+*/
+
 OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
     const QUrl& context,
-    const QString& msg_id,
+    const QString& msgId,
     const QVariant& payload) {
   Q_D(OxideQQuickWebFrame);
 
@@ -213,7 +303,7 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  if (!d->proxy_->sendMessage(context, msg_id, aux, request)) {
+  if (!d->proxy_->sendMessage(context, msgId, aux, request)) {
     delete request;
     return nullptr;
   }
@@ -221,8 +311,19 @@ OxideQQuickScriptMessageRequest* OxideQQuickWebFrame::sendMessage(
   return request;
 }
 
+/*!
+\qmlmethod void WebFrame::sendMessageNoReply(url context,
+                                             string msgId,
+                                             variant payload)
+
+Send a message to the handler for \a{msgId} provided by the user script injected
+in to the JS context identified by \a{context}. The message payload is supplied
+via \{payload}. \a{payload} must be a value, object or array that can be
+represented by JSON values.
+*/
+
 void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
-                                             const QString& msg_id,
+                                             const QString& msgId,
                                              const QVariant& payload) {
   Q_D(OxideQQuickWebFrame);
 
@@ -231,5 +332,5 @@ void OxideQQuickWebFrame::sendMessageNoReply(const QUrl& context,
     aux = aux.value<QJSValue>().toVariant();
   }
 
-  d->proxy_->sendMessageNoReply(context, msg_id, aux);
+  d->proxy_->sendMessageNoReply(context, msgId, aux);
 }
