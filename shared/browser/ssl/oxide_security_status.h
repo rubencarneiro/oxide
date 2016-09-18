@@ -23,15 +23,11 @@
 #include "base/callback.h"
 #include "base/callback_list.h"
 #include "base/memory/ref_counted.h"
+#include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents_user_data.h"
-#include "content/public/common/ssl_status.h"
 
 #include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_shared_export.h"
-
-namespace content {
-class CertStore;
-}
 
 namespace net {
 class X509Certificate;
@@ -72,14 +68,10 @@ class OXIDE_SHARED_EXPORT SecurityStatus
   CertStatusFlags cert_status() const { return cert_status_; }
   net::X509Certificate* cert() const { return cert_.get(); }
 
-  void SetCertStoreForTesting(content::CertStore* cert_store);
-
  private:
   friend class content::WebContentsUserData<SecurityStatus>;
 
   SecurityStatus(content::WebContents* contents);
-
-  content::CertStore* GetCertStore() const;
 
   content::WebContents* contents_;
 
@@ -89,8 +81,6 @@ class OXIDE_SHARED_EXPORT SecurityStatus
   scoped_refptr<net::X509Certificate> cert_;
 
   base::CallbackList<void(ChangedFlags)> callback_list_;
-
-  content::CertStore* cert_store_for_testing_;
 };
 
 } // namespace oxide

@@ -30,7 +30,6 @@
 #include "third_party/skia/include/core/SkImage.h"
 #include "third_party/WebKit/public/platform/WebDragOperation.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
-#include "third_party/WebKit/public/platform/WebScreenInfo.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect_conversions.h"
@@ -245,10 +244,9 @@ gfx::NativeWindow WebContentsView::GetTopLevelNativeWindow() const {
   return nullptr;
 }
 
-void WebContentsView::GetScreenInfo(
-    blink::WebScreenInfo* web_screen_info) const {
-  content::WebContentsViewOxide::GetWebScreenInfoForDisplay(GetDisplay(),
-                                                            web_screen_info);
+void WebContentsView::GetScreenInfo(content::ScreenInfo* screen_info) const {
+  content::WebContentsViewOxide::GetScreenInfoForDisplay(GetDisplay(),
+                                                         screen_info);
 }
 
 void WebContentsView::GetContainerBounds(gfx::Rect* out) const {

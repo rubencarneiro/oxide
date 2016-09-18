@@ -71,6 +71,18 @@ QEvent::Type GetPrepareToCloseBypassEventType() {
   return QEvent::Type(g_event_type);
 }
 
+oxide::qt::RestoreType ToInternalRestoreType(
+    OxideQQuickWebView::RestoreType type) {
+  switch (type) {
+    case OxideQQuickWebView::RestoreCurrentSession:
+      return oxide::qt::RESTORE_CURRENT_SESSION;
+    case OxideQQuickWebView::RestoreLastSessionExitedCleanly:
+      return oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY;
+    case OxideQQuickWebView::RestoreLastSessionCrashed:
+      return oxide::qt::RESTORE_LAST_SESSION_CRASHED;
+  }
+}
+
 }
 
 OxideQQuickWebViewAttached::OxideQQuickWebViewAttached(QObject* parent) :
@@ -2355,17 +2367,7 @@ void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
     return;
   }
 
-  Q_STATIC_ASSERT(
-      RestoreCurrentSession ==
-        static_cast<RestoreType>(oxide::qt::RESTORE_CURRENT_SESSION));
-  Q_STATIC_ASSERT(
-      RestoreLastSessionExitedCleanly ==
-        static_cast<RestoreType>(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY));
-  Q_STATIC_ASSERT(
-      RestoreLastSessionCrashed ==
-        static_cast<RestoreType>(oxide::qt::RESTORE_LAST_SESSION_CRASHED));
-
-  d->construct_props_->restore_type = static_cast<oxide::qt::RestoreType>(type);
+  d->construct_props_->restore_type = ToInternalRestoreType(type);
 }
 
 /*!

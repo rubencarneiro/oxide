@@ -186,7 +186,7 @@ WebView::CommonParams::~CommonParams() {}
 WebView::CreateParams::CreateParams()
     : context(nullptr),
       incognito(false),
-      restore_type(content::NavigationController::RESTORE_CURRENT_SESSION),
+      restore_type(content::RestoreType::NONE),
       restore_index(0) {}
 
 WebView::CreateParams::~CreateParams() {}
@@ -925,7 +925,6 @@ void WebView::DidNavigateMainFrame(
 }
 
 void WebView::DidGetRedirectForResourceRequest(
-      content::RenderFrameHost* render_frame_host,
       const content::ResourceRedirectDetails& details) {
   if (details.resource_type != content::RESOURCE_TYPE_MAIN_FRAME) {
     return;

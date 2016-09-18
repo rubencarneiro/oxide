@@ -19,13 +19,12 @@
 
 #include "base/bind.h"
 #include "base/memory/ref_counted.h"
-#include "content/public/browser/cert_store.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
+#include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/referrer.h"
 #include "content/public/common/security_style.h"
-#include "content/public/common/ssl_status.h"
 #include "content/public/test/test_browser_context.h"
 #include "content/public/test/test_web_contents_factory.h"
 #include "net/cert/x509_certificate.h"
@@ -34,7 +33,6 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/test/oxide_mock_cert_store.h"
 #include "shared/test/oxide_test_browser_thread_bundle.h"
 
 #include "oxide_security_status.h"
@@ -55,44 +53,37 @@ class SecurityStatusTest : public testing::Test {
  protected:
   content::WebContents* web_contents() const { return web_contents_; }
 
-  content::CertStore* cert_store() { return &cert_store_; }
-
-  int cert_id() const { return cert_id_; }
-  int expired_cert_id() const { return expired_cert_id_; }
+  net::X509Certificate* cert() const { return cert_.get(); }
+  net::X509Certificate* expired_cert() const { return expired_cert_.get(); }
 
  private:
   void SetUp() override;
 
-  MockCertStore cert_store_;
   TestBrowserThreadBundle browser_thread_bundle_;
   content::TestBrowserContext browser_context_;
   content::TestWebContentsFactory web_contents_factory_;
 
   content::WebContents* web_contents_;
 
-  int cert_id_;
-  int expired_cert_id_;
+  scoped_refptr<net::X509Certificate> cert_;
+  scoped_refptr<net::X509Certificate> expired_cert_;
 };
 
 void SecurityStatusTest::SetUp() {
   web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
   SecurityStatus::CreateForWebContents(web_contents_);
-  SecurityStatus::FromWebContents(web_contents_)->SetCertStoreForTesting(
-      &cert_store_);
 
-  scoped_refptr<net::X509Certificate> cert(
+  cert_ =
       new net::X509Certificate("https://www.google.com/",
                                "https://www.example.com/",
                                base::Time::UnixEpoch(),
-                               base::Time::Now() + base::TimeDelta::FromDays(1)));
-  cert_id_ = cert_store_.AddCertForTesting(cert.get());
+                               base::Time::Now() + base::TimeDelta::FromDays(1));
 
-  cert =
+  expired_cert_ =
       new net::X509Certificate("https://www.google.com/",
                                "https://www.example.com/",
                                base::Time::UnixEpoch(),
                                base::Time::Now() - base::TimeDelta::FromDays(1));
-  expired_cert_id_ = cert_store_.AddCertForTesting(cert.get());
 }
 
 SecurityStatusTest::SecurityStatusTest() {}
@@ -131,18 +122,15 @@ TEST_F(SecurityStatusTest, Secure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_SECURE, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
   EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, Broken) {
@@ -153,19 +141,16 @@ TEST_F(SecurityStatusTest, Broken) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
   EXPECT_EQ(CERT_STATUS_BAD_IDENTITY, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, RanInsecure) {
@@ -176,19 +161,16 @@ TEST_F(SecurityStatusTest, RanInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::RAN_INSECURE_CONTENT, status->content_status());
   EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, DisplayedInsecure) {
@@ -199,20 +181,17 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_WARNING, status->security_level());
   EXPECT_EQ(content::SSLStatus::DISPLAYED_INSECURE_CONTENT,
             status->content_status());
   EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
@@ -223,7 +202,7 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.content_status =
       content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
       content::SSLStatus::RAN_INSECURE_CONTENT;
@@ -231,15 +210,12 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
                 content::SSLStatus::RAN_INSECURE_CONTENT,
             status->content_status());
   EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, MinorCertError) {
@@ -250,19 +226,16 @@ TEST_F(SecurityStatusTest, MinorCertError) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_WARNING, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
   EXPECT_EQ(CERT_STATUS_REVOCATION_CHECK_FAILED, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 TEST_F(SecurityStatusTest, SecureEV) {
@@ -273,19 +246,16 @@ TEST_F(SecurityStatusTest, SecureEV) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.cert_id = cert_id();
+  ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(cert_id(), &cert));
-
   EXPECT_EQ(SECURITY_LEVEL_SECURE_EV, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
   EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(cert(), status->cert());
 }
 
 struct CertStatusRow {
@@ -500,11 +470,10 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   } else {
     ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   }
-  ssl_status.cert_id = row.expired_cert ? expired_cert_id() : cert_id();
+  ssl_status.certificate = row.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = row.cert_status_in;
 
-  scoped_refptr<net::X509Certificate> cert;
-  ASSERT_TRUE(cert_store()->RetrieveCert(ssl_status.cert_id, &cert));
+  scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
@@ -523,7 +492,7 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   EXPECT_EQ(expected_security_level, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
   EXPECT_EQ(row.cert_status_out, status->cert_status());
-  EXPECT_EQ(cert.get(), status->cert());
+  EXPECT_EQ(expected_cert.get(), status->cert());
 }
 
 struct ObserverCallbackRow {
@@ -684,8 +653,8 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.security_style = params.initial_data.security_style;
-  ssl_status.cert_id =
-      params.initial_data.expired_cert ? expired_cert_id() : cert_id();
+  ssl_status.certificate =
+      params.initial_data.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = params.initial_data.cert_status;
   ssl_status.content_status = params.initial_data.content_status;
 
@@ -709,16 +678,12 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
                                            &flags));
 
   ssl_status.security_style = params.test_data.security_style;
-  ssl_status.cert_id =
-      params.test_data.expired_cert ? expired_cert_id() : cert_id();
+  ssl_status.certificate =
+      params.test_data.expired_cert ? expired_cert() : this->cert();
   ssl_status.cert_status = params.test_data.cert_status;
   ssl_status.content_status = params.test_data.content_status;
 
-  scoped_refptr<net::X509Certificate> expected_cert;
-  ASSERT_TRUE(
-      cert_store()->RetrieveCert(params.cert_expected_expired ?
-                                     expired_cert_id() : cert_id(),
-                                 &expected_cert));
+  scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
   status->VisibleSSLStateChanged();
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2016 Canonical Ltd.
+// Copyright (C) 2014 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,40 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_TEST_MOCK_CERT_STORE_H_
-#define _OXIDE_SHARED_TEST_MOCK_CERT_STORE_H_
+#ifndef _OXIDE_SHARED_BROWSER_DEVTOOLS_MANAGER_DELEGATE_H_
+#define _OXIDE_SHARED_BROWSER_DEVTOOLS_MANAGER_DELEGATE_H_
 
-#include <map>
-
+#include "base/compiler_specific.h"
 #include "base/macros.h"
-#include "content/public/browser/cert_store.h"
-
-namespace net {
-class X509Certificate;
-}
+#include "content/public/browser/devtools_manager_delegate.h"
 
 namespace oxide {
 
-class MockCertStore : public content::CertStore {
+class DevToolsManagerDelegate : public content::DevToolsManagerDelegate {
  public:
-  MockCertStore();
-  ~MockCertStore() override;
-
-  int AddCertForTesting(net::X509Certificate* cert);
-
-  // content::CertStore implementation
-  int StoreCert(net::X509Certificate* cert,
-                int render_process_host_id) override;
-  bool RetrieveCert(int cert_id,
-                    scoped_refptr<net::X509Certificate>* cert) override;
+  DevToolsManagerDelegate();
+  ~DevToolsManagerDelegate() override;
 
  private:
-  int next_id_;
-  std::map<int, scoped_refptr<net::X509Certificate>> id_to_cert_;
+  // DevToolsManagerelegate overrides.
+  std::string GetDiscoveryPageHTML() override;
+  std::string GetFrontendResource(const std::string& path) override;
 
-  DISALLOW_COPY_AND_ASSIGN(MockCertStore);
+  DISALLOW_COPY_AND_ASSIGN(DevToolsManagerDelegate);
 };
 
-} // namespace oxide
+}
 
-#endif // _OXIDE_SHARED_TEST_MOCK_CERT_STORE_H_
+#endif  // _OXIDE_SHARED_BROWSER_DEVTOOLS_MANAGER_DELEGATE_H_
+

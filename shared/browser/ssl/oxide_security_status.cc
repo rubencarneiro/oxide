@@ -18,7 +18,6 @@
 #include "oxide_security_status.h"
 
 #include "base/logging.h"
-#include "content/public/browser/cert_store.h"
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/web_contents.h"
@@ -142,17 +141,8 @@ SecurityStatus::SecurityStatus(content::WebContents* contents)
     : contents_(contents),
       security_level_(SECURITY_LEVEL_NONE),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
-      cert_status_(CERT_STATUS_OK),
-      cert_store_for_testing_(nullptr) {
+      cert_status_(CERT_STATUS_OK) {
   VisibleSSLStateChanged();
-}
-
-content::CertStore* SecurityStatus::GetCertStore() const {
-  if (cert_store_for_testing_) {
-    return cert_store_for_testing_;
-  }
-
-  return content::CertStore::GetInstance();
 }
 
 SecurityStatus::~SecurityStatus() {}
@@ -178,8 +168,7 @@ void SecurityStatus::VisibleSSLStateChanged() {
       contents_->GetController().GetVisibleEntry();
   content::SSLStatus status = entry ? entry->GetSSL() : content::SSLStatus();
 
-  cert_ = nullptr;
-  GetCertStore()->RetrieveCert(status.cert_id, &cert_);
+  cert_ = status.certificate;
 
   security_level_ = CalculateSecurityLevel(status, cert_.get());
   content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
@@ -210,10 +199,6 @@ void SecurityStatus::VisibleSSLStateChanged() {
 std::unique_ptr<SecurityStatus::Subscription>
 SecurityStatus::AddChangeCallback(const ObserverCallback& callback) {
   return callback_list_.Add(callback);
-}
-
-void SecurityStatus::SetCertStoreForTesting(content::CertStore* cert_store) {
-  cert_store_for_testing_ = cert_store;
 }
 
 } // namespace oxide

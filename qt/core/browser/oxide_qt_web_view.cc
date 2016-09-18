@@ -40,8 +40,8 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
-#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/render_process_host.h"
+#include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/page_zoom.h"
 #include "net/base/net_errors.h"
@@ -215,25 +215,24 @@ void CreateRestoreEntriesFromRestoreState(
   *index_out = index;
 }
 
-content::NavigationController::RestoreType ToNavigationControllerRestoreType(
-    RestoreType type) {
+content::RestoreType ToContentRestoreType(RestoreType type) {
   static_assert(
       RESTORE_CURRENT_SESSION == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_CURRENT_SESSION),
-      "RestoreType and content::NavigationController::RestoreType don't "
+          content::RestoreType::CURRENT_SESSION),
+      "RestoreType and content::RestoreType don't "
       "match: RESTORE_CURRENT_SESSION");
   static_assert(
       RESTORE_LAST_SESSION_EXITED_CLEANLY == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-      "RestoreType and content::NavigationController::RestoreType don't "
+          content::RestoreType::LAST_SESSION_EXITED_CLEANLY),
+      "RestoreType and content::RestoreType don't "
       "match: RESTORE_LAST_SESSION_EXITED_CLEANLY");
   static_assert(
       RESTORE_LAST_SESSION_CRASHED == static_cast<RestoreType>(
-          content::NavigationController::RESTORE_LAST_SESSION_CRASHED),
-      "RestoreType and content::NavigationController::RestoreType don't "
+          content::RestoreType::LAST_SESSION_CRASHED),
+      "RestoreType and content::RestoreType don't "
       "match: RESTORE_LAST_SESSION_CRASHED");
 
-  return static_cast<content::NavigationController::RestoreType>(type);
+  return static_cast<content::RestoreType>(type);
 }
 
 bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
@@ -1150,8 +1149,7 @@ WebView::WebView(WebViewProxyClient* client,
     CreateRestoreEntriesFromRestoreState(restore_state,
                                          &create_params.restore_entries,
                                          &create_params.restore_index);
-    create_params.restore_type =
-        ToNavigationControllerRestoreType(restore_type);
+    create_params.restore_type = ToContentRestoreType(restore_type);
   }
 
   if (oxide::BrowserProcessMain::GetInstance()->GetProcessModel() ==

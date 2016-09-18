@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_devtools_http_handler_delegate.h"
+#include "oxide_devtools_manager_delegate.h"
 
 #include "content/public/browser/devtools_frontend_host.h"
 #include "ui/base/resource/resource_bundle.h"
@@ -24,18 +24,18 @@
 
 namespace oxide {
 
-std::string DevtoolsHttpHandlerDelegate::GetDiscoveryPageHTML() {
+std::string DevToolsManagerDelegate::GetDiscoveryPageHTML() {
   return ui::ResourceBundle::GetSharedInstance().GetRawDataResource(
     IDR_OXIDE_DEVTOOLS_DISCOVERY_HTML_PAGE).as_string();
 }
 
-std::string DevtoolsHttpHandlerDelegate::GetFrontendResource(
+std::string DevToolsManagerDelegate::GetFrontendResource(
     const std::string& path) {
   return content::DevToolsFrontendHost::GetFrontendResource(path).as_string();
 }
 
-DevtoolsHttpHandlerDelegate::DevtoolsHttpHandlerDelegate() = default;
+DevToolsManagerDelegate::DevToolsManagerDelegate() = default;
 
-DevtoolsHttpHandlerDelegate::~DevtoolsHttpHandlerDelegate() = default;
+DevToolsManagerDelegate::~DevToolsManagerDelegate() = default;
 
 }

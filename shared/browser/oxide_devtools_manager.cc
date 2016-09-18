@@ -23,9 +23,10 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/singleton.h"
-#include "components/devtools_http_handler/devtools_http_handler.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
+#include "content/browser/devtools/devtools_http_handler.h" // nogncheck
+#include "content/browser/devtools/devtools_manager.h" // nogncheck
 #include "content/public/browser/devtools_socket_factory.h"
 #include "net/base/ip_address.h"
 #include "net/base/net_errors.h"
@@ -33,7 +34,7 @@
 #include "net/socket/tcp_server_socket.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_devtools_http_handler_delegate.h"
+#include "oxide_devtools_manager_delegate.h"
 #include "oxide_user_agent_settings.h"
 
 namespace oxide {
@@ -157,14 +158,14 @@ void DevToolsManager::SetEnabled(bool enabled) {
       new TCPServerSocketFactory(address_, port_));
 
   http_handler_.reset(
-      new devtools_http_handler::DevToolsHttpHandler(
-        std::move(factory),
-        std::string(),
-        new DevtoolsHttpHandlerDelegate(),
-        base::FilePath(),
-        base::FilePath(),
-        UserAgentSettings::Get(context_)->GetProduct(),
-        UserAgentSettings::Get(context_)->GetUserAgent()));
+      new content::DevToolsHttpHandler(
+          content::DevToolsManager::GetInstance()->delegate(),
+          std::move(factory),
+          std::string(),
+          base::FilePath(),
+          base::FilePath(),
+          UserAgentSettings::Get(context_)->GetProduct(),
+          UserAgentSettings::Get(context_)->GetUserAgent()));
 }
 
 void DevToolsManager::SetPort(int port) {

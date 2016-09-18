@@ -23,7 +23,7 @@
 #include <QtGlobal>
 
 #include "base/macros.h"
-#include "content/public/common/ssl_status.h"
+#include "content/public/browser/ssl_status.h"
 
 #include "qt/core/common/oxide_qt_export.h"
 #include "shared/browser/ssl/oxide_security_status.h"

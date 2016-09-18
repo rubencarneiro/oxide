@@ -28,9 +28,6 @@
 
 namespace content {
 class BrowserContext;
-}
-
-namespace devtools_http_handler {
 class DevToolsHttpHandler;
 }
 
@@ -39,6 +36,8 @@ namespace oxide {
 class BrowserContext;
 class DevToolsManagerFactory;
 
+// XXX(chrisccoulson): This per-BrowserContext class is probably going to go
+//  away - see https://launchpad.net/bugs/1622247
 class OXIDE_SHARED_EXPORT DevToolsManager : public KeyedService {
  public:
   static DevToolsManager* Get(content::BrowserContext* context);
@@ -65,7 +64,7 @@ class OXIDE_SHARED_EXPORT DevToolsManager : public KeyedService {
   int port_;
   std::string address_;
 
-  std::unique_ptr<devtools_http_handler::DevToolsHttpHandler> http_handler_;
+  std::unique_ptr<content::DevToolsHttpHandler> http_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(DevToolsManager);
 };

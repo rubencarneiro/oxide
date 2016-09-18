@@ -27,7 +27,8 @@ void SSLHostStateDelegate::AllowCert(const std::string& host,
                                      const net::X509Certificate& cert,
                                      net::CertStatus error) {}
 
-void SSLHostStateDelegate::Clear() {}
+void SSLHostStateDelegate::Clear(
+    const base::Callback<bool(const std::string&)>& host_filter) {}
 
 content::SSLHostStateDelegate::CertJudgment SSLHostStateDelegate::QueryPolicy(
     const std::string& host,
