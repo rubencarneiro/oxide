@@ -38,7 +38,7 @@
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
-#include "cc/trees/layer_tree_host_interface.h"
+#include "cc/trees/layer_tree_host_in_process.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
@@ -383,7 +383,7 @@ void Compositor::EnsureLayerTreeHost() {
   settings.use_external_begin_frame_source = false;
   settings.renderer_settings.allow_antialiasing = false;
 
-  cc::LayerTreeHost::InitParams params;
+  cc::LayerTreeHostInProcess::InitParams params;
   params.client = this;
   params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
   params.gpu_memory_buffer_manager =
@@ -394,7 +394,8 @@ void Compositor::EnsureLayerTreeHost() {
   params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
   params.animation_host = cc::AnimationHost::CreateMainInstance();
 
-  layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
+  layer_tree_host_ =
+      cc::LayerTreeHostInProcess::CreateSingleThreaded(this, &params);
   DCHECK(layer_tree_host_);
 
   can_evict_layer_tree_host_ = true;

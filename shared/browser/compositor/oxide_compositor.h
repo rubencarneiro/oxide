@@ -44,7 +44,7 @@ namespace cc {
 class CompositorFrameSink;
 class Display;
 class Layer;
-class LayerTreeHostInterface;
+class LayerTreeHost;
 class SurfaceIdAllocator;
 }
 
@@ -180,7 +180,7 @@ class Compositor : public cc::LayerTreeHostClient,
   bool layer_tree_host_eviction_pending_;
   bool can_evict_layer_tree_host_;
 
-  std::unique_ptr<cc::LayerTreeHostInterface> layer_tree_host_;
+  std::unique_ptr<cc::LayerTreeHost> layer_tree_host_;
 
   int num_failed_recreate_attempts_;
 
