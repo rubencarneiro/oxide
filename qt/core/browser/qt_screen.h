@@ -22,6 +22,9 @@
 
 #include <QObject>
 #include <QtGlobal>
+#if defined(USE_QINPUTDEVICE)
+#include <QInputDevice>
+#endif
 
 #include "base/macros.h"
 
@@ -57,20 +60,35 @@ class OXIDE_QT_EXPORT Screen : public QObject,
 
   static void SetEnableQtUbuntuIntegrationForTesting(bool enable);
 
+ protected :
+  ShellMode GetShellMode() override;
+
  private Q_SLOTS:
   void OnScreenAdded(QScreen* screen);
   void OnScreenRemoved(QScreen* screen);
   void OnPrimaryScreenChanged(QScreen* screen);
+#if defined(USE_QINPUTDEVICE)
+  void OnInputDeviceAdded(QInputDevice* device);
+  void OnInputDeviceRemoved(const QString& deviceId);
+  void OnInputDevicesReady();
+#endif
   void OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
                                        const QString& property_name);
 
  private:
   QScreen* QScreenFromDisplay(const display::Display& display) const;
   void UpdateDisplayForScreen(QScreen* screen);
+#if defined(USE_QINPUTDEVICE)
+  bool GetShellModeFromInputDevices(ShellMode* mode);
+#endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
   std::map<QScreen*, display::Display> displays_;
 #endif
+#if defined(USE_QINPUTDEVICE)
+  QInputInfoManager input_device_manager_;
+#endif
+  oxide::ShellMode current_shell_mode_;
 };
 
 } // namespace qt

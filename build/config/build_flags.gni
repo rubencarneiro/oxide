@@ -23,6 +23,8 @@ declare_args() {
 
   enable_mediahub = false
 
+  use_qinputdevice = false
+
   oxide_gettext_domain = false
 
   oxide_libexec_subdir = ""

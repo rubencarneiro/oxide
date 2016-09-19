@@ -17,6 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import("//build/config/linux/pkg_config.gni")
+import("//oxide/build/config/build_flags.gni")
 
 template("qt_private_includes") {
   module = invoker.module
@@ -87,4 +88,10 @@ pkg_config("Qt5Network") {
 pkg_config("Qt5Positioning") {
   visibility = [ "//oxide/build/config/Qt5:Positioning" ]
   packages = [ "Qt5Positioning" ]
+}
+
+if (use_qinputdevice) {
+  pkg_config("Qt5SystemInfo") {
+    packages = [ "Qt5SystemInfo" ]
+  }
 }

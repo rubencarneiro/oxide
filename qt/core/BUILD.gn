@@ -38,6 +38,10 @@ config("core_api_include_dir") {
 }
 
 qtmoc("core_moc_gen") {
+  if (use_qinputdevice) {
+    defines = [ "USE_QINPUTDEVICE" ]
+  }
+
   sources = [
     "api/oxideqcertificateerror.h",
     "api/oxideqdownloadrequest.h",
@@ -117,6 +121,11 @@ source_set("core_sources") {
     "//ui/touch_selection",
     "//url"
   ]
+
+  if (use_qinputdevice) {
+    deps += [ "//oxide/build/config/Qt5:SystemInfo" ]
+    defines += [ "USE_QINPUTDEVICE" ]
+  }
 
   sources = [
     "$target_gen_dir/api/moc_oxideqcertificateerror.cc",
@@ -390,6 +399,11 @@ test_executable("core_screen_unittests") {
     "//testing/gtest",
     "//ui/display",
   ]
+
+  if (use_qinputdevice) {
+    deps += [ "//oxide/build/config/Qt5:SystemInfo" ]
+    defines += [ "USE_QINPUTDEVICE" ]
+  }
 
   sources = [
     "browser/qt_screen_unittest.cc",

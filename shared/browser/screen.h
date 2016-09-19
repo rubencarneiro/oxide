@@ -51,7 +51,7 @@ class OXIDE_SHARED_EXPORT Screen {
   virtual DisplayFormFactor GetDisplayFormFactor(
       const display::Display& display);
 
-  static ShellMode GetShellMode();
+  virtual ShellMode GetShellMode();
 
  protected:
   Screen();

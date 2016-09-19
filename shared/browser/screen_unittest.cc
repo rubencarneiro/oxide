@@ -195,15 +195,15 @@ TEST_F(ScreenTest, GetShellMode) {
 #if defined(ENABLE_HYBRIS)
   {
     FakeHybrisUtils hybris_utils(false);
-    EXPECT_EQ(ShellMode::Windowed, Screen::GetShellMode());
+    EXPECT_EQ(ShellMode::Windowed, Screen::GetInstance()->GetShellMode());
   }
 
   {
     FakeHybrisUtils hybris_utils(true);
-    EXPECT_EQ(ShellMode::NonWindowed, Screen::GetShellMode());
+    EXPECT_EQ(ShellMode::NonWindowed, Screen::GetInstance()->GetShellMode());
   }
 #else
-  EXPECT_EQ(ShellMode::Windowed, Screen::GetShellMode());
+  EXPECT_EQ(ShellMode::Windowed, Screen::GetInstance()->GetShellMode());
 #endif
 }
 

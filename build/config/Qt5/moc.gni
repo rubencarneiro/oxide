@@ -34,9 +34,15 @@ template("moc_action_foreach") {
     output = "${root_gen_dir}/{{source_root_relative_dir}}/${invoker.output_prefix}{{source_name_part}}.${invoker.output_extension}"
     outputs = [ output ]
 
-    args = [
-      "-m", "$qt_moc_executable", "{{source}}", rebase_path("$output", "", ".")
-    ]
+    args = [ "-m", "$qt_moc_executable" ]
+    if (defined(invoker.defines)) {
+      define_flags = ""
+      foreach(define, invoker.defines) {
+        define_flags += "-D" + define + " "
+      }
+      args += [ "-f", "$define_flags" ]
+    }
+    args += [ "{{source}}", rebase_path("$output", "", ".") ]
   }
 }
 
@@ -60,6 +66,9 @@ template("qtmoc") {
   }
 
   targets = []
+  if (defined(invoker.defines)) {
+    defines = invoker.defines
+  }
 
   if (defined(sources_cc)) {
     name = "${target_name}_cc"

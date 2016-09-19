@@ -27,6 +27,7 @@ import sys
 def main(argv):
   parser = OptionParser(usage="usage: %prog [options] input output")
   parser.add_option("-m", dest="moc")
+  parser.add_option("-f", dest="defs")
 
   (options, args) = parser.parse_args(argv)
 
@@ -44,7 +45,11 @@ def main(argv):
     print("moc is not executable", file=sys.stderr)
     return 1
 
-  subprocess.check_call([moc, "-o", args[1], args[0]])
+  cmd_line = [moc, "-o", args[1], args[0]]
+  if options.defs != None:
+    cmd_line += options.defs.strip().split();
+
+  subprocess.check_call(cmd_line)
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv[1:]))

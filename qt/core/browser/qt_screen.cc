@@ -31,6 +31,7 @@
 
 #include "shared/browser/display_form_factor.h"
 #include "shared/browser/hybris_utils.h"
+#include "shared/browser/shell_mode.h"
 
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_screen_utils.h"
@@ -192,6 +193,83 @@ void Screen::OnPrimaryScreenChanged(QScreen* screen) {
   NotifyPrimaryDisplayChanged();
 }
 
+#if defined(USE_QINPUTDEVICE)
+void Screen::OnInputDeviceAdded(QInputDevice* device) {
+  DCHECK(input_device_manager_.count() > 0);
+  VLOG(1) << "Input Device ADDED : " << device->name().toStdString();
+  ShellMode mode = GetShellMode();
+  if (mode != current_shell_mode_) {
+    current_shell_mode_ = mode;
+    NotifyShellModeChanged();
+  }
+}
+
+void Screen::OnInputDeviceRemoved(const QString& deviceid) {
+  VLOG(1) << "Input Device REMOVED : " << deviceid.toStdString();
+  ShellMode mode = GetShellMode();
+  if (mode != current_shell_mode_) {
+    current_shell_mode_ = mode;
+    NotifyShellModeChanged();
+  }
+}
+
+void Screen::OnInputDevicesReady() {
+  VLOG(2) << "Input Devices READY";
+  current_shell_mode_ = GetShellMode();
+  NotifyShellModeChanged();
+}
+
+bool Screen::GetShellModeFromInputDevices(ShellMode* mode) {
+  QMap<QString, QInputDevice*> device_map;
+  device_map = input_device_manager_.deviceMap();
+  bool mouse = false, keyboard = false, touchpad = false, touchscreen = false;
+  for (auto i = device_map.begin(); i != device_map.end(); ++i) {
+    const QInputDevice::InputTypeFlags type = i.value()->types();
+    if (type & QInputDevice::InputType::Mouse) {
+      mouse = true;
+    }
+    if (type & QInputDevice::InputType::Keyboard) {
+      keyboard = true;
+    }
+    if (type & QInputDevice::InputType::TouchPad) {
+      touchpad = true;
+    }
+    if (type & QInputDevice::InputType::TouchScreen) {
+      touchscreen = true;
+    }
+  }
+  if (mouse || keyboard || touchpad) {
+    *mode = ShellMode::Windowed;
+    return true;
+  }
+  if (touchscreen) {
+    *mode = ShellMode::NonWindowed;
+    return true;
+  }
+
+  return false;
+}
+#endif
+
+ShellMode Screen::GetShellMode() {
+  ShellMode mode;
+  // Qt input devices state heuristics to detect mode.
+  bool ret = false;
+#if defined(USE_QINPUTDEVICE)
+  ret = GetShellModeFromInputDevices(&mode);
+#endif
+
+  if (!ret) {
+    // oxide heuristics to detect mode form factor, hybris.
+    mode = oxide::Screen::GetShellMode();
+  }
+
+  // other heuristics to determine like connecting
+  // device to Monitor.
+  // mode = .....
+  return mode;
+}
+
 void Screen::OnPlatformScreenPropertyChanged(QPlatformScreen* screen,
                                              const QString& property_name) {
   if (property_name == QStringLiteral("scale") ||
@@ -260,6 +338,18 @@ Screen::Screen() {
     connect(QGuiApplication::instance(), SIGNAL(primaryScreenChanged(QScreen*)),
             SLOT(OnPrimaryScreenChanged(QScreen*)));
   }
+#endif
+#if defined(USE_QINPUTDEVICE)
+  input_device_manager_.setFilter(QInputDevice::InputType::Mouse |
+      QInputDevice::InputType::Keyboard |
+      QInputDevice::InputType::TouchPad |
+      QInputDevice::InputType::TouchScreen);
+  connect(&input_device_manager_, SIGNAL(ready()),
+          SLOT(OnInputDevicesReady()));
+  connect(&input_device_manager_, SIGNAL(deviceAdded(QInputDevice*)),
+          SLOT(OnInputDeviceAdded(QInputDevice*)));
+  connect(&input_device_manager_, SIGNAL(deviceRemoved(const QString&)),
+          SLOT(OnInputDeviceRemoved(const QString&)));
 #endif
 
   QString platform = QGuiApplication::platformName();

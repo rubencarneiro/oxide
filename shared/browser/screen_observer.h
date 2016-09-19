@@ -27,6 +27,7 @@ class Display;
 namespace oxide {
 
 class Screen;
+enum class ShellMode;
 
 class OXIDE_SHARED_EXPORT ScreenObserver {
  public:
