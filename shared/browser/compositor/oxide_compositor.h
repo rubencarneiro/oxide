@@ -41,6 +41,7 @@ class SingleThreadTaskRunner;
 }
 
 namespace cc {
+class CompositorFrameSink;
 class Display;
 class Layer;
 class LayerTreeHostInterface;
@@ -97,7 +98,7 @@ class Compositor : public cc::LayerTreeHostClient,
 
   void OutputSurfaceChanged();
 
-  std::unique_ptr<cc::OutputSurface> CreateOutputSurface();
+  std::unique_ptr<cc::CompositorFrameSink> CreateCompositorFrameSink();
 
   void AddObserver(CompositorObserver* observer);
   void RemoveObserver(CompositorObserver* observer);
@@ -130,9 +131,9 @@ class Compositor : public cc::LayerTreeHostClient,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) override;
-  void RequestNewOutputSurface() override;
-  void DidInitializeOutputSurface() override;
-  void DidFailToInitializeOutputSurface() override;
+  void RequestNewCompositorFrameSink() override;
+  void DidInitializeCompositorFrameSink() override;
+  void DidFailToInitializeCompositorFrameSink() override;
   void WillCommit() override;
   void DidCommit() override;
   void DidCommitAndDrawFrame() override;
