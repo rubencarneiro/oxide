@@ -43,6 +43,7 @@
 #include "net/base/host_mapping_rules.h"
 #include "net/base/net_errors.h"
 #include "net/cookies/cookie_monster.h"
+#include "net/extras/sqlite/sqlite_channel_id_store.h"
 #include "net/ftp/ftp_network_layer.h"
 #include "net/http/http_cache.h"
 #include "net/http/http_network_session.h"
@@ -91,6 +92,8 @@ const base::FilePath::CharType kCacheDirname2[] = FILE_PATH_LITERAL("Cache2");
 
 const base::FilePath::CharType kCookiesFilename[] =
     FILE_PATH_LITERAL("cookies.sqlite");
+const base::FilePath::CharType kChannelIDFilename[] =
+    FILE_PATH_LITERAL("ChannelID");
 
 const char kDataScheme[] = "data";
 const char kFileScheme[] = "file";
@@ -347,15 +350,23 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   DCHECK_CURRENTLY_ON(content::BrowserThread::IO);
   DCHECK(!main_request_context_);
 
-  base::FilePath cookie_path;
+  std::unique_ptr<net::CookieStore> cookie_store;
+  scoped_refptr<net::SQLiteChannelIDStore> channel_id_store;
   if (!IsOffTheRecord() && !GetPath().empty()) {
-    cookie_path = GetPath().Append(kCookiesFilename);
+    cookie_store =
+        content::CreateCookieStore(
+            content::CookieStoreConfig(GetPath().Append(kCookiesFilename),
+                                       GetSessionCookieMode(),
+                                       nullptr, nullptr));
+    channel_id_store =
+        new net::SQLiteChannelIDStore(
+            GetPath().Append(kChannelIDFilename),
+            content::BrowserThread::GetBlockingPool()->GetSequencedTaskRunner(
+                base::SequencedWorkerPool::GetSequenceToken()));
+  } else {
+    cookie_store = content::CreateCookieStore(content::CookieStoreConfig());
   }
-  std::unique_ptr<net::CookieStore> cookie_store =
-      content::CreateCookieStore(
-          content::CookieStoreConfig(cookie_path,
-                                     GetSessionCookieMode(),
-                                     nullptr, nullptr));
+
   cookie_store_owner_->set_store(std::move(cookie_store));
 
   IOThread::Globals* io_thread_globals = IOThread::instance()->globals();
@@ -398,12 +409,10 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
   context->set_network_delegate(network_delegate_.get());
   context->set_http_user_agent_settings(http_user_agent_settings_.get());
 
-  // TODO: We want persistent storage here (for non-incognito), but 
-  //       SQLiteChannelIDStore is part of chrome
   storage->set_channel_id_service(
-      base::WrapUnique(new net::ChannelIDService(
-          new net::DefaultChannelIDStore(nullptr),
-          base::WorkerPool::GetTaskRunner(true))));
+      base::MakeUnique<net::ChannelIDService>(
+          new net::DefaultChannelIDStore(channel_id_store.get()),
+          base::WorkerPool::GetTaskRunner(true)));
 
   context->set_http_server_properties(http_server_properties_.get());
 

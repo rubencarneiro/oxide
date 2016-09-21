@@ -203,6 +203,7 @@ component("shared") {
     "//mojo/common",
     "//mojo/edk/system",
     "//net",
+    "//net:extras",
     "//services/shell/public/cpp",
     "//skia",
     "//storage/common",
