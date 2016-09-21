@@ -59,7 +59,6 @@ CompositorOutputSurfaceSoftware::CompositorOutputSurfaceSoftware(
     std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
     : CompositorOutputSurface(surface_id,
-                              nullptr,
                               std::move(software_device),
                               listener) {}
 

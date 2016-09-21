@@ -31,9 +31,16 @@ namespace oxide {
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
+    CompositorOutputSurfaceListener* listener)
+    : cc::OutputSurface(context_provider),
+      listener_(listener),
+      surface_id_(surface_id) {}
+
+CompositorOutputSurface::CompositorOutputSurface(
+    uint32_t surface_id,
     std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
-    : cc::OutputSurface(context_provider, nullptr, std::move(software_device)),
+    : cc::OutputSurface(std::move(software_device)),
       listener_(listener),
       surface_id_(surface_id) {}
 
