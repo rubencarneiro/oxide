@@ -25,6 +25,9 @@ namespace oxide {
 
 Clipboard::Clipboard() {
   DCHECK(CalledOnValidThread());
+  for (int i = 0; i < ui::CLIPBOARD_TYPE_LAST; ++i) {
+    cached_info_->push_back(CachedInfo());
+  }
 }
 
 void Clipboard::NotifyClipboardDataChanged(ui::ClipboardType type) {
