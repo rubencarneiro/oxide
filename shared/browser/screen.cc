@@ -81,7 +81,6 @@ Screen* Screen::GetInstance() {
 }
 
 Screen::~Screen() {
-  DCHECK(g_thread_checker.Get().CalledOnValidThread());
   DCHECK_EQ(g_instance, this);
   FOR_EACH_OBSERVER(ScreenObserver, observers_, OnScreenDestruction());
   g_instance = nullptr;
