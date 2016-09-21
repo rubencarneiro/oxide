@@ -768,6 +768,8 @@ BrowserContext::~BrowserContext() {
   BrowserContextDependencyManager::GetInstance()
       ->DestroyBrowserContextServices(this);
 
+  ShutdownStoragePartitions();
+
   // Schedule io_data_ to be destroyed on the IO thread
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
