@@ -681,6 +681,9 @@ std::unique_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 Compositor::~Compositor() {
   FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
 
+  layer_tree_host_.reset();
+  display_.reset();
+
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
       ->InvalidateSurfaceClientId(surface_id_allocator_->client_id());
