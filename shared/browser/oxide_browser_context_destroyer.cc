@@ -18,7 +18,7 @@
 #include "oxide_browser_context_destroyer.h"
 
 #include "base/logging.h"
-#include "base/message_loop/message_loop.h"
+#include "base/threading/thread_task_runner_handle.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/render_process_host.h"
 
@@ -59,7 +59,7 @@ void BrowserContextDestroyer::RenderProcessHostDestroyed(
   if (content::RenderProcessHost::run_renderer_in_process()) {
     FinishDestroyContext();
   } else {
-    base::MessageLoop::current()->PostTask(
+    base::ThreadTaskRunnerHandle::Get()->PostTask(
         FROM_HERE,
         base::Bind(&BrowserContextDestroyer::FinishDestroyContext,
                    // We have exclusive ownership of |this| - nobody else can

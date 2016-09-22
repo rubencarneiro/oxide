@@ -794,7 +794,7 @@ int WebContext::setCookies(const QUrl& url,
   }
 
   if (ctxt->remaining == 0) {
-    base::MessageLoop::current()->PostTask(
+    base::ThreadTaskRunnerHandle::Get()->PostTask(
         FROM_HERE,
         base::Bind(&WebContext::DeliverSetCookiesResponse,
                    weak_factory_.GetWeakPtr(), ctxt));

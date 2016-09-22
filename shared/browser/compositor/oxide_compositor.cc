@@ -380,7 +380,6 @@ void Compositor::EnsureLayerTreeHost() {
   }
 
   cc::LayerTreeSettings settings;
-  settings.use_external_begin_frame_source = false;
   settings.renderer_settings.allow_antialiasing = false;
 
   cc::LayerTreeHostInProcess::InitParams params;

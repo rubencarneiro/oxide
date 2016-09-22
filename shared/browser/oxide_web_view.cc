@@ -27,6 +27,7 @@
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/supports_user_data.h"
+#include "base/threading/thread_task_runner_handle.h"
 #include "components/sessions/content/content_serialized_navigation_builder.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/interstitial_page.h"
@@ -951,7 +952,7 @@ void WebView::DidShowFullscreenWidget() {
   // We do this asynchronously to avoid a UAF in
   // WebContentsImpl::ShowCreatedWidget
   // See https://launchpad.net/bugs/1510973
-  base::MessageLoop::current()->PostTask(
+  base::ThreadTaskRunnerHandle::Get()->PostTask(
       FROM_HERE,
       base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
 }
@@ -1426,7 +1427,7 @@ void WebView::PrepareToClose() {
                  AsWeakPtr(), true);
 
   if (!web_contents_->NeedToFireBeforeUnload()) {
-    base::MessageLoop::current()->PostTask(
+    base::ThreadTaskRunnerHandle::Get()->PostTask(
         FROM_HERE,
         base::Bind(&WebView::DispatchPrepareToCloseResponse,
                    AsWeakPtr(), true));
