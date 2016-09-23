@@ -1,0 +1,135 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype SecurityStatus
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQSecurityStatus
+\since OxideQt 1.2
+
+\brief Security status for a webview
+
+SecurityStatus provides security status information for a webview. It
+provides an overall security level indication via securityLevel.
+
+Details about the X.509 certificate for the current site can be accessed via
+\l{certificate} and certStatus.
+*/
+
+/*!
+\qmlproperty enumeration SecurityStatus::securityLevel
+
+The current security level. This is useful for displaying a security hint
+(such as a padlock icon) to the user.
+
+Possible values are:
+
+\value SecurityStatus.SecurityLevelNone
+The current page was loaded via an insecure connection (eg, http).
+
+\value SecurityStatus.SecurityLevelSecure
+The current page was loaded via a secure connection.
+
+\value SecurityStatus.SecurityLevelSecureEV
+The current page was loaded via a secure connection and the supplied certificate
+is an EV certificate.
+
+\value SecurityStatus.SecurityLevelWarning
+The current page was loaded via a secure connection, but the security of the
+page is degraded. This could be because some passive content (eg, images) were
+not loaded via a secure connection, or the supplied certificate has an error
+that is considered to be minor (eg, revocation check failed). A web browser
+would generally represent this status using a padlock icon with a warning
+triangle.
+
+\value SecurityStatus.SecurityLevelError
+The security of the current page is broken. This could be because of a
+certificate error permitted by the application via
+CertificateError::allow, or because some active content (eg, scripts or
+CSS) were loaded via an insecure connection. A web browser would generally
+represent this status using a broken padlock icon.
+*/
+
+/*!
+\qmlproperty flags SecurityStatus::contentStatus
+
+The current content status. This can be used to determine if the page has loaded
+any insecure content. If securityLevel is \e{SecurityLevelNone}, this will be
+\e{ContentStatusNormal}.
+
+Possible values are:
+
+\value SecurityStatus.ContentStatusNormal
+(0) All elements on the current page were loaded via a secure connection.
+
+\value SecurityStatus.ContentStatusDisplayedInsecure
+The current page contains passive elements such as images or videos that were
+loaded over an insecure connection.
+
+\value SecurityStatus.ContentStatusRanInsecure
+The current page contains active elements such as scripts or CSS that were
+loaded over an insecure connection.
+*/
+
+/*!
+\qmlproperty flags SecurityStatus::certStatus
+
+The status of the current certificate - this can be used to determine any
+errors that affect it. If securityLevel is \e{SecurityLevelNone}, this will be
+\e{CertStatusOk}.
+
+Possible values are:
+
+\value SecurityStatus.CertStatusOk
+(0) The current certificate has no errors.
+
+\value SecurityStatus.CertStatusBadIdentity
+The identity of the certificate does not match the identity of the site.
+
+\value SecurityStatus.CertStatusExpired
+The certificate has expired.
+
+\value SecurityStatus.CertStatusDateInvalid
+The certificate has a date that is invalid, eg, its start date is in the future.
+
+\value SecurityStatus.CertStatusAuthorityInvalid
+The certificate is signed by an authority that isn't trusted.
+
+\value SecurityStatus.CertStatusRevocationCheckFailed
+The revocation status of the certificate could not be determined.
+
+\value SecurityStatus.CertStatusRevoked
+The certificate has been revoked.
+
+\value SecurityStatus.CertStatusInvalid
+The certificate is invalid, eg, it has errors.
+
+\value SecurityStatus.CertStatusInsecure
+The certificate is insecure, eg, it uses a weak signature algorithm or has a
+weak public key.
+
+\value SecurityStatus.CertStatusGenericError
+This is used for all other unspecified certificate errors.
+*/
+
+/*!
+\qmlproperty SslCertificate SecurityStatus::certificate
+
+The X.509 certificate for the currently displayed page. This will be null if
+securityLevel is \e{SecurityLevelNone}.
+*/

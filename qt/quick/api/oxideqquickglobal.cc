@@ -99,6 +99,16 @@ void OxideQQuickGlobalPrivate::availableVideoCaptureDevicesDidChange() {
 
 OxideQQuickGlobalPrivate::~OxideQQuickGlobalPrivate() {}
 
+/*!
+\qmltype Oxide
+\inqmlmodule com.canonical.Oxide 1.0
+
+\brief Global object for Oxide functions
+
+The \e{Oxide} object is a global object for accessing global functions exposed
+by Oxide.
+*/
+
 OxideQQuickGlobal::OxideQQuickGlobal() :
     d_ptr(new OxideQQuickGlobalPrivate(this)) {
   Q_STATIC_ASSERT(
@@ -132,6 +142,31 @@ OxideQQuickGlobal::~OxideQQuickGlobal() {
   OxideQMediaCaptureDevices::instance()->disconnect(this);
 }
 
+/*!
+\qmlproperty enumeration Oxide::processModel
+\since OxideQt 1.4
+
+The process model to use. Setting this determines whether Oxide will run web
+content in sandboxed sub-processes or the application process. The default is
+\e{Oxide.ProcessModelMultiProcess}.
+
+This must be called before Oxide is started up (in your applications main(),
+before using any other Oxide APIs). Calling it afterwards will have no effect.
+
+Possible values are:
+
+\value Oxide.ProcessModelMultiProcess
+Multi-process mode. In this mode, web content runs in sandboxed sub-processes
+rather than the application process. This mode provides the best level of
+security and fault tolerance.
+
+\value Oxide.ProcessModelSingleProcess
+Single process mode. In this mode, web content runs in the application process.
+Web content is not sandboxed, and crashes that would normally only affect a web
+content process in multi-process mode will result in an application crash in
+this mode.
+*/
+
 OxideQQuickGlobal::ProcessModel OxideQQuickGlobal::processModel() const {
   return static_cast<ProcessModel>(oxideGetProcessModel());
 }
@@ -145,6 +180,21 @@ void OxideQQuickGlobal::setProcessModel(ProcessModel model) {
 
   Q_EMIT processModelChanged();
 }
+
+/*!
+\qmlproperty int Oxide::maxRendererProcessCount
+\since OxideQt 1.4
+
+The maximum number of web content processes to run. Setting this to 0 will
+reset it to the default, which is system dependent.
+
+This is not a hard limit, as there are cases where web content processes will
+not be shared (eg, web views in different web contexts, or incognito /
+non-incognito web views).
+
+This must be called before Oxide is started up (in your applications main(),
+before using any other Oxide APIs). Calling it afterwards will have no effect.
+*/
 
 int OxideQQuickGlobal::maxRendererProcessCount() const {
   return static_cast<int>(
@@ -169,9 +219,37 @@ void OxideQQuickGlobal::setMaxRendererProcessCount(int count) {
   Q_EMIT maxRendererProcessCountChanged();
 }
 
+/*!
+\qmlproperty WebContext Oxide::defaultWebContext
+
+The global default WebContext. The default WebContext will be used for WebView's
+that aren't created with an application supplied WebContext.
+
+The default WebContext is also the only usable WebContext in single-process mode
+(processModel is \e{Oxide.ProcessModelSingleProcess}.
+
+Accessing this for the first time will create the default WebContext if it
+hasn't been created already. Oxide retains ownership of the default WebContext -
+applications mustn't delete it.
+*/
+
 OxideQQuickWebContext* OxideQQuickGlobal::defaultWebContext() {
   return OxideQQuickWebContext::defaultContext(true);
 }
+
+/*!
+\qmlproperty list<variant> Oxide::availableAudioCaptureDevices
+\since OxideQt 1.8
+
+A list of audio capture devices detected by Oxide. Each item of the list is a
+variant with the following properties:
+\list
+  \li id - The ID of this device. This ID is unique for this device and this
+  session, but applications should not rely on this ID persisting between
+  sessions.
+  \li displayName - The display name of this device.
+\endlist
+*/
 
 QVariant OxideQQuickGlobal::availableAudioCaptureDevices() {
   Q_D(OxideQQuickGlobal);
@@ -193,6 +271,23 @@ QVariant OxideQQuickGlobal::availableAudioCaptureDevices() {
   return d->audio_capture_devices_;
 }
 
+/*!
+\qmlproperty list<variant> Oxide::availableVideoCaptureDevices
+\since OxideQt 1.8
+
+A list of video capture devices detected by Oxide. Each item of the list is a
+variant with the following properties:
+\list
+  \li id - The ID of this device. This ID is unique for this device and this
+  session, but applications should not rely on this ID persisting between
+  sessions.
+  \li displayName - The display name of this device.
+  \li position - The position of this device. This can be one of "frontface",
+  "backface" or "unspecified". On devices where this is not supported, this
+  will be "unspecified"
+\endlist
+*/
+
 QVariant OxideQQuickGlobal::availableVideoCaptureDevices() {
   Q_D(OxideQQuickGlobal);
 
@@ -213,9 +308,23 @@ QVariant OxideQQuickGlobal::availableVideoCaptureDevices() {
   return d->video_capture_devices_;
 }
 
+/*!
+\qmlproperty string Oxide::chromiumVersion
+\since OxideQt 1.15
+
+The Chromium version that this Oxide build is based on, in the form \e{x.x.x.x}.
+*/
+
 QString OxideQQuickGlobal::chromiumVersion() const {
   return oxideGetChromeVersion();
 }
+
+/*!
+\qmlproperty string Oxide::oxideVersion
+\since OxideQt 1.15
+
+The current Oxide version, in the form \e{1.x.x}.
+*/
 
 QString OxideQQuickGlobal::oxideVersion() const {
   return oxideGetVersion();

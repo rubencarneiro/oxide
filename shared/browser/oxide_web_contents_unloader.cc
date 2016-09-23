@@ -24,7 +24,25 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_contents_observer.h"
 
+#include "oxide_browser_context.h"
+#include "oxide_web_view_contents_helper.h"
+
 namespace oxide {
+
+namespace {
+
+void MaybeDestroyOffTheRecordContext(BrowserContext* context) {
+  DCHECK(context->IsOffTheRecord());
+
+  if (WebViewContentsHelper::IsContextInUse(context)) {
+    return;
+  }
+
+  BrowserContext::DestroyOffTheRecordContextForContext(
+      context->GetOriginalContext());
+}
+
+}
 
 class WebContentsUnloaderObserver : public content::WebContentsObserver {
  public:
@@ -46,10 +64,12 @@ class WebContentsUnloaderObserver : public content::WebContentsObserver {
 WebContentsUnloader::WebContentsUnloader() = default;
 
 void WebContentsUnloader::CloseContents(content::WebContents* contents) {
-  ScopedVector<content::WebContents>::iterator it =
-      std::find(contents_unloading_.begin(),
-                contents_unloading_.end(),
-                contents);
+  auto it = std::find_if(
+      contents_unloading_.begin(),
+      contents_unloading_.end(),
+      [contents](const std::unique_ptr<content::WebContents>& c) {
+    return contents == c.get();
+  });
   DCHECK(it != contents_unloading_.end());
 
   contents_unloading_.erase(it);
@@ -64,21 +84,28 @@ WebContentsUnloader* WebContentsUnloader::GetInstance() {
 
 void WebContentsUnloader::Unload(
     std::unique_ptr<content::WebContents> contents) {
-  if (!contents->NeedToFireBeforeUnload()) {
+  content::WebContents* c = contents.get();
+  contents_unloading_.push_back(std::move(contents));
+
+  content::BrowserContext* context = c->GetBrowserContext();
+  if (context->IsOffTheRecord()) {
+    MaybeDestroyOffTheRecordContext(BrowserContext::FromContent(context));
+  }
+
+  if (!c->NeedToFireBeforeUnload()) {
     // Despite the name, this checks if sudden termination is allowed. If so,
     // we shouldn't fire the unload handler particularly if this was script
     // closed, else we'll never get an ACK
+    CloseContents(c);
+    // |c| is invalid now
     return;
   }
 
   // To intercept render process crashes
-  new WebContentsUnloaderObserver(contents.get());
+  new WebContentsUnloaderObserver(c);
 
   // So we can intercept CloseContents
-  contents->SetDelegate(this);
-
-  content::WebContents* c = contents.get();
-  contents_unloading_.push_back(contents.release());
+  c->SetDelegate(this);
 
   c->ClosePage();
   // Note: |c| might be deleted at this point
@@ -86,6 +113,15 @@ void WebContentsUnloader::Unload(
 
 void WebContentsUnloader::Shutdown() {
   contents_unloading_.clear();
+}
+
+bool WebContentsUnloader::IsUnloadInProgress(content::WebContents* contents) {
+  return std::find_if(
+      contents_unloading_.begin(),
+      contents_unloading_.end(),
+      [contents](const std::unique_ptr<content::WebContents>& c) {
+    return contents == c.get();
+  }) != contents_unloading_.end();
 }
 
 }

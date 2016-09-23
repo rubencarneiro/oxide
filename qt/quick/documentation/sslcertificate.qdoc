@@ -1,0 +1,144 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype SslCertificate
+\instantiates OxideQSslCertificate
+\inqmlmodule com.canonical.Oxide 1.0
+\since OxideQt 1.2
+
+\brief X.509 certificate
+
+SslCertificate represents a X.509 certificate provided by a remote server.
+
+Information about the subject of the certificate can be discovered by calling
+getSubjectInfo. Information about the issuer of the certificate (the entity
+that signed it) can be discovered by calling getIssuerInfo. For self-signed
+certificates, this will return the same as getSubjectInfo.
+
+For certificates that aren't self-signed, the issuer's certificate can be
+accessed via \l{issuer}.
+*/
+
+/*!
+\qmlproperty string SslCertificate::serialNumber
+
+The serial number of this certificate as a hex encoded string.
+*/
+
+/*!
+\qmlproperty string SslCertificate::subjectDisplayName
+
+The display name of the subject of this certificate.
+*/
+
+/*!
+\qmlproperty string SslCertificate::issuerDisplayName
+
+The display name of the issuer of this certificate.
+*/
+
+/*!
+\qmlmethod string SslCertificate::getSubjectInfo(enumeration attr)
+
+Returns the value of the field specified by \a attr for this certificate's
+subject.
+
+Possible values for \a attr are:
+
+\value SslCertificate.PrincipalAttrOrganizationName
+'O' - The name of the organization.
+
+\value SslCertificate.PrincipalAttrCommonName
+'CN' - The Common Name. Generally used to store the host name.
+
+\value SslCertificate.PrincipalAttrLocalityName
+'L' - The locality.
+
+\value SslCertificate.PrincipalAttrOrganizationUnitName
+'OU' - The organizational unit name.
+
+\value SslCertificate.PrincipalAttrCountryName
+'C' - The country name.
+
+\value SslCertificate.PrincipalAttrStateOrProvinceName
+'ST' - The state or province name.
+*/
+
+/*!
+\qmlmethod string SslCertificate::getIssuerInfo(enumeration attr)
+
+Returns the value of the field specified by \a attr for this certificate's
+issuer.
+
+Possible values for \a attr are:
+
+\value SslCertificate.PrincipalAttrOrganizationName
+'O' - The name of the organization.
+
+\value SslCertificate.PrincipalAttrCommonName
+'CN' - The Common Name. Generally used to store the host name.
+
+\value SslCertificate.PrincipalAttrLocalityName
+'L' - The locality.
+
+\value SslCertificate.PrincipalAttrOrganizationUnitName
+'OU' - The organizational unit name.
+
+\value SslCertificate.PrincipalAttrCountryName
+'C' - The country name.
+
+\value SslCertificate.PrincipalAttrStateOrProvinceName
+'ST' - The state or province name.
+*/
+
+/*!
+\qmlproperty Date SslCertificate::effectiveDate
+
+The start date for this certificate.
+*/
+
+/*!
+\qmlproperty Date SslCertificate::expiryDate
+
+The expiry date for this certificate.
+*/
+
+/*!
+\qmlproperty string SslCertificate::fingerprintSHA1
+
+The SHA1 fingerprint of this certificate as a hex encoded string.
+*/
+
+/*!
+\qmlproperty bool SslCertificate::isExpired
+
+Whether this certificate has expired.
+*/
+
+/*!
+\qmlproperty SslCertificate SslCertificate::issuer
+
+The issuer of this certificate, or null if the certificate is self-signed.
+*/
+
+/*!
+\qmlmethod string SslCertificate::toPem()
+
+Returns a PEM encoded version of this certificate.
+*/

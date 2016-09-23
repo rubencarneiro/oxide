@@ -860,6 +860,263 @@ void OxideQQuickWebViewPrivate::killWebProcess(bool crash) {
   proxy_->killWebProcess(crash);
 }
 
+/*!
+\class OxideQQuickWebView
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickwebview.h
+
+\brief Display web content in a QML scene
+*/
+
+/*!
+\qmltype WebView
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickWebView
+
+\brief Display web content in a QML scene
+
+WebView is the central class that applications use to embed web content in a QML
+scene.
+
+Applications can load web content by setting \l{url} or calling loadHtml. Load
+progress can be observed by monitoring the \l{loading} property, listening to
+events from loadEvent and observing the loadProgress property.
+
+The WebView API contains basic navigation actions in the form of goBack,
+goForward, \l{reload} and \l{stop}.
+
+The security status of the WebView is provided via securityStatus. If a
+certificate error is encountered when trying to establish a secure connection to
+a site, then this is signalled to the application via certificateError. In some
+cases, this provides the application with an opportunity to abort or continue
+the connection.
+
+WebView doesn't provide any auxilliary user interfaces (JS dialogs, context
+menu etc) by itself. It is currently the application's responsibility to provide
+these as QML components by setting the alertDialog, beforeUnloadDialog,
+confirmDialog, contextMenu, filePicker, popupMenu and promptDialog properties.
+
+A structure that represents the frames within a currently displayed document is
+provided via the rootFrame property. This allows applications to send messages
+to user scripts that it has injected in to them.
+
+The WebView provides APIs to allow applications to implement session-restore
+type functionality (currentState, restoreState and restoreType).
+
+There is an API that allows applications to intercept content-initiated
+navigations, which is useful for implementing web applications
+(navigationRequested). There is also an API to allow web content to open new
+web views (newViewRequested).
+
+It is possible for applications to implement private browsing functionality by
+creating WebViews with the \l{incognito} property set to true.
+
+The API provides various signals to allow web content to request permission to
+access various resources, such as location (via geolocationPermissionRequested),
+media capture devices (via mediaAccessPermissionRequested) and the system's
+notification API (via notificationPermissionRequested).
+*/
+
+/*!
+\qmlsignal void WebView::loadEvent(LoadEvent event)
+
+This signal is used to notify the application of load events in the main frame.
+Please refer to the documentation for LoadEvent for more information about how
+to use it.
+*/
+
+/*!
+\qmlsignal void WebView::frameAdded(WebFrame frame)
+
+This signal is used to indicate that \a{frame} was added to the frame tree for
+this webview.
+*/
+
+/*!
+\qmlsignal void WebView::frameRemoved(WebFrame frame)
+
+This signal is used to indicate that \a{frame} was removed from the frame tree
+for this webview.
+*/
+
+/*!
+\qmlsignal void WebView::fullscreenRequested(bool fullscreen)
+
+This signal indicates that web content has requested to change the fullscreen
+state.
+
+If \a{fullscreen} is true, then this is a request to enter fullscreen mode. If
+the application permits this then it should make its window fullscreen, hide all
+of its UI, and respond by setting the \l{fullscreen} property to true.
+
+If \a{fullscreen} is false, then this is a request to exit fullscreen mode. In
+this case, the application should un-fullscreen its window, unhide all of its
+UI and respond by setting the \l{fullscreen} property to false.
+*/
+
+/*!
+\qmlsignal void WebView::navigationRequested(NavigationRequest request)
+
+This signal indicates that web content would like to navigate this webview.
+Please refer to the documentation for NavigationRequest for more information
+about how to use it.
+
+If NavigationRequest::disposition is set to something other than
+\e{NavigationRequest::DispositionCurrentTab}, then this is part of a request to
+open a new webview. If the application allows this request, then
+newViewRequested will be signalled afterwards to tell the application when to
+create a new webview.
+
+The application must respond to this synchronously.
+*/
+
+/*!
+\qmlsignal void WebView::newViewRequested(NewViewRequest request)
+
+This signal indicates that the application should create a new webview, either
+as a result of web content calling \e{window.open()} or a link click with
+modifier keys pressed. Please refer to the documentation for NewViewRequest for
+more information about how to use it.
+
+The application must respond to this by constructing a new WebView, and passing
+\a{request} to the \l{request} property during construction.
+
+If the application doesn't connect to this signal, then all requests to open a
+new webview will be converted to navigations in this webview.
+
+\note Applications that support creating new webviews must also connect to
+closeRequested.
+*/
+
+/*!
+\qmlsignal void WebView::geolocationPermissionRequested(GeolocationPermissionRequest request)
+
+This signal indicates that the page inside this webview would like to access the
+current location. Please refer to the documentation for PermissionRequest for
+more information about how to use it.
+
+The ownership of \a{request} is passed to the QML engine. This means that
+applications can respond to this asynchronously.
+*/
+
+/*!
+\qmlsignal void WebView::mediaAccessPermissionRequested(MediaAccessPermissionRequest request)
+\since OxideQt 1.8
+
+This signal indicates that the page inside this webview would like to access
+media capture devices because of a call to \e{MediaDevices.getUserMedia()}.
+Please refer to the documentation for MediaAccessPermissionRequest for more
+information about how to use it.
+
+The ownership of \a{request} is passed to the QML engine. This means that
+applications can respond to this asynchronously.
+*/
+
+/*!
+\qmlsignal void WebView::notificationPermissionRequested(PermissionRequest request)
+\since OxideQt 1.11
+
+This signal indicates that the page inside this webview would like to use the
+notification API. Please refer to the documentation for PermissionRequest for
+more information about how to use it.
+
+Note that PermissionRequest::embedder behaves differently for notification
+permission requests - it will be equal to PermissionRequest::origin.
+
+The ownership of \a{request} is passed to the QML engine. This means that
+applications can respond to this asynchronously.
+*/
+
+/*!
+\qmlsignal void WebView::javaScriptConsoleMessage(emumeration level,
+                                                  string message,
+                                                  int lineNumber,
+                                                  string sourceId)
+
+This signal indicates that the web content inside this webview triggered a
+console message, either via a call to \e{console.log()} or because of some
+message logged inside Blink.
+
+\a{message} provides the actual message. The source of the message is indicated
+by \a{sourceId} and \a{lineNumber}.
+
+\a{level} indicates the severity level of the message. It can be one of the
+following values:
+
+\value WebView.LogSeverityVerbose
+
+\value WebView.LogSeverityInfo
+
+\value WebView.LogSeverityWarning
+
+\value WebView.LogSeverityError
+*/
+
+/*!
+\qmlsignal void WebView::downloadRequested(DownloadRequest request)
+
+This signal is a request for the application to download the resource specified
+by \a{request}. Please refer to the documentation for DownloadRequest for
+more information about how to use it.
+*/
+
+/*!
+\qmlsignal void WebView::certificateError(CertificateError error)
+\since OxideQt 1.2
+
+This signal is emitted when an error is encountered with the X.509 certificate
+provided by a server when trying to establish a secure connection. Please refer
+to the documentation for CertificateError for more information about how to use
+it.
+
+The ownership of \a{error} is passed to the QML engine. This means that
+applications can respond to this asynchronously for errors that are overridable.
+*/
+
+/*!
+\qmlsignal void WebView::prepareToCloseResponse(bool proceed)
+\since OxideQt 1.4
+
+This is the response to a call to prepareToClose. \a{proceed} is a hint that
+indicates whether the application should proceed to delete the webview.
+
+If \a{proceed} is false, then this means that the site caused a beforeunload
+dialog to appear and the user declined the attempt to leave the page. This is a
+hint that the application shouldn't proceed to delete the webview.
+*/
+
+/*!
+\qmlsignal void WebView::closeRequested()
+\since OxideQt 1.4
+
+This signal is emitted when a web page calls \e{window.close()}. As calling
+\e{window.close()} is destructive, the application must respond to this by
+deleting the webview.
+
+\note Web pages can only delete windows that they created, unless
+WebPreferences::allowScriptsToCloseWindows is set to true.
+*/
+
+/*!
+\qmlsignal void WebView::httpAuthenticationRequested(HttpAuthenticationRequest request);
+\since OxideQt 1.9
+
+This signal is a request for HTTP authentication credentials. Please refer to
+the documentation for HttpAuthenticationRequest for more information about how
+to use it.
+*/
+
+/*!
+\qmlsignal void WebView::loadingChanged(LoadEvent event)
+\deprecated
+*/
+
+/*!
+\fn void OxideQQuickWebView::loadingChanged(const OxideQLoadEvent& event)
+\deprecated
+*/
+
+
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   Q_D(OxideQQuickWebView);
 
@@ -1088,6 +1345,10 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
   return d->contents_view_->updatePaintNode(oldNode);
 }
 
+/*!
+\internal
+*/
+
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
     : QQuickItem(parent),
       d_ptr(new OxideQQuickWebViewPrivate(this)) {
@@ -1121,6 +1382,22 @@ OxideQQuickWebView::~OxideQQuickWebView() {
   d->proxy_->teardownFrameTree();
 }
 
+/*!
+\qmlproperty url WebView::url
+
+The visible URL. This is the URL that a web browser should display in its
+addressbar.
+
+This will indicate the pending URL if a navigation is in progress and the
+navigation is application initiated, or it is renderer initiated and this
+webview hasn't been accessed by another webview.
+
+Writing a URL to this property will initiate a new navigation.
+
+\note Applications should not base any policy or security decisions on the value
+of this property.
+*/
+
 QUrl OxideQQuickWebView::url() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1150,6 +1427,13 @@ void OxideQQuickWebView::setUrl(const QUrl& url) {
   }
 }
 
+/*!
+\qmlproperty string WebView::title
+
+The title of the currently displayed page. This is based on the \e{<title>} tag
+or \e{document.title}.
+*/
+
 QString OxideQQuickWebView::title() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1159,6 +1443,21 @@ QString OxideQQuickWebView::title() const {
 
   return d->proxy_->title();
 }
+
+/*!
+\qmlproperty url WebView::icon
+
+The URL of the favicon for the current page. This will correspond to the URL
+specified by the \e{<link rel="icon">} element if it exists in the page, else it
+will fallback to \e{<domain>/favicon.ico} if the page is loaded over http: or
+https:.
+
+The application is responsible for downloading the icon. The icon specified by
+this property is not guaranteed to exist.
+
+There is currently no support for other favicon types (\e{<link
+rel="apple-touch-icon">} or \e{<link rel="apple-touch-icon-precomposed">}).
+*/
 
 QUrl OxideQQuickWebView::icon() const {
   Q_D(const OxideQQuickWebView);
@@ -1170,6 +1469,17 @@ QUrl OxideQQuickWebView::icon() const {
   return d->proxy_->favIconUrl();
 }
 
+/*!
+\qmlproperty bool WebView::canGoBack
+
+This property will be true if the application can navigate the webview back by
+calling goBack. Else it will be false.
+
+\note The notification signal for this is \e{navigationHistoryChanged}.
+
+\sa goBack
+*/
+
 bool OxideQQuickWebView::canGoBack() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1179,6 +1489,17 @@ bool OxideQQuickWebView::canGoBack() const {
 
   return d->proxy_->canGoBack();
 }
+
+/*!
+\qmlproperty bool WebView::canGoForward
+
+This property will be true if the application can navigate the webview forward
+by calling goForward. Else it will be false.
+
+\note The notification signal for this is \e{navigationHistoryChanged}.
+
+\sa goForward
+*/
 
 bool OxideQQuickWebView::canGoForward() const {
   Q_D(const OxideQQuickWebView);
@@ -1190,6 +1511,22 @@ bool OxideQQuickWebView::canGoForward() const {
   return d->proxy_->canGoForward();
 }
 
+/*!
+\qmlproperty bool WebView::incognito
+
+Whether the webview is in incognito mode. This can be set by the application
+during construction - attempts to change it afterwards will be ignored.
+
+The default is false.
+
+Incognito webviews won't save browsing activity such as network cache, cookies
+and local storage. They also won't reveal currently saved items to web pages.
+
+If this WebView is created as a request to open a new window (via
+newViewRequested), then the incognito setting will be inherited from the opening
+WebView. Setting this will have no effect.
+*/
+
 bool OxideQQuickWebView::incognito() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1199,6 +1536,10 @@ bool OxideQQuickWebView::incognito() const {
 
   return d->proxy_->incognito();
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebView::setIncognito(bool incognito) {
   Q_D(OxideQQuickWebView);
@@ -1223,6 +1564,15 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
   emit incognitoChanged();
 }
 
+/*!
+\qmlproperty bool WebView::loading
+
+This property indicates whether a load is currently in progress.
+
+\note The notifier signal for this property is \e{loadingStateChanged} rather
+than the expected \e{loadingChanged}.
+*/
+
 bool OxideQQuickWebView::loading() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1232,6 +1582,26 @@ bool OxideQQuickWebView::loading() const {
 
   return d->proxy_->loading();
 }
+
+/*!
+\qmlproperty bool WebView::fullscreen
+
+Whether fullscreen has been granted to this webview.
+
+Applications should set this to true in response to a request from web content
+to enter fullscreen mode (via the fullscreenRequested signal) if it entered
+fullscreen. Doing this will cause Oxide to indicate to web content that it is
+now fullscreen, and will result in the fullscreen element occupying the whole
+webview.
+
+Applications should set this to false again in response to a request
+from web content to leave fullscreen mode or if the application exits
+fullscreen.
+
+\note Oxide does not control the fullscreen mode of the application window. It
+is the responsibility of the application to do this, and it is the
+responsibility of the application to hide its UI when entering fullscreen.
+*/
 
 bool OxideQQuickWebView::fullscreen() const {
   Q_D(const OxideQQuickWebView);
@@ -1259,11 +1629,26 @@ void OxideQQuickWebView::setFullscreen(bool fullscreen) {
   emit fullscreenChanged();
 }
 
+/*!
+\qmlproperty int WebView::loadProgress
+
+The current load progress as a percentage. The value of this can range between 0
+and 100.
+
+When \l{loading} is false, this will be 100.
+*/
+
 int OxideQQuickWebView::loadProgress() const {
   Q_D(const OxideQQuickWebView);
 
   return d->load_progress_;
 }
+
+/*!
+\qmlproperty WebFrame WebView::rootFrame
+
+The WebFrame representing the root frame for this webview.
+*/
 
 OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   Q_D(const OxideQQuickWebView);
@@ -1280,6 +1665,14 @@ OxideQQuickWebFrame* OxideQQuickWebView::rootFrame() const {
   return qobject_cast<OxideQQuickWebFrame*>(frame);
 }
 
+/*!
+\qmlproperty list<ScriptMessageHandler> WebView::messageHandlers
+
+The list of script message handlers attached to this webview. These can handle
+messages from user scripts injected in to frames inside this webview that
+aren't handled by a ScriptMessageHandler attached to the destination WebFrame.
+*/
+
 QQmlListProperty<OxideQQuickScriptMessageHandler>
 OxideQQuickWebView::messageHandlers() {
   return QQmlListProperty<OxideQQuickScriptMessageHandler>(
@@ -1289,6 +1682,23 @@ OxideQQuickWebView::messageHandlers() {
       OxideQQuickWebViewPrivate::messageHandler_at,
       OxideQQuickWebViewPrivate::messageHandler_clear);
 }
+
+/*!
+\qmlmethod void WebView::addMessageHandler(ScriptMessageHandler handler)
+
+Add \a{handler} to the list of script message handlers attached to this view.
+If \a{handler} is already attached to another WebView or WebFrame, then this
+will return without making any changes.
+
+If \a{handler} is already attached to this view then it will be moved to the
+end of the list.
+
+This view will assume ownership of \a{handle} by setting itself as the
+parent.
+
+If \a{handle} is deleted whilst it is attached to this view, then it will
+automatically be detached.
+*/
 
 void OxideQQuickWebView::addMessageHandler(
     OxideQQuickScriptMessageHandler* handler) {
@@ -1319,6 +1729,15 @@ void OxideQQuickWebView::addMessageHandler(
   emit messageHandlersChanged();
 }
 
+/*!
+\qmlmethod void WebView::removeMessageHandler(ScriptMessageHandler handler)
+
+Remove \a{handler} from the list of script message handlers attached to this
+view.
+
+This will unparent \a{handler}, giving ownership of it back to the application.
+*/
+
 void OxideQQuickWebView::removeMessageHandler(
     OxideQQuickScriptMessageHandler* handler) {
   Q_D(OxideQQuickWebView);
@@ -1338,6 +1757,16 @@ void OxideQQuickWebView::removeMessageHandler(
   emit messageHandlersChanged();
 }
 
+/*!
+\property OxideQQuickWebView::viewportWidth
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::viewportWidth
+\deprecated
+*/
+
 qreal OxideQQuickWebView::viewportWidth() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1348,6 +1777,16 @@ qreal OxideQQuickWebView::viewportWidth() const {
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy_->compositorFrameViewportSize().width();
 }
+
+/*!
+\property OxideQQuickWebView::viewportHeight
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::viewportHeight
+\deprecated
+*/
 
 qreal OxideQQuickWebView::viewportHeight() const {
   Q_D(const OxideQQuickWebView);
@@ -1360,6 +1799,16 @@ qreal OxideQQuickWebView::viewportHeight() const {
       d)->proxy_->compositorFrameViewportSize().height();
 }
 
+/*!
+\property OxideQQuickWebView::contentWidth
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::contentWidth
+\deprecated
+*/
+
 qreal OxideQQuickWebView::contentWidth() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1370,6 +1819,16 @@ qreal OxideQQuickWebView::contentWidth() const {
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy_->compositorFrameContentSize().width();
 }
+
+/*!
+\property OxideQQuickWebView::contentHeight
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::contentHeight
+\deprecated
+*/
 
 qreal OxideQQuickWebView::contentHeight() const {
   Q_D(const OxideQQuickWebView);
@@ -1382,6 +1841,16 @@ qreal OxideQQuickWebView::contentHeight() const {
       d)->proxy_->compositorFrameContentSize().height();
 }
 
+/*!
+\property OxideQQuickWebView::contentX
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::contentX
+\deprecated
+*/
+
 qreal OxideQQuickWebView::contentX() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1392,6 +1861,16 @@ qreal OxideQQuickWebView::contentX() const {
   return const_cast<OxideQQuickWebViewPrivate*>(
       d)->proxy_->compositorFrameScrollOffset().x();
 }
+
+/*!
+\property OxideQQuickWebView::contentY
+\deprecated
+*/
+
+/*!
+\qmlproperty real WebView::contentY
+\deprecated
+*/
 
 qreal OxideQQuickWebView::contentY() const {
   Q_D(const OxideQQuickWebView);
@@ -1404,22 +1883,31 @@ qreal OxideQQuickWebView::contentY() const {
       d)->proxy_->compositorFrameScrollOffset().y();
 }
 
+/*!
+\qmlproperty Component WebView::contextMenu
+\since OxideQt 1.8
+*/
+
 QQmlComponent* OxideQQuickWebView::contextMenu() const {
   Q_D(const OxideQQuickWebView);
 
   return d->contents_view_->contextMenu();
 }
 
-void OxideQQuickWebView::setContextMenu(QQmlComponent* context_menu) {
+void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->contents_view_->contextMenu() == context_menu) {
+  if (d->contents_view_->contextMenu() == contextMenu) {
     return;
   }
 
-  d->contents_view_->setContextMenu(context_menu);
+  d->contents_view_->setContextMenu(contextMenu);
   emit contextMenuChanged();
 }
+
+/*!
+\qmlproperty Component WebView::popupMenu
+*/
 
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
@@ -1427,16 +1915,20 @@ QQmlComponent* OxideQQuickWebView::popupMenu() const {
   return d->contents_view_->popupMenu();
 }
 
-void OxideQQuickWebView::setPopupMenu(QQmlComponent* popup_menu) {
+void OxideQQuickWebView::setPopupMenu(QQmlComponent* popupMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->contents_view_->popupMenu() == popup_menu) {
+  if (d->contents_view_->popupMenu() == popupMenu) {
     return;
   }
 
-  d->contents_view_->setPopupMenu(popup_menu);
+  d->contents_view_->setPopupMenu(popupMenu);
   emit popupMenuChanged();
 }
+
+/*!
+\qmlproperty Component WebView::alertDialog
+*/
 
 QQmlComponent* OxideQQuickWebView::alertDialog() const {
   Q_D(const OxideQQuickWebView);
@@ -1444,16 +1936,20 @@ QQmlComponent* OxideQQuickWebView::alertDialog() const {
   return d->alert_dialog_;
 }
 
-void OxideQQuickWebView::setAlertDialog(QQmlComponent* alert_dialog) {
+void OxideQQuickWebView::setAlertDialog(QQmlComponent* alertDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->alert_dialog_ == alert_dialog) {
+  if (d->alert_dialog_ == alertDialog) {
     return;
   }
 
-  d->alert_dialog_ = alert_dialog;
+  d->alert_dialog_ = alertDialog;
   emit alertDialogChanged();
 }
+
+/*!
+\qmlproperty Component WebView::confirmDialog
+*/
 
 QQmlComponent* OxideQQuickWebView::confirmDialog() const {
   Q_D(const OxideQQuickWebView);
@@ -1461,16 +1957,20 @@ QQmlComponent* OxideQQuickWebView::confirmDialog() const {
   return d->confirm_dialog_;
 }
 
-void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirm_dialog) {
+void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirmDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->confirm_dialog_ == confirm_dialog) {
+  if (d->confirm_dialog_ == confirmDialog) {
     return;
   }
 
-  d->confirm_dialog_ = confirm_dialog;
+  d->confirm_dialog_ = confirmDialog;
   emit confirmDialogChanged();
 }
+
+/*!
+\qmlproperty Component WebView::promptDialog
+*/
 
 QQmlComponent* OxideQQuickWebView::promptDialog() const {
   Q_D(const OxideQQuickWebView);
@@ -1478,16 +1978,20 @@ QQmlComponent* OxideQQuickWebView::promptDialog() const {
   return d->prompt_dialog_;
 }
 
-void OxideQQuickWebView::setPromptDialog(QQmlComponent* prompt_dialog) {
+void OxideQQuickWebView::setPromptDialog(QQmlComponent* promptDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->prompt_dialog_ == prompt_dialog) {
+  if (d->prompt_dialog_ == promptDialog) {
     return;
   }
 
-  d->prompt_dialog_ = prompt_dialog;
+  d->prompt_dialog_ = promptDialog;
   emit promptDialogChanged();
 }
+
+/*!
+\qmlproperty Component WebView::beforeUnloadDialog
+*/
 
 QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
   Q_D(const OxideQQuickWebView);
@@ -1496,16 +2000,20 @@ QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
 }
 
 void OxideQQuickWebView::setBeforeUnloadDialog(
-    QQmlComponent* before_unload_dialog) {
+    QQmlComponent* beforeUnloadDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->before_unload_dialog_ == before_unload_dialog) {
+  if (d->before_unload_dialog_ == beforeUnloadDialog) {
     return;
   }
 
-  d->before_unload_dialog_ = before_unload_dialog;
+  d->before_unload_dialog_ = beforeUnloadDialog;
   emit beforeUnloadDialogChanged();
 }
+
+/*!
+\qmlproperty Component WebView::filePicker
+*/
 
 QQmlComponent* OxideQQuickWebView::filePicker() const {
   Q_D(const OxideQQuickWebView);
@@ -1513,16 +2021,38 @@ QQmlComponent* OxideQQuickWebView::filePicker() const {
   return d->file_picker_;
 }
 
-void OxideQQuickWebView::setFilePicker(QQmlComponent* file_picker) {
+void OxideQQuickWebView::setFilePicker(QQmlComponent* filePicker) {
   Q_D(OxideQQuickWebView);
 
-  if (d->file_picker_ == file_picker) {
+  if (d->file_picker_ == filePicker) {
     return;
   }
 
-  d->file_picker_ = file_picker;
+  d->file_picker_ = filePicker;
   emit filePickerChanged();
 }
+
+/*!
+\qmlproperty WebContext WebView::context
+
+The WebContext to use for this WebView. This can be set during construction -
+attempts to change it afterwards will be ignored.
+
+If the application doesn't set this, then WebView will use the application
+default WebContext (Oxide::defaultWebContext).
+
+The application should ensure that the provided WebContext outlives this
+WebView. Deleting the WebContext whilst the WebView is still alive may cause
+some features to stop working.
+
+If this WebView is created as a request to open a new window (via
+newViewRequested), then the WebContext will be inherited from the opening
+WebView. Setting this will have no effect.
+
+Attempts to set this when Oxide::processModel is
+\e{Oxide.ProcessModelSingleProcess} will be ignored. Only the default WebContext
+can be used in single process mode.
+*/
 
 OxideQQuickWebContext* OxideQQuickWebView::context() const {
   Q_D(const OxideQQuickWebView);
@@ -1534,6 +2064,10 @@ OxideQQuickWebContext* OxideQQuickWebView::context() const {
 
   return qobject_cast<OxideQQuickWebContext*>(c);
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   Q_D(OxideQQuickWebView);
@@ -1570,6 +2104,30 @@ void OxideQQuickWebView::setContext(OxideQQuickWebContext* context) {
   emit contextChanged();
 }
 
+/*!
+\qmlproperty WebPreferences WebView::preferences
+
+The WebPreferences object used to customize the behaviour of this WebView.
+Please refer to the documentation for WebPreferences for more information about
+how to use this.
+
+This always returns a valid WebPreferences instance.
+
+The default WebPreferences instance is a child of this WebView.
+
+Applications can set this to a different WebPreferences instance. If the
+provided instance does not have a parent, then this WebView will set itself as
+the parent. When setting a new WebPreferences instance, the old instance will
+be deleted if this WebView is its parent.
+
+If this WebView is created as a request to open a new window (via
+newViewRequested), then the default WebPreferences will be copied from the one
+provided by the opening WebView.
+
+If this view's WebPreferences instance is deleted, a default WebPreferences
+instance will be recreated automatically for this WebView.
+*/
+
 OxideQWebPreferences* OxideQQuickWebView::preferences() {
   Q_D(OxideQQuickWebView);
 
@@ -1599,17 +2157,51 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   emit preferencesChanged();
 }
 
+/*!
+\qmlproperty NavigationHistory WebView::navigationHistory
+*/
+
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   Q_D(OxideQQuickWebView);
 
   return &d->navigation_history_;
 }
 
+/*!
+\qmlproperty SecurityStatus WebView::securityStatus
+\since OxideQt 1.2
+
+The security status for this WebView. Please refer to the documentation for
+SecurityStatus for more information about how to use this.
+*/
+
 OxideQSecurityStatus* OxideQQuickWebView::securityStatus() {
   Q_D(OxideQQuickWebView);
 
   return d->security_status_.data();
 }
+
+/*!
+\qmlproperty flags WebView::blockedContent
+\since OxideQt 1.2
+
+This indicates content that has been blocked in this WebView.
+
+Possible values are:
+
+\value WebView.ContentTypeNone
+(0) No content is blocked
+
+\value WebView.ContentTypeMixedDisplay
+Passive mixed content was blocked on this page. This will only happen if
+WebPreferences::canDisplayInsecureContent is set to false. The application can
+temporarily override this by calling setCanTemporarilyDisplayInsecureContent.
+
+\value WebView.ContentTypeMixedScript
+Active mixed content was blocked on this page. This will only happen if
+WebPreferences::canRunInsecureContent is set to false. The application can
+temporarily override this by calling setCanTemporarilyRunInsecureContent.
+*/
 
 OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
   Q_D(const OxideQQuickWebView);
@@ -1631,12 +2223,34 @@ OxideQQuickWebView::ContentType OxideQQuickWebView::blockedContent() const {
   return static_cast<ContentType>(d->proxy_->blockedContent());
 }
 
+/*!
+\property OxideQQuickWebView::request
+\internal
+*/
+
+/*!
+\qmlproperty NewViewRequest WebView::request
+
+This should be set during construction of a WebView created in response to
+newViewRequested. Please refer to the documentation for newViewRequested.
+
+This is a write-only property. Reads from it always return null.
+*/
+
+/*!
+\internal
+*/
+
 // This exists purely to remove a moc warning. We don't store this request
 // anywhere, it's only a transient object and I can't think of any possible
 // reason why anybody would want to read it back
 OxideQNewViewRequest* OxideQQuickWebView::request() const {
   return nullptr;
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   Q_D(OxideQQuickWebView);
@@ -1650,12 +2264,39 @@ void OxideQQuickWebView::setRequest(OxideQNewViewRequest* request) {
   d->construct_props_->new_view_request = request;
 }
 
+/*!
+\property OxideQQuickWebView::restoreState
+\internal
+*/
+
+/*!
+\qmlproperty string WebView::restoreState
+\since OxideQt 1.4
+
+This should be set during construction of a WebView to restore the state from a
+previous session. To do this, the application can set this to the serialized
+state obtained from currentState in a previous session.
+
+If this WebView is created as a request to open a new window (via
+newViewRequested), then setting this has no effect.
+
+This is a write-only property. Reads from it always return an empty string.
+*/
+
+/*!
+\internal
+*/
+
 // This exists purely to remove a moc warning. We don't store this initial state
 // anywhere, it's only a transient blob and I can't think of any possible
 // reason why anybody would want to read it back
 QString OxideQQuickWebView::restoreState() const {
   return QString();
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebView::setRestoreState(const QString& state) {
   Q_D(OxideQQuickWebView);
@@ -1671,6 +2312,39 @@ void OxideQQuickWebView::setRestoreState(const QString& state) {
       QByteArray::fromBase64(state.toLocal8Bit());
 }
 
+/*!
+\property OxideQQuickWebView::restoreType
+\internal
+*/
+
+/*!
+\qmlproperty enumeration WebView::restoreType
+\since OxideQt 1.4
+
+This should be set during construction of a WebView in conjunction with
+restoreState. It defines the type of restore, which may affect things
+like cache policy.
+
+Possible values are:
+
+\value WebView.RestoreCurrentSession
+This WebView is being restored from a WebView that was closed in this session.
+
+\value WebView.RestoreLastSessionExitedCleanly
+This WebView is being restored from a WebView closed at the end of the previous
+session.
+
+\value WebView.RestoreLastSessionCrashed
+This WebView is being restored from a WebView 
+
+This is a write-only property. Reads from it always return
+\e{RestoreLastSessionExitedCleanly}.
+*/
+
+/*!
+\internal
+*/
+
 // This exists purely to remove a moc warning. We don't store this restore type
 // anywhere, it's only a transient property and I can't think of any possible
 // reason why anybody would want to read it back
@@ -1679,6 +2353,10 @@ OxideQQuickWebView::RestoreType OxideQQuickWebView::restoreType() const {
 
   return RestoreLastSessionExitedCleanly;
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
   Q_D(OxideQQuickWebView);
@@ -1692,6 +2370,17 @@ void OxideQQuickWebView::setRestoreType(OxideQQuickWebView::RestoreType type) {
   d->construct_props_->restore_type = ToInternalRestoreType(type);
 }
 
+/*!
+\qmlproperty string WebView::currentState
+\since OxideQt 1.4
+
+This is the serialized state of the WebView. If this WebView is deleted, it
+will be possible to restore it by passing the serialized state to restoreState
+when constructing a new WebView.
+
+This property is currently not notifiable.
+*/
+
 QString OxideQQuickWebView::currentState() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1704,6 +2393,15 @@ QString OxideQQuickWebView::currentState() const {
   return QString::fromLocal8Bit(d->proxy_->currentState().toBase64());
 }
 
+/*!
+\qmlproperty LocationBarController WebView::locationBarController
+\since OxideQt 1.5
+
+This is the LocationBarController instance for this WebView. Please refer to the
+documentation for LocationBarController for more information about how to use
+it.
+*/
+
 OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
   Q_D(OxideQQuickWebView);
 
@@ -1714,6 +2412,30 @@ OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
 
   return d->location_bar_controller_.data();
 }
+
+/*!
+\qmlproperty enumeration WebView::webProcessStatus
+\since OxideQt 1.8
+
+This is the current state of the process used for running web content in this
+WebView.
+
+Possible values are:
+
+\value WebView.WebProcessRunning
+The web content process is running normally. This value is also used if this
+WebView doesn't yet have a web content process.
+
+\value WebView.WebProcessKilled
+The web content process has been killed by the system. This might happen as a
+result of low memory or application lifecycle management.
+
+\value WebView.WebProcessCrashed
+The web content process has crashed.
+
+If Oxide::processModel is \e{Oxide.ProcessModelSingleProcess}, this will always
+be \e{WebProcessRunning}.
+*/
 
 OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() const {
   Q_D(const OxideQQuickWebView);
@@ -1735,6 +2457,16 @@ OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() cons
   return static_cast<WebProcessStatus>(d->proxy_->webProcessStatus());
 }
 
+/*!
+\qmlproperty url WebView::hoveredUrl
+\since OxideQt 1.12
+
+When using a pointing device, this indicates the URL of the link currently under
+the pointer. If no link is under the pointer, then this will be null.
+
+This will also indicate the URL of a link focused by the keyboard.
+*/
+
 QUrl OxideQQuickWebView::hoveredUrl() const {
   Q_D(const OxideQQuickWebView);
 
@@ -1744,6 +2476,42 @@ QUrl OxideQQuickWebView::hoveredUrl() const {
 
   return d->proxy_->targetUrl();
 }
+
+/*!
+\qmlproperty flags WebView::editingCapabilities
+\since OxideQt 1.12
+
+This indicates the editing commands that are currently active and available via
+the executeEditingCommand function for this WebView.
+
+Possible values are:
+
+\value WebView.NoCapability
+(0) No editing commands are available
+
+\value WebView.UndoCapability
+The \e{EditingCommandUndo} command is active
+
+\value WebView.RedoCapability
+The \e{EditingCommandRedo} command is active
+
+\value WebView.CutCapability
+The \e{EditingCommandCut} command is active
+
+\value WebView.CopyCapability
+The \e{EditingCommandCopy} command is active
+
+\value WebView.PasteCapability
+The \e{EditingCommandPaste} command is active
+
+\value WebView.EraseCapability
+The \e{EditingCommandErase} command is active
+
+\value WebView.SelectAllCapability
+The \e{EditingCommandSelectAll} command is active
+
+\sa executeEditingCommand
+*/
 
 OxideQQuickWebView::EditCapabilities
 OxideQQuickWebView::editingCapabilities() const {
@@ -1756,6 +2524,24 @@ OxideQQuickWebView::editingCapabilities() const {
   oxide::qt::EditCapabilityFlags flags = d->proxy_->editFlags();
   return static_cast<EditCapabilities>(flags);
 }
+
+/*!
+\qmlproperty real WebView::zoomFactor
+\since OxideQt 1.15
+
+The page-zoom factor for this WebView. This is 1 by default.
+
+Changes to this will also propagate to other webviews displaying a page from the
+same host. The zoom factor will persist for the remainder of the session.
+
+When the WebView is navigated to a new host, the zoom factor is either restored
+to the default or restored to the last defined zoom factor for the new host.
+
+Attempts to set the zoom factor to a value that is less than minimumZoomFactor
+or greater than maximumZoomFactor will be ignored.
+
+\sa minimumZoomFactor, maximumZoomFactor
+*/
 
 qreal OxideQQuickWebView::zoomFactor() const {
   Q_D(const OxideQQuickWebView);
@@ -1791,9 +2577,29 @@ void OxideQQuickWebView::setZoomFactor(qreal factor) {
   d->proxy_->setZoomFactor(factor);
 }
 
+/*!
+\qmlproperty real WebView::minimumZoomFactor
+\since OxideQt 1.15
+
+The minimum permitted zoom factor. Attempts to set zoomFactor to a value less
+than this will be ignored.
+
+\sa zoomFactor
+*/
+
 qreal OxideQQuickWebView::minimumZoomFactor() const {
   return oxide::qt::WebViewProxy::minimumZoomFactor();
 }
+
+/*!
+\qmlproperty real WebView::maximumZoomFactor
+\since OxideQt 1.15
+
+The maximum permitted zoom factor. Attempts to set zoomFactor to a value greater
+than this will be ignored.
+
+\sa zoomFactor
+*/
 
 qreal OxideQQuickWebView::maximumZoomFactor() const {
   return oxide::qt::WebViewProxy::maximumZoomFactor();
@@ -1804,6 +2610,39 @@ OxideQQuickWebViewAttached* OxideQQuickWebView::qmlAttachedProperties(
     QObject* object) {
   return new OxideQQuickWebViewAttached(object);
 }
+
+/*!
+\qmlmethod void WebView::executeEditingCommand(enumeration command)
+\since OxideQt 1.8
+
+Execute the editing command defined by \a{command}. If the specified command is
+not defined as currently active by editingCapabilities, this will have no
+effect.
+
+Possible values for \a{command} are:
+
+\value WebView.EditingCommandUndo
+Undo the previous change
+
+\value WebView.EditingCommandRedo
+Redo the last undone change
+
+\value WebView.EditingCommandCut
+Delete the text that is currently selected, copying it to the clipboard in the
+process
+
+\value WebView.EditingCommandCopy
+Copy the currently selected text to the clipboard
+
+\value WebView.EditingCommandPaste
+Paste the contents of the clipboard at the current cursor position
+
+\value WebView.EditingCommandErase
+Delete the text that is currently selected
+
+\value WebView.EditingCommandSelectAll
+Select all of the text in the editor
+*/
 
 void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
   Q_D(const OxideQQuickWebView);
@@ -1838,6 +2677,15 @@ void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
       static_cast<oxide::qt::EditingCommands>(command));
 }
 
+/*!
+\qmlmethod void WebView::goBack()
+
+Navigate to the previous entry in the navigation history. If there isn't one,
+then calling this function will do nothing.
+
+\sa canGoBack
+*/
+
 void OxideQQuickWebView::goBack() {
   Q_D(OxideQQuickWebView);
 
@@ -1847,6 +2695,15 @@ void OxideQQuickWebView::goBack() {
 
   d->proxy_->goBack();
 }
+
+/*!
+\qmlmethod void WebView::goForward()
+
+Navigate to the next entry in the navigation history. If there isn't one, then
+calling this function will do nothing.
+
+\sa canGoForward
+*/
 
 void OxideQQuickWebView::goForward() {
   Q_D(OxideQQuickWebView);
@@ -1858,6 +2715,16 @@ void OxideQQuickWebView::goForward() {
   d->proxy_->goForward();
 }
 
+/*!
+\qmlmethod void WebView::stop()
+
+Cancel the current navigation, if one is in progress. If there isn't currently a
+navigation in progress, this will do nothing.
+
+This will result in loadEvent being fired with a \e{LoadEvent.TypeStopped}
+event.
+*/
+
 void OxideQQuickWebView::stop() {
   Q_D(OxideQQuickWebView);
 
@@ -1868,6 +2735,12 @@ void OxideQQuickWebView::stop() {
   d->proxy_->stop();
 }
 
+/*!
+\qmlmethod void WebView::reload()
+
+Reload the page that is currently displayed in the WebView.
+*/
+
 void OxideQQuickWebView::reload() {
   Q_D(OxideQQuickWebView);
 
@@ -1877,6 +2750,17 @@ void OxideQQuickWebView::reload() {
 
   d->proxy_->reload();
 }
+
+/*!
+\qmlmethod void WebView::loadHtml(string html, url baseUrl = undefined)
+
+Load the HTML specified by \a{html} in to this WebView. It will be loaded as a
+percent encoded data: URL with the \e{mediatype} set to
+"text/html;charset=UTF-8".
+
+If \a{baseUrl} is specified, the provided URL will be used as the security
+origin for the page.
+*/
 
 void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   Q_D(OxideQQuickWebView);
@@ -1891,6 +2775,20 @@ void OxideQQuickWebView::loadHtml(const QString& html, const QUrl& baseUrl) {
   d->proxy_->loadHtml(html, baseUrl);
 }
 
+/*!
+\qmlmethod void WebView::setCanTemporarilyDisplayInsecureContent(bool allow)
+\since OxideQt 1.2
+
+Calling this allows the WebView to temporarily display passive mixed content.
+This will only have an effect if blockedContent indicates that passive mixed
+content is currently being blocked.
+
+The effect of this call is temporary - passive mixed content will be disallowed
+the next time a navigation is committed inside this WebView.
+
+Calling this triggers a reload of the page.
+*/
+
 void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
   Q_D(OxideQQuickWebView);
 
@@ -1901,6 +2799,20 @@ void OxideQQuickWebView::setCanTemporarilyDisplayInsecureContent(bool allow) {
   d->proxy_->setCanTemporarilyDisplayInsecureContent(allow);
 }
 
+/*!
+\qmlmethod void WebView::setCanTemporarilyRunInsecureContent(bool allow)
+\since OxideQt 1.2
+
+Calling this allows the WebView to temporarily run active mixed content. This
+will only have an effect if blockedContent indicates that active mixed
+content is currently being blocked.
+
+The effect of this call is temporary - active mixed content will be disallowed
+the next time a navigation is committed inside this WebView.
+
+Calling this triggers a reload of the page.
+*/
+
 void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
   Q_D(OxideQQuickWebView);
 
@@ -1910,6 +2822,17 @@ void OxideQQuickWebView::setCanTemporarilyRunInsecureContent(bool allow) {
 
   d->proxy_->setCanTemporarilyRunInsecureContent(allow);
 }
+
+/*!
+\qmlmethod void WebView::prepareToClose()
+\since OxideQt 1.4
+
+Causes Oxide to run the current page's \e{beforeunload} handler if there is one.
+This should be called by applications before the WebView is deleted.
+
+The response to this will be delivered asynchronously by the
+prepareToCloseResponse signal.
+*/
 
 void OxideQQuickWebView::prepareToClose() {
   Q_D(OxideQQuickWebView);
@@ -1923,11 +2846,27 @@ void OxideQQuickWebView::prepareToClose() {
   d->proxy_->prepareToClose();
 }
 
+/*!
+\qmlproperty FindController WebView::findController
+\since OxideQt 1.8
+
+The WebView's FindController instance. Please refer to the documentation for
+FindController for more details about how to use it.
+*/
+
 OxideQFindController* OxideQQuickWebView::findController() const {
   Q_D(const OxideQQuickWebView);
 
   return d->find_controller_.data();
 }
+
+/*!
+\qmlproperty TouchSelectionController WebView::touchSelectionController
+\since OxideQt 1.12
+
+The WebView's TouchSelectionController instance. Please refer to the
+documentation for TouchSelectionController for more details about how to use it.
+*/
 
 OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
   Q_D(OxideQQuickWebView);

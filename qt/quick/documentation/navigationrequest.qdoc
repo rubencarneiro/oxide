@@ -1,0 +1,101 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype NavigationRequest
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQNavigationRequest
+
+\brief Request to navigate to a new page
+
+NavigationRequest represents a request to navigate to a new page. It is only
+used for content-initiated navigations.
+
+Due to a mis-design of this API, it is currently used in more than one context.
+If \l{disposition} is \e{DispositionCurrentTab}, then this is a request to
+navigate the current webview. In this case \l{url} will indicate the actual URL
+that will be committed (redirects have already occurred at this point).
+
+If \l{disposition} is not \e{DispositionCurrentTab}, then this is actually part
+of a request to open a new webview, whether this is due to a call to
+\e{window.open()} or the result of a link click with modifier keys pressed. In
+this case, \l{url} will indicate the initial URL that will be loaded in the new
+view (before any redirects occur).
+
+The application gives its response by setting \l{action} appropriately.
+*/
+
+/*!
+\qmlproperty url NavigationRequest::url
+
+The URL of the navigation request. If \l{disposition} is
+\e{DispositionCurrentTab}, this is the URL that will be committed (redirects
+have already occurred), else this will be the initial URL (before any redirects
+occur).
+*/
+
+/*!
+\qmlproperty enumeration NavigationRequest::disposition
+
+Indicates the type of request. If this is \e{DispositionCurrentTab}, then it is
+a request to perform a navigation in the current view. Otherwise it is part of
+a request to open a new view, with the disposition acting as a hint to the type
+of view that the application will be asked to present.
+
+Possible values are:
+
+\value NavigationRequest.DispositionCurrentTab
+A request to navigate in the current view
+
+\value NavigationRequest.DispositionNewForegroundTab
+A request to begin a navigation in a new foreground tab
+
+\value NavigationRequest.DispositionNewBackgroundTab
+A request to begin a navigation in a new background tab
+
+\value NavigationRequest.DispositionNewPopup
+A request to begin a navigation in a popup
+
+\value NavigationRequest.DispositionNewWindow
+A request to begin a navigation in a new window
+*/
+
+/*!
+\qmlproperty bool NavigationRequest::userGesture
+\deprecated
+
+Whether the navigation request was a result of a user gesture (eg, a tap or
+mouse click).
+
+\note This property doesn't work correctly in all circumstances.
+*/
+
+/*!
+\qmlproperty enumeration NavigationRequest::action
+
+This property stores the application's response. The default is
+\e{ActionAccept}.
+
+Possible values are:
+
+\value NavigationRequest.ActionAccept
+Allow the navigation to proceed
+
+\value NavigationRequest.ActionReject
+Block the navigation
+*/

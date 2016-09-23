@@ -31,7 +31,7 @@ QT_END_NAMESPACE
 # define OXIDE_QTCORE_EXPORT Q_DECL_IMPORT
 #endif
 
-enum OXIDE_QTCORE_EXPORT OxideProcessModel {
+enum OxideProcessModel {
   OxideProcessModelMultiProcess, // Uses the default multiprocess model
   OxideProcessModelSingleProcess,
 

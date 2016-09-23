@@ -109,56 +109,185 @@ void OxideQMediaCaptureDevicesPrivate::OnVideoCaptureDevicesChanged() {
   Q_EMIT q->availableVideoDevicesChanged();
 }
 
+/*!
+\class OxideQAudioCaptureDevice
+\inmodule OxideQtCore
+\inheaderfile oxideqmediacapturedevices.h
+
+\brief Provides information about an audio capture device
+
+OxideQAudioCaptureDevice provides information about an audio capture device.
+The only information currently available is the device \l{id} and displayName.
+*/
+
 OxideQAudioCaptureDevice::OxideQAudioCaptureDevice(const QString& id,
                                                    const QString& name)
     : d(new OxideQAudioCaptureDeviceData(id, name)) {}
+
+/*!
+Copy construct a new OxideQAudioCaptureDevice from \a{other}.
+*/
 
 OxideQAudioCaptureDevice::OxideQAudioCaptureDevice(
     const OxideQAudioCaptureDevice& other)
     : d(other.d) {}
 
+/*!
+Destroy this OxideQAudioCaptureDevice.
+*/
+
 OxideQAudioCaptureDevice::~OxideQAudioCaptureDevice() {}
+
+/*!
+Return the ID of this device. This ID is unique for this device and this
+session, but applications should not rely on this ID persisting between
+sessions.
+*/
 
 QString OxideQAudioCaptureDevice::id() const {
   return d->id;
 }
 
+/*!
+Return the display name of this device.
+*/
+
 QString OxideQAudioCaptureDevice::displayName() const {
   return d->name;
 }
+
+/*!
+\class OxideQVideoCaptureDevice
+\inmodule OxideQtCore
+\inheaderfile oxideqmediacapturedevices.h
+
+\brief Provides information about a video capture device
+
+OxideQVideoCaptureDevice provides information about a video capture device. The
+device ID can be determined by calling \l{id}, and the device's display name is
+available via displayName.
+ 
+On some devices it is possible to determine whether this is a front facing or
+rear facing video capture device by calling \l{position}.
+*/
+
+/*!
+\enum OxideQVideoCaptureDevice::Position
+
+This describes a video capture device position.
+
+\value PositionUnspecified
+The camera position could not be determined.
+
+\value PositionFrontFace
+The camera is front facing, ie, pointing towards the user.
+
+\value PositionBackFace
+The camera is rear facing, ie, pointing away from the user.
+*/
 
 OxideQVideoCaptureDevice::OxideQVideoCaptureDevice(const QString& id,
                                                    const QString& name,
                                                    Position position)
     : d(new OxideQVideoCaptureDeviceData(id, name, position)) {}
 
+/*!
+Copy construct a new OxideQVideoCaptureDevice from \a{other}.
+*/
+
 OxideQVideoCaptureDevice::OxideQVideoCaptureDevice(
     const OxideQVideoCaptureDevice& other)
     : d(other.d) {}
 
+/*!
+Destroy this OxideQVideoCaptureDevice.
+*/
+
 OxideQVideoCaptureDevice::~OxideQVideoCaptureDevice() {}
+
+/*!
+Return the ID of this device. This ID is unique for this device and this
+session, but applications should not rely on this ID persisting between
+sessions.
+*/
 
 QString OxideQVideoCaptureDevice::id() const {
   return d->id;
 }
 
+/*!
+Return the display name of this device.
+*/
+
 QString OxideQVideoCaptureDevice::displayName() const {
   return d->name;
 }
+
+/*!
+Return the position of this device.
+
+On devices where this is not supported, this will return PositionUnspecified.
+*/
 
 OxideQVideoCaptureDevice::Position OxideQVideoCaptureDevice::position() const {
   return d->position;
 }
 
+/*!
+\class OxideQMediaCaptureDevices
+\inmodule OxideQtCore
+\inheaderfile oxideqmediacapturedevices.h
+
+\brief Singleton for accessing media capture device info
+
+OxideQMediaCaptureDevices provides a mechanism to discover information about
+media capture devices detected by Oxide. Media capture devices can be made
+available to web content via \e{MediaDevices.getUserMedia()}.
+*/
+
+/*!
+\fn void OxideQMediaCaptureDevices::availableAudioDevicesChanged()
+
+This signal is emitted when the list of available audio capture devices changes.
+
+\sa availableAudioDevices
+*/
+
+/*!
+\fn void OxideQMediaCaptureDevices::availableVideoDevicesChanged()
+
+This signal is emitted when the list of available video capture devices changes.
+
+\sa availableVideoDevices
+*/
+
+/*!
+\internal
+*/
+
 OxideQMediaCaptureDevices::OxideQMediaCaptureDevices()
     : d_ptr(new OxideQMediaCaptureDevicesPrivate(this)) {}
 
+/*!
+\internal
+*/
+
 OxideQMediaCaptureDevices::~OxideQMediaCaptureDevices() {}
+
+/*!
+Return the OxideQMediaCaptureDevices singleton.
+*/
 
 // static
 OxideQMediaCaptureDevices* OxideQMediaCaptureDevices::instance() {
   return g_instance();
 }
+
+/*!
+Return a list of audio capture devices detected by Oxide.
+
+\sa availableAudioDevicesChanged
+*/
 
 QList<OxideQAudioCaptureDevice>
 OxideQMediaCaptureDevices::availableAudioDevices() {
@@ -186,6 +315,12 @@ OxideQMediaCaptureDevices::availableAudioDevices() {
 
   return d->audio_devices_;
 }
+
+/*!
+Return a list of video capture devices detected by Oxide.
+
+\sa availableVideoDevicesChanged
+*/
 
 QList<OxideQVideoCaptureDevice>
 OxideQMediaCaptureDevices::availableVideoDevices() {

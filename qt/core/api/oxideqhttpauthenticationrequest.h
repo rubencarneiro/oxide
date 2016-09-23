@@ -41,8 +41,9 @@ class OXIDE_QTCORE_EXPORT OxideQHttpAuthenticationRequest : public QObject {
   QString host() const;
   QString realm() const;
 
-  Q_INVOKABLE void allow(const QString& username, const QString& password);
-  Q_INVOKABLE void deny();
+ public Q_SLOTS:
+  void allow(const QString& username, const QString& password);
+  void deny();
 
  Q_SIGNALS:
   void cancelled() const;

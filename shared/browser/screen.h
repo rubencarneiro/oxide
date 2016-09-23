@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "base/observer_list.h"
+#include "base/threading/thread_checker.h"
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 
@@ -66,6 +67,8 @@ class OXIDE_SHARED_EXPORT Screen {
 
   void AddObserver(ScreenObserver* observer);
   void RemoveObserver(ScreenObserver* observer);
+
+  base::ThreadChecker thread_checker_;
 
   base::ObserverList<ScreenObserver> observers_;
 };

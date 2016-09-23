@@ -60,6 +60,33 @@ OxideQQuickUserScriptPrivate* OxideQQuickUserScriptPrivate::get(
   return user_script->d_func();
 }
 
+/*!
+\class OxideQQuickUserScript
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickuserscript.h
+*/
+
+/*!
+\qmltype UserScript
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickUserScript
+
+\brief A user script
+
+UserScript represents a single JS file to inject in to web pages. The location
+of the file is specified by \l{url}.
+
+The way that the script is injected can be controlled by emulateGreasemonkey,
+matchAllFrames and incognitoEnabled. In addition to this, UserScript supports a
+limited subset of the Greasemonkey metadata (\e{@include}, \e{@exclude},
+\e{@match}, \e{@exclude_match} and \e{@run-at}).
+
+User scripts are not injected in to the same JS context as the web page's
+script - they are injected in to a unique execution environment that has access
+to the DOM but no access to functions or variables created by the page. Scripts
+can be injected in to different contexts, specified by \l{context}.
+*/
+
 void OxideQQuickUserScript::classBegin() {}
 
 void OxideQQuickUserScript::componentComplete() {
@@ -95,6 +122,10 @@ void OxideQQuickUserScript::componentComplete() {
   d->construct_props_.reset();
 }
 
+/*!
+\internal
+*/
+
 OxideQQuickUserScript::OxideQQuickUserScript(QObject* parent) :
     QObject(parent),
     d_ptr(new OxideQQuickUserScriptPrivate(this)) {
@@ -106,11 +137,24 @@ OxideQQuickUserScript::~OxideQQuickUserScript() {
   emit d->willBeDeleted();
 }
 
+/*!
+\qmlproperty url UserScript::url
+
+The URL of the script to load. This can only be set during construction -
+attempts to change it afterwards will be ignored.
+
+This can only be set to a local file: URL. Other URL schemes are not supported.
+*/
+
 QUrl OxideQQuickUserScript::url() const {
   Q_D(const OxideQQuickUserScript);
 
   return d->url_;
 }
+
+/*!
+\internal
+*/
 
 void OxideQQuickUserScript::setUrl(const QUrl& url) {
   Q_D(OxideQQuickUserScript);
@@ -127,6 +171,13 @@ void OxideQQuickUserScript::setUrl(const QUrl& url) {
   d->url_ = url;
   emit scriptPropertyChanged();
 }
+
+/*!
+\qmlproperty bool UserScript::emulateGreasemonkey
+
+Set to true to inject the script content in to its own scope. This is set to
+false by default.
+*/
 
 bool OxideQQuickUserScript::emulateGreasemonkey() const {
   Q_D(const OxideQQuickUserScript);
@@ -154,6 +205,13 @@ void OxideQQuickUserScript::setEmulateGreasemonkey(bool emulate_greasemonkey) {
   emit scriptPropertyChanged();
 }
 
+/*!
+\qmlproperty bool UserScript::matchAllFrames
+
+Whether to inject the script in to all frames. This is false by default, which
+means the script will only be injected in to the main frame.
+*/
+
 bool OxideQQuickUserScript::matchAllFrames() const {
   Q_D(const OxideQQuickUserScript);
 
@@ -180,6 +238,14 @@ void OxideQQuickUserScript::setMatchAllFrames(bool match_all_frames) {
   emit scriptPropertyChanged();
 }
 
+/*!
+\qmlproperty bool UserScript::incognitoEnabled
+
+Whether to inject the script in to frames that are inside an incognito webview.
+This is false by default, which means that this script will not be injected in
+to frames that are in an incognito webview.
+*/
+
 bool OxideQQuickUserScript::incognitoEnabled() const {
   Q_D(const OxideQQuickUserScript);
 
@@ -205,6 +271,12 @@ void OxideQQuickUserScript::setIncognitoEnabled(bool incognito_enabled) {
 
   emit scriptPropertyChanged();
 }
+
+/*!
+\qmlproperty url UserScript::context
+
+An identifier for the javascript context in which to inject this user script.
+*/
 
 QUrl OxideQQuickUserScript::context() const {
   Q_D(const OxideQQuickUserScript);

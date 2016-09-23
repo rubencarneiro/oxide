@@ -16,6 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
+find_package(Qt5Core REQUIRED)
 find_package(Qt5Quick)
 
 set(_OXIDEQMLSCENE_DEFAULT OFF)
@@ -25,3 +26,14 @@ if(DEFINED Qt5Quick_VERSION_STRING AND
 endif()
 option(ENABLE_OXIDEQMLSCENE "Enable the oxideqmlscene binary" ${_OXIDEQMLSCENE_DEFAULT})
 unset(${_OXIDEQMLSCENE_DEFAULT})
+
+set(_DOC_SUPPORTED True)
+if(${Qt5Core_VERSION_STRING} VERSION_LESS "5.4.0")
+  # We depend on \value outside of \enum, which requires Qt5.4
+  set(_DOC_SUPPORTED False)
+endif()
+
+cmake_dependent_option(ENABLE_DOCUMENTATION
+                       "Enable the documentation"
+                       ${_DOC_SUPPORTED}
+                       "_DOC_SUPPORTED" OFF)

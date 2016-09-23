@@ -37,18 +37,92 @@ class OxideQNavigationRequestPrivate {
   OxideQNavigationRequest::Action action_;
 };
 
+/*!
+\class OxideQNavigationRequest
+\inmodule OxideQtCore
+\inheaderfile oxideqnavigationrequest.h
+
+\brief Request to navigate to a new page
+
+OxideQNavigationRequest represents a request to navigate to a new page. It is
+only used for content-initiated navigations.
+
+Due to a mis-design of this API, it is currently used in more than one context.
+If \l{disposition} is DispositionCurrentTab, then this is a request to
+navigate the current webview. In this case \l{url} will indicate the actual URL
+that will be committed (redirects have already occurred at this point).
+
+If \l{disposition} is not DispositionCurrentTab, then this is actually part of
+a request to open a new webview, whether this is due to a call to
+\e{window.open()} or the result of a link click with modifier keys pressed. In
+this case, \l{url} will indicate the initial URL that will be loaded in the new
+view (before any redirects occur).
+
+The application gives its response by setting \l{action} appropriately.
+*/
+
+/*!
+\enum OxideQNavigationRequest::Disposition
+
+\value DispositionCurrentTab
+A request to navigate in the current view
+
+\value DispositionNewForegroundTab
+A request to begin a navigation in a new foreground tab
+
+\value DispositionNewBackgroundTab
+A request to begin a navigation in a new background tab
+
+\value DispositionNewPopup
+A request to begin a navigation in a popup
+
+\value DispositionNewWindow
+A request to begin a navigation in a new window
+*/
+
+/*!
+\enum OxideQNavigationRequest::Action
+
+\value ActionAccept
+Allow the navigation to proceed
+
+\value ActionReject
+Block the navigation
+*/
+
 OxideQNavigationRequest::OxideQNavigationRequest(const QUrl& url,
                                                  Disposition disposition,
                                                  bool user_gesture) :
     d_ptr(new OxideQNavigationRequestPrivate(url, disposition, user_gesture)) {}
 
+/*!
+\internal
+*/
+
 OxideQNavigationRequest::~OxideQNavigationRequest() {}
+
+/*!
+\property OxideQNavigationRequest::url
+
+The URL of the navigation request. If \l{disposition} is DispositionCurrentTab,
+this is the URL that will be committed (redirects have already occurred), else
+this will be the initial URL (before any redirects occur).
+*/
 
 QUrl OxideQNavigationRequest::url() const {
   Q_D(const OxideQNavigationRequest);
 
   return d->url_;
 }
+
+/*!
+\property OxideQNavigationRequest::disposition
+
+Indicates the type of request. If this is DispositionCurrentTab, then it is a
+request to perform a navigation in the current view. Otherwise it is part of a
+request to open a new view, with the disposition acting as a hint to the type of
+view that the application will be asked to present.
+*/
 
 OxideQNavigationRequest::Disposition
 OxideQNavigationRequest::disposition() const {
@@ -57,11 +131,27 @@ OxideQNavigationRequest::disposition() const {
   return d->disposition_;
 }
 
+/*!
+\property OxideQNavigationRequest::userGesture
+\deprecated
+
+Whether the navigation request was a result of a user gesture (eg, a tap or
+mouse click).
+
+\note This property doesn't work correctly in all circumstances.
+*/
+
 bool OxideQNavigationRequest::userGesture() const {
   Q_D(const OxideQNavigationRequest);
 
   return d->user_gesture_;
 }
+
+/*!
+\property OxideQNavigationRequest::action
+
+This property stores the application's response. The default is ActionAccept.
+*/
 
 OxideQNavigationRequest::Action OxideQNavigationRequest::action() const {
   Q_D(const OxideQNavigationRequest);

@@ -44,9 +44,39 @@ OxideQQuickScriptMessagePrivate* OxideQQuickScriptMessagePrivate::get(
   return q->d_func();
 }
 
+/*!
+\class OxideQQuickScriptMessage
+\inmodule OxideQtQuick
+\inheaderfile oxideqquickscriptmessage.h
+
+\brief An incoming JS message from a user script
+*/
+
+/*!
+\qmltype ScriptMessage
+\inqmlmodule com.canonical.Oxide 1.0
+\instantiates OxideQQuickScriptMessage
+
+\brief A JS message sent from a user script
+
+ScriptMessage represents a JS message sent from a user script. It provides
+various details about the message such as the source WebFrame (\l{frame}), the
+ID of the source JS context (\l{context}) and the message ID (msgId).
+
+The message payload is provided by \l{payload}.
+
+The application can choose to reply to this message by calling \l{reply}.
+*/
+
 OxideQQuickScriptMessage::OxideQQuickScriptMessage() {}
 
 OxideQQuickScriptMessage::~OxideQQuickScriptMessage() {}
+
+/*!
+\qmlproperty WebFrame ScriptMessage::frame
+
+The WebFrame representing the frame that this message was sent from.
+*/
 
 OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   Q_D(const OxideQQuickScriptMessage);
@@ -59,17 +89,34 @@ OxideQQuickWebFrame* OxideQQuickScriptMessage::frame() const {
   return qobject_cast<OxideQQuickWebFrame*>(f);
 }
 
+/*!
+\qmlproperty url ScriptMessage::context
+
+The ID of the JS context that this message was sent from.
+*/
+
 QUrl OxideQQuickScriptMessage::context() const {
   Q_D(const OxideQQuickScriptMessage);
 
   return d->proxy_->context();
 }
 
+/*!
+\qmlproperty string ScriptMessage::msgId
+
+The ID of this message.
+*/
+
 QString OxideQQuickScriptMessage::msgId() const {
   Q_D(const OxideQQuickScriptMessage);
 
   return d->proxy_->msgId();
 }
+
+/*!
+\qmlproperty variant ScriptMessage::args
+\deprecated
+*/
 
 QVariant OxideQQuickScriptMessage::args() const {
   WARN_DEPRECATED_API_USAGE() <<
@@ -79,11 +126,27 @@ QVariant OxideQQuickScriptMessage::args() const {
   return payload();
 }
 
+/*!
+\qmlproperty variant ScriptMessage::payload
+\since OxideQt 1.9
+
+The message payload. The format is defined by the application.
+*/
+
 QVariant OxideQQuickScriptMessage::payload() const {
   Q_D(const OxideQQuickScriptMessage);
 
   return d->proxy_->payload();
 }
+
+/*!
+\qmlmethod void ScriptMessage::reply(variant payload)
+
+Reply to this message, responding with the provided \a{payload}. \a{payload}
+must be a value, object or array that can be represented by JSON values.
+
+This is ignored if the message isn't expecting a reply.
+*/
 
 void OxideQQuickScriptMessage::reply(const QVariant& payload) {
   Q_D(OxideQQuickScriptMessage);
@@ -95,6 +158,11 @@ void OxideQQuickScriptMessage::reply(const QVariant& payload) {
 
   d->proxy_->reply(aux);
 }
+
+/*!
+\qmlmethod void ScriptMessage::error(variant payload)
+\deprecated
+*/
 
 void OxideQQuickScriptMessage::error(const QVariant& payload) {
   Q_D(OxideQQuickScriptMessage);

@@ -108,20 +108,20 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebContext : public QObject,
   void setProduct(const QString& product);
 
   QString userAgent() const;
-  void setUserAgent(const QString& user_agent);
+  void setUserAgent(const QString& userAgent);
 
   QUrl dataPath() const;
-  void setDataPath(const QUrl& data_url);
+  void setDataPath(const QUrl& dataUrl);
 
   QUrl cachePath() const;
-  void setCachePath(const QUrl& cache_url);
+  void setCachePath(const QUrl& cacheUrl);
 
   QString acceptLangs() const;
-  void setAcceptLangs(const QString& accept_langs);
+  void setAcceptLangs(const QString& acceptLangs);
 
   QQmlListProperty<OxideQQuickUserScript> userScripts();
-  Q_INVOKABLE void addUserScript(OxideQQuickUserScript* user_script);
-  Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* user_script);
+  Q_INVOKABLE void addUserScript(OxideQQuickUserScript* script);
+  Q_INVOKABLE void removeUserScript(OxideQQuickUserScript* script);
 
   CookiePolicy cookiePolicy() const;
   void setCookiePolicy(CookiePolicy policy);

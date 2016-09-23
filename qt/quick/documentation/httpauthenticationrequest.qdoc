@@ -1,0 +1,76 @@
+# vim:expandtab:shiftwidth=2:tabstop=2:
+
+# Copyright (C) 2016 Canonical Ltd.
+
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/*!
+\qmltype HttpAuthenticationRequest
+\inqmlmodule com.canonical.Oxide 1.9
+\instantiates OxideQHttpAuthenticationRequest
+\since OxideQt 1.9
+
+\brief HTTP authentication request
+
+HttpAuthenticationRequest represents a request for HTTP authentication
+credentials. An authentication request is triggered when a site responds with a
+\e{401 Unauthorized} response and a \e{WWW-Authenticate} header.
+
+Request details are provided by \l{host} and \l{realm}. The application can
+respond by calling \l{allow} with the requested credentials or calling \l{deny}
+to decline the request.
+
+A request can be cancelled by Oxide. In this case, the \l{cancelled} signal will
+be emitted.
+
+If the application destroys the request without responding, the request will be
+automatically declined.
+*/
+
+/*!
+\qmlsignal HttpAuthenticationRequest::cancelled()
+
+This signal is emitted if the request is cancelled by Oxide. This could happen
+if the application begins another navigation. If the application is displaying a
+UI to request authentication details, it should hide it if this signal is
+emitted.
+*/
+
+/*!
+\qmlproperty string HttpAuthenticationRequest::host
+
+The host that the authentication request is for.
+
+\note This API is broken, as it currently returns the host/port pair
+*/
+
+/*!
+\qmlproperty string HttpAuthenticationRequest::realm
+
+The protection space that this authentication request is for. This is provided
+by the \e{realm} attribute in the \e{WWW-Authenticate} HTTP header.
+*/
+
+/*!
+\qmlmethod void HttpAuthenticationRequest::allow(string username, string password)
+
+Provide the authentication credentials requested.
+*/
+
+/*!
+\qmlmethod void HttpAuthenticationRequest::deny()
+
+Decline the request for authentication credentials.
+*/

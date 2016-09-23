@@ -62,7 +62,6 @@ class OXIDE_QTCORE_EXPORT OxideQCertificateError : public QObject {
   ~OxideQCertificateError() Q_DECL_OVERRIDE;
 
   QUrl url() const;
-  QUrl embedder() const;
 
   bool isCancelled() const;
 

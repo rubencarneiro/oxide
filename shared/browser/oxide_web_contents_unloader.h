@@ -19,9 +19,9 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNLOADER_H_
 
 #include <memory>
+#include <vector>
 
 #include "base/macros.h"
-#include "base/memory/scoped_vector.h"
 #include "content/public/browser/web_contents_delegate.h"
 
 namespace base {
@@ -48,8 +48,12 @@ class WebContentsUnloader : public content::WebContentsDelegate {
   // takes ownership of |contents| and deletes it when complete
   void Unload(std::unique_ptr<content::WebContents> contents);
 
-  // Delete all WebContents that are currently closing
+  // Delete all WebContents that are currently closing without waiting for
+  // unload handlers to complete
   void Shutdown();
+
+  // Determine whether |contents| is currently unloading
+  bool IsUnloadInProgress(content::WebContents* contents);
 
  private:
   friend class base::DefaultSingletonTraits<WebContentsUnloader>;
@@ -60,7 +64,7 @@ class WebContentsUnloader : public content::WebContentsDelegate {
   void CloseContents(content::WebContents* contents) override;
 
   // The WebContents for which we are waiting to unload
-  ScopedVector<content::WebContents> contents_unloading_;
+  std::vector<std::unique_ptr<content::WebContents>> contents_unloading_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsUnloader);
 };

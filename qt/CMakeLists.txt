@@ -36,6 +36,16 @@ if(ENABLE_TESTS)
   find_package(Qt5PlatformSupport REQUIRED)
 endif()
 
+if(NOT CMAKE_CROSSCOMPILING)
+  # qmake isn't multi-arch aware as it installs arch-specific mkspec files
+  # in to /usr/share, so we can't use it here (we'd need a qmake binary
+  # for the host arch using data for the target arch)
+  find_program(QMAKE_EXECUTABLE qmake)
+  if(QMAKE_EXECUTABLE STREQUAL "QMAKE_EXECUTABLE-NOTFOUND")
+    message(FATAL_ERROR "qmake not found")
+  endif()
+endif()
+
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/run_qmlapp.sh.in
     ${CMAKE_CURRENT_BINARY_DIR}/run_qmlapp.sh
@@ -88,6 +98,10 @@ if(ENABLE_OXIDEQMLSCENE)
             "qmlscene instead")
   endif()
   add_subdirectory(qmlrunner)
+endif()
+
+if(ENABLE_DOCUMENTATION)
+  add_subdirectory(documentation)
 endif()
 
 if(ENABLE_TESTS)

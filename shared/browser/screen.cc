@@ -20,9 +20,7 @@
 #include <string>
 
 #include "base/environment.h"
-#include "base/lazy_instance.h"
 #include "base/logging.h"
-#include "base/threading/thread_checker.h"
 
 #include "display_form_factor.h"
 #include "hybris_utils.h"
@@ -32,13 +30,10 @@
 namespace oxide {
 
 namespace {
-base::LazyInstance<base::ThreadChecker> g_thread_checker =
-    LAZY_INSTANCE_INITIALIZER;
 Screen* g_instance;
 }
 
 Screen::Screen() {
-  DCHECK(g_thread_checker.Get().CalledOnValidThread());
   DCHECK(!g_instance);
   g_instance = this;
 }
@@ -66,22 +61,24 @@ void Screen::NotifyShellModeChanged() {
 }
 
 void Screen::AddObserver(ScreenObserver* observer) {
+  DCHECK(thread_checker_.CalledOnValidThread());
   observers_.AddObserver(observer);
 }
 
 void Screen::RemoveObserver(ScreenObserver* observer) {
+  DCHECK(thread_checker_.CalledOnValidThread());
   observers_.RemoveObserver(observer);
 }
 
 // static
 Screen* Screen::GetInstance() {
-  DCHECK(g_thread_checker.Get().CalledOnValidThread());
   DCHECK(g_instance);
+  DCHECK(g_instance->thread_checker_.CalledOnValidThread());
   return g_instance;
 }
 
 Screen::~Screen() {
-  DCHECK(g_thread_checker.Get().CalledOnValidThread());
+  DCHECK(thread_checker_.CalledOnValidThread());
   DCHECK_EQ(g_instance, this);
   FOR_EACH_OBSERVER(ScreenObserver, observers_, OnScreenDestruction());
   g_instance = nullptr;
@@ -89,6 +86,8 @@ Screen::~Screen() {
 
 DisplayFormFactor Screen::GetDisplayFormFactor(
     const display::Display& display) {
+  DCHECK(thread_checker_.CalledOnValidThread());
+
 #if defined(ENABLE_HYBRIS)
   if (HybrisUtils::GetInstance()->HasDeviceProperties() &&
       display.id() == GetPrimaryDisplay().id()) {

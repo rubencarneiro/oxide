@@ -129,6 +129,73 @@ void OxideQCertificateErrorPrivate::SimulateCancel() {
   error_->SimulateCancel();
 }
 
+/*!
+\class OxideQCertificateError
+\inheaderfile oxideqcertificateerror.h
+\inmodule OxideQtCore
+
+\brief Represents a certificate error
+
+OxideQCertificateError represents an individual certificate error. This can't be
+constructed by applications.
+
+\l{url} indicates the URL of the connection that the error represents, and an
+error code is given by certError.
+
+For certificate errors that are overridable (\l{overridable} is true), calling
+\l{allow} will tell Oxide to proceed with the connection. Calling \l{deny} will
+tell Oxide to abort the connection.
+
+For non-overridable certificate errors (\l{overridable} is false), calling
+\l{allow} or \l{deny} will have no effect. The associated connection will
+already have been aborted (for main-frame document errors) or failed with an
+error (for sub-frame or subresource errors).
+
+For main-frame document errors (where isMainFrame is true and
+isSubresource is false), a blank transient page will be loaded for the life
+of the error, with the URL pointing to \l{url}. This is to ensure that
+navigation actions work correctly. It is assumed that an application wil
+display its own error UI over this. The transient page will be destroyed after a
+call to \l{allow} or \l{deny} for overridable errors, and will be destroyed if
+the error instance is deleted.
+
+Main-frame document errors can also be cancelled by Oxide (eg, if another
+navigation is started). In this case, the \l{cancelled} signal will be emitted
+and \l{isCancelled} will change to true. The associated transient page will be
+destroyed automatically when this happens.
+*/
+
+/*!
+\enum OxideQCertificateError::Error
+
+\omitvalue OK
+
+\value ErrorBadIdentity
+The identity of the certificate does not match the identity of the site.
+
+\value ErrorExpired
+The certificate has expired.
+
+\value ErrorDateInvalid
+The certificate has a date that is invalid, eg, its start date is in the future.
+
+\value ErrorAuthorityInvalid
+The certificate is signed by an authority that isn't trusted.
+
+\value ErrorRevoked
+The certificate has been revoked.
+
+\value ErrorInvalid
+The certificate is invalid, eg, it has errors.
+
+\value ErrorInsecure
+The certificate is insecure, eg, it uses a weak signature algorithm or has a
+weak public key.
+
+\value ErrorGeneric
+This is used for all other unspecified errors.
+*/
+
 OxideQCertificateError::OxideQCertificateError(
     OxideQCertificateErrorPrivate& dd,
     QObject* parent)
@@ -174,7 +241,21 @@ OxideQCertificateError::OxideQCertificateError(
       "Error and oxide::CertError enums dont match: ErrorGeneric");
 }
 
+/*!
+Destroy the certificate error. If this is a main-frame document error
+(isMainFrame is true and isSubresource is false), this will destroy the
+associated transient page if it still exists. If the error is overridable and
+the application hasn't already responded by calling \l{allow} or \l{deny}, then
+the connection will be aborted automatically.
+*/
+
 OxideQCertificateError::~OxideQCertificateError() {}
+
+/*!
+\property OxideQCertificateError::url
+
+The URL associated with the certificate error.
+*/
 
 QUrl OxideQCertificateError::url() const {
   Q_D(const OxideQCertificateError);
@@ -182,11 +263,25 @@ QUrl OxideQCertificateError::url() const {
   return QUrl(QString::fromStdString(d->error_->url().spec()));
 }
 
+/*!
+\property OxideQCertificateError::isCancelled
+
+Indicates whether this error has been cancelled by Oxide. This could occur if
+the application starts another navigation before responding to this error. If
+the application is displaying an error UI, it should hide it upon cancellation.
+*/
+
 bool OxideQCertificateError::isCancelled() const {
   Q_D(const OxideQCertificateError);
 
   return d->error_->IsCancelled();
 }
+
+/*!
+\property OxideQCertificateError::isMainFrame
+
+Indicates whether this error originates from the main frame.
+*/
 
 bool OxideQCertificateError::isMainFrame() const {
   Q_D(const OxideQCertificateError);
@@ -194,11 +289,27 @@ bool OxideQCertificateError::isMainFrame() const {
   return d->error_->is_main_frame();
 }
 
+/*!
+\property OxideQCertificateError::isSubresource
+
+Indicates whether this error originates from a subresource within its frame.
+*/
+
 bool OxideQCertificateError::isSubresource() const {
   Q_D(const OxideQCertificateError);
 
   return d->error_->is_subresource();
 }
+
+/*!
+\property OxideQCertificateError::overridable
+
+Indicates whether this error is overridable. Only errors from main-frame
+document loads (where isMainFrame is true and isSubresource is false) can
+be overridable. Certain types of errors are never overridable.
+
+If the error is not overridable, calls to \l{allow} or \l{deny} are ignored.
+*/
 
 bool OxideQCertificateError::overridable() const {
   Q_D(const OxideQCertificateError);
@@ -206,11 +317,24 @@ bool OxideQCertificateError::overridable() const {
   return d->error_->overridable();
 }
 
+/*!
+\property OxideQCertificateError::strictEnforcement
+
+Indicates whether this error is for a connection which is required to be secure
+due to HSTS policy. If this is true, \l{overridable} will be false.
+*/
+
 bool OxideQCertificateError::strictEnforcement() const {
   Q_D(const OxideQCertificateError);
 
   return d->error_->strict_enforcement();
 }
+
+/*!
+\property OxideQCertificateError::certificate
+
+The certificate associated with this error.
+*/
 
 OxideQSslCertificate OxideQCertificateError::certificate() const {
   Q_D(const OxideQCertificateError);
@@ -218,17 +342,39 @@ OxideQSslCertificate OxideQCertificateError::certificate() const {
   return d->certificate_;
 }
 
+/*!
+\property OxideQCertificateError::certError
+
+The error code for this certificate error.
+*/
+
 OxideQCertificateError::Error OxideQCertificateError::certError() const {
   Q_D(const OxideQCertificateError);
 
   return static_cast<Error>(d->error_->cert_error());
 }
 
+/*!
+If this error is overridable (\l{overridable} is true), then calling this will
+allow the connection to proceed. Calling this has no effect if the error is not
+overridable.
+
+\sa deny
+*/
+
 void OxideQCertificateError::allow() {
   Q_D(OxideQCertificateError);
 
   d->respond(true);
 }
+
+/*!
+If this error is overridable (\l{overridable} is true), then calling this will
+abort the connection. Calling this has no effect if the error is not
+overridable.
+
+\sa allow
+*/
 
 void OxideQCertificateError::deny() {
   Q_D(OxideQCertificateError);

@@ -76,9 +76,50 @@ void OxideQHttpAuthenticationRequestPrivate::RequestCancelled() {
   q->cancelled();
 }
 
+/*!
+\class OxideQHttpAuthenticationRequest
+\inheaderfile oxideqhttpauthenticationrequest.h
+\inmodule OxideQtCore
+
+\brief HTTP authentication request
+
+OxideQHttpAuthenticationRequest represents a request for HTTP authentication
+credentials. An authentication request is triggered when a site responds with a
+\e{401 Unauthorized} response and a \e{WWW-Authenticate} header.
+
+Request details are provided by \l{host} and \l{realm}. The application can
+respond by calling \l{allow} with the requested credentials or calling \l{deny}
+to decline the request.
+
+A request can be cancelled by Oxide. In this case, the \l{cancelled} signal will
+be emitted.
+*/
+
+/*!
+\fn OxideQHttpAuthenticationRequest::cancelled() const
+
+This signal is emitted if the request is cancelled by Oxide. This could happen
+if the application begins another navigation. If the application is displaying a
+UI to request authentication details, it should hide it if this signal is
+emitted.
+*/
+
 OxideQHttpAuthenticationRequest::OxideQHttpAuthenticationRequest() {}
 
+/*!
+Destroy this authentication request. If the application has not responded yet,
+the request will be automatically denied.
+*/
+
 OxideQHttpAuthenticationRequest::~OxideQHttpAuthenticationRequest() {}
+
+/*!
+\property OxideQHttpAuthenticationRequest::host
+
+The host that the authentication request is for.
+
+\note This API is broken, as it currently returns the host/port pair
+*/
 
 QString OxideQHttpAuthenticationRequest::host() const {
   Q_D(const OxideQHttpAuthenticationRequest);
@@ -86,11 +127,22 @@ QString OxideQHttpAuthenticationRequest::host() const {
   return d->host_;
 }
 
+/*!
+\property OxideQHttpAuthenticationRequest::realm
+
+The protection space that this authentication request is for. This is provided
+by the \e{realm} attribute in the \e{WWW-Authenticate} HTTP header.
+*/
+
 QString OxideQHttpAuthenticationRequest::realm() const {
   Q_D(const OxideQHttpAuthenticationRequest);
 
   return d->realm_;
 }
+
+/*!
+Decline the request for authentication credentials.
+*/
 
 void OxideQHttpAuthenticationRequest::deny() {
   Q_D(OxideQHttpAuthenticationRequest);
@@ -101,8 +153,12 @@ void OxideQHttpAuthenticationRequest::deny() {
   }
 }
 
-void OxideQHttpAuthenticationRequest::allow(const QString &username,
-                                             const QString &password) {
+/*!
+Provide the authentication credentials requested.
+*/
+
+void OxideQHttpAuthenticationRequest::allow(const QString& username,
+                                            const QString& password) {
   Q_D(OxideQHttpAuthenticationRequest);
 
   if (d->login_delegate_) {

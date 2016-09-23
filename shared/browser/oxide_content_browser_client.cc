@@ -46,7 +46,9 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "display_form_factor.h"
+#include "in_process_renderer_observer.h"
 #include "oxide_browser_context.h"
+#include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_main_parts.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -92,12 +94,17 @@ content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
 
 void ContentBrowserClient::RenderProcessWillLaunch(
     content::RenderProcessHost* host) {
+  if (content::RenderProcessHost::run_renderer_in_process()) {
+    host->AddObserver(new InProcessRendererObserver());
+  }
+
   host->AddFilter(new RenderMessageFilter(host));
 }
 
-std::string ContentBrowserClient::GetAcceptLangs(
-    content::BrowserContext* browser_context) {
-  return UserAgentSettings::Get(browser_context)->GetAcceptLangs();
+void ContentBrowserClient::SiteInstanceGotProcess(
+    content::SiteInstance* site_instance) {
+  BrowserContextDestroyer::RenderProcessHostAssignedToSiteInstance(
+      site_instance->GetProcess());
 }
 
 void ContentBrowserClient::AppendExtraCommandLineSwitches(
@@ -128,6 +135,16 @@ void ContentBrowserClient::AppendExtraCommandLineSwitches(
   if (!CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     command_line->AppendSwitch(switches::kDisableGpuCompositing);
   }
+}
+
+std::string
+ContentBrowserClient::GetApplicationLocale() {
+  return application_locale_;
+}
+
+std::string ContentBrowserClient::GetAcceptLangs(
+    content::BrowserContext* browser_context) {
+  return UserAgentSettings::Get(browser_context)->GetAcceptLangs();
 }
 
 bool ContentBrowserClient::AllowGetCookie(const GURL& url,
@@ -337,11 +354,6 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 #else
   return gpu::GpuControlList::kOsAny;
 #endif
-}
-
-std::string
-ContentBrowserClient::GetApplicationLocale() {
-  return application_locale_;
 }
 
 ContentBrowserClient::ContentBrowserClient(
