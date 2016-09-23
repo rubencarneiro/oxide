@@ -121,7 +121,8 @@ class RenderWidgetHostView
   gfx::Size GetPhysicalBackingSize() const override;
   bool DoTopControlsShrinkBlinkSize() const override;
   float GetTopControlsHeight() const override;
-  void FocusedNodeChanged(bool is_editable_node) override;
+  void FocusedNodeChanged(bool is_editable_node,
+                          const gfx::Rect& node_bounds_in_screen) override;
   void OnSwapCompositorFrame(uint32_t output_surface_id,
                              cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;

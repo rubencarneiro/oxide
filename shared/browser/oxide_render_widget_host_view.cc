@@ -190,7 +190,9 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
   return container_->GetLocationBarHeight();
 }
 
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+void RenderWidgetHostView::FocusedNodeChanged(
+    bool is_editable_node,
+    const gfx::Rect& node_bounds_in_screen) {
   ime_bridge_.FocusedNodeChanged(is_editable_node);
 }
 
