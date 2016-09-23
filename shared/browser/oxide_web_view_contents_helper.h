@@ -48,6 +48,8 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
   static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
+  static bool IsContextInUse(BrowserContext* context);
+
   content::WebContents* GetWebContents() const;
   BrowserContext* GetBrowserContext() const;
 
@@ -72,7 +74,6 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   // WebPreferencesObserver implementation
   void WebPreferencesValueChanged() final;
 
-  scoped_refptr<BrowserContext> context_;
   content::WebContents* web_contents_;
 
   bool owns_web_preferences_;

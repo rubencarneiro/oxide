@@ -48,14 +48,15 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
 
  private:
   // content::ContentBrowserClient implementation
-  std::string GetApplicationLocale() override;
   content::BrowserMainParts* CreateBrowserMainParts(
       const content::MainFunctionParams& parameters) override;
   void RenderProcessWillLaunch(content::RenderProcessHost* host) override;
-  std::string GetAcceptLangs(
-      content::BrowserContext* browser_context) override;
+  void SiteInstanceGotProcess(content::SiteInstance* site_instance) override;
   void AppendExtraCommandLineSwitches(base::CommandLine* command_line,
                                       int child_process_id) override;
+  std::string GetApplicationLocale() override;
+  std::string GetAcceptLangs(
+      content::BrowserContext* browser_context) override;
   bool AllowGetCookie(const GURL& url,
                       const GURL& first_party,
                       const net::CookieList& cookie_list,

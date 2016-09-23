@@ -558,24 +558,16 @@ class OTRBrowserContextImpl : public BrowserContext {
  public:
   OTRBrowserContextImpl(BrowserContextImpl* original,
                         BrowserContextIODataImpl* original_io_data);
-
-  base::WeakPtr<OTRBrowserContextImpl> GetWeakPtr() {
-    return weak_ptr_factory_.GetWeakPtr();
-  }
-
- private:
   ~OTRBrowserContextImpl() override;
 
-  scoped_refptr<BrowserContext> GetOffTheRecordContext() override {
-    return make_scoped_refptr(this);
-  }
-  BrowserContext* GetOriginalContext() const override;
+ private:
+  BrowserContext* GetOffTheRecordContext() override { return this; }
+
+  BrowserContext* GetOriginalContext() override;
 
   bool HasOffTheRecordContext() const override { return true; }
 
-  scoped_refptr<BrowserContextImpl> original_context_;
-
-  base::WeakPtrFactory<OTRBrowserContextImpl> weak_ptr_factory_;
+  BrowserContextImpl* original_context_;
 };
 
 class BrowserContextImpl : public BrowserContext {
@@ -583,50 +575,49 @@ class BrowserContextImpl : public BrowserContext {
   BrowserContextImpl(const BrowserContext::Params& params);
 
  private:
+  friend class BrowserContext;
+
   ~BrowserContextImpl() override;
 
-  scoped_refptr<BrowserContext> GetOffTheRecordContext() override;
+  BrowserContext* GetOffTheRecordContext() override;
 
-  BrowserContext* GetOriginalContext() const override {
-    return const_cast<BrowserContextImpl*>(this);
-  }
+  BrowserContext* GetOriginalContext() override { return this; }
 
   bool HasOffTheRecordContext() const override {
     return otr_context_ != nullptr;
   }
 
-  base::WeakPtr<OTRBrowserContextImpl> otr_context_;
+  std::unique_ptr<OTRBrowserContextImpl> otr_context_;
 };
 
-OTRBrowserContextImpl::~OTRBrowserContextImpl() {}
-
-BrowserContext* OTRBrowserContextImpl::GetOriginalContext() const {
-  return original_context_.get();
+BrowserContext* OTRBrowserContextImpl::GetOriginalContext() {
+  return original_context_;
 }
+
+OTRBrowserContextImpl::~OTRBrowserContextImpl() {}
 
 OTRBrowserContextImpl::OTRBrowserContextImpl(
     BrowserContextImpl* original,
     BrowserContextIODataImpl* original_io_data)
     : BrowserContext(new OTRBrowserContextIODataImpl(original_io_data)),
-      original_context_(original),
-      weak_ptr_factory_(this) {
+      original_context_(original) {
   BrowserContextDependencyManager::GetInstance()
       ->CreateBrowserContextServices(this);
 }
 
-BrowserContextImpl::~BrowserContextImpl() {
-  CHECK(!otr_context_);
-}
-
-scoped_refptr<BrowserContext> BrowserContextImpl::GetOffTheRecordContext() {
+BrowserContext* BrowserContextImpl::GetOffTheRecordContext() {
   if (!otr_context_) {
-    OTRBrowserContextImpl* context = new OTRBrowserContextImpl(
-        this,
-        static_cast<BrowserContextIODataImpl *>(io_data()));
-    otr_context_ = context->GetWeakPtr();
+    otr_context_ =
+        base::MakeUnique<OTRBrowserContextImpl>(
+            this,
+            static_cast<BrowserContextIODataImpl*>(io_data()));
   }
 
-  return make_scoped_refptr(otr_context_.get());
+  return otr_context_.get();
+}
+
+BrowserContextImpl::~BrowserContextImpl() {
+  CHECK(!otr_context_);
 }
 
 BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
@@ -643,8 +634,9 @@ BrowserContextImpl::BrowserContextImpl(const BrowserContext::Params& params)
       ->CreateBrowserContextServices(this);
 }
 
-void BrowserContextTraits::Destruct(const BrowserContext* x) {
-  BrowserContextDestroyer::DestroyContext(const_cast<BrowserContext*>(x));
+void BrowserContext::Deleter::operator()(BrowserContext* context) {
+  CHECK(!context->IsOffTheRecord());
+  BrowserContextDestroyer::DestroyContext(base::WrapUnique(context));
 }
 
 std::unique_ptr<content::ZoomLevelDelegate>
@@ -744,8 +736,8 @@ void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
   observers_.RemoveObserver(observer);
 }
 
-BrowserContext::BrowserContext(BrowserContextIOData* io_data) :
-    io_data_(io_data) {
+BrowserContext::BrowserContext(BrowserContextIOData* io_data)
+    : io_data_(io_data) {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
       "The main browser process components must be started before " <<
       "creating a context";
@@ -786,9 +778,8 @@ BrowserContext::~BrowserContext() {
 }
 
 // static
-scoped_refptr<BrowserContext> BrowserContext::Create(const Params& params) {
-  scoped_refptr<BrowserContext> context = new BrowserContextImpl(params);
-  return context;
+BrowserContext::UniquePtr BrowserContext::Create(const Params& params) {
+  return BrowserContext::UniquePtr(new BrowserContextImpl(params));
 }
 
 // static
@@ -800,7 +791,10 @@ void BrowserContext::ForEach(const BrowserContextCallback& callback) {
 
 // static
 void BrowserContext::AssertNoContextsExist() {
-  CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0));
+  CHECK_EQ(g_all_contexts.Get().size(), static_cast<size_t>(0))
+      << "BrowserContexts still exist at shutdown! This is normally the result "
+      << "of an application leak, but it's possible that there might be an "
+      << "Oxide bug too";
 }
 
 BrowserContextID BrowserContext::GetID() const {
@@ -820,6 +814,14 @@ void BrowserContext::SetDelegate(BrowserContextDelegate* delegate) {
   data.delegate = delegate;
 }
 
+// static
+void BrowserContext::DestroyOffTheRecordContextForContext(
+    BrowserContext* context) {
+  CHECK(!context->IsOffTheRecord() && context->HasOffTheRecordContext());
+  BrowserContextDestroyer::DestroyContext(
+      std::move(static_cast<BrowserContextImpl*>(context)->otr_context_));
+}
+
 bool BrowserContext::IsOffTheRecord() const {
   DCHECK(CalledOnValidThread());
   return io_data()->IsOffTheRecord();
@@ -829,7 +831,7 @@ bool BrowserContext::IsSameContext(BrowserContext* other) const {
   DCHECK(CalledOnValidThread());
   return other->GetOriginalContext() == this ||
          (other->HasOffTheRecordContext() &&
-          other->GetOffTheRecordContext().get() == this);
+          other->GetOffTheRecordContext() == this);
 }
 
 base::FilePath BrowserContext::GetPath() const {

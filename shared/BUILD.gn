@@ -284,6 +284,8 @@ component("shared") {
     "browser/input/oxide_input_method_context.h",
     "browser/input/oxide_input_method_context_observer.cc",
     "browser/input/oxide_input_method_context_observer.h",
+    "browser/in_process_renderer_observer.cc",
+    "browser/in_process_renderer_observer.h",
     "browser/media/oxide_media_capture_devices_context.cc",
     "browser/media/oxide_media_capture_devices_context.h",
     "browser/media/oxide_media_capture_devices_context_client.h",

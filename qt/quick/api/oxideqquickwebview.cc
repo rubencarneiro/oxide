@@ -2042,8 +2042,8 @@ If the application doesn't set this, then WebView will use the application
 default WebContext (Oxide::defaultWebContext).
 
 The application should ensure that the provided WebContext outlives this
-WebView. Although WebView will continue to function normally if its provided
-WebContext is deleted, it will mean that this property is null.
+WebView. Deleting the WebContext whilst the WebView is still alive may cause
+some features to stop working.
 
 If this WebView is created as a request to open a new window (via
 newViewRequested), then the WebContext will be inherited from the opening

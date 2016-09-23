@@ -33,6 +33,7 @@
 
 #include "qt/core/glue/oxide_qt_web_context_proxy.h"
 #include "shared/browser/media/oxide_media_capture_devices_context_client.h"
+#include "shared/browser/oxide_browser_context.h"
 
 QT_BEGIN_NAMESPACE
 class QNetworkAccessManager;
@@ -43,9 +44,6 @@ class CookieStore;
 }
 
 namespace oxide {
-
-class BrowserContext;
-
 namespace qt {
 
 class SetCookiesContext;
@@ -152,7 +150,7 @@ class WebContext : public WebContextProxy,
 
   WebContextProxyClient* client_;
 
-  scoped_refptr<BrowserContext> context_;
+  BrowserContext::UniquePtr context_;
 
   struct ConstructProperties;
   std::unique_ptr<ConstructProperties> construct_props_;

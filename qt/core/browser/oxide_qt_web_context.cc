@@ -53,7 +53,6 @@
 #include "qt/core/browser/oxide_qt_user_script.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 #include "shared/browser/media/oxide_media_capture_devices_context.h"
-#include "shared/browser/oxide_browser_context.h"
 #include "shared/browser/oxide_browser_context_delegate.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_devtools_manager.h"
@@ -66,6 +65,7 @@
 namespace oxide {
 namespace qt {
 
+using oxide::BrowserContext;
 using oxide::DevToolsManager;
 using oxide::MediaCaptureDevicesContext;
 using oxide::UserAgentSettings;
@@ -456,7 +456,7 @@ WebContext::~WebContext() {
 }
 
 // static
-WebContext* WebContext::FromBrowserContext(oxide::BrowserContext* context) {
+WebContext* WebContext::FromBrowserContext(BrowserContext* context) {
   BrowserContextDelegate* delegate =
       static_cast<BrowserContextDelegate*>(context->GetDelegate());
   if (!delegate) {
@@ -466,21 +466,21 @@ WebContext* WebContext::FromBrowserContext(oxide::BrowserContext* context) {
   return delegate->context();
 }
 
-oxide::BrowserContext* WebContext::GetContext() {
+BrowserContext* WebContext::GetContext() {
   if (context_.get()) {
     return context_.get();
   }
 
   DCHECK(construct_props_);
 
-  oxide::BrowserContext::Params params(
+  BrowserContext::Params params(
       construct_props_->data_path,
       construct_props_->cache_path,
       construct_props_->max_cache_size_hint,
       construct_props_->session_cookie_mode);
   params.host_mapping_rules = construct_props_->host_mapping_rules;
 
-  context_ = oxide::BrowserContext::Create(params);
+  context_ = BrowserContext::Create(params);
 
   UserAgentSettings* ua_settings = UserAgentSettings::Get(context_.get());
 

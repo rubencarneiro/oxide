@@ -994,11 +994,11 @@ WebView::WebView(const CommonParams& common_params,
     : WebView(common_params.client) {
   CHECK(create_params.context) << "Didn't specify a BrowserContext";
 
-  scoped_refptr<BrowserContext> context = create_params.incognito ?
+  BrowserContext* context = create_params.incognito ?
       create_params.context->GetOffTheRecordContext() :
       create_params.context->GetOriginalContext();
 
-  content::WebContents::CreateParams content_params(context.get());
+  content::WebContents::CreateParams content_params(context);
   content_params.initial_size =
       gfx::ToEnclosingRect(common_params.view_client->GetBounds()).size();
   content_params.initially_hidden = !common_params.view_client->IsVisible();
@@ -1013,7 +1013,7 @@ WebView::WebView(const CommonParams& common_params,
   if (create_params.restore_entries.size() > 0) {
     std::vector<std::unique_ptr<content::NavigationEntry>> entries =
         sessions::ContentSerializedNavigationBuilder::ToNavigationEntries(
-            create_params.restore_entries, context.get());
+            create_params.restore_entries, context);
     web_contents_->GetController().Restore(
         create_params.restore_index,
         create_params.restore_type,
