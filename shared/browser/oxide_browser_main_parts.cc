@@ -49,6 +49,7 @@
 #include "shared/gpu/oxide_gl_context_dependent.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_browser_context_destroyer.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_geolocation_delegate.h"
@@ -57,6 +58,7 @@
 #include "oxide_lifecycle_observer.h"
 #include "oxide_message_pump.h"
 #include "oxide_render_process_initializer.h"
+#include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "screen.h"
 
@@ -341,15 +343,15 @@ bool BrowserMainParts::MainMessageLoopRun(int* result_code) {
 }
 
 void BrowserMainParts::PostMainMessageLoopRun() {
+  WebContentsUnloader::GetInstance()->Shutdown();
+
+  BrowserContextDestroyer::Shutdown();
+  BrowserContext::AssertNoContextsExist();
+
   CompositorUtils::GetInstance()->Shutdown();
 }
 
 void BrowserMainParts::PostDestroyThreads() {
-  if (BrowserProcessMain::GetInstance()->GetProcessModel() ==
-      PROCESS_MODEL_SINGLE_PROCESS) {
-    BrowserContext::AssertNoContextsExist();
-  }
-
   device_client_.reset();
 
   display::Screen::SetScreenInstance(nullptr);

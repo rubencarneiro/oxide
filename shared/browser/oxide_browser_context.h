@@ -146,17 +146,10 @@ class BrowserContextIOData {
 
 class BrowserContext;
 
-struct OXIDE_SHARED_EXPORT BrowserContextTraits {
-  static void Destruct(const BrowserContext* x);
-};
-
 // This class holds the context needed for a browsing session. It lives on
-// and must only be accessed on the UI thread - note that it uses a thread-safe
-// refcount only so that we can override the delete behaviour
-class OXIDE_SHARED_EXPORT BrowserContext
-    : public content::BrowserContext,
-      public base::RefCountedThreadSafe<BrowserContext, BrowserContextTraits>,
-      public base::NonThreadSafe {
+// and must only be accessed on the UI thread
+class OXIDE_SHARED_EXPORT BrowserContext : public content::BrowserContext,
+                                           public base::NonThreadSafe {
  public:
 
   struct Params {
@@ -176,12 +169,24 @@ class OXIDE_SHARED_EXPORT BrowserContext
     std::vector<std::string> host_mapping_rules;
   };
 
+  virtual ~BrowserContext();
+
   static BrowserContext* FromContent(
       content::BrowserContext* context) {
     return static_cast<BrowserContext *>(context);
   }
 
-  static scoped_refptr<BrowserContext> Create(const Params& params);
+  struct Deleter {
+    void operator()(BrowserContext* context);
+  };
+
+  typedef std::unique_ptr<BrowserContext, Deleter> UniquePtr;
+
+  // Create a new BrowserContext. Callers should be aware that the returned
+  // std::unique_ptr is not guaranteed to delete the BrowserContext immediately
+  // when released - it schedules the BrowserContext to be deleted when it's no
+  // longer in use.
+  static UniquePtr Create(const Params& params);
 
   typedef base::Callback<void(BrowserContext*)> BrowserContextCallback;
   static void ForEach(const BrowserContextCallback& callback);
@@ -194,9 +199,21 @@ class OXIDE_SHARED_EXPORT BrowserContext
   BrowserContextDelegate* GetDelegate() const;
   void SetDelegate(BrowserContextDelegate* delegate);
 
-  virtual scoped_refptr<BrowserContext> GetOffTheRecordContext() = 0;
-  virtual BrowserContext* GetOriginalContext() const = 0;
+  // Returns an OTR BrowserContext, creating it if it needs to. Callers must
+  // never delete the returned BrowserContext directly, but must pass the
+  // BrowserContext returned by GetOriginalContext() to
+  // DestroyOffTheRecordContextForContext when it's no longer required.
+  virtual BrowserContext* GetOffTheRecordContext() = 0;
+
+  // Returns the main BrowserContext associated with |this|. Callers must never
+  // delete the returned BrowserContext.
+  // The returned BrowserContext is only guaranteed to be valid until |this| is
+  // released.
+  virtual BrowserContext* GetOriginalContext() = 0;
+
   virtual bool HasOffTheRecordContext() const = 0;
+
+  static void DestroyOffTheRecordContextForContext(BrowserContext* context);
 
   bool IsOffTheRecord() const override; // from content::BrowserContext
 
@@ -231,10 +248,7 @@ class OXIDE_SHARED_EXPORT BrowserContext
   BrowserContextIOData* GetIOData() const;
 
  protected:
-  friend class BrowserContextDestroyer; // for destructor
-
   BrowserContext(BrowserContextIOData* io_data);
-  virtual ~BrowserContext();
 
   BrowserContextIOData* io_data() const { return io_data_; }
 

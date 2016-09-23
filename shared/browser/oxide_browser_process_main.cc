@@ -72,10 +72,8 @@
 #include "shared/common/oxide_content_client.h"
 #include "shared/common/oxide_form_factor.h"
 
-#include "oxide_browser_context.h"
 #include "oxide_form_factor_detection.h"
 #include "oxide_message_pump.h"
-#include "oxide_web_contents_unloader.h"
 
 namespace content {
 
@@ -580,14 +578,6 @@ void BrowserProcessMainImpl::Shutdown() {
   state_ = STATE_SHUTTING_DOWN;
 
   MessagePump::Get()->Stop();
-
-  WebContentsUnloader::GetInstance()->Shutdown();
-
-  if (process_model_ != PROCESS_MODEL_SINGLE_PROCESS) {
-    // In single process mode, we do this check after destroying
-    // threads, as we hold the single BrowserContext alive until then
-    BrowserContext::AssertNoContextsExist();
-  }
 
   browser_main_runner_->Shutdown();
   browser_main_runner_.reset();
