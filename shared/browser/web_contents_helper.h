@@ -15,13 +15,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_H_
-#define _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_HELPER_H_
+#define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_HELPER_H_
 
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/supports_user_data.h"
+#include "content/public/browser/web_contents_user_data.h"
 
 #include "shared/browser/oxide_browser_context_observer.h"
 #include "shared/browser/oxide_web_preferences_observer.h"
@@ -37,16 +37,16 @@ namespace oxide {
 class BrowserContext;
 class WebPreferences;
 
-class WebViewContentsHelper final : private BrowserContextObserver,
-                                    private ScreenObserver,
-                                    private WebPreferencesObserver,
-                                    private base::SupportsUserData::Data {
+class WebContentsHelper
+    : public content::WebContentsUserData<WebContentsHelper>,
+      public BrowserContextObserver,
+      public ScreenObserver,
+      public WebPreferencesObserver {
  public:
-  WebViewContentsHelper(content::WebContents* contents,
-                        content::WebContents* opener);
+  static void CreateForWebContents(content::WebContents* contents,
+                                   content::WebContents* opener);
 
-  static WebViewContentsHelper* FromWebContents(content::WebContents* contents);
-  static WebViewContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
+  static WebContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
   static bool IsContextInUse(BrowserContext* context);
 
@@ -59,28 +59,33 @@ class WebViewContentsHelper final : private BrowserContextObserver,
   void WebContentsAdopted();
 
  private:
-  ~WebViewContentsHelper();
+  friend class content::WebContentsUserData<WebContentsHelper>;
+
+  WebContentsHelper(content::WebContents* contents);
+  ~WebContentsHelper() override;
+
+  void InitFromOpener(content::WebContents* opener);
 
   void UpdateWebPreferences();
 
   // BrowserContextObserver implementation
-  void NotifyPopupBlockerEnabledChanged() final;
-  void NotifyDoNotTrackChanged() final;
+  void NotifyPopupBlockerEnabledChanged() override;
+  void NotifyDoNotTrackChanged() override;
 
   // ScreenObserver
-  void OnDisplayPropertiesChanged(const display::Display& display) final;
-  void OnShellModeChanged() final;
+  void OnDisplayPropertiesChanged(const display::Display& display) override;
+  void OnShellModeChanged() override;
 
   // WebPreferencesObserver implementation
-  void WebPreferencesValueChanged() final;
+  void WebPreferencesValueChanged() override;
 
   content::WebContents* web_contents_;
 
   bool owns_web_preferences_;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(WebViewContentsHelper);
+  DISALLOW_COPY_AND_ASSIGN(WebContentsHelper);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_VIEW_CONTENTS_HELPER_H_
+#endif // _OXIDE_SHARED_BROWSER_WEB_CONTENTS_HELPER_H_

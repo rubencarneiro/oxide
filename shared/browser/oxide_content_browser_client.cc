@@ -60,9 +60,9 @@
 #include "oxide_web_contents_view.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
-#include "oxide_web_view_contents_helper.h"
 #include "screen.h"
 #include "shell_mode.h"
+#include "web_contents_helper.h"
 
 #if defined(ENABLE_HYBRIS)
 #include "hybris_utils.h"
@@ -250,8 +250,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     }
   }
 
-  WebViewContentsHelper* contents_helper =
-      WebViewContentsHelper::FromWebContents(contents);
+  WebContentsHelper* contents_helper =
+      WebContentsHelper::FromWebContents(contents);
 
   WebPreferences* web_prefs = nullptr;
   if (contents_helper) {

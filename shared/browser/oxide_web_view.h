@@ -78,7 +78,7 @@ class WebFrame;
 class WebPreferences;
 class WebView;
 class WebViewClient;
-class WebViewContentsHelper;
+class WebContentsHelper;
 
 class WebViewIterator final {
  public:
@@ -424,7 +424,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       WebContentsScopedPtr;
 
   WebContentsScopedPtr web_contents_;
-  WebViewContentsHelper* web_contents_helper_;
+  WebContentsHelper* web_contents_helper_;
 
   content::NotificationRegistrar registrar_;
 

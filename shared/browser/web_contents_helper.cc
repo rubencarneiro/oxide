@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_view_contents_helper.h"
+#include "web_contents_helper.h"
 
 #include <set>
 
@@ -37,68 +37,15 @@
 namespace oxide {
 
 namespace {
-const char kWebViewContentsHelperKey[] = "oxide_web_view_contents_helper_data";
-base::LazyInstance<std::set<WebViewContentsHelper*>> g_contents_helpers =
+
+DEFINE_WEB_CONTENTS_USER_DATA_KEY(WebContentsHelper);
+
+base::LazyInstance<std::set<WebContentsHelper*>> g_contents_helpers =
     LAZY_INSTANCE_INITIALIZER;
+
 }
 
-WebViewContentsHelper::~WebViewContentsHelper() {
-  size_t erased = g_contents_helpers.Get().erase(this);
-  DCHECK_GT(erased, 0U);
-
-  if (web_preferences() && owns_web_preferences_) {
-    WebPreferences* prefs = web_preferences();
-    WebPreferencesObserver::Observe(nullptr);
-    prefs->Destroy();
-  }
-}
-
-void WebViewContentsHelper::UpdateWebPreferences() {
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->OnWebkitPreferencesChanged();
-}
-
-void WebViewContentsHelper::NotifyPopupBlockerEnabledChanged() {
-  UpdateWebPreferences();
-}
-
-void WebViewContentsHelper::NotifyDoNotTrackChanged() {
-  content::RendererPreferences* renderer_prefs =
-      web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->enable_do_not_track = GetBrowserContext()->GetDoNotTrack();
-
-  // Send the new override string to the renderer.
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-  rvh->SyncRendererPrefs();
-}
-
-void WebViewContentsHelper::OnDisplayPropertiesChanged(
-    const display::Display& display) {
-  if (display.id() !=
-      WebContentsView::FromWebContents(web_contents_)->GetDisplay().id()) {
-    return;
-  }
-
-  UpdateWebPreferences();
-}
-
-void WebViewContentsHelper::OnShellModeChanged() {
-  UpdateWebPreferences();
-}
-
-void WebViewContentsHelper::WebPreferencesValueChanged() {
-  UpdateWebPreferences();
-}
-
-WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
-                                             content::WebContents* opener)
+WebContentsHelper::WebContentsHelper(content::WebContents* contents)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
       web_contents_(contents),
@@ -106,8 +53,6 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
   DCHECK(!FromWebContents(web_contents_));
 
   g_contents_helpers.Get().insert(this);
-
-  web_contents_->SetUserData(kWebViewContentsHelperKey, this);
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
@@ -125,27 +70,85 @@ WebViewContentsHelper::WebViewContentsHelper(content::WebContents* contents,
   if (rvh) {
     rvh->SyncRendererPrefs();
   }
+}
 
-  if (opener) {
-    WebPreferencesObserver::Observe(
-        WebViewContentsHelper::FromWebContents(opener)
-          ->GetWebPreferences()->Clone());
-    owns_web_preferences_ = true;
-    UpdateWebPreferences();
+WebContentsHelper::~WebContentsHelper() {
+  size_t erased = g_contents_helpers.Get().erase(this);
+  DCHECK_GT(erased, 0U);
+
+  if (web_preferences() && owns_web_preferences_) {
+    WebPreferences* prefs = web_preferences();
+    WebPreferencesObserver::Observe(nullptr);
+    prefs->Destroy();
   }
+}
+
+void WebContentsHelper::InitFromOpener(content::WebContents* opener) {
+  WebPreferencesObserver::Observe(
+      WebContentsHelper::FromWebContents(opener)
+        ->GetWebPreferences()->Clone());
+  owns_web_preferences_ = true;
+  UpdateWebPreferences();
+}
+
+void WebContentsHelper::UpdateWebPreferences() {
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->OnWebkitPreferencesChanged();
+}
+
+void WebContentsHelper::NotifyPopupBlockerEnabledChanged() {
+  UpdateWebPreferences();
+}
+
+void WebContentsHelper::NotifyDoNotTrackChanged() {
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  renderer_prefs->enable_do_not_track = GetBrowserContext()->GetDoNotTrack();
+
+  // Send the new override string to the renderer.
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+  rvh->SyncRendererPrefs();
+}
+
+void WebContentsHelper::OnDisplayPropertiesChanged(
+    const display::Display& display) {
+  if (display.id() !=
+      WebContentsView::FromWebContents(web_contents_)->GetDisplay().id()) {
+    return;
+  }
+
+  UpdateWebPreferences();
+}
+
+void WebContentsHelper::OnShellModeChanged() {
+  UpdateWebPreferences();
+}
+
+void WebContentsHelper::WebPreferencesValueChanged() {
+  UpdateWebPreferences();
 }
 
 // static
-WebViewContentsHelper* WebViewContentsHelper::FromWebContents(
-    content::WebContents* contents) {
-  if (!contents) {
-    return nullptr;
+void WebContentsHelper::CreateForWebContents(content::WebContents* contents,
+                                             content::WebContents* opener) {
+  content::WebContentsUserData<WebContentsHelper>::CreateForWebContents(contents);
+
+  if (!opener) {
+    return;
   }
-  return static_cast<WebViewContentsHelper *>(
-      contents->GetUserData(kWebViewContentsHelperKey));
+
+  WebContentsHelper* helper = FromWebContents(contents);
+  helper->InitFromOpener(opener);
 }
 
-WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
+WebContentsHelper* WebContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   content::WebContents* contents =
       content::WebContents::FromRenderViewHost(rvh);
@@ -157,7 +160,7 @@ WebViewContentsHelper* WebViewContentsHelper::FromRenderViewHost(
 }
 
 // static
-bool WebViewContentsHelper::IsContextInUse(BrowserContext* context) {
+bool WebContentsHelper::IsContextInUse(BrowserContext* context) {
   for (auto* helper : g_contents_helpers.Get()) {
     if (helper->GetBrowserContext() == context &&
         !WebContentsUnloader::GetInstance()->IsUnloadInProgress(
@@ -169,19 +172,19 @@ bool WebViewContentsHelper::IsContextInUse(BrowserContext* context) {
   return false;
 }
 
-content::WebContents* WebViewContentsHelper::GetWebContents() const {
+content::WebContents* WebContentsHelper::GetWebContents() const {
   return web_contents_;
 }
 
-BrowserContext* WebViewContentsHelper::GetBrowserContext() const {
+BrowserContext* WebContentsHelper::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
-WebPreferences* WebViewContentsHelper::GetWebPreferences() const {
+WebPreferences* WebContentsHelper::GetWebPreferences() const {
   return web_preferences();
 }
 
-void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
+void WebContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   if (preferences == web_preferences()) {
     return;
   }
@@ -198,7 +201,7 @@ void WebViewContentsHelper::SetWebPreferences(WebPreferences* preferences) {
   UpdateWebPreferences();
 }
 
-void WebViewContentsHelper::WebContentsAdopted() {
+void WebContentsHelper::WebContentsAdopted() {
   owns_web_preferences_ = false;
 }
 

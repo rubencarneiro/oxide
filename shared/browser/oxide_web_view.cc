@@ -91,7 +91,7 @@
 #include "oxide_web_frame.h"
 #include "oxide_web_preferences.h"
 #include "oxide_web_view_client.h"
-#include "oxide_web_view_contents_helper.h"
+#include "web_contents_helper.h"
 
 #if defined(ENABLE_MEDIAHUB)
 #include "shared/browser/media/oxide_media_web_contents_observer.h"
@@ -125,7 +125,7 @@ void FillLoadURLParamsFromOpenURLParams(
 
 void CreateHelpers(content::WebContents* contents,
                    content::WebContents* opener = nullptr) {
-  new WebViewContentsHelper(contents, opener);
+  WebContentsHelper::CreateForWebContents(contents, opener);
   CertificateErrorDispatcher::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
   PermissionRequestDispatcher::CreateForWebContents(contents);
@@ -223,7 +223,7 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
   // ourself to the WebContents, as the pref update needs to call back in
   // to us (via CanCreateWindows)
   web_contents_helper_ =
-      WebViewContentsHelper::FromWebContents(web_contents_.get());
+      WebContentsHelper::FromWebContents(web_contents_.get());
   web_contents_helper_->WebContentsAdopted();
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
@@ -1028,8 +1028,8 @@ WebView::WebView(const CommonParams& common_params,
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<
          "Specified WebContents doesn't have a BrowserContext";
-  CHECK(WebViewContentsHelper::FromWebContents(contents.get())) <<
-       "Specified WebContents should already have a WebViewContentsHelper";
+  CHECK(WebContentsHelper::FromWebContents(contents.get())) <<
+       "Specified WebContents should already have a WebContentsHelper";
   CHECK(!FromWebContents(contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
