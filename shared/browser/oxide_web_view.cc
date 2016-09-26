@@ -20,7 +20,6 @@
 #include <queue>
 #include <utility>
 
-#include "base/lazy_instance.h"
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
@@ -143,39 +142,11 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
-base::LazyInstance<std::vector<WebView*> > g_all_web_views;
-
 }
 
 void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
   WebContentsUnloader::GetInstance()->Unload(base::WrapUnique(contents));
 };
-
-WebViewIterator::WebViewIterator(const std::vector<WebView*>& views) {
-  for (std::vector<WebView*>::const_iterator it = views.begin();
-       it != views.end(); ++it) {
-    views_.push_back((*it)->AsWeakPtr());
-  }
-  current_ = views_.begin();
-}
-
-WebViewIterator::~WebViewIterator() {}
-
-bool WebViewIterator::HasMore() const {
-  return current_ != views_.end();
-}
-
-WebView* WebViewIterator::GetNext() {
-  while (current_ != views_.end()) {
-    base::WeakPtr<WebView>& view = *current_;
-    current_++;
-    if (view.get()) {
-      return view.get();
-    }
-  }
-
-  return nullptr;
-}
 
 WebView::CommonParams::CommonParams()
     : client(nullptr),
@@ -190,11 +161,6 @@ WebView::CreateParams::CreateParams()
       restore_index(0) {}
 
 WebView::CreateParams::~CreateParams() {}
-
-// static
-WebViewIterator WebView::GetAllWebViews() {
-  return WebViewIterator(g_all_web_views.Get());
-}
 
 WebView::WebView(WebViewClient* client)
     : client_(client),
@@ -238,12 +204,6 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
                  base::Unretained(this)));
 
   CompositorObserver::Observe(view->GetCompositor());
-
-  DCHECK(std::find(g_all_web_views.Get().begin(),
-                   g_all_web_views.Get().end(),
-                   this) ==
-         g_all_web_views.Get().end());
-  g_all_web_views.Get().push_back(this);
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
@@ -1042,12 +1002,6 @@ WebView::WebView(const CommonParams& common_params,
 }
 
 WebView::~WebView() {
-  g_all_web_views.Get().erase(
-      std::remove(g_all_web_views.Get().begin(),
-                  g_all_web_views.Get().end(),
-                  this),
-      g_all_web_views.Get().end());
-
   WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
   view->SetClient(nullptr);
   view->set_editing_capabilities_changed_callback(base::Closure());
