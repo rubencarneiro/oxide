@@ -78,24 +78,7 @@ class WebFrame;
 class WebPreferences;
 class WebView;
 class WebViewClient;
-class WebViewContentsHelper;
-
-class WebViewIterator final {
- public:
-  ~WebViewIterator();
-
-  bool HasMore() const;
-  WebView* GetNext();
-
- private:
-  friend class WebView;
-
-  WebViewIterator(const std::vector<WebView*>& views);
-
-  typedef std::vector<base::WeakPtr<WebView> > Vector;
-  Vector views_;
-  Vector::iterator current_;
-};
+class WebContentsHelper;
 
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
@@ -141,8 +124,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
   static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
-
-  static WebViewIterator GetAllWebViews();
 
   base::WeakPtr<WebView> AsWeakPtr() {
     return weak_factory_.GetWeakPtr();
@@ -424,7 +405,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       WebContentsScopedPtr;
 
   WebContentsScopedPtr web_contents_;
-  WebViewContentsHelper* web_contents_helper_;
+  WebContentsHelper* web_contents_helper_;
 
   content::NotificationRegistrar registrar_;
 

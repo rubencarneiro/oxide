@@ -25,7 +25,7 @@
 #include "content/public/browser/web_contents_observer.h"
 
 #include "oxide_browser_context.h"
-#include "oxide_web_view_contents_helper.h"
+#include "web_contents_helper.h"
 
 namespace oxide {
 
@@ -34,7 +34,7 @@ namespace {
 void MaybeDestroyOffTheRecordContext(BrowserContext* context) {
   DCHECK(context->IsOffTheRecord());
 
-  if (WebViewContentsHelper::IsContextInUse(context)) {
+  if (WebContentsHelper::IsContextInUse(context)) {
     return;
   }
 
