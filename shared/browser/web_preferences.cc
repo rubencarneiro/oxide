@@ -17,14 +17,11 @@
 
 #include "web_preferences.h"
 
-#include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 
 namespace oxide {
 
-WebPreferences::~WebPreferences() {
-  CHECK(callback_list_.empty());
-}
+WebPreferences::~WebPreferences() = default;
 
 #define WEB_PREF(type, name, initial_value) \
       name##_(initial_value),
