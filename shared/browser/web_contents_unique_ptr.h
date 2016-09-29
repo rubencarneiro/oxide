@@ -20,13 +20,15 @@
 
 #include <memory>
 
+#include "shared/common/oxide_shared_export.h"
+
 namespace content {
 class WebContents;
 }
 
 namespace oxide {
 
-struct WebContentsDeleter {
+struct OXIDE_SHARED_EXPORT WebContentsDeleter {
   void operator()(content::WebContents* contents);
 };
 
