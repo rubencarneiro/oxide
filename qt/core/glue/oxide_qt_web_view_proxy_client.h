@@ -92,8 +92,6 @@ class WebViewProxyClient {
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
 
-  virtual void WebPreferencesReplaced() = 0;
-
   virtual void FrameRemoved(QObject* frame) = 0;
 
   virtual bool CanCreateWindows() const = 0;

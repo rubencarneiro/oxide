@@ -45,7 +45,7 @@
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
-#include "shared/browser/oxide_web_preferences_observer.h"
+#include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_shared_export.h"
 
@@ -73,18 +73,17 @@ class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
+class WebContentsClient;
+class WebContentsHelper;
 class WebContentsViewClient;
 class WebFrame;
-class WebPreferences;
 class WebView;
 class WebViewClient;
-class WebContentsHelper;
 
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
 class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                     private CompositorObserver,
-                                    private WebPreferencesObserver,
                                     private content::NotificationObserver,
                                     private content::WebContentsDelegate,
                                     private content::WebContentsObserver,
@@ -95,8 +94,9 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
     CommonParams();
     ~CommonParams();
 
-    WebViewClient* client;
-    WebContentsViewClient* view_client;
+    WebViewClient* client = nullptr;
+    WebContentsClient* contents_client = nullptr;
+    WebContentsViewClient* view_client = nullptr;
   };
 
   struct CreateParams {
@@ -115,7 +115,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   WebView(const CommonParams& common_params,
           const CreateParams& create_params);
   WebView(const CommonParams& common_params,
-          std::unique_ptr<content::WebContents> contents);
+          WebContentsUniquePtr contents);
 
   ~WebView() override;
 
@@ -154,10 +154,10 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
-  void UpdateWebPreferences();
-
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
+
+  WebContentsHelper* GetWebContentsHelper() const;
 
   int GetNavigationEntryCount() const;
   int GetNavigationCurrentEntryIndex() const;
@@ -168,9 +168,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   base::Time GetNavigationEntryTimestamp(int index) const;
 
   WebFrame* GetRootFrame() const;
-
-  WebPreferences* GetWebPreferences();
-  void SetWebPreferences(WebPreferences* prefs);
 
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
@@ -235,8 +232,9 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
  private:
   WebView(WebViewClient* client);
 
-  void CommonInit(std::unique_ptr<content::WebContents> contents,
-                  WebContentsViewClient* view_client);
+  void CommonInit(WebContentsUniquePtr contents,
+                  WebContentsViewClient* view_client,
+                  WebContentsClient* contents_client);
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
   content::RenderViewHost* GetRenderViewHost() const;
@@ -272,9 +270,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   // CompositorObserver implementation
   void CompositorWillRequestSwapFrame() override;
-
-  // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() override;
 
   // content::NotificationObserver implementation
   void Observe(int type,
@@ -398,14 +393,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebViewClient* client_;
 
-  struct WebContentsDeleter {
-    void operator()(content::WebContents* contents);
-  };
-  typedef std::unique_ptr<content::WebContents, WebContentsDeleter>
-      WebContentsScopedPtr;
-
-  WebContentsScopedPtr web_contents_;
-  WebContentsHelper* web_contents_helper_;
+  WebContentsUniquePtr web_contents_;
 
   content::NotificationRegistrar registrar_;
 

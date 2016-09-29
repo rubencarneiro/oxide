@@ -107,7 +107,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
                               QObject* handle,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
-                              OxideQNewViewRequest* new_view_request);
+                              OxideQNewViewRequest* new_view_request,
+                              OxideQWebPreferences* initial_prefs);
 
   virtual ~WebViewProxy();
 
@@ -154,7 +155,7 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual OxideQWebPreferences* preferences() = 0;
   virtual void setPreferences(OxideQWebPreferences* prefs) = 0;
 
-  virtual void updateWebPreferences() = 0;
+  virtual void syncWebPreferences() = 0;
 
   virtual QPoint compositorFrameScrollOffset() = 0;
   virtual QSize compositorFrameContentSize() = 0;

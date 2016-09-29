@@ -280,12 +280,6 @@ void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
   emit q->fullscreenRequested(enter);
 }
 
-void OxideQQuickWebViewPrivate::WebPreferencesReplaced() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->preferencesChanged();
-}
-
 void OxideQQuickWebViewPrivate::FrameRemoved(QObject* frame) {
   Q_Q(OxideQQuickWebView);
 
@@ -539,15 +533,30 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_ASSERT(construct_props_.data());
 
   if (construct_props_->new_view_request) {
+    OxideQWebPreferences* initial_prefs = nullptr;
+    if (!construct_props_->preferences) {
+      initial_prefs = new OxideQWebPreferences(q);
+      attachPreferencesSignals(initial_prefs);
+    }
+
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
         find_controller_.data(),
         security_status_.data(),
-        construct_props_->new_view_request));
+        construct_props_->new_view_request,
+        initial_prefs));
   }
 
   if (!proxy_) {
+    Q_ASSERT(construct_props_->context);
+
+    if (!construct_props_->preferences) {
+      construct_props_->preferences = new OxideQWebPreferences(q);
+      attachPreferencesSignals(construct_props_->preferences);
+    }
+
     construct_props_->new_view_request = nullptr;
+
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
         find_controller_.data(),
@@ -556,6 +565,10 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
         construct_props_->incognito,
         construct_props_->restore_state,
         construct_props_->restore_type));
+  }
+
+  if (construct_props_->preferences) {
+    proxy_->setPreferences(construct_props_->preferences);
   }
 
   proxy_->messageHandlers().swap(construct_props_->message_handlers);
@@ -573,10 +586,6 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   }
 
   proxy_->setFullscreen(construct_props_->fullscreen);
-
-  if (construct_props_->preferences) {
-    proxy_->setPreferences(construct_props_->preferences);
-  }
 
   // Initialization created the root frame. This is the only time
   // this is emitted
@@ -715,6 +724,22 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextConstructed()));
   QObject::disconnect(context, SIGNAL(destroyed()),
                       q, SLOT(contextDestroyed()));
+}
+
+void OxideQQuickWebViewPrivate::attachPreferencesSignals(
+    OxideQWebPreferences* prefs) {
+  Q_Q(OxideQQuickWebView);
+
+  q->connect(prefs, SIGNAL(destroyed()), SLOT(preferencesDestroyed()));
+}
+
+void OxideQQuickWebViewPrivate::preferencesDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // At this point, the oxide::WebPreferences instance associated with the
+  // deleted OxideQWebPreferences has been orphaned. Provide a fresh preferences
+  // instance
+  q->setPreferences(nullptr);
 }
 
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
@@ -1124,7 +1149,7 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 
 #define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
   if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy_) {
-    d->proxy_->updateWebPreferences();
+    d->proxy_->syncWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
     WARN_DEPRECATED_API_USAGE() <<
         "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
@@ -1144,7 +1169,7 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
   if ((signal == QMetaMethod::fromSignal(
           &OxideQQuickWebView::newViewRequested) ||
       !signal.isValid()) && d->proxy_) {
-    d->proxy_->updateWebPreferences();
+    d->proxy_->syncWebPreferences();
   }
 }
 
@@ -1165,10 +1190,7 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  OxideQQuickWebContext* context = nullptr;
-  if (d->construct_props_->context) {
-    context = d->construct_props_->context;
-  }
+  OxideQQuickWebContext* context = context = d->construct_props_->context;
 
   if (!context && !d->construct_props_->new_view_request) {
     context = OxideQQuickWebContext::defaultContext(true);
@@ -2134,24 +2156,45 @@ OxideQWebPreferences* OxideQQuickWebView::preferences() {
   if (!d->proxy_) {
     if (!d->construct_props_->preferences) {
       d->construct_props_->preferences = new OxideQWebPreferences(this);
+      d->attachPreferencesSignals(d->construct_props_->preferences);
     }
     return d->construct_props_->preferences;
   }
 
-  return d->proxy_->preferences();
+  OxideQWebPreferences* prefs = d->proxy_->preferences();
+  Q_ASSERT(prefs);
+
+  return prefs;
 }
 
 void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   Q_D(OxideQQuickWebView);
 
-  if (prefs == this->preferences()) {
+  OxideQWebPreferences* old = preferences();
+  if (prefs == old && prefs) {
     return;
   }
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(this);
+  }
+
+  if (!prefs->parent()) {
+    prefs->setParent(this);
+  }
+  d->attachPreferencesSignals(prefs);
 
   if (!d->proxy_) {
     d->construct_props_->preferences = prefs;
   } else {
     d->proxy_->setPreferences(prefs);
+  }
+
+  if (old) {
+    old->disconnect(this, SLOT(preferencesDestroyed()));
+    if (old->parent() == this) {
+      delete old;
+    }
   }
 
   emit preferencesChanged();

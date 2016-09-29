@@ -48,7 +48,6 @@
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
-#include "content/public/common/web_preferences.h"
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
@@ -83,12 +82,10 @@
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
-#include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_frame.h"
-#include "oxide_web_preferences.h"
 #include "oxide_web_view_client.h"
 #include "web_contents_helper.h"
 
@@ -122,9 +119,7 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-void CreateHelpers(content::WebContents* contents,
-                   content::WebContents* opener = nullptr) {
-  WebContentsHelper::CreateForWebContents(contents, opener);
+void CreateHelpers(content::WebContents* contents) {
   CertificateErrorDispatcher::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
   PermissionRequestDispatcher::CreateForWebContents(contents);
@@ -144,15 +139,9 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
 }
 
-void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
-  WebContentsUnloader::GetInstance()->Unload(base::WrapUnique(contents));
-};
+WebView::CommonParams::CommonParams() = default;
 
-WebView::CommonParams::CommonParams()
-    : client(nullptr),
-      view_client(nullptr) {}
-
-WebView::CommonParams::~CommonParams() {}
+WebView::CommonParams::~CommonParams() = default;
 
 WebView::CreateParams::CreateParams()
     : context(nullptr),
@@ -164,7 +153,6 @@ WebView::CreateParams::~CreateParams() {}
 
 WebView::WebView(WebViewClient* client)
     : client_(client),
-      web_contents_helper_(nullptr),
       blocked_content_(CONTENT_TYPE_NONE),
       location_bar_height_(0),
       location_bar_constraints_(blink::WebTopControlsBoth),
@@ -174,9 +162,10 @@ WebView::WebView(WebViewClient* client)
   CHECK(client) << "Didn't specify a client";
 }
 
-void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
-                         WebContentsViewClient* view_client) {
-  web_contents_.reset(contents.release());
+void WebView::CommonInit(WebContentsUniquePtr contents,
+                         WebContentsViewClient* view_client,
+                         WebContentsClient* contents_client) {
+  web_contents_ = std::move(contents);
 
   // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
@@ -184,13 +173,6 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
                              new UnownedUserData<WebView>(this));
 
   content::WebContentsObserver::Observe(web_contents_.get());
-
-  // Set the initial WebPreferences. This has to happen after attaching
-  // ourself to the WebContents, as the pref update needs to call back in
-  // to us (via CanCreateWindows)
-  web_contents_helper_ =
-      WebContentsHelper::FromWebContents(web_contents_.get());
-  web_contents_helper_->WebContentsAdopted();
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -202,6 +184,9 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
   view->set_editing_capabilities_changed_callback(
       base::Bind(&WebView::EditingCapabilitiesChanged,
                  base::Unretained(this)));
+
+  DCHECK(GetWebContentsHelper());
+  GetWebContentsHelper()->set_client(contents_client);
 
   CompositorObserver::Observe(view->GetCompositor());
 }
@@ -375,10 +360,6 @@ void WebView::CompositorWillRequestSwapFrame() {
   client_->FrameMetadataUpdated(old);
 }
 
-void WebView::WebPreferencesDestroyed() {
-  client_->WebPreferencesDestroyed();
-}
-
 void WebView::Observe(int type,
                       const content::NotificationSource& source,
                       const content::NotificationDetails& details) {
@@ -494,14 +475,9 @@ content::WebContents* WebView::OpenURLFromTab(
       web_contents_->GetMainFrame()->GetRoutingID();
   contents_params.opener_suppressed = opener_suppressed;
 
-  std::unique_ptr<content::WebContents> contents(
-      content::WebContents::Create(contents_params));
-  if (!contents) {
-    LOG(ERROR) << "Failed to create new WebContents for navigation";
-    return nullptr;
-  }
-
-  CreateHelpers(contents.get(), web_contents_.get());
+  WebContentsUniquePtr contents =
+      WebContentsHelper::CreateWebContents(contents_params);
+  CreateHelpers(contents.get());
 
   WebView* new_view =
       client_->CreateNewWebView(GetViewBoundsDip(),
@@ -594,7 +570,8 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_.get());
+  WebContentsHelper::CreateForWebContents(new_contents, web_contents_.get());
+  CreateHelpers(new_contents);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -616,7 +593,7 @@ void WebView::AddNewContents(content::WebContents* source,
     *was_blocked = true;
   }
 
-  std::unique_ptr<content::WebContents> contents(new_contents);
+  WebContentsUniquePtr contents(new_contents);
 
   WebView* new_view =
       client_->CreateNewWebView(
@@ -963,12 +940,13 @@ WebView::WebView(const CommonParams& common_params,
       gfx::ToEnclosingRect(common_params.view_client->GetBounds()).size();
   content_params.initially_hidden = !common_params.view_client->IsVisible();
 
-  std::unique_ptr<content::WebContents> contents(
-      content::WebContents::Create(content_params));
-  CHECK(contents.get()) << "Failed to create WebContents";
+  WebContentsUniquePtr contents =
+      WebContentsHelper::CreateWebContents(content_params);
 
   CreateHelpers(contents.get());
-  CommonInit(std::move(contents), common_params.view_client);
+  CommonInit(std::move(contents),
+             common_params.view_client,
+             common_params.contents_client);
 
   if (create_params.restore_entries.size() > 0) {
     std::vector<std::unique_ptr<content::NavigationEntry>> entries =
@@ -983,17 +961,17 @@ WebView::WebView(const CommonParams& common_params,
 }
 
 WebView::WebView(const CommonParams& common_params,
-                 std::unique_ptr<content::WebContents> contents)
+                 WebContentsUniquePtr contents)
     : WebView(common_params.client) {
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<
          "Specified WebContents doesn't have a BrowserContext";
-  CHECK(WebContentsHelper::FromWebContents(contents.get())) <<
-       "Specified WebContents should already have a WebContentsHelper";
   CHECK(!FromWebContents(contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
-  CommonInit(std::move(contents), common_params.view_client);
+  CommonInit(std::move(contents),
+             common_params.view_client,
+             common_params.contents_client);
 
   content::RenderViewHost* rvh = GetRenderViewHost();
   if (rvh) {
@@ -1005,6 +983,8 @@ WebView::~WebView() {
   WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
   view->SetClient(nullptr);
   view->set_editing_capabilities_changed_callback(base::Closure());
+
+  GetWebContentsHelper()->set_client(nullptr);
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
@@ -1155,21 +1135,16 @@ bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
 }
 
-void WebView::UpdateWebPreferences() {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->OnWebkitPreferencesChanged();
-}
-
 BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
 content::WebContents* WebView::GetWebContents() const {
   return web_contents_.get();
+}
+
+WebContentsHelper* WebView::GetWebContentsHelper() const {
+  return WebContentsHelper::FromWebContents(web_contents_.get());
 }
 
 int WebView::GetNavigationEntryCount() const {
@@ -1210,15 +1185,6 @@ base::Time WebView::GetNavigationEntryTimestamp(int index) const {
 
 WebFrame* WebView::GetRootFrame() const {
   return WebFrameTree::FromWebContents(web_contents_.get())->root_frame();
-}
-
-WebPreferences* WebView::GetWebPreferences() {
-  return web_contents_helper_->GetWebPreferences();
-}
-
-void WebView::SetWebPreferences(WebPreferences* prefs) {
-  WebPreferencesObserver::Observe(prefs);
-  web_contents_helper_->SetWebPreferences(prefs);
 }
 
 gfx::Point WebView::GetCompositorFrameScrollOffset() {

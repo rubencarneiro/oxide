@@ -85,6 +85,7 @@
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/ssl/oxide_certificate_error.h"
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
+#include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_contents_view.h"
@@ -98,7 +99,7 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
-#include "oxide_qt_web_preferences.h"
+#include "web_preferences.h"
 
 namespace oxide {
 namespace qt {
@@ -106,6 +107,7 @@ namespace qt {
 using oxide::CertificateErrorDispatcher;
 using oxide::FullscreenHelper;
 using oxide::PermissionRequestDispatcher;
+using oxide::WebContentsUniquePtr;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
 
@@ -282,16 +284,6 @@ void WebView::CommonInit(OxideQFindController* find_controller,
   client_->CreateWebFrame(root_frame);
 }
 
-void WebView::EnsurePreferences() {
-  if (web_view_->GetWebPreferences()) {
-    return;
-  }
-
-  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(p)->preferences());
-}
-
 void WebView::OnZoomLevelChanged(
     const content::HostZoomMap::ZoomLevelChange& change) {
   client_->ZoomLevelChanged();
@@ -440,13 +432,6 @@ bool WebView::AddMessageToConsole(
   return true;
 }
 
-void WebView::WebPreferencesDestroyed() {
-  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(p)->preferences());
-  client_->WebPreferencesReplaced();
-}
-
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
@@ -553,7 +538,7 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
 oxide::WebView* WebView::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
-    std::unique_ptr<content::WebContents> contents) {
+    WebContentsUniquePtr contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
@@ -868,36 +853,22 @@ QByteArray WebView::currentState() const {
 }
 
 OxideQWebPreferences* WebView::preferences() {
-  EnsurePreferences();
-  return static_cast<WebPreferences*>(web_view_->GetWebPreferences())->api_handle();
+  WebPreferences* prefs =
+      WebPreferences::FromPrefs(
+          web_view_->GetWebContentsHelper()->GetPreferences());
+  return prefs ? prefs->api_handle() : nullptr;
 }
 
 void WebView::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = nullptr;
-  if (WebPreferences* o = static_cast<WebPreferences *>(web_view_->GetWebPreferences())) {
-    old = o->api_handle();
+  oxide::WebPreferences* p = nullptr;
+  if (prefs) {
+    p = OxideQWebPreferencesPrivate::get(prefs)->GetPrefs();
   }
-
-  if (!prefs) {
-    prefs = new OxideQWebPreferences(handle());
-  } else if (!prefs->parent()) {
-    prefs->setParent(handle());
-  }
-
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(prefs)->preferences());
-
-  if (!old) {
-    return;
-  }
-
-  if (old->parent() == handle()) {
-    delete old;
-  }
+  web_view_->GetWebContentsHelper()->SetPreferences(p);
 }
 
-void WebView::updateWebPreferences() {
-  web_view_->UpdateWebPreferences();
+void WebView::syncWebPreferences() {
+  web_view_->GetWebContentsHelper()->SyncWebPreferences();
 }
 
 QPoint WebView::compositorFrameScrollOffset() {
@@ -1140,6 +1111,7 @@ WebView::WebView(WebViewProxyClient* client,
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
+  common_params.contents_client = this;
 
   oxide::WebView::CreateParams create_params;
   create_params.context = context->GetContext();
@@ -1160,8 +1132,6 @@ WebView::WebView(WebViewProxyClient* client,
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
   CommonInit(find_controller, security_status);
-
-  EnsurePreferences();
 }
 
 // static
@@ -1171,7 +1141,8 @@ WebView* WebView::CreateFromNewViewRequest(
     QObject* handle,
     OxideQFindController* find_controller,
     OxideQSecurityStatus* security_status,
-    OxideQNewViewRequest* new_view_request) {
+    OxideQNewViewRequest* new_view_request,
+    OxideQWebPreferences* initial_prefs) {
   OxideQNewViewRequestPrivate* rd =
       OxideQNewViewRequestPrivate::get(new_view_request);
   if (rd->view) {
@@ -1183,17 +1154,19 @@ WebView* WebView::CreateFromNewViewRequest(
   oxide::WebView::CommonParams params;
   params.client = new_view;
   params.view_client = new_view->contents_view_.get();
+  params.contents_client = new_view;
   new_view->web_view_.reset(new oxide::WebView(params, std::move(rd->contents)));
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
   new_view->CommonInit(find_controller, security_status);
 
-  OxideQWebPreferences* p =
-      static_cast<WebPreferences*>(
-        new_view->web_view_->GetWebPreferences())->api_handle();
-  if (!p->parent()) {
-    p->setParent(new_view->handle());
+  if (initial_prefs) {
+    oxide::WebPreferences* p =
+        new_view->web_view_->GetWebContentsHelper()->GetPreferences();
+    DCHECK(!WebPreferences::FromPrefs(p));
+
+    OxideQWebPreferencesPrivate::get(initial_prefs)->AdoptPrefs(p);
   }
 
   return new_view;

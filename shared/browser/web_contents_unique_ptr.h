@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,38 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
-#define _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNIQUE_PTR_H_
+#define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNIQUE_PTR_H_
 
-#include <QtGlobal>
+#include <memory>
 
-#include "qt/core/browser/web_preferences.h"
-
-class OxideQWebPreferences;
-
-QT_BEGIN_NAMESPACE
-class QObject;
-QT_END_NAMESPACE
-
-namespace oxide {
-class WebPreferences;
+namespace content {
+class WebContents;
 }
 
-class OxideQWebPreferencesPrivate {
- public:
-  ~OxideQWebPreferencesPrivate();
+namespace oxide {
 
-  static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
-
-  oxide::WebPreferences* GetPrefs() const;
-
-  void AdoptPrefs(oxide::WebPreferences* prefs);
-
- private:
-  friend class OxideQWebPreferences;
-  OxideQWebPreferencesPrivate(OxideQWebPreferences* q);
-
-  oxide::qt::WebPreferences preferences_;
+struct WebContentsDeleter {
+  void operator()(content::WebContents* contents);
 };
 
-#endif // _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
+typedef std::unique_ptr<content::WebContents, WebContentsDeleter>
+    WebContentsUniquePtr;
+
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_WEB_CONTENTS_UNIQUE_PTR_H_

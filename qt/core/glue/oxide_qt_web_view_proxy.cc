@@ -54,13 +54,15 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
                                    QObject* handle,
                                    OxideQFindController* find_controller,
                                    OxideQSecurityStatus* security_status,
-                                   OxideQNewViewRequest* new_view_request) {
+                                   OxideQNewViewRequest* new_view_request,
+                                   OxideQWebPreferences* initial_prefs) {
   return WebView::CreateFromNewViewRequest(client,
                                            view_client,
                                            handle,
                                            find_controller,
                                            security_status,
-                                           new_view_request);
+                                           new_view_request,
+                                           initial_prefs);
 }
 
 WebViewProxy::~WebViewProxy() {}

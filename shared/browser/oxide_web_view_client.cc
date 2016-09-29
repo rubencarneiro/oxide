@@ -83,8 +83,6 @@ bool WebViewClient::AddMessageToConsole(int32_t level,
   return false;
 }
 
-void WebViewClient::WebPreferencesDestroyed() {}
-
 void WebViewClient::FrameMetadataUpdated(
     const cc::CompositorFrameMetadata& old) {}
 
@@ -105,7 +103,7 @@ bool WebViewClient::ShouldHandleNavigation(const GURL& url,
 WebView* WebViewClient::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
-    std::unique_ptr<content::WebContents> contents) {
+    WebContentsUniquePtr contents) {
   NOTREACHED() <<
       "Your CanCreateWindows() implementation should be returning false!";
   return nullptr;

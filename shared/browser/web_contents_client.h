@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,37 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_PREFERENCES_OBSERVER_H_
-#define _OXIDE_SHARED_BROWSER_WEB_PREFERENCES_OBSERVER_H_
+#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 
 namespace oxide {
 
-class WebPreferences;
-
-class WebPreferencesObserver {
+class WebContentsClient {
  public:
-  virtual ~WebPreferencesObserver();
-
-  virtual void WebPreferencesDestroyed() {}
-
-  virtual void WebPreferencesValueChanged() {}
-
- protected:
-  WebPreferencesObserver();
-  WebPreferencesObserver(WebPreferences* preferences);
-
-  void Observe(WebPreferences* preferences);
-
-  WebPreferences* web_preferences() const { return web_preferences_; }
-
- private:
-  friend class WebPreferences;
-
-  void OnWebPreferencesDestruction();
-
-  WebPreferences* web_preferences_;
+  virtual ~WebContentsClient() = default;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_PREFERENCES_OBSERVER_H_
+#endif // _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_

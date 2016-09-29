@@ -31,8 +31,8 @@
 #include "oxide_browser_context.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
-#include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
+#include "web_preferences.h"
 
 namespace oxide {
 
@@ -45,11 +45,14 @@ base::LazyInstance<std::set<WebContentsHelper*>> g_contents_helpers =
 
 }
 
+void WebContentsDeleter::operator()(content::WebContents* contents) {
+  WebContentsUnloader::GetInstance()->Unload(base::WrapUnique(contents));
+}
+
 WebContentsHelper::WebContentsHelper(content::WebContents* contents)
     : BrowserContextObserver(
           BrowserContext::FromContent(contents->GetBrowserContext())),
-      web_contents_(contents),
-      owns_web_preferences_(false) {
+      web_contents_(contents) {
   DCHECK(!FromWebContents(web_contents_));
 
   g_contents_helpers.Get().insert(this);
@@ -66,42 +69,25 @@ WebContentsHelper::WebContentsHelper(content::WebContents* contents)
   renderer_prefs->inactive_selection_bg_color = 0xFFCFECF7;
   renderer_prefs->inactive_selection_fg_color = 0xFF5D5D5D;
 
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (rvh) {
-    rvh->SyncRendererPrefs();
-  }
+  SyncRendererPreferences();
 }
 
 WebContentsHelper::~WebContentsHelper() {
   size_t erased = g_contents_helpers.Get().erase(this);
   DCHECK_GT(erased, 0U);
-
-  if (web_preferences() && owns_web_preferences_) {
-    WebPreferences* prefs = web_preferences();
-    WebPreferencesObserver::Observe(nullptr);
-    prefs->Destroy();
-  }
 }
 
-void WebContentsHelper::InitFromOpener(content::WebContents* opener) {
-  WebPreferencesObserver::Observe(
-      WebContentsHelper::FromWebContents(opener)
-        ->GetWebPreferences()->Clone());
-  owns_web_preferences_ = true;
-  UpdateWebPreferences();
-}
-
-void WebContentsHelper::UpdateWebPreferences() {
+void WebContentsHelper::SyncRendererPreferences() {
   content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
   if (!rvh) {
     return;
   }
 
-  rvh->OnWebkitPreferencesChanged();
+  rvh->SyncRendererPrefs();
 }
 
 void WebContentsHelper::NotifyPopupBlockerEnabledChanged() {
-  UpdateWebPreferences();
+  SyncWebPreferences();
 }
 
 void WebContentsHelper::NotifyDoNotTrackChanged() {
@@ -109,12 +95,7 @@ void WebContentsHelper::NotifyDoNotTrackChanged() {
       web_contents_->GetMutableRendererPrefs();
   renderer_prefs->enable_do_not_track = GetBrowserContext()->GetDoNotTrack();
 
-  // Send the new override string to the renderer.
-  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-  rvh->SyncRendererPrefs();
+  SyncRendererPreferences();
 }
 
 void WebContentsHelper::OnDisplayPropertiesChanged(
@@ -124,30 +105,39 @@ void WebContentsHelper::OnDisplayPropertiesChanged(
     return;
   }
 
-  UpdateWebPreferences();
+  SyncWebPreferences();
 }
 
 void WebContentsHelper::OnShellModeChanged() {
-  UpdateWebPreferences();
+  SyncWebPreferences();
 }
 
-void WebContentsHelper::WebPreferencesValueChanged() {
-  UpdateWebPreferences();
+// static
+WebContentsUniquePtr WebContentsHelper::CreateWebContents(
+    const content::WebContents::CreateParams& params) {
+  WebContentsUniquePtr contents(content::WebContents::Create(params));
+  CHECK(contents.get()) << "Failed to create WebContents";
+
+  CreateForWebContents(contents.get(), nullptr);
+
+  return std::move(contents);
 }
 
 // static
 void WebContentsHelper::CreateForWebContents(content::WebContents* contents,
                                              content::WebContents* opener) {
   content::WebContentsUserData<WebContentsHelper>::CreateForWebContents(contents);
+  FromWebContents(contents)->SetPreferences(new WebPreferences());
 
   if (!opener) {
     return;
   }
 
-  WebContentsHelper* helper = FromWebContents(contents);
-  helper->InitFromOpener(opener);
+  FromWebContents(contents)->SetPreferences(
+      FromWebContents(opener)->GetPreferences()->Clone().get());
 }
 
+// static
 WebContentsHelper* WebContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   content::WebContents* contents =
@@ -180,29 +170,39 @@ BrowserContext* WebContentsHelper::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
-WebPreferences* WebContentsHelper::GetWebPreferences() const {
-  return web_preferences();
+WebPreferences* WebContentsHelper::GetPreferences() const {
+  DCHECK(preferences_);
+  return preferences_.get();
 }
 
-void WebContentsHelper::SetWebPreferences(WebPreferences* preferences) {
-  if (preferences == web_preferences()) {
+void WebContentsHelper::SetPreferences(WebPreferences* preferences) {
+  if (preferences == preferences_) {
     return;
   }
 
-  if (web_preferences() && owns_web_preferences_) {
-    WebPreferences* old = web_preferences();
-    WebPreferencesObserver::Observe(nullptr);
-    old->Destroy();
+  prefs_change_subscription_.reset();
+
+  if (preferences) {
+    preferences_ = preferences;
+  } else {
+    preferences_ = new WebPreferences();
   }
 
-  owns_web_preferences_ = false;
+  prefs_change_subscription_ =
+      preferences_->AddChangeCallback(
+          base::Bind(&WebContentsHelper::SyncWebPreferences,
+                     base::Unretained(this)));
 
-  WebPreferencesObserver::Observe(preferences);
-  UpdateWebPreferences();
+  SyncWebPreferences();
 }
 
-void WebContentsHelper::WebContentsAdopted() {
-  owns_web_preferences_ = false;
+void WebContentsHelper::SyncWebPreferences() {
+  content::RenderViewHost* rvh = web_contents_->GetRenderViewHost();
+  if (!rvh) {
+    return;
+  }
+
+  rvh->OnWebkitPreferencesChanged();
 }
 
 } // namespace oxide

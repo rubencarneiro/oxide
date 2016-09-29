@@ -58,11 +58,11 @@
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_user_agent_settings.h"
 #include "oxide_web_contents_view.h"
-#include "oxide_web_preferences.h"
 #include "oxide_web_view.h"
 #include "screen.h"
 #include "shell_mode.h"
 #include "web_contents_helper.h"
+#include "web_preferences.h"
 
 #if defined(ENABLE_HYBRIS)
 #include "hybris_utils.h"
@@ -250,18 +250,14 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     }
   }
 
+  DCHECK(contents);
+
   WebContentsHelper* contents_helper =
       WebContentsHelper::FromWebContents(contents);
+  DCHECK(contents_helper) <<
+      "WebContents must be created with WebContentsHelper::CreateWebContents";
 
-  WebPreferences* web_prefs = nullptr;
-  if (contents_helper) {
-    web_prefs = contents_helper->GetWebPreferences();
-  }
-  if (!web_prefs) {
-    web_prefs = WebPreferences::GetFallback();
-  }
-
-  web_prefs->ApplyToWebkitPrefs(prefs);
+  contents_helper->GetPreferences()->ApplyToWebkitPrefs(prefs);
 
   prefs->touch_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?

@@ -18,14 +18,18 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_HELPER_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_HELPER_H_
 
+#include <memory>
+
 #include "base/compiler_specific.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/web_contents_user_data.h"
 
 #include "shared/browser/oxide_browser_context_observer.h"
-#include "shared/browser/oxide_web_preferences_observer.h"
 #include "shared/browser/screen_observer.h"
+#include "shared/browser/web_contents_unique_ptr.h"
+#include "shared/browser/web_preferences.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace content {
 class RenderViewHost;
@@ -35,14 +39,16 @@ class WebContents;
 namespace oxide {
 
 class BrowserContext;
-class WebPreferences;
+class WebContentsClient;
 
-class WebContentsHelper
+class OXIDE_SHARED_EXPORT WebContentsHelper
     : public content::WebContentsUserData<WebContentsHelper>,
       public BrowserContextObserver,
-      public ScreenObserver,
-      public WebPreferencesObserver {
+      public ScreenObserver {
  public:
+  static WebContentsUniquePtr CreateWebContents(
+      const content::WebContents::CreateParams& params);
+
   static void CreateForWebContents(content::WebContents* contents,
                                    content::WebContents* opener);
 
@@ -50,13 +56,16 @@ class WebContentsHelper
 
   static bool IsContextInUse(BrowserContext* context);
 
+  WebContentsClient* client() const { return client_; }
+  void set_client(WebContentsClient* client) { client_ = client; }
+
   content::WebContents* GetWebContents() const;
   BrowserContext* GetBrowserContext() const;
 
-  WebPreferences* GetWebPreferences() const;
-  void SetWebPreferences(WebPreferences* preferences);
+  WebPreferences* GetPreferences() const;
+  void SetPreferences(WebPreferences* preferences);
 
-  void WebContentsAdopted();
+  void SyncWebPreferences();
 
  private:
   friend class content::WebContentsUserData<WebContentsHelper>;
@@ -64,9 +73,7 @@ class WebContentsHelper
   WebContentsHelper(content::WebContents* contents);
   ~WebContentsHelper() override;
 
-  void InitFromOpener(content::WebContents* opener);
-
-  void UpdateWebPreferences();
+  void SyncRendererPreferences();
 
   // BrowserContextObserver implementation
   void NotifyPopupBlockerEnabledChanged() override;
@@ -76,12 +83,14 @@ class WebContentsHelper
   void OnDisplayPropertiesChanged(const display::Display& display) override;
   void OnShellModeChanged() override;
 
-  // WebPreferencesObserver implementation
-  void WebPreferencesValueChanged() override;
-
   content::WebContents* web_contents_;
 
-  bool owns_web_preferences_;
+  WebContentsClient* client_ = nullptr;
+
+  scoped_refptr<WebPreferences> preferences_;
+
+  // |preferences_| must outlive this
+  std::unique_ptr<WebPreferences::Subscription> prefs_change_subscription_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsHelper);
 };

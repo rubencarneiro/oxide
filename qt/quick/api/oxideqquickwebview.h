@@ -420,6 +420,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
+  Q_PRIVATE_SLOT(d_func(), void preferencesDestroyed());
 
   QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };

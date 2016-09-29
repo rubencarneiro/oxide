@@ -32,6 +32,7 @@
 #include "qt/quick/api/oxideqquickwebview.h"
 
 class OxideQNewViewRequest;
+class OxideQWebPreferences;
 class OxideQQuickLocationBarController;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContextPrivate;
@@ -110,7 +111,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
                            int line_no,
                            const QString& source_id) override;
   void ToggleFullscreenMode(bool enter) override;
-  void WebPreferencesReplaced() override;
   void FrameRemoved(QObject* frame) override;
   bool CanCreateWindows() const override;
   void NavigationRequested(OxideQNavigationRequest* request) override;
@@ -157,6 +157,8 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void contextDestroyed();
   void attachContextSignals(OxideQQuickWebContextPrivate* context);
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
+  void attachPreferencesSignals(OxideQWebPreferences* prefs);
+  void preferencesDestroyed();
 
   OxideQQuickWebView* q_ptr;
 
