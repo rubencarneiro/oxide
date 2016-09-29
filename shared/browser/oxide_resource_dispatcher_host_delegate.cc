@@ -63,6 +63,7 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
     content::ResourceContext* resource_context,
     bool is_content_initiated,
     bool must_download,
+    bool is_new_request,
     ScopedVector<content::ResourceThrottle>* throttles) {
   std::string suggested_name =
       content::ResourceRequestInfo::ForRequest(request)
