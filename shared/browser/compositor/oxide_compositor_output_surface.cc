@@ -60,6 +60,33 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   return true;
 }
 
+cc::OverlayCandidateValidator*
+CompositorOutputSurface::GetOverlayCandidateValidator() const {
+  return nullptr;
+}
+
+bool CompositorOutputSurface::IsDisplayedAsOverlayPlane() const {
+  return false;
+}
+
+unsigned CompositorOutputSurface::GetOverlayTextureId() const {
+  return 0;
+}
+
+bool CompositorOutputSurface::SurfaceIsSuspendForRecycle() const {
+  return false;
+}
+
+bool CompositorOutputSurface::HasExternalStencilTest() const {
+  return false;
+}
+
+void CompositorOutputSurface::ApplyExternalStencil() {}
+
+uint32_t CompositorOutputSurface::GetFramebufferCopyTextureFormat() {
+  return 0;
+}
+
 CompositorOutputSurface::~CompositorOutputSurface() {
   listener_->OutputSurfaceDestroyed(this);
 }

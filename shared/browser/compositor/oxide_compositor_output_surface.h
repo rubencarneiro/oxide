@@ -57,7 +57,14 @@ class CompositorOutputSurface : public cc::OutputSurface {
   void DoSwapBuffers(std::unique_ptr<CompositorFrameData> frame);
 
   // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client);
+  bool BindToClient(cc::OutputSurfaceClient* client) override;
+  cc::OverlayCandidateValidator* GetOverlayCandidateValidator() const override;
+  bool IsDisplayedAsOverlayPlane() const override;
+  unsigned GetOverlayTextureId() const override;
+  bool SurfaceIsSuspendForRecycle() const override;
+  bool HasExternalStencilTest() const override;
+  void ApplyExternalStencil() override;
+  uint32_t GetFramebufferCopyTextureFormat() override;
 
   CompositorOutputSurfaceListener* listener() const { return listener_; }
 

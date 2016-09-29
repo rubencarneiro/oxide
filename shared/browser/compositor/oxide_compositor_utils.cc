@@ -132,16 +132,6 @@ class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
   EGLImageKHR egl_image_;
 };
 
-class CompositorThread : public base::Thread {
- public:
-  CompositorThread();
-  ~CompositorThread() override;
-
- private:
-  // base::Thread implementation
-  void Init() override;
-};
-
 class CompositorUtilsImpl : public CompositorUtils,
                             public base::MessageLoop::TaskObserver {
  public:
