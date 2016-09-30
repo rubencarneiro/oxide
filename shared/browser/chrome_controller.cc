@@ -35,7 +35,8 @@ namespace oxide {
 DEFINE_WEB_CONTENTS_USER_DATA_KEY(ChromeController);
 
 ChromeController::ChromeController(content::WebContents* contents)
-    : client_(nullptr),
+    : content::WebContentsObserver(contents),
+      client_(nullptr),
       web_contents_(contents),
       top_controls_height_(0),
       constraints_(blink::WebTopControlsBoth),
