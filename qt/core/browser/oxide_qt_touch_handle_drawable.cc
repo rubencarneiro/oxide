@@ -75,7 +75,7 @@ void TouchHandleDrawable::SetOrientation(
 void TouchHandleDrawable::SetOrigin(const gfx::PointF& origin) {
   if (proxy_) {
     gfx::PointF o = origin;
-    o += gfx::Vector2dF(0, view_->GetLocationBarContentOffset());
+    o += gfx::Vector2dF(0, view_->GetTopContentOffset());
     gfx::PointF scaled_origin =
         DpiUtils::ConvertChromiumPixelsToQt(o, view_->GetScreen());
     proxy_->SetOrigin(ToQt(scaled_origin));
@@ -97,7 +97,7 @@ gfx::RectF TouchHandleDrawable::GetVisibleBounds() const {
       DpiUtils::ConvertQtPixelsToChromium(
         ToChromium(proxy_->GetVisibleBounds()),
         view_->GetScreen());
-  bounds += gfx::Vector2dF(0, -view_->GetLocationBarContentOffset());
+  bounds += gfx::Vector2dF(0, -view_->GetTopContentOffset());
 
   return bounds;
 }

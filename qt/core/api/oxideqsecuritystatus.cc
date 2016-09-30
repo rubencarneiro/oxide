@@ -23,14 +23,11 @@
 #include "net/cert/x509_certificate.h"
 
 #include "qt/core/browser/ssl/oxide_qt_security_status.h"
+#include "qt/core/glue/macros.h"
 #include "shared/browser/ssl/oxide_security_types.h"
 
 #include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"
-
-#define STATIC_ASSERT_MATCHING_ENUM(a, b) \
-  static_assert(static_cast<int>(a) == static_cast<int>(b), \
-                "Mismatched enum values");
 
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::SecurityLevelNone,
                             oxide::SECURITY_LEVEL_NONE)

@@ -33,7 +33,6 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
@@ -157,6 +156,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
 
+  // Accessors for various helpers - clients of these should note that they can
+  // all outlive WebView (the lifetime of them is tied to WebContents)
   WebContentsHelper* GetWebContentsHelper() const;
 
   int GetNavigationEntryCount() const;
@@ -177,26 +178,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   gfx::Size GetCompositorFrameContentSize();
   gfx::Size GetCompositorFrameViewportSize();
 
-  float GetLocationBarOffset() const;
-  float GetLocationBarContentOffset() const;
-
   ContentType blocked_content() const { return blocked_content_; }
-
-  float GetLocationBarHeight() const;
-  void SetLocationBarHeight(float height);
-
-  blink::WebTopControlsState location_bar_constraints() const {
-    return location_bar_constraints_;
-  }
-  void SetLocationBarConstraints(blink::WebTopControlsState constraints);
-
-  bool location_bar_animated() const { return location_bar_animated_; }
-  void set_location_bar_animated(bool animated) {
-    location_bar_animated_ = animated;
-  }
-
-  void ShowLocationBar(bool animate);
-  void HideLocationBar(bool animate);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -237,7 +219,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                   WebContentsClient* contents_client);
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
-  content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHost* GetRenderWidgetHost() const;
 
   gfx::Size GetViewSizeDip() const;
@@ -252,9 +233,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
-
-  void InitializeTopControlsForHost(content::RenderViewHost* rvh,
-                                    bool initial_host);
 
   void DispatchPrepareToCloseResponse(bool proceed);
 
@@ -346,12 +324,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) override;
 
   // content::WebContentsObserver implementation
-  void RenderFrameForInterstitialPageCreated(
-      content::RenderFrameHost* render_frame_host) override;
   void RenderViewReady() override;
   void RenderProcessGone(base::TerminationStatus status) override;
-  void RenderViewHostChanged(content::RenderViewHost* old_host,
-                             content::RenderViewHost* new_host) override;
   void DidStartLoading() override;
   void DidStopLoading() override;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -402,10 +376,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   ContentType blocked_content_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
-
-  int location_bar_height_;
-  blink::WebTopControlsState location_bar_constraints_;
-  bool location_bar_animated_;
 
   GURL target_url_;
 

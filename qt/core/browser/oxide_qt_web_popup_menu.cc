@@ -104,7 +104,7 @@ void WebPopupMenu::Show(const gfx::Rect& bounds) {
   ContentsView* view = ContentsView::FromWebContents(contents_);
 
   gfx::Rect rect = bounds;
-  rect += gfx::Vector2d(0, view->GetLocationBarContentOffset());
+  rect += gfx::Vector2d(0, view->GetTopContentOffset());
   
   proxy_->Show(
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, view->GetScreen())));

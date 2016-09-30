@@ -23,6 +23,8 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include <memory>
+
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
@@ -59,18 +61,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   static OxideQQuickWebViewPrivate* get(OxideQQuickWebView* web_view);
 
   void addAttachedPropertyTo(QObject* object);
-
-  // XXX(chrisccoulson): Add LocationBarControllerProxy and remove these
-  int locationBarHeight();
-  void setLocationBarHeight(int height);
-  oxide::qt::LocationBarMode locationBarMode() const;
-  void setLocationBarMode(oxide::qt::LocationBarMode mode);
-  bool locationBarAnimated() const;
-  void setLocationBarAnimated(bool animated);
-  int locationBarOffset();
-  int locationBarContentOffset();
-  void locationBarShow(bool animate);
-  void locationBarHide(bool animate);
 
   // XXX(chrisccoulson): Add NavigationControllerProxy and remove these
   int getNavigationEntryCount() const;
@@ -184,7 +174,7 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   struct ConstructProps;
   QScopedPointer<ConstructProps> construct_props_;
 
-  QScopedPointer<OxideQQuickLocationBarController> location_bar_controller_;
+  std::unique_ptr<OxideQQuickLocationBarController> location_bar_controller_;
 };
 
 #endif // _OXIDE_QT_QUICK_API_WEB_VIEW_P_P_H_

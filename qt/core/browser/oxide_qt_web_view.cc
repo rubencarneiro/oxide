@@ -46,7 +46,6 @@
 #include "content/public/common/page_zoom.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebDragOperation.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
@@ -99,6 +98,7 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
+#include "web_contents_id_tracker.h"
 #include "web_preferences.h"
 
 namespace oxide {
@@ -149,21 +149,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
-
-blink::WebTopControlsState LocationBarModeToBlinkTopControlsState(
-    LocationBarMode mode) {
-  switch (mode) {
-    case LOCATION_BAR_MODE_AUTO:
-      return blink::WebTopControlsBoth;
-    case LOCATION_BAR_MODE_SHOWN:
-      return blink::WebTopControlsShown;
-    case LOCATION_BAR_MODE_HIDDEN:
-      return blink::WebTopControlsHidden;
-    default:
-      NOTREACHED();
-      return blink::WebTopControlsBoth;
-  }
-}
 
 void CreateRestoreEntriesFromRestoreState(
     const QByteArray& state,
@@ -250,7 +235,6 @@ WebView::WebView(WebViewProxyClient* client,
                  QObject* handle)
     : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
-      location_bar_height_(0),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -455,13 +439,6 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
           web_view_->compositor_frame_metadata().scrollable_viewport_size.height()) {
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
-  if ((old.top_controls_height !=
-       web_view_->compositor_frame_metadata().top_controls_height) ||
-      (old.top_controls_shown_ratio !=
-       web_view_->compositor_frame_metadata().top_controls_shown_ratio)) {
-    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
-  }
   if (old.device_scale_factor !=
           web_view_->compositor_frame_metadata().device_scale_factor ||
       old.page_scale_factor !=
@@ -469,8 +446,6 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
     flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
     flags |= FRAME_METADATA_CHANGE_CONTENT;
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
-    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
 
   client_->FrameMetadataUpdated(flags);
@@ -706,13 +681,9 @@ void WebView::ExitFullscreenMode() {
   client_->ToggleFullscreenMode(false);
 }
 
-void WebView::OnDisplayPropertiesChanged(const display::Display& display) {
-  if (display.id() != web_view_->GetDisplay().id()) {
-    return;
-  }
-
-  // Recalculate location bar height if scale changed
-  setLocationBarHeight(location_bar_height_);
+WebContentsID WebView::webContentsID() const {
+  return WebContentsIDTracker::GetInstance()->GetIDForWebContents(
+      web_view_->GetWebContents());
 }
 
 QUrl WebView::url() const {
@@ -919,62 +890,6 @@ ContentTypeFlags WebView::blockedContent() const {
 
 void WebView::prepareToClose() {
   web_view_->PrepareToClose();
-}
-
-int WebView::locationBarHeight() const {
-  return location_bar_height_;
-}
-
-void WebView::setLocationBarHeight(int height) {
-  location_bar_height_ = height;
-  web_view_->SetLocationBarHeight(
-      DpiUtils::ConvertQtPixelsToChromium(height,
-                                          contents_view_->GetScreen()));
-}
-
-int WebView::locationBarOffset() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarOffset(), contents_view_->GetScreen());
-}
-
-int WebView::locationBarContentOffset() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarContentOffset(), contents_view_->GetScreen());
-}
-
-LocationBarMode WebView::locationBarMode() const {
-  switch (web_view_->location_bar_constraints()) {
-    case blink::WebTopControlsShown:
-      return LOCATION_BAR_MODE_SHOWN;
-    case blink::WebTopControlsHidden:
-      return LOCATION_BAR_MODE_HIDDEN;
-    case blink::WebTopControlsBoth:
-      return LOCATION_BAR_MODE_AUTO;
-    default:
-      NOTREACHED();
-      return LOCATION_BAR_MODE_AUTO;
-  }
-}
-
-void WebView::setLocationBarMode(LocationBarMode mode) {
-  web_view_->SetLocationBarConstraints(
-      LocationBarModeToBlinkTopControlsState(mode));
-}
-
-bool WebView::locationBarAnimated() const {
-  return web_view_->location_bar_animated();
-}
-
-void WebView::setLocationBarAnimated(bool animated) {
-  web_view_->set_location_bar_animated(animated);
-}
-
-void WebView::locationBarShow(bool animate) {
-  web_view_->ShowLocationBar(animate);
-}
-
-void WebView::locationBarHide(bool animate) {
-  web_view_->HideLocationBar(animate);
 }
 
 WebProcessStatus WebView::webProcessStatus() const {

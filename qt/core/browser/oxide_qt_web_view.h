@@ -34,7 +34,6 @@
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
-#include "shared/browser/screen_observer.h"
 #include "shared/browser/web_contents_client.h"
 
 QT_BEGIN_NAMESPACE
@@ -66,7 +65,6 @@ class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::FullscreenHelperClient,
-                public oxide::ScreenObserver,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
@@ -184,10 +182,9 @@ class WebView : public oxide::WebViewClient,
   void EnterFullscreenMode(const GURL& origin) override;
   void ExitFullscreenMode() override;
 
-  // oxide::ScreenObserver implementation
-  void OnDisplayPropertiesChanged(const display::Display& display) override;
-
   // WebViewProxy implementation
+  WebContentsID webContentsID() const override;
+
   QUrl url() const override;
   void setUrl(const QUrl& url) override;
 
@@ -244,17 +241,6 @@ class WebView : public oxide::WebViewClient,
 
   void prepareToClose() override;
 
-  int locationBarHeight() const override;
-  void setLocationBarHeight(int height) override;
-  int locationBarOffset() const override;
-  int locationBarContentOffset() const override;
-  LocationBarMode locationBarMode() const override;
-  void setLocationBarMode(LocationBarMode mode) override;
-  bool locationBarAnimated() const override;
-  void setLocationBarAnimated(bool animated) override;
-  void locationBarShow(bool animate) override;
-  void locationBarHide(bool animate) override;
-
   WebProcessStatus webProcessStatus() const override;
 
   void executeEditingCommand(EditingCommands command) const override;
@@ -278,7 +264,6 @@ class WebView : public oxide::WebViewClient,
 
   QList<QObject*> message_handlers_;
 
-  int location_bar_height_;
   bool frame_tree_torn_down_;
 
   std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;

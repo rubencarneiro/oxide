@@ -65,11 +65,12 @@ class ContentsView : public QObject,
 
   QObject* native_view() const { return native_view_; }
 
+  display::Display GetDisplay() const override;
   QScreen* GetScreen() const;
 
   ContentsViewProxyClient* client() const { return client_; }
 
-  float GetLocationBarContentOffset() const;
+  float GetTopContentOffset() const;
 
  private:
   // ContentsViewProxy implementation
@@ -100,7 +101,6 @@ class ContentsView : public QObject,
   void SetInputMethodEnabled(bool enabled);
 
   // oxide::WebContentsViewClient implementation
-  display::Display GetDisplay() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
   gfx::RectF GetBounds() const override;

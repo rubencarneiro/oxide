@@ -46,6 +46,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
+#include "chrome_controller.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_drag_source.h"
 #include "oxide_fullscreen_helper.h"
@@ -53,13 +54,15 @@
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_context_menu.h"
 #include "oxide_web_popup_menu_impl.h"
-#include "oxide_web_view.h"
 #include "screen.h"
 
 namespace oxide {
 
 namespace {
 int kUserDataKey;
+
+ChromeController* kUninitializedChromeController =
+    reinterpret_cast<ChromeController*>(1);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
@@ -71,7 +74,8 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone),
-      render_frame_message_source_(nullptr) {
+      render_frame_message_source_(nullptr),
+      chrome_controller_(kUninitializedChromeController) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
 
@@ -660,14 +664,13 @@ bool WebContentsView::IsFullscreen() const {
   return helper->IsFullscreen();
 }
 
-float WebContentsView::GetLocationBarHeight() const {
-  // TODO: Add LocationBarController class
-  WebView* view = WebView::FromWebContents(web_contents());
-  if (!view) {
+float WebContentsView::GetTopControlsHeight() {
+  ChromeController* chrome_controller = GetChromeController();
+  if (!chrome_controller) {
     return 0.f;
   }
 
-  return view->GetLocationBarHeight();
+  return chrome_controller->top_controls_height();
 }
 
 ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
@@ -678,10 +681,9 @@ ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
   return client_->CreateTouchHandleDrawable();
 }
 
-void WebContentsView::TouchSelectionChanged(
-    RenderWidgetHostView* view,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) const {
+void WebContentsView::TouchSelectionChanged(RenderWidgetHostView* view,
+                                            bool handle_drag_in_progress,
+                                            bool insertion_handle_tapped) {
   if (!client_) {
     return;
   }
@@ -701,11 +703,10 @@ void WebContentsView::TouchSelectionChanged(
     bounds = controller->GetRectBetweenBounds();
   }
 
-  // TODO: Add LocationBarController class
   float offset = 0.f;
-  WebView* web_view = WebView::FromWebContents(web_contents());
-  if (web_view) {
-    offset = web_view->GetLocationBarContentOffset();
+  ChromeController* chrome_controller = GetChromeController();
+  if (chrome_controller) {
+    offset = chrome_controller->GetTopContentOffset();
   }
   bounds.Offset(0, offset);
 
@@ -1064,6 +1065,14 @@ void WebContentsView::HideTouchSelectionController() {
   if (selection_controller) {
     selection_controller->HideAndDisallowShowingAutomatically();
   }
+}
+
+ChromeController* WebContentsView::GetChromeController() {
+  if (chrome_controller_ == kUninitializedChromeController) {
+    chrome_controller_ = ChromeController::FromWebContents(web_contents());
+  }
+
+  return chrome_controller_;
 }
 
 } // namespace oxide

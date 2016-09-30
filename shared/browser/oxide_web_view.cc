@@ -71,6 +71,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
+#include "chrome_controller.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
@@ -131,6 +132,7 @@ void CreateHelpers(content::WebContents* contents) {
   WebFrameTree::CreateForWebContents(contents);
   FaviconHelper::CreateForWebContents(contents);
   FullscreenHelper::CreateForWebContents(contents);
+  ChromeController::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
@@ -154,9 +156,6 @@ WebView::CreateParams::~CreateParams() {}
 WebView::WebView(WebViewClient* client)
     : client_(client),
       blocked_content_(CONTENT_TYPE_NONE),
-      location_bar_height_(0),
-      location_bar_constraints_(blink::WebTopControlsBoth),
-      location_bar_animated_(true),
       edit_flags_(blink::WebContextMenuData::CanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
@@ -199,10 +198,6 @@ RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
   }
 
   return static_cast<RenderWidgetHostView *>(rwhv);
-}
-
-content::RenderViewHost* WebView::GetRenderViewHost() const {
-  return web_contents_->GetRenderViewHost();
 }
 
 content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
@@ -268,23 +263,6 @@ void WebView::OnDidBlockRunningInsecureContent() {
   client_->ContentBlocked();
 }
 
-void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
-                                           bool initial_host) {
-  // Show the location bar if this is the initial RVH and the constraints
-  // are set to blink::WebTopControlsBoth
-  blink::WebTopControlsState current = location_bar_constraints_;
-  if (initial_host &&
-      location_bar_constraints_ == blink::WebTopControlsBoth) {
-    current = blink::WebTopControlsShown;
-  }
-
-  rvh->Send(
-      new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                          location_bar_constraints_,
-                                          current,
-                                          false));
-}
-
 void WebView::DispatchPrepareToCloseResponse(bool proceed) {
   client_->PrepareToCloseResponseReceived(proceed);
 }
@@ -348,14 +326,6 @@ void WebView::CompositorWillRequestSwapFrame() {
   compositor_frame_metadata_ =
       WebContentsView::FromWebContents(web_contents_.get())
         ->committed_frame_metadata().Clone();
-
-  if (IsFullscreen()) {
-    // Ensure that the location bar is always hidden in fullscreen. This
-    // is required because fullscreen RenderWidgets don't have a mechanism
-    // to control the location bar height
-    compositor_frame_metadata_.top_controls_height = location_bar_height_;
-    compositor_frame_metadata_.top_controls_shown_ratio = 0.f;
-  }
 
   client_->FrameMetadataUpdated(old);
 }
@@ -740,30 +710,12 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
-void WebView::RenderFrameForInterstitialPageCreated(
-    content::RenderFrameHost* render_frame_host) {
-  if (render_frame_host->GetParent()) {
-    return;
-  }
-
-  InitializeTopControlsForHost(render_frame_host->GetRenderViewHost(), false);
-}
-
 void WebView::RenderViewReady() {
   client_->CrashedStatusChanged();
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
   client_->CrashedStatusChanged();
-}
-
-void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
-                                    content::RenderViewHost* new_host) {
-  if (!new_host) {
-    return;
-  }
-
-  InitializeTopControlsForHost(new_host, !old_host);
 }
 
 void WebView::DidStartLoading() {
@@ -972,11 +924,6 @@ WebView::WebView(const CommonParams& common_params,
   CommonInit(std::move(contents),
              common_params.view_client,
              common_params.contents_client);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (rvh) {
-    InitializeTopControlsForHost(rvh, true);
-  }
 }
 
 WebView::~WebView() {
@@ -1225,82 +1172,6 @@ gfx::Size WebView::GetCompositorFrameViewportSize() {
                      compositor_frame_metadata().page_scale_factor);
 
   return gfx::Size(std::round(size.width()), std::round(size.height()));
-}
-
-float WebView::GetLocationBarOffset() const {
-  return GetLocationBarContentOffset() - GetLocationBarHeight();
-}
-
-float WebView::GetLocationBarContentOffset() const {
-  return compositor_frame_metadata().top_controls_height *
-         compositor_frame_metadata().top_controls_shown_ratio;
-}
-
-float WebView::GetLocationBarHeight() const {
-  return location_bar_height_;
-}
-
-void WebView::SetLocationBarHeight(float height) {
-  DCHECK_GE(height, 0);
-
-  if (height == location_bar_height_) {
-    return;
-  }
-
-  location_bar_height_ = height;
-
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  host->WasResized();
-}
-
-void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) {
-  if (constraints == location_bar_constraints_) {
-    return;
-  }
-
-  location_bar_constraints_ = constraints;
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsBoth,
-                                                location_bar_animated_));
-}
-
-void WebView::ShowLocationBar(bool animate) {
-  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsShown,
-                                                animate));
-}
-
-void WebView::HideLocationBar(bool animate) {
-  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsHidden,
-                                                animate));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {

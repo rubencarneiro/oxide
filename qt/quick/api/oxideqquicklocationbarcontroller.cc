@@ -16,17 +16,47 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqquicklocationbarcontroller.h"
+#include "oxideqquicklocationbarcontroller_p.h"
 
-#include "oxideqquickwebview.h"
-#include "oxideqquickwebview_p.h"
+#include <QtDebug>
 
-class OxideQQuickLocationBarControllerPrivate {
- public:
-  OxideQQuickLocationBarControllerPrivate()
-      : view(nullptr) {}
+#include "qt/core/glue/chrome_controller.h"
+#include "qt/core/glue/macros.h"
 
-  OxideQQuickWebView* view;
-};
+OxideQQuickLocationBarControllerPrivate
+    ::OxideQQuickLocationBarControllerPrivate(
+        OxideQQuickLocationBarController* q)
+    : q_ptr(q),
+      chrome_controller_(oxide::qt::ChromeController::create(this, q)) {}
+
+void OxideQQuickLocationBarControllerPrivate::ChromePositionUpdated() {
+  Q_Q(OxideQQuickLocationBarController);
+
+  Q_EMIT q->offsetChanged();
+  Q_EMIT q->contentOffsetChanged();
+}
+
+OxideQQuickLocationBarControllerPrivate
+    ::~OxideQQuickLocationBarControllerPrivate() = default;
+
+// static
+std::unique_ptr<OxideQQuickLocationBarController>
+OxideQQuickLocationBarControllerPrivate::create() {
+  return std::unique_ptr<OxideQQuickLocationBarController>(
+      new OxideQQuickLocationBarController());
+}
+
+// static
+OxideQQuickLocationBarControllerPrivate*
+OxideQQuickLocationBarControllerPrivate::get(
+    OxideQQuickLocationBarController* q) {
+  return q->d_func();
+}
+
+void OxideQQuickLocationBarControllerPrivate::init(
+    oxide::qt::WebContentsID web_contents_id) {
+  chrome_controller_->init(web_contents_id);
+}
 
 /*!
 \class OxideQQuickLocationBarController
@@ -62,19 +92,14 @@ The application must specify the fully revealed height of its location bar by
 setting the \l{height} property.
 */
 
-OxideQQuickLocationBarController::OxideQQuickLocationBarController(
-    OxideQQuickWebView* view)
-    : d_ptr(new OxideQQuickLocationBarControllerPrivate()) {
-  Q_D(OxideQQuickLocationBarController);
-
-  d->view = view;
-}
+OxideQQuickLocationBarController::OxideQQuickLocationBarController()
+    : d_ptr(new OxideQQuickLocationBarControllerPrivate(this)) {}
 
 /*!
 \internal
 */
 
-OxideQQuickLocationBarController::~OxideQQuickLocationBarController() {}
+OxideQQuickLocationBarController::~OxideQQuickLocationBarController() = default;
 
 /*!
 \qmlproperty real LocationBarController::height
@@ -87,7 +112,7 @@ Setting this to 0 effectively disables this API.
 qreal OxideQQuickLocationBarController::height() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->locationBarHeight();
+  return d->chrome_controller_->topControlsHeight();
 }
 
 void OxideQQuickLocationBarController::setHeight(qreal height) {
@@ -103,7 +128,7 @@ void OxideQQuickLocationBarController::setHeight(qreal height) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarHeight(height);
+  d->chrome_controller_->setTopControlsHeight(height);
   Q_EMIT heightChanged();
 }
 
@@ -128,18 +153,14 @@ OxideQQuickLocationBarController::Mode
 OxideQQuickLocationBarController::mode() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  Q_STATIC_ASSERT(
-      static_cast<int>(ModeAuto) ==
-        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_AUTO));
-  Q_STATIC_ASSERT(
-      static_cast<int>(ModeShown) ==
-        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_SHOWN));
-  Q_STATIC_ASSERT(
-      static_cast<int>(ModeHidden) ==
-        static_cast<int>(oxide::qt::LOCATION_BAR_MODE_HIDDEN));
+  STATIC_ASSERT_MATCHING_ENUM(ModeAuto,
+                              oxide::qt::ChromeController::Mode::Auto);
+  STATIC_ASSERT_MATCHING_ENUM(ModeShown,
+                              oxide::qt::ChromeController::Mode::Shown);
+  STATIC_ASSERT_MATCHING_ENUM(ModeHidden,
+                              oxide::qt::ChromeController::Mode::Hidden);
 
-  return static_cast<Mode>(
-      OxideQQuickWebViewPrivate::get(d->view)->locationBarMode());
+  return static_cast<Mode>(d->chrome_controller_->mode());
 }
 
 void OxideQQuickLocationBarController::setMode(Mode mode) {
@@ -149,8 +170,8 @@ void OxideQQuickLocationBarController::setMode(Mode mode) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarMode(
-      static_cast<oxide::qt::LocationBarMode>(mode));
+  d->chrome_controller_->setMode(
+      static_cast<oxide::qt::ChromeController::Mode>(mode));
   Q_EMIT modeChanged();
 }
 
@@ -165,7 +186,7 @@ value is true.
 bool OxideQQuickLocationBarController::animated() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->locationBarAnimated();
+  return d->chrome_controller_->animationEnabled();
 }
 
 void OxideQQuickLocationBarController::setAnimated(bool animated) {
@@ -175,7 +196,7 @@ void OxideQQuickLocationBarController::setAnimated(bool animated) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->setLocationBarAnimated(animated);
+  d->chrome_controller_->setAnimationEnabled(animated);
   Q_EMIT animatedChanged();
 }
 
@@ -195,7 +216,7 @@ avoid tearing.
 qreal OxideQQuickLocationBarController::offset() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(d->view)->locationBarOffset();
+  return d->chrome_controller_->topControlsOffset();
 }
 
 /*!
@@ -210,8 +231,7 @@ revealed).
 qreal OxideQQuickLocationBarController::contentOffset() const {
   Q_D(const OxideQQuickLocationBarController);
 
-  return OxideQQuickWebViewPrivate::get(
-      d->view)->locationBarContentOffset();
+  return d->chrome_controller_->topContentOffset();
 }
 
 /*!
@@ -243,7 +263,7 @@ void OxideQQuickLocationBarController::show(bool animate) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->locationBarShow(animate);
+  d->chrome_controller_->show(animate);
 }
 
 /*!
@@ -275,5 +295,5 @@ void OxideQQuickLocationBarController::hide(bool animate) {
     return;
   }
 
-  OxideQQuickWebViewPrivate::get(d->view)->locationBarHide(animate);
+  d->chrome_controller_->hide(animate);
 }
