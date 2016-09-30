@@ -46,6 +46,8 @@ class OXIDE_SHARED_EXPORT ChromeController
       public content::WebContentsObserver,
       public CompositorObserver {
  public:
+  static ChromeController* FromWebContents(content::WebContents* contents);
+
   ~ChromeController() override;
 
   float top_controls_height() const { return top_controls_height_; }

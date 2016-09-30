@@ -132,6 +132,12 @@ void ChromeController::CompositorWillRequestSwapFrame() {
   client_->ChromePositionUpdated();
 }
 
+// static
+ChromeController* ChromeController::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<ChromeController>::FromWebContents(contents);
+}
+
 ChromeController::~ChromeController() = default;
 
 void ChromeController::SetTopControlsHeight(float height) {
