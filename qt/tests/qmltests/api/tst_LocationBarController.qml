@@ -33,7 +33,7 @@ Item {
 
     property var target: null
 
-    readonly property alias unbalancedSignalsReceived: locationBarSpy.qtest_unbalancedSignalsReceived
+    readonly property alias missingSignal: locationBarSpy.qtest_missingSignal
     readonly property alias inconsistentPropertiesSeen: locationBarSpy.qtest_inconsistentPropertiesSeen
     readonly property alias shown: locationBarSpy.qtest_shown
     readonly property alias hidden: locationBarSpy.qtest_hidden
@@ -43,9 +43,8 @@ Item {
 
     function clear() {
       qtest_waitingForNewContentOffset = false;
-      qtest_unbalancedSignalsReceived = false;
+      qtest_missingSignal = false;
       qtest_inconsistentPropertiesSeen = false;
-      qtest_hadGoodUpdate = false;
       qtest_animationStartTime = null;
       qtest_lastAnimationDuration = null;
 
@@ -62,14 +61,9 @@ Item {
       return TestUtils.waitFor(function() { return qtest_hidden; });
     }
 
-    function waitForUpdate() {
-      return TestUtils.waitFor(function() { return qtest_hadGoodUpdate; });
-    }
-
     property bool qtest_waitingForNewContentOffset: false
-    property bool qtest_unbalancedSignalsReceived: false
+    property bool qtest_missingSignal: false
     property bool qtest_inconsistentPropertiesSeen: false
-    property bool qtest_hadGoodUpdate: false
     property bool qtest_shown: false
     property bool qtest_hidden: false
     property bool qtest_animating: false
@@ -82,13 +76,10 @@ Item {
       var l = target.locationBarController;
 
       var good = Math.abs(l.contentOffset - l.offset - l.height) <= 1;
-      qtest_hadGoodUpdate |= good;
-      if (qtest_hadGoodUpdate) {
-        if (!good) {
-          console.log("Bad properties, contentOffset: " + l.contentOffset + ", offset: " + l.offset + ", height: " + l.height);
-        }
-        qtest_inconsistentPropertiesSeen |= !good
+      if (!good) {
+        console.log("Bad properties, contentOffset: " + l.contentOffset + ", offset: " + l.offset + ", height: " + l.height);
       }
+      qtest_inconsistentPropertiesSeen |= !good
 
       qtest_shown = l.offset == 0 && l.height > 0;
       qtest_hidden = l.contentOffset == 0 && l.height > 0;
@@ -117,15 +108,17 @@ Item {
 
     function qtest_offsetChanged() {
       if (qtest_waitingForNewContentOffset) {
-        qtest_unbalancedSignalsReceived = true;
+        qtest_missingSignal = true;
       }
 
       qtest_waitingForNewContentOffset = true;
+
+      qtest_update();
     }
 
     function qtest_contentOffsetChanged() {
       if (!qtest_waitingForNewContentOffset) {
-        qtest_unbalancedSignalsReceived = true;
+        qtest_missingSignal = true;
       }
 
       qtest_waitingForNewContentOffset = false;
@@ -219,7 +212,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
       compare(webView.locationBarController.offset, 0);
@@ -232,7 +225,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
       compare(webView.locationBarController.offset, 0);
@@ -245,7 +238,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
       compare(webView.locationBarController.offset, 0);
@@ -260,7 +253,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
       compare(webView.locationBarController.offset, 0);
@@ -271,7 +264,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
       compare(webView.locationBarController.offset, 0);
@@ -299,10 +292,10 @@ Item {
       webView.url = "http://testsuite/tst_LocationBarController.html";
       verify(webView.waitForLoadSucceeded());
 
-      verify(locationBarSpy.waitForUpdate());
+      verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -315,7 +308,7 @@ Item {
       verify(locationBarSpy.waitUntilHidden());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -332,7 +325,7 @@ Item {
       verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -367,10 +360,10 @@ Item {
       webView.url = "http://testsuite/tst_LocationBarController.html";
       verify(webView.waitForLoadSucceeded());
 
-      verify(locationBarSpy.waitForUpdate());
+      verify(locationBarSpy.waitUntilHidden());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -380,7 +373,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -390,7 +383,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -400,7 +393,7 @@ Item {
       verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -429,10 +422,10 @@ Item {
       webView.url = "http://testsuite/tst_LocationBarController.html";
       verify(webView.waitForLoadSucceeded());
 
-      verify(locationBarSpy.waitForUpdate());
+      verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -442,7 +435,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -452,7 +445,7 @@ Item {
       TestSupport.wait(500);
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -462,7 +455,7 @@ Item {
       verify(locationBarSpy.waitUntilHidden());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -490,10 +483,10 @@ Item {
       webView.url = "http://testsuite/tst_LocationBarController_fullscreen.html";
       verify(webView.waitForLoadSucceeded());
 
-      verify(locationBarSpy.waitForUpdate());
+      verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -508,7 +501,7 @@ Item {
       verify(locationBarSpy.waitUntilHidden());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.shown);
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
@@ -519,7 +512,7 @@ Item {
       verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.unbalancedSignalsReceived);
+      verify(!locationBarSpy.missingSignal);
       verify(locationBarSpy.shown);
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);

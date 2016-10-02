@@ -29,7 +29,6 @@
 
 namespace content {
 class RenderFrameHost;
-class RenderViewHost;
 class RenderWidgetHost;
 class WebContents;
 }
@@ -73,15 +72,17 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   void InitializeForHost(content::RenderFrameHost* render_frame_host,
                          bool initial_host);
+  void UpdateTopControlsState(content::RenderFrameHost* render_frame_host,
+                              blink::WebTopControlsState current_state,
+                              bool animated);
   RenderWidgetHostView* GetRenderWidgetHostView();
   content::RenderWidgetHost* GetRenderWidgetHost();
-  content::RenderViewHost* GetRenderViewHost();
 
   // content::WebContentsObserver implementation
-  void RenderFrameHostChanged(content::RenderFrameHost* old_host,
-                              content::RenderFrameHost* new_host) override;
   void RenderFrameForInterstitialPageCreated(
       content::RenderFrameHost* render_frame_host) override;
+  void RenderViewHostChanged(content::RenderViewHost* old_host,
+                             content::RenderViewHost* new_host) override;
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;

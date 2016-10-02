@@ -60,13 +60,20 @@ void ChromeController::InitializeForHost(
     current = blink::WebTopControlsShown;
   }
 
+  UpdateTopControlsState(render_frame_host, current, false);
+}
+
+void ChromeController::UpdateTopControlsState(
+    content::RenderFrameHost* render_frame_host,
+    blink::WebTopControlsState current_state,
+    bool animated) {
   content::RenderViewHost* rvh = render_frame_host->GetRenderViewHost();
 
   rvh->Send(
       new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
                                           constraints_,
-                                          current,
-                                          false));
+                                          current_state,
+                                          animated));
 }
 
 RenderWidgetHostView* ChromeController::GetRenderWidgetHostView() {
@@ -88,25 +95,6 @@ content::RenderWidgetHost* ChromeController::GetRenderWidgetHost() {
   return rwhv->GetRenderWidgetHost();
 }
 
-content::RenderViewHost* ChromeController::GetRenderViewHost() {
-  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  if (!rwh) {
-    return nullptr;
-  }
-
-  return content::RenderViewHost::From(rwh);
-}
-
-void ChromeController::RenderFrameHostChanged(
-    content::RenderFrameHost* old_host,
-    content::RenderFrameHost* new_host) {
-  if (new_host->GetParent()) {
-    return;
-  }
-
-  InitializeForHost(new_host, !old_host);
-}
-
 void ChromeController::RenderFrameForInterstitialPageCreated(
     content::RenderFrameHost* render_frame_host) {
   if (render_frame_host->GetParent()) {
@@ -114,6 +102,12 @@ void ChromeController::RenderFrameForInterstitialPageCreated(
   }
 
   InitializeForHost(render_frame_host, false);
+}
+
+void ChromeController::RenderViewHostChanged(
+    content::RenderViewHost* old_host,
+    content::RenderViewHost* new_host) {
+  InitializeForHost(new_host->GetMainFrame(), !old_host);
 }
 
 void ChromeController::CompositorDidCommit() {
@@ -124,7 +118,7 @@ void ChromeController::CompositorDidCommit() {
 }
 
 void ChromeController::CompositorWillRequestSwapFrame() {
-  current_frame_metadata_ = std::move(committed_frame_metadata_);
+  current_frame_metadata_ = committed_frame_metadata_.Clone();
 
   if (!client_) {
     return;
@@ -163,43 +157,25 @@ void ChromeController::SetConstraints(blink::WebTopControlsState constraints) {
 
   constraints_ = constraints;
 
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints_,
-                                                blink::WebTopControlsBoth,
-                                                animation_enabled_));
+  UpdateTopControlsState(web_contents_->GetMainFrame(),
+                         blink::WebTopControlsBoth,
+                         animation_enabled_);
 }
 
 void ChromeController::Show(bool animate) {
   DCHECK_EQ(constraints_, blink::WebTopControlsBoth);
 
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints_,
-                                                blink::WebTopControlsShown,
-                                                animate));
+  UpdateTopControlsState(web_contents_->GetMainFrame(),
+                         blink::WebTopControlsShown,
+                         animate);
 }
 
 void ChromeController::Hide(bool animate) {
   DCHECK_EQ(constraints_, blink::WebTopControlsBoth);
 
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                constraints_,
-                                                blink::WebTopControlsHidden,
-                                                animate));
+  UpdateTopControlsState(web_contents_->GetMainFrame(),
+                         blink::WebTopControlsHidden,
+                         animate);
 }
 
 float ChromeController::GetTopControlsOffset() const {
