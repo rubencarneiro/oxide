@@ -78,6 +78,8 @@ class OXIDE_SHARED_EXPORT ChromeController
   RenderWidgetHostView* GetRenderWidgetHostView();
   content::RenderWidgetHost* GetRenderWidgetHost();
 
+  cc::CompositorFrameMetadata DefaultMetadata() const;
+
   // content::WebContentsObserver implementation
   void RenderFrameForInterstitialPageCreated(
       content::RenderFrameHost* render_frame_host) override;

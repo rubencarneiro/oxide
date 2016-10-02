@@ -518,5 +518,54 @@ Item {
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
     }
+
+    function test_LocationBarController8_initial_shown_data() {
+      return [
+        { mode: LocationBarController.ModeAuto },
+        { mode: LocationBarController.ModeShown }
+      ];
+    }
+
+    // Test that the API initializes to the correct value before the
+    // webview is used (https://launchpad.net/bugs/1625484)
+    function test_LocationBarController8_initial_shown() {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": true,
+          "locationBarController.mode": data.mode
+      });
+
+      locationBarSpy.target = webView;
+
+      verify(locationBarSpy.waitUntilShown());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+    }
+
+    // Test that the API initializes to the correct value before the
+    // webview is used (https://launchpad.net/bugs/1625484)
+    function test_LocationBarController9_initial_hidden() {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": true,
+          "locationBarController.mode": LocationBarController.ModeHidden
+      });
+
+      locationBarSpy.target = webView;
+
+      verify(locationBarSpy.waitUntilHidden());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+    }
   }
 }

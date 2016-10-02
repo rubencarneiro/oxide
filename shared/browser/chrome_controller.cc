@@ -74,6 +74,13 @@ void ChromeController::UpdateTopControlsState(
                                           constraints_,
                                           current_state,
                                           animated));
+
+  if (render_frame_host->IsRenderFrameLive()) {
+    return;
+  }
+
+  committed_frame_metadata_ = DefaultMetadata();
+  CompositorWillRequestSwapFrame();
 }
 
 RenderWidgetHostView* ChromeController::GetRenderWidgetHostView() {
@@ -95,6 +102,15 @@ content::RenderWidgetHost* ChromeController::GetRenderWidgetHost() {
   return rwhv->GetRenderWidgetHost();
 }
 
+cc::CompositorFrameMetadata ChromeController::DefaultMetadata() const {
+  cc::CompositorFrameMetadata metadata;
+  metadata.top_controls_height = top_controls_height();
+  metadata.top_controls_shown_ratio =
+      constraints_ == blink::WebTopControlsHidden ? 0.f : 1.f;
+
+  return std::move(metadata);
+}
+
 void ChromeController::RenderFrameForInterstitialPageCreated(
     content::RenderFrameHost* render_frame_host) {
   if (render_frame_host->GetParent()) {
@@ -114,7 +130,7 @@ void ChromeController::CompositorDidCommit() {
   committed_frame_metadata_ =
       GetRenderWidgetHostView() ?
           GetRenderWidgetHostView()->last_submitted_frame_metadata().Clone()
-          : cc::CompositorFrameMetadata();
+          : DefaultMetadata();
 }
 
 void ChromeController::CompositorWillRequestSwapFrame() {
@@ -144,6 +160,8 @@ void ChromeController::SetTopControlsHeight(float height) {
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
+    committed_frame_metadata_ = DefaultMetadata();
+    CompositorWillRequestSwapFrame();
     return;
   }
 
