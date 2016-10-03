@@ -547,6 +547,17 @@ void WebView::WebContentsCreated(content::WebContents* source,
   CreateHelpers(new_contents);
 }
 
+void WebView::RendererUnresponsive(content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  ChromeController::FromWebContents(web_contents_.get())
+      ->RendererIsUnresponsive();
+}
+
+void WebView::RendererResponsive(content::WebContents* source) {
+  DCHECK_VALID_SOURCE_CONTENTS
+  ChromeController::FromWebContents(web_contents_.get())->RendererIsResponsive();
+}
+
 void WebView::AddNewContents(content::WebContents* source,
                              content::WebContents* new_contents,
                              WindowOpenDisposition disposition,

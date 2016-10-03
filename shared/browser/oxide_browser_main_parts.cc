@@ -81,6 +81,8 @@ namespace oxide {
 
 namespace {
 
+const int64_t kHangMonitorTimeoutMs = 5000;
+
 #if defined(OS_LINUX)
 std::unique_ptr<media::VideoCaptureDeviceFactory>
 OverrideVideoCaptureDeviceFactory(
@@ -240,6 +242,7 @@ class Screen : public ::display::Screen {
 } // namespace display
 
 void BrowserMainParts::PreEarlyInitialization() {
+  content::RenderWidgetHost::SetHangMonitorTimeout(kHangMonitorTimeoutMs);
   content::SetWebContentsViewOxideFactory(WebContentsView::Create);
 #if defined(OS_LINUX)
   media::SetVideoCaptureDeviceFactoryOverrideDelegate(

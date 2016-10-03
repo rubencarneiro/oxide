@@ -752,4 +752,12 @@ void Compositor::SetRootLayer(scoped_refptr<cc::Layer> layer) {
   }
 }
 
+void Compositor::SetNeedsRedraw() {
+  if (!layer_tree_host_) {
+    return;
+  }
+
+  layer_tree_host_->SetNeedsRedraw();
+}
+
 } // namespace oxide
