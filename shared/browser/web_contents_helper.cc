@@ -29,6 +29,7 @@
 #include "shared/common/oxide_content_client.h"
 
 #include "oxide_browser_context.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_contents_unloader.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_view.h"
@@ -50,8 +51,8 @@ void WebContentsDeleter::operator()(content::WebContents* contents) {
 }
 
 WebContentsHelper::WebContentsHelper(content::WebContents* contents)
-    : BrowserContextObserver(
-          BrowserContext::FromContent(contents->GetBrowserContext())),
+    : UserAgentSettingsObserver(
+          UserAgentSettings::Get(contents->GetBrowserContext())),
       web_contents_(contents) {
   DCHECK(!FromWebContents(web_contents_));
 
@@ -59,7 +60,8 @@ WebContentsHelper::WebContentsHelper(content::WebContents* contents)
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->enable_do_not_track = GetBrowserContext()->GetDoNotTrack();
+  renderer_prefs->enable_do_not_track =
+      UserAgentSettings::Get(contents->GetBrowserContext())->GetDoNotTrack();
 
   // Hardcoded selection colors to match the current Ambiance theme from the
   // Ubuntu UI Toolkit (https://bazaar.launchpad.net/~ubuntu-sdk-team/ubuntu-ui-toolkit/trunk/view/head:/src/Ubuntu/Components/Themes/Ambiance/1.3/Palette.qml)
@@ -93,7 +95,9 @@ void WebContentsHelper::NotifyPopupBlockerEnabledChanged() {
 void WebContentsHelper::NotifyDoNotTrackChanged() {
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->enable_do_not_track = GetBrowserContext()->GetDoNotTrack();
+  UserAgentSettings* ua_settings =
+      UserAgentSettings::Get(web_contents_->GetBrowserContext());
+  renderer_prefs->enable_do_not_track = ua_settings->GetDoNotTrack();
 
   SyncRendererPreferences();
 }

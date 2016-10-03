@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@
 
 #include "oxide_browser_context.h"
 #include "oxide_browser_context_delegate.h"
+#include "oxide_user_agent_settings_observer.h"
 
 namespace oxide {
 
@@ -96,7 +97,9 @@ void UserAgentSettingsIOData::SetUserAgentOverrides(
 }
 
 UserAgentSettingsIOData::UserAgentSettingsIOData(BrowserContextIOData* context)
-    : context_(context) {
+    : context_(context),
+      popup_blocker_enabled_(true),
+      do_not_track_(false) {
   // TRANSLATORS: AcceptLanguage is a special token that should not be
   // translated as such. The expected value is a comma-separated list of
   // language codes in order of decreasing preference (e.g. "es-ES,es,en,*").
@@ -131,6 +134,16 @@ std::string UserAgentSettingsIOData::GetUserAgentForURL(const GURL& url) {
 std::string UserAgentSettingsIOData::GetUserAgentOverrideForURL(
     const GURL& url) {
   return user_agent_override_set_.GetOverrideForURL(url);
+}
+
+bool UserAgentSettingsIOData::IsPopupBlockerEnabled() const {
+  base::AutoLock lock(lock_);
+  return popup_blocker_enabled_;
+}
+
+bool UserAgentSettingsIOData::GetDoNotTrack() const {
+  base::AutoLock lock(lock_);
+  return do_not_track_;
 }
 
 UserAgentSettings::UserAgentSettings(BrowserContext* context)
@@ -177,6 +190,16 @@ void UserAgentSettings::UpdateLegacyUserAgentOverrideEnabledForHost(
   host->Send(
       new OxideMsg_SetLegacyUserAgentOverrideEnabled(
         legacy_user_agent_override_enabled_));
+}
+
+void UserAgentSettings::AddObserver(UserAgentSettingsObserver* observer) {
+  DCHECK(CalledOnValidThread());
+  observers_.AddObserver(observer);
+}
+
+void UserAgentSettings::RemoveObserver(UserAgentSettingsObserver* observer) {
+  DCHECK(CalledOnValidThread());
+  observers_.RemoveObserver(observer);
 }
 
 // static
@@ -301,6 +324,44 @@ void UserAgentSettings::SetLegacyUserAgentOverrideEnabled(bool enabled) {
   for (auto host : hosts) {
     UpdateLegacyUserAgentOverrideEnabledForHost(host);
   }
+}
+
+bool UserAgentSettings::IsPopupBlockerEnabled() const {
+  DCHECK(CalledOnValidThread());
+
+  return context_->GetIOData()->GetUserAgentSettings()->popup_blocker_enabled_;
+}
+
+void UserAgentSettings::SetIsPopupBlockerEnabled(bool enabled) {
+  DCHECK(CalledOnValidThread());
+
+  UserAgentSettingsIOData* io_data =
+      context_->GetIOData()->GetUserAgentSettings();
+  base::AutoLock lock(io_data->lock_);
+  io_data->popup_blocker_enabled_ = enabled;
+
+  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
+                    observers_,
+                    NotifyPopupBlockerEnabledChanged());
+}
+
+bool UserAgentSettings::GetDoNotTrack() const {
+  DCHECK(CalledOnValidThread());
+
+  return context_->GetIOData()->GetUserAgentSettings()->do_not_track_;
+}
+
+void UserAgentSettings::SetDoNotTrack(bool dnt) {
+  DCHECK(CalledOnValidThread());
+
+  UserAgentSettingsIOData* io_data =
+      context_->GetIOData()->GetUserAgentSettings();
+  base::AutoLock lock(io_data->lock_);
+  io_data->do_not_track_ = dnt;
+
+  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
+                    observers_,
+                    NotifyDoNotTrackChanged());
 }
 
 } // namespace oxide

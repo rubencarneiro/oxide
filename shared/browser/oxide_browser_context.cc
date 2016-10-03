@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -69,7 +69,6 @@
 
 #include "oxide_browser_context_delegate.h"
 #include "oxide_browser_context_destroyer.h"
-#include "oxide_browser_context_observer.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_download_manager_delegate.h"
 #include "oxide_http_user_agent_settings.h"
@@ -196,8 +195,7 @@ struct BrowserContextSharedIOData {
         session_cookie_mode(params.session_cookie_mode),
         popup_blocker_enabled(true),
         host_mapping_rules(params.host_mapping_rules),
-        user_agent_settings(new UserAgentSettingsIOData(context)),
-        do_not_track(false) {}
+        user_agent_settings(new UserAgentSettingsIOData(context)) {}
 
   mutable base::Lock lock;
 
@@ -212,8 +210,6 @@ struct BrowserContextSharedIOData {
   std::vector<std::string> host_mapping_rules;
 
   std::unique_ptr<UserAgentSettingsIOData> user_agent_settings;
-
-  bool do_not_track;
 
   scoped_refptr<BrowserContextDelegate> delegate;
 };
@@ -312,10 +308,6 @@ net::StaticCookiePolicy::Type BrowserContextIOData::GetCookiePolicy() const {
   return data.cookie_policy;
 }
 
-bool BrowserContextIOData::IsPopupBlockerEnabled() const {
-  return GetSharedData().popup_blocker_enabled;
-}
-
 base::FilePath BrowserContextIOData::GetPath() const {
   return GetSharedData().path;
 }
@@ -336,12 +328,6 @@ int BrowserContextIOData::GetMaxCacheSizeHint() const {
   static int upper_limit = std::numeric_limits<int>::max() / (1024 * 1024);
   DCHECK_LE(max_cache_size_hint, upper_limit);
   return max_cache_size_hint;
-}
-
-bool BrowserContextIOData::GetDoNotTrack() const {
-  const BrowserContextSharedIOData& data = GetSharedData();
-  base::AutoLock lock(data.lock);
-  return data.do_not_track;
 }
 
 URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
@@ -726,16 +712,6 @@ BrowserContext::CreateMediaRequestContextForStoragePartition(
   return nullptr;
 }
 
-void BrowserContext::AddObserver(BrowserContextObserver* observer) {
-  DCHECK(CalledOnValidThread());
-  observers_.AddObserver(observer);
-}
-
-void BrowserContext::RemoveObserver(BrowserContextObserver* observer) {
-  DCHECK(CalledOnValidThread());
-  observers_.RemoveObserver(observer);
-}
-
 BrowserContext::BrowserContext(BrowserContextIOData* io_data)
     : io_data_(io_data) {
   CHECK(BrowserProcessMain::GetInstance()->IsRunning()) <<
@@ -759,10 +735,6 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data)
 
 BrowserContext::~BrowserContext() {
   DCHECK(CalledOnValidThread());
-
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    observers_,
-                    OnBrowserContextDestruction());
 
   g_all_contexts.Get().erase(this);
 
@@ -868,26 +840,6 @@ BrowserContext::GetSessionCookieMode() const {
   return io_data()->GetSessionCookieMode();
 }
 
-bool BrowserContext::IsPopupBlockerEnabled() const {
-  DCHECK(CalledOnValidThread());
-  return io_data()->IsPopupBlockerEnabled();
-}
-
-void BrowserContext::SetIsPopupBlockerEnabled(bool enabled) {
-  DCHECK(CalledOnValidThread());
-
-  io_data()->GetSharedData().popup_blocker_enabled = enabled;
-
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyPopupBlockerEnabledChanged());
-  if (HasOffTheRecordContext()) {
-    FOR_EACH_OBSERVER(BrowserContextObserver,
-                      GetOffTheRecordContext()->observers_,
-                      NotifyPopupBlockerEnabledChanged());
-  }
-}
-
 const std::vector<std::string>& BrowserContext::GetHostMappingRules() const {
   DCHECK(CalledOnValidThread());
   return io_data()->GetSharedData().host_mapping_rules;
@@ -911,28 +863,6 @@ BrowserContext::GetTemporarySavedPermissionContext() const {
 BrowserContextIOData* BrowserContext::GetIOData() const {
   DCHECK(CalledOnValidThread());
   return io_data_;
-}
-
-bool BrowserContext::GetDoNotTrack() const {
-  DCHECK(CalledOnValidThread());
-  return io_data()->GetSharedData().do_not_track;
-}
-
-void BrowserContext::SetDoNotTrack(bool dnt) {
-  DCHECK(CalledOnValidThread());
-
-  BrowserContextSharedIOData& data = io_data()->GetSharedData();
-  base::AutoLock lock(data.lock);
-  data.do_not_track = dnt;
-
-  FOR_EACH_OBSERVER(BrowserContextObserver,
-                    GetOriginalContext()->observers_,
-                    NotifyDoNotTrackChanged());
-  if (HasOffTheRecordContext()) {
-    FOR_EACH_OBSERVER(BrowserContextObserver,
-                      GetOffTheRecordContext()->observers_,
-                      NotifyDoNotTrackChanged());
-  }
 }
 
 } // namespace oxide

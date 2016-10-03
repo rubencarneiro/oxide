@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,40 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_
-#define _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_
+#include "oxide_user_agent_settings_observer.h"
+
+#include "oxide_user_agent_settings.h"
 
 namespace oxide {
 
-class BrowserContext;
+UserAgentSettingsObserver::UserAgentSettingsObserver()
+    : settings_(nullptr) {}
 
-class BrowserContextObserver {
- public:
-  virtual ~BrowserContextObserver();
+UserAgentSettingsObserver::UserAgentSettingsObserver(
+    UserAgentSettings* settings)
+    : settings_(settings) {
+  if (settings) {
+    settings->AddObserver(this);
+  }
+}
 
-  virtual void BrowserContextDestroyed() {}
+void UserAgentSettingsObserver::Observe(UserAgentSettings* settings) {
+  if (settings == settings_) {
+    return;
+  }
+  if (settings_) {
+    settings_->RemoveObserver(this);
+  }
+  settings_ = settings;
+  if (settings_) {
+    settings_->AddObserver(this);
+  }
+}
 
-  virtual void NotifyPopupBlockerEnabledChanged() {}
-
-  virtual void NotifyDoNotTrackChanged() {}
-
- protected:
-  BrowserContextObserver();
-  BrowserContextObserver(BrowserContext* context);
-
-  void Observe(BrowserContext* context);
-
-  BrowserContext* browser_context() const { return browser_context_; }
-
- private:
-  friend class BrowserContext;
-
-  void OnBrowserContextDestruction();
-
-  BrowserContext* browser_context_;
-};
+UserAgentSettingsObserver::~UserAgentSettingsObserver() {
+  if (settings_) {
+    settings_->RemoveObserver(this);
+  }
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_BROWSER_CONTEXT_OBSERVER_H_

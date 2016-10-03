@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014 Canonical Ltd.
+// Copyright (C) 2014-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
 #include "base/memory/ref_counted.h"
 #include "content/public/browser/web_contents_user_data.h"
 
-#include "shared/browser/oxide_browser_context_observer.h"
+#include "shared/browser/oxide_user_agent_settings_observer.h"
 #include "shared/browser/screen_observer.h"
 #include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/browser/web_preferences.h"
@@ -43,8 +43,8 @@ class WebContentsClient;
 
 class OXIDE_SHARED_EXPORT WebContentsHelper
     : public content::WebContentsUserData<WebContentsHelper>,
-      public BrowserContextObserver,
-      public ScreenObserver {
+      public ScreenObserver,
+      public UserAgentSettingsObserver {
  public:
   static WebContentsUniquePtr CreateWebContents(
       const content::WebContents::CreateParams& params);
@@ -75,13 +75,13 @@ class OXIDE_SHARED_EXPORT WebContentsHelper
 
   void SyncRendererPreferences();
 
-  // BrowserContextObserver implementation
-  void NotifyPopupBlockerEnabledChanged() override;
-  void NotifyDoNotTrackChanged() override;
-
   // ScreenObserver
   void OnDisplayPropertiesChanged(const display::Display& display) override;
   void OnShellModeChanged() override;
+
+  // UserAgentSettingsObserver implementation
+  void NotifyPopupBlockerEnabledChanged() override;
+  void NotifyDoNotTrackChanged() override;
 
   content::WebContents* web_contents_;
 

@@ -227,7 +227,7 @@ bool ContentBrowserClient::CanCreateWindow(
   }
 
   return !BrowserContextIOData::FromResourceContext(
-      context)->IsPopupBlockerEnabled();
+      context)->GetUserAgentSettings()->IsPopupBlockerEnabled();
 }
 
 void ContentBrowserClient::ResourceDispatcherHostCreated() {
@@ -264,7 +264,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
-      !BrowserContext::FromContent(
+      !UserAgentSettings::Get(
         render_view_host->GetProcess()->GetBrowserContext())
         ->IsPopupBlockerEnabled();
 

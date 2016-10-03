@@ -496,10 +496,11 @@ BrowserContext* WebContext::GetContext() {
   ua_settings->SetUserAgentOverrides(construct_props_->user_agent_overrides);
   ua_settings->SetLegacyUserAgentOverrideEnabled(
       construct_props_->legacy_user_agent_override_enabled);
+  ua_settings->SetIsPopupBlockerEnabled(
+      construct_props_->popup_blocker_enabled);
+  ua_settings->SetDoNotTrack(construct_props_->do_not_track);
 
   context_->SetCookiePolicy(construct_props_->cookie_policy);
-  context_->SetIsPopupBlockerEnabled(construct_props_->popup_blocker_enabled);
-  context_->SetDoNotTrack(construct_props_->do_not_track);
 
   MediaCaptureDevicesContext* dc =
       MediaCaptureDevicesContext::Get(context_.get());
@@ -690,7 +691,7 @@ void WebContext::setSessionCookieMode(SessionCookieMode mode) {
 
 bool WebContext::popupBlockerEnabled() const {
   if (IsInitialized()) {
-    return context_->IsPopupBlockerEnabled();
+    return UserAgentSettings::Get(context_.get())->IsPopupBlockerEnabled();
   }
 
   return construct_props_->popup_blocker_enabled;
@@ -698,7 +699,7 @@ bool WebContext::popupBlockerEnabled() const {
 
 void WebContext::setPopupBlockerEnabled(bool enabled) {
   if (IsInitialized()) {
-    context_->SetIsPopupBlockerEnabled(enabled);
+    UserAgentSettings::Get(context_.get())->SetIsPopupBlockerEnabled(enabled);
   } else {
     construct_props_->popup_blocker_enabled = enabled;
   }
@@ -1000,7 +1001,7 @@ void WebContext::DefaultVideoDeviceChanged() {
 
 bool WebContext::doNotTrack() const {
     if (IsInitialized()) {
-    return context_->GetDoNotTrack();
+    return UserAgentSettings::Get(context_.get())->GetDoNotTrack();
   }
 
   return construct_props_->do_not_track;
@@ -1008,7 +1009,7 @@ bool WebContext::doNotTrack() const {
 
 void WebContext::setDoNotTrack(bool dnt) {
   if (IsInitialized()) {
-    context_->SetDoNotTrack(dnt);
+    UserAgentSettings::Get(context_.get())->SetDoNotTrack(dnt);
   } else {
     construct_props_->do_not_track = dnt;
   }

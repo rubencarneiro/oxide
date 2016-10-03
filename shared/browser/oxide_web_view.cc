@@ -83,6 +83,7 @@
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_frame_tree.h"
@@ -376,11 +377,13 @@ content::WebContents* WebView::OpenURLFromTab(
   }
 
   // Block popups
+  UserAgentSettings* ua_settings =
+      UserAgentSettings::Get(web_contents_->GetBrowserContext());
   if ((params.disposition == WindowOpenDisposition::NEW_FOREGROUND_TAB ||
        params.disposition == WindowOpenDisposition::NEW_BACKGROUND_TAB ||
        params.disposition == WindowOpenDisposition::NEW_WINDOW ||
        params.disposition == WindowOpenDisposition::NEW_POPUP) &&
-      !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
+      !params.user_gesture && ua_settings->IsPopupBlockerEnabled()) {
     return nullptr;
   }
 
