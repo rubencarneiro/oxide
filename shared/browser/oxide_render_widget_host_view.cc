@@ -81,7 +81,7 @@ void SatisfyCallback(cc::SurfaceManager* manager,
                      const cc::SurfaceSequence& sequence) {
   std::vector<uint32_t> sequences;
   sequences.push_back(sequence.sequence);
-  manager->DidSatisfySequences(sequence.client_id, &sequences);
+  manager->DidSatisfySequences(sequence.frame_sink_id, &sequences);
 }
 
 void RequireCallback(cc::SurfaceManager* manager,
@@ -779,7 +779,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       container_(nullptr),
       id_allocator_(
           new cc::SurfaceIdAllocator(
-              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
+              CompositorUtils::GetInstance()->AllocateFrameSinkId())),
       last_output_surface_id_(0),
       ime_bridge_(this),
       is_loading_(false),
@@ -803,8 +803,8 @@ RenderWidgetHostView::RenderWidgetHostView(
   selection_controller_.reset(
       new ui::TouchSelectionController(this, tsc_config));
 
-  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
-      id_allocator_->client_id());
+  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterFrameSinkId(
+      id_allocator_->frame_sink_id());
 
   if (GetTextInputManager()) {
     GetTextInputManager()->AddObserver(this);
@@ -822,7 +822,7 @@ RenderWidgetHostView::~RenderWidgetHostView() {
 
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
-      ->InvalidateSurfaceClientId(id_allocator_->client_id());
+      ->InvalidateFrameSinkId(id_allocator_->frame_sink_id());
 }
 
 void RenderWidgetHostView::SetContainer(

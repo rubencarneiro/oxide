@@ -115,7 +115,7 @@ Compositor::Compositor(CompositorClient* client)
       mailbox_buffer_map_(mode_),
       surface_id_allocator_(
           new cc::SurfaceIdAllocator(
-              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
+              CompositorUtils::GetInstance()->AllocateFrameSinkId())),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
@@ -127,8 +127,8 @@ Compositor::Compositor(CompositorClient* client)
       frames_waiting_for_completion_(0),
       mailbox_resource_fetches_in_progress_(0),
       weak_factory_(this) {
-  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
-      surface_id_allocator_->client_id());
+  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterFrameSinkId(
+      surface_id_allocator_->frame_sink_id());
 }
 
 bool Compositor::SurfaceIdIsCurrent(uint32_t surface_id) {
@@ -689,7 +689,7 @@ Compositor::~Compositor() {
 
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
-      ->InvalidateSurfaceClientId(surface_id_allocator_->client_id());
+      ->InvalidateFrameSinkId(surface_id_allocator_->frame_sink_id());
 }
 
 void Compositor::SetVisibility(bool visible) {

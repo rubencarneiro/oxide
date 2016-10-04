@@ -154,7 +154,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
   cc::SurfaceManager* GetSurfaceManager() const override;
-  uint32_t AllocateSurfaceClientId() override;
+  cc::FrameSinkId AllocateFrameSinkId() override;
 
   bool CalledOnMainThread() const;
   bool CalledOnGpuThread() const;
@@ -604,8 +604,8 @@ cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
   return main().surface_manager.get();
 }
 
-uint32_t CompositorUtilsImpl::AllocateSurfaceClientId() {
-  return g_next_surface_client_id++;
+cc::FrameSinkId CompositorUtilsImpl::AllocateFrameSinkId() {
+  return cc::FrameSinkId(g_next_surface_client_id++, 0);
 }
 
 bool CompositorUtilsImpl::CalledOnMainThread() const {
