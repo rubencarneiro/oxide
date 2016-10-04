@@ -54,11 +54,11 @@ class OXIDE_SHARED_EXPORT MediaCaptureDevicesDispatcher
 
   // Returns the first audio capture device. This is used as a fallback
   // when the embedder doesn't specify a device
-  const content::MediaStreamDevice* GetFirstAudioCaptureDevice();
+  const content::MediaStreamDevice* GetPreferredDefaultAudioCaptureDevice();
 
   // Returns the first video capture device. This is used as a fallback
   // when the embedder doesn't specify a device
-  const content::MediaStreamDevice* GetFirstVideoCaptureDevice();
+  const content::MediaStreamDevice* GetPreferredDefaultVideoCaptureDevice();
 
   // Returns the audio capture device corresponding to the specified ID,
   // or nullptr if no device with that ID exists

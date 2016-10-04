@@ -357,13 +357,19 @@ MediaCaptureDevicesDispatcher::GetVideoCaptureDevices() {
 }
 
 const content::MediaStreamDevice*
-MediaCaptureDevicesDispatcher::GetFirstAudioCaptureDevice() {
+MediaCaptureDevicesDispatcher::GetPreferredDefaultAudioCaptureDevice() {
   return GetFirstCaptureDevice(GetAudioCaptureDevices());
 }
 
 const content::MediaStreamDevice*
-MediaCaptureDevicesDispatcher::GetFirstVideoCaptureDevice() {
-  return GetFirstCaptureDevice(GetVideoCaptureDevices());
+MediaCaptureDevicesDispatcher::GetPreferredDefaultVideoCaptureDevice() {
+  const auto& devices = GetVideoCaptureDevices();
+  for (auto& device : devices) {
+    if (device.video_facing == content::MEDIA_VIDEO_FACING_USER) {
+      return &device;
+    }
+  }
+  return GetFirstCaptureDevice(devices);
 }
 
 const content::MediaStreamDevice*
@@ -399,7 +405,7 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   if (need_audio) {
     const content::MediaStreamDevice* device = dc->GetDefaultAudioDevice();
     if (!device) {
-      device = GetFirstAudioCaptureDevice();
+      device = GetPreferredDefaultAudioCaptureDevice();
     }
     if (device) {
       need_audio = false;
@@ -410,7 +416,7 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
   if (need_video) {
     const content::MediaStreamDevice* device = dc->GetDefaultVideoDevice();
     if (!device) {
-      device = GetFirstVideoCaptureDevice();
+      device = GetPreferredDefaultVideoCaptureDevice();
     }
     if (device) {
       need_video = false;
