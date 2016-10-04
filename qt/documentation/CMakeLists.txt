@@ -23,7 +23,7 @@ endif()
 
 # CMake doesn't seem to provide a way to get at QT_INSTALL_DOCS
 if(NOT CMAKE_CROSSCOMPILING)
-  execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_INSTALL_DOCS
+  execute_process(COMMAND ${QMAKE_EXECUTABLE} -qt5 -query QT_INSTALL_DOCS
                   RESULT_VARIABLE _RESULT
                   OUTPUT_VARIABLE QT_INSTALL_DOCS
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -39,7 +39,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/oxideqt.qdocconf.in
                IMMEDIATE @ONLY)
 
 add_custom_target(doc 
-                  COMMAND ${QDOC_EXE} ${CMAKE_CURRENT_BINARY_DIR}/oxideqt.qdocconf
+                  COMMAND ${QDOC_EXE} -qt5 ${CMAKE_CURRENT_BINARY_DIR}/oxideqt.qdocconf
                   COMMENT "Building the documentation")
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
