@@ -187,7 +187,7 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
     return 0.0f;
   }
 
-  return container_->GetLocationBarHeight();
+  return container_->GetTopControlsHeight();
 }
 
 void RenderWidgetHostView::FocusedNodeChanged(

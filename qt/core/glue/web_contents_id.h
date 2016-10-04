@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,38 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
-#define _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTENTS_ID_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTENTS_ID_H_
 
-#include <QtGlobal>
-
-#include "qt/core/browser/web_preferences.h"
-
-class OxideQWebPreferences;
-
-QT_BEGIN_NAMESPACE
-class QObject;
-QT_END_NAMESPACE
+#include <stdint.h>
 
 namespace oxide {
-class WebPreferences;
-}
+namespace qt {
 
-class OxideQWebPreferencesPrivate {
- public:
-  ~OxideQWebPreferencesPrivate();
+typedef uintptr_t WebContentsID;
 
-  static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
+} // namespace qt
+} // namespace oxide
 
-  oxide::WebPreferences* GetPrefs() const;
-
-  void AdoptPrefs(oxide::WebPreferences* prefs);
-
- private:
-  friend class OxideQWebPreferences;
-  OxideQWebPreferencesPrivate(OxideQWebPreferences* q);
-
-  oxide::qt::WebPreferences preferences_;
-};
-
-#endif // _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTENTS_ID_H_

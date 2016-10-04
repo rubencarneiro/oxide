@@ -19,26 +19,32 @@
 #define _OXIDE_QT_CORE_BROWSER_WEB_PREFERENCES_H_
 
 #include "base/macros.h"
-
-#include "shared/browser/oxide_web_preferences.h"
+#include "base/memory/ref_counted.h"
 
 class OxideQWebPreferences;
 
 namespace oxide {
+
+class WebPreferences;
+
 namespace qt {
 
-class WebPreferences final : public oxide::WebPreferences {
+class WebPreferences {
  public:
   WebPreferences(OxideQWebPreferences* api_handle = nullptr);
   ~WebPreferences();
 
+  static WebPreferences* FromPrefs(oxide::WebPreferences* prefs);
+
   OxideQWebPreferences* api_handle() const { return api_handle_; }
 
-  // oxide::WebPreferences implementation
-  void Destroy() final;
-  oxide::WebPreferences* Clone() const final;
+  oxide::WebPreferences* GetPrefs() const;
+
+  void AdoptPrefs(oxide::WebPreferences* prefs);
 
  private:
+  scoped_refptr<oxide::WebPreferences> prefs_;
+
   OxideQWebPreferences* api_handle_;
 
   DISALLOW_COPY_AND_ASSIGN(WebPreferences);

@@ -28,6 +28,7 @@
 #include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/oxide_script_message_target.h"
+#include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/common/oxide_shared_export.h"
 
 class GURL;
@@ -110,9 +111,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
                                    int32_t line_no,
                                    const base::string16& source_id);
 
-  // TODO(chrisccoulson): Make WebPreferences ref-counted and get rid of this
-  virtual void WebPreferencesDestroyed();
-
   // TODO(chrisccoulson): Merge with SwapCompositorFrame
   // TODO(chrisccoulson): Get rid of |old| and replace with |changed_flags|
   virtual void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old);
@@ -134,7 +132,7 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
   virtual WebView* CreateNewWebView(
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
-      std::unique_ptr<content::WebContents> contents);
+      WebContentsUniquePtr contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderFrameHost* rfh);
 

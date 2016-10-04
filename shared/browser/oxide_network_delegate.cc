@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,7 @@ int NetworkDelegate::OnBeforeURLRequest(
     return net::OK;
   }
 
-  bool do_not_track = context_->GetDoNotTrack();
+  bool do_not_track = context_->GetUserAgentSettings()->GetDoNotTrack();
   if (do_not_track) {
     request->SetExtraRequestHeaderByName(
         kDoNotTrackHeaderName, "1", true);

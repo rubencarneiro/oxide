@@ -33,7 +33,6 @@
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
@@ -45,7 +44,7 @@
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
-#include "shared/browser/oxide_web_preferences_observer.h"
+#include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/common/oxide_message_enums.h"
 #include "shared/common/oxide_shared_export.h"
 
@@ -73,18 +72,17 @@ class FilePicker;
 class JavaScriptDialog;
 class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
+class WebContentsClient;
+class WebContentsHelper;
 class WebContentsViewClient;
 class WebFrame;
-class WebPreferences;
 class WebView;
 class WebViewClient;
-class WebContentsHelper;
 
 // This is the main webview class. Implementations should customize this by
 // providing an implementation of WebViewClient
 class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                     private CompositorObserver,
-                                    private WebPreferencesObserver,
                                     private content::NotificationObserver,
                                     private content::WebContentsDelegate,
                                     private content::WebContentsObserver,
@@ -95,8 +93,9 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
     CommonParams();
     ~CommonParams();
 
-    WebViewClient* client;
-    WebContentsViewClient* view_client;
+    WebViewClient* client = nullptr;
+    WebContentsClient* contents_client = nullptr;
+    WebContentsViewClient* view_client = nullptr;
   };
 
   struct CreateParams {
@@ -115,7 +114,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   WebView(const CommonParams& common_params,
           const CreateParams& create_params);
   WebView(const CommonParams& common_params,
-          std::unique_ptr<content::WebContents> contents);
+          WebContentsUniquePtr contents);
 
   ~WebView() override;
 
@@ -154,10 +153,12 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   bool IsLoading() const;
 
-  void UpdateWebPreferences();
-
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
+
+  // Accessors for various helpers - clients of these should note that they can
+  // all outlive WebView (the lifetime of them is tied to WebContents)
+  WebContentsHelper* GetWebContentsHelper() const;
 
   int GetNavigationEntryCount() const;
   int GetNavigationCurrentEntryIndex() const;
@@ -169,9 +170,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebFrame* GetRootFrame() const;
 
-  WebPreferences* GetWebPreferences();
-  void SetWebPreferences(WebPreferences* prefs);
-
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
     return compositor_frame_metadata_;
   }
@@ -180,26 +178,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   gfx::Size GetCompositorFrameContentSize();
   gfx::Size GetCompositorFrameViewportSize();
 
-  float GetLocationBarOffset() const;
-  float GetLocationBarContentOffset() const;
-
   ContentType blocked_content() const { return blocked_content_; }
-
-  float GetLocationBarHeight() const;
-  void SetLocationBarHeight(float height);
-
-  blink::WebTopControlsState location_bar_constraints() const {
-    return location_bar_constraints_;
-  }
-  void SetLocationBarConstraints(blink::WebTopControlsState constraints);
-
-  bool location_bar_animated() const { return location_bar_animated_; }
-  void set_location_bar_animated(bool animated) {
-    location_bar_animated_ = animated;
-  }
-
-  void ShowLocationBar(bool animate);
-  void HideLocationBar(bool animate);
 
   void SetCanTemporarilyDisplayInsecureContent(bool allow);
   void SetCanTemporarilyRunInsecureContent(bool allow);
@@ -235,11 +214,11 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
  private:
   WebView(WebViewClient* client);
 
-  void CommonInit(std::unique_ptr<content::WebContents> contents,
-                  WebContentsViewClient* view_client);
+  void CommonInit(WebContentsUniquePtr contents,
+                  WebContentsViewClient* view_client,
+                  WebContentsClient* contents_client);
 
   RenderWidgetHostView* GetRenderWidgetHostView() const;
-  content::RenderViewHost* GetRenderViewHost() const;
   content::RenderWidgetHost* GetRenderWidgetHost() const;
 
   gfx::Size GetViewSizeDip() const;
@@ -255,9 +234,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void OnDidBlockDisplayingInsecureContent();
   void OnDidBlockRunningInsecureContent();
 
-  void InitializeTopControlsForHost(content::RenderViewHost* rvh,
-                                    bool initial_host);
-
   void DispatchPrepareToCloseResponse(bool proceed);
 
   void MaybeCancelFullscreenMode();
@@ -272,9 +248,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   // CompositorObserver implementation
   void CompositorWillRequestSwapFrame() override;
-
-  // WebPreferencesObserver implementation
-  void WebPreferencesDestroyed() override;
 
   // content::NotificationObserver implementation
   void Observe(int type,
@@ -351,12 +324,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) override;
 
   // content::WebContentsObserver implementation
-  void RenderFrameForInterstitialPageCreated(
-      content::RenderFrameHost* render_frame_host) override;
   void RenderViewReady() override;
   void RenderProcessGone(base::TerminationStatus status) override;
-  void RenderViewHostChanged(content::RenderViewHost* old_host,
-                             content::RenderViewHost* new_host) override;
   void DidStartLoading() override;
   void DidStopLoading() override;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,
@@ -398,14 +367,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebViewClient* client_;
 
-  struct WebContentsDeleter {
-    void operator()(content::WebContents* contents);
-  };
-  typedef std::unique_ptr<content::WebContents, WebContentsDeleter>
-      WebContentsScopedPtr;
-
-  WebContentsScopedPtr web_contents_;
-  WebContentsHelper* web_contents_helper_;
+  WebContentsUniquePtr web_contents_;
 
   content::NotificationRegistrar registrar_;
 
@@ -414,10 +376,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   ContentType blocked_content_;
 
   cc::CompositorFrameMetadata compositor_frame_metadata_;
-
-  int location_bar_height_;
-  blink::WebTopControlsState location_bar_constraints_;
-  bool location_bar_animated_;
 
   GURL target_url_;
 

@@ -18,13 +18,13 @@
 #ifndef _OXIDE_QT_CORE_API_NEW_VIEW_REQUEST_P_H_
 #define _OXIDE_QT_CORE_API_NEW_VIEW_REQUEST_P_H_
 
-#include <memory>
 #include <QRect>
 #include <QtGlobal>
 
 #include "base/memory/weak_ptr.h"
 
 #include "qt/core/api/oxideqnewviewrequest.h"
+#include "shared/browser/web_contents_unique_ptr.h"
 
 namespace content {
 class WebContents;
@@ -40,7 +40,7 @@ class OxideQNewViewRequestPrivate final {
 
   static OxideQNewViewRequestPrivate* get(OxideQNewViewRequest* q);
 
-  std::unique_ptr<content::WebContents> contents;
+  oxide::WebContentsUniquePtr contents;
   base::WeakPtr<oxide::WebView> view;
 
  private:

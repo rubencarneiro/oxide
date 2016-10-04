@@ -19,10 +19,18 @@ TestWebView {
   }
 
   Component {
-    id: webViewFactory
+    id: webViewFactoryImpl1
     TestWebView {}
   }
 
+  Component {
+    id: webViewFactoryImpl2
+    TestWebView {
+      preferences.canRunInsecureContent: false
+    }
+  }
+
+  property var webViewFactory: null
   property var created: null
 
   onNewViewRequested: {
@@ -75,7 +83,7 @@ TestWebView {
     // be properly shared, but QML requires objects to have a parent if we
     // don't want them collected, so, bah
     function test_WebView_preferences2() {
-      var webview2 = webViewFactory.createObject(null, {});
+      var webview2 = webViewFactoryImpl1.createObject(null, {});
       webView.preferences = webview2.preferences;
 
       compare(spy.count, 1,
@@ -90,6 +98,7 @@ TestWebView {
       TestSupport.destroyQObjectNow(webview2);
 
       compare(spy.count, 2, "Preferences should have been destroyed");
+      verify(webView.preferences);
       compare(TestSupport.qObjectParent(webView.preferences), webView,
               "WebView should own the replacement preferences");
       compare(webView.preferences.javascriptEnabled, !oldSetting,
@@ -99,7 +108,7 @@ TestWebView {
     // Test that when we share preferences with another view and then delete it,
     // the preferences stay intact
     function test_WebView_preferences3() {
-      var webview2 = webViewFactory.createObject(null, {preferences: webView.preferences});
+      var webview2 = webViewFactoryImpl1.createObject(null, {preferences: webView.preferences});
 
       compare(webView.preferences, webview2.preferences);
       compare(TestSupport.qObjectParent(webview2.preferences), webView);
@@ -123,9 +132,10 @@ TestWebView {
       compare(TestSupport.qObjectParent(webView.preferences), webView);
     }
 
-    // Test that new webviews created via WebView.newViewRequested inherit the opener
-    // preferences (is this actually the expected behaviour?)
+    // Test that new webviews created via WebView.newViewRequested get a clone of the
+    // opener preferences if no others are provided
     function test_WebView_preferences5() {
+      webView.webViewFactory = webViewFactoryImpl1;
       webView.context.popupBlockerEnabled = false;
 
       webView.preferences.allowScriptsToCloseWindows = !webView.preferences.allowScriptsToCloseWindows;
@@ -149,6 +159,36 @@ TestWebView {
               webView.preferences.localStorageEnabled);
       compare(TestSupport.qObjectParent(created.preferences), created,
               "WebView should own its default preferences");
+    }
+
+    function test_WebView_preferences6() {
+      webView.webViewFactory = webViewFactoryImpl2;
+      webView.context.popupBlockerEnabled = false;
+
+      webView.preferences.allowScriptsToCloseWindows = !webView.preferences.allowScriptsToCloseWindows;
+      webView.preferences.canDisplayInsecureContent = !webView.preferences.canDisplayInsecureContent;
+      webView.preferences.localStorageEnabled = !webView.preferences.localStorageEnabled;
+
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.getTestApi().evaluateCode("window.open(\"empty.html\");", true);
+      TestUtils.waitFor(function() { return webView.created != null; });
+
+      webView.context.popupBlockerEnabled = true;
+
+      verify(webView.preferences != created.preferences);
+      verify(created.preferences.allowScriptsToCloseWidows !=
+             webView.preferences.allowScriptsToCloseWindows);
+      verify(created.preferences.allowScriptsToCloseWindows !=
+             webView.preferences.allowScriptsToCloseWindows);
+      verify(created.preferences.canDisplayInsecureContent !=
+             webView.preferences.canDisplayInsecureContent);
+      verify(created.preferences.localStorageEnabled !=
+             webView.preferences.localStorageEnabled);
+      compare(TestSupport.qObjectParent(created.preferences), created,
+              "WebView should own its default preferences");
+
     }
   }
 }

@@ -29,6 +29,7 @@
 #include <QUrl>
 
 #include "qt/core/glue/oxide_qt_proxy_base.h"
+#include "qt/core/glue/web_contents_id.h"
 
 class OxideQFindController;
 class OxideQNewViewRequest;
@@ -55,12 +56,6 @@ enum RestoreType {
   RESTORE_LAST_SESSION_EXITED_CLEANLY,
   RESTORE_LAST_SESSION_CRASHED,
   RESTORE_CURRENT_SESSION,
-};
-
-enum LocationBarMode {
-  LOCATION_BAR_MODE_AUTO,
-  LOCATION_BAR_MODE_SHOWN,
-  LOCATION_BAR_MODE_HIDDEN
 };
 
 enum WebProcessStatus {
@@ -107,9 +102,12 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
                               QObject* handle,
                               OxideQFindController* find_controller,
                               OxideQSecurityStatus* security_status,
-                              OxideQNewViewRequest* new_view_request);
+                              OxideQNewViewRequest* new_view_request,
+                              OxideQWebPreferences* initial_prefs);
 
   virtual ~WebViewProxy();
+
+  virtual WebContentsID webContentsID() const = 0;
 
   virtual QUrl url() const = 0;
   virtual void setUrl(const QUrl& url) = 0;
@@ -154,7 +152,7 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual OxideQWebPreferences* preferences() = 0;
   virtual void setPreferences(OxideQWebPreferences* prefs) = 0;
 
-  virtual void updateWebPreferences() = 0;
+  virtual void syncWebPreferences() = 0;
 
   virtual QPoint compositorFrameScrollOffset() = 0;
   virtual QSize compositorFrameContentSize() = 0;
@@ -166,17 +164,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual ContentTypeFlags blockedContent() const = 0;
 
   virtual void prepareToClose() = 0;
-
-  virtual int locationBarHeight() const = 0;
-  virtual void setLocationBarHeight(int height) = 0;
-  virtual int locationBarOffset() const = 0;
-  virtual int locationBarContentOffset() const = 0;
-  virtual LocationBarMode locationBarMode() const = 0;
-  virtual void setLocationBarMode(LocationBarMode mode) = 0;
-  virtual bool locationBarAnimated() const = 0;
-  virtual void setLocationBarAnimated(bool animated) = 0;
-  virtual void locationBarShow(bool animate) = 0;
-  virtual void locationBarHide(bool animate) = 0;
 
   virtual WebProcessStatus webProcessStatus() const = 0;
 

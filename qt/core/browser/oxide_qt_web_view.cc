@@ -46,7 +46,6 @@
 #include "content/public/common/page_zoom.h"
 #include "net/base/net_errors.h"
 #include "third_party/WebKit/public/platform/WebDragOperation.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
@@ -85,6 +84,7 @@
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/ssl/oxide_certificate_error.h"
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
+#include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_qt_contents_view.h"
@@ -98,7 +98,8 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
-#include "oxide_qt_web_preferences.h"
+#include "web_contents_id_tracker.h"
+#include "web_preferences.h"
 
 namespace oxide {
 namespace qt {
@@ -106,6 +107,7 @@ namespace qt {
 using oxide::CertificateErrorDispatcher;
 using oxide::FullscreenHelper;
 using oxide::PermissionRequestDispatcher;
+using oxide::WebContentsUniquePtr;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
 
@@ -147,21 +149,6 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
 static uint16_t STATE_SERIALIZER_VERSION = 1;
-
-blink::WebTopControlsState LocationBarModeToBlinkTopControlsState(
-    LocationBarMode mode) {
-  switch (mode) {
-    case LOCATION_BAR_MODE_AUTO:
-      return blink::WebTopControlsBoth;
-    case LOCATION_BAR_MODE_SHOWN:
-      return blink::WebTopControlsShown;
-    case LOCATION_BAR_MODE_HIDDEN:
-      return blink::WebTopControlsHidden;
-    default:
-      NOTREACHED();
-      return blink::WebTopControlsBoth;
-  }
-}
 
 void CreateRestoreEntriesFromRestoreState(
     const QByteArray& state,
@@ -248,7 +235,6 @@ WebView::WebView(WebViewProxyClient* client,
                  QObject* handle)
     : contents_view_(new ContentsView(view_client, handle)),
       client_(client),
-      location_bar_height_(0),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -280,16 +266,6 @@ void WebView::CommonInit(OxideQFindController* find_controller,
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
   web_view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
   client_->CreateWebFrame(root_frame);
-}
-
-void WebView::EnsurePreferences() {
-  if (web_view_->GetWebPreferences()) {
-    return;
-  }
-
-  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(p)->preferences());
 }
 
 void WebView::OnZoomLevelChanged(
@@ -440,13 +416,6 @@ bool WebView::AddMessageToConsole(
   return true;
 }
 
-void WebView::WebPreferencesDestroyed() {
-  OxideQWebPreferences* p = new OxideQWebPreferences(handle());
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(p)->preferences());
-  client_->WebPreferencesReplaced();
-}
-
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(FrameMetadataChangeFlags)
 
 void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
@@ -470,13 +439,6 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
           web_view_->compositor_frame_metadata().scrollable_viewport_size.height()) {
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
   }
-  if ((old.top_controls_height !=
-       web_view_->compositor_frame_metadata().top_controls_height) ||
-      (old.top_controls_shown_ratio !=
-       web_view_->compositor_frame_metadata().top_controls_shown_ratio)) {
-    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
-  }
   if (old.device_scale_factor !=
           web_view_->compositor_frame_metadata().device_scale_factor ||
       old.page_scale_factor !=
@@ -484,8 +446,6 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
     flags |= FRAME_METADATA_CHANGE_SCROLL_OFFSET;
     flags |= FRAME_METADATA_CHANGE_CONTENT;
     flags |= FRAME_METADATA_CHANGE_VIEWPORT;
-    flags |= FRAME_METADATA_CHANGE_CONTROLS_OFFSET;
-    flags |= FRAME_METADATA_CHANGE_CONTENT_OFFSET;
   }
 
   client_->FrameMetadataUpdated(flags);
@@ -553,7 +513,7 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
 oxide::WebView* WebView::CreateNewWebView(
     const gfx::Rect& initial_pos,
     WindowOpenDisposition disposition,
-    std::unique_ptr<content::WebContents> contents) {
+    WebContentsUniquePtr contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
@@ -721,13 +681,9 @@ void WebView::ExitFullscreenMode() {
   client_->ToggleFullscreenMode(false);
 }
 
-void WebView::OnDisplayPropertiesChanged(const display::Display& display) {
-  if (display.id() != web_view_->GetDisplay().id()) {
-    return;
-  }
-
-  // Recalculate location bar height if scale changed
-  setLocationBarHeight(location_bar_height_);
+WebContentsID WebView::webContentsID() const {
+  return WebContentsIDTracker::GetInstance()->GetIDForWebContents(
+      web_view_->GetWebContents());
 }
 
 QUrl WebView::url() const {
@@ -868,36 +824,22 @@ QByteArray WebView::currentState() const {
 }
 
 OxideQWebPreferences* WebView::preferences() {
-  EnsurePreferences();
-  return static_cast<WebPreferences*>(web_view_->GetWebPreferences())->api_handle();
+  WebPreferences* prefs =
+      WebPreferences::FromPrefs(
+          web_view_->GetWebContentsHelper()->GetPreferences());
+  return prefs ? prefs->api_handle() : nullptr;
 }
 
 void WebView::setPreferences(OxideQWebPreferences* prefs) {
-  OxideQWebPreferences* old = nullptr;
-  if (WebPreferences* o = static_cast<WebPreferences *>(web_view_->GetWebPreferences())) {
-    old = o->api_handle();
+  oxide::WebPreferences* p = nullptr;
+  if (prefs) {
+    p = OxideQWebPreferencesPrivate::get(prefs)->GetPrefs();
   }
-
-  if (!prefs) {
-    prefs = new OxideQWebPreferences(handle());
-  } else if (!prefs->parent()) {
-    prefs->setParent(handle());
-  }
-
-  web_view_->SetWebPreferences(
-      OxideQWebPreferencesPrivate::get(prefs)->preferences());
-
-  if (!old) {
-    return;
-  }
-
-  if (old->parent() == handle()) {
-    delete old;
-  }
+  web_view_->GetWebContentsHelper()->SetPreferences(p);
 }
 
-void WebView::updateWebPreferences() {
-  web_view_->UpdateWebPreferences();
+void WebView::syncWebPreferences() {
+  web_view_->GetWebContentsHelper()->SyncWebPreferences();
 }
 
 QPoint WebView::compositorFrameScrollOffset() {
@@ -948,62 +890,6 @@ ContentTypeFlags WebView::blockedContent() const {
 
 void WebView::prepareToClose() {
   web_view_->PrepareToClose();
-}
-
-int WebView::locationBarHeight() const {
-  return location_bar_height_;
-}
-
-void WebView::setLocationBarHeight(int height) {
-  location_bar_height_ = height;
-  web_view_->SetLocationBarHeight(
-      DpiUtils::ConvertQtPixelsToChromium(height,
-                                          contents_view_->GetScreen()));
-}
-
-int WebView::locationBarOffset() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarOffset(), contents_view_->GetScreen());
-}
-
-int WebView::locationBarContentOffset() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(
-      web_view_->GetLocationBarContentOffset(), contents_view_->GetScreen());
-}
-
-LocationBarMode WebView::locationBarMode() const {
-  switch (web_view_->location_bar_constraints()) {
-    case blink::WebTopControlsShown:
-      return LOCATION_BAR_MODE_SHOWN;
-    case blink::WebTopControlsHidden:
-      return LOCATION_BAR_MODE_HIDDEN;
-    case blink::WebTopControlsBoth:
-      return LOCATION_BAR_MODE_AUTO;
-    default:
-      NOTREACHED();
-      return LOCATION_BAR_MODE_AUTO;
-  }
-}
-
-void WebView::setLocationBarMode(LocationBarMode mode) {
-  web_view_->SetLocationBarConstraints(
-      LocationBarModeToBlinkTopControlsState(mode));
-}
-
-bool WebView::locationBarAnimated() const {
-  return web_view_->location_bar_animated();
-}
-
-void WebView::setLocationBarAnimated(bool animated) {
-  web_view_->set_location_bar_animated(animated);
-}
-
-void WebView::locationBarShow(bool animate) {
-  web_view_->ShowLocationBar(animate);
-}
-
-void WebView::locationBarHide(bool animate) {
-  web_view_->HideLocationBar(animate);
 }
 
 WebProcessStatus WebView::webProcessStatus() const {
@@ -1140,6 +1026,7 @@ WebView::WebView(WebViewProxyClient* client,
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
+  common_params.contents_client = this;
 
   oxide::WebView::CreateParams create_params;
   create_params.context = context->GetContext();
@@ -1160,8 +1047,6 @@ WebView::WebView(WebViewProxyClient* client,
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
   CommonInit(find_controller, security_status);
-
-  EnsurePreferences();
 }
 
 // static
@@ -1171,7 +1056,8 @@ WebView* WebView::CreateFromNewViewRequest(
     QObject* handle,
     OxideQFindController* find_controller,
     OxideQSecurityStatus* security_status,
-    OxideQNewViewRequest* new_view_request) {
+    OxideQNewViewRequest* new_view_request,
+    OxideQWebPreferences* initial_prefs) {
   OxideQNewViewRequestPrivate* rd =
       OxideQNewViewRequestPrivate::get(new_view_request);
   if (rd->view) {
@@ -1183,17 +1069,19 @@ WebView* WebView::CreateFromNewViewRequest(
   oxide::WebView::CommonParams params;
   params.client = new_view;
   params.view_client = new_view->contents_view_.get();
+  params.contents_client = new_view;
   new_view->web_view_.reset(new oxide::WebView(params, std::move(rd->contents)));
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
   new_view->CommonInit(find_controller, security_status);
 
-  OxideQWebPreferences* p =
-      static_cast<WebPreferences*>(
-        new_view->web_view_->GetWebPreferences())->api_handle();
-  if (!p->parent()) {
-    p->setParent(new_view->handle());
+  if (initial_prefs) {
+    oxide::WebPreferences* p =
+        new_view->web_view_->GetWebContentsHelper()->GetPreferences();
+    DCHECK(!WebPreferences::FromPrefs(p));
+
+    OxideQWebPreferencesPrivate::get(initial_prefs)->AdoptPrefs(p);
   }
 
   return new_view;

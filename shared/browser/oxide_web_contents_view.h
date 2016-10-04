@@ -70,6 +70,7 @@ class TouchSelectionController;
 
 namespace oxide {
 
+class ChromeController;
 class Compositor;
 class CompositorFrameHandle;
 class DragSource;
@@ -145,6 +146,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void ScreenChanged();
 
   void HideTouchSelectionController();
+
+  ChromeController* GetChromeController();
 
  private:
   WebContentsView(content::WebContents* web_contents);
@@ -241,11 +244,11 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void CursorChanged(RenderWidgetHostView* view) override;
   gfx::Size GetViewSizeInPixels() const override;
   bool IsFullscreen() const override;
-  float GetLocationBarHeight() const override;
+  float GetTopControlsHeight() override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(RenderWidgetHostView* view,
                              bool handle_drag_in_progress,
-                             bool insertion_handle_tapped) const override;
+                             bool insertion_handle_tapped) override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
   // ScreenObserver implementation
@@ -277,6 +280,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   RenderWidgetHostID interstitial_rwh_id_;
 
   content::RenderFrameHost* render_frame_message_source_;
+
+  // Avoid calling ChromeController::FromWebContentsView on every frame
+  ChromeController* chrome_controller_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

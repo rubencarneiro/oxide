@@ -75,8 +75,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickLocationBarController : public QObject {
   void contentOffsetChanged();
 
  private:
-  friend class OxideQQuickWebView;
-  Q_DECL_HIDDEN OxideQQuickLocationBarController(OxideQQuickWebView* view);
+  Q_DECL_HIDDEN OxideQQuickLocationBarController();
 
   QScopedPointer<OxideQQuickLocationBarControllerPrivate> d_ptr;
 };

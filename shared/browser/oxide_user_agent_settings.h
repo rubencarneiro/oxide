@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "base/macros.h"
+#include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "base/threading/non_thread_safe.h"
 #include "components/keyed_service/core/keyed_service.h"
@@ -44,6 +45,7 @@ class BrowserContext;
 class BrowserContextIOData;
 class UserAgentSettings;
 class UserAgentSettingsFactory;
+class UserAgentSettingsObserver;
 
 // IO thread part of UserAgentSettings (see below) - accessed from
 // BrowserContextIOData
@@ -66,6 +68,10 @@ class UserAgentSettingsIOData {
   // Get the override user agent string for the specified |url|
   std::string GetUserAgentOverrideForURL(const GURL& url);
 
+  bool IsPopupBlockerEnabled() const;
+
+  bool GetDoNotTrack() const;
+
  private:
   friend class UserAgentSettings;
 
@@ -74,13 +80,17 @@ class UserAgentSettingsIOData {
 
   BrowserContextIOData* context_;
 
-  // Used to protect user_agent_ and accept_langs_ when being modified on
-  // the UI thread
+  // Used to protect user_agent_, accept_langs_, popup_blocker_enabled_ and
+  // do_not_track_ when being modified on the UI thread
   mutable base::Lock lock_;
 
   std::string user_agent_;
 
   std::string accept_langs_;
+
+  bool popup_blocker_enabled_;
+
+  bool do_not_track_;
 
   UserAgentOverrideSet user_agent_override_set_;
 
@@ -140,8 +150,17 @@ class OXIDE_SHARED_EXPORT UserAgentSettings : public KeyedService,
   // via synchronous IPC
   void SetLegacyUserAgentOverrideEnabled(bool enabled);
 
+  // Get and set whether the popup blocker is enabled
+  bool IsPopupBlockerEnabled() const;
+  void SetIsPopupBlockerEnabled(bool enabled);
+
+  // Get and set whether to send the Do Not Track (DNT) HTTP header
+  bool GetDoNotTrack() const;
+  void SetDoNotTrack(bool dnt);
+
  private:
   friend class UserAgentSettingsFactory;
+  friend class UserAgentSettingsObserver; // for {Add,Remove}Observer
   typedef std::set<content::RenderProcessHost*> HostSet;
 
   UserAgentSettings(BrowserContext* context);
@@ -153,7 +172,12 @@ class OXIDE_SHARED_EXPORT UserAgentSettings : public KeyedService,
   void UpdateLegacyUserAgentOverrideEnabledForHost(
       content::RenderProcessHost* host);
 
+  void AddObserver(UserAgentSettingsObserver* observer);
+  void RemoveObserver(UserAgentSettingsObserver* observer);
+
   BrowserContext* context_;
+
+  base::ObserverList<UserAgentSettingsObserver> observers_;
 
   std::string product_;
 

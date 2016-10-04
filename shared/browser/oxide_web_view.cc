@@ -49,7 +49,6 @@
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
 #include "content/public/common/url_constants.h"
-#include "content/public/common/web_preferences.h"
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/ssl_info.h"
@@ -73,6 +72,7 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
+#include "chrome_controller.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
@@ -84,12 +84,11 @@
 #include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
-#include "oxide_web_contents_unloader.h"
+#include "oxide_user_agent_settings.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_frame.h"
-#include "oxide_web_preferences.h"
 #include "oxide_web_view_client.h"
 #include "web_contents_helper.h"
 
@@ -123,9 +122,7 @@ void FillLoadURLParamsFromOpenURLParams(
   }
 }
 
-void CreateHelpers(content::WebContents* contents,
-                   content::WebContents* opener = nullptr) {
-  WebContentsHelper::CreateForWebContents(contents, opener);
+void CreateHelpers(content::WebContents* contents) {
   CertificateErrorDispatcher::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
   PermissionRequestDispatcher::CreateForWebContents(contents);
@@ -137,6 +134,7 @@ void CreateHelpers(content::WebContents* contents,
   WebFrameTree::CreateForWebContents(contents);
   FaviconHelper::CreateForWebContents(contents);
   FullscreenHelper::CreateForWebContents(contents);
+  ChromeController::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
@@ -145,15 +143,9 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
 }
 
-void WebView::WebContentsDeleter::operator()(content::WebContents* contents) {
-  WebContentsUnloader::GetInstance()->Unload(base::WrapUnique(contents));
-};
+WebView::CommonParams::CommonParams() = default;
 
-WebView::CommonParams::CommonParams()
-    : client(nullptr),
-      view_client(nullptr) {}
-
-WebView::CommonParams::~CommonParams() {}
+WebView::CommonParams::~CommonParams() = default;
 
 WebView::CreateParams::CreateParams()
     : context(nullptr),
@@ -165,19 +157,16 @@ WebView::CreateParams::~CreateParams() {}
 
 WebView::WebView(WebViewClient* client)
     : client_(client),
-      web_contents_helper_(nullptr),
       blocked_content_(CONTENT_TYPE_NONE),
-      location_bar_height_(0),
-      location_bar_constraints_(blink::WebTopControlsBoth),
-      location_bar_animated_(true),
       edit_flags_(blink::WebContextMenuData::CanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 }
 
-void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
-                         WebContentsViewClient* view_client) {
-  web_contents_.reset(contents.release());
+void WebView::CommonInit(WebContentsUniquePtr contents,
+                         WebContentsViewClient* view_client,
+                         WebContentsClient* contents_client) {
+  web_contents_ = std::move(contents);
 
   // Attach ourself to the WebContents
   web_contents_->SetDelegate(this);
@@ -185,13 +174,6 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
                              new UnownedUserData<WebView>(this));
 
   content::WebContentsObserver::Observe(web_contents_.get());
-
-  // Set the initial WebPreferences. This has to happen after attaching
-  // ourself to the WebContents, as the pref update needs to call back in
-  // to us (via CanCreateWindows)
-  web_contents_helper_ =
-      WebContentsHelper::FromWebContents(web_contents_.get());
-  web_contents_helper_->WebContentsAdopted();
 
   registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -204,6 +186,9 @@ void WebView::CommonInit(std::unique_ptr<content::WebContents> contents,
       base::Bind(&WebView::EditingCapabilitiesChanged,
                  base::Unretained(this)));
 
+  DCHECK(GetWebContentsHelper());
+  GetWebContentsHelper()->set_client(contents_client);
+
   CompositorObserver::Observe(view->GetCompositor());
 }
 
@@ -215,10 +200,6 @@ RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
   }
 
   return static_cast<RenderWidgetHostView *>(rwhv);
-}
-
-content::RenderViewHost* WebView::GetRenderViewHost() const {
-  return web_contents_->GetRenderViewHost();
 }
 
 content::RenderWidgetHost* WebView::GetRenderWidgetHost() const {
@@ -282,23 +263,6 @@ void WebView::OnDidBlockRunningInsecureContent() {
   blocked_content_ |= CONTENT_TYPE_MIXED_SCRIPT;
 
   client_->ContentBlocked();
-}
-
-void WebView::InitializeTopControlsForHost(content::RenderViewHost* rvh,
-                                           bool initial_host) {
-  // Show the location bar if this is the initial RVH and the constraints
-  // are set to blink::WebTopControlsBoth
-  blink::WebTopControlsState current = location_bar_constraints_;
-  if (initial_host &&
-      location_bar_constraints_ == blink::WebTopControlsBoth) {
-    current = blink::WebTopControlsShown;
-  }
-
-  rvh->Send(
-      new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                          location_bar_constraints_,
-                                          current,
-                                          false));
 }
 
 void WebView::DispatchPrepareToCloseResponse(bool proceed) {
@@ -365,19 +329,7 @@ void WebView::CompositorWillRequestSwapFrame() {
       WebContentsView::FromWebContents(web_contents_.get())
         ->committed_frame_metadata().Clone();
 
-  if (IsFullscreen()) {
-    // Ensure that the location bar is always hidden in fullscreen. This
-    // is required because fullscreen RenderWidgets don't have a mechanism
-    // to control the location bar height
-    compositor_frame_metadata_.top_controls_height = location_bar_height_;
-    compositor_frame_metadata_.top_controls_shown_ratio = 0.f;
-  }
-
   client_->FrameMetadataUpdated(old);
-}
-
-void WebView::WebPreferencesDestroyed() {
-  client_->WebPreferencesDestroyed();
 }
 
 void WebView::Observe(int type,
@@ -426,11 +378,13 @@ content::WebContents* WebView::OpenURLFromTab(
   }
 
   // Block popups
+  UserAgentSettings* ua_settings =
+      UserAgentSettings::Get(web_contents_->GetBrowserContext());
   if ((params.disposition == WindowOpenDisposition::NEW_FOREGROUND_TAB ||
        params.disposition == WindowOpenDisposition::NEW_BACKGROUND_TAB ||
        params.disposition == WindowOpenDisposition::NEW_WINDOW ||
        params.disposition == WindowOpenDisposition::NEW_POPUP) &&
-      !params.user_gesture && GetBrowserContext()->IsPopupBlockerEnabled()) {
+      !params.user_gesture && ua_settings->IsPopupBlockerEnabled()) {
     return nullptr;
   }
 
@@ -495,14 +449,9 @@ content::WebContents* WebView::OpenURLFromTab(
       web_contents_->GetMainFrame()->GetRoutingID();
   contents_params.opener_suppressed = opener_suppressed;
 
-  std::unique_ptr<content::WebContents> contents(
-      content::WebContents::Create(contents_params));
-  if (!contents) {
-    LOG(ERROR) << "Failed to create new WebContents for navigation";
-    return nullptr;
-  }
-
-  CreateHelpers(contents.get(), web_contents_.get());
+  WebContentsUniquePtr contents =
+      WebContentsHelper::CreateWebContents(contents_params);
+  CreateHelpers(contents.get());
 
   WebView* new_view =
       client_->CreateNewWebView(GetViewBoundsDip(),
@@ -595,7 +544,8 @@ void WebView::WebContentsCreated(content::WebContents* source,
   DCHECK_VALID_SOURCE_CONTENTS
   DCHECK(!WebView::FromWebContents(new_contents));
 
-  CreateHelpers(new_contents, web_contents_.get());
+  WebContentsHelper::CreateForWebContents(new_contents, web_contents_.get());
+  CreateHelpers(new_contents);
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -617,7 +567,7 @@ void WebView::AddNewContents(content::WebContents* source,
     *was_blocked = true;
   }
 
-  std::unique_ptr<content::WebContents> contents(new_contents);
+  WebContentsUniquePtr contents(new_contents);
 
   WebView* new_view =
       client_->CreateNewWebView(
@@ -764,30 +714,12 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
 }
 
-void WebView::RenderFrameForInterstitialPageCreated(
-    content::RenderFrameHost* render_frame_host) {
-  if (render_frame_host->GetParent()) {
-    return;
-  }
-
-  InitializeTopControlsForHost(render_frame_host->GetRenderViewHost(), false);
-}
-
 void WebView::RenderViewReady() {
   client_->CrashedStatusChanged();
 }
 
 void WebView::RenderProcessGone(base::TerminationStatus status) {
   client_->CrashedStatusChanged();
-}
-
-void WebView::RenderViewHostChanged(content::RenderViewHost* old_host,
-                                    content::RenderViewHost* new_host) {
-  if (!new_host) {
-    return;
-  }
-
-  InitializeTopControlsForHost(new_host, !old_host);
 }
 
 void WebView::DidStartLoading() {
@@ -964,12 +896,13 @@ WebView::WebView(const CommonParams& common_params,
       gfx::ToEnclosingRect(common_params.view_client->GetBounds()).size();
   content_params.initially_hidden = !common_params.view_client->IsVisible();
 
-  std::unique_ptr<content::WebContents> contents(
-      content::WebContents::Create(content_params));
-  CHECK(contents.get()) << "Failed to create WebContents";
+  WebContentsUniquePtr contents =
+      WebContentsHelper::CreateWebContents(content_params);
 
   CreateHelpers(contents.get());
-  CommonInit(std::move(contents), common_params.view_client);
+  CommonInit(std::move(contents),
+             common_params.view_client,
+             common_params.contents_client);
 
   if (create_params.restore_entries.size() > 0) {
     std::vector<std::unique_ptr<content::NavigationEntry>> entries =
@@ -984,28 +917,25 @@ WebView::WebView(const CommonParams& common_params,
 }
 
 WebView::WebView(const CommonParams& common_params,
-                 std::unique_ptr<content::WebContents> contents)
+                 WebContentsUniquePtr contents)
     : WebView(common_params.client) {
   CHECK(contents);
   DCHECK(contents->GetBrowserContext()) <<
          "Specified WebContents doesn't have a BrowserContext";
-  CHECK(WebContentsHelper::FromWebContents(contents.get())) <<
-       "Specified WebContents should already have a WebContentsHelper";
   CHECK(!FromWebContents(contents.get())) <<
         "Specified WebContents already belongs to a WebView";
 
-  CommonInit(std::move(contents), common_params.view_client);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (rvh) {
-    InitializeTopControlsForHost(rvh, true);
-  }
+  CommonInit(std::move(contents),
+             common_params.view_client,
+             common_params.contents_client);
 }
 
 WebView::~WebView() {
   WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
   view->SetClient(nullptr);
   view->set_editing_capabilities_changed_callback(base::Closure());
+
+  GetWebContentsHelper()->set_client(nullptr);
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);
@@ -1156,21 +1086,16 @@ bool WebView::IsLoading() const {
   return web_contents_->IsLoading();
 }
 
-void WebView::UpdateWebPreferences() {
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->OnWebkitPreferencesChanged();
-}
-
 BrowserContext* WebView::GetBrowserContext() const {
   return BrowserContext::FromContent(web_contents_->GetBrowserContext());
 }
 
 content::WebContents* WebView::GetWebContents() const {
   return web_contents_.get();
+}
+
+WebContentsHelper* WebView::GetWebContentsHelper() const {
+  return WebContentsHelper::FromWebContents(web_contents_.get());
 }
 
 int WebView::GetNavigationEntryCount() const {
@@ -1213,15 +1138,6 @@ WebFrame* WebView::GetRootFrame() const {
   return WebFrameTree::FromWebContents(web_contents_.get())->root_frame();
 }
 
-WebPreferences* WebView::GetWebPreferences() {
-  return web_contents_helper_->GetWebPreferences();
-}
-
-void WebView::SetWebPreferences(WebPreferences* prefs) {
-  WebPreferencesObserver::Observe(prefs);
-  web_contents_helper_->SetWebPreferences(prefs);
-}
-
 gfx::Point WebView::GetCompositorFrameScrollOffset() {
   // See https://launchpad.net/bugs/1336730
   const gfx::SizeF& viewport_size =
@@ -1260,82 +1176,6 @@ gfx::Size WebView::GetCompositorFrameViewportSize() {
                      compositor_frame_metadata().page_scale_factor);
 
   return gfx::Size(std::round(size.width()), std::round(size.height()));
-}
-
-float WebView::GetLocationBarOffset() const {
-  return GetLocationBarContentOffset() - GetLocationBarHeight();
-}
-
-float WebView::GetLocationBarContentOffset() const {
-  return compositor_frame_metadata().top_controls_height *
-         compositor_frame_metadata().top_controls_shown_ratio;
-}
-
-float WebView::GetLocationBarHeight() const {
-  return location_bar_height_;
-}
-
-void WebView::SetLocationBarHeight(float height) {
-  DCHECK_GE(height, 0);
-
-  if (height == location_bar_height_) {
-    return;
-  }
-
-  location_bar_height_ = height;
-
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
-    return;
-  }
-
-  host->WasResized();
-}
-
-void WebView::SetLocationBarConstraints(blink::WebTopControlsState constraints) {
-  if (constraints == location_bar_constraints_) {
-    return;
-  }
-
-  location_bar_constraints_ = constraints;
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsBoth,
-                                                location_bar_animated_));
-}
-
-void WebView::ShowLocationBar(bool animate) {
-  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsShown,
-                                                animate));
-}
-
-void WebView::HideLocationBar(bool animate) {
-  DCHECK_EQ(location_bar_constraints_, blink::WebTopControlsBoth);
-
-  content::RenderViewHost* rvh = GetRenderViewHost();
-  if (!rvh) {
-    return;
-  }
-
-  rvh->Send(new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
-                                                location_bar_constraints_,
-                                                blink::WebTopControlsHidden,
-                                                animate));
 }
 
 void WebView::SetCanTemporarilyDisplayInsecureContent(bool allow) {

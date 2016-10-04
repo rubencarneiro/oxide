@@ -57,6 +57,7 @@
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
 
 #include "oxideqquicklocationbarcontroller.h"
+#include "oxideqquicklocationbarcontroller_p.h"
 #include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickwebcontext.h"
@@ -104,9 +105,6 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
       : incognito(false),
         context(nullptr),
         restore_type(oxide::qt::RESTORE_LAST_SESSION_EXITED_CLEANLY),
-        location_bar_height(0),
-        location_bar_mode(oxide::qt::LOCATION_BAR_MODE_AUTO),
-        location_bar_animated(true),
         load_html(false),
         fullscreen(false) {}
 
@@ -116,9 +114,6 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
   QByteArray restore_state;
   oxide::qt::RestoreType restore_type;
   QList<QObject*> message_handlers;
-  int location_bar_height;
-  oxide::qt::LocationBarMode location_bar_mode;
-  bool location_bar_animated;
   bool load_html;
   QUrl url;
   QString html;
@@ -278,12 +273,6 @@ void OxideQQuickWebViewPrivate::ToggleFullscreenMode(bool enter) {
   Q_Q(OxideQQuickWebView);
 
   emit q->fullscreenRequested(enter);
-}
-
-void OxideQQuickWebViewPrivate::WebPreferencesReplaced() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->preferencesChanged();
 }
 
 void OxideQQuickWebViewPrivate::FrameRemoved(QObject* frame) {
@@ -452,17 +441,6 @@ void OxideQQuickWebViewPrivate::FrameMetadataUpdated(
     emit q->viewportWidthChanged();
     emit q->viewportHeightChanged();
   }
-
-  if (!location_bar_controller_) {
-    return;
-  }
-
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTROLS_OFFSET)) {
-    emit location_bar_controller_->offsetChanged();
-  }
-  if (f.testFlag(oxide::qt::FRAME_METADATA_CHANGE_CONTENT_OFFSET)) {
-    emit location_bar_controller_->contentOffsetChanged();
-  }
 }
 
 void OxideQQuickWebViewPrivate::DownloadRequested(
@@ -539,15 +517,30 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   Q_ASSERT(construct_props_.data());
 
   if (construct_props_->new_view_request) {
+    OxideQWebPreferences* initial_prefs = nullptr;
+    if (!construct_props_->preferences) {
+      initial_prefs = new OxideQWebPreferences(q);
+      attachPreferencesSignals(initial_prefs);
+    }
+
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
         find_controller_.data(),
         security_status_.data(),
-        construct_props_->new_view_request));
+        construct_props_->new_view_request,
+        initial_prefs));
   }
 
   if (!proxy_) {
+    Q_ASSERT(construct_props_->context);
+
+    if (!construct_props_->preferences) {
+      construct_props_->preferences = new OxideQWebPreferences(q);
+      attachPreferencesSignals(construct_props_->preferences);
+    }
+
     construct_props_->new_view_request = nullptr;
+
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
         find_controller_.data(),
@@ -558,11 +551,16 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
         construct_props_->restore_type));
   }
 
-  proxy_->messageHandlers().swap(construct_props_->message_handlers);
+  if (location_bar_controller_) {
+    OxideQQuickLocationBarControllerPrivate::get(location_bar_controller_.get())
+        ->init(proxy_->webContentsID());
+  }
 
-  proxy_->setLocationBarHeight(construct_props_->location_bar_height);
-  proxy_->setLocationBarMode(construct_props_->location_bar_mode);
-  proxy_->setLocationBarAnimated(construct_props_->location_bar_animated);
+  if (construct_props_->preferences) {
+    proxy_->setPreferences(construct_props_->preferences);
+  }
+
+  proxy_->messageHandlers().swap(construct_props_->message_handlers);
 
   if (!construct_props_->new_view_request) {
     if (construct_props_->load_html) {
@@ -573,10 +571,6 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
   }
 
   proxy_->setFullscreen(construct_props_->fullscreen);
-
-  if (construct_props_->preferences) {
-    proxy_->setPreferences(construct_props_->preferences);
-  }
 
   // Initialization created the root frame. This is the only time
   // this is emitted
@@ -717,6 +711,22 @@ void OxideQQuickWebViewPrivate::detachContextSignals(
                       q, SLOT(contextDestroyed()));
 }
 
+void OxideQQuickWebViewPrivate::attachPreferencesSignals(
+    OxideQWebPreferences* prefs) {
+  Q_Q(OxideQQuickWebView);
+
+  q->connect(prefs, SIGNAL(destroyed()), SLOT(preferencesDestroyed()));
+}
+
+void OxideQQuickWebViewPrivate::preferencesDestroyed() {
+  Q_Q(OxideQQuickWebView);
+
+  // At this point, the oxide::WebPreferences instance associated with the
+  // deleted OxideQWebPreferences has been orphaned. Provide a fresh preferences
+  // instance
+  q->setPreferences(nullptr);
+}
+
 OxideQQuickWebViewPrivate::~OxideQQuickWebViewPrivate() {}
 
 // static
@@ -732,87 +742,6 @@ void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
       qobject_cast<OxideQQuickWebViewAttached *>(
         qmlAttachedPropertiesObject<OxideQQuickWebView>(object));
   attached->setView(q);
-}
-
-int OxideQQuickWebViewPrivate::locationBarHeight() {
-  if (!proxy_) {
-    return construct_props_->location_bar_height;
-  }
-
-  return proxy_->locationBarHeight();
-}
-
-void OxideQQuickWebViewPrivate::setLocationBarHeight(int height) {
-  if (!proxy_) {
-    construct_props_->location_bar_height = height;
-  } else {
-    proxy_->setLocationBarHeight(height);
-  }
-}
-
-oxide::qt::LocationBarMode OxideQQuickWebViewPrivate::locationBarMode() const {
-  if (!proxy_) {
-    return construct_props_->location_bar_mode;
-  }
-
-  return proxy_->locationBarMode();
-}
-
-void OxideQQuickWebViewPrivate::setLocationBarMode(
-    oxide::qt::LocationBarMode mode) {
-  if (!proxy_) {
-    construct_props_->location_bar_mode = mode;
-  } else {
-    proxy_->setLocationBarMode(mode);
-  }
-}
-
-bool OxideQQuickWebViewPrivate::locationBarAnimated() const {
-  if (!proxy_) {
-    return construct_props_->location_bar_animated;
-  }
-
-  return proxy_->locationBarAnimated();
-}
-
-void OxideQQuickWebViewPrivate::setLocationBarAnimated(bool animated) {
-  if (!proxy_) {
-    construct_props_->location_bar_animated = animated;
-  } else {
-    proxy_->setLocationBarAnimated(animated);
-  }
-}
-
-int OxideQQuickWebViewPrivate::locationBarOffset() {
-  if (!proxy_) {
-    return 0;
-  }
-
-  return proxy_->locationBarOffset();
-}
-
-int OxideQQuickWebViewPrivate::locationBarContentOffset() {
-  if (!proxy_) {
-    return 0;
-  }
-
-  return proxy_->locationBarContentOffset();
-}
-
-void OxideQQuickWebViewPrivate::locationBarShow(bool animate) {
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->locationBarShow(animate);
-}
-
-void OxideQQuickWebViewPrivate::locationBarHide(bool animate) {
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->locationBarHide(animate);
 }
 
 int OxideQQuickWebViewPrivate::getNavigationEntryCount() const {
@@ -1124,7 +1053,7 @@ void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
 
 #define VIEW_SIGNAL(sig) QMetaMethod::fromSignal(&OxideQQuickWebView::sig)
   if (signal == VIEW_SIGNAL(newViewRequested) && d->proxy_) {
-    d->proxy_->updateWebPreferences();
+    d->proxy_->syncWebPreferences();
   } else if (signal == VIEW_SIGNAL(loadingChanged)) {
     WARN_DEPRECATED_API_USAGE() <<
         "OxideQQuickWebView: loadingChanged is deprecated. Please connect "
@@ -1144,7 +1073,7 @@ void OxideQQuickWebView::disconnectNotify(const QMetaMethod& signal) {
   if ((signal == QMetaMethod::fromSignal(
           &OxideQQuickWebView::newViewRequested) ||
       !signal.isValid()) && d->proxy_) {
-    d->proxy_->updateWebPreferences();
+    d->proxy_->syncWebPreferences();
   }
 }
 
@@ -1165,10 +1094,7 @@ void OxideQQuickWebView::componentComplete() {
 
   QQuickItem::componentComplete();
 
-  OxideQQuickWebContext* context = nullptr;
-  if (d->construct_props_->context) {
-    context = d->construct_props_->context;
-  }
+  OxideQQuickWebContext* context = context = d->construct_props_->context;
 
   if (!context && !d->construct_props_->new_view_request) {
     context = OxideQQuickWebContext::defaultContext(true);
@@ -2134,24 +2060,45 @@ OxideQWebPreferences* OxideQQuickWebView::preferences() {
   if (!d->proxy_) {
     if (!d->construct_props_->preferences) {
       d->construct_props_->preferences = new OxideQWebPreferences(this);
+      d->attachPreferencesSignals(d->construct_props_->preferences);
     }
     return d->construct_props_->preferences;
   }
 
-  return d->proxy_->preferences();
+  OxideQWebPreferences* prefs = d->proxy_->preferences();
+  Q_ASSERT(prefs);
+
+  return prefs;
 }
 
 void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
   Q_D(OxideQQuickWebView);
 
-  if (prefs == this->preferences()) {
+  OxideQWebPreferences* old = preferences();
+  if (prefs == old && prefs) {
     return;
   }
+
+  if (!prefs) {
+    prefs = new OxideQWebPreferences(this);
+  }
+
+  if (!prefs->parent()) {
+    prefs->setParent(this);
+  }
+  d->attachPreferencesSignals(prefs);
 
   if (!d->proxy_) {
     d->construct_props_->preferences = prefs;
   } else {
     d->proxy_->setPreferences(prefs);
+  }
+
+  if (old) {
+    old->disconnect(this, SLOT(preferencesDestroyed()));
+    if (old->parent() == this) {
+      delete old;
+    }
   }
 
   emit preferencesChanged();
@@ -2406,11 +2353,15 @@ OxideQQuickLocationBarController* OxideQQuickWebView::locationBarController() {
   Q_D(OxideQQuickWebView);
 
   if (!d->location_bar_controller_) {
-    d->location_bar_controller_.reset(
-        new OxideQQuickLocationBarController(this));
+    d->location_bar_controller_ =
+        OxideQQuickLocationBarControllerPrivate::create();
+    if (d->proxy_) {
+      OxideQQuickLocationBarControllerPrivate::get(
+          d->location_bar_controller_.get())->init(d->proxy_->webContentsID());
+    }
   }
 
-  return d->location_bar_controller_.data();
+  return d->location_bar_controller_.get();
 }
 
 /*!

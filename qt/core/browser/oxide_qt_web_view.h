@@ -34,7 +34,7 @@
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
-#include "shared/browser/screen_observer.h"
+#include "shared/browser/web_contents_client.h"
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -46,6 +46,7 @@ QT_END_NAMESPACE
 
 class OxideQFindController;
 class OxideQSecurityStatus;
+class OxideQWebPreferences;
 
 namespace oxide {
 
@@ -60,10 +61,10 @@ class WebContext;
 class WebViewProxyClient;
 
 class WebView : public oxide::WebViewClient,
+                public oxide::WebContentsClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::FullscreenHelperClient,
-                public oxide::ScreenObserver,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
@@ -81,7 +82,8 @@ class WebView : public oxide::WebViewClient,
       QObject* handle,
       OxideQFindController* find_controller,
       OxideQSecurityStatus* security_status,
-      OxideQNewViewRequest* new_view_request);
+      OxideQNewViewRequest* new_view_request,
+      OxideQWebPreferences* initial_prefs);
   ~WebView();
 
   static WebView* FromView(oxide::WebView* view);
@@ -95,8 +97,6 @@ class WebView : public oxide::WebViewClient,
 
   void CommonInit(OxideQFindController* find_controller,
                   OxideQSecurityStatus* security_status);
-
-  void EnsurePreferences();
 
   void OnZoomLevelChanged(const content::HostZoomMap::ZoomLevelChange& change);
 
@@ -133,7 +133,6 @@ class WebView : public oxide::WebViewClient,
                            const base::string16& message,
                            int32_t line_no,
                            const base::string16& source_id) override;
-  void WebPreferencesDestroyed() override;
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
   void DownloadRequested(const GURL& url,
       const std::string& mime_type,
@@ -150,7 +149,7 @@ class WebView : public oxide::WebViewClient,
   oxide::WebView* CreateNewWebView(
       const gfx::Rect& initial_pos,
       WindowOpenDisposition disposition,
-      std::unique_ptr<content::WebContents> contents) override;
+      oxide::WebContentsUniquePtr contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderFrameHost* rfh) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
@@ -183,10 +182,9 @@ class WebView : public oxide::WebViewClient,
   void EnterFullscreenMode(const GURL& origin) override;
   void ExitFullscreenMode() override;
 
-  // oxide::ScreenObserver implementation
-  void OnDisplayPropertiesChanged(const display::Display& display) override;
-
   // WebViewProxy implementation
+  WebContentsID webContentsID() const override;
+
   QUrl url() const override;
   void setUrl(const QUrl& url) override;
 
@@ -230,7 +228,7 @@ class WebView : public oxide::WebViewClient,
   OxideQWebPreferences* preferences() override;
   void setPreferences(OxideQWebPreferences* prefs) override;
 
-  void updateWebPreferences() override;
+  void syncWebPreferences() override;
 
   QPoint compositorFrameScrollOffset() override;
   QSize compositorFrameContentSize() override;
@@ -242,17 +240,6 @@ class WebView : public oxide::WebViewClient,
   ContentTypeFlags blockedContent() const override;
 
   void prepareToClose() override;
-
-  int locationBarHeight() const override;
-  void setLocationBarHeight(int height) override;
-  int locationBarOffset() const override;
-  int locationBarContentOffset() const override;
-  LocationBarMode locationBarMode() const override;
-  void setLocationBarMode(LocationBarMode mode) override;
-  bool locationBarAnimated() const override;
-  void setLocationBarAnimated(bool animated) override;
-  void locationBarShow(bool animate) override;
-  void locationBarHide(bool animate) override;
 
   WebProcessStatus webProcessStatus() const override;
 
@@ -277,7 +264,6 @@ class WebView : public oxide::WebViewClient,
 
   QList<QObject*> message_handlers_;
 
-  int location_bar_height_;
   bool frame_tree_torn_down_;
 
   std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;

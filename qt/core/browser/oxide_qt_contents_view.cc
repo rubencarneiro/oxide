@@ -42,10 +42,10 @@
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
+#include "shared/browser/chrome_controller.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
-#include "shared/browser/oxide_web_view.h"
 
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
@@ -56,11 +56,12 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
-#include "oxide_qt_web_view.h"
 #include "qt_screen.h"
 
 namespace oxide {
 namespace qt {
+
+using oxide::ChromeController;
 
 namespace {
 
@@ -255,11 +256,10 @@ EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
 QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
   if (!compositor_frame_) {
     compositor_frame_ =
-        QSharedPointer<CompositorFrameHandle>(new CompositorFrameHandleImpl(
-          view()->GetCompositorFrameHandle(),
-          view()->committed_frame_metadata().top_controls_height *
-              view()->committed_frame_metadata().top_controls_shown_ratio,
-          GetScreen()));
+        QSharedPointer<CompositorFrameHandle>(
+            new CompositorFrameHandleImpl(view()->GetCompositorFrameHandle(),
+                                          GetTopContentOffset(),
+                                          GetScreen()));
   }
 
   return compositor_frame_;
@@ -337,7 +337,7 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
   view()->HandleMouseEvent(
       MakeWebMouseEvent(event,
                         GetScreen(),
-                        GetLocationBarContentOffset()));
+                        GetTopContentOffset()));
   event->accept();
 }
 
@@ -352,7 +352,7 @@ void ContentsView::handleWheelEvent(QWheelEvent* event,
       MakeWebMouseWheelEvent(event,
                              window_pos,
                              GetScreen(),
-                             GetLocationBarContentOffset()));
+                             GetTopContentOffset()));
   event->accept();
 }
 
@@ -360,7 +360,7 @@ void ContentsView::handleTouchEvent(QTouchEvent* event) {
   MotionEventFactory::ResultVector events;
   motion_event_factory_.MakeMotionEvents(event,
                                          GetScreen(),
-                                         GetLocationBarContentOffset(),
+                                         GetTopContentOffset(),
                                          &events);
 
   for (const auto& e : events) {
@@ -378,7 +378,7 @@ void ContentsView::handleHoverEvent(QHoverEvent* event,
                         window_pos,
                         global_pos,
                         GetScreen(),
-                        GetLocationBarContentOffset()));
+                        GetTopContentOffset()));
   event->accept();
 }
 
@@ -390,7 +390,7 @@ void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
 
   GetDragEnterEventParams(event,
                           GetScreen(),
-                          GetLocationBarContentOffset(),
+                          GetTopContentOffset(),
                           &drop_data,
                           &location,
                           &allowed_ops,
@@ -407,7 +407,7 @@ void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetLocationBarContentOffset(),
+                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDragMove(location, key_modifiers);
@@ -431,7 +431,7 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetLocationBarContentOffset(),
+                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDrop(location, key_modifiers);
@@ -449,19 +449,13 @@ void ContentsView::hideTouchSelectionController() {
   view()->HideTouchSelectionController();
 }
 
-display::Display ContentsView::GetDisplay() const {
-  return Screen::GetInstance()->DisplayFromQScreen(GetScreen());
-}
-
-float ContentsView::GetLocationBarContentOffset() const {
-  // XXX: Stop using WebView here
-  oxide::WebView* web_view =
-      oxide::WebView::FromWebContents(view()->GetWebContents());
-  if (!web_view) {
+float ContentsView::GetTopContentOffset() const {
+  ChromeController* chrome_controller = view()->GetChromeController();
+  if (!chrome_controller) {
     return 0.f;
   }
 
-  return web_view->GetLocationBarContentOffset();
+  return chrome_controller->GetTopContentOffset();
 }
 
 void ContentsView::SetInputMethodEnabled(bool enabled) {
@@ -630,6 +624,10 @@ content::WebContents* ContentsView::GetWebContents() const {
   }
 
   return view()->GetWebContents();
+}
+
+display::Display ContentsView::GetDisplay() const {
+  return Screen::GetInstance()->DisplayFromQScreen(GetScreen());
 }
 
 QScreen* ContentsView::GetScreen() const {

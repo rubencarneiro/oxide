@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,6 @@
 #include "base/files/file_path.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/observer_list.h"
 #include "base/synchronization/lock.h"
 #include "base/threading/non_thread_safe.h"
 #include "content/public/browser/browser_context.h"
@@ -58,7 +57,6 @@ typedef uintptr_t BrowserContextID;
 
 class BrowserContextDelegate;
 class BrowserContextImpl;
-class BrowserContextObserver;
 class BrowserContextSharedData;
 class BrowserContextSharedIOData;
 class CookieStoreOwner;
@@ -84,13 +82,9 @@ class BrowserContextIOData {
   net::StaticCookiePolicy::Type GetCookiePolicy() const;
   virtual content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const = 0;
 
-  bool IsPopupBlockerEnabled() const;
-
   base::FilePath GetPath() const;
   base::FilePath GetCachePath() const;
   int GetMaxCacheSizeHint() const;
-
-  bool GetDoNotTrack() const;
 
   virtual bool IsOffTheRecord() const = 0;
 
@@ -228,13 +222,7 @@ class OXIDE_SHARED_EXPORT BrowserContext : public content::BrowserContext,
 
   content::CookieStoreConfig::SessionCookieMode GetSessionCookieMode() const;
 
-  bool IsPopupBlockerEnabled() const;
-  void SetIsPopupBlockerEnabled(bool enabled);
-
   const std::vector<std::string>& GetHostMappingRules() const;
-
-  bool GetDoNotTrack() const;
-  void SetDoNotTrack(bool dnt);
 
   // from content::BrowserContext
   content::ResourceContext* GetResourceContext() override;
@@ -253,8 +241,6 @@ class OXIDE_SHARED_EXPORT BrowserContext : public content::BrowserContext,
   BrowserContextIOData* io_data() const { return io_data_; }
 
  private:
-  friend class BrowserContextObserver; // for {Add,Remove}Observer
-
   // content::BrowserContext implementation
   std::unique_ptr<content::ZoomLevelDelegate> CreateZoomLevelDelegate(
       const base::FilePath& partition_path) override;
@@ -278,12 +264,8 @@ class OXIDE_SHARED_EXPORT BrowserContext : public content::BrowserContext,
       const base::FilePath& partition_path,
       bool in_memory) override;
 
-  void AddObserver(BrowserContextObserver* observer);
-  void RemoveObserver(BrowserContextObserver* observer);
-
   BrowserContextIOData* io_data_;
   scoped_refptr<URLRequestContextGetter> main_request_context_getter_;
-  base::ObserverList<BrowserContextObserver> observers_;
 
   std::unique_ptr<SSLHostStateDelegate> ssl_host_state_delegate_;
   std::unique_ptr<PermissionManager> permission_manager_;

@@ -53,9 +53,7 @@ enum FrameMetadataChangeFlags {
 
   FRAME_METADATA_CHANGE_SCROLL_OFFSET = 1 << 0,
   FRAME_METADATA_CHANGE_CONTENT = 1 << 1,
-  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2,
-  FRAME_METADATA_CHANGE_CONTROLS_OFFSET = 1 << 3,
-  FRAME_METADATA_CHANGE_CONTENT_OFFSET = 1 << 4
+  FRAME_METADATA_CHANGE_VIEWPORT = 1 << 2
 };
 
 class WebViewProxyClient {
@@ -91,8 +89,6 @@ class WebViewProxyClient {
                                    const QString& source_id) = 0;
 
   virtual void ToggleFullscreenMode(bool enter) = 0;
-
-  virtual void WebPreferencesReplaced() = 0;
 
   virtual void FrameRemoved(QObject* frame) = 0;
 

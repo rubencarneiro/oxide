@@ -62,13 +62,13 @@ class RenderWidgetHostViewContainer {
 
   virtual bool IsFullscreen() const = 0;
 
-  virtual float GetLocationBarHeight() const = 0;
+  virtual float GetTopControlsHeight() = 0;
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
 
   virtual void TouchSelectionChanged(RenderWidgetHostView* view,
                                      bool handle_drag_in_progress,
-                                     bool insertion_handle_tapped) const = 0;
+                                     bool insertion_handle_tapped) = 0;
 
   virtual void EditingCapabilitiesChanged(RenderWidgetHostView* view) = 0;
 };

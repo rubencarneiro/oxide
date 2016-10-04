@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,38 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
-#define _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
-
-#include <QtGlobal>
-
-#include "qt/core/browser/web_preferences.h"
-
-class OxideQWebPreferences;
-
-QT_BEGIN_NAMESPACE
-class QObject;
-QT_END_NAMESPACE
+#ifndef _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_
 
 namespace oxide {
-class WebPreferences;
-}
 
-class OxideQWebPreferencesPrivate {
+class UserAgentSettings;
+
+class UserAgentSettingsObserver {
  public:
-  ~OxideQWebPreferencesPrivate();
+  virtual ~UserAgentSettingsObserver();
 
-  static OxideQWebPreferencesPrivate* get(OxideQWebPreferences* q);
+  virtual void NotifyPopupBlockerEnabledChanged() {}
 
-  oxide::WebPreferences* GetPrefs() const;
+  virtual void NotifyDoNotTrackChanged() {}
 
-  void AdoptPrefs(oxide::WebPreferences* prefs);
+ protected:
+  UserAgentSettingsObserver();
+  UserAgentSettingsObserver(UserAgentSettings* settings);
+
+  void Observe(UserAgentSettings* settings);
+
+  UserAgentSettings* user_agent_settings() const { return settings_; }
 
  private:
-  friend class OxideQWebPreferences;
-  OxideQWebPreferencesPrivate(OxideQWebPreferences* q);
+  friend class UserAgentSettings;
 
-  oxide::qt::WebPreferences preferences_;
+  UserAgentSettings* settings_;
 };
 
-#endif // _OXIDE_QT_CORE_API_WEB_PREFERENCES_P_H_
+} // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_
