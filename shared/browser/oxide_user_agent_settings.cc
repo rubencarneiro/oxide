@@ -267,6 +267,10 @@ void UserAgentSettings::SetAcceptLangs(const std::string& accept_langs) {
       context_->GetIOData()->GetUserAgentSettings();
   base::AutoLock lock(io_data->lock_);
   io_data->accept_langs_ = accept_langs;
+
+  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
+                    observers_,
+                    NotifyAcceptLanguagesChanged());
 }
 
 std::vector<UserAgentSettings::UserAgentOverride>

@@ -82,6 +82,7 @@ class OXIDE_SHARED_EXPORT WebContentsHelper
   // UserAgentSettingsObserver implementation
   void NotifyPopupBlockerEnabledChanged() override;
   void NotifyDoNotTrackChanged() override;
+  void NotifyAcceptLanguagesChanged() override;
 
   content::WebContents* web_contents_;
 

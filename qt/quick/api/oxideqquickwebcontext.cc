@@ -721,7 +721,8 @@ void OxideQQuickWebContext::setCachePath(const QUrl& cacheUrl) {
 /*!
 \qmlproperty string WebContext::acceptLangs
 
-The value used to determine the contents of the HTTP \e{Accept-Language} header.
+The value used to determine the contents of \e{navigator.languages} and of the
+HTTP \e{Accept-Language} header.
 
 Applications can specify this by setting it to a comma delimited list of
 language codes in order of preference (starting with the most-preferred). Oxide

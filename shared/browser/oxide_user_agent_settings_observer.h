@@ -30,6 +30,8 @@ class UserAgentSettingsObserver {
 
   virtual void NotifyDoNotTrackChanged() {}
 
+  virtual void NotifyAcceptLanguagesChanged() {}
+
  protected:
   UserAgentSettingsObserver();
   UserAgentSettingsObserver(UserAgentSettings* settings);
