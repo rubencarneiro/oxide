@@ -101,6 +101,13 @@ void ChromeController::UpdateTopControlsState(
          (current_state != blink::WebTopControlsShown ||
           constraints != blink::WebTopControlsHidden));
 
+  // render_frame_host can be null here, because I think we're hitting something
+  // like https://bugs.chromium.org/p/chromium/issues/detail?id=575245
+  // (RenderViewHost::GetMainFrame is returning nullptr inside
+  // RenderViewHostChanged)
+  if (!render_frame_host) {
+    render_frame_host = web_contents()->GetMainFrame();
+  }
   content::RenderViewHost* rvh = render_frame_host->GetRenderViewHost();
 
   rvh->Send(
