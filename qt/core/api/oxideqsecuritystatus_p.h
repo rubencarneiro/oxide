@@ -23,6 +23,7 @@
 
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/core/glue/web_contents_id.h"
 
 QT_BEGIN_NAMESPACE
 class QObject;
@@ -46,7 +47,7 @@ class OXIDE_QTCORE_EXPORT OxideQSecurityStatusPrivate final {
 
   static OxideQSecurityStatusPrivate* get(OxideQSecurityStatus* q);
 
-  oxide::qt::SecurityStatus* proxy() const { return proxy_.data(); }
+  void Init(oxide::qt::WebContentsID web_contents_id);
 
   void InvalidateCertificate();
 
@@ -55,7 +56,7 @@ class OXIDE_QTCORE_EXPORT OxideQSecurityStatusPrivate final {
 
   OxideQSecurityStatus* q_ptr;
 
-  QScopedPointer<oxide::qt::SecurityStatus> proxy_;
+  QScopedPointer<oxide::qt::SecurityStatus> status_;
 
   mutable bool cert_invalidated_;
   mutable OxideQSslCertificate cert_;

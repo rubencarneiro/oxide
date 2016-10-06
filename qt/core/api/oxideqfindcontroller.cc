@@ -23,6 +23,8 @@
 #include "qt/core/browser/oxide_qt_find_controller.h"
 #include "shared/browser/oxide_find_controller.h"
 
+using oxide::qt::WebContentsID;
+
 OxideQFindControllerPrivate::OxideQFindControllerPrivate(
     OxideQFindController* q)
     : q_ptr(q),
@@ -40,6 +42,10 @@ OxideQFindController* OxideQFindControllerPrivate::Create() {
 OxideQFindControllerPrivate* OxideQFindControllerPrivate::get(
     OxideQFindController* q) {
   return q->d_func();
+}
+
+void OxideQFindControllerPrivate::Init(WebContentsID web_contents_id) {
+  controller_->Init(web_contents_id);
 }
 
 /*!

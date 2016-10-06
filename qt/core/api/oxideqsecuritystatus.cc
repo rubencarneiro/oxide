@@ -29,6 +29,8 @@
 #include "oxideqsslcertificate.h"
 #include "oxideqsslcertificate_p.h"
 
+using oxide::qt::WebContentsID;
+
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::SecurityLevelNone,
                             oxide::SECURITY_LEVEL_NONE)
 STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::SecurityLevelSecure,
@@ -64,7 +66,7 @@ STATIC_ASSERT_MATCHING_ENUM(OxideQSecurityStatus::CertStatusGenericError,
 OxideQSecurityStatusPrivate::OxideQSecurityStatusPrivate(
     OxideQSecurityStatus* q)
     : q_ptr(q),
-      proxy_(new oxide::qt::SecurityStatus(q)),
+      status_(new oxide::qt::SecurityStatus(q)),
       cert_invalidated_(true) {}
 
 OxideQSecurityStatusPrivate::~OxideQSecurityStatusPrivate() {}
@@ -78,6 +80,10 @@ OxideQSecurityStatus* OxideQSecurityStatusPrivate::Create() {
 OxideQSecurityStatusPrivate* OxideQSecurityStatusPrivate::get(
     OxideQSecurityStatus* q) {
   return q->d_func();
+}
+
+void OxideQSecurityStatusPrivate::Init(WebContentsID web_contents_id) {
+  status_->Init(web_contents_id);
 }
 
 void OxideQSecurityStatusPrivate::InvalidateCertificate() {
@@ -204,7 +210,7 @@ OxideQSecurityStatus::SecurityLevel
 OxideQSecurityStatus::securityLevel() const {
   Q_D(const OxideQSecurityStatus);
 
-  return static_cast<SecurityLevel>(d->proxy_->GetSecurityLevel());
+  return static_cast<SecurityLevel>(d->status_->GetSecurityLevel());
 }
 
 /*!
@@ -219,7 +225,7 @@ OxideQSecurityStatus::ContentStatus
 OxideQSecurityStatus::contentStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  content::SSLStatus::ContentStatusFlags status = d->proxy_->GetContentStatus();
+  content::SSLStatus::ContentStatusFlags status = d->status_->GetContentStatus();
   ContentStatus rv = ContentStatusNormal;
 
   if (status & content::SSLStatus::DISPLAYED_INSECURE_CONTENT) {
@@ -243,7 +249,7 @@ CertStatusOk.
 OxideQSecurityStatus::CertStatus OxideQSecurityStatus::certStatus() const {
   Q_D(const OxideQSecurityStatus);
 
-  return static_cast<CertStatus>(d->proxy_->GetCertStatus());
+  return static_cast<CertStatus>(d->status_->GetCertStatus());
 }
 
 /*!
@@ -259,7 +265,7 @@ QVariant OxideQSecurityStatus::certificate() const {
 
   if (d->cert_invalidated_) {
     d->cert_invalidated_ = false;
-    scoped_refptr<net::X509Certificate> cert = d->proxy_->GetCert();
+    scoped_refptr<net::X509Certificate> cert = d->status_->GetCert();
     if (cert) {
       d->cert_ = OxideQSslCertificateData::Create(cert.get());
     }

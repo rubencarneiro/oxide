@@ -62,13 +62,8 @@
 #include "qt/core/api/oxideqpermissionrequest_p.h"
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqcertificateerror_p.h"
-#include "qt/core/api/oxideqsecuritystatus.h"
-#include "qt/core/api/oxideqsecuritystatus_p.h"
-#include "qt/core/api/oxideqfindcontroller.h"
-#include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/browser/ssl/oxide_qt_security_status.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -91,7 +86,6 @@
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
-#include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
@@ -242,8 +236,7 @@ WebView::WebView(WebViewProxyClient* client,
   setHandle(handle);
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller,
-                         OxideQSecurityStatus* security_status) {
+void WebView::CommonInit() {
   content::WebContents* contents = web_view_->GetWebContents();
 
   // base::Unretained is safe here because we disconnect in the destructor
@@ -253,9 +246,6 @@ void WebView::CommonInit(OxideQFindController* find_controller,
 
   FullscreenHelper::FromWebContents(contents)->set_client(this);
   PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
-  OxideQSecurityStatusPrivate::get(security_status)->proxy()->Init(contents);
-  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
-      contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
   track_zoom_subscription_ = content::HostZoomMap::GetForWebContents(contents)
@@ -1016,8 +1006,6 @@ void WebView::killWebProcess(bool crash) {
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
                  QObject* handle,
-                 OxideQFindController* find_controller,
-                 OxideQSecurityStatus* security_status,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
@@ -1046,7 +1034,7 @@ WebView::WebView(WebViewProxyClient* client,
 
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
-  CommonInit(find_controller, security_status);
+  CommonInit();
 }
 
 // static
@@ -1054,8 +1042,6 @@ WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
     ContentsViewProxyClient* view_client,
     QObject* handle,
-    OxideQFindController* find_controller,
-    OxideQSecurityStatus* security_status,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {
   OxideQNewViewRequestPrivate* rd =
@@ -1074,7 +1060,7 @@ WebView* WebView::CreateFromNewViewRequest(
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
-  new_view->CommonInit(find_controller, security_status);
+  new_view->CommonInit();
 
   if (initial_prefs) {
     oxide::WebPreferences* p =

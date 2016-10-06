@@ -37,6 +37,7 @@
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
+#include "qt/core/browser/web_contents_id_tracker.h"
 #include "shared/test/oxide_test_browser_thread_bundle.h"
 
 #include "oxide_qt_security_status.h"
@@ -79,8 +80,8 @@ void SecurityStatusTest::SetUp() {
   web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
   oxide::SecurityStatus::CreateForWebContents(web_contents_);
 
-  OxideQSecurityStatusPrivate::get(security_status_.get())->proxy()->Init(
-      web_contents_);
+  OxideQSecurityStatusPrivate::get(security_status_.get())->Init(
+      WebContentsIDTracker::GetInstance()->GetIDForWebContents(web_contents_));
 
   cert_ =
       new net::X509Certificate("https://www.google.com/",

@@ -21,14 +21,12 @@
 #include <QPointer>
 
 #include "base/macros.h"
+
+#include "qt/core/glue/web_contents_id.h"
 #include "shared/browser/oxide_find_controller.h"
 #include "shared/browser/oxide_find_controller_client.h"
 
 class OxideQFindController;
-
-namespace content {
-class WebContents;
-}
 
 namespace oxide {
 namespace qt {
@@ -39,7 +37,7 @@ class FindController : public oxide::FindControllerClient {
   ~FindController() override;
 
   // Initialize FindController from the specified WebContents
-  void Init(content::WebContents* contents);
+  void Init(WebContentsID web_contents_id);
 
   // Returns true when FindController has been initialized for a WebContents
   bool IsInitialized() const;

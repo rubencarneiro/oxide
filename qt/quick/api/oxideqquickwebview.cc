@@ -525,8 +525,6 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
-        find_controller_.data(),
-        security_status_.data(),
         construct_props_->new_view_request,
         initial_prefs));
   }
@@ -543,14 +541,16 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
-        find_controller_.data(),
-        security_status_.data(),
         construct_props_->context,
         construct_props_->incognito,
         construct_props_->restore_state,
         construct_props_->restore_type));
   }
 
+  OxideQFindControllerPrivate::get(find_controller_.data())->Init(
+      proxy_->webContentsID());
+  OxideQSecurityStatusPrivate::get(security_status_.data())->Init(
+      proxy_->webContentsID());
   if (location_bar_controller_) {
     OxideQQuickLocationBarControllerPrivate::get(location_bar_controller_.get())
         ->init(proxy_->webContentsID());

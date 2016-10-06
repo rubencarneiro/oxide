@@ -44,8 +44,6 @@ class QMouseEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
 
-class OxideQFindController;
-class OxideQSecurityStatus;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -70,8 +68,6 @@ class WebView : public oxide::WebViewClient,
   WebView(WebViewProxyClient* client,
           ContentsViewProxyClient* view_client,
           QObject* handle,
-          OxideQFindController* find_controller,
-          OxideQSecurityStatus* security_status,
           WebContext* context,
           bool incognito,
           const QByteArray& restore_state,
@@ -80,8 +76,6 @@ class WebView : public oxide::WebViewClient,
       WebViewProxyClient* client,
       ContentsViewProxyClient* view_client,
       QObject* handle,
-      OxideQFindController* find_controller,
-      OxideQSecurityStatus* security_status,
       OxideQNewViewRequest* new_view_request,
       OxideQWebPreferences* initial_prefs);
   ~WebView();
@@ -95,8 +89,7 @@ class WebView : public oxide::WebViewClient,
           ContentsViewProxyClient* view_client,
           QObject* handle);
 
-  void CommonInit(OxideQFindController* find_controller,
-                  OxideQSecurityStatus* security_status);
+  void CommonInit();
 
   void OnZoomLevelChanged(const content::HostZoomMap::ZoomLevelChange& change);
 
