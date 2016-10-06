@@ -677,7 +677,7 @@ Item {
       // Security error
       function _test_2_init(webView) {
         webView.preferences.canRunInsecureContent = true;
-        webView.url = "https://testsuite/tst_LocationBarController_run_insecure.html";
+        webView.url = "https://jkjfgvklfd.testsuite/tst_LocationBarController_run_insecure.html";
         verify(webView.waitForLoadSucceeded());
         compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelError);
       }
