@@ -465,6 +465,8 @@ component("shared") {
     "browser/web_contents_helper.h",
     "browser/web_preferences.cc",
     "browser/web_preferences.h",
+    "browser/web_process_status_monitor.cc",
+    "browser/web_process_status_monitor.h",
     "common/oxide_constants.cc",
     "common/oxide_constants.h",
     "common/oxide_content_client.cc",

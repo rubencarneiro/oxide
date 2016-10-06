@@ -36,8 +36,6 @@ bool WebViewClient::CanCreateWindows() const {
   return false;
 }
 
-void WebViewClient::CrashedStatusChanged() {}
-
 void WebViewClient::URLChanged() {}
 
 void WebViewClient::TitleChanged() {}

@@ -19,8 +19,10 @@ TestWebView {
 
     function test_WebView_webProcessStatus_data() {
       return [
-        { crash: false, status: WebView.WebProcessKilled },
-        { crash: true, status: WebView.WebProcessCrashed }
+        { url: "chrome://kill/", status: WebView.WebProcessKilled, needsReload: true, signals: 2 },
+        { url: "chrome://crash/", status: WebView.WebProcessCrashed, needsReload: true, signals: 2 },
+        { url: "chrome://hang/", status: WebView.WebProcessUnresponsive, needsReload: true, signals: 4 },
+        { url: "chrome://shorthang", status: WebView.WebProcessUnresponsive, needsReload: false, signals: 2 }
       ];
     }
 
@@ -32,16 +34,34 @@ TestWebView {
 
       spy.clear();
 
-      webView.killWebProcess(data.crash);
-      spy.wait();
+      webView.url = data.url;
+
+      // Send some events, as we need those to start the hang monitor
+      for (var i = 0; i < 100; i++) {
+        keyClick("A");
+        mouseClick(webView, webView.width / 2, webView.height / 2, Qt.LeftButton);
+      }
+
+      // It takes 5 seconds for the hang monitor to fire
+      spy.wait(10000);
 
       tryCompare(webView, "webProcessStatus", data.status);
 
-      webView.reload();
-      verify(webView.waitForLoadSucceeded(),
-             "Timed out waiting for successful load");
+      if (data.needsReload) {
+        if (webView.webProcessStatus == WebView.WebProcessUnresponsive) {
+          webView.terminateWebProcess();
+          TestSupport.wait(1000);
+        }
+        webView.reload();
+        verify(webView.waitForLoadSucceeded(),
+               "Timed out waiting for successful load");
+      } else {
+        // Wait for the hung process to start responding
+        spy.wait(30000);
+      }
+
       compare(webView.webProcessStatus, WebView.WebProcessRunning);
-      compare(spy.count, 2);
+      compare(spy.count, data.signals);
     }
   }
 }

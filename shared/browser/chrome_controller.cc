@@ -47,18 +47,21 @@ ChromeController::ChromeController(content::WebContents* contents)
       client_(nullptr),
       top_controls_height_(0),
       constraints_(blink::WebTopControlsBoth),
-      animation_enabled_(true),
-      renderer_is_unresponsive_(false),
-      renderer_crashed_(false) {
+      animation_enabled_(true) {
   CompositorObserver::Observe(
       WebContentsView::FromWebContents(contents)->GetCompositor());
 
   FullscreenHelper::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
+  WebProcessStatusMonitor::CreateForWebContents(contents);
 
   security_status_subscription_ =
       SecurityStatus::FromWebContents(contents)->AddChangeCallback(
           base::Bind(&ChromeController::OnSecurityStatusChanged,
+                     base::Unretained(this)));
+  web_process_status_subscription_ =
+      WebProcessStatusMonitor::FromWebContents(contents)->AddChangeCallback(
+          base::Bind(&ChromeController::OnWebProcessStatusChanged,
                      base::Unretained(this)));
 
   InitializeForHost(contents->GetMainFrame(), true);
@@ -116,7 +119,7 @@ void ChromeController::UpdateTopControlsState(
                                           current_state,
                                           animated));
 
-  if (render_frame_host->IsRenderFrameLive() && !renderer_is_unresponsive_) {
+  if (render_frame_host->IsRenderFrameLive() && !RendererIsUnresponsive()) {
     return;
   }
 
@@ -143,6 +146,13 @@ content::RenderWidgetHost* ChromeController::GetRenderWidgetHost() {
   }
 
   return rwhv->GetRenderWidgetHost();
+}
+
+bool ChromeController::RendererIsUnresponsive() const {
+  WebProcessStatusMonitor* status_monitor =
+      WebProcessStatusMonitor::FromWebContents(web_contents());
+  return status_monitor->GetStatus() ==
+         WebProcessStatusMonitor::Status::Unresponsive;
 }
 
 cc::CompositorFrameMetadata ChromeController::DefaultMetadata() const {
@@ -177,12 +187,8 @@ bool ChromeController::CanHideTopControls() const {
     return false;
   }
 
-  if (renderer_is_unresponsive_) {
-    return false;
-  }
-
-  if (web_contents()->GetCrashedStatus() !=
-      base::TERMINATION_STATUS_STILL_RUNNING) {
+  if (WebProcessStatusMonitor::FromWebContents(web_contents())->GetStatus() !=
+          WebProcessStatusMonitor::Status::Running) {
     return false;
   }
 
@@ -210,6 +216,10 @@ void ChromeController::OnSecurityStatusChanged(
   RefreshTopControlsState();
 }
 
+void ChromeController::OnWebProcessStatusChanged() {
+  RefreshTopControlsState();
+}
+
 void ChromeController::RenderFrameForInterstitialPageCreated(
     content::RenderFrameHost* render_frame_host) {
   if (render_frame_host->GetParent()) {
@@ -217,21 +227,6 @@ void ChromeController::RenderFrameForInterstitialPageCreated(
   }
 
   InitializeForHost(render_frame_host, false);
-}
-
-void ChromeController::RenderViewReady() {
-  if (!renderer_crashed_) {
-    return;
-  }
-
-  renderer_crashed_ = false;
-
-  InitializeForHost(web_contents()->GetMainFrame(), false);
-}
-
-void ChromeController::RenderProcessGone(base::TerminationStatus status) {
-  renderer_crashed_ = true;
-  RefreshTopControlsState();
 }
 
 void ChromeController::RenderViewHostChanged(
@@ -252,9 +247,10 @@ void ChromeController::DidCommitProvisionalLoadForFrame(
 }
 
 void ChromeController::WebContentsDestroyed() {
-  // There's no guarantee we'll be deleted before SecurityStatus, so clear this
-  // now
+  // There's no guarantee we'll be deleted before SecurityStatus or
+  // WebProcessStatusMonitor, so clear these now
   security_status_subscription_.reset();
+  web_process_status_subscription_.reset();
 }
 
 void ChromeController::DidShowFullscreenWidget() {
@@ -280,7 +276,7 @@ void ChromeController::DidDetachInterstitialPage() {
 
 void ChromeController::CompositorDidCommit() {
   committed_frame_metadata_ =
-      GetRenderWidgetHostView() && !renderer_is_unresponsive_ ?
+      GetRenderWidgetHostView() && !RendererIsUnresponsive() ?
           GetRenderWidgetHostView()->last_submitted_frame_metadata().Clone()
           : DefaultMetadata();
 }
@@ -311,7 +307,7 @@ void ChromeController::SetTopControlsHeight(float height) {
   top_controls_height_ = height;
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host || renderer_is_unresponsive_) {
+  if (!host || RendererIsUnresponsive()) {
     committed_frame_metadata_ = DefaultMetadata();
     WebContentsView::FromWebContents(web_contents())
         ->GetCompositor()
@@ -360,26 +356,6 @@ float ChromeController::GetTopControlsOffset() const {
 float ChromeController::GetTopContentOffset() const {
   return current_frame_metadata_.top_controls_height *
          current_frame_metadata_.top_controls_shown_ratio;
-}
-
-void ChromeController::RendererIsResponsive() {
-  if (!renderer_is_unresponsive_) {
-    return;
-  }
-
-  renderer_is_unresponsive_ = false;
-
-  RefreshTopControlsState();
-}
-
-void ChromeController::RendererIsUnresponsive() {
-  if (renderer_is_unresponsive_) {
-    return;
-  }
-
-  renderer_is_unresponsive_ = true;
-
-  RefreshTopControlsState();
 }
 
 } // namespace oxide

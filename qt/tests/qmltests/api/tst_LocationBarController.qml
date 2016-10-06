@@ -709,7 +709,7 @@ Item {
         webView.locationBarController.hide(false);
         verify(locationBarSpy.waitUntilHidden());
 
-        webView.killWebProcess(true);
+        webView.url = "chrome://kill/";
       }
       function _test_4_post(webView) {
         webView.reload();
@@ -730,7 +730,7 @@ Item {
         }
       }
       function _test_5_post(webView) {
-        webView.killWebProcess(false);
+        webView.terminateWebProcess();
         TestSupport.wait(1000);
         webView.url = "http://testsuite/tst_LocationBarController.html";
         verify(webView.waitForLoadSucceeded());

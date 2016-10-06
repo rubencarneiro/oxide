@@ -20,7 +20,6 @@
 #include <deque>
 #include <limits>
 #include <memory>
-#include <signal.h>
 #include <utility>
 #include <vector>
 
@@ -34,13 +33,10 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/pickle.h"
-#include "base/process/process.h"
-#include "base/process/process_handle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
-#include "content/public/browser/render_process_host.h"
 #include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/page_zoom.h"
@@ -64,6 +60,7 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/macros.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -104,6 +101,7 @@ using oxide::PermissionRequestDispatcher;
 using oxide::WebContentsUniquePtr;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
+using oxide::WebProcessStatusMonitor;
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
@@ -248,9 +246,14 @@ void WebView::CommonInit() {
   PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
-  track_zoom_subscription_ = content::HostZoomMap::GetForWebContents(contents)
-      ->AddZoomLevelChangedCallback(
-          base::Bind(&WebView::OnZoomLevelChanged, base::Unretained(this)));
+  track_zoom_subscription_ =
+      content::HostZoomMap::GetForWebContents(contents)
+          ->AddZoomLevelChangedCallback(base::Bind(&WebView::OnZoomLevelChanged,
+                                                   base::Unretained(this)));
+  web_process_status_subscription_ =
+      WebProcessStatusMonitor::FromWebContents(contents)->AddChangeCallback(
+          base::Bind(&WebView::OnWebProcessStatusChanged,
+                     base::Unretained(this)));
 
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
@@ -261,6 +264,10 @@ void WebView::CommonInit() {
 void WebView::OnZoomLevelChanged(
     const content::HostZoomMap::ZoomLevelChange& change) {
   client_->ZoomLevelChanged();
+}
+
+void WebView::OnWebProcessStatusChanged() {
+  client_->WebProcessStatusChanged();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -293,10 +300,6 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
 
 bool WebView::CanCreateWindows() const {
   return client_->CanCreateWindows();
-}
-
-void WebView::CrashedStatusChanged() {
-  client_->WebProcessStatusChanged();
 }
 
 void WebView::URLChanged() {
@@ -882,17 +885,23 @@ void WebView::prepareToClose() {
   web_view_->PrepareToClose();
 }
 
+void WebView::terminateWebProcess() {
+  web_view_->TerminateWebProcess();
+}
+
 WebProcessStatus WebView::webProcessStatus() const {
-  base::TerminationStatus status = web_view_->GetWebContents()->GetCrashedStatus();
-  if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
-    return WEB_PROCESS_RUNNING;
-  } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
-    return WEB_PROCESS_KILLED;
-  } else {
-    // Map all other termination statuses to crashed. This is
-    // consistent with how the sad tab helper works in Chrome.
-    return WEB_PROCESS_CRASHED;
-  }
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_RUNNING,
+                              WebProcessStatusMonitor::Status::Running);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_KILLED,
+                              WebProcessStatusMonitor::Status::Killed);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_CRASHED,
+                              WebProcessStatusMonitor::Status::Crashed);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_UNRESPONSIVE,
+                              WebProcessStatusMonitor::Status::Unresponsive);
+
+  return static_cast<WebProcessStatus>(
+      WebProcessStatusMonitor::FromWebContents(web_view_->GetWebContents())
+          ->GetStatus());
 }
 
 void WebView::executeEditingCommand(EditingCommands command) const {
@@ -981,26 +990,6 @@ void WebView::teardownFrameTree() {
   }
 
   frame_tree_torn_down_ = true;
-}
-
-void WebView::killWebProcess(bool crash) {
-  content::RenderProcessHost* host =
-      web_view_->GetWebContents()->GetRenderProcessHost();
-  if (!host) {
-    return;
-  }
-
-  base::ProcessHandle handle = host->GetHandle();
-  if (handle == base::kNullProcessHandle) {
-    return;
-  }
-
-  if (!crash) {
-    base::Process process = base::Process::Open(handle);
-    process.Terminate(0, false);
-  } else if (kill(handle, SIGSEGV) != 0) {
-    LOG(WARNING) << "Unable to crash process " << handle;
-  }
 }
 
 WebView::WebView(WebViewProxyClient* client,

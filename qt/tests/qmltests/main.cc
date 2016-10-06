@@ -209,9 +209,6 @@ static void RegisterQmlTypes() {
   qmlRegisterUncreatableType<WebContextTestSupport>(
       "Oxide.testsupport", 1, 0, "WebContextTestSupport",
       "WebContextTestSupport only exists to provide attached properties");
-  qmlRegisterUncreatableType<WebViewTestSupport>(
-      "Oxide.testsupport", 1, 0, "WebViewTestSupport",
-      "WebViewTestSupport only exists to provide attached properties");
   qmlRegisterUncreatableType<TestWindow>(
       "Oxide.testsupport", 1, 0, "TestWindow",
       "TestWindow only exists to provide attached properties");

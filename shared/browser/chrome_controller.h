@@ -28,6 +28,7 @@
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/ssl/oxide_security_status.h"
+#include "shared/browser/web_process_status_monitor.h"
 #include "shared/common/oxide_shared_export.h"
 
 namespace content {
@@ -69,9 +70,6 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   void set_client(ChromeControllerClient* client) { client_ = client; }
 
-  void RendererIsResponsive();
-  void RendererIsUnresponsive();
-
  private:
   friend class content::WebContentsUserData<ChromeController>;
   ChromeController(content::WebContents* contents);
@@ -85,18 +83,19 @@ class OXIDE_SHARED_EXPORT ChromeController
   RenderWidgetHostView* GetRenderWidgetHostView();
   content::RenderWidgetHost* GetRenderWidgetHost();
 
+  bool RendererIsUnresponsive() const;
+
   cc::CompositorFrameMetadata DefaultMetadata() const;
 
   bool CanHideTopControls() const;
   bool CanShowTopControls() const;
 
   void OnSecurityStatusChanged(SecurityStatus::ChangedFlags flags);
+  void OnWebProcessStatusChanged();
 
   // content::WebContentsObserver implementation
   void RenderFrameForInterstitialPageCreated(
       content::RenderFrameHost* render_frame_host) override;
-  void RenderViewReady() override;
-  void RenderProcessGone(base::TerminationStatus status) override;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) override;
   void DidCommitProvisionalLoadForFrame(
@@ -124,10 +123,9 @@ class OXIDE_SHARED_EXPORT ChromeController
   cc::CompositorFrameMetadata committed_frame_metadata_;
   cc::CompositorFrameMetadata current_frame_metadata_;
 
-  bool renderer_is_unresponsive_;
-  bool renderer_crashed_;
-
   std::unique_ptr<SecurityStatus::Subscription> security_status_subscription_;
+  std::unique_ptr<WebProcessStatusMonitor::Subscription>
+      web_process_status_subscription_;
 
   DISALLOW_COPY_AND_ASSIGN(ChromeController);
 };

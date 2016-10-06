@@ -59,7 +59,8 @@ enum RestoreType {
 enum WebProcessStatus {
   WEB_PROCESS_RUNNING,
   WEB_PROCESS_KILLED,
-  WEB_PROCESS_CRASHED
+  WEB_PROCESS_CRASHED,
+  WEB_PROCESS_UNRESPONSIVE
 };
 
 enum EditCapabilityFlags {
@@ -159,6 +160,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual void prepareToClose() = 0;
 
+  virtual void terminateWebProcess() = 0;
+
   virtual WebProcessStatus webProcessStatus() const = 0;
 
   virtual void executeEditingCommand(EditingCommands command) const = 0;
@@ -173,8 +176,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   static qreal maximumZoomFactor();
 
   virtual void teardownFrameTree() = 0;
-
-  virtual void killWebProcess(bool crash) = 0;
 };
 
 } // namespace qt

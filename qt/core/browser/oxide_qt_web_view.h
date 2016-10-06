@@ -35,6 +35,7 @@
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
 #include "shared/browser/web_contents_client.h"
+#include "shared/browser/web_process_status_monitor.h"
 
 QT_BEGIN_NAMESPACE
 class QFocusEvent;
@@ -93,12 +94,13 @@ class WebView : public oxide::WebViewClient,
 
   void OnZoomLevelChanged(const content::HostZoomMap::ZoomLevelChange& change);
 
+  void OnWebProcessStatusChanged();
+
   // oxide::WebViewClient implementation
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type) override;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
   bool CanCreateWindows() const override;
-  void CrashedStatusChanged() override;
   void URLChanged() override;
   void TitleChanged() override;
   void FaviconChanged() override;
@@ -234,6 +236,8 @@ class WebView : public oxide::WebViewClient,
 
   void prepareToClose() override;
 
+  void terminateWebProcess() override;
+
   WebProcessStatus webProcessStatus() const override;
 
   void executeEditingCommand(EditingCommands command) const override;
@@ -247,8 +251,6 @@ class WebView : public oxide::WebViewClient,
 
   void teardownFrameTree() override;
 
-  void killWebProcess(bool crash) override;
-
   std::unique_ptr<ContentsView> contents_view_;
 
   std::unique_ptr<oxide::WebView> web_view_;
@@ -260,6 +262,9 @@ class WebView : public oxide::WebViewClient,
   bool frame_tree_torn_down_;
 
   std::unique_ptr<content::HostZoomMap::Subscription> track_zoom_subscription_;
+
+  std::unique_ptr<oxide::WebProcessStatusMonitor::Subscription>
+      web_process_status_subscription_;
 
   DISALLOW_COPY_AND_ASSIGN(WebView);
 };

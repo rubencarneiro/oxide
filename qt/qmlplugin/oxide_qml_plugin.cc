@@ -206,6 +206,8 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
         "TouchSelectionController is accessed via "
         "WebView.touchSelectionController");
     qmlRegisterType<OxideQQuickWebView, 8>(uri, 1, 15, "WebView");
+
+    qmlRegisterType<OxideQQuickWebView, 9>(uri, 1, 19, "WebView");
   }
 };
 

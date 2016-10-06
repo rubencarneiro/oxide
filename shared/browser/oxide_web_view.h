@@ -211,6 +211,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   blink::WebContextMenuData::EditFlags GetEditFlags() const;
 
+  void TerminateWebProcess();
+
  private:
   WebView(WebViewClient* client);
 
@@ -326,8 +328,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) override;
 
   // content::WebContentsObserver implementation
-  void RenderViewReady() override;
-  void RenderProcessGone(base::TerminationStatus status) override;
   void DidStartLoading() override;
   void DidStopLoading() override;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,

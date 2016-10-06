@@ -39,6 +39,7 @@
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/page_navigator.h"
 #include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/resource_request_details.h"
@@ -47,6 +48,7 @@
 #include "content/public/common/file_chooser_params.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/renderer_preferences.h"
+#include "content/public/common/result_codes.h"
 #include "content/public/common/url_constants.h"
 #include "ipc/ipc_message_macros.h"
 #include "net/base/net_errors.h"
@@ -90,6 +92,7 @@
 #include "oxide_web_frame.h"
 #include "oxide_web_view_client.h"
 #include "web_contents_helper.h"
+#include "web_process_status_monitor.h"
 
 #if defined(ENABLE_MEDIAHUB)
 #include "shared/browser/media/oxide_media_web_contents_observer.h"
@@ -549,13 +552,14 @@ void WebView::WebContentsCreated(content::WebContents* source,
 
 void WebView::RendererUnresponsive(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
-  ChromeController::FromWebContents(web_contents_.get())
+  WebProcessStatusMonitor::FromWebContents(web_contents_.get())
       ->RendererIsUnresponsive();
 }
 
 void WebView::RendererResponsive(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
-  ChromeController::FromWebContents(web_contents_.get())->RendererIsResponsive();
+  WebProcessStatusMonitor::FromWebContents(web_contents_.get())
+      ->RendererIsResponsive();
 }
 
 void WebView::AddNewContents(content::WebContents* source,
@@ -722,14 +726,6 @@ bool WebView::CheckMediaAccessPermission(content::WebContents* source,
                               security_origin,
                               web_contents_->GetLastCommittedURL().GetOrigin());
   return status == TEMPORARY_SAVED_PERMISSION_STATUS_ALLOWED;
-}
-
-void WebView::RenderViewReady() {
-  client_->CrashedStatusChanged();
-}
-
-void WebView::RenderProcessGone(base::TerminationStatus status) {
-  client_->CrashedStatusChanged();
 }
 
 void WebView::DidStartLoading() {
@@ -1294,6 +1290,21 @@ bool WebView::CanCreateWindows() const {
 
 blink::WebContextMenuData::EditFlags WebView::GetEditFlags() const {
   return edit_flags_;
+}
+
+void WebView::TerminateWebProcess() {
+  content::RenderProcessHost* host = web_contents_->GetRenderProcessHost();
+  if (!host) {
+    return;
+  }
+
+  bool is_hung =
+      WebProcessStatusMonitor::FromWebContents(web_contents_.get())
+          ->GetStatus() == WebProcessStatusMonitor::Status::Unresponsive;
+
+  host->Shutdown(is_hung ?
+                     content::RESULT_CODE_HUNG : content::RESULT_CODE_KILLED,
+                 false);
 }
 
 } // namespace oxide

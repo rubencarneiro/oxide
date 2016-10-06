@@ -94,10 +94,6 @@ WebView {
 
   context: SingletonTestWebContext
 
-  function killWebProcess(crash) {
-    WebViewTestSupport.killWebProcess(crash);
-  }
-
   Connections {
     onFrameRemoved: {
       delete webView.qtest_testApiHosts[frame];

@@ -66,8 +66,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
 
   virtual bool CanCreateWindows() const;
 
-  virtual void CrashedStatusChanged();
-
   virtual void URLChanged();
 
   virtual void TitleChanged();
