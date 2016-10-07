@@ -119,6 +119,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebViewClient* client() const { return client_; }
 
+  // DEPRECATED. If you need to map a WebContents to WebView, then your code
+  // belongs in a separate helper class
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
   static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
