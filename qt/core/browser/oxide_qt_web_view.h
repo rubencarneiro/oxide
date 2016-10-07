@@ -128,13 +128,6 @@ class WebView : public oxide::WebViewClient,
                            int32_t line_no,
                            const base::string16& source_id) override;
   void FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) override;
-  void DownloadRequested(const GURL& url,
-      const std::string& mime_type,
-      const bool should_prompt,
-      const base::string16& suggested_filename,
-      const std::string& cookies,
-      const std::string& referrer,
-      const std::string& user_agent) override;
   oxide::FilePicker* CreateFilePicker(content::RenderFrameHost* rfh) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
@@ -151,6 +144,13 @@ class WebView : public oxide::WebViewClient,
   bool AdoptNewWebContents(const gfx::Rect& initial_pos,
                            WindowOpenDisposition disposition,
                            oxide::WebContentsUniquePtr contents) override;
+  void DownloadRequested(const GURL& url,
+      const std::string& mime_type,
+      const bool should_prompt,
+      const base::string16& suggested_filename,
+      const std::string& cookies,
+      const std::string& referrer,
+      const std::string& user_agent) override;
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
 

@@ -43,7 +43,8 @@
 #include "oxide_redirection_intercept_throttle.h"
 #include "oxide_resource_dispatcher_host_login_delegate.h"
 #include "oxide_user_agent_settings.h"
-#include "oxide_web_view.h"
+#include "web_contents_client.h"
+#include "web_contents_helper.h"
 
 namespace oxide {
 
@@ -213,18 +214,22 @@ void ResourceDispatcherHostDelegate::DispatchDownloadRequestWithCookies(
     return;
   }
 
-  WebView* webview = WebView::FromWebContents(contents);
-  if (!webview) {
+  WebContentsHelper* contents_helper =
+      WebContentsHelper::FromWebContents(contents);
+  DCHECK(contents_helper);
+
+  if (!contents_helper->client()) {
     return;
   }
-  webview->DownloadRequested(
-    params.url,
-    params.mime_type,
-    params.use_prompt,
-    params.suggested_name,
-    cookies,
-    params.referrer.spec(),
-    params.user_agent);
+
+  contents_helper->client()->DownloadRequested(
+      params.url,
+      params.mime_type,
+      params.use_prompt,
+      params.suggested_name,
+      cookies,
+      params.referrer.spec(),
+      params.user_agent);
 }
 
 net::CookieStore* ResourceDispatcherHostDelegate::GetCookieStoreForContext(

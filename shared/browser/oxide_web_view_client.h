@@ -109,14 +109,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
 
   // XXX(chrisccoulson): WebView currently just proxies straight to this -
   //    should this get its own interface?
-  virtual void DownloadRequested(const GURL& url,
-                                 const std::string& mime_type,
-                                 const bool should_prompt,
-                                 const base::string16& suggested_filename,
-                                 const std::string& cookies,
-                                 const std::string& referrer,
-                                 const std::string& user_agent);
-
   virtual FilePicker* CreateFilePicker(content::RenderFrameHost* rfh);
 
   // TODO(chrisccoulson): Rename to BlockedContentChanged or something

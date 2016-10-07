@@ -44,6 +44,14 @@ bool WebContentsClient::AdoptNewWebContents(
   return false;
 }
 
+void WebContentsClient::DownloadRequested(const GURL& url,
+                                          const std::string& mime_type,
+                                          const bool should_prompt,
+                                          const base::string16& suggested_filename,
+                                          const std::string& cookies,
+                                          const std::string& referrer,
+                                          const std::string& user_agent) {}
+
 void WebContentsClient::HttpAuthenticationRequested(
     ResourceDispatcherHostLoginDelegate* login_delegate) {}
 

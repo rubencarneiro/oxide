@@ -184,15 +184,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   void PrepareToClose();
 
-  void DownloadRequested(
-      const GURL& url,
-      const std::string& mime_type,
-      const bool should_prompt,
-      const base::string16& suggested_filename,
-      const std::string& cookies,
-      const std::string& referrer,
-      const std::string& user_agent);
-
   display::Display GetDisplay() const;
 
   JavaScriptDialog* CreateJavaScriptDialog(
