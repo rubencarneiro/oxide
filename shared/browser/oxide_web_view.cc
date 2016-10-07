@@ -137,6 +137,7 @@ void CreateHelpers(content::WebContents* contents) {
   WebFrameTree::CreateForWebContents(contents);
   FaviconHelper::CreateForWebContents(contents);
   FullscreenHelper::CreateForWebContents(contents);
+  WebProcessStatusMonitor::CreateForWebContents(contents);
   ChromeController::CreateForWebContents(contents);
 }
 
