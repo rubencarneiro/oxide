@@ -97,7 +97,8 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
     content::RenderFrameHost* render_frame_host) {
   OxideHostMsg_SendMessage::Param p;
   if (!OxideHostMsg_SendMessage::Read(&message, &p)) {
-    render_frame_host->GetProcess()->ShutdownForBadMessage();
+    render_frame_host->GetProcess()->ShutdownForBadMessage(
+        content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
     return;
   }
 

@@ -35,7 +35,6 @@
 #include "cc/surfaces/direct_compositor_frame_sink.h"
 #include "cc/surfaces/display.h"
 #include "cc/surfaces/display_scheduler.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_host_in_process.h"
@@ -113,9 +112,7 @@ Compositor::Compositor(CompositorClient* client)
       task_runner_(base::ThreadTaskRunnerHandle::Get()),
       output_surface_(nullptr),
       mailbox_buffer_map_(mode_),
-      surface_id_allocator_(
-          new cc::SurfaceIdAllocator(
-              CompositorUtils::GetInstance()->AllocateFrameSinkId())),
+      frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
@@ -127,8 +124,9 @@ Compositor::Compositor(CompositorClient* client)
       frames_waiting_for_completion_(0),
       mailbox_resource_fetches_in_progress_(0),
       weak_factory_(this) {
-  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterFrameSinkId(
-      surface_id_allocator_->frame_sink_id());
+  CompositorUtils::GetInstance()
+      ->GetSurfaceManager()
+      ->RegisterFrameSinkId(frame_sink_id_);
 }
 
 bool Compositor::SurfaceIdIsCurrent(uint32_t surface_id) {
@@ -352,8 +350,8 @@ Compositor::CreateCompositorFrameSink() {
 
   std::unique_ptr<cc::DirectCompositorFrameSink> sink =
       base::MakeUnique<cc::DirectCompositorFrameSink>(
+          frame_sink_id_,
           CompositorUtils::GetInstance()->GetSurfaceManager(),
-          surface_id_allocator_.get(),
           display_.get(),
           context_provider,
           nullptr);
@@ -689,7 +687,7 @@ Compositor::~Compositor() {
 
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
-      ->InvalidateFrameSinkId(surface_id_allocator_->frame_sink_id());
+      ->InvalidateFrameSinkId(frame_sink_id_);
 }
 
 void Compositor::SetVisibility(bool visible) {

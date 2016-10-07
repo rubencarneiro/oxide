@@ -26,6 +26,7 @@
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
+#include "cc/surfaces/frame_sink_id.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "cc/trees/layer_tree_host_single_thread_client.h"
 #include "ui/gfx/geometry/size.h"
@@ -45,7 +46,6 @@ class CompositorFrameSink;
 class Display;
 class Layer;
 class LayerTreeHost;
-class SurfaceIdAllocator;
 }
 
 namespace gfx {
@@ -173,8 +173,8 @@ class Compositor : public cc::LayerTreeHostClient,
   // OutputSurface calling in to OutputSurfaceDestroyed
   CompositorClient::SwapAckCallback swap_ack_callback_;
 
-  // Both of these need to outlive |layer_tree_host_|
-  std::unique_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+  cc::FrameSinkId frame_sink_id_;
+  // This needs to outlive |layer_tree_host_|
   std::unique_ptr<cc::Display> display_;
 
   bool layer_tree_host_eviction_pending_;

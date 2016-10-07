@@ -31,6 +31,7 @@
 #include "net/base/ip_address.h"
 #include "net/base/net_errors.h"
 #include "net/log/net_log.h"
+#include "net/log/net_log_source.h"
 #include "net/socket/tcp_server_socket.h"
 
 #include "oxide_browser_context.h"
@@ -58,7 +59,7 @@ class TCPServerSocketFactory : public content::DevToolsSocketFactory {
  private:
   std::unique_ptr<net::ServerSocket> CreateForHttpServer() override {
     std::unique_ptr<net::TCPServerSocket> socket(
-        new net::TCPServerSocket(nullptr, net::NetLog::Source()));
+        new net::TCPServerSocket(nullptr, net::NetLogSource()));
     if (socket->ListenWithAddressAndPort(address_,
                                          port_,
                                          kBackLog) != net::OK) {
