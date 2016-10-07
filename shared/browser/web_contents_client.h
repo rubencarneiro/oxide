@@ -21,6 +21,7 @@
 #include "ui/base/window_open_disposition.h"
 
 #include "shared/browser/web_contents_unique_ptr.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -30,7 +31,7 @@ class Rect;
 
 namespace oxide {
 
-class WebContentsClient {
+class OXIDE_SHARED_EXPORT WebContentsClient {
  public:
   virtual ~WebContentsClient();
 
