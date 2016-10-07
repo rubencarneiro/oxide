@@ -22,6 +22,7 @@
 
 #include "base/macros.h"
 
+#include "qt/core/common/oxide_qt_export.h"
 #include "qt/core/glue/web_contents_id.h"
 
 namespace base {
@@ -37,7 +38,7 @@ namespace qt {
 
 // Allows safely passing an opaque identifier for a WebContents outside of the
 // core library
-class WebContentsIDTracker {
+class OXIDE_QT_EXPORT WebContentsIDTracker {
  public:
   static WebContentsIDTracker* GetInstance();
 

@@ -203,13 +203,11 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       content::JavaScriptMessageType javascript_message_type);
   JavaScriptDialog* CreateBeforeUnloadDialog();
 
-  bool ShouldHandleNavigation(const GURL& url, bool has_user_gesture);
-
-  bool CanCreateWindows() const;
-
   const GURL& target_url() const { return target_url_; }
 
   blink::WebContextMenuData::EditFlags GetEditFlags() const;
+
+  void TerminateWebProcess();
 
  private:
   WebView(WebViewClient* client);
@@ -282,6 +280,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                           const std::string& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) override;
+  void RendererUnresponsive(content::WebContents* source) override;
+  void RendererResponsive(content::WebContents* source) override;
   void AddNewContents(content::WebContents* source,
                       content::WebContents* new_contents,
                       WindowOpenDisposition disposition,
@@ -325,8 +325,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                   content::MediaStreamType type) override;
 
   // content::WebContentsObserver implementation
-  void RenderViewReady() override;
-  void RenderProcessGone(base::TerminationStatus status) override;
   void DidStartLoading() override;
   void DidStopLoading() override;
   void DidFinishLoad(content::RenderFrameHost* render_frame_host,

@@ -48,6 +48,7 @@
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/core/glue/macros.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
 #include "qt/quick/oxide_qquick_confirm_dialog.h"
@@ -525,8 +526,6 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
-        find_controller_.data(),
-        security_status_.data(),
         construct_props_->new_view_request,
         initial_prefs));
   }
@@ -543,14 +542,16 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
         this, contents_view_.data(), q,
-        find_controller_.data(),
-        security_status_.data(),
         construct_props_->context,
         construct_props_->incognito,
         construct_props_->restore_state,
         construct_props_->restore_type));
   }
 
+  OxideQFindControllerPrivate::get(find_controller_.data())->Init(
+      proxy_->webContentsID());
+  OxideQSecurityStatusPrivate::get(security_status_.data())->Init(
+      proxy_->webContentsID());
   if (location_bar_controller_) {
     OxideQQuickLocationBarControllerPrivate::get(location_bar_controller_.get())
         ->init(proxy_->webContentsID());
@@ -779,14 +780,6 @@ QString OxideQQuickWebViewPrivate::getNavigationEntryTitle(int index) const {
 QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
     int index) const {
   return proxy_->getNavigationEntryTimestamp(index);
-}
-
-void OxideQQuickWebViewPrivate::killWebProcess(bool crash) {
-  if (!proxy_) {
-    return;
-  }
-
-  proxy_->killWebProcess(crash);
 }
 
 /*!
@@ -2378,19 +2371,31 @@ The web content process is running normally. This value is also used if this
 WebView doesn't yet have a web content process.
 
 \value WebView.WebProcessKilled
-The web content process has been killed by the system. This might happen as a
-result of low memory or application lifecycle management.
+The web content process has been killed by the system or a signal sent to it.
+This might happen as a result of low memory or application lifecycle management.
 
 \value WebView.WebProcessCrashed
-The web content process has crashed.
+The web content process has crashed or otherwise exited abnormally.
 
-If Oxide::processModel is \e{Oxide.ProcessModelSingleProcess}, this will always
-be \e{WebProcessRunning}.
+\value WebView.WebProcessUnresponsive
+The web content process is no longer responding to events. The timeout for
+triggering this is currently set to 5s.
+
+If Oxide::processModel is \e{Oxide.ProcessModelSingleProcess}, this will only
+ever be \e{WebProcessRunning} or \e{WebProcessUnresponsive}
 */
 
 OxideQQuickWebView::WebProcessStatus OxideQQuickWebView::webProcessStatus() const {
   Q_D(const OxideQQuickWebView);
 
+  STATIC_ASSERT_MATCHING_ENUM(WebProcessRunning,
+                              oxide::qt::WEB_PROCESS_RUNNING);
+  STATIC_ASSERT_MATCHING_ENUM(WebProcessKilled,
+                              oxide::qt::WEB_PROCESS_KILLED);
+  STATIC_ASSERT_MATCHING_ENUM(WebProcessCrashed,
+                              oxide::qt::WEB_PROCESS_CRASHED);
+  STATIC_ASSERT_MATCHING_ENUM(WebProcessUnresponsive,
+                              oxide::qt::WEB_PROCESS_UNRESPONSIVE);
   Q_STATIC_ASSERT(
       WebProcessRunning ==
         static_cast<WebProcessStatus>(oxide::qt::WEB_PROCESS_RUNNING));
@@ -2795,6 +2800,32 @@ void OxideQQuickWebView::prepareToClose() {
   }
 
   d->proxy_->prepareToClose();
+}
+
+/*!
+\qmlmethod void WebView::terminateWebProcess()
+\since OxideQt 1.19
+
+Terminate the current web process. This call is asynchronous and won't wait for
+the process to die before returning.
+
+This function is useful for terminating web content processes that have become
+unresponsive.
+
+Calling this when Oxide::processModel is \e{Oxide.ProcessModelSingleProcess}
+will result in the calling process being killed.
+*/
+
+void OxideQQuickWebView::terminateWebProcess() {
+  Q_D(OxideQQuickWebView);
+
+  if (!d->proxy_) {
+    qWarning() <<
+        "OxideQQuickWebView::terminateWebProcess: There is no web process yet";
+    return;
+  }
+
+  d->proxy_->terminateWebProcess();
 }
 
 /*!

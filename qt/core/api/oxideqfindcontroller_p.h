@@ -22,6 +22,7 @@
 #include <QString>
 
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/glue/web_contents_id.h"
 
 namespace oxide {
 namespace qt {
@@ -39,7 +40,7 @@ class OXIDE_QTCORE_EXPORT OxideQFindControllerPrivate {
 
   static OxideQFindControllerPrivate* get(OxideQFindController* q);
 
-  oxide::qt::FindController* controller() const { return controller_.data(); }
+  void Init(oxide::qt::WebContentsID web_contents_id);
 
  private:
   OxideQFindControllerPrivate(OxideQFindController* q);

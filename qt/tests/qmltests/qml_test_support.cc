@@ -168,25 +168,6 @@ WebContextTestSupportAttached* WebContextTestSupport::qmlAttachedProperties(
   return new WebContextTestSupportAttached(attachee);
 }
 
-WebViewTestSupportAttached::WebViewTestSupportAttached(QObject* attachee)
-    : QObject(attachee),
-      view_(qobject_cast<OxideQQuickWebView*>(attachee)) {}
-
-void WebViewTestSupportAttached::killWebProcess(bool crash) {
-  if (!view_) {
-    qWarning() << "Object is not a WebView";
-    return;
-  }
-
-  OxideQQuickWebViewPrivate::get(view_)->killWebProcess(crash);
-}
-
-// static
-WebViewTestSupportAttached* WebViewTestSupport::qmlAttachedProperties(
-    QObject* attachee) {
-  return new WebViewTestSupportAttached(attachee);
-}
-
 TestWindowAttached::TestWindowAttached(QObject* attachee)
     : QObject(attachee),
       item_(nullptr) {

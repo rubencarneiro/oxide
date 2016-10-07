@@ -60,8 +60,10 @@ WebContentsHelper::WebContentsHelper(content::WebContents* contents)
 
   content::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();
-  renderer_prefs->enable_do_not_track =
-      UserAgentSettings::Get(contents->GetBrowserContext())->GetDoNotTrack();
+  UserAgentSettings* ua_settings =
+      UserAgentSettings::Get(contents->GetBrowserContext());
+  renderer_prefs->enable_do_not_track = ua_settings->GetDoNotTrack();
+  renderer_prefs->accept_languages = ua_settings->GetAcceptLangs();
 
   // Hardcoded selection colors to match the current Ambiance theme from the
   // Ubuntu UI Toolkit (https://bazaar.launchpad.net/~ubuntu-sdk-team/ubuntu-ui-toolkit/trunk/view/head:/src/Ubuntu/Components/Themes/Ambiance/1.3/Palette.qml)
@@ -98,6 +100,16 @@ void WebContentsHelper::NotifyDoNotTrackChanged() {
   UserAgentSettings* ua_settings =
       UserAgentSettings::Get(web_contents_->GetBrowserContext());
   renderer_prefs->enable_do_not_track = ua_settings->GetDoNotTrack();
+
+  SyncRendererPreferences();
+}
+
+void WebContentsHelper::NotifyAcceptLanguagesChanged() {
+  content::RendererPreferences* renderer_prefs =
+      web_contents_->GetMutableRendererPrefs();
+  UserAgentSettings* ua_settings =
+      UserAgentSettings::Get(web_contents_->GetBrowserContext());
+  renderer_prefs->accept_languages = ua_settings->GetAcceptLangs();
 
   SyncRendererPreferences();
 }

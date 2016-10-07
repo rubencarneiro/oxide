@@ -17,8 +17,6 @@
 
 #include "oxide_web_view_client.h"
 
-#include "base/logging.h"
-
 namespace oxide {
 
 WebViewClient::~WebViewClient() {}
@@ -31,12 +29,6 @@ JavaScriptDialog* WebViewClient::CreateJavaScriptDialog(
 JavaScriptDialog* WebViewClient::CreateBeforeUnloadDialog() {
   return nullptr;
 }
-
-bool WebViewClient::CanCreateWindows() const {
-  return false;
-}
-
-void WebViewClient::CrashedStatusChanged() {}
 
 void WebViewClient::URLChanged() {}
 
@@ -93,21 +85,6 @@ void WebViewClient::DownloadRequested(const GURL& url,
                                       const std::string& cookies,
                                       const std::string& referrer,
                                       const std::string& user_agent) {}
-
-bool WebViewClient::ShouldHandleNavigation(const GURL& url,
-                                           WindowOpenDisposition disposition,
-                                           bool user_gesture) {
-  return true;
-}
-
-WebView* WebViewClient::CreateNewWebView(
-    const gfx::Rect& initial_pos,
-    WindowOpenDisposition disposition,
-    WebContentsUniquePtr contents) {
-  NOTREACHED() <<
-      "Your CanCreateWindows() implementation should be returning false!";
-  return nullptr;
-}
 
 FilePicker* WebViewClient::CreateFilePicker(content::RenderFrameHost* rfh) {
   return nullptr;

@@ -126,28 +126,6 @@ class WebContextTestSupport : public QObject {
 QML_DECLARE_TYPE(WebContextTestSupport)
 QML_DECLARE_TYPEINFO(WebContextTestSupport, QML_HAS_ATTACHED_PROPERTIES)
 
-class WebViewTestSupportAttached : public QObject {
-  Q_OBJECT
-
- public:
-  WebViewTestSupportAttached(QObject* attachee);
-
-  Q_INVOKABLE void killWebProcess(bool crash);
-
- private:
-  OxideQQuickWebView* view_;
-};
-
-class WebViewTestSupport : public QObject {
-  Q_OBJECT
-
- public:
-  static WebViewTestSupportAttached* qmlAttachedProperties(QObject* attachee);
-};
-
-QML_DECLARE_TYPE(WebViewTestSupport)
-QML_DECLARE_TYPEINFO(WebViewTestSupport, QML_HAS_ATTACHED_PROPERTIES)
-
 class ItemTestSupportAttached : public QObject {
   Q_OBJECT
 

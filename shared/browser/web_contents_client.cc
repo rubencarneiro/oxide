@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,37 +15,33 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_
-#define _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_
+#include "web_contents_client.h"
 
 namespace oxide {
 
-class UserAgentSettings;
+WebContentsClient::~WebContentsClient() = default;
 
-class UserAgentSettingsObserver {
- public:
-  virtual ~UserAgentSettingsObserver();
+bool WebContentsClient::ShouldHandleNavigation(const GURL& url,
+                                               bool user_gesture) {
+  return true;
+}
 
-  virtual void NotifyPopupBlockerEnabledChanged() {}
+bool WebContentsClient::CanCreateWindows() {
+  return false;
+}
 
-  virtual void NotifyDoNotTrackChanged() {}
+bool WebContentsClient::ShouldCreateNewWebContents(
+    const GURL& url,
+    WindowOpenDisposition disposition,
+    bool user_gesture) {
+  return true;
+}
 
-  virtual void NotifyAcceptLanguagesChanged() {}
-
- protected:
-  UserAgentSettingsObserver();
-  UserAgentSettingsObserver(UserAgentSettings* settings);
-
-  void Observe(UserAgentSettings* settings);
-
-  UserAgentSettings* user_agent_settings() const { return settings_; }
-
- private:
-  friend class UserAgentSettings;
-
-  UserAgentSettings* settings_;
-};
+bool WebContentsClient::AdoptNewWebContents(
+    const gfx::Rect& initial_pos,
+    WindowOpenDisposition disposition,
+    WebContentsUniquePtr contents) {
+  return false;
+}
 
 } // namespace oxide
-
-#endif // _OXIDE_SHARED_BROWSER_USER_AGENT_SETTINGS_OBSERVER_H_

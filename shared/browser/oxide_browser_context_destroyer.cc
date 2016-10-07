@@ -163,10 +163,12 @@ void BrowserContextDestroyer::RenderProcessHostDestroyed(
 void BrowserContextDestroyer::DestroyContext(
     std::unique_ptr<BrowserContext> context) {
 
+  bool is_otr_context = context->IsOffTheRecord();
+
   bool has_live_otr_context = false;
   uint32_t otr_contexts_pending_deletion = 0;
 
-  if (!context->IsOffTheRecord()) {
+  if (!is_otr_context) {
     // If |context| is not an OTR BrowserContext, we need to keep track of how
     // many OTR BrowserContexts that were owned by it are scheduled for deletion
     // but still exist, as |context| must outlive these
@@ -204,11 +206,19 @@ void BrowserContextDestroyer::DestroyContext(
 
   if (!hosts.empty() ||
       otr_contexts_pending_deletion > 0 ||
-      has_live_otr_context) {
-    // |context| is not safe to delete yet
-    new BrowserContextDestroyer(std::move(context),
-                                hosts,
-                                otr_contexts_pending_deletion);
+      has_live_otr_context ||
+      is_otr_context) {
+    // |context| is not safe to delete yet. Note we always use
+    // BrowserContextDestroyer for OTR contexts as if we don't then we'll leak
+    // the owning BrowserContext if it's already been scheduled for deletion (as
+    // we've already incremented otr_contexts_pending_deletion_)
+    BrowserContextDestroyer* destroyer =
+        new BrowserContextDestroyer(std::move(context),
+                                    hosts,
+                                    otr_contexts_pending_deletion);
+    if (is_otr_context) {
+      destroyer->MaybeScheduleFinishDestroyContext();
+    }
   }
 }
 

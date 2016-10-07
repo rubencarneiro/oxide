@@ -31,9 +31,7 @@
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/web_contents_id.h"
 
-class OxideQFindController;
 class OxideQNewViewRequest;
-class OxideQSecurityStatus;
 class OxideQWebPreferences;
 
 namespace oxide {
@@ -61,7 +59,8 @@ enum RestoreType {
 enum WebProcessStatus {
   WEB_PROCESS_RUNNING,
   WEB_PROCESS_KILLED,
-  WEB_PROCESS_CRASHED
+  WEB_PROCESS_CRASHED,
+  WEB_PROCESS_UNRESPONSIVE
 };
 
 enum EditCapabilityFlags {
@@ -91,8 +90,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
       WebViewProxyClient* client, // Must outlive returned proxy
       ContentsViewProxyClient* view_client, // Must outlive returned proxy
       QObject* handle,
-      OxideQFindController* find_controller, // Returned proxy must outlive this
-      OxideQSecurityStatus* security_status, // Returned proxy must outlive this
       QObject* context,
       bool incognito,
       const QByteArray& restore_state,
@@ -100,8 +97,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   static WebViewProxy* create(WebViewProxyClient* client,
                               ContentsViewProxyClient* view_client,
                               QObject* handle,
-                              OxideQFindController* find_controller,
-                              OxideQSecurityStatus* security_status,
                               OxideQNewViewRequest* new_view_request,
                               OxideQWebPreferences* initial_prefs);
 
@@ -165,6 +160,8 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
 
   virtual void prepareToClose() = 0;
 
+  virtual void terminateWebProcess() = 0;
+
   virtual WebProcessStatus webProcessStatus() const = 0;
 
   virtual void executeEditingCommand(EditingCommands command) const = 0;
@@ -179,8 +176,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   static qreal maximumZoomFactor();
 
   virtual void teardownFrameTree() = 0;
-
-  virtual void killWebProcess(bool crash) = 0;
 };
 
 } // namespace qt

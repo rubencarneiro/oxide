@@ -26,16 +26,13 @@
 #include "content/public/browser/ssl_status.h"
 
 #include "qt/core/common/oxide_qt_export.h"
+#include "qt/core/glue/web_contents_id.h"
 #include "shared/browser/ssl/oxide_security_status.h"
 #include "shared/browser/ssl/oxide_security_types.h"
 
 QT_BEGIN_NAMESPACE
 class OxideQSecurityStatus;
 QT_END_NAMESPACE
-
-namespace content {
-class WebContents;
-}
 
 namespace net {
 class X509Certificate;
@@ -51,7 +48,7 @@ class OXIDE_QT_EXPORT SecurityStatus {
   ~SecurityStatus();
 
   // Initialize with the specified WebContents
-  void Init(content::WebContents* contents);
+  void Init(WebContentsID web_contents_id);
 
   oxide::SecurityLevel GetSecurityLevel() const;
 

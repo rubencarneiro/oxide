@@ -18,11 +18,34 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 
+#include "ui/base/window_open_disposition.h"
+
+#include "shared/browser/web_contents_unique_ptr.h"
+
+class GURL;
+
+namespace gfx {
+class Rect;
+}
+
 namespace oxide {
 
 class WebContentsClient {
  public:
-  virtual ~WebContentsClient() = default;
+  virtual ~WebContentsClient();
+
+  virtual bool ShouldHandleNavigation(const GURL& url,
+                                      bool user_gesture);
+
+  virtual bool CanCreateWindows();
+
+  virtual bool ShouldCreateNewWebContents(const GURL& url,
+                                          WindowOpenDisposition disposition,
+                                          bool user_gesture);
+
+  virtual bool AdoptNewWebContents(const gfx::Rect& initial_pos,
+                                   WindowOpenDisposition disposition,
+                                   WebContentsUniquePtr contents);
 };
 
 } // namespace oxide

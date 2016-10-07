@@ -75,9 +75,9 @@ void OxideQQuickLocationBarControllerPrivate::init(
 
 \brief Bridge for location bar autohide functionality
 
-LocationBarContoller provides a bridge to allow applications to provide location
-bar autohide functionality. It assumes that the location bar is at the top of
-the view, and overlays the view when fully revealed.
+LocationBarContoller provides a mechanism to allow applications to provide
+location bar autohide functionality. It assumes that the location bar is at the
+top of the view, and overlays the view when fully revealed.
 
 LocationBarController works by calculating a position that the application
 should use to position its location bar (via the \l{offset} property), and by
@@ -138,7 +138,9 @@ void OxideQQuickLocationBarController::setHeight(qreal height) {
 The operational mode of the LocationBarController. Possible values are:
 
 \value LocationBarController.ModeAuto
-Auto hide and auto reveal of the location bar will be enabled.
+Auto hide and auto reveal of the location bar will be enabled, although there
+are several conditions that can override this to disable auto-hide or
+auto-reveal functionality.
 
 \value LocationBarController.ModeShown
 The location bar should be fully revealed.
@@ -181,6 +183,9 @@ void OxideQQuickLocationBarController::setMode(Mode mode) {
 
 Whether transitions between different modes should be animated. The default
 value is true.
+
+\note Transitions will only be animated if the web process hasn't crashed and
+isn't hung.
 */
 
 bool OxideQQuickLocationBarController::animated() const {
@@ -244,7 +249,8 @@ it is revealed, auto hide will continue functioning as normal.
 The application can control whether the transition is animated by setting the
 \a{animate} argument appropriately.
 
-Calling this in a mode other than auto will have no effect.
+Calling this in a mode other than auto or if auto-reveal has been disabled by
+Oxide will have no effect.
 */
 
 void OxideQQuickLocationBarController::show(bool animate) {
@@ -276,7 +282,8 @@ it is hidden, auto reveal will continue functioning as normal.
 The application can control whether the transition is animated by setting the
 \a{animate} argument appropriately.
 
-Calling this in a mode other than auto will have no effect.
+Calling this in a mode other than auto or if auto-hide has been disabled by
+Oxide will have no effect.
 */
 
 void OxideQQuickLocationBarController::hide(bool animate) {

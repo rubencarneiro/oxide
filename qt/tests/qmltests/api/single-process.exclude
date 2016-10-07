@@ -2,3 +2,5 @@ tst_WebContext_semi_construct_only_properties.qml
 tst_WebContext_sessionCookies.qml
 tst_WebView_context.qml
 tst_WebView_incognito.qml
+tst_WebView_terminateWebProcess.qml
+tst_WebView_webProcessStatus.qml

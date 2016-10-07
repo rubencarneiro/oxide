@@ -22,6 +22,8 @@
 #include "qt/core/api/oxideqfindcontroller.h"
 #include "shared/browser/oxide_find_controller.h"
 
+#include "web_contents_id_tracker.h"
+
 namespace oxide {
 namespace qt {
 
@@ -45,8 +47,13 @@ FindController::~FindController() {
   }
 }
 
-void FindController::Init(content::WebContents* contents) {
+void FindController::Init(WebContentsID web_contents_id) {
   DCHECK(!find_controller_);
+
+  content::WebContents* contents =
+      WebContentsIDTracker::GetInstance()->GetWebContentsFromID(web_contents_id);
+  DCHECK(contents);
+
   find_controller_ = oxide::FindController::FromWebContents(contents);
   find_controller_->set_client(this);
 }

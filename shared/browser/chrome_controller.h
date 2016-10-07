@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_H_
 #define _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_H_
 
+#include <memory>
+
 #include "base/macros.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -25,6 +27,8 @@
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
+#include "shared/browser/ssl/oxide_security_status.h"
+#include "shared/browser/web_process_status_monitor.h"
 #include "shared/common/oxide_shared_export.h"
 
 namespace content {
@@ -72,19 +76,39 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   void InitializeForHost(content::RenderFrameHost* render_frame_host,
                          bool initial_host);
+  void RefreshTopControlsState();
   void UpdateTopControlsState(content::RenderFrameHost* render_frame_host,
                               blink::WebTopControlsState current_state,
                               bool animated);
   RenderWidgetHostView* GetRenderWidgetHostView();
   content::RenderWidgetHost* GetRenderWidgetHost();
 
+  bool RendererIsUnresponsive() const;
+
   cc::CompositorFrameMetadata DefaultMetadata() const;
+
+  bool CanHideTopControls() const;
+  bool CanShowTopControls() const;
+
+  void OnSecurityStatusChanged(SecurityStatus::ChangedFlags flags);
+  void OnWebProcessStatusChanged();
 
   // content::WebContentsObserver implementation
   void RenderFrameForInterstitialPageCreated(
       content::RenderFrameHost* render_frame_host) override;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) override;
+  void DidCommitProvisionalLoadForFrame(
+      content::RenderFrameHost* render_frame_host,
+      const GURL& url,
+      ui::PageTransition transition_type) override;
+  void WebContentsDestroyed() override;
+  void DidShowFullscreenWidget() override;
+  void DidDestroyFullscreenWidget() override;
+  void DidToggleFullscreenModeForTab(bool entered_fullscreen,
+                                     bool will_cause_resize) override;
+  void DidAttachInterstitialPage() override;
+  void DidDetachInterstitialPage() override;
 
   // CompositorObserver implementation
   void CompositorDidCommit() override;
@@ -92,14 +116,16 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   ChromeControllerClient* client_;
 
-  content::WebContents* web_contents_;
-
   float top_controls_height_;
   blink::WebTopControlsState constraints_;
   bool animation_enabled_;
 
   cc::CompositorFrameMetadata committed_frame_metadata_;
   cc::CompositorFrameMetadata current_frame_metadata_;
+
+  std::unique_ptr<SecurityStatus::Subscription> security_status_subscription_;
+  std::unique_ptr<WebProcessStatusMonitor::Subscription>
+      web_process_status_subscription_;
 
   DISALLOW_COPY_AND_ASSIGN(ChromeController);
 };

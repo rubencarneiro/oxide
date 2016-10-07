@@ -32,7 +32,7 @@ endif()
 
 # CMake doesn't seem to provide a way to get at QT_INSTALL_QML
 if(NOT CMAKE_CROSSCOMPILING)
-  execute_process(COMMAND ${QMAKE_EXECUTABLE} -query QT_INSTALL_QML
+  execute_process(COMMAND ${QMAKE_EXECUTABLE} -qt5 -query QT_INSTALL_QML
                   RESULT_VARIABLE _RESULT
                   OUTPUT_VARIABLE QT_INSTALL_QML
                   OUTPUT_STRIP_TRAILING_WHITESPACE)

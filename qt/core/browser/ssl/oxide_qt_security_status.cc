@@ -21,6 +21,7 @@
 
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
+#include "qt/core/browser/web_contents_id_tracker.h"
 #include "shared/common/oxide_enum_flags.h"
 
 namespace oxide {
@@ -53,7 +54,13 @@ SecurityStatus::SecurityStatus(OxideQSecurityStatus* api_handle)
 
 SecurityStatus::~SecurityStatus() {}
 
-void SecurityStatus::Init(content::WebContents* contents) {
+void SecurityStatus::Init(WebContentsID web_contents_id) {
+  DCHECK(!security_status_);
+
+  content::WebContents* contents =
+      WebContentsIDTracker::GetInstance()->GetWebContentsFromID(web_contents_id);
+  DCHECK(contents);
+
   security_status_ = oxide::SecurityStatus::FromWebContents(contents);
   change_subscription_ = security_status_->AddChangeCallback(
       base::Bind(&SecurityStatus::OnStatusChanged,

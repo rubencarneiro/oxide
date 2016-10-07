@@ -171,7 +171,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   enum WebProcessStatus {
     WebProcessRunning,
     WebProcessKilled,
-    WebProcessCrashed
+    WebProcessCrashed,
+    WebProcessUnresponsive
   };
 
   enum EditCapabilityFlags {
@@ -326,6 +327,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void setCanTemporarilyRunInsecureContent(bool allow);
 
   Q_REVISION(2) void prepareToClose();
+
+  Q_REVISION(9) void terminateWebProcess();
 
  Q_SIGNALS:
   void urlChanged();

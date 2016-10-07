@@ -27,6 +27,13 @@ Item {
     id: spy
   }
 
+  Connections {
+    property var lastError: null
+
+    id: certificateErrorSink
+    onCertificateError: lastError = error;
+  }
+
   Item {
     id: locationBarSpy
     visible: false
@@ -37,6 +44,7 @@ Item {
     readonly property alias inconsistentPropertiesSeen: locationBarSpy.qtest_inconsistentPropertiesSeen
     readonly property alias shown: locationBarSpy.qtest_shown
     readonly property alias hidden: locationBarSpy.qtest_hidden
+    readonly property alias transitionCount: locationBarSpy.qtest_transitionCount
     readonly property alias animating: locationBarSpy.qtest_animating
     readonly property alias animationCount: locationBarSpy.qtest_animationCount
     readonly property alias lastAnimationDuration: locationBarSpy.qtest_lastAnimationDuration
@@ -47,14 +55,20 @@ Item {
       qtest_inconsistentPropertiesSeen = false;
       qtest_animationStartTime = null;
       qtest_lastAnimationDuration = null;
+      qtest_shown = false;
+      qtest_hidden = false;
+      qtest_animating = false;
 
       qtest_update();
 
+      qtest_wasShown = qtest_shown;
+      qtest_wasHidden = qtest_hidden;
       qtest_animationCount = 0;
+      qtest_transitionCount = 0;
     }
 
-    function waitUntilShown() {
-      return TestUtils.waitFor(function() { return qtest_shown; });
+    function waitUntilShown(timeout) {
+      return TestUtils.waitFor(function() { return qtest_shown; }, timeout);
     }
 
     function waitUntilHidden() {
@@ -139,6 +153,33 @@ Item {
         qtest_animationStartTime = Date.now();
       }
     }
+
+    property int qtest_transitionCount: 0
+    property bool qtest_wasShown: false
+    property bool qtest_wasHidden: false
+
+    function qtest_updateTransitionCount() {
+      if (qtest_shown) {
+        if (!qtest_wasShown) {
+          qtest_transitionCount++;
+        }
+        qtest_wasShown = true;
+        qtest_wasHidden = false;
+      } else if (qtest_hidden) {
+        if (!qtest_wasHidden) {
+          qtest_transitionCount++;
+        }
+        qtest_wasHidden = true;
+        qtest_wasShown = false;
+      }
+    }
+    onQtest_shownChanged: {
+      qtest_updateTransitionCount();
+    }
+
+    onQtest_hiddenChanged: {
+      qtest_updateTransitionCount();
+    }
   }
 
   TestCase {
@@ -153,9 +194,12 @@ Item {
 
       locationBarSpy.target = null;
       locationBarSpy.clear();
+
+      certificateErrorSink.target = null;
+      certificateErrorSink.lastError = null;
     }
 
-    // Ensure that the default are as expected
+    // Ensure that the defaults are as expected
     function test_LocationBarController1_defaults() {
       var webView = webViewFactory.createObject(top, {});
       compare(webView.locationBarController.height, 0,
@@ -198,10 +242,12 @@ Item {
       compare(webView.locationBarController.height, 0,
               "Height should be set correctly");
       compare(spy.count, 2, "Should have had a signal when setting the height");
+
+      TestSupport.destroyQObjectNow(webView);
     }
 
     // Ensure that changing the mode and calling show() / hide() has no effect
-    //  when not in use
+    // when not in use (height == 0)
     function test_LocationBarController3_mode_off() {
       var webView = webViewFactory.createObject(top, {});
       locationBarSpy.target = webView;
@@ -215,6 +261,7 @@ Item {
       verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
       compare(webView.locationBarController.offset, 0);
       compare(webView.locationBarController.contentOffset, 0);
 
@@ -228,6 +275,7 @@ Item {
       verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
       compare(webView.locationBarController.offset, 0);
       compare(webView.locationBarController.contentOffset, 0);
 
@@ -241,6 +289,7 @@ Item {
       verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
       compare(webView.locationBarController.offset, 0);
       compare(webView.locationBarController.contentOffset, 0);
 
@@ -256,6 +305,7 @@ Item {
       verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
       compare(webView.locationBarController.offset, 0);
       compare(webView.locationBarController.contentOffset, 0);
 
@@ -267,11 +317,73 @@ Item {
       verify(!locationBarSpy.missingSignal);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
       compare(webView.locationBarController.offset, 0);
       compare(webView.locationBarController.contentOffset, 0);
+
+      TestSupport.destroyQObjectNow(webView);
     }
 
-    function test_LocationBarController4_mode_on_data() {
+    function test_LocationBarController4_initial_shown_data() {
+      return [
+        { mode: LocationBarController.ModeAuto },
+        { mode: LocationBarController.ModeShown }
+      ];
+    }
+
+    // Test that the API initializes to the correct value before the
+    // webview is used (https://launchpad.net/bugs/1625484)
+    function test_LocationBarController4_initial_shown() {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": true,
+          "locationBarController.mode": data.mode
+      });
+
+      locationBarSpy.target = webView;
+
+      verify(locationBarSpy.waitUntilShown());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      // This is 2 because we get a transition:
+      // - When we set the spy target
+      // - When the locationbar is shown (it's initially hidden until the
+      //   webview compositor produces a frame)
+      compare(locationBarSpy.transitionCount, 2);
+
+      TestSupport.destroyQObjectNow(webView);
+    }
+
+    // Test that the API initializes to the correct value before the
+    // webview is used (https://launchpad.net/bugs/1625484)
+    function test_LocationBarController5_initial_hidden() {
+      var webView = webViewFactory.createObject(top, {
+          "locationBarController.height": 60,
+          "locationBarController.animated": true,
+          "locationBarController.mode": LocationBarController.ModeHidden
+      });
+
+      locationBarSpy.target = webView;
+
+      verify(locationBarSpy.waitUntilHidden());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 1);
+
+      TestSupport.destroyQObjectNow(webView);
+    }
+
+    function test_LocationBarController6_mode_on_data() {
       return [
         { animated: true },
         { animated: false }
@@ -279,7 +391,8 @@ Item {
     }
 
     // Ensure that changing the mode does have an effect when in use
-    function test_LocationBarController4_mode_on(data) {
+    // (height > 0)
+    function test_LocationBarController6_mode_on(data) {
       var webView = webViewFactory.createObject(top, {
           "locationBarController.height": 60,
           "locationBarController.animated": data.animated
@@ -300,6 +413,7 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 2);
 
       webView.locationBarController.mode = LocationBarController.ModeHidden;
       compare(spy.count, 1);
@@ -317,6 +431,7 @@ Item {
         verify(locationBarSpy.lastAnimationDuration > 150 &&
                locationBarSpy.lastAnimationDuration < 250);
       }
+      compare(locationBarSpy.transitionCount, 3);
 
       webView.locationBarController.mode = LocationBarController.ModeShown;
       compare(spy.count, 2);
@@ -334,11 +449,12 @@ Item {
         verify(locationBarSpy.lastAnimationDuration > 150 &&
                locationBarSpy.lastAnimationDuration < 250);
       }
+      compare(locationBarSpy.transitionCount, 4);
 
       TestSupport.destroyQObjectNow(webView);
     }
 
-    function test_LocationBarController5_on_show_data() {
+    function test_LocationBarController7_on_show_data() {
       return [
         { animated: true },
         { animated: false }
@@ -346,7 +462,7 @@ Item {
     }
 
     // Test that show() behaves as expected
-    function test_LocationBarController5_on_show(data) {
+    function test_LocationBarController7_on_show(data) {
       var webView = webViewFactory.createObject(top, {
           "locationBarController.height": 60,
           "locationBarController.animated": data.animated,
@@ -368,6 +484,7 @@ Item {
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 1);
 
       webView.locationBarController.show(data.animated);
       TestSupport.wait(500);
@@ -378,6 +495,7 @@ Item {
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 1);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
       TestSupport.wait(500);
@@ -388,6 +506,7 @@ Item {
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 1);
 
       webView.locationBarController.show(data.animated);
       verify(locationBarSpy.waitUntilShown());
@@ -398,9 +517,12 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
+      compare(locationBarSpy.transitionCount, 2);
+
+      TestSupport.destroyQObjectNow(webView);
     }
 
-    function test_LocationBarController6_on_hide_data() {
+    function test_LocationBarController8_on_hide_data() {
       return [
         { animated: true },
         { animated: false }
@@ -408,7 +530,7 @@ Item {
     }
 
     // Test that show() behaves as expected
-    function test_LocationBarController6_on_hide(data) {
+    function test_LocationBarController8_on_hide(data) {
       var webView = webViewFactory.createObject(top, {
           "locationBarController.height": 60,
           "locationBarController.animated": data.animated,
@@ -430,6 +552,7 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 2);
 
       webView.locationBarController.hide(data.animated);
       TestSupport.wait(500);
@@ -440,6 +563,7 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 2);
 
       webView.locationBarController.mode = LocationBarController.ModeAuto;
       TestSupport.wait(500);
@@ -450,6 +574,7 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 2);
 
       webView.locationBarController.hide(data.animated);
       verify(locationBarSpy.waitUntilHidden());
@@ -460,43 +585,45 @@ Item {
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, data.animated ? 1 : 0);
+      compare(locationBarSpy.transitionCount, 3);
+
+      TestSupport.destroyQObjectNow(webView);
     }
 
-    function test_LocationBarController7_fullscreen_data() {
+    function test_LocationBarController9_show_blockers_data() {
+      function _test_1_init(webView) {
+        spy.target = webView;
+        spy.signalName = "fullscreenRequested";
+
+        webView.url = "http://testsuite/tst_LocationBarController_fullscreen.html";
+        verify(webView.waitForLoadSucceeded());
+        verify(locationBarSpy.waitUntilShown());
+
+        var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
+        mouseClick(webView, r.x + r.width / 2, r.y + 60 + r.height / 2, Qt.LeftButton);
+        spy.wait();
+
+        webView.fullscreen = true;
+      }
+      function _test_1_post(webView) {
+        webView.fullscreen = false;
+      }
+
       return [
-        { initial: LocationBarController.ModeShown },
-        { initial: LocationBarController.ModeAuto }
+        { initial: LocationBarController.ModeShown, init: _test_1_init, post: _test_1_post },
+        { initial: LocationBarController.ModeAuto, init: _test_1_init, post: _test_1_post }
       ];
     }
 
-    function test_LocationBarController7_fullscreen(data) {
+    function test_LocationBarController9_show_blockers(data) {
       var webView = webViewFactory.createObject(top, {
           "locationBarController.height": 60,
-          "locationBarController.animated": true,
           "locationBarController.mode": data.initial
       });
 
       locationBarSpy.target = webView;
-      spy.target = webView;
-      spy.signalName = "fullscreenRequested";
 
-      webView.url = "http://testsuite/tst_LocationBarController_fullscreen.html";
-      verify(webView.waitForLoadSucceeded());
-
-      verify(locationBarSpy.waitUntilShown());
-
-      verify(!locationBarSpy.inconsistentPropertiesSeen);
-      verify(!locationBarSpy.missingSignal);
-      verify(locationBarSpy.shown);
-      verify(!locationBarSpy.hidden);
-      verify(!locationBarSpy.animating);
-      compare(locationBarSpy.animationCount, 0);
-
-      var r = webView.getTestApi().getBoundingClientRectForSelector("#button");
-      mouseClick(webView, r.x + r.width / 2, r.y + 60 + r.height / 2, Qt.LeftButton);
-      spy.wait();
-
-      webView.fullscreen = true;
+      data.init(webView);
 
       verify(locationBarSpy.waitUntilHidden());
 
@@ -507,8 +634,22 @@ Item {
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
 
-      webView.fullscreen = false;
+      locationBarSpy.clear();
 
+      webView.locationBarController.show(false);
+      TestSupport.wait(500);
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(!locationBarSpy.shown);
+      verify(locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
+
+      data.post(webView);
+
+      webView.locationBarController.show(false);
       verify(locationBarSpy.waitUntilShown());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
@@ -517,27 +658,111 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+
+      TestSupport.destroyQObjectNow(webView);
     }
 
-    function test_LocationBarController8_initial_shown_data() {
-      return [
-        { mode: LocationBarController.ModeAuto },
-        { mode: LocationBarController.ModeShown }
+    function test_LocationBarController10_hide_blockers_data() {
+      // Degraded security level
+      function _test_1_init(webView) {
+        webView.url = "https://testsuite/tst_LocationBarController_display_insecure.html";
+        verify(webView.waitForLoadSucceeded());
+        compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelWarning);
+      }
+      function _test_1_post(webView) {
+        webView.url = "https://testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+      }
+
+      // Security error
+      function _test_2_init(webView) {
+        webView.preferences.canRunInsecureContent = true;
+        webView.url = "https://jkjfgvklfd.testsuite/tst_LocationBarController_run_insecure.html";
+        verify(webView.waitForLoadSucceeded());
+        compare(webView.securityStatus.securityLevel, SecurityStatus.SecurityLevelError);
+      }
+      function _test_2_post(webView) {
+        webView.url = "https://foo.testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+      }
+
+      // Certificate error
+      function _test_3_init(webView) {
+        certificateErrorSink.target = webView;
+
+        webView.url = "http://testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+        webView.locationBarController.hide(false);
+        verify(locationBarSpy.waitUntilHidden());
+
+        webView.url = "https://expired.testsuite/tst_LocationBarController.html";
+        TestUtils.waitFor(function() { return certificateErrorSink.lastError != null; });
+      }
+      function _test_3_post(webView) {
+        certificateErrorSink.lastError.deny();
+      }
+
+      // Render process crash
+      function _test_4_init(webView) {
+        webView.url = "http://testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+        webView.locationBarController.hide(false);
+        verify(locationBarSpy.waitUntilHidden());
+
+        webView.url = "chrome://kill/";
+      }
+      function _test_4_post(webView) {
+        webView.reload();
+        verify(webView.waitForLoadSucceeded());
+      }
+
+      // Render process hang
+      function _test_5_init(webView) {
+        webView.url = "http://testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+        webView.locationBarController.hide(false);
+        verify(locationBarSpy.waitUntilHidden());
+
+        webView.url = "chrome://hang/";
+        for (var i = 0; i < 100; i++) {
+          keyClick("A");
+          mouseClick(webView, webView.width / 2, webView.height / 2, Qt.LeftButton);
+        }
+      }
+      function _test_5_post(webView) {
+        webView.terminateWebProcess();
+        TestSupport.wait(1000);
+        webView.url = "http://testsuite/tst_LocationBarController.html";
+        verify(webView.waitForLoadSucceeded());
+      }
+
+      var data = [
+        { init: _test_1_init, post: _test_1_post },
+        { init: _test_2_init, post: _test_2_post },
+        // { init: _test_3_init, post: _test_3_post },
       ];
+      if (Oxide.processModel != Oxide.ProcessModelSingleProcess) {
+        data = data.concat([
+          { init: _test_4_init, post: _test_4_post },
+          { init: _test_5_init, post: _test_5_post },
+        ]);;
+      }
+      return data;
     }
 
-    // Test that the API initializes to the correct value before the
-    // webview is used (https://launchpad.net/bugs/1625484)
-    function test_LocationBarController8_initial_shown() {
+    // Test various conditions that prevent hiding of the locationbar when in
+    // auto mode. We test this by calling hide(), but this also prevents
+    // autohide on scrolling
+    function test_LocationBarController10_hide_blockers(data) {
       var webView = webViewFactory.createObject(top, {
-          "locationBarController.height": 60,
-          "locationBarController.animated": true,
-          "locationBarController.mode": data.mode
+          "locationBarController.height": 60
       });
 
       locationBarSpy.target = webView;
 
-      verify(locationBarSpy.waitUntilShown());
+      data.init(webView);
+
+      verify(locationBarSpy.waitUntilShown(20000));
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
       verify(!locationBarSpy.missingSignal);
@@ -545,19 +770,23 @@ Item {
       verify(!locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
-    }
 
-    // Test that the API initializes to the correct value before the
-    // webview is used (https://launchpad.net/bugs/1625484)
-    function test_LocationBarController9_initial_hidden() {
-      var webView = webViewFactory.createObject(top, {
-          "locationBarController.height": 60,
-          "locationBarController.animated": true,
-          "locationBarController.mode": LocationBarController.ModeHidden
-      });
+      locationBarSpy.clear();
 
-      locationBarSpy.target = webView;
+      webView.locationBarController.hide(false);
+      TestSupport.wait(500);
 
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      compare(locationBarSpy.transitionCount, 0);
+
+      data.post(webView);
+
+      webView.locationBarController.hide(false);
       verify(locationBarSpy.waitUntilHidden());
 
       verify(!locationBarSpy.inconsistentPropertiesSeen);
@@ -566,6 +795,8 @@ Item {
       verify(locationBarSpy.hidden);
       verify(!locationBarSpy.animating);
       compare(locationBarSpy.animationCount, 0);
+
+      TestSupport.destroyQObjectNow(webView);
     }
   }
 }

@@ -70,6 +70,7 @@ class Compositor : public cc::LayerTreeHostClient,
   void SetDeviceScaleFactor(float scale);
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
+  void SetNeedsRedraw();
 
  private:
   friend class CompositorObserver;

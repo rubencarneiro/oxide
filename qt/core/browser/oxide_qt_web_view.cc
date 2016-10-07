@@ -20,7 +20,6 @@
 #include <deque>
 #include <limits>
 #include <memory>
-#include <signal.h>
 #include <utility>
 #include <vector>
 
@@ -34,13 +33,10 @@
 #include "base/logging.h"
 #include "base/macros.h"
 #include "base/pickle.h"
-#include "base/process/process.h"
-#include "base/process/process_handle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
-#include "content/public/browser/render_process_host.h"
 #include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/page_zoom.h"
@@ -62,13 +58,9 @@
 #include "qt/core/api/oxideqpermissionrequest_p.h"
 #include "qt/core/api/oxideqcertificateerror.h"
 #include "qt/core/api/oxideqcertificateerror_p.h"
-#include "qt/core/api/oxideqsecuritystatus.h"
-#include "qt/core/api/oxideqsecuritystatus_p.h"
-#include "qt/core/api/oxideqfindcontroller.h"
-#include "qt/core/api/oxideqfindcontroller_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
-#include "qt/core/browser/ssl/oxide_qt_security_status.h"
+#include "qt/core/glue/macros.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -91,7 +83,6 @@
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
-#include "oxide_qt_find_controller.h"
 #include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
@@ -110,6 +101,7 @@ using oxide::PermissionRequestDispatcher;
 using oxide::WebContentsUniquePtr;
 using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
+using oxide::WebProcessStatusMonitor;
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
 
@@ -242,8 +234,7 @@ WebView::WebView(WebViewProxyClient* client,
   setHandle(handle);
 }
 
-void WebView::CommonInit(OxideQFindController* find_controller,
-                         OxideQSecurityStatus* security_status) {
+void WebView::CommonInit() {
   content::WebContents* contents = web_view_->GetWebContents();
 
   // base::Unretained is safe here because we disconnect in the destructor
@@ -253,14 +244,16 @@ void WebView::CommonInit(OxideQFindController* find_controller,
 
   FullscreenHelper::FromWebContents(contents)->set_client(this);
   PermissionRequestDispatcher::FromWebContents(contents)->set_client(this);
-  OxideQSecurityStatusPrivate::get(security_status)->proxy()->Init(contents);
-  OxideQFindControllerPrivate::get(find_controller)->controller()->Init(
-      contents);
   WebFrameTreeObserver::Observe(WebFrameTree::FromWebContents(contents));
 
-  track_zoom_subscription_ = content::HostZoomMap::GetForWebContents(contents)
-      ->AddZoomLevelChangedCallback(
-          base::Bind(&WebView::OnZoomLevelChanged, base::Unretained(this)));
+  track_zoom_subscription_ =
+      content::HostZoomMap::GetForWebContents(contents)
+          ->AddZoomLevelChangedCallback(base::Bind(&WebView::OnZoomLevelChanged,
+                                                   base::Unretained(this)));
+  web_process_status_subscription_ =
+      WebProcessStatusMonitor::FromWebContents(contents)->AddChangeCallback(
+          base::Bind(&WebView::OnWebProcessStatusChanged,
+                     base::Unretained(this)));
 
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
@@ -271,6 +264,10 @@ void WebView::CommonInit(OxideQFindController* find_controller,
 void WebView::OnZoomLevelChanged(
     const content::HostZoomMap::ZoomLevelChange& change) {
   client_->ZoomLevelChanged();
+}
+
+void WebView::OnWebProcessStatusChanged() {
+  client_->WebProcessStatusChanged();
 }
 
 oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
@@ -299,14 +296,6 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   JavaScriptDialog* dialog = new JavaScriptDialog();
   dialog->SetProxy(client_->CreateBeforeUnloadDialog(dialog));
   return dialog;
-}
-
-bool WebView::CanCreateWindows() const {
-  return client_->CanCreateWindows();
-}
-
-void WebView::CrashedStatusChanged() {
-  client_->WebProcessStatusChanged();
 }
 
 void WebView::URLChanged() {
@@ -477,15 +466,52 @@ void WebView::HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
-bool WebView::ShouldHandleNavigation(const GURL& url,
-                                     WindowOpenDisposition disposition,
-                                     bool user_gesture) {
+oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
+  FilePicker* picker = new FilePicker(rfh);
+  picker->SetProxy(client_->CreateFilePicker(picker));
+  return picker;
+}
+
+void WebView::ContentBlocked() {
+  client_->ContentBlocked();
+}
+
+void WebView::PrepareToCloseResponseReceived(bool proceed) {
+  client_->PrepareToCloseResponse(proceed);
+}
+
+void WebView::CloseRequested() {
+  client_->CloseRequested();
+}
+
+void WebView::TargetURLChanged() {
+  client_->TargetURLChanged();
+}
+
+void WebView::OnEditingCapabilitiesChanged() {
+  client_->OnEditingCapabilitiesChanged();
+}
+
+bool WebView::ShouldHandleNavigation(const GURL& url, bool user_gesture) {
+  OxideQNavigationRequest request(QUrl(QString::fromStdString(url.spec())),
+                                  OxideQNavigationRequest::DispositionCurrentTab,
+                                  user_gesture);
+
+  client_->NavigationRequested(&request);
+
+  return request.action() == OxideQNavigationRequest::ActionAccept;
+}
+
+bool WebView::CanCreateWindows() {
+  return client_->CanCreateWindows();
+}
+
+bool WebView::ShouldCreateNewWebContents(const GURL& url,
+                                         WindowOpenDisposition disposition,
+                                         bool user_gesture) {
   OxideQNavigationRequest::Disposition d = OxideQNavigationRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case WindowOpenDisposition::CURRENT_TAB:
-      d = OxideQNavigationRequest::DispositionCurrentTab;
-      break;
     case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNavigationRequest::DispositionNewForegroundTab;
       break;
@@ -510,16 +536,12 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebView* WebView::CreateNewWebView(
-    const gfx::Rect& initial_pos,
-    WindowOpenDisposition disposition,
-    WebContentsUniquePtr contents) {
+bool WebView::AdoptNewWebContents(const gfx::Rect& initial_pos,
+                                  WindowOpenDisposition disposition,
+                                  oxide::WebContentsUniquePtr contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case WindowOpenDisposition::CURRENT_TAB:
-      d = OxideQNewViewRequest::DispositionCurrentTab;
-      break;
     case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNewViewRequest::DispositionNewForegroundTab;
       break;
@@ -545,47 +567,7 @@ oxide::WebView* WebView::CreateNewWebView(
 
   client_->NewViewRequested(&request);
 
-  oxide::WebView* view =
-      OxideQNewViewRequestPrivate::get(&request)->view.get();
-  if (!view) {
-    qCritical() <<
-        "Either a webview wasn't created in WebView.newViewRequested, or the "
-        "request object was not passed to the new webview. *THIS IS AN "
-        "APPLICATION BUG*. Embedders must create a new webview in "
-        "WebView.newViewRequested and must pass the request object to the new "
-        "WebView. Failure to do this may result in render process crashes or "
-        "undefined behaviour. If you want to block a new webview from opening, "
-        "this must be done in WebView.navigationRequested. Alternatively, if "
-        "your application doesn't support multiple webviews, just don't "
-        "implement WebView.newViewRequested.";
-  }
-  return view;
-}
-
-oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
-  FilePicker* picker = new FilePicker(rfh);
-  picker->SetProxy(client_->CreateFilePicker(picker));
-  return picker;
-}
-
-void WebView::ContentBlocked() {
-  client_->ContentBlocked();
-}
-
-void WebView::PrepareToCloseResponseReceived(bool proceed) {
-  client_->PrepareToCloseResponse(proceed);
-}
-
-void WebView::CloseRequested() {
-  client_->CloseRequested();
-}
-
-void WebView::TargetURLChanged() {
-  client_->TargetURLChanged();
-}
-
-void WebView::OnEditingCapabilitiesChanged() {
-  client_->OnEditingCapabilitiesChanged();
+  return OxideQNewViewRequestPrivate::get(&request)->view.get() != nullptr;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -892,17 +874,23 @@ void WebView::prepareToClose() {
   web_view_->PrepareToClose();
 }
 
+void WebView::terminateWebProcess() {
+  web_view_->TerminateWebProcess();
+}
+
 WebProcessStatus WebView::webProcessStatus() const {
-  base::TerminationStatus status = web_view_->GetWebContents()->GetCrashedStatus();
-  if (status == base::TERMINATION_STATUS_STILL_RUNNING) {
-    return WEB_PROCESS_RUNNING;
-  } else if (status == base::TERMINATION_STATUS_PROCESS_WAS_KILLED) {
-    return WEB_PROCESS_KILLED;
-  } else {
-    // Map all other termination statuses to crashed. This is
-    // consistent with how the sad tab helper works in Chrome.
-    return WEB_PROCESS_CRASHED;
-  }
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_RUNNING,
+                              WebProcessStatusMonitor::Status::Running);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_KILLED,
+                              WebProcessStatusMonitor::Status::Killed);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_CRASHED,
+                              WebProcessStatusMonitor::Status::Crashed);
+  STATIC_ASSERT_MATCHING_ENUM(WEB_PROCESS_UNRESPONSIVE,
+                              WebProcessStatusMonitor::Status::Unresponsive);
+
+  return static_cast<WebProcessStatus>(
+      WebProcessStatusMonitor::FromWebContents(web_view_->GetWebContents())
+          ->GetStatus());
 }
 
 void WebView::executeEditingCommand(EditingCommands command) const {
@@ -993,31 +981,9 @@ void WebView::teardownFrameTree() {
   frame_tree_torn_down_ = true;
 }
 
-void WebView::killWebProcess(bool crash) {
-  content::RenderProcessHost* host =
-      web_view_->GetWebContents()->GetRenderProcessHost();
-  if (!host) {
-    return;
-  }
-
-  base::ProcessHandle handle = host->GetHandle();
-  if (handle == base::kNullProcessHandle) {
-    return;
-  }
-
-  if (!crash) {
-    base::Process process = base::Process::Open(handle);
-    process.Terminate(0, false);
-  } else if (kill(handle, SIGSEGV) != 0) {
-    LOG(WARNING) << "Unable to crash process " << handle;
-  }
-}
-
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewProxyClient* view_client,
                  QObject* handle,
-                 OxideQFindController* find_controller,
-                 OxideQSecurityStatus* security_status,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
@@ -1046,7 +1012,7 @@ WebView::WebView(WebViewProxyClient* client,
 
   web_view_.reset(new oxide::WebView(common_params, create_params));
 
-  CommonInit(find_controller, security_status);
+  CommonInit();
 }
 
 // static
@@ -1054,8 +1020,6 @@ WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
     ContentsViewProxyClient* view_client,
     QObject* handle,
-    OxideQFindController* find_controller,
-    OxideQSecurityStatus* security_status,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {
   OxideQNewViewRequestPrivate* rd =
@@ -1074,7 +1038,7 @@ WebView* WebView::CreateFromNewViewRequest(
 
   rd->view = new_view->web_view_->AsWeakPtr();
 
-  new_view->CommonInit(find_controller, security_status);
+  new_view->CommonInit();
 
   if (initial_prefs) {
     oxide::WebPreferences* p =
