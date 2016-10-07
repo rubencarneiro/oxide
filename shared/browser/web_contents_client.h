@@ -31,6 +31,8 @@ class Rect;
 
 namespace oxide {
 
+class ResourceDispatcherHostLoginDelegate;
+
 class OXIDE_SHARED_EXPORT WebContentsClient {
  public:
   virtual ~WebContentsClient();
@@ -47,6 +49,9 @@ class OXIDE_SHARED_EXPORT WebContentsClient {
   virtual bool AdoptNewWebContents(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition,
                                    WebContentsUniquePtr contents);
+
+  virtual void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
 };
 
 } // namespace oxide

@@ -459,13 +459,6 @@ void WebView::DownloadRequested(const GURL& url,
   client_->DownloadRequested(download_request);
 }
 
-void WebView::HttpAuthenticationRequested(
-        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
-  // The client takes ownership of the request
-  client_->HttpAuthenticationRequested(
-      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
-}
-
 oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
   FilePicker* picker = new FilePicker(rfh);
   picker->SetProxy(client_->CreateFilePicker(picker));
@@ -568,6 +561,13 @@ bool WebView::AdoptNewWebContents(const gfx::Rect& initial_pos,
   client_->NewViewRequested(&request);
 
   return OxideQNewViewRequestPrivate::get(&request)->view.get() != nullptr;
+}
+
+void WebView::HttpAuthenticationRequested(
+        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
+  // The client takes ownership of the request
+  client_->HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {

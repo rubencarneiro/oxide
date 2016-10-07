@@ -44,4 +44,7 @@ bool WebContentsClient::AdoptNewWebContents(
   return false;
 }
 
+void WebContentsClient::HttpAuthenticationRequested(
+    ResourceDispatcherHostLoginDelegate* login_delegate) {}
+
 } // namespace oxide

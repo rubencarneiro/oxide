@@ -45,7 +45,6 @@ namespace oxide {
 class CertificateError;
 class FilePicker;
 class JavaScriptDialog;
-class ResourceDispatcherHostLoginDelegate;
 class WebView;
 
 // A class for customizing the behaviour of WebView
@@ -131,9 +130,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
   virtual void CloseRequested();
 
   virtual void TargetURLChanged();
-
-  virtual void HttpAuthenticationRequested(
-      ResourceDispatcherHostLoginDelegate* login_delegate);
 
   virtual void OnEditingCapabilitiesChanged();
 };

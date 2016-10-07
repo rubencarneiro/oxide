@@ -32,6 +32,7 @@
 #include "shared/common/oxide_shared_export.h"
 
 namespace content {
+class RenderFrameHost;
 class RenderViewHost;
 class WebContents;
 }
@@ -52,6 +53,7 @@ class OXIDE_SHARED_EXPORT WebContentsHelper
   static void CreateForWebContents(content::WebContents* contents,
                                    content::WebContents* opener);
 
+  static WebContentsHelper* FromRenderFrameHost(content::RenderFrameHost* rfh);
   static WebContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
   static bool IsContextInUse(BrowserContext* context);

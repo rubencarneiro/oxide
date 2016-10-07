@@ -1275,11 +1275,6 @@ void WebView::DownloadRequested(
                              user_agent);
 }
 
-void WebView::HttpAuthenticationRequested(
-    ResourceDispatcherHostLoginDelegate* login_delegate) {
-  client_->HttpAuthenticationRequested(login_delegate);
-}
-
 display::Display WebView::GetDisplay() const {
   return WebContentsView::FromWebContents(web_contents_.get())->GetDisplay();
 }

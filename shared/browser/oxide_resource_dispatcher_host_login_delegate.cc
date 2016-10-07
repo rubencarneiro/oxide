@@ -28,7 +28,8 @@
 #include "net/base/auth.h"
 #include "net/url_request/url_request.h"
 
-#include "oxide_web_view.h"
+#include "web_contents_client.h"
+#include "web_contents_helper.h"
 
 namespace oxide {
 
@@ -136,13 +137,16 @@ void ResourceDispatcherHostLoginDelegate::DispatchRequest(
     return;
   }
 
-  WebView* webview = WebView::FromRenderFrameHost(rfh);
-  if (!webview) {
+  WebContentsHelper* contents_helper =
+      WebContentsHelper::FromRenderFrameHost(rfh);
+  DCHECK(contents_helper);
+
+  if (!contents_helper->client()) {
     Deny();
     return;
   }
 
-  webview->HttpAuthenticationRequested(this);
+  contents_helper->client()->HttpAuthenticationRequested(this);
 }
 
 } // namespace oxide

@@ -70,7 +70,6 @@ namespace oxide {
 class BrowserContext;
 class FilePicker;
 class JavaScriptDialog;
-class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
 class WebContentsClient;
 class WebContentsHelper;
@@ -193,9 +192,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const std::string& cookies,
       const std::string& referrer,
       const std::string& user_agent);
-
-  void HttpAuthenticationRequested(
-      ResourceDispatcherHostLoginDelegate* login_delegate);
 
   display::Display GetDisplay() const;
 

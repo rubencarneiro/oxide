@@ -98,9 +98,6 @@ void WebViewClient::CloseRequested() {}
 
 void WebViewClient::TargetURLChanged() {}
 
-void WebViewClient::HttpAuthenticationRequested(
-    ResourceDispatcherHostLoginDelegate* login_delegate) {}
-
 void WebViewClient::OnEditingCapabilitiesChanged() {}
 
 } // namespace oxide
