@@ -91,6 +91,7 @@
 #include "oxide_web_frame_tree.h"
 #include "oxide_web_frame.h"
 #include "oxide_web_view_client.h"
+#include "web_contents_client.h"
 #include "web_contents_helper.h"
 #include "web_process_status_monitor.h"
 
@@ -392,9 +393,11 @@ content::WebContents* WebView::OpenURLFromTab(
 
   WindowOpenDisposition disposition = params.disposition;
 
+  WebContentsClient* contents_client = GetWebContentsHelper()->client();
+
   // If we can't create new windows, this should be a CURRENT_TAB navigation
   // in the top-level frame
-  if (!CanCreateWindows() &&
+  if ((!contents_client || !contents_client->CanCreateWindows()) &&
       disposition != WindowOpenDisposition::CURRENT_TAB) {
     disposition = WindowOpenDisposition::CURRENT_TAB;
   }
@@ -424,11 +427,16 @@ content::WebContents* WebView::OpenURLFromTab(
     disposition = WindowOpenDisposition::NEW_POPUP;
   }
 
+  // If there's no WebContentsClient, then we can't open a new view
+  if (!contents_client) {
+    return nullptr;
+  }
+
   // Give the application a chance to block the navigation if it is
   // renderer initiated
-  if (!client_->ShouldHandleNavigation(params.url,
-                                       disposition,
-                                       params.user_gesture)) {
+  if (!contents_client->ShouldCreateNewWebContents(params.url,
+                                                   disposition,
+                                                   params.user_gesture)) {
     return nullptr;
   }
 
@@ -455,20 +463,22 @@ content::WebContents* WebView::OpenURLFromTab(
       WebContentsHelper::CreateWebContents(contents_params);
   CreateHelpers(contents.get());
 
-  WebView* new_view =
-      client_->CreateNewWebView(GetViewBoundsDip(),
-                                disposition,
-                                std::move(contents));
-  if (!new_view) {
+  WebContentsHelper* helper = WebContentsHelper::FromWebContents(contents.get());
+
+  bool created =
+      GetWebContentsHelper()->client()->AdoptNewWebContents(GetViewBoundsDip(),
+                                                            disposition,
+                                                            std::move(contents));
+  if (!created) {
     return nullptr;
   }
 
   content::NavigationController::LoadURLParams load_params(params.url);
   FillLoadURLParamsFromOpenURLParams(&load_params, params);
 
-  new_view->GetWebContents()->GetController().LoadURLWithParams(load_params);
+  helper->GetWebContents()->GetController().LoadURLWithParams(load_params);
 
-  return new_view->GetWebContents();
+  return helper->GetWebContents();
 }
 
 void WebView::NavigationStateChanged(content::WebContents* source,
@@ -518,11 +528,15 @@ bool WebView::ShouldCreateWebContents(
 
   // Note that popup blocking was done on the IO thread
 
-  if (!CanCreateWindows()) {
+  if (!GetWebContentsHelper()->client()) {
     return false;
   }
 
-  return client_->ShouldHandleNavigation(
+  if (!GetWebContentsHelper()->client()->CanCreateWindows()) {
+    return false;
+  }
+
+  return GetWebContentsHelper()->client()->ShouldCreateNewWebContents(
       target_url,
       user_gesture ? disposition : WindowOpenDisposition::NEW_POPUP,
       user_gesture);
@@ -583,12 +597,16 @@ void WebView::AddNewContents(content::WebContents* source,
 
   WebContentsUniquePtr contents(new_contents);
 
-  WebView* new_view =
-      client_->CreateNewWebView(
+  if (!GetWebContentsHelper()->client()) {
+    return;
+  }
+
+  bool created =
+      GetWebContentsHelper()->client()->AdoptNewWebContents(
           initial_pos,
           user_gesture ? disposition : WindowOpenDisposition::NEW_POPUP,
           std::move(contents));
-  if (!new_view) {
+  if (!created) {
     return;
   }
 
@@ -1272,20 +1290,6 @@ JavaScriptDialog* WebView::CreateJavaScriptDialog(
 
 JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return client_->CreateBeforeUnloadDialog();
-}
-
-bool WebView::ShouldHandleNavigation(const GURL& url, bool has_user_gesture) {
-  if (web_contents_->GetController().IsInitialNavigation()) {
-    return true;
-  }
-
-  return client_->ShouldHandleNavigation(url,
-                                         WindowOpenDisposition::CURRENT_TAB,
-                                         has_user_gesture);
-}
-
-bool WebView::CanCreateWindows() const {
-  return client_->CanCreateWindows();
 }
 
 blink::WebContextMenuData::EditFlags WebView::GetEditFlags() const {

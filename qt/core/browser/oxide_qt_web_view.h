@@ -100,7 +100,6 @@ class WebView : public oxide::WebViewClient,
   oxide::JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type) override;
   oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
-  bool CanCreateWindows() const override;
   void URLChanged() override;
   void TitleChanged() override;
   void FaviconChanged() override;
@@ -138,19 +137,22 @@ class WebView : public oxide::WebViewClient,
       const std::string& user_agent) override;
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
-  bool ShouldHandleNavigation(const GURL& url,
-                              WindowOpenDisposition disposition,
-                              bool user_gesture) override;
-  oxide::WebView* CreateNewWebView(
-      const gfx::Rect& initial_pos,
-      WindowOpenDisposition disposition,
-      oxide::WebContentsUniquePtr contents) override;
   oxide::FilePicker* CreateFilePicker(content::RenderFrameHost* rfh) override;
   void ContentBlocked() override;
   void PrepareToCloseResponseReceived(bool proceed) override;
   void CloseRequested() override;
   void TargetURLChanged() override;
   void OnEditingCapabilitiesChanged() override;
+
+  // oxide::WebContentsClient implementation
+  bool ShouldHandleNavigation(const GURL& url, bool user_gesture) override;
+  bool CanCreateWindows() override;
+  bool ShouldCreateNewWebContents(const GURL& url,
+                                  WindowOpenDisposition disposition,
+                                  bool user_gesture) override;
+  bool AdoptNewWebContents(const gfx::Rect& initial_pos,
+                           WindowOpenDisposition disposition,
+                           oxide::WebContentsUniquePtr contents) override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;

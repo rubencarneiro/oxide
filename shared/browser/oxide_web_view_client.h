@@ -24,11 +24,8 @@
 #include "base/strings/string16.h"
 #include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
-#include "ui/base/window_open_disposition.h"
-#include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/oxide_script_message_target.h"
-#include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/common/oxide_shared_export.h"
 
 class GURL;
@@ -63,8 +60,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
 
   // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
   virtual JavaScriptDialog* CreateBeforeUnloadDialog();
-
-  virtual bool CanCreateWindows() const;
 
   virtual void URLChanged();
 
@@ -122,15 +117,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
                                  const std::string& cookies,
                                  const std::string& referrer,
                                  const std::string& user_agent);
-
-  virtual bool ShouldHandleNavigation(const GURL& url,
-                                      WindowOpenDisposition disposition,
-                                      bool user_gesture);
-
-  virtual WebView* CreateNewWebView(
-      const gfx::Rect& initial_pos,
-      WindowOpenDisposition disposition,
-      WebContentsUniquePtr contents);
 
   virtual FilePicker* CreateFilePicker(content::RenderFrameHost* rfh);
 

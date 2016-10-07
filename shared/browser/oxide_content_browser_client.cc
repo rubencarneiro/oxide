@@ -58,9 +58,9 @@
 #include "oxide_resource_dispatcher_host_delegate.h"
 #include "oxide_user_agent_settings.h"
 #include "oxide_web_contents_view.h"
-#include "oxide_web_view.h"
 #include "screen.h"
 #include "shell_mode.h"
+#include "web_contents_client.h"
 #include "web_contents_helper.h"
 #include "web_preferences.h"
 
@@ -311,9 +311,9 @@ void ContentBrowserClient::OverrideWebkitPrefs(
   }
 
   prefs->supports_multiple_windows = false;
-  WebView* view = WebView::FromRenderViewHost(render_view_host);
-  if (view) {
-    prefs->supports_multiple_windows = view->CanCreateWindows();
+  if (contents_helper->client()) {
+    prefs->supports_multiple_windows =
+        contents_helper->client()->CanCreateWindows();
   }
 }
 

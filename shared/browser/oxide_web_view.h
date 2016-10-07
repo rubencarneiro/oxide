@@ -203,10 +203,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       content::JavaScriptMessageType javascript_message_type);
   JavaScriptDialog* CreateBeforeUnloadDialog();
 
-  bool ShouldHandleNavigation(const GURL& url, bool has_user_gesture);
-
-  bool CanCreateWindows() const;
-
   const GURL& target_url() const { return target_url_; }
 
   blink::WebContextMenuData::EditFlags GetEditFlags() const;

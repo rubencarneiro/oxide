@@ -298,10 +298,6 @@ oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
   return dialog;
 }
 
-bool WebView::CanCreateWindows() const {
-  return client_->CanCreateWindows();
-}
-
 void WebView::URLChanged() {
   client_->URLChanged();
 }
@@ -470,15 +466,52 @@ void WebView::HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
-bool WebView::ShouldHandleNavigation(const GURL& url,
-                                     WindowOpenDisposition disposition,
-                                     bool user_gesture) {
+oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
+  FilePicker* picker = new FilePicker(rfh);
+  picker->SetProxy(client_->CreateFilePicker(picker));
+  return picker;
+}
+
+void WebView::ContentBlocked() {
+  client_->ContentBlocked();
+}
+
+void WebView::PrepareToCloseResponseReceived(bool proceed) {
+  client_->PrepareToCloseResponse(proceed);
+}
+
+void WebView::CloseRequested() {
+  client_->CloseRequested();
+}
+
+void WebView::TargetURLChanged() {
+  client_->TargetURLChanged();
+}
+
+void WebView::OnEditingCapabilitiesChanged() {
+  client_->OnEditingCapabilitiesChanged();
+}
+
+bool WebView::ShouldHandleNavigation(const GURL& url, bool user_gesture) {
+  OxideQNavigationRequest request(QUrl(QString::fromStdString(url.spec())),
+                                  OxideQNavigationRequest::DispositionCurrentTab,
+                                  user_gesture);
+
+  client_->NavigationRequested(&request);
+
+  return request.action() == OxideQNavigationRequest::ActionAccept;
+}
+
+bool WebView::CanCreateWindows() {
+  return client_->CanCreateWindows();
+}
+
+bool WebView::ShouldCreateNewWebContents(const GURL& url,
+                                         WindowOpenDisposition disposition,
+                                         bool user_gesture) {
   OxideQNavigationRequest::Disposition d = OxideQNavigationRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case WindowOpenDisposition::CURRENT_TAB:
-      d = OxideQNavigationRequest::DispositionCurrentTab;
-      break;
     case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNavigationRequest::DispositionNewForegroundTab;
       break;
@@ -503,16 +536,12 @@ bool WebView::ShouldHandleNavigation(const GURL& url,
   return request.action() == OxideQNavigationRequest::ActionAccept;
 }
 
-oxide::WebView* WebView::CreateNewWebView(
-    const gfx::Rect& initial_pos,
-    WindowOpenDisposition disposition,
-    WebContentsUniquePtr contents) {
+bool WebView::AdoptNewWebContents(const gfx::Rect& initial_pos,
+                                  WindowOpenDisposition disposition,
+                                  oxide::WebContentsUniquePtr contents) {
   OxideQNewViewRequest::Disposition d = OxideQNewViewRequest::DispositionNewWindow;
 
   switch (disposition) {
-    case WindowOpenDisposition::CURRENT_TAB:
-      d = OxideQNewViewRequest::DispositionCurrentTab;
-      break;
     case WindowOpenDisposition::NEW_FOREGROUND_TAB:
       d = OxideQNewViewRequest::DispositionNewForegroundTab;
       break;
@@ -538,47 +567,7 @@ oxide::WebView* WebView::CreateNewWebView(
 
   client_->NewViewRequested(&request);
 
-  oxide::WebView* view =
-      OxideQNewViewRequestPrivate::get(&request)->view.get();
-  if (!view) {
-    qCritical() <<
-        "Either a webview wasn't created in WebView.newViewRequested, or the "
-        "request object was not passed to the new webview. *THIS IS AN "
-        "APPLICATION BUG*. Embedders must create a new webview in "
-        "WebView.newViewRequested and must pass the request object to the new "
-        "WebView. Failure to do this may result in render process crashes or "
-        "undefined behaviour. If you want to block a new webview from opening, "
-        "this must be done in WebView.navigationRequested. Alternatively, if "
-        "your application doesn't support multiple webviews, just don't "
-        "implement WebView.newViewRequested.";
-  }
-  return view;
-}
-
-oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
-  FilePicker* picker = new FilePicker(rfh);
-  picker->SetProxy(client_->CreateFilePicker(picker));
-  return picker;
-}
-
-void WebView::ContentBlocked() {
-  client_->ContentBlocked();
-}
-
-void WebView::PrepareToCloseResponseReceived(bool proceed) {
-  client_->PrepareToCloseResponse(proceed);
-}
-
-void WebView::CloseRequested() {
-  client_->CloseRequested();
-}
-
-void WebView::TargetURLChanged() {
-  client_->TargetURLChanged();
-}
-
-void WebView::OnEditingCapabilitiesChanged() {
-  client_->OnEditingCapabilitiesChanged();
+  return OxideQNewViewRequestPrivate::get(&request)->view.get() != nullptr;
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {

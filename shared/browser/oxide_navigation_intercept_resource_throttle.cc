@@ -22,18 +22,51 @@
 #include "base/location.h"
 #include "base/logging.h"
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/resource_controller.h"
 #include "content/public/browser/resource_request_info.h"
+#include "content/public/browser/web_contents.h"
 #include "url/gurl.h"
 #include "net/url_request/url_request.h"
 #include "ui/base/page_transition_types.h"
 
-#include "oxide_web_view.h"
+#include "web_contents_client.h"
+#include "web_contents_helper.h"
 
 namespace oxide {
 
 namespace {
+
+bool ShouldProceedWithNavigation(const GURL& url,
+                                 int render_process_id,
+                                 int render_frame_id,
+                                 bool has_user_gesture) {
+  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
+
+  content::RenderFrameHost* render_frame_host =
+      content::RenderFrameHost::FromID(render_process_id, render_frame_id);
+  if (!render_frame_host) {
+    return false;
+  }
+
+  content::WebContents* contents =
+      content::WebContents::FromRenderFrameHost(render_frame_host);
+  if (!contents) {
+    return true;
+  }
+
+  if (contents->GetController().IsInitialNavigation()) {
+    return true;
+  }
+
+  WebContentsHelper* helper = WebContentsHelper::FromWebContents(contents);
+  if (!helper->client()) {
+    return true;
+  }
+
+  return helper->client()->ShouldHandleNavigation(url, has_user_gesture);
+}
 
 void CheckShouldNavigationProceedOnUIThread(
     const GURL& url,
@@ -43,15 +76,10 @@ void CheckShouldNavigationProceedOnUIThread(
     const base::Callback<void(bool)>& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
-  bool proceed = false;
-  content::RenderFrameHost* render_frame_host =
-      content::RenderFrameHost::FromID(render_process_id, render_frame_id);
-  if (render_frame_host) {
-    WebView* view = WebView::FromRenderFrameHost(render_frame_host);
-    if (view) {
-      proceed = view->ShouldHandleNavigation(url, has_user_gesture);
-    }
-  }
+  bool proceed = ShouldProceedWithNavigation(url,
+                                             render_process_id,
+                                             render_frame_id,
+                                             has_user_gesture);
 
   content::BrowserThread::PostTask(content::BrowserThread::IO,
                                    FROM_HERE,
