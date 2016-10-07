@@ -21,8 +21,8 @@
 
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
-#include "cc/output/compositor_frame.h"
 #include "cc/output/output_surface_client.h"
+#include "cc/output/output_surface_frame.h"
 
 #include "oxide_compositor_frame_ack.h"
 #include "oxide_compositor_frame_data.h"
@@ -36,7 +36,7 @@ void CompositorOutputSurfaceSoftware::DiscardBackbuffer() {}
 
 void CompositorOutputSurfaceSoftware::BindFramebuffer() {}
 
-void CompositorOutputSurfaceSoftware::SwapBuffers(cc::CompositorFrame frame) {
+void CompositorOutputSurfaceSoftware::SwapBuffers(cc::OutputSurfaceFrame frame) {
   std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
   data->software_frame_data = base::WrapUnique(new SoftwareFrameData());
 

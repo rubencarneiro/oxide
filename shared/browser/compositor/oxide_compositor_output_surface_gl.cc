@@ -21,10 +21,9 @@
 
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
-#include "cc/output/compositor_frame.h"
 #include "cc/output/context_provider.h"
-#include "cc/output/gl_frame_data.h"
 #include "cc/output/output_surface_client.h"
+#include "cc/output/output_surface_frame.h"
 #include "cc/resources/resource_format.h"
 #include "cc/resources/resource_provider.h"
 #include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
@@ -182,12 +181,11 @@ uint32_t CompositorOutputSurfaceGL::GetFramebufferCopyTextureFormat() {
   return gl->GetCopyTextureInternalFormat();
 }
 
-void CompositorOutputSurfaceGL::SwapBuffers(cc::CompositorFrame frame) {
-  DCHECK(frame.gl_frame_data);
+void CompositorOutputSurfaceGL::SwapBuffers(cc::OutputSurfaceFrame frame) {
   DCHECK(back_buffer_);
   DCHECK(!back_buffer_->mailbox.IsZero());
   DCHECK(surface_size_ == back_buffer_->size);
-  DCHECK(frame.gl_frame_data->size == back_buffer_->size);
+  DCHECK(frame.size == back_buffer_->size);
   DCHECK(!back_buffer_->size.IsEmpty());
 
   gpu::gles2::GLES2Interface* gl = context_provider_->ContextGL();
