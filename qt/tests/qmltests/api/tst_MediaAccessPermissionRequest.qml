@@ -176,7 +176,7 @@ TestWebView {
       cancelSpy.target = webView.lastRequest;
 
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
-          "window.location = \"http://testsuite/empty.html\";", false);
+          "window.location = \"https://testsuite/empty.html\";", false);
 
       cancelSpy.wait();
 
