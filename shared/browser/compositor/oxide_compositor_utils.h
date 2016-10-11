@@ -25,6 +25,7 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "cc/surfaces/frame_sink_id.h"
 
 #include "shared/browser/compositor/oxide_compositing_mode.h"
 
@@ -89,7 +90,7 @@ class CompositorUtils {
 
   virtual cc::SurfaceManager* GetSurfaceManager() const = 0;
 
-  virtual uint32_t AllocateSurfaceClientId() = 0;
+  virtual cc::FrameSinkId AllocateFrameSinkId() = 0;
 
  protected:
   virtual ~CompositorUtils();

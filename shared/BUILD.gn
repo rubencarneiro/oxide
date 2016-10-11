@@ -19,7 +19,6 @@
 import("//build/config/features.gni")
 import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
-import("//oxide/build/config/repack_locales.gni")
 import("//oxide/build/config/test_executable.gni")
 import("//oxide/build/config/version.gni")
 import("//tools/grit/grit_rule.gni")
@@ -108,14 +107,21 @@ repack("packed_resources_200_percent") {
   output = "$root_out_dir/oxide_200_percent.pak"
 }
 
-repack_locales("repack_locales_pack") {
+repack_locales("shared_repack_locales") {
   input_locales = locales
+  output_locales = locales
 
-  if (is_mac) {
-    output_locales = locales_as_mac_outputs
-  } else {
-    output_locales = locales
-  }
+  source_patterns = [
+    "${root_gen_dir}/content/app/strings/content_strings_",
+    "${root_gen_dir}/ui/strings/app_locale_settings_",
+  ]
+
+  output_dir = "${root_out_dir}/chromium_l10n"
+
+  deps = [
+    "//content/app/strings",
+    "//ui/strings:app_locale_settings",
+  ]
 }
 
 version_header("chrome_version") {
@@ -166,7 +172,7 @@ component("shared") {
     ":packed_resources",
     ":packed_resources_100_percent",
     ":packed_resources_200_percent",
-    ":repack_locales_pack",
+    ":shared_repack_locales",
     ":shared_resources",
     "//base",
     "//base:base_static",
@@ -185,7 +191,7 @@ component("shared") {
     "//content/public/utility",
     "//crypto",
     "//device/core",
-    "//device/geolocation:device_geolocation",
+    "//device/geolocation",
     "//device/power_save_blocker",
     "//device/vibration",
     "//device/vibration:mojo_bindings",

@@ -25,18 +25,19 @@
 #include "base/trace_event/trace_event.h"
 #include "cc/animation/animation_host.h"
 #include "cc/layers/layer.h"
+#include "cc/output/compositor_frame_sink.h"
 #include "cc/output/context_provider.h"
+#include "cc/output/output_surface.h"
 #include "cc/output/renderer_settings.h"
 #include "cc/output/texture_mailbox_deleter.h"
 #include "cc/scheduler/begin_frame_source.h"
 #include "cc/scheduler/delay_based_time_source.h"
+#include "cc/surfaces/direct_compositor_frame_sink.h"
 #include "cc/surfaces/display.h"
 #include "cc/surfaces/display_scheduler.h"
-#include "cc/surfaces/surface_display_output_surface.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
-#include "cc/trees/layer_tree_host_interface.h"
+#include "cc/trees/layer_tree_host_in_process.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
@@ -111,9 +112,7 @@ Compositor::Compositor(CompositorClient* client)
       task_runner_(base::ThreadTaskRunnerHandle::Get()),
       output_surface_(nullptr),
       mailbox_buffer_map_(mode_),
-      surface_id_allocator_(
-          new cc::SurfaceIdAllocator(
-              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
+      frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
@@ -125,8 +124,9 @@ Compositor::Compositor(CompositorClient* client)
       frames_waiting_for_completion_(0),
       mailbox_resource_fetches_in_progress_(0),
       weak_factory_(this) {
-  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
-      surface_id_allocator_->client_id());
+  CompositorUtils::GetInstance()
+      ->GetSurfaceManager()
+      ->RegisterFrameSinkId(frame_sink_id_);
 }
 
 bool Compositor::SurfaceIdIsCurrent(uint32_t surface_id) {
@@ -301,24 +301,25 @@ void Compositor::OutputSurfaceChanged() {
   }
 }
 
-std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
+std::unique_ptr<cc::CompositorFrameSink>
+Compositor::CreateCompositorFrameSink() {
   uint32_t output_surface_id = next_output_surface_id_++;
 
   scoped_refptr<cc::ContextProvider> context_provider;
-  std::unique_ptr<cc::OutputSurface> display_surface;
+  std::unique_ptr<cc::OutputSurface> output_surface;
   if (CompositorUtils::GetInstance()->CanUseGpuCompositing()) {
     context_provider = CreateOffscreenContextProvider();
     if (!context_provider.get()) {
       return nullptr;
     }
-    display_surface =
+    output_surface =
         base::MakeUnique<CompositorOutputSurfaceGL>(output_surface_id,
                                                     context_provider,
                                                     this);
   } else {
     std::unique_ptr<CompositorSoftwareOutputDevice> output_device(
         new CompositorSoftwareOutputDevice());
-    display_surface =
+    output_surface =
         base::MakeUnique<CompositorOutputSurfaceSoftware>(
             output_surface_id,
             std::move(output_device),
@@ -334,7 +335,7 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
       new cc::DisplayScheduler(
           begin_frame_source.get(),
           base::ThreadTaskRunnerHandle::Get().get(),
-          display_surface->capabilities().max_frames_pending));
+          output_surface->capabilities().max_frames_pending));
 
   display_ =
       base::MakeUnique<cc::Display>(
@@ -342,23 +343,23 @@ std::unique_ptr<cc::OutputSurface> Compositor::CreateOutputSurface() {
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
           std::move(begin_frame_source),
-          std::move(display_surface),
+          std::move(output_surface),
           std::move(scheduler),
           base::MakeUnique<cc::TextureMailboxDeleter>(
               base::ThreadTaskRunnerHandle::Get().get()));
 
-  std::unique_ptr<cc::SurfaceDisplayOutputSurface> surface(
-      new cc::SurfaceDisplayOutputSurface(
+  std::unique_ptr<cc::DirectCompositorFrameSink> sink =
+      base::MakeUnique<cc::DirectCompositorFrameSink>(
+          frame_sink_id_,
           CompositorUtils::GetInstance()->GetSurfaceManager(),
-          surface_id_allocator_.get(),
           display_.get(),
           context_provider,
-          nullptr));
+          nullptr);
 
   display_->Resize(layer_tree_host_->GetLayerTree()->device_viewport_size());
   display_->SetVisible(layer_tree_host_->IsVisible());
 
-  return std::move(surface);
+  return std::move(sink);
 }
 
 void Compositor::AddObserver(CompositorObserver* observer) {
@@ -377,10 +378,9 @@ void Compositor::EnsureLayerTreeHost() {
   }
 
   cc::LayerTreeSettings settings;
-  settings.use_external_begin_frame_source = false;
   settings.renderer_settings.allow_antialiasing = false;
 
-  cc::LayerTreeHost::InitParams params;
+  cc::LayerTreeHostInProcess::InitParams params;
   params.client = this;
   params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
   params.gpu_memory_buffer_manager =
@@ -391,7 +391,8 @@ void Compositor::EnsureLayerTreeHost() {
   params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
   params.animation_host = cc::AnimationHost::CreateMainInstance();
 
-  layer_tree_host_ = cc::LayerTreeHost::CreateSingleThreaded(this, &params);
+  layer_tree_host_ =
+      cc::LayerTreeHostInProcess::CreateSingleThreaded(this, &params);
   DCHECK(layer_tree_host_);
 
   can_evict_layer_tree_host_ = true;
@@ -495,28 +496,28 @@ void Compositor::ApplyViewportDeltas(
     float page_scale,
     float top_controls_delta) {}
 
-void Compositor::RequestNewOutputSurface() {
-  std::unique_ptr<cc::OutputSurface> surface(CreateOutputSurface());
-  if (!surface) {
-    DidFailToInitializeOutputSurface();
+void Compositor::RequestNewCompositorFrameSink() {
+  std::unique_ptr<cc::CompositorFrameSink> sink(CreateCompositorFrameSink());
+  if (!sink) {
+    DidFailToInitializeCompositorFrameSink();
     return;
   }
 
-  layer_tree_host_->SetOutputSurface(std::move(surface));
+  layer_tree_host_->SetCompositorFrameSink(std::move(sink));
 }
 
-void Compositor::DidInitializeOutputSurface() {
+void Compositor::DidInitializeCompositorFrameSink() {
   num_failed_recreate_attempts_ = 0;
 }
 
-void Compositor::DidFailToInitializeOutputSurface() {
+void Compositor::DidFailToInitializeCompositorFrameSink() {
   num_failed_recreate_attempts_++;
 
   CHECK_LE(num_failed_recreate_attempts_, 4);
 
   base::ThreadTaskRunnerHandle::Get()->PostTask(
       FROM_HERE,
-      base::Bind(&Compositor::RequestNewOutputSurface,
+      base::Bind(&Compositor::RequestNewCompositorFrameSink,
                  weak_factory_.GetWeakPtr()));
 }
 
@@ -686,7 +687,7 @@ Compositor::~Compositor() {
 
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
-      ->InvalidateSurfaceClientId(surface_id_allocator_->client_id());
+      ->InvalidateFrameSinkId(frame_sink_id_);
 }
 
 void Compositor::SetVisibility(bool visible) {

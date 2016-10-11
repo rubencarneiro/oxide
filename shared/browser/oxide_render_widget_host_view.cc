@@ -29,6 +29,8 @@
 #include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
+#include "cc/surfaces/surface_factory.h"
+#include "cc/surfaces/surface_id.h"
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
@@ -81,7 +83,7 @@ void SatisfyCallback(cc::SurfaceManager* manager,
                      const cc::SurfaceSequence& sequence) {
   std::vector<uint32_t> sequences;
   sequences.push_back(sequence.sequence);
-  manager->DidSatisfySequences(sequence.client_id, &sequences);
+  manager->DidSatisfySequences(sequence.frame_sink_id, &sequences);
 }
 
 void RequireCallback(cc::SurfaceManager* manager,
@@ -190,7 +192,9 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
   return container_->GetTopControlsHeight();
 }
 
-void RenderWidgetHostView::FocusedNodeChanged(bool is_editable_node) {
+void RenderWidgetHostView::FocusedNodeChanged(
+    bool is_editable_node,
+    const gfx::Rect& node_bounds_in_screen) {
   ime_bridge_.FocusedNodeChanged(is_editable_node);
 }
 
@@ -198,7 +202,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                                                  cc::CompositorFrame frame) {
   if (!frame.delegated_frame_data) {
     DLOG(ERROR) << "Non delegated renderer path is not supported";
-    host_->GetProcess()->ShutdownForBadMessage();
+    host_->GetProcess()->ShutdownForBadMessage(
+        content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
     return;
   }
 
@@ -206,7 +211,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
 
   if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
-    host_->GetProcess()->ShutdownForBadMessage();
+    host_->GetProcess()->ShutdownForBadMessage(
+        content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
     return;
   }
 
@@ -247,16 +253,16 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     if (!surface_factory_) {
       DCHECK(manager);
       surface_factory_ =
-          base::WrapUnique(new cc::SurfaceFactory(manager, this));
+          base::MakeUnique<cc::SurfaceFactory>(frame_sink_id_, manager, this);
     }
 
-    if (surface_id_.is_null() ||
+    if (local_frame_id_.is_null() ||
         frame_size_dip != last_frame_size_dip_) {
       DestroyDelegatedContent();
 
-      surface_id_ = id_allocator_->GenerateId();
-      DCHECK(!surface_id_.is_null());
-      surface_factory_->Create(surface_id_);
+      local_frame_id_ = id_allocator_->GenerateId();
+      DCHECK(!local_frame_id_.is_null());
+      surface_factory_->Create(local_frame_id_);
 
       layer_ =
           cc::SurfaceLayer::Create(base::Bind(&SatisfyCallback,
@@ -264,7 +270,10 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                                    base::Bind(&RequireCallback,
                                               base::Unretained(manager)));
       DCHECK(layer_);
-      layer_->SetSurfaceId(surface_id_, device_scale_factor, frame_size);
+      layer_->SetSurfaceId(
+          cc::SurfaceId(frame_sink_id_, local_frame_id_),
+          device_scale_factor,
+          frame_size);
       layer_->SetBounds(frame_size_dip);
       layer_->SetIsDrawable(true);
       layer_->SetContentsOpaque(true);
@@ -276,7 +285,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
-    surface_factory_->SubmitCompositorFrame(surface_id_,
+    surface_factory_->SubmitCompositorFrame(local_frame_id_,
                                             std::move(frame),
                                             ack_callback);
   }
@@ -716,10 +725,10 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  if (!surface_id_.is_null()) {
+  if (!local_frame_id_.is_null()) {
     DCHECK(surface_factory_.get());
-    surface_factory_->Destroy(surface_id_);
-    surface_id_ = cc::SurfaceId();
+    surface_factory_->Destroy(local_frame_id_);
+    local_frame_id_ = cc::LocalFrameId();
   }
   layer_ = nullptr;
 }
@@ -779,9 +788,8 @@ RenderWidgetHostView::RenderWidgetHostView(
     content::RenderWidgetHostImpl* host)
     : host_(host),
       container_(nullptr),
-      id_allocator_(
-          new cc::SurfaceIdAllocator(
-              CompositorUtils::GetInstance()->AllocateSurfaceClientId())),
+      frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
+      id_allocator_(new cc::SurfaceIdAllocator()),
       last_output_surface_id_(0),
       ime_bridge_(this),
       is_loading_(false),
@@ -805,8 +813,9 @@ RenderWidgetHostView::RenderWidgetHostView(
   selection_controller_.reset(
       new ui::TouchSelectionController(this, tsc_config));
 
-  CompositorUtils::GetInstance()->GetSurfaceManager()->RegisterSurfaceClientId(
-      id_allocator_->client_id());
+  CompositorUtils::GetInstance()
+      ->GetSurfaceManager()
+      ->RegisterFrameSinkId(frame_sink_id_);
 
   if (GetTextInputManager()) {
     GetTextInputManager()->AddObserver(this);
@@ -816,7 +825,7 @@ RenderWidgetHostView::RenderWidgetHostView(
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(!layer_);
   DCHECK(!surface_factory_);
-  DCHECK(surface_id_.is_null());
+  DCHECK(local_frame_id_.is_null());
 
   if (text_input_manager_) {
     text_input_manager_->RemoveObserver(this);
@@ -824,7 +833,7 @@ RenderWidgetHostView::~RenderWidgetHostView() {
 
   CompositorUtils::GetInstance()
       ->GetSurfaceManager()
-      ->InvalidateSurfaceClientId(id_allocator_->client_id());
+      ->InvalidateFrameSinkId(frame_sink_id_);
 }
 
 void RenderWidgetHostView::SetContainer(

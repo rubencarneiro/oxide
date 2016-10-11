@@ -18,7 +18,7 @@
 #include "oxide_user_script_scheduler.h"
 
 #include "base/bind.h"
-#include "base/message_loop/message_loop.h"
+#include "base/threading/thread_task_runner_handle.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
 
@@ -62,7 +62,7 @@ void UserScriptScheduler::DidFinishLoad(blink::WebLocalFrame* frame) {
 
   idle_posted_ = true;
 
-  base::MessageLoop::current()->PostTask(
+  base::ThreadTaskRunnerHandle::Get()->PostTask(
       FROM_HERE,
       base::Bind(&UserScriptScheduler::DoIdleInject,
                  weak_factory_.GetWeakPtr()));

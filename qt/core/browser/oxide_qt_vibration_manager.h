@@ -23,8 +23,6 @@
 
 #include "base/macros.h"
 
-#include "mojo/public/cpp/bindings/strong_binding.h"
-
 #include "device/vibration/vibration_manager_impl.h"
 
 QT_BEGIN_NAMESPACE
@@ -38,14 +36,13 @@ class VibrationManager : public device::VibrationManager {
  public:
   static void Create(mojo::InterfaceRequest<device::VibrationManager> request);
 
+  VibrationManager();
+  ~VibrationManager() override;
+
   void Vibrate(int64_t milliseconds, const VibrateCallback& callback) override;
   void Cancel(const CancelCallback& callback) override;
 
  private:
-  VibrationManager(mojo::InterfaceRequest<device::VibrationManager> request);
-  ~VibrationManager() override;
-
-  mojo::StrongBinding<device::VibrationManager> binding_;
   std::unique_ptr<QFeedbackHapticsEffect> vibration_;
 };
 

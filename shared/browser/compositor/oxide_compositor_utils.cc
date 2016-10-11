@@ -130,16 +130,6 @@ class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
   EGLImageKHR egl_image_;
 };
 
-class CompositorThread : public base::Thread {
- public:
-  CompositorThread();
-  ~CompositorThread() override;
-
- private:
-  // base::Thread implementation
-  void Init() override;
-};
-
 class CompositorUtilsImpl : public CompositorUtils,
                             public base::MessageLoop::TaskObserver {
  public:
@@ -162,7 +152,7 @@ class CompositorUtilsImpl : public CompositorUtils,
   CompositingMode GetCompositingMode() const override;
   cc::TaskGraphRunner* GetTaskGraphRunner() const override;
   cc::SurfaceManager* GetSurfaceManager() const override;
-  uint32_t AllocateSurfaceClientId() override;
+  cc::FrameSinkId AllocateFrameSinkId() override;
 
   bool CalledOnMainThread() const;
   bool CalledOnGpuThread() const;
@@ -607,8 +597,8 @@ cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
   return content::GetSurfaceManager();
 }
 
-uint32_t CompositorUtilsImpl::AllocateSurfaceClientId() {
-  return content::AllocateSurfaceClientId();
+cc::FrameSinkId CompositorUtilsImpl::AllocateFrameSinkId() {
+  return content::AllocateFrameSinkId();
 }
 
 bool CompositorUtilsImpl::CalledOnMainThread() const {

@@ -28,9 +28,9 @@
 #include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/resources/returned_resource.h"
-#include "cc/surfaces/surface_factory.h"
+#include "cc/surfaces/frame_sink_id.h"
+#include "cc/surfaces/local_frame_id.h"
 #include "cc/surfaces/surface_factory_client.h"
-#include "cc/surfaces/surface_id.h"
 #include "content/browser/renderer_host/render_widget_host_view_oxide.h" // nogncheck
 #include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/common/cursors/webcursor.h" // nogncheck
@@ -121,13 +121,14 @@ class RenderWidgetHostView
   gfx::Size GetPhysicalBackingSize() const override;
   bool DoTopControlsShrinkBlinkSize() const override;
   float GetTopControlsHeight() const override;
-  void FocusedNodeChanged(bool is_editable_node) override;
+  void FocusedNodeChanged(bool is_editable_node,
+                          const gfx::Rect& node_bounds_in_screen) override;
   void OnSwapCompositorFrame(uint32_t output_surface_id,
                              cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) override;
-  uint32_t GetSurfaceClientId() override;
+  cc::FrameSinkId GetFrameSinkId() override;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) override;
   void InitAsFullscreen(
@@ -218,9 +219,10 @@ class RenderWidgetHostView
   RenderWidgetHostViewContainer* container_;
 
   scoped_refptr<cc::SurfaceLayer> layer_;
+  cc::FrameSinkId frame_sink_id_;
   std::unique_ptr<cc::SurfaceIdAllocator> id_allocator_;
   std::unique_ptr<cc::SurfaceFactory> surface_factory_;
-  cc::SurfaceId surface_id_;
+  cc::LocalFrameId local_frame_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
 
   // The output surface ID for the last frame from the renderer

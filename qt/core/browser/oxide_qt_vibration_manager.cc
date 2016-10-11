@@ -18,6 +18,7 @@
 #include "oxide_qt_vibration_manager.h"
 
 #include "base/logging.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 
 #include <QFeedbackHapticsEffect>
 
@@ -31,15 +32,14 @@ const double kVibrationIntensity = 1.0;
 // static
 void VibrationManager::Create(
     mojo::InterfaceRequest<device::VibrationManager> request) {
-  new VibrationManager(std::move(request));
+  mojo::MakeStrongBinding(base::MakeUnique<VibrationManager>(),
+                          std::move(request));
 }
 
-VibrationManager::VibrationManager(
-      mojo::InterfaceRequest<device::VibrationManager> request)
-  : binding_(this, std::move(request)),
-    vibration_(new QFeedbackHapticsEffect()) {
-}
-VibrationManager::~VibrationManager() {}
+VibrationManager::VibrationManager()
+    : vibration_(new QFeedbackHapticsEffect()) {}
+
+VibrationManager::~VibrationManager() = default;
 
 void VibrationManager::Vibrate(int64_t milliseconds,
                                const VibrateCallback& callback) {

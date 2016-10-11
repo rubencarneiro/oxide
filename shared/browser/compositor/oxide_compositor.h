@@ -26,6 +26,7 @@
 #include "base/memory/scoped_vector.h"
 #include "base/memory/weak_ptr.h"
 #include "base/observer_list.h"
+#include "cc/surfaces/frame_sink_id.h"
 #include "cc/trees/layer_tree_host_client.h"
 #include "cc/trees/layer_tree_host_single_thread_client.h"
 #include "ui/gfx/geometry/size.h"
@@ -41,10 +42,10 @@ class SingleThreadTaskRunner;
 }
 
 namespace cc {
+class CompositorFrameSink;
 class Display;
 class Layer;
-class LayerTreeHostInterface;
-class SurfaceIdAllocator;
+class LayerTreeHost;
 }
 
 namespace gfx {
@@ -98,7 +99,7 @@ class Compositor : public cc::LayerTreeHostClient,
 
   void OutputSurfaceChanged();
 
-  std::unique_ptr<cc::OutputSurface> CreateOutputSurface();
+  std::unique_ptr<cc::CompositorFrameSink> CreateCompositorFrameSink();
 
   void AddObserver(CompositorObserver* observer);
   void RemoveObserver(CompositorObserver* observer);
@@ -131,9 +132,9 @@ class Compositor : public cc::LayerTreeHostClient,
                            const gfx::Vector2dF& elastic_overscroll_delta,
                            float page_scale,
                            float top_controls_delta) override;
-  void RequestNewOutputSurface() override;
-  void DidInitializeOutputSurface() override;
-  void DidFailToInitializeOutputSurface() override;
+  void RequestNewCompositorFrameSink() override;
+  void DidInitializeCompositorFrameSink() override;
+  void DidFailToInitializeCompositorFrameSink() override;
   void WillCommit() override;
   void DidCommit() override;
   void DidCommitAndDrawFrame() override;
@@ -173,14 +174,14 @@ class Compositor : public cc::LayerTreeHostClient,
   // OutputSurface calling in to OutputSurfaceDestroyed
   CompositorClient::SwapAckCallback swap_ack_callback_;
 
-  // Both of these need to outlive |layer_tree_host_|
-  std::unique_ptr<cc::SurfaceIdAllocator> surface_id_allocator_;
+  cc::FrameSinkId frame_sink_id_;
+  // This needs to outlive |layer_tree_host_|
   std::unique_ptr<cc::Display> display_;
 
   bool layer_tree_host_eviction_pending_;
   bool can_evict_layer_tree_host_;
 
-  std::unique_ptr<cc::LayerTreeHostInterface> layer_tree_host_;
+  std::unique_ptr<cc::LayerTreeHost> layer_tree_host_;
 
   int num_failed_recreate_attempts_;
 

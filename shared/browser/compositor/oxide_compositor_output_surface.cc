@@ -31,9 +31,16 @@ namespace oxide {
 CompositorOutputSurface::CompositorOutputSurface(
     uint32_t surface_id,
     scoped_refptr<cc::ContextProvider> context_provider,
+    CompositorOutputSurfaceListener* listener)
+    : cc::OutputSurface(context_provider),
+      listener_(listener),
+      surface_id_(surface_id) {}
+
+CompositorOutputSurface::CompositorOutputSurface(
+    uint32_t surface_id,
     std::unique_ptr<cc::SoftwareOutputDevice> software_device,
     CompositorOutputSurfaceListener* listener)
-    : cc::OutputSurface(context_provider, nullptr, std::move(software_device)),
+    : cc::OutputSurface(std::move(software_device)),
       listener_(listener),
       surface_id_(surface_id) {}
 
@@ -51,6 +58,33 @@ bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
 
   listener_->OutputSurfaceBound(this);
   return true;
+}
+
+cc::OverlayCandidateValidator*
+CompositorOutputSurface::GetOverlayCandidateValidator() const {
+  return nullptr;
+}
+
+bool CompositorOutputSurface::IsDisplayedAsOverlayPlane() const {
+  return false;
+}
+
+unsigned CompositorOutputSurface::GetOverlayTextureId() const {
+  return 0;
+}
+
+bool CompositorOutputSurface::SurfaceIsSuspendForRecycle() const {
+  return false;
+}
+
+bool CompositorOutputSurface::HasExternalStencilTest() const {
+  return false;
+}
+
+void CompositorOutputSurface::ApplyExternalStencil() {}
+
+uint32_t CompositorOutputSurface::GetFramebufferCopyTextureFormat() {
+  return 0;
 }
 
 CompositorOutputSurface::~CompositorOutputSurface() {
