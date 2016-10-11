@@ -451,16 +451,20 @@ BOOLEAN_PREF_IMPL(tabsToLinks, setTabsToLinks, tabs_to_links)
 
 /*!
 \property OxideQWebPreferences::caretBrowsingEnabled
+\deprecated
 
 Whether to enable caret browsing. The default is false.
 
 When caret browsing is enabled, the content of a web page can be navigated using
 the keyboard.
+
+\note This option is always false and has no effect since OxideQt 1.19, as the
+setting was removed from Blink.
 */
 
-BOOLEAN_PREF_IMPL(caretBrowsingEnabled,
-                  setCaretBrowsingEnabled,
-                  caret_browsing_enabled)
+DEPRECATED_BOOLEAN_PREF_IMPL(caretBrowsingEnabled,
+                             setCaretBrowsingEnabled,
+                             false)
 
 /*!
 \property OxideQWebPreferences::touchEnabled

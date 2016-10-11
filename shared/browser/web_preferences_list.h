@@ -30,5 +30,4 @@ WEB_PREF(bool, text_areas_are_resizable, true)
 WEB_PREF(bool, local_storage_enabled, false)
 WEB_PREF(bool, application_cache_enabled, false)
 WEB_PREF(bool, tabs_to_links, true)
-WEB_PREF(bool, caret_browsing_enabled, false)
 #undef WEB_PREF_DEFAULT

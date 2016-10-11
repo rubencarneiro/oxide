@@ -36,6 +36,14 @@ void CompositorOutputSurfaceSoftware::DiscardBackbuffer() {}
 
 void CompositorOutputSurfaceSoftware::BindFramebuffer() {}
 
+void CompositorOutputSurfaceSoftware::Reshape(
+    const gfx::Size& size,
+    float device_scale_factor,
+    const gfx::ColorSpace& color_space,
+    bool has_alpha) {
+  software_device()->Resize(size, device_scale_factor);
+}
+
 void CompositorOutputSurfaceSoftware::SwapBuffers(cc::OutputSurfaceFrame frame) {
   std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
   data->software_frame_data = base::WrapUnique(new SoftwareFrameData());

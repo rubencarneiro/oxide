@@ -39,6 +39,10 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
   void EnsureBackbuffer() override;
   void DiscardBackbuffer() override;
   void BindFramebuffer() override;
+  void Reshape(const gfx::Size& size,
+               float device_scale_factor,
+               const gfx::ColorSpace& color_space,
+               bool has_alpha) override;
   void SwapBuffers(cc::OutputSurfaceFrame frame) override;
 
   // CompositorOutputSurface implementation

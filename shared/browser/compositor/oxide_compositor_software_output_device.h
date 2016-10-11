@@ -69,6 +69,8 @@ class CompositorSoftwareOutputDevice : public cc::SoftwareOutputDevice {
   unsigned GetNextId();
   void DiscardBuffer(BufferData* buffer);
 
+  float device_scale_factor_;
+
   unsigned next_buffer_id_;
   unsigned last_painted_buffer_id_;
 
