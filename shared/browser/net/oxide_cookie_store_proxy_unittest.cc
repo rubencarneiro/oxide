@@ -328,7 +328,7 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsync) {
             std::get<0>(changes[0]).SameSite());
   EXPECT_EQ(net::COOKIE_PRIORITY_DEFAULT, std::get<0>(changes[0]).Priority());
   EXPECT_FALSE(std::get<1>(changes[0]));
-  EXPECT_EQ(net::CookieStore::ChangeCause::EXPLICIT,
+  EXPECT_EQ(net::CookieStore::ChangeCause::INSERTED,
             std::get<2>(changes[0]));
 }
 
