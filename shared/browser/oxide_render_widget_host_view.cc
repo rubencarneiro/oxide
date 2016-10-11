@@ -333,8 +333,8 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
-uint32_t RenderWidgetHostView::GetSurfaceClientId() {
-  return id_allocator_->client_id();
+cc::FrameSinkId RenderWidgetHostView::GetFrameSinkId() {
+  return frame_sink_id_;
 }
 
 void RenderWidgetHostView::InitAsPopup(
