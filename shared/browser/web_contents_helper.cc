@@ -154,6 +154,18 @@ void WebContentsHelper::CreateForWebContents(content::WebContents* contents,
 }
 
 // static
+WebContentsHelper* WebContentsHelper::FromRenderFrameHost(
+    content::RenderFrameHost* rfh) {
+  content::WebContents* contents =
+      content::WebContents::FromRenderFrameHost(rfh);
+  if (!contents) {
+    return nullptr;
+  }
+
+  return FromWebContents(contents);
+}
+
+// static
 WebContentsHelper* WebContentsHelper::FromRenderViewHost(
     content::RenderViewHost* rvh) {
   content::WebContents* contents =

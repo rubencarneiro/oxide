@@ -70,7 +70,6 @@ namespace oxide {
 class BrowserContext;
 class FilePicker;
 class JavaScriptDialog;
-class ResourceDispatcherHostLoginDelegate;
 class RenderWidgetHostView;
 class WebContentsClient;
 class WebContentsHelper;
@@ -120,6 +119,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebViewClient* client() const { return client_; }
 
+  // DEPRECATED. If you need to map a WebContents to WebView, then your code
+  // belongs in a separate helper class
   static WebView* FromWebContents(const content::WebContents* web_contents);
   static WebView* FromRenderViewHost(content::RenderViewHost* rvh);
   static WebView* FromRenderFrameHost(content::RenderFrameHost* rfh);
@@ -184,18 +185,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
   void PrepareToClose();
-
-  void DownloadRequested(
-      const GURL& url,
-      const std::string& mime_type,
-      const bool should_prompt,
-      const base::string16& suggested_filename,
-      const std::string& cookies,
-      const std::string& referrer,
-      const std::string& user_agent);
-
-  void HttpAuthenticationRequested(
-      ResourceDispatcherHostLoginDelegate* login_delegate);
 
   display::Display GetDisplay() const;
 

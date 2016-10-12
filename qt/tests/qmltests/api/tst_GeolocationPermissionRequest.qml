@@ -167,7 +167,7 @@ TestWebView {
 
       webView.clearLoadEventCounters();
       webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
-          "window.location = \"http://testsuite/empty.html\";", false);
+          "window.location = \"https://testsuite/empty.html\";", false);
  
       if (!webView.lastGeolocationRequest.isCancelled) {
         cancelSpy.wait();

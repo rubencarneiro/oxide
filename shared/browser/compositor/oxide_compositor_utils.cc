@@ -29,7 +29,7 @@
 #include "base/threading/thread_task_runner_handle.h"
 #include "cc/output/context_provider.h"
 #include "cc/raster/single_thread_task_graph_runner.h"
-#include "cc/surfaces/surface_manager.h"
+#include "content/browser/compositor/surface_utils.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
@@ -49,8 +49,6 @@
 namespace oxide {
 
 namespace {
-
-uint32_t g_next_surface_client_id = 0;
 
 void WakeUpGpuThread() {}
 
@@ -211,7 +209,6 @@ class CompositorUtilsImpl : public CompositorUtils,
 
   struct MainData {
     std::unique_ptr<cc::SingleThreadTaskGraphRunner> task_graph_runner;
-    std::unique_ptr<cc::SurfaceManager> surface_manager;
   } main_unsafe_access_;
 
   struct GpuData {
@@ -455,8 +452,6 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
   main().task_graph_runner->Start("CompositorTileWorker1",
                                   base::SimpleThread::Options());
 
-  main().surface_manager.reset(new cc::SurfaceManager());
-
   scoped_refptr<gpu::GpuChannelHost> gpu_channel_host(
       content::BrowserGpuChannelHostFactory::instance()->EstablishGpuChannelSync());
   if (gpu_channel_host.get()) {
@@ -472,8 +467,6 @@ void CompositorUtilsImpl::Initialize(bool has_share_context) {
 void CompositorUtilsImpl::Shutdown() {
   main().task_graph_runner->Shutdown();
   main().task_graph_runner.reset();
-
-  main().surface_manager.reset();
 
   // Detach the GPU thread MessageLoop::TaskObserver, to stop processing
   // and existing incoming requests
@@ -601,11 +594,11 @@ cc::TaskGraphRunner* CompositorUtilsImpl::GetTaskGraphRunner() const {
 }
 
 cc::SurfaceManager* CompositorUtilsImpl::GetSurfaceManager() const {
-  return main().surface_manager.get();
+  return content::GetSurfaceManager();
 }
 
 cc::FrameSinkId CompositorUtilsImpl::AllocateFrameSinkId() {
-  return cc::FrameSinkId(g_next_surface_client_id++, 0);
+  return content::AllocateFrameSinkId();
 }
 
 bool CompositorUtilsImpl::CalledOnMainThread() const {

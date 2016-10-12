@@ -1260,28 +1260,6 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload();
 }
 
-void WebView::DownloadRequested(
-    const GURL& url,
-    const std::string& mime_type,
-    const bool should_prompt,
-    const base::string16& suggested_filename,
-    const std::string& cookies,
-    const std::string& referrer,
-    const std::string& user_agent) {
-  client_->DownloadRequested(url,
-                             mime_type,
-                             should_prompt,
-                             suggested_filename,
-                             cookies,
-                             referrer,
-                             user_agent);
-}
-
-void WebView::HttpAuthenticationRequested(
-    ResourceDispatcherHostLoginDelegate* login_delegate) {
-  client_->HttpAuthenticationRequested(login_delegate);
-}
-
 display::Display WebView::GetDisplay() const {
   return WebContentsView::FromWebContents(web_contents_.get())->GetDisplay();
 }

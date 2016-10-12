@@ -128,6 +128,7 @@ class RenderWidgetHostView
   void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) override;
+  cc::FrameSinkId GetFrameSinkId() override;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) override;
   void InitAsFullscreen(

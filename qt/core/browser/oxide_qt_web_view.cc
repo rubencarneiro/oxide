@@ -440,32 +440,6 @@ void WebView::FrameMetadataUpdated(const cc::CompositorFrameMetadata& old) {
   client_->FrameMetadataUpdated(flags);
 }
 
-void WebView::DownloadRequested(const GURL& url,
-                                const std::string& mime_type,
-                                const bool should_prompt,
-                                const base::string16& suggested_filename,
-                                const std::string& cookies,
-                                const std::string& referrer,
-                                const std::string& user_agent) {
-  OxideQDownloadRequest download_request(
-      QUrl(QString::fromStdString(url.spec())),
-      QString::fromStdString(mime_type),
-      should_prompt,
-      QString::fromStdString(base::UTF16ToUTF8(suggested_filename)),
-      QString::fromStdString(cookies),
-      QString::fromStdString(referrer),
-      QString::fromStdString(user_agent));
-
-  client_->DownloadRequested(download_request);
-}
-
-void WebView::HttpAuthenticationRequested(
-        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
-  // The client takes ownership of the request
-  client_->HttpAuthenticationRequested(
-      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
-}
-
 oxide::FilePicker* WebView::CreateFilePicker(content::RenderFrameHost* rfh) {
   FilePicker* picker = new FilePicker(rfh);
   picker->SetProxy(client_->CreateFilePicker(picker));
@@ -568,6 +542,32 @@ bool WebView::AdoptNewWebContents(const gfx::Rect& initial_pos,
   client_->NewViewRequested(&request);
 
   return OxideQNewViewRequestPrivate::get(&request)->view.get() != nullptr;
+}
+
+void WebView::DownloadRequested(const GURL& url,
+                                const std::string& mime_type,
+                                const bool should_prompt,
+                                const base::string16& suggested_filename,
+                                const std::string& cookies,
+                                const std::string& referrer,
+                                const std::string& user_agent) {
+  OxideQDownloadRequest download_request(
+      QUrl(QString::fromStdString(url.spec())),
+      QString::fromStdString(mime_type),
+      should_prompt,
+      QString::fromStdString(base::UTF16ToUTF8(suggested_filename)),
+      QString::fromStdString(cookies),
+      QString::fromStdString(referrer),
+      QString::fromStdString(user_agent));
+
+  client_->DownloadRequested(download_request);
+}
+
+void WebView::HttpAuthenticationRequested(
+        oxide::ResourceDispatcherHostLoginDelegate* login_delegate) {
+  // The client takes ownership of the request
+  client_->HttpAuthenticationRequested(
+      OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {

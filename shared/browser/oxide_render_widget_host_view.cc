@@ -333,6 +333,10 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
+cc::FrameSinkId RenderWidgetHostView::GetFrameSinkId() {
+  return frame_sink_id_;
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {

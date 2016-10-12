@@ -78,14 +78,6 @@ bool WebViewClient::AddMessageToConsole(int32_t level,
 void WebViewClient::FrameMetadataUpdated(
     const cc::CompositorFrameMetadata& old) {}
 
-void WebViewClient::DownloadRequested(const GURL& url,
-                                      const std::string& mime_type,
-                                      const bool should_prompt,
-                                      const base::string16& suggested_filename,
-                                      const std::string& cookies,
-                                      const std::string& referrer,
-                                      const std::string& user_agent) {}
-
 FilePicker* WebViewClient::CreateFilePicker(content::RenderFrameHost* rfh) {
   return nullptr;
 }
@@ -97,9 +89,6 @@ void WebViewClient::PrepareToCloseResponseReceived(bool proceed) {}
 void WebViewClient::CloseRequested() {}
 
 void WebViewClient::TargetURLChanged() {}
-
-void WebViewClient::HttpAuthenticationRequested(
-    ResourceDispatcherHostLoginDelegate* login_delegate) {}
 
 void WebViewClient::OnEditingCapabilitiesChanged() {}
 

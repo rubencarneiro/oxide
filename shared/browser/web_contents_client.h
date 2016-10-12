@@ -18,9 +18,13 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 
+#include <string>
+
+#include "base/strings/string16.h"
 #include "ui/base/window_open_disposition.h"
 
 #include "shared/browser/web_contents_unique_ptr.h"
+#include "shared/common/oxide_shared_export.h"
 
 class GURL;
 
@@ -30,7 +34,9 @@ class Rect;
 
 namespace oxide {
 
-class WebContentsClient {
+class ResourceDispatcherHostLoginDelegate;
+
+class OXIDE_SHARED_EXPORT WebContentsClient {
  public:
   virtual ~WebContentsClient();
 
@@ -46,6 +52,17 @@ class WebContentsClient {
   virtual bool AdoptNewWebContents(const gfx::Rect& initial_pos,
                                    WindowOpenDisposition disposition,
                                    WebContentsUniquePtr contents);
+
+  virtual void DownloadRequested(const GURL& url,
+                                 const std::string& mime_type,
+                                 const bool should_prompt,
+                                 const base::string16& suggested_filename,
+                                 const std::string& cookies,
+                                 const std::string& referrer,
+                                 const std::string& user_agent);
+
+  virtual void HttpAuthenticationRequested(
+      ResourceDispatcherHostLoginDelegate* login_delegate);
 };
 
 } // namespace oxide

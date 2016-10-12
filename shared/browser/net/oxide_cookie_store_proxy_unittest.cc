@@ -191,7 +191,7 @@ class CookieStoreProxyTest : public testing::Test {
   using CookieChange =
       std::tuple<net::CanonicalCookie,
                  bool,
-                 net::CookieMonsterDelegate::ChangeCause>;
+                 net::CookieStore::ChangeCause>;
   using CookieChangeVector = std::vector<CookieChange>;
 
   const CookieChangeVector& cookie_changes() const { return cookie_changes_; }
@@ -208,7 +208,7 @@ class CookieStoreProxyTest : public testing::Test {
     // net::CookieMonsterDelegate
     void OnCookieChanged(const net::CanonicalCookie& cookie,
                          bool removed,
-                         ChangeCause cause) override;
+                         net::CookieStore::ChangeCause cause) override;
 
     CookieStoreProxyTest* test_;
   };
@@ -219,7 +219,7 @@ class CookieStoreProxyTest : public testing::Test {
 
   void CookieChanged(const net::CanonicalCookie& cookie,
                      bool removed,
-                     net::CookieMonsterDelegate::ChangeCause cause);
+                     net::CookieStore::ChangeCause cause);
 
   scoped_refptr<CookieMonsterDelegate> cookie_monster_delegate_;
 
@@ -288,14 +288,14 @@ void CookieStoreProxyTest::TearDown() {
 void CookieStoreProxyTest::CookieChanged(
     const net::CanonicalCookie& cookie,
     bool removed,
-    net::CookieMonsterDelegate::ChangeCause cause) {
+    net::CookieStore::ChangeCause cause) {
   cookie_changes_.push_back(std::make_tuple(cookie, removed, cause));
 }
 
 void CookieStoreProxyTest::CookieMonsterDelegate::OnCookieChanged(
     const net::CanonicalCookie& cookie,
     bool removed,
-    ChangeCause cause) {
+    net::CookieStore::ChangeCause cause) {
   test_->CookieChanged(cookie, removed, cause);
 }
 
@@ -328,7 +328,7 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsync) {
             std::get<0>(changes[0]).SameSite());
   EXPECT_EQ(net::COOKIE_PRIORITY_DEFAULT, std::get<0>(changes[0]).Priority());
   EXPECT_FALSE(std::get<1>(changes[0]));
-  EXPECT_EQ(net::CookieMonsterDelegate::CHANGE_COOKIE_EXPLICIT,
+  EXPECT_EQ(net::CookieStore::ChangeCause::INSERTED,
             std::get<2>(changes[0]));
 }
 
