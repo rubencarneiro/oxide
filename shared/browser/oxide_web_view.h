@@ -27,8 +27,6 @@
 #include "base/strings/string16.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "components/sessions/core/serialized_navigation_entry.h"
-#include "content/public/browser/notification_observer.h"
-#include "content/public/browser/notification_registrar.h"
 #include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -52,7 +50,6 @@ class GURL;
 
 namespace content {
 
-class NotificationRegistrar;
 struct OpenURLParams;
 class RenderFrameHost;
 class RenderViewHost;
@@ -82,7 +79,6 @@ class WebViewClient;
 // providing an implementation of WebViewClient
 class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                                     private CompositorObserver,
-                                    private content::NotificationObserver,
                                     private content::WebContentsDelegate,
                                     private content::WebContentsObserver,
                                     private ClipboardObserver {
@@ -161,14 +157,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   // all outlive WebView (the lifetime of them is tied to WebContents)
   WebContentsHelper* GetWebContentsHelper() const;
 
-  int GetNavigationEntryCount() const;
-  int GetNavigationCurrentEntryIndex() const;
-  void SetNavigationCurrentEntryIndex(int index);
-  int GetNavigationEntryUniqueID(int index) const;
-  const GURL& GetNavigationEntryUrl(int index) const;
-  std::string GetNavigationEntryTitle(int index) const;
-  base::Time GetNavigationEntryTimestamp(int index) const;
-
   WebFrame* GetRootFrame() const;
 
   const cc::CompositorFrameMetadata& compositor_frame_metadata() const {
@@ -232,14 +220,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   virtual const ScriptMessageHandler* GetScriptMessageHandlerAt(
       size_t index) const override;
 
-
   // CompositorObserver implementation
   void CompositorWillRequestSwapFrame() override;
-
-  // content::NotificationObserver implementation
-  void Observe(int type,
-               const content::NotificationSource& source,
-               const content::NotificationDetails& details) override;
 
   // content::WebContentsDelegate implementation
   content::WebContents* OpenURLFromTab(
@@ -343,9 +325,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const content::FrameNavigateParams& params) override;
   void DidGetRedirectForResourceRequest(
       const content::ResourceRedirectDetails& details) override;
-  void NavigationEntryCommitted(
-      const content::LoadCommittedDetails& load_details) override;
-  void TitleWasSet(content::NavigationEntry* entry, bool explicit_set) override;
   void DidShowFullscreenWidget() override;
   bool OnMessageReceived(const IPC::Message& msg,
                          content::RenderFrameHost* render_frame_host) override;
@@ -356,8 +335,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   WebViewClient* client_;
 
   WebContentsUniquePtr web_contents_;
-
-  content::NotificationRegistrar registrar_;
 
   base::WeakPtr<FilePicker> active_file_picker_;
 

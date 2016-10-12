@@ -36,8 +36,6 @@ void WebViewClient::TitleChanged() {}
 
 void WebViewClient::FaviconChanged() {}
 
-void WebViewClient::CommandsUpdated() {}
-
 void WebViewClient::LoadingChanged() {}
 
 void WebViewClient::LoadProgressChanged(double progress) {}
@@ -61,12 +59,6 @@ void WebViewClient::LoadFailed(const GURL& validated_url,
 
 void WebViewClient::LoadSucceeded(const GURL& validated_url,
                                     int http_status_code) {}
-
-void WebViewClient::NavigationEntryCommitted() {}
-
-void WebViewClient::NavigationListPruned(bool from_front, int count) {}
-
-void WebViewClient::NavigationEntryChanged(int index) {}
 
 bool WebViewClient::AddMessageToConsole(int32_t level,
                                         const base::string16& message,

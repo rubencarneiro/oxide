@@ -25,6 +25,7 @@ if(${Qt5Qml_VERSION_STRING} VERSION_LESS "5.5.0")
   list(APPEND OXIDE_QMLPLUGIN_SRCS
        oxide_qml_download_request.cc
        oxide_qml_load_event.cc
+       oxide_qml_navigation_item.cc
        oxide_qml_ssl_certificate.cc
        oxide_qml_value_type_provider.cc)
   set(LEGACY_QMLVALUE_TYPES TRUE)

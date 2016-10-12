@@ -18,47 +18,56 @@
 #ifndef _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_H_
 #define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_H_
 
-#include <QAbstractListModel>
-#include <QScopedPointer>
-#include <QtQml>
+#include <memory>
 
-#include "qt/quick/api/oxideqquickglobal.h"
+#include <QList>
+#include <QtGlobal>
 
-class OxideQQuickNavigationHistoryPrivate;
-class OxideQQuickWebView;
+#include "qt/core/glue/navigation_history.h"
+#include "qt/core/glue/navigation_history_client.h"
+#include "qt/core/glue/web_contents_id.h"
 
-class OXIDE_QTQUICK_EXPORT OxideQQuickNavigationHistory
-    : public QAbstractListModel {
-  Q_OBJECT
-  Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged)
+#include "qt/quick/api/oxideqquicknavigationitem.h"
+
+class OxideQQuickNavigationHistory;
+
+class OxideQQuickNavigationHistoryPrivate
+    : public oxide::qt::NavigationHistoryClient {
+  Q_DECLARE_PUBLIC(OxideQQuickNavigationHistory)
+  Q_DISABLE_COPY(OxideQQuickNavigationHistoryPrivate)
 
  public:
-  OxideQQuickNavigationHistory(OxideQQuickWebView* webview);
-  ~OxideQQuickNavigationHistory() Q_DECL_OVERRIDE;
+  ~OxideQQuickNavigationHistoryPrivate();
 
-  // reimplemented from QAbstractListModel
-  QHash<int, QByteArray> roleNames() const;
-  int rowCount(const QModelIndex& parent = QModelIndex()) const;
-  QVariant data(const QModelIndex& index, int role) const;
+  static OxideQQuickNavigationHistoryPrivate* get(
+      OxideQQuickNavigationHistory* q);
 
-  int currentIndex() const;
-  void setCurrentIndex(int index);
-
- Q_SIGNALS:
-  void currentIndexChanged();
-
- private Q_SLOTS:
-  friend class OxideQQuickWebViewPrivate;
-  void onNavigationEntryCommitted();
-  void onNavigationListPruned(bool from_front, int count);
-  void onNavigationEntryChanged(int index);
+  void init(oxide::qt::WebContentsID web_contents_id);
 
  private:
-  Q_DISABLE_COPY(OxideQQuickNavigationHistory)
-  QScopedPointer<OxideQQuickNavigationHistoryPrivate> d_ptr;
-  Q_DECLARE_PRIVATE(OxideQQuickNavigationHistory)
-};
+  OxideQQuickNavigationHistoryPrivate(OxideQQuickNavigationHistory* q);
 
-QML_DECLARE_TYPE(OxideQQuickNavigationHistory)
+  void ensureModelItemsAreBuilt();
+
+  OxideQQuickNavigationItem constructItemForIndex(int index);
+
+  // oxide::qt::NavigationHistoryClient implementation
+  void NavigationHistoryChanged() override;
+
+  enum Roles {
+    Url = Qt::UserRole + 1,
+    Title,
+    Timestamp
+  };
+
+  OxideQQuickNavigationHistory* q_ptr;
+
+  std::unique_ptr<oxide::qt::NavigationHistory> navigation_history_;
+
+  struct ModelHistoryItem;
+
+  bool model_items_need_rebuilding_;
+  QList<ModelHistoryItem> model_items_;
+};
 
 #endif // _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_H_

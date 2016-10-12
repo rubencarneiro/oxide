@@ -59,6 +59,7 @@
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
 #include "oxideqquickwebcontext.h"
@@ -129,7 +130,6 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
       constructed_(false),
-      navigation_history_(view),
       alert_dialog_(nullptr),
       confirm_dialog_(nullptr),
       prompt_dialog_(nullptr),
@@ -195,12 +195,6 @@ void OxideQQuickWebViewPrivate::FaviconChanged() {
   emit q->iconChanged();
 }
 
-void OxideQQuickWebViewPrivate::CommandsUpdated() {
-  Q_Q(OxideQQuickWebView);
-
-  emit q->navigationHistoryChanged();
-}
-
 void OxideQQuickWebViewPrivate::LoadingChanged() {
   Q_Q(OxideQQuickWebView);
 
@@ -227,18 +221,6 @@ void OxideQQuickWebViewPrivate::LoadEvent(const OxideQLoadEvent& event) {
   }
 
   emit q->loadingChanged(event);
-}
-
-void OxideQQuickWebViewPrivate::NavigationEntryCommitted() {
-  navigation_history_.onNavigationEntryCommitted();
-}
-
-void OxideQQuickWebViewPrivate::NavigationListPruned(bool from_front, int count) {
-  navigation_history_.onNavigationListPruned(from_front, count);
-}
-
-void OxideQQuickWebViewPrivate::NavigationEntryChanged(int index) {
-  navigation_history_.onNavigationEntryChanged(index);
 }
 
 void OxideQQuickWebViewPrivate::CreateWebFrame(
@@ -548,6 +530,8 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
         construct_props_->restore_type));
   }
 
+  OxideQQuickNavigationHistoryPrivate::get(&navigation_history_)->init(
+      proxy_->webContentsID());
   OxideQFindControllerPrivate::get(find_controller_.data())->Init(
       proxy_->webContentsID());
   OxideQSecurityStatusPrivate::get(security_status_.data())->Init(
@@ -745,43 +729,6 @@ void OxideQQuickWebViewPrivate::addAttachedPropertyTo(QObject* object) {
   attached->setView(q);
 }
 
-int OxideQQuickWebViewPrivate::getNavigationEntryCount() const {
-  if (!proxy_) {
-    return 0;
-  }
-
-  return proxy_->getNavigationEntryCount();
-}
-
-int OxideQQuickWebViewPrivate::getNavigationCurrentEntryIndex() const {
-  if (!proxy_) {
-    return -1;
-  }
-
-  return proxy_->getNavigationCurrentEntryIndex();
-}
-
-void OxideQQuickWebViewPrivate::setNavigationCurrentEntryIndex(int index) {
-  proxy_->setNavigationCurrentEntryIndex(index);
-}
-
-int OxideQQuickWebViewPrivate::getNavigationEntryUniqueID(int index) const {
-  return proxy_->getNavigationEntryUniqueID(index);
-}
-
-QUrl OxideQQuickWebViewPrivate::getNavigationEntryUrl(int index) const {
-  return proxy_->getNavigationEntryUrl(index);
-}
-
-QString OxideQQuickWebViewPrivate::getNavigationEntryTitle(int index) const {
-  return proxy_->getNavigationEntryTitle(index);
-}
-
-QDateTime OxideQQuickWebViewPrivate::getNavigationEntryTimestamp(
-    int index) const {
-  return proxy_->getNavigationEntryTimestamp(index);
-}
-
 /*!
 \class OxideQQuickWebView
 \inmodule OxideQtQuick
@@ -845,6 +792,9 @@ notification API (via notificationPermissionRequested).
 This signal is used to notify the application of load events in the main frame.
 Please refer to the documentation for LoadEvent for more information about how
 to use it.
+
+\a{event} is owned by the QML engine and will be garbage collected when it goes
+out of scope.
 */
 
 /*!
@@ -918,7 +868,8 @@ current location. Please refer to the documentation for PermissionRequest for
 more information about how to use it.
 
 The ownership of \a{request} is passed to the QML engine. This means that
-applications can respond to this asynchronously.
+applications can respond to this asynchronously. \a{request} will be garbage
+collected when it goes out of scope.
 */
 
 /*!
@@ -931,7 +882,8 @@ Please refer to the documentation for MediaAccessPermissionRequest for more
 information about how to use it.
 
 The ownership of \a{request} is passed to the QML engine. This means that
-applications can respond to this asynchronously.
+applications can respond to this asynchronously. \a{request} will be garbage
+collected when it goes out of scope.
 */
 
 /*!
@@ -946,7 +898,8 @@ Note that PermissionRequest::embedder behaves differently for notification
 permission requests - it will be equal to PermissionRequest::origin.
 
 The ownership of \a{request} is passed to the QML engine. This means that
-applications can respond to this asynchronously.
+applications can respond to this asynchronously. \a{request} will be garbage
+collected when it goes out of scope.
 */
 
 /*!
@@ -980,6 +933,9 @@ following values:
 This signal is a request for the application to download the resource specified
 by \a{request}. Please refer to the documentation for DownloadRequest for
 more information about how to use it.
+
+\a{request} is owned by the QML engine and will be garbage collected when it
+goes out of scope.
 */
 
 /*!
@@ -1281,6 +1237,9 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
            QQuickItem::ItemAcceptsDrops);
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
+
+  connect(&d->navigation_history_, &OxideQQuickNavigationHistory::changed,
+          this, &OxideQQuickWebView::navigationHistoryChanged);
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
@@ -1390,6 +1349,7 @@ QUrl OxideQQuickWebView::icon() const {
 
 /*!
 \qmlproperty bool WebView::canGoBack
+\deprecated
 
 This property will be true if the application can navigate the webview back by
 calling goBack. Else it will be false.
@@ -1402,15 +1362,15 @@ calling goBack. Else it will be false.
 bool OxideQQuickWebView::canGoBack() const {
   Q_D(const OxideQQuickWebView);
 
-  if (!d->proxy_) {
-    return false;
-  }
-
-  return d->proxy_->canGoBack();
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebView: canGoBack is deprecated. Please use the API "
+      "provided by OxideQQuickNavigationHistory instead";
+  return d->navigation_history_.canGoBack();
 }
 
 /*!
 \qmlproperty bool WebView::canGoForward
+\deprecated
 
 This property will be true if the application can navigate the webview forward
 by calling goForward. Else it will be false.
@@ -1423,11 +1383,10 @@ by calling goForward. Else it will be false.
 bool OxideQQuickWebView::canGoForward() const {
   Q_D(const OxideQQuickWebView);
 
-  if (!d->proxy_) {
-    return false;
-  }
-
-  return d->proxy_->canGoForward();
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebView: canGoForward is deprecated. Please use the API "
+      "provided by OxideQQuickNavigationHistory instead";
+  return d->navigation_history_.canGoForward();
 }
 
 /*!
@@ -2099,6 +2058,9 @@ void OxideQQuickWebView::setPreferences(OxideQWebPreferences* prefs) {
 
 /*!
 \qmlproperty NavigationHistory WebView::navigationHistory
+
+The navigation history for this webview. Please refer to the documentation for
+NavigationHistory for more information about how to use this.
 */
 
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
@@ -2635,6 +2597,7 @@ void OxideQQuickWebView::executeEditingCommand(EditingCommands command) const {
 
 /*!
 \qmlmethod void WebView::goBack()
+\deprecated
 
 Navigate to the previous entry in the navigation history. If there isn't one,
 then calling this function will do nothing.
@@ -2645,15 +2608,15 @@ then calling this function will do nothing.
 void OxideQQuickWebView::goBack() {
   Q_D(OxideQQuickWebView);
 
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->goBack();
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebView: goBack is deprecated. Please use the API "
+      "provided by OxideQQuickNavigationHistory instead";
+  d->navigation_history_.goBack();
 }
 
 /*!
 \qmlmethod void WebView::goForward()
+\deprecated
 
 Navigate to the next entry in the navigation history. If there isn't one, then
 calling this function will do nothing.
@@ -2664,11 +2627,10 @@ calling this function will do nothing.
 void OxideQQuickWebView::goForward() {
   Q_D(OxideQQuickWebView);
 
-  if (!d->proxy_) {
-    return;
-  }
-
-  d->proxy_->goForward();
+  WARN_DEPRECATED_API_USAGE() <<
+      "OxideQQuickWebView: goForward is deprecated. Please use the API "
+      "provided by OxideQQuickNavigationHistory instead";
+  d->navigation_history_.goForward();
 }
 
 /*!

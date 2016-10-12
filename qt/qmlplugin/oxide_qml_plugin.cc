@@ -37,7 +37,7 @@
 #include "qt/quick/api/oxideqquickcookiemanager_p.h"
 #include "qt/quick/api/oxideqquickglobal_p.h"
 #include "qt/quick/api/oxideqquicklocationbarcontroller.h"
-#include "qt/quick/api/oxideqquicknavigationhistory_p.h"
+#include "qt/quick/api/oxideqquicknavigationhistory.h"
 #include "qt/quick/api/oxideqquickscriptmessage.h"
 #include "qt/quick/api/oxideqquickscriptmessagehandler.h"
 #include "qt/quick/api/oxideqquickscriptmessagerequest.h"
@@ -51,6 +51,7 @@
 #ifdef LEGACY_QMLVALUE_TYPES
 #include "oxide_qml_download_request.h"
 #include "oxide_qml_load_event.h"
+#include "oxide_qml_navigation_item.h"
 #include "oxide_qml_ssl_certificate.h"
 #include "oxide_qml_value_type_provider.h"
 #endif
@@ -102,6 +103,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterUncreatableType<oxide::qmlplugin::LoadEvent>(
         uri, 1, 0, "LoadEvent",
         "LoadEvent is delivered by WebView.loadingChanged");
+    qmlRegisterUncreatableType<oxide::qmlplugin::NavigationItem>(
+        uri, 1, 0, "NavigationItem",
+        "NavigationItem is created by NavigationHistory");
     qmlRegisterUncreatableType<oxide::qmlplugin::SslCertificate>(
         uri, 1, 0, "SslCertificate",
         "SslCertificate is accessed via SecurityStatus.certificate");
@@ -208,6 +212,9 @@ class OxideQmlPlugin : public QQmlExtensionPlugin {
     qmlRegisterType<OxideQQuickWebView, 8>(uri, 1, 15, "WebView");
 
     qmlRegisterType<OxideQQuickWebView, 9>(uri, 1, 19, "WebView");
+    qmlRegisterUncreatableType<OxideQQuickNavigationHistory, 1>(
+        uri, 1, 19, "NavigationHistory",
+        "NavigationHistory is accessed via WebView.navigationHistory");
   }
 };
 

@@ -66,8 +66,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
 
   virtual void FaviconChanged();
 
-  virtual void CommandsUpdated();
-
   virtual void LoadingChanged();
 
   virtual void LoadProgressChanged(double progress);
@@ -91,12 +89,6 @@ class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
 
   virtual void LoadSucceeded(const GURL& validated_url,
                              int http_status_code);
-
-  virtual void NavigationEntryCommitted();
-
-  virtual void NavigationListPruned(bool from_front, int count);
-
-  virtual void NavigationEntryChanged(int index);
 
   virtual bool AddMessageToConsole(int32_t level,
                                    const base::string16& message,

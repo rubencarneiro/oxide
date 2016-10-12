@@ -37,6 +37,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
+#include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/page_zoom.h"
@@ -310,10 +311,6 @@ void WebView::FaviconChanged() {
   client_->FaviconChanged();
 }
 
-void WebView::CommandsUpdated() {
-  client_->CommandsUpdated();
-}
-
 void WebView::LoadingChanged() {
   client_->LoadingChanged();
 }
@@ -378,18 +375,6 @@ void WebView::LoadSucceeded(const GURL& validated_url, int http_status_code) {
         QUrl(QString::fromStdString(validated_url.spec())),
         http_status_code);
   client_->LoadEvent(event);
-}
-
-void WebView::NavigationEntryCommitted() {
-  client_->NavigationEntryCommitted();
-}
-
-void WebView::NavigationListPruned(bool from_front, int count) {
-  client_->NavigationListPruned(from_front, count);
-}
-
-void WebView::NavigationEntryChanged(int index) {
-  client_->NavigationEntryChanged(index);
 }
 
 bool WebView::AddMessageToConsole(
@@ -755,36 +740,6 @@ QList<QObject*>& WebView::messageHandlers() {
   return message_handlers_;
 }
 
-int WebView::getNavigationEntryCount() const {
-  return web_view_->GetNavigationEntryCount();
-}
-
-int WebView::getNavigationCurrentEntryIndex() const {
-  return web_view_->GetNavigationCurrentEntryIndex();
-}
-
-void WebView::setNavigationCurrentEntryIndex(int index) {
-  web_view_->SetNavigationCurrentEntryIndex(index);
-}
-
-int WebView::getNavigationEntryUniqueID(int index) const {
-  return web_view_->GetNavigationEntryUniqueID(index);
-}
-
-QUrl WebView::getNavigationEntryUrl(int index) const {
-  return QUrl(QString::fromStdString(
-      web_view_->GetNavigationEntryUrl(index).spec()));
-}
-
-QString WebView::getNavigationEntryTitle(int index) const {
-  return QString::fromStdString(web_view_->GetNavigationEntryTitle(index));
-}
-
-QDateTime WebView::getNavigationEntryTimestamp(int index) const {
-  return QDateTime::fromMSecsSinceEpoch(
-      web_view_->GetNavigationEntryTimestamp(index).ToJsTime());
-}
-
 QByteArray WebView::currentState() const {
   // XXX(chrisccoulson): Move the pickling in to oxide::WebView
   std::vector<sessions::SerializedNavigationEntry> entries = web_view_->GetState();
@@ -801,7 +756,8 @@ QByteArray WebView::currentState() const {
   for (i = entries.begin(); i != entries.end(); ++i) {
     i->WriteToPickle(max_state_size, &pickle);
   }
-  pickle.WriteInt(web_view_->GetNavigationCurrentEntryIndex());
+  pickle.WriteInt(
+      web_view_->GetWebContents()->GetController().GetCurrentEntryIndex());
   return QByteArray(static_cast<const char*>(pickle.data()), pickle.size());
 }
 

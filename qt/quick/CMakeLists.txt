@@ -24,6 +24,7 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickglobal.cc
     api/oxideqquicklocationbarcontroller.cc
     api/oxideqquicknavigationhistory.cc
+    api/oxideqquicknavigationitem.cc
     api/oxideqquickscriptmessage.cc
     api/oxideqquickscriptmessagehandler.cc
     api/oxideqquickscriptmessagerequest.cc
