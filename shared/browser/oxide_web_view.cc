@@ -410,6 +410,10 @@ void WebView::CompositorWillRequestSwapFrame() {
     // to control the location bar height
     compositor_frame_metadata_.top_controls_height = location_bar_height_;
     compositor_frame_metadata_.top_controls_shown_ratio = 0.f;
+  } else if (!GetRenderWidgetHostView()) {
+    compositor_frame_metadata_.top_controls_height = location_bar_height_;
+    compositor_frame_metadata_.top_controls_shown_ratio =
+        location_bar_constraints_ == blink::WebTopControlsHidden ? 0.f : 1.f;
   }
 
   client_->FrameMetadataUpdated(old);
