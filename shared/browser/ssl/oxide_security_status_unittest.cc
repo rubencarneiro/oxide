@@ -24,7 +24,6 @@
 #include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/referrer.h"
-#include "content/public/common/security_style.h"
 #include "content/public/test/test_browser_context.h"
 #include "content/public/test/test_web_contents_factory.h"
 #include "net/cert/x509_certificate.h"
@@ -102,9 +101,6 @@ TEST_F(SecurityStatusTest, NoSecurity) {
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
-  content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_UNAUTHENTICATED;
-
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
   status->VisibleSSLStateChanged();
 
@@ -116,15 +112,22 @@ TEST_F(SecurityStatusTest, NoSecurity) {
 
 TEST_F(SecurityStatusTest, Secure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
-  content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.certificate = cert();
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
+  status->VisibleSSLStateChanged();
+
+  EXPECT_EQ(SECURITY_LEVEL_NONE, status->security_level());
+  EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
+  EXPECT_EQ(CERT_STATUS_OK, status->cert_status());
+  EXPECT_EQ(nullptr, status->cert());
+
+  content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
+  ssl_status.certificate = cert();
+
   status->VisibleSSLStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_SECURE, status->security_level());
@@ -135,12 +138,11 @@ TEST_F(SecurityStatusTest, Secure) {
 
 TEST_F(SecurityStatusTest, Broken) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
@@ -155,12 +157,11 @@ TEST_F(SecurityStatusTest, Broken) {
 
 TEST_F(SecurityStatusTest, RanInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
@@ -175,12 +176,11 @@ TEST_F(SecurityStatusTest, RanInsecure) {
 
 TEST_F(SecurityStatusTest, DisplayedInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
@@ -196,12 +196,11 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
 
 TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.content_status =
       content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
@@ -220,12 +219,11 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
 
 TEST_F(SecurityStatusTest, MinorCertError) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
@@ -240,12 +238,11 @@ TEST_F(SecurityStatusTest, MinorCertError) {
 
 TEST_F(SecurityStatusTest, SecureEV) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
@@ -459,17 +456,11 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   const CertStatusRow& row = GetParam();
 
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  if (net::IsCertStatusError(row.cert_status_in) &&
-      !net::IsCertStatusMinorError(row.cert_status_in)) {
-    ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  } else {
-    ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  }
   ssl_status.certificate = row.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = row.cert_status_in;
 
@@ -497,16 +488,16 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
 
 struct ObserverCallbackRow {
   struct InputData {
-    InputData(content::SecurityStyle security_style,
+    InputData(bool https,
               bool expired_cert,
               net::CertStatus cert_status,
               content::SSLStatus::ContentStatusFlags content_status)
-        : security_style(security_style),
+        : https(https),
           expired_cert(expired_cert),
           cert_status(cert_status),
           content_status(content_status) {}
 
-    content::SecurityStyle security_style;
+    bool https;
     bool expired_cert;
     net::CertStatus cert_status;
     content::SSLStatus::ContentStatusFlags content_status;
@@ -548,11 +539,9 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ObserverCallbackRow(
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
             SECURITY_LEVEL_SECURE,
             content::SSLStatus::NORMAL_CONTENT,
             CERT_STATUS_OK,
@@ -564,12 +553,10 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ObserverCallbackRow(
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                false, false, 0, content::SSLStatus::NORMAL_CONTENT),
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATION_BROKEN,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
-            SECURITY_LEVEL_ERROR,
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
+            SECURITY_LEVEL_SECURE,
             content::SSLStatus::NORMAL_CONTENT,
             CERT_STATUS_OK,
             false,
@@ -580,11 +567,9 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ObserverCallbackRow(
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
+                true, false, 0, content::SSLStatus::DISPLAYED_INSECURE_CONTENT),
             SECURITY_LEVEL_WARNING,
             content::SSLStatus::DISPLAYED_INSECURE_CONTENT,
             CERT_STATUS_OK,
@@ -597,11 +582,9 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ObserverCallbackRow(
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false,
+                true, false,
                 net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION,
                 content::SSLStatus::NORMAL_CONTENT),
             SECURITY_LEVEL_WARNING,
@@ -616,11 +599,9 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         ObserverCallbackRow(
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                false, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, false, 0, content::SSLStatus::NORMAL_CONTENT),
             ObserverCallbackRow::InputData(
-                content::SECURITY_STYLE_AUTHENTICATED,
-                true, 0, content::SSLStatus::NORMAL_CONTENT),
+                true, true, 0, content::SSLStatus::NORMAL_CONTENT),
             SECURITY_LEVEL_SECURE,
             content::SSLStatus::NORMAL_CONTENT,
             CERT_STATUS_OK,
@@ -647,12 +628,13 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
   const ObserverCallbackRow& params = GetParam();
 
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("https://www.google.com/"),
+  controller.LoadURL(params.initial_data.https ?
+                         GURL("https://www.google.com/")
+                         : GURL("http://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = params.initial_data.security_style;
   ssl_status.certificate =
       params.initial_data.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = params.initial_data.cert_status;
@@ -677,7 +659,9 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
                                            &cert,
                                            &flags));
 
-  ssl_status.security_style = params.test_data.security_style;
+  controller.GetVisibleEntry()->SetURL(
+      params.test_data.https ?
+          GURL("https://www.google.com") : GURL("http://www.google.com/"));
   ssl_status.certificate =
       params.test_data.expired_cert ? expired_cert() : this->cert();
   ssl_status.cert_status = params.test_data.cert_status;

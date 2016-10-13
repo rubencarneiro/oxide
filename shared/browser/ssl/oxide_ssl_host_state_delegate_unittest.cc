@@ -75,7 +75,7 @@ TEST_F(SSLHostStateDelegateTest, HostRanInsecureContent) {
       ssl_host_state_delegate()->DidHostRunInsecureContent(
           "www.google.com", 1,
           content::SSLHostStateDelegate::MIXED_CONTENT));
-  EXPECT_TRUE(
+  EXPECT_FALSE(
       ssl_host_state_delegate()->DidHostRunInsecureContent(
           "www.google.com", 1,
           content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
@@ -100,7 +100,7 @@ TEST_F(SSLHostStateDelegateTest, HostRanInsecureContent) {
       ssl_host_state_delegate()->DidHostRunInsecureContent(
           "www.example.co.uk", 3,
           content::SSLHostStateDelegate::CERT_ERRORS_CONTENT));
-  EXPECT_TRUE(
+  EXPECT_FALSE(
       ssl_host_state_delegate()->DidHostRunInsecureContent(
           "www.example.co.uk", 3,
           content::SSLHostStateDelegate::MIXED_CONTENT));

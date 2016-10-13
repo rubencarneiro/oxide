@@ -45,14 +45,31 @@ void SSLHostStateDelegate::HostRanInsecureContent(
   // We need this because SSLPolicy::UpdateEntry uses the response of
   // DidHostRunInsecureContent to set the appropriate content status
   // XXX: We should clear out processes as they die
-  ran_insecure_content_hosts_.insert(BrokenHostEntry(host, pid));
+  switch (content_type) {
+    case MIXED_CONTENT:
+      ran_insecure_content_hosts_.insert(BrokenHostEntry(host, pid));
+      break;
+    case CERT_ERRORS_CONTENT:
+      ran_content_with_cert_errors_hosts_.insert(BrokenHostEntry(host, pid));
+      break;
+  }
 }
 
 bool SSLHostStateDelegate::DidHostRunInsecureContent(
     const std::string& host,
     int pid,
     InsecureContentType content_type) const {
-  return ran_insecure_content_hosts_.count(BrokenHostEntry(host, pid)) != 0;
+  switch (content_type) {
+    case MIXED_CONTENT:
+      return ran_insecure_content_hosts_.count(BrokenHostEntry(host, pid)) != 0;
+    case CERT_ERRORS_CONTENT: {
+      BrokenHostEntry entry(host, pid);
+      return ran_content_with_cert_errors_hosts_.count(entry) != 0;
+    }
+  }
+
+  NOTREACHED();
+  return true;
 }
 
 void SSLHostStateDelegate::RevokeUserAllowExceptions(const std::string& host) {}

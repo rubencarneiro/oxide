@@ -21,7 +21,6 @@
 #include "content/public/browser/navigation_controller.h"
 #include "content/public/browser/navigation_entry.h"
 #include "content/public/browser/web_contents.h"
-#include "content/public/common/security_style.h"
 #include "net/cert/cert_status_flags.h"
 #include "net/cert/x509_certificate.h"
 
@@ -38,42 +37,36 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(CertStatusFlags)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::ChangedFlags)
 
 inline SecurityLevel CalculateSecurityLevel(
-    const content::SSLStatus& ssl_status,
-    net::X509Certificate* cert) {
-  if (ssl_status.security_style == content::SECURITY_STYLE_UNKNOWN ||
-      ssl_status.security_style == content::SECURITY_STYLE_UNAUTHENTICATED) {
+    const GURL& url,
+    net::X509Certificate* certificate,
+    net::CertStatus cert_status,
+    int content_status) {
+  if (!url.SchemeIsCryptographic() || !certificate) {
     return SECURITY_LEVEL_NONE;
   }
 
-  if (ssl_status.security_style ==
-      content::SECURITY_STYLE_AUTHENTICATION_BROKEN) {
+  if (net::IsCertStatusError(cert_status) &&
+      !net::IsCertStatusMinorError(cert_status)) {
     return SECURITY_LEVEL_ERROR;
   }
 
-  DCHECK_EQ(ssl_status.security_style, content::SECURITY_STYLE_AUTHENTICATED);
-  CHECK(!(ssl_status.content_status &
-          content::SSLStatus::RAN_INSECURE_CONTENT)) <<
-      "Invalid SSLStatus - RAN_INSECURE_CONTENT and SECURITY_STYLE_AUTHENTICATED "
-      "are meant to be mutually exclusive!";
+  if ((content_status & content::SSLStatus::RAN_INSECURE_CONTENT) ||
+      (content_status & content::SSLStatus::RAN_CONTENT_WITH_CERT_ERRORS)) {
+    return SECURITY_LEVEL_ERROR;
+  }
 
-  if (ssl_status.content_status &
-      content::SSLStatus::DISPLAYED_INSECURE_CONTENT) {
+  if ((content_status & content::SSLStatus::DISPLAYED_INSECURE_CONTENT) ||
+      (content_status & content::SSLStatus::DISPLAYED_CONTENT_WITH_CERT_ERRORS)) {
     return SECURITY_LEVEL_WARNING;
   }
 
-  DCHECK_EQ(
-      static_cast<content::SSLStatus::ContentStatusFlags>(
-        ssl_status.content_status),
-      content::SSLStatus::NORMAL_CONTENT);
-
-  if (net::IsCertStatusError(ssl_status.cert_status)) {
-    CHECK(net::IsCertStatusMinorError(ssl_status.cert_status)) <<
-        "Invalid SSLStatus - Non-minor cert status error and "
-        "SECURITY_STYLE_AUTHENTICATED are meant to be mutually exclusive!";
+  // Does Chrome do this?
+  if (net::IsCertStatusError(cert_status)) {
+    CHECK(net::IsCertStatusMinorError(cert_status));
     return SECURITY_LEVEL_WARNING;
   }
 
-  if ((ssl_status.cert_status & net::CERT_STATUS_IS_EV) && cert) {
+  if ((cert_status & net::CERT_STATUS_IS_EV) != 0) {
     return SECURITY_LEVEL_SECURE_EV;
   }
 
@@ -170,9 +163,12 @@ void SecurityStatus::VisibleSSLStateChanged() {
 
   cert_ = status.certificate;
 
-  security_level_ = CalculateSecurityLevel(status, cert_.get());
-  content_status_ = static_cast<content::SSLStatus::ContentStatusFlags>(
-      status.content_status);
+  security_level_ = CalculateSecurityLevel(entry ? entry->GetURL() : GURL(),
+                                           cert_.get(),
+                                           status.cert_status,
+                                           status.content_status);
+  content_status_ =
+      static_cast<content::SSLStatus::ContentStatusFlags>(status.content_status);
   cert_status_ = CalculateCertStatus(status.cert_status, cert_.get());
 
   ChangedFlags flags = CHANGED_FLAG_NONE;

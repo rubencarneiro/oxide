@@ -27,7 +27,6 @@
 #include "content/public/browser/ssl_status.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/referrer.h"
-#include "content/public/common/security_style.h"
 #include "content/public/test/test_browser_context.h"
 #include "content/public/test/test_web_contents_factory.h"
 #include "net/cert/x509_certificate.h"
@@ -124,7 +123,6 @@ TEST_F(SecurityStatusTest, NoSecurity) {
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_UNAUTHENTICATED;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -140,12 +138,11 @@ TEST_F(SecurityStatusTest, NoSecurity) {
 
 TEST_F(SecurityStatusTest, Secure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
@@ -167,12 +164,11 @@ TEST_F(SecurityStatusTest, Secure) {
 
 TEST_F(SecurityStatusTest, Broken) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
@@ -196,12 +192,11 @@ TEST_F(SecurityStatusTest, Broken) {
 
 TEST_F(SecurityStatusTest, RanInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
@@ -224,12 +219,11 @@ TEST_F(SecurityStatusTest, RanInsecure) {
 
 TEST_F(SecurityStatusTest, DisplayedInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
@@ -252,12 +246,11 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
 
 TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
   ssl_status.certificate = cert();
   ssl_status.content_status =
       content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
@@ -283,12 +276,11 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
 
 TEST_F(SecurityStatusTest, MinorCertError) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
@@ -312,12 +304,11 @@ TEST_F(SecurityStatusTest, MinorCertError) {
 
 TEST_F(SecurityStatusTest, SecureEV) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
@@ -553,17 +544,11 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   const CertStatusRow& row = GetParam();
 
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  if (net::IsCertStatusError(row.cert_status_in) &&
-      !net::IsCertStatusMinorError(row.cert_status_in)) {
-    ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
-  } else {
-    ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  }
   ssl_status.certificate = row.expired_cert ? expired_cert() : cert();
   ssl_status.cert_status = row.cert_status_in;
 
@@ -637,13 +622,11 @@ void Observer::OnUpdate() {
 
 TEST_F(SecurityStatusTest, SecurityLevelUpdate) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
-  ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
@@ -652,22 +635,21 @@ TEST_F(SecurityStatusTest, SecurityLevelUpdate) {
   observer->connect(status(), SIGNAL(securityLevelChanged()),
                     SLOT(OnUpdate()));
 
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATION_BROKEN;
+  ssl_status.certificate = cert();
   oxide::SecurityStatus::FromWebContents(web_contents())
       ->VisibleSSLStateChanged();
 
   EXPECT_EQ(1, observer->update_count);
-  EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError, observer->security_level);
+  EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecure, observer->security_level);
 }
 
 TEST_F(SecurityStatusTest, ContentStatusUpdate) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
@@ -688,12 +670,11 @@ TEST_F(SecurityStatusTest, ContentStatusUpdate) {
 
 TEST_F(SecurityStatusTest, CertStatusUpdate) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
@@ -714,12 +695,11 @@ TEST_F(SecurityStatusTest, CertStatusUpdate) {
 
 TEST_F(SecurityStatusTest, CertUpdate) {
   content::NavigationController& controller = web_contents()->GetController();
-  controller.LoadURL(GURL("http://www.google.com/"),
+  controller.LoadURL(GURL("https://www.google.com/"),
                      content::Referrer(),
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
-  ssl_status.security_style = content::SECURITY_STYLE_AUTHENTICATED;
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
