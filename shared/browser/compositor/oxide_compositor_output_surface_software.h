@@ -39,7 +39,7 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
   void EnsureBackbuffer() override;
   void DiscardBackbuffer() override;
   void BindFramebuffer() override;
-  void SwapBuffers(cc::CompositorFrame frame) override;
+  void SwapBuffers(cc::OutputSurfaceFrame frame) override;
 
   // CompositorOutputSurface implementation
   void ReclaimResources(const CompositorFrameAck& ack) override;
