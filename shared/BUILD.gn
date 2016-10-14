@@ -190,7 +190,7 @@ component("shared") {
     "//content/public/renderer",
     "//content/public/utility",
     "//crypto",
-    "//device/core",
+    "//device/base",
     "//device/geolocation",
     "//device/power_save_blocker",
     "//device/vibration",
