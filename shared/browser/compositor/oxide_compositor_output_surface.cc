@@ -92,7 +92,7 @@ CompositorOutputSurface::~CompositorOutputSurface() {
 }
 
 void CompositorOutputSurface::DidSwapBuffers() {
-  client_->DidSwapBuffersComplete();
+  client_->DidReceiveSwapBuffersAck();
 }
 
 void CompositorOutputSurface::ReclaimResources(const CompositorFrameAck& ack) {}
