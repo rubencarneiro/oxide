@@ -106,7 +106,7 @@ class ContentBrowserClient final : public content::ContentBrowserClient {
                            content::WebPreferences* prefs) override;
   content::DevToolsManagerDelegate* GetDevToolsManagerDelegate() override;
   void RegisterRenderFrameMojoInterfaces(
-      shell::InterfaceRegistry* registry,
+      service_manager::InterfaceRegistry* registry,
       content::RenderFrameHost* render_frame_host) override;
   void DidCreatePpapiPlugin(content::BrowserPpapiHost* browser_host) override;
   gpu::GpuControlList::OsType GetOsTypeOverrideForGpuDataManager(

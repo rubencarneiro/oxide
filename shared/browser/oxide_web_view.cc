@@ -501,7 +501,7 @@ void WebView::NavigationStateChanged(content::WebContents* source,
   }
 }
 
-void WebView::VisibleSSLStateChanged(const content::WebContents* source) {
+void WebView::VisibleSSLStateChanged(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
   SecurityStatus::FromWebContents(web_contents_.get())->VisibleSSLStateChanged();
@@ -567,7 +567,9 @@ void WebView::WebContentsCreated(content::WebContents* source,
   CreateHelpers(new_contents);
 }
 
-void WebView::RendererUnresponsive(content::WebContents* source) {
+void WebView::RendererUnresponsive(
+    content::WebContents* source,
+    const content::WebContentsUnresponsiveState& unresponsive_state) {
   DCHECK_VALID_SOURCE_CONTENTS
   WebProcessStatusMonitor::FromWebContents(web_contents_.get())
       ->RendererIsUnresponsive();

@@ -210,7 +210,7 @@ component("shared") {
     "//mojo/edk/system",
     "//net",
     "//net:extras",
-    "//services/shell/public/cpp",
+    "//services/service_manager/public/cpp",
     "//skia",
     "//storage/common",
     "//third_party/WebKit/public:blink",

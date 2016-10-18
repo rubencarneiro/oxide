@@ -35,7 +35,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
-#include "services/shell/public/cpp/interface_registry.h"
+#include "services/service_manager/public/cpp/interface_registry.h"
 #include "ui/display/display.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
@@ -323,7 +323,7 @@ ContentBrowserClient::GetDevToolsManagerDelegate() {
 }
 
 void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
-    shell::InterfaceRegistry* registry,
+    service_manager::InterfaceRegistry* registry,
     content::RenderFrameHost* render_frame_host) {
   DCHECK(registry);
   registry->AddInterface(base::Bind(&CreateVibrationManager));
