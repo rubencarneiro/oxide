@@ -21,6 +21,7 @@
 
 #include "base/command_line.h"
 #include "base/strings/stringprintf.h"
+#include "base/time/time.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/public/common/url_constants.h"
 #include "content/public/common/user_agent.h"
@@ -156,9 +157,9 @@ void ContentRendererClient::OverrideCompositorSettings(
     // XXX: This will need updating if we support overlay scrollbars on
     //  desktop. See https://launchpad.net/bugs/1426567
     settings->scrollbar_animator = cc::LayerTreeSettings::LINEAR_FADE;
-    settings->scrollbar_fade_delay_ms = 300;
-    settings->scrollbar_fade_resize_delay_ms = 2000;
-    settings->scrollbar_fade_duration_ms = 300;
+    settings->scrollbar_fade_delay = base::TimeDelta::FromMilliseconds(300);
+    settings->scrollbar_fade_resize_delay = base::TimeDelta::FromSeconds(2);
+    settings->scrollbar_fade_duration = base::TimeDelta::FromMilliseconds(300);
   }
 }
 
