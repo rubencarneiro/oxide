@@ -532,8 +532,8 @@ void Compositor::DidCommitAndDrawFrame() {}
 void Compositor::DidReceiveCompositorFrameAck() {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
-void Compositor::DidPostSwapBuffers() {}
-void Compositor::DidAbortSwapBuffers() {}
+void Compositor::DidSubmitCompositorFrame() {}
+void Compositor::DidLoseCompositorFrameSink() {}
 
 void Compositor::OutputSurfaceBound(CompositorOutputSurface* output_surface) {
   DCHECK(!output_surface_);

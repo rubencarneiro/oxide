@@ -142,8 +142,8 @@ class Compositor : public cc::LayerTreeHostClient,
   void DidCompletePageScaleAnimation() override;
 
   // cc::LayerTreeHostSingleThreadClient implementation
-  void DidPostSwapBuffers() override;
-  void DidAbortSwapBuffers() override;
+  void DidSubmitCompositorFrame() override;
+  void DidLoseCompositorFrameSink() override;
 
   // CompositorOutputSurfaceListener implementation
   void OutputSurfaceBound(CompositorOutputSurface* output_surface) override;
