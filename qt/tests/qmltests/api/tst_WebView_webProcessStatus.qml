@@ -22,7 +22,7 @@ TestWebView {
         { url: "chrome://kill/", status: WebView.WebProcessKilled, needsReload: true, signals: 2 },
         { url: "chrome://crash/", status: WebView.WebProcessCrashed, needsReload: true, signals: 2 },
         { url: "chrome://hang/", status: WebView.WebProcessUnresponsive, needsReload: true, signals: 4 },
-        { url: "chrome://shorthang", status: WebView.WebProcessUnresponsive, needsReload: false, signals: 2 }
+        { url: "chrome://shorthang/", status: WebView.WebProcessUnresponsive, needsReload: false, signals: 2 }
       ];
     }
 
