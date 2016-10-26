@@ -44,7 +44,6 @@
 #include "net/base/net_errors.h"
 #include "net/cookies/cookie_monster.h"
 #include "net/extras/sqlite/sqlite_channel_id_store.h"
-#include "net/ftp/ftp_network_layer.h"
 #include "net/http/http_cache.h"
 #include "net/http/http_network_session.h"
 #include "net/http/http_server_properties_impl.h"
@@ -359,8 +358,6 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   ssl_config_service_ = new SSLConfigService();
   http_user_agent_settings_.reset(new HttpUserAgentSettings(this));
-  ftp_transaction_factory_.reset(
-      new net::FtpNetworkLayer(io_thread_globals->host_resolver()));
 
   // TODO: We want persistent storage here (for non-incognito), but the
   //       persistent implementation used in Chrome uses the preferences
@@ -485,8 +482,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   set_protocol = job_factory->SetProtocolHandler(
       oxide::kFtpScheme,
-      base::WrapUnique(new net::FtpProtocolHandler(
-        ftp_transaction_factory_.get())));
+      net::FtpProtocolHandler::Create(io_thread_globals->host_resolver()));
   DCHECK(set_protocol);
 
   std::unique_ptr<net::URLRequestJobFactory> top_job_factory(

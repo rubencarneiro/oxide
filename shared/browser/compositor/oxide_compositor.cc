@@ -51,6 +51,7 @@
 #include "gpu/command_buffer/common/gles2_cmd_utils.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
+#include "ui/gfx/geometry/rect.h"
 #include "url/gurl.h"
 
 #include "oxide_compositor_client.h"
@@ -528,7 +529,7 @@ void Compositor::DidCommit() {
 }
 
 void Compositor::DidCommitAndDrawFrame() {}
-void Compositor::DidCompleteSwapBuffers() {}
+void Compositor::DidReceiveCompositorFrameAck() {}
 void Compositor::DidCompletePageScaleAnimation() {}
 
 void Compositor::DidPostSwapBuffers() {}
@@ -758,7 +759,7 @@ void Compositor::SetNeedsRedraw() {
     return;
   }
 
-  layer_tree_host_->SetNeedsRedraw();
+  layer_tree_host_->SetNeedsRedrawRect(gfx::Rect(size_));
 }
 
 } // namespace oxide

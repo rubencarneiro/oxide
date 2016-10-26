@@ -35,8 +35,9 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
-#include "services/shell/public/cpp/interface_registry.h"
+#include "services/service_manager/public/cpp/interface_registry.h"
 #include "ui/display/display.h"
+#include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
@@ -315,6 +316,8 @@ void ContentBrowserClient::OverrideWebkitPrefs(
     prefs->supports_multiple_windows =
         contents_helper->client()->CanCreateWindows();
   }
+
+  prefs->use_solid_color_scrollbars = ui::IsOverlayScrollbarEnabled();
 }
 
 content::DevToolsManagerDelegate*
@@ -323,7 +326,7 @@ ContentBrowserClient::GetDevToolsManagerDelegate() {
 }
 
 void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
-    shell::InterfaceRegistry* registry,
+    service_manager::InterfaceRegistry* registry,
     content::RenderFrameHost* render_frame_host) {
   DCHECK(registry);
   registry->AddInterface(base::Bind(&CreateVibrationManager));

@@ -39,7 +39,6 @@ class ResourceContext;
 namespace net {
 
 class CookieMonster;
-class FtpNetworkLayer;
 class HostMappingRules;
 class HttpNetworkSession;
 class HttpServerProperties;
@@ -119,7 +118,6 @@ class BrowserContextIOData {
 
   scoped_refptr<net::SSLConfigService> ssl_config_service_;
   std::unique_ptr<net::HttpUserAgentSettings> http_user_agent_settings_;
-  std::unique_ptr<net::FtpNetworkLayer> ftp_transaction_factory_;
   std::unique_ptr<net::HttpServerProperties> http_server_properties_;
   std::unique_ptr<net::NetworkDelegate> network_delegate_;
 

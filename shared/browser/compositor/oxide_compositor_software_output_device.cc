@@ -84,12 +84,13 @@ CompositorSoftwareOutputDevice::BufferData::~BufferData() {}
 
 void CompositorSoftwareOutputDevice::Resize(const gfx::Size& pixel_size,
                                             float scale_factor) {
-  if (pixel_size == viewport_pixel_size_ && scale_factor == scale_factor_) {
+  if (pixel_size == viewport_pixel_size_ &&
+      scale_factor == device_scale_factor_) {
     return;
   }
 
   viewport_pixel_size_ = pixel_size;
-  scale_factor_ = scale_factor;
+  device_scale_factor_ = scale_factor;
 
   DiscardBackbuffer();
   EnsureBackbuffer();
@@ -272,7 +273,8 @@ void CompositorSoftwareOutputDevice::DiscardBuffer(BufferData* buffer) {
 }
 
 CompositorSoftwareOutputDevice::CompositorSoftwareOutputDevice()
-    : next_buffer_id_(1),
+    : device_scale_factor_(1.f),
+      next_buffer_id_(1),
       last_painted_buffer_id_(0),
       back_buffer_(nullptr),
       is_backbuffer_discarded_(true) {}
@@ -288,7 +290,7 @@ void CompositorSoftwareOutputDevice::PopulateFrameDataForSwap(
   const BufferData* buffer = GetLastPaintedBuffer();
 
   data->size_in_pixels = buffer->size;
-  data->device_scale = scale_factor_;
+  data->device_scale = device_scale_factor_;
   data->software_frame_data->id = buffer->id;
   data->software_frame_data->damage_rect = damage_rect_;
   data->software_frame_data->pixels = buffer->pixels;

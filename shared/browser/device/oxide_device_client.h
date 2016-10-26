@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "base/macros.h"
-#include "device/core/device_client.h"
+#include "device/base/device_client.h"
 
 namespace oxide {
 

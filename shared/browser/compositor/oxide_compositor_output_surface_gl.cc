@@ -41,6 +41,7 @@ CompositorOutputSurfaceGL::CompositorOutputSurfaceGL(
     scoped_refptr<cc::ContextProvider> context_provider,
     CompositorOutputSurfaceListener* listener)
     : CompositorOutputSurface(surface_id, context_provider, listener),
+      device_scale_factor_(1.f),
       back_buffer_(nullptr),
       is_backbuffer_discarded_(false),
       fbo_(0) {

@@ -229,7 +229,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const content::OpenURLParams& params) override;
   void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) override;
-  void VisibleSSLStateChanged(const content::WebContents* source) override;
+  void VisibleSSLStateChanged(content::WebContents* source) override;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,
@@ -251,7 +251,9 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                           const std::string& frame_name,
                           const GURL& target_url,
                           content::WebContents* new_contents) override;
-  void RendererUnresponsive(content::WebContents* source) override;
+  void RendererUnresponsive(
+      content::WebContents* source,
+      const content::WebContentsUnresponsiveState& unresponsive_state) override;
   void RendererResponsive(content::WebContents* source) override;
   void AddNewContents(content::WebContents* source,
                       content::WebContents* new_contents,

@@ -64,6 +64,9 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   BufferData& GetBufferDataForMailbox(const gpu::Mailbox& mailbox);
   void DiscardBufferIfPossible(BufferData* buffer);
 
+  float device_scale_factor_;
+  gfx::Size surface_size_;
+
   BufferData* back_buffer_;
   std::array<BufferData, 2> buffers_;
 

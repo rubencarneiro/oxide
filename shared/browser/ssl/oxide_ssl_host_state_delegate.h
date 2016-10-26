@@ -59,6 +59,7 @@ class OXIDE_SHARED_EXPORT SSLHostStateDelegate
  private:
   typedef std::pair<std::string, int> BrokenHostEntry;
   std::set<BrokenHostEntry> ran_insecure_content_hosts_;
+  std::set<BrokenHostEntry> ran_content_with_cert_errors_hosts_;
 };
 
 } // namespace oxide
