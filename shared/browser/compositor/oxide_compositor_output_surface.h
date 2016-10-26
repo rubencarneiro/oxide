@@ -57,7 +57,7 @@ class CompositorOutputSurface : public cc::OutputSurface {
   void DoSwapBuffers(std::unique_ptr<CompositorFrameData> frame);
 
   // cc::OutputSurface implementation
-  bool BindToClient(cc::OutputSurfaceClient* client) override;
+  void BindToClient(cc::OutputSurfaceClient* client) override;
   cc::OverlayCandidateValidator* GetOverlayCandidateValidator() const override;
   bool IsDisplayedAsOverlayPlane() const override;
   unsigned GetOverlayTextureId() const override;
@@ -67,6 +67,9 @@ class CompositorOutputSurface : public cc::OutputSurface {
   uint32_t GetFramebufferCopyTextureFormat() override;
 
   CompositorOutputSurfaceListener* listener() const { return listener_; }
+
+ protected:
+  cc::OutputSurfaceClient* client_;
 
  private:
   CompositorOutputSurfaceListener* listener_; // Owns us via LayerTreeHost

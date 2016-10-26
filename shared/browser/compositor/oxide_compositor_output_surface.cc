@@ -51,13 +51,9 @@ void CompositorOutputSurface::DoSwapBuffers(
   listener_->SwapCompositorFrame(std::move(frame));
 }
 
-bool CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
-  if (!cc::OutputSurface::BindToClient(client)) {
-    return false;
-  }
-
+void CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
+  client_ = client;
   listener_->OutputSurfaceBound(this);
-  return true;
 }
 
 cc::OverlayCandidateValidator*
