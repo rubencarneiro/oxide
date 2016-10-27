@@ -29,9 +29,9 @@ ImeBridge* InputMethodContext::ime_bridge() const {
 }
 
 void InputMethodContext::NotifyInputPanelVisibilityChanged() {
-  FOR_EACH_OBSERVER(InputMethodContextObserver,
-                    observers_,
-                    InputPanelVisibilityChanged());
+  for (auto& observer : observers_) {
+    observer.InputPanelVisibilityChanged();
+  }
 }
 
 void InputMethodContext::SetImeBridge(ImeBridgeImpl* bridge) {
@@ -65,9 +65,9 @@ InputMethodContext::InputMethodContext()
 InputMethodContext::~InputMethodContext() {
   in_destruction_ = true;
 
-  FOR_EACH_OBSERVER(InputMethodContextObserver,
-                    observers_,
-                    OnInputMethodContextDestruction());
+  for (auto& observer : observers_) {
+    observer.OnInputMethodContextDestruction();
+  }
 
   if (ime_bridge_) {
     ime_bridge_->SetContext(nullptr);

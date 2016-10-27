@@ -268,9 +268,9 @@ void UserAgentSettings::SetAcceptLangs(const std::string& accept_langs) {
   base::AutoLock lock(io_data->lock_);
   io_data->accept_langs_ = accept_langs;
 
-  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
-                    observers_,
-                    NotifyAcceptLanguagesChanged());
+  for (auto& observer : observers_) {
+    observer.NotifyAcceptLanguagesChanged();
+  }
 }
 
 std::vector<UserAgentSettings::UserAgentOverride>
@@ -344,9 +344,9 @@ void UserAgentSettings::SetIsPopupBlockerEnabled(bool enabled) {
   base::AutoLock lock(io_data->lock_);
   io_data->popup_blocker_enabled_ = enabled;
 
-  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
-                    observers_,
-                    NotifyPopupBlockerEnabledChanged());
+  for (auto& observer : observers_) {
+    observer.NotifyPopupBlockerEnabledChanged();
+  }
 }
 
 bool UserAgentSettings::GetDoNotTrack() const {
@@ -363,9 +363,9 @@ void UserAgentSettings::SetDoNotTrack(bool dnt) {
   base::AutoLock lock(io_data->lock_);
   io_data->do_not_track_ = dnt;
 
-  FOR_EACH_OBSERVER(UserAgentSettingsObserver,
-                    observers_,
-                    NotifyDoNotTrackChanged());
+  for (auto& observer : observers_) {
+    observer.NotifyDoNotTrackChanged();
+  }
 }
 
 } // namespace oxide

@@ -39,25 +39,33 @@ Screen::Screen() {
 }
 
 void Screen::NotifyPrimaryDisplayChanged() {
-  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnPrimaryDisplayChanged());
+  for (auto& observer : observers_) {
+    observer.OnPrimaryDisplayChanged();
+  }
 }
 
 void Screen::NotifyDisplayAdded(const display::Display& display) {
-  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnDisplayAdded(display));
+  for (auto& observer : observers_) {
+    observer.OnDisplayAdded(display);
+  }
 }
 
 void Screen::NotifyDisplayRemoved(const display::Display& display) {
-  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnDisplayRemoved(display));
+  for (auto& observer : observers_) {
+    observer.OnDisplayRemoved(display);
+  }
 }
 
 void Screen::NotifyDisplayPropertiesChanged(const display::Display& display) {
-  FOR_EACH_OBSERVER(ScreenObserver,
-                    observers_,
-                    OnDisplayPropertiesChanged(display));
+  for (auto& observer : observers_) {
+    observer.OnDisplayPropertiesChanged(display);
+  }
 }
 
 void Screen::NotifyShellModeChanged() {
-  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnShellModeChanged());
+  for (auto& observer : observers_) {
+    observer.OnShellModeChanged();
+  }
 }
 
 void Screen::AddObserver(ScreenObserver* observer) {
@@ -80,7 +88,9 @@ Screen* Screen::GetInstance() {
 Screen::~Screen() {
   DCHECK(thread_checker_.CalledOnValidThread());
   DCHECK_EQ(g_instance, this);
-  FOR_EACH_OBSERVER(ScreenObserver, observers_, OnScreenDestruction());
+  for (auto& observer : observers_) {
+    observer.OnScreenDestruction();
+  }
   g_instance = nullptr;
 }
 

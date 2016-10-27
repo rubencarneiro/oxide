@@ -104,9 +104,9 @@ void BrowserPlatformIntegration::RemoveObserver(
 }
 
 void BrowserPlatformIntegration::NotifyApplicationStateChanged() {
-  FOR_EACH_OBSERVER(BrowserPlatformIntegrationObserver,
-                    observers_,
-                    ApplicationStateChanged());
+  for (auto& observer : observers_) {
+    observer.ApplicationStateChanged();
+  }
 }
 
 void BrowserPlatformIntegration::CreateVibrationManager(

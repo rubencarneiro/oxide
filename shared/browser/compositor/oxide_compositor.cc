@@ -216,9 +216,9 @@ void Compositor::SendSwapCompositorFrameToClient(
   DCHECK(output_surface_);
   DCHECK(!swap_ack_callback_.is_null());
 
-  FOR_EACH_OBSERVER(CompositorObserver,
-                    observers_,
-                    CompositorWillRequestSwapFrame());
+  for (auto& observer : observers_) {
+    observer.CompositorWillRequestSwapFrame();
+  }
 
   // XXX: What if we are hidden?
   TRACE_EVENT_ASYNC_BEGIN1("cc", "oxide::Compositor:pending_swaps",
@@ -235,9 +235,9 @@ void Compositor::SendSwapCompositorFrameToClient(
                                 std::move(frame));
   client_->CompositorSwapFrame(handle.get(), swap_ack_callback_);
 
-  FOR_EACH_OBSERVER(CompositorObserver,
-                    observers_,
-                    CompositorDidRequestSwapFrame());
+  for (auto& observer : observers_) {
+    observer.CompositorDidRequestSwapFrame();
+  }
 }
 
 // static
@@ -525,7 +525,9 @@ void Compositor::DidFailToInitializeCompositorFrameSink() {
 void Compositor::WillCommit() {}
 
 void Compositor::DidCommit() {
-  FOR_EACH_OBSERVER(CompositorObserver, observers_, CompositorDidCommit());
+  for (auto& observer : observers_) {
+    observer.CompositorDidCommit();
+  }
 }
 
 void Compositor::DidCommitAndDrawFrame() {}
@@ -681,7 +683,9 @@ std::unique_ptr<Compositor> Compositor::Create(CompositorClient* client) {
 }
 
 Compositor::~Compositor() {
-  FOR_EACH_OBSERVER(CompositorObserver, observers_, OnCompositorDestruction());
+  for (auto& observer : observers_) {
+    observer.OnCompositorDestruction();
+  }
 
   layer_tree_host_.reset();
   display_.reset();
@@ -712,9 +716,9 @@ void Compositor::SetVisibility(bool visible) {
 
   if (!visible) {
     layer_tree_host_eviction_pending_ = true;
-    FOR_EACH_OBSERVER(CompositorObserver,
-                      observers_,
-                      CompositorEvictResources());
+    for (auto& observer : observers_) {
+      observer.CompositorEvictResources();
+    }
     MaybeEvictLayerTreeHost();
   }
 }

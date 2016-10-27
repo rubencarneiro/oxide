@@ -63,9 +63,9 @@ class NavigationControllerObserver::Delegate
 };
 
 void NavigationControllerObserver::Delegate::DispatchNavigationHistoryChanged() {
-  FOR_EACH_OBSERVER(NavigationControllerObserver,
-                    observer_list_,
-                    NavigationHistoryChanged());
+  for (auto& observer : observer_list_) {
+    observer.NavigationHistoryChanged();
+  }
 }
 
 void NavigationControllerObserver::Delegate::DidStartNavigationToPendingEntry(
@@ -106,9 +106,9 @@ NavigationControllerObserver::Delegate::Delegate(content::WebContents* contents)
 }
 
 NavigationControllerObserver::Delegate::~Delegate() {
-  FOR_EACH_OBSERVER(NavigationControllerObserver,
-                    observer_list_,
-                    OnDelegateDestruction());
+  for (auto& observer : observer_list_) {
+    observer.OnDelegateDestruction();
+  }
 }
 
 void NavigationControllerObserver::Delegate::AddObserver(
