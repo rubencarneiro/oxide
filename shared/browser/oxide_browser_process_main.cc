@@ -301,6 +301,10 @@ void InitializeCommandLine(const std::string& argv0,
   command_line->AppendSwitchASCII(switches::kProfilerTiming,
                                   switches::kProfilerTimingDisabledValue);
 
+  // See https://launchpad.net/bugs/1632490
+  command_line->AppendSwitchASCII(switches::kEnableUseZoomForDSF,
+                                  "false");
+
   if (gl_impl == gl::kGLImplementationNone ||
       IsEnvironmentOptionEnabled("DISABLE_GPU", env)) {
     command_line->AppendSwitch(switches::kDisableGpu);

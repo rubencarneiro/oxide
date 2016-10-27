@@ -286,10 +286,25 @@ Module {
     Component {
         name: "OxideQQuickNavigationHistory"
         prototype: "QAbstractListModel"
-        exports: ["NavigationHistory 1.0"]
+        exports: ["NavigationHistory 1.0", "NavigationHistory 1.19"]
         isCreatable: false
-        exportMetaObjectRevisions: [0]
+        exportMetaObjectRevisions: [0, 1]
+        Property { name: "backItems"; revision: 1; type: "QVariantList"; isReadonly: true }
+        Property { name: "forwardItems"; revision: 1; type: "QVariantList"; isReadonly: true }
+        Property { name: "items"; revision: 1; type: "QVariantList"; isReadonly: true }
+        Property { name: "currentItem"; revision: 1; type: "QVariant" }
+        Property { name: "currentItemIndex"; revision: 1; type: "int" }
         Property { name: "currentIndex"; type: "int" }
+        Property { name: "canGoBack"; revision: 1; type: "bool"; isReadonly: true }
+        Property { name: "canGoForward"; revision: 1; type: "bool"; isReadonly: true }
+        Signal { name: "changed"; revision: 1 }
+        Method { name: "goBack"; revision: 1 }
+        Method { name: "goForward"; revision: 1 }
+        Method {
+            name: "goToOffset"
+            revision: 1
+            Parameter { name: "offset"; type: "int" }
+        }
     }
     Component {
         name: "OxideQQuickScriptMessage"

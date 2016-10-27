@@ -123,20 +123,18 @@ TestWebView {
       tryCompare(webView.findController, "current", 0);
     }
 
-    function test_navigation_does_not_reset() {
+    function test_navigation_does_update() {
       webView.findController.text = "dolor";
       tryCompare(webView.findController, "count", 2);
       webView.findController.next();
       tryCompare(webView.findController, "current", 2);
 
-      // Verify that when navigating to another page the search does not
-      // reset, it is the user responsibility to cancel it and restart it
       webView.url = "http://testsuite/tst_WebView_findControllerManyResults.html";
       verify(webView.waitForLoadSucceeded(),
              "Timed out waiting for successful load");
       compare(webView.findController.text, "dolor");
-      tryCompare(webView.findController, "count", 2);
-      tryCompare(webView.findController, "current", 2);
+      tryCompare(webView.findController, "count", 20);
+      tryCompare(webView.findController, "current", 1);
 
       webView.findController.text = "";
       tryCompare(webView.findController, "count", 0);

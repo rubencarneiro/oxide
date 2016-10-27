@@ -16,6 +16,17 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-add_subdirectory(oxideqcertificateerror)
-add_subdirectory(oxideqdownloadrequest)
-add_subdirectory(oxideqquicknavigationitem)
+add_executable(tst_oxideqquicknavigationitem tst_oxideqquicknavigationitem.cc)
+target_link_libraries(tst_oxideqquicknavigationitem
+                      PRIVATE
+                      ${OXIDE_LIB}
+                      ${OXIDE_QUICKLIB}
+                      ${Qt5Core_LIBRARIES}
+                      ${Qt5Gui_LIBRARIES}
+                      ${Qt5Test_LIBRARIES})
+set_target_properties(tst_oxideqquicknavigationitem PROPERTIES
+                      AUTOMOC TRUE)
+
+add_test(NAME tst_oxideqquicknavigationitem
+         COMMAND ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
+                 ${CMAKE_CURRENT_BINARY_DIR}/tst_oxideqquicknavigationitem)

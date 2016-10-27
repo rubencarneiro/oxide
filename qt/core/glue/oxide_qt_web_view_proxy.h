@@ -19,7 +19,6 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_H_
 
 #include <QByteArray>
-#include <QDateTime>
 #include <QImage>
 #include <QList>
 #include <QPoint>
@@ -133,14 +132,6 @@ class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
   virtual void loadHtml(const QString& html, const QUrl& base_url) = 0;
 
   virtual QList<QObject*>& messageHandlers() = 0;
-
-  virtual int getNavigationEntryCount() const = 0;
-  virtual int getNavigationCurrentEntryIndex() const = 0;
-  virtual void setNavigationCurrentEntryIndex(int index) = 0;
-  virtual int getNavigationEntryUniqueID(int index) const = 0;
-  virtual QUrl getNavigationEntryUrl(int index) const = 0;
-  virtual QString getNavigationEntryTitle(int index) const = 0;
-  virtual QDateTime getNavigationEntryTimestamp(int index) const = 0;
 
   virtual QByteArray currentState() const = 0;
 

@@ -75,6 +75,7 @@
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "chrome_controller.h"
+#include "navigation_controller_observer.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
 #include "oxide_content_browser_client.h"
@@ -179,11 +180,6 @@ void WebView::CommonInit(WebContentsUniquePtr contents,
                              new UnownedUserData<WebView>(this));
 
   content::WebContentsObserver::Observe(web_contents_.get());
-
-  registrar_.Add(this, content::NOTIFICATION_NAV_LIST_PRUNED,
-                 content::NotificationService::AllBrowserContextsAndSources());
-  registrar_.Add(this, content::NOTIFICATION_NAV_ENTRY_CHANGED,
-                 content::NotificationService::AllBrowserContextsAndSources());
 
   WebContentsView* view = WebContentsView::FromWebContents(web_contents_.get());
   view->SetClient(view_client);
@@ -337,25 +333,6 @@ void WebView::CompositorWillRequestSwapFrame() {
   client_->FrameMetadataUpdated(old);
 }
 
-void WebView::Observe(int type,
-                      const content::NotificationSource& source,
-                      const content::NotificationDetails& details) {
-  if (content::Source<content::NavigationController>(source).ptr() !=
-      &GetWebContents()->GetController()) {
-    return;
-  }
-  if (type == content::NOTIFICATION_NAV_LIST_PRUNED) {
-    content::PrunedDetails* pruned_details =
-        content::Details<content::PrunedDetails>(details).ptr();
-    client_->NavigationListPruned(pruned_details->from_front,
-                                  pruned_details->count);
-  } else if (type == content::NOTIFICATION_NAV_ENTRY_CHANGED) {
-    int index =
-        content::Details<content::EntryChangedDetails>(details).ptr()->index;
-    client_->NavigationEntryChanged(index);
-  }
-}
-
 content::WebContents* WebView::OpenURLFromTab(
     content::WebContents* source,
     const content::OpenURLParams& params) {
@@ -487,17 +464,16 @@ void WebView::NavigationStateChanged(content::WebContents* source,
                                      content::InvalidateTypes changed_flags) {
   DCHECK_VALID_SOURCE_CONTENTS
 
+  NavigationControllerObserver::NotifyNavigationStateChanged(
+      web_contents_->GetController(),
+      changed_flags);
+
   if (changed_flags & content::INVALIDATE_TYPE_URL) {
     client_->URLChanged();
   }
 
   if (changed_flags & content::INVALIDATE_TYPE_TITLE) {
     client_->TitleChanged();
-  }
-
-  if (changed_flags & (content::INVALIDATE_TYPE_URL |
-                       content::INVALIDATE_TYPE_LOAD)) {
-    client_->CommandsUpdated();
   }
 }
 
@@ -857,11 +833,6 @@ void WebView::DidGetRedirectForResourceRequest(
                           details.http_response_code);
 }
 
-void WebView::NavigationEntryCommitted(
-    const content::LoadCommittedDetails& load_details) {
-  client_->NavigationEntryCommitted();
-}
-
 void WebView::DidShowFullscreenWidget() {
   if (IsFullscreen()) {
     return;
@@ -876,17 +847,6 @@ void WebView::DidShowFullscreenWidget() {
   base::ThreadTaskRunnerHandle::Get()->PostTask(
       FROM_HERE,
       base::Bind(&WebView::MaybeCancelFullscreenMode, AsWeakPtr()));
-}
-
-void WebView::TitleWasSet(content::NavigationEntry* entry, bool explicit_set) {
-  const content::NavigationController& controller = web_contents_->GetController();
-  int count = controller.GetEntryCount();
-  for (int i = 0; i < count; ++i) {
-    if (controller.GetEntryAtIndex(i) == entry) {
-      client_->NavigationEntryChanged(i);
-      return;
-    }
-  }
 }
 
 bool WebView::OnMessageReceived(const IPC::Message& msg,
@@ -1125,42 +1085,6 @@ content::WebContents* WebView::GetWebContents() const {
 
 WebContentsHelper* WebView::GetWebContentsHelper() const {
   return WebContentsHelper::FromWebContents(web_contents_.get());
-}
-
-int WebView::GetNavigationEntryCount() const {
-  return web_contents_->GetController().GetEntryCount();
-}
-
-int WebView::GetNavigationCurrentEntryIndex() const {
-  return web_contents_->GetController().GetCurrentEntryIndex();
-}
-
-void WebView::SetNavigationCurrentEntryIndex(int index) {
-  web_contents_->GetController().GoToIndex(index);
-}
-
-int WebView::GetNavigationEntryUniqueID(int index) const {
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetUniqueID();
-}
-
-const GURL& WebView::GetNavigationEntryUrl(int index) const {
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetURL();
-}
-
-std::string WebView::GetNavigationEntryTitle(int index) const {
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return base::UTF16ToUTF8(entry->GetTitle());
-}
-
-base::Time WebView::GetNavigationEntryTimestamp(int index) const {
-  const content::NavigationController& controller = web_contents_->GetController();
-  content::NavigationEntry* entry = controller.GetEntryAtIndex(index);
-  return entry->GetTimestamp();
 }
 
 WebFrame* WebView::GetRootFrame() const {

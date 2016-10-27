@@ -20,9 +20,11 @@
 #include "qt/core/api/oxideqdownloadrequest.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqsslcertificate.h"
+#include "qt/quick/api/oxideqquicknavigationitem.h"
 
 #include "oxide_qml_download_request.h"
 #include "oxide_qml_load_event.h"
+#include "oxide_qml_navigation_item.h"
 #include "oxide_qml_ssl_certificate.h"
 
 namespace oxide {
@@ -35,6 +37,8 @@ bool ValueTypeProvider::create(int type, QQmlValueType*& v) {
     return create<DownloadRequest>(v);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return create<SslCertificate>(v);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return create<NavigationItem>(v);
   }
 
   return false;
@@ -47,6 +51,8 @@ bool ValueTypeProvider::init(int type, void* data, size_t data_size) {
     return init<OxideQDownloadRequest>(data, data_size);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return init<OxideQSslCertificate>(data, data_size);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return init<OxideQQuickNavigationItem>(data, data_size);
   }
 
   return false;
@@ -59,6 +65,8 @@ bool ValueTypeProvider::destroy(int type, void* data, size_t data_size) {
     return destroy<OxideQDownloadRequest>(data, data_size);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return destroy<OxideQSslCertificate>(data, data_size);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return destroy<OxideQQuickNavigationItem>(data, data_size);
   }
 
   return false;
@@ -74,6 +82,8 @@ bool ValueTypeProvider::copy(int type,
     return copy<OxideQDownloadRequest>(src, dst, dst_size);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return copy<OxideQSslCertificate>(src, dst, dst_size);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return copy<OxideQQuickNavigationItem>(src, dst, dst_size);
   }
 
   return false;
@@ -126,6 +136,8 @@ bool ValueTypeProvider::equal(int type,
     return equal<OxideQDownloadRequest>(lhs, rhs);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return equal<OxideQSslCertificate>(lhs, rhs);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return equal<OxideQQuickNavigationItem>(lhs, rhs);
   }
 
   return false;
@@ -141,6 +153,8 @@ bool ValueTypeProvider::store(int type,
     return store<OxideQDownloadRequest>(src, dst, dst_size);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return store<OxideQSslCertificate>(src, dst, dst_size);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return store<OxideQQuickNavigationItem>(src, dst, dst_size);
   }
 
   return false;
@@ -157,6 +171,9 @@ bool ValueTypeProvider::read(int src_type,
     return read<OxideQDownloadRequest>(src_type, src, src_size, dst_type, dst);
   } else if (src_type == qMetaTypeId<OxideQSslCertificate>()) {
     return read<OxideQSslCertificate>(src_type, src, src_size, dst_type, dst);
+  } else if (src_type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return read<OxideQQuickNavigationItem>(src_type, src, src_size,
+                                           dst_type, dst);
   }
 
   return false;
@@ -172,6 +189,8 @@ bool ValueTypeProvider::write(int type,
     return write<OxideQDownloadRequest>(src, dst, dst_size);
   } else if (type == qMetaTypeId<OxideQSslCertificate>()) {
     return write<OxideQSslCertificate>(src, dst, dst_size);
+  } else if (type == qMetaTypeId<OxideQQuickNavigationItem>()) {
+    return write<OxideQQuickNavigationItem>(src, dst, dst_size);
   }
 
   return false;

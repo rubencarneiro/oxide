@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,30 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
-#define _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
+#ifndef _OXIDE_QT_CORE_GLUE_NAVIGATION_HISTORY_CLIENT_H_
+#define _OXIDE_QT_CORE_GLUE_NAVIGATION_HISTORY_CLIENT_H_
 
-#include <QMap>
+namespace oxide {
+namespace qt {
 
-class OxideQQuickNavigationHistory;
-class OxideQQuickWebView;
+class NavigationHistoryClient {
+ public:
+  virtual ~NavigationHistoryClient() {}
 
-struct NavigationEntry;
-
-class OxideQQuickNavigationHistoryPrivate {
-  Q_DECLARE_PUBLIC(OxideQQuickNavigationHistory)
-
-  enum Roles {
-    Url = Qt::UserRole + 1,
-    Title,
-    Timestamp
-  };
-
-  OxideQQuickNavigationHistory* q_ptr;
-  OxideQQuickWebView* webview;
-  int entry_count;
-  int current_index;
-  QMap<int, NavigationEntry*> entry_cache;
+  virtual void NavigationHistoryChanged() = 0;
 };
 
-#endif // _OXIDE_QT_QUICK_API_NAVIGATION_HISTORY_P_P_H_
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_NAVIGATION_HISTORY_CLIENT_H_

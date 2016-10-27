@@ -103,7 +103,6 @@ class WebView : public oxide::WebViewClient,
   void URLChanged() override;
   void TitleChanged() override;
   void FaviconChanged() override;
-  void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
   void LoadStarted(const GURL& validated_url) override;
@@ -120,9 +119,6 @@ class WebView : public oxide::WebViewClient,
                   int http_status_code) override;
   void LoadSucceeded(const GURL& validated_url,
                      int http_status_code) override;
-  void NavigationEntryCommitted() override;
-  void NavigationListPruned(bool from_front, int count) override;
-  void NavigationEntryChanged(int index) override;
   bool AddMessageToConsole(int32_t level,
                            const base::string16& message,
                            int32_t line_no,
@@ -211,14 +207,6 @@ class WebView : public oxide::WebViewClient,
   void loadHtml(const QString& html, const QUrl& base_url) override;
 
   QList<QObject*>& messageHandlers() override;
-
-  int getNavigationEntryCount() const override;
-  int getNavigationCurrentEntryIndex() const override;
-  void setNavigationCurrentEntryIndex(int index) override;
-  int getNavigationEntryUniqueID(int index) const override;
-  QUrl getNavigationEntryUrl(int index) const override;
-  QString getNavigationEntryTitle(int index) const override;
-  QDateTime getNavigationEntryTimestamp(int index) const override;
 
   QByteArray currentState() const override;
 

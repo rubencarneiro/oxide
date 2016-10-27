@@ -30,7 +30,7 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
-#include "qt/quick/api/oxideqquicknavigationhistory_p.h"
+#include "qt/quick/api/oxideqquicknavigationhistory.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 
 class OxideQNewViewRequest;
@@ -62,15 +62,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
 
   void addAttachedPropertyTo(QObject* object);
 
-  // XXX(chrisccoulson): Add NavigationControllerProxy and remove these
-  int getNavigationEntryCount() const;
-  int getNavigationCurrentEntryIndex() const;
-  void setNavigationCurrentEntryIndex(int index);
-  int getNavigationEntryUniqueID(int index) const;
-  QUrl getNavigationEntryUrl(int index) const;
-  QString getNavigationEntryTitle(int index) const;
-  QDateTime getNavigationEntryTimestamp(int index) const;
-
  private:
   OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
 
@@ -86,13 +77,9 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void URLChanged() override;
   void TitleChanged() override;
   void FaviconChanged() override;
-  void CommandsUpdated() override;
   void LoadingChanged() override;
   void LoadProgressChanged(double progress) override;
   void LoadEvent(const OxideQLoadEvent& event) override;
-  void NavigationEntryCommitted() override;
-  void NavigationListPruned(bool from_front, int count) override;
-  void NavigationEntryChanged(int index) override;
   void CreateWebFrame(oxide::qt::WebFrameProxy* proxy) override;
   void AddMessageToConsole(int level,
                            const QString& message,

@@ -304,6 +304,8 @@ component("shared") {
     "browser/media/oxide_media_capture_devices_dispatcher_observer.h",
     "browser/media/oxide_video_capture_device_factory_linux.cc",
     "browser/media/oxide_video_capture_device_factory_linux.h",
+    "browser/navigation_controller_observer.cc",
+    "browser/navigation_controller_observer.h",
     "browser/net/oxide_cookie_store_proxy.cc",
     "browser/net/oxide_cookie_store_proxy.h",
     "browser/notifications/oxide_notification_data.h",
