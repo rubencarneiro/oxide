@@ -30,6 +30,7 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
+#include "qt/quick/api/oxideqquickglobal.h"
 #include "qt/quick/api/oxideqquicknavigationhistory.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 
@@ -52,7 +53,8 @@ class ContentsView;
 }
 }
 
-class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
+class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
+    : public oxide::qt::WebViewProxyClient {
   Q_DECLARE_PUBLIC(OxideQQuickWebView)
 
  public:
@@ -62,9 +64,12 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
 
   void addAttachedPropertyTo(QObject* object);
 
- private:
-  OxideQQuickWebViewPrivate(OxideQQuickWebView* view);
+ protected:
+  OxideQQuickWebViewPrivate(OxideQQuickWebView* q);
 
+  OxideQQuickWebView* q_ptr;
+
+ private:
   // oxide::qt::WebViewProxyClient implementation
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,
@@ -134,8 +139,6 @@ class OxideQQuickWebViewPrivate : public oxide::qt::WebViewProxyClient {
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
   void attachPreferencesSignals(OxideQWebPreferences* prefs);
   void preferencesDestroyed();
-
-  OxideQQuickWebView* q_ptr;
 
   QScopedPointer<oxide::qquick::ContentsView> contents_view_;
 

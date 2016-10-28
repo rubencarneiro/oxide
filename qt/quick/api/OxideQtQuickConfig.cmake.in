@@ -35,6 +35,8 @@ if(OxideQtQuick_FIND_REQUIRED)
   set(_FIND_PACKAGE_REQUIRED REQUIRED)
 endif()
 
+find_package(OxideQtCore ${_FIND_PACKAGE_REQUIRED})
+list(APPEND OxideQtQuick_INCLUDE_DIRS ${OxideQtCore_INCLUDE_DIRS})
 find_package(Qt5Core ${_FIND_PACKAGE_REQUIRED})
 list(APPEND OxideQtQuick_INCLUDE_DIRS ${Qt5Core_INCLUDE_DIRS})
 find_package(Qt5Qml ${_FIND_PACKAGE_REQUIRED})
@@ -48,5 +50,5 @@ if(NOT TARGET OxideQt::Quick)
       OxideQt::Quick PROPERTIES
       "IMPORTED_LOCATION" "@PACKAGE_CMAKE_INSTALL_LIBDIR@/@OXIDE_QUICKLIB_FILENAME@"
       "INTERFACE_INCLUDE_DIRECTORIES" "${OxideQtQuick_INCLUDE_DIRS}"
-      "INTERFACE_LINK_LIBRARIES" "Qt5::Core;Qt5::Qml;Qt5::Quick")
+      "INTERFACE_LINK_LIBRARIES" "OxideQt::Core;Qt5::Core;Qt5::Qml;Qt5::Quick")
 endif()

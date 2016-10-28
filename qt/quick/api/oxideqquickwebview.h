@@ -384,6 +384,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
   void loadingChanged(const OxideQLoadEvent& loadEvent);
 
  protected:
+  OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
+                     QQuickItem* parent = nullptr);
+
   // QObject implementation
   void connectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
   void disconnectNotify(const QMetaMethod& signal) Q_DECL_OVERRIDE;
@@ -420,12 +423,12 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebView : public QQuickItem {
       QSGNode* oldNode,
       UpdatePaintNodeData* updatePaintNodeData) Q_DECL_OVERRIDE;
 
+  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
+
  private:
   Q_PRIVATE_SLOT(d_func(), void contextConstructed());
   Q_PRIVATE_SLOT(d_func(), void contextDestroyed());
   Q_PRIVATE_SLOT(d_func(), void preferencesDestroyed());
-
-  QScopedPointer<OxideQQuickWebViewPrivate> d_ptr;
 };
 
 QML_DECLARE_TYPE(OxideQQuickWebView)
