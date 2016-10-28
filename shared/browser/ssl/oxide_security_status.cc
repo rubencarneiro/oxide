@@ -135,7 +135,7 @@ SecurityStatus::SecurityStatus(content::WebContents* contents)
       security_level_(SECURITY_LEVEL_NONE),
       content_status_(content::SSLStatus::NORMAL_CONTENT),
       cert_status_(CERT_STATUS_OK) {
-  VisibleSSLStateChanged();
+  VisibleSecurityStateChanged();
 }
 
 SecurityStatus::~SecurityStatus() {}
@@ -151,7 +151,7 @@ SecurityStatus* SecurityStatus::FromWebContents(
   return content::WebContentsUserData<SecurityStatus>::FromWebContents(contents);
 }
 
-void SecurityStatus::VisibleSSLStateChanged() {
+void SecurityStatus::VisibleSecurityStateChanged() {
   SecurityLevel old_security_level = security_level_;
   content::SSLStatus::ContentStatusFlags old_content_status = content_status_;
   CertStatusFlags old_cert_status = cert_status_;

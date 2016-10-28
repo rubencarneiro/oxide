@@ -46,7 +46,7 @@ ChromeController::ChromeController(content::WebContents* contents)
     : content::WebContentsObserver(contents),
       client_(nullptr),
       top_controls_height_(0),
-      constraints_(blink::WebTopControlsBoth),
+      constraints_(blink::WebBrowserControlsBoth),
       animation_enabled_(true) {
   CompositorObserver::Observe(
       WebContentsView::FromWebContents(contents)->GetCompositor());
@@ -71,38 +71,38 @@ void ChromeController::InitializeForHost(
     content::RenderFrameHost* render_frame_host,
     bool initial_host) {
   // Show the location bar if this is the initial RVH and the constraints
-  // are set to blink::WebTopControlsBoth
-  blink::WebTopControlsState current = constraints_;
-  if (initial_host && constraints_ == blink::WebTopControlsBoth) {
-    current = blink::WebTopControlsShown;
+  // are set to blink::WebBrowserControlsBoth
+  blink::WebBrowserControlsState current = constraints_;
+  if (initial_host && constraints_ == blink::WebBrowserControlsBoth) {
+    current = blink::WebBrowserControlsShown;
   }
 
-  UpdateTopControlsState(render_frame_host, current, false);
+  UpdateBrowserControlsState(render_frame_host, current, false);
 }
 
-void ChromeController::RefreshTopControlsState() {
-  UpdateTopControlsState(web_contents()->GetMainFrame(),
-                         blink::WebTopControlsBoth,
-                         animation_enabled_);
+void ChromeController::RefreshBrowserControlsState() {
+  UpdateBrowserControlsState(web_contents()->GetMainFrame(),
+                             blink::WebBrowserControlsBoth,
+                             animation_enabled_);
 }
 
-void ChromeController::UpdateTopControlsState(
+void ChromeController::UpdateBrowserControlsState(
     content::RenderFrameHost* render_frame_host,
-    blink::WebTopControlsState current_state,
+    blink::WebBrowserControlsState current_state,
     bool animated) {
-  blink::WebTopControlsState constraints = constraints_;
-  if (constraints_ == blink::WebTopControlsBoth) {
-    if (!CanHideTopControls()) {
-      current_state = constraints = blink::WebTopControlsShown;
-    } else if (!CanShowTopControls()) {
-      current_state = constraints = blink::WebTopControlsHidden;
+  blink::WebBrowserControlsState constraints = constraints_;
+  if (constraints_ == blink::WebBrowserControlsBoth) {
+    if (!CanHideBrowserControls()) {
+      current_state = constraints = blink::WebBrowserControlsShown;
+    } else if (!CanShowBrowserControls()) {
+      current_state = constraints = blink::WebBrowserControlsHidden;
     }
   }
 
-  DCHECK((current_state != blink::WebTopControlsHidden ||
-          constraints != blink::WebTopControlsShown) &&
-         (current_state != blink::WebTopControlsShown ||
-          constraints != blink::WebTopControlsHidden));
+  DCHECK((current_state != blink::WebBrowserControlsHidden ||
+          constraints != blink::WebBrowserControlsShown) &&
+         (current_state != blink::WebBrowserControlsShown ||
+          constraints != blink::WebBrowserControlsHidden));
 
   // render_frame_host can be null here, because I think we're hitting something
   // like https://bugs.chromium.org/p/chromium/issues/detail?id=575245
@@ -114,7 +114,7 @@ void ChromeController::UpdateTopControlsState(
   content::RenderViewHost* rvh = render_frame_host->GetRenderViewHost();
 
   rvh->Send(
-      new OxideMsg_UpdateTopControlsState(rvh->GetRoutingID(),
+      new OxideMsg_UpdateBrowserControlsState(rvh->GetRoutingID(),
                                           constraints,
                                           current_state,
                                           animated));
@@ -159,12 +159,12 @@ cc::CompositorFrameMetadata ChromeController::DefaultMetadata() const {
   cc::CompositorFrameMetadata metadata;
   metadata.top_controls_height = top_controls_height();
   metadata.top_controls_shown_ratio =
-      constraints_ == blink::WebTopControlsHidden ? 0.f : 1.f;
+      constraints_ == blink::WebBrowserControlsHidden ? 0.f : 1.f;
 
   return std::move(metadata);
 }
 
-bool ChromeController::CanHideTopControls() const {
+bool ChromeController::CanHideBrowserControls() const {
   SecurityStatus* security_status =
       SecurityStatus::FromWebContents(web_contents());
   if (security_status->security_level() == SECURITY_LEVEL_WARNING ||
@@ -199,7 +199,7 @@ bool ChromeController::CanHideTopControls() const {
   return true;
 }
 
-bool ChromeController::CanShowTopControls() const {
+bool ChromeController::CanShowBrowserControls() const {
   if (FullscreenHelper::FromWebContents(web_contents())->IsFullscreen()) {
     return false;
   }
@@ -213,11 +213,11 @@ void ChromeController::OnSecurityStatusChanged(
     return;
   }
 
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::OnWebProcessStatusChanged() {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::RenderFrameForInterstitialPageCreated(
@@ -243,7 +243,7 @@ void ChromeController::DidCommitProvisionalLoadForFrame(
     return;
   }
 
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::WebContentsDestroyed() {
@@ -254,24 +254,24 @@ void ChromeController::WebContentsDestroyed() {
 }
 
 void ChromeController::DidShowFullscreenWidget() {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::DidDestroyFullscreenWidget() {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::DidToggleFullscreenModeForTab(bool entered_fullscreen,
                                                      bool will_cause_resize) {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::DidAttachInterstitialPage() {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::DidDetachInterstitialPage() {
-  RefreshTopControlsState();
+  RefreshBrowserControlsState();
 }
 
 void ChromeController::CompositorDidCommit() {
@@ -321,32 +321,32 @@ void ChromeController::SetTopControlsHeight(float height) {
   host->WasResized();
 }
 
-void ChromeController::SetConstraints(blink::WebTopControlsState constraints) {
+void ChromeController::SetConstraints(blink::WebBrowserControlsState constraints) {
   if (constraints == constraints_) {
     return;
   }
 
   constraints_ = constraints;
 
-  UpdateTopControlsState(web_contents()->GetMainFrame(),
-                         blink::WebTopControlsBoth,
-                         animation_enabled_);
+  UpdateBrowserControlsState(web_contents()->GetMainFrame(),
+                             blink::WebBrowserControlsBoth,
+                             animation_enabled_);
 }
 
 void ChromeController::Show(bool animate) {
-  DCHECK_EQ(constraints_, blink::WebTopControlsBoth);
+  DCHECK_EQ(constraints_, blink::WebBrowserControlsBoth);
 
-  UpdateTopControlsState(web_contents()->GetMainFrame(),
-                         blink::WebTopControlsShown,
-                         animate);
+  UpdateBrowserControlsState(web_contents()->GetMainFrame(),
+                             blink::WebBrowserControlsShown,
+                             animate);
 }
 
 void ChromeController::Hide(bool animate) {
-  DCHECK_EQ(constraints_, blink::WebTopControlsBoth);
+  DCHECK_EQ(constraints_, blink::WebBrowserControlsBoth);
 
-  UpdateTopControlsState(web_contents()->GetMainFrame(),
-                         blink::WebTopControlsHidden,
-                         animate);
+  UpdateBrowserControlsState(web_contents()->GetMainFrame(),
+                             blink::WebBrowserControlsHidden,
+                             animate);
 }
 
 float ChromeController::GetTopControlsOffset() const {

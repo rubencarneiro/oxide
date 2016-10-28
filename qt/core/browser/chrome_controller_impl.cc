@@ -18,7 +18,7 @@
 #include "chrome_controller_impl.h"
 
 #include "base/logging.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "third_party/WebKit/public/platform/WebBrowserControlsState.h"
 
 #include "qt/core/glue/chrome_controller_client.h"
 #include "shared/browser/chrome_controller.h"
@@ -32,18 +32,18 @@ namespace qt {
 
 namespace {
 
-blink::WebTopControlsState ModeToTopControlsState(ChromeController::Mode mode) {
+blink::WebBrowserControlsState ModeToTopControlsState(ChromeController::Mode mode) {
   switch (mode) {
     case ChromeController::Mode::Auto:
-      return blink::WebTopControlsBoth;
+      return blink::WebBrowserControlsBoth;
     case ChromeController::Mode::Shown:
-      return blink::WebTopControlsShown;
+      return blink::WebBrowserControlsShown;
     case ChromeController::Mode::Hidden:
-      return blink::WebTopControlsHidden;
+      return blink::WebBrowserControlsHidden;
   }
 
   NOTREACHED();
-  return blink::WebTopControlsBoth;
+  return blink::WebBrowserControlsBoth;
 }
 
 }
@@ -101,11 +101,11 @@ ChromeController::Mode ChromeControllerImpl::mode() const {
   }
 
   switch (controller_->constraints()) {
-    case blink::WebTopControlsShown:
+    case blink::WebBrowserControlsShown:
       return Mode::Shown;
-    case blink::WebTopControlsHidden:
+    case blink::WebBrowserControlsHidden:
       return Mode::Hidden;
-    case blink::WebTopControlsBoth:
+    case blink::WebBrowserControlsBoth:
       return Mode::Auto;
   }
 

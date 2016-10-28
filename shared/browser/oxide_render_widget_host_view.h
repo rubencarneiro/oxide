@@ -119,7 +119,7 @@ class RenderWidgetHostView
                         size_t offset,
                         const gfx::Range& range) override;
   gfx::Size GetPhysicalBackingSize() const override;
-  bool DoTopControlsShrinkBlinkSize() const override;
+  bool DoBrowserControlsShrinkBlinkSize() const override;
   float GetTopControlsHeight() const override;
   void FocusedNodeChanged(bool is_editable_node,
                           const gfx::Rect& node_bounds_in_screen) override;
@@ -245,7 +245,7 @@ class RenderWidgetHostView
   cc::CompositorFrameMetadata committed_frame_metadata_;
   cc::CompositorFrameMetadata displayed_frame_metadata_;
 
-  bool top_controls_shrink_blink_size_;
+  bool browser_controls_shrink_blink_size_;
 
   std::unique_ptr<GestureProvider> gesture_provider_;
 

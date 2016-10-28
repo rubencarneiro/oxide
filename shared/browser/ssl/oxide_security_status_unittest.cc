@@ -102,7 +102,7 @@ TEST_F(SecurityStatusTest, NoSecurity) {
                      ui::PAGE_TRANSITION_TYPED,
                      std::string());
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_NONE, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -118,7 +118,7 @@ TEST_F(SecurityStatusTest, Secure) {
                      std::string());
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_NONE, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -128,7 +128,7 @@ TEST_F(SecurityStatusTest, Secure) {
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
   ssl_status.certificate = cert();
 
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_SECURE, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -147,7 +147,7 @@ TEST_F(SecurityStatusTest, Broken) {
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -166,7 +166,7 @@ TEST_F(SecurityStatusTest, RanInsecure) {
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::RAN_INSECURE_CONTENT, status->content_status());
@@ -185,7 +185,7 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_WARNING, status->security_level());
   EXPECT_EQ(content::SSLStatus::DISPLAYED_INSECURE_CONTENT,
@@ -207,7 +207,7 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
       content::SSLStatus::RAN_INSECURE_CONTENT;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_ERROR, status->security_level());
   EXPECT_EQ(content::SSLStatus::DISPLAYED_INSECURE_CONTENT |
@@ -228,7 +228,7 @@ TEST_F(SecurityStatusTest, MinorCertError) {
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_WARNING, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -247,7 +247,7 @@ TEST_F(SecurityStatusTest, SecureEV) {
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(SECURITY_LEVEL_SECURE_EV, status->security_level());
   EXPECT_EQ(content::SSLStatus::NORMAL_CONTENT, status->content_status());
@@ -467,7 +467,7 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   SecurityLevel expected_security_level;
   if (net::IsCertStatusError(row.cert_status_in)) {
@@ -641,7 +641,7 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
   ssl_status.content_status = params.initial_data.content_status;
 
   SecurityStatus* status = SecurityStatus::FromWebContents(web_contents());
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   SecurityStatus::ChangedFlags flags = SecurityStatus::CHANGED_FLAG_NONE;
   SecurityLevel security_level = status->security_level();
@@ -669,7 +669,7 @@ TEST_P(SecurityStatusObserverCallbackTest, TestObserver) {
 
   scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
-  status->VisibleSSLStateChanged();
+  status->VisibleSecurityStateChanged();
 
   EXPECT_EQ(params.expected_flags, flags);
   EXPECT_EQ(params.expected_security_level, security_level);

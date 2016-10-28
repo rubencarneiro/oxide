@@ -24,7 +24,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "third_party/WebKit/public/platform/WebBrowserControlsState.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/ssl/oxide_security_status.h"
@@ -43,7 +43,7 @@ class ChromeControllerClient;
 class RenderWidgetHostView;
 
 // A mechanism to allow Oxide to position an application's UI, using the
-// renderer compositor cc::TopControlsManager
+// renderer compositor cc::BrowserControlsOffsetManager
 class OXIDE_SHARED_EXPORT ChromeController
     : public content::WebContentsUserData<ChromeController>,
       public content::WebContentsObserver,
@@ -56,8 +56,8 @@ class OXIDE_SHARED_EXPORT ChromeController
   float top_controls_height() const { return top_controls_height_; }
   void SetTopControlsHeight(float height);
 
-  blink::WebTopControlsState constraints() const { return constraints_; }
-  void SetConstraints(blink::WebTopControlsState constraints);
+  blink::WebBrowserControlsState constraints() const { return constraints_; }
+  void SetConstraints(blink::WebBrowserControlsState constraints);
 
   bool animation_enabled() const { return animation_enabled_; }
   void set_animation_enabled(bool animated) { animation_enabled_ = animated; }
@@ -76,10 +76,10 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   void InitializeForHost(content::RenderFrameHost* render_frame_host,
                          bool initial_host);
-  void RefreshTopControlsState();
-  void UpdateTopControlsState(content::RenderFrameHost* render_frame_host,
-                              blink::WebTopControlsState current_state,
-                              bool animated);
+  void RefreshBrowserControlsState();
+  void UpdateBrowserControlsState(content::RenderFrameHost* render_frame_host,
+                                  blink::WebBrowserControlsState current_state,
+                                  bool animated);
   RenderWidgetHostView* GetRenderWidgetHostView();
   content::RenderWidgetHost* GetRenderWidgetHost();
 
@@ -87,8 +87,8 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   cc::CompositorFrameMetadata DefaultMetadata() const;
 
-  bool CanHideTopControls() const;
-  bool CanShowTopControls() const;
+  bool CanHideBrowserControls() const;
+  bool CanShowBrowserControls() const;
 
   void OnSecurityStatusChanged(SecurityStatus::ChangedFlags flags);
   void OnWebProcessStatusChanged();
@@ -117,7 +117,7 @@ class OXIDE_SHARED_EXPORT ChromeController
   ChromeControllerClient* client_;
 
   float top_controls_height_;
-  blink::WebTopControlsState constraints_;
+  blink::WebBrowserControlsState constraints_;
   bool animation_enabled_;
 
   cc::CompositorFrameMetadata committed_frame_metadata_;

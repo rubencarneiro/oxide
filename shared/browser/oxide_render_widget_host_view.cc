@@ -176,8 +176,8 @@ gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   return container_->GetViewSizeInPixels();
 }
 
-bool RenderWidgetHostView::DoTopControlsShrinkBlinkSize() const {
-  return top_controls_shrink_blink_size_;
+bool RenderWidgetHostView::DoBrowserControlsShrinkBlinkSize() const {
+  return browser_controls_shrink_blink_size_;
 }
 
 float RenderWidgetHostView::GetTopControlsHeight() const {
@@ -297,8 +297,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   bool shrink =
       metadata.top_controls_height > 0.f &&
       metadata.top_controls_shown_ratio == 1.f;
-  if (shrink != top_controls_shrink_blink_size_) {
-    top_controls_shrink_blink_size_ = shrink;
+  if (shrink != browser_controls_shrink_blink_size_) {
+    browser_controls_shrink_blink_size_ = shrink;
     host_->WasResized();
   }
 
@@ -466,7 +466,7 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
     bounds = container_->GetViewBounds();
   }
 
-  if (DoTopControlsShrinkBlinkSize()) {
+  if (DoBrowserControlsShrinkBlinkSize()) {
     bounds.Inset(0, GetTopControlsHeight(), 0, 0);
   }
 
@@ -794,7 +794,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       ime_bridge_(this),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
-      top_controls_shrink_blink_size_(false),
+      browser_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)),
       handle_drag_in_progress_(false),
       weak_ptr_factory_(this) {

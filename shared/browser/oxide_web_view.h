@@ -229,7 +229,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       const content::OpenURLParams& params) override;
   void NavigationStateChanged(content::WebContents* source,
                               content::InvalidateTypes changed_flags) override;
-  void VisibleSSLStateChanged(content::WebContents* source) override;
+  void VisibleSecurityStateChanged(content::WebContents* source) override;
   bool ShouldCreateWebContents(
       content::WebContents* source,
       int route_id,

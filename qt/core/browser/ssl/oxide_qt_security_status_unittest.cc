@@ -125,7 +125,7 @@ TEST_F(SecurityStatusTest, NoSecurity) {
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelNone, status()->securityLevel());
   EXPECT_EQ(OxideQSecurityStatus::ContentStatusNormal,
@@ -146,7 +146,7 @@ TEST_F(SecurityStatusTest, Secure) {
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecure,
             status()->securityLevel());
@@ -173,7 +173,7 @@ TEST_F(SecurityStatusTest, Broken) {
   ssl_status.cert_status = net::CERT_STATUS_COMMON_NAME_INVALID;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -201,7 +201,7 @@ TEST_F(SecurityStatusTest, RanInsecure) {
   ssl_status.content_status = content::SSLStatus::RAN_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -228,7 +228,7 @@ TEST_F(SecurityStatusTest, DisplayedInsecure) {
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelWarning,
             status()->securityLevel());
@@ -257,7 +257,7 @@ TEST_F(SecurityStatusTest, DisplayedAndRanInsecure) {
       content::SSLStatus::RAN_INSECURE_CONTENT;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelError,
             status()->securityLevel());
@@ -285,7 +285,7 @@ TEST_F(SecurityStatusTest, MinorCertError) {
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelWarning,
             status()->securityLevel());
@@ -313,7 +313,7 @@ TEST_F(SecurityStatusTest, SecureEV) {
   ssl_status.cert_status = net::CERT_STATUS_IS_EV;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecureEV,
             status()->securityLevel());
@@ -555,7 +555,7 @@ TEST_P(SecurityStatusCertStatusTest, TestCertStatus) {
   scoped_refptr<net::X509Certificate> expected_cert = ssl_status.certificate;
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   OxideQSecurityStatus::SecurityLevel expected_security_level;
   if (net::IsCertStatusError(row.cert_status_in)) {
@@ -629,7 +629,7 @@ TEST_F(SecurityStatusTest, SecurityLevelUpdate) {
   content::SSLStatus& ssl_status = controller.GetVisibleEntry()->GetSSL();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   std::unique_ptr<Observer> observer = base::WrapUnique(new Observer(status()));
   observer->connect(status(), SIGNAL(securityLevelChanged()),
@@ -637,7 +637,7 @@ TEST_F(SecurityStatusTest, SecurityLevelUpdate) {
 
   ssl_status.certificate = cert();
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(1, observer->update_count);
   EXPECT_EQ(OxideQSecurityStatus::SecurityLevelSecure, observer->security_level);
@@ -653,7 +653,7 @@ TEST_F(SecurityStatusTest, ContentStatusUpdate) {
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   std::unique_ptr<Observer> observer = base::WrapUnique(new Observer(status()));
   observer->connect(status(), SIGNAL(contentStatusChanged()),
@@ -661,7 +661,7 @@ TEST_F(SecurityStatusTest, ContentStatusUpdate) {
 
   ssl_status.content_status = content::SSLStatus::DISPLAYED_INSECURE_CONTENT;
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(1, observer->update_count);
   EXPECT_EQ(OxideQSecurityStatus::ContentStatusDisplayedInsecure,
@@ -678,7 +678,7 @@ TEST_F(SecurityStatusTest, CertStatusUpdate) {
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   std::unique_ptr<Observer> observer = base::WrapUnique(new Observer(status()));
   observer->connect(status(), SIGNAL(certStatusChanged()),
@@ -686,7 +686,7 @@ TEST_F(SecurityStatusTest, CertStatusUpdate) {
 
   ssl_status.cert_status = net::CERT_STATUS_UNABLE_TO_CHECK_REVOCATION;
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(1, observer->update_count);
   EXPECT_EQ(OxideQSecurityStatus::CertStatusRevocationCheckFailed,
@@ -703,7 +703,7 @@ TEST_F(SecurityStatusTest, CertUpdate) {
   ssl_status.certificate = cert();
 
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   std::unique_ptr<Observer> observer = base::WrapUnique(new Observer(status()));
   observer->connect(status(), SIGNAL(certificateChanged()),
@@ -711,7 +711,7 @@ TEST_F(SecurityStatusTest, CertUpdate) {
 
   ssl_status.certificate = expired_cert();
   oxide::SecurityStatus::FromWebContents(web_contents())
-      ->VisibleSSLStateChanged();
+      ->VisibleSecurityStateChanged();
 
   EXPECT_EQ(1, observer->update_count);
   EXPECT_FALSE(observer->cert.isNull());

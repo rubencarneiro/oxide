@@ -23,7 +23,7 @@
 #include "content/public/common/menu_item.h"
 #include "ipc/ipc_message_macros.h"
 #include "ipc/ipc_message_start.h"
-#include "third_party/WebKit/public/platform/WebTopControlsState.h"
+#include "third_party/WebKit/public/platform/WebBrowserControlsState.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/ipc/geometry/gfx_param_traits.h"
 #include "url/gurl.h"
@@ -33,7 +33,7 @@
 #include "shared/common/oxide_script_message_params.h"
 #include "shared/common/oxide_user_agent_override_set.h"
 
-IPC_ENUM_TRAITS(blink::WebTopControlsState)
+IPC_ENUM_TRAITS(blink::WebBrowserControlsState)
 IPC_ENUM_TRAITS(oxide::ScriptMessageParams::Error)
 IPC_ENUM_TRAITS(oxide::ScriptMessageParams::Type)
 
@@ -61,9 +61,9 @@ IPC_MESSAGE_ROUTED1(OxideMsg_SetAllowRunningInsecureContent,
                     bool)
 IPC_MESSAGE_ROUTED0(OxideMsg_ReloadFrame)
 
-IPC_MESSAGE_ROUTED3(OxideMsg_UpdateTopControlsState,
-                    blink::WebTopControlsState,
-                    blink::WebTopControlsState,
+IPC_MESSAGE_ROUTED3(OxideMsg_UpdateBrowserControlsState,
+                    blink::WebBrowserControlsState,
+                    blink::WebBrowserControlsState,
                     bool)
 
 IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserAgentOverrides,

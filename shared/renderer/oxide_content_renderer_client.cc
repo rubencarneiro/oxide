@@ -38,10 +38,10 @@
 #include "shared/common/oxide_constants.h"
 #include "shared/common/oxide_net_resource_provider.h"
 
+#include "browser_controls_handler.h"
 #include "external_popup_menu.h"
 #include "oxide_renderer_user_agent_settings.h"
 #include "oxide_script_message_dispatcher_renderer.h"
-#include "oxide_top_controls_handler.h"
 #include "oxide_user_script_scheduler.h"
 #include "oxide_user_script_slave.h"
 #include "oxide_web_content_settings_client.h"
@@ -93,7 +93,7 @@ void ContentRendererClient::RenderFrameCreated(
 
 void ContentRendererClient::RenderViewCreated(
     content::RenderView* render_view) {
-  new TopControlsHandler(render_view);
+  new BrowserControlsHandler(render_view);
   // XXX: This is currently here because RenderFrame proxies the
   //      notifications we're interested in to RenderView. Make this
   //      a RenderFrameObserver when it grows the features we need

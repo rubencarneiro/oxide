@@ -477,10 +477,11 @@ void WebView::NavigationStateChanged(content::WebContents* source,
   }
 }
 
-void WebView::VisibleSSLStateChanged(content::WebContents* source) {
+void WebView::VisibleSecurityStateChanged(content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  SecurityStatus::FromWebContents(web_contents_.get())->VisibleSSLStateChanged();
+  SecurityStatus::FromWebContents(web_contents_.get())
+      ->VisibleSecurityStateChanged();
 }
 
 bool WebView::ShouldCreateWebContents(

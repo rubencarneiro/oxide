@@ -45,7 +45,7 @@ class OXIDE_SHARED_EXPORT SecurityStatus
   static SecurityStatus* FromWebContents(content::WebContents* contents);
 
   // Notification from content
-  void VisibleSSLStateChanged();
+  void VisibleSecurityStateChanged();
 
   enum ChangedFlags {
     CHANGED_FLAG_NONE = 0,
