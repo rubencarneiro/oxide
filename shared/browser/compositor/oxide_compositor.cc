@@ -355,7 +355,9 @@ Compositor::CreateCompositorFrameSink() {
           CompositorUtils::GetInstance()->GetSurfaceManager(),
           display_.get(),
           context_provider,
-          nullptr);
+          nullptr,
+          content::BrowserGpuMemoryBufferManager::current(),
+          content::HostSharedBitmapManager::current());
 
   display_->Resize(layer_tree_host_->GetLayerTree()->device_viewport_size());
   display_->SetVisible(layer_tree_host_->IsVisible());
@@ -383,9 +385,6 @@ void Compositor::EnsureLayerTreeHost() {
 
   cc::LayerTreeHostInProcess::InitParams params;
   params.client = this;
-  params.shared_bitmap_manager = content::HostSharedBitmapManager::current();
-  params.gpu_memory_buffer_manager =
-      content::BrowserGpuMemoryBufferManager::current();
   params.task_graph_runner =
       CompositorUtils::GetInstance()->GetTaskGraphRunner();
   params.settings = &settings;
