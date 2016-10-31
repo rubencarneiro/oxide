@@ -33,7 +33,9 @@ Clipboard::Clipboard() {
 void Clipboard::NotifyClipboardDataChanged(ui::ClipboardType type) {
   DCHECK(CalledOnValidThread());
   cached_info_[type].needs_update = true;
-  FOR_EACH_OBSERVER(ClipboardObserver, observers_, ClipboardDataChanged(type));
+  for (auto& observer : observers_) {
+    observer.ClipboardDataChanged(type);
+  }
 }
 
 void Clipboard::AddObserver(ClipboardObserver* observer) {
@@ -48,7 +50,9 @@ void Clipboard::RemoveObserver(ClipboardObserver* observer) {
 
 Clipboard::~Clipboard() {
   DCHECK(CalledOnValidThread());
-  FOR_EACH_OBSERVER(ClipboardObserver, observers_, OnClipboardDestruction());
+  for (auto& observer : observers_) {
+    observer.OnClipboardDestruction();
+  }
 }
 
 // static

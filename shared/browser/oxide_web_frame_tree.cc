@@ -36,7 +36,9 @@ WebFrameTree::WebFrameTree(content::WebContents* contents)
       root_frame_(new WebFrame(this, contents->GetMainFrame())) {}
 
 void WebFrameTree::WebFrameRemoved(WebFrame* frame) {
-  FOR_EACH_OBSERVER(WebFrameTreeObserver, observers_, FrameDeleted(frame));
+  for (auto& observer : observers_) {
+    observer.FrameDeleted(frame);
+  }
 }
 
 void WebFrameTree::AddObserver(WebFrameTreeObserver* observer) {
@@ -67,8 +69,10 @@ void WebFrameTree::RenderFrameCreated(
 
   WebFrame* frame = new WebFrame(this, render_frame_host);
   parent->AddChild(base::WrapUnique(frame));
-  
-  FOR_EACH_OBSERVER(WebFrameTreeObserver, observers_, FrameCreated(frame));
+ 
+  for (auto& observer : observers_) {
+    observer.FrameCreated(frame);
+  } 
 }
 
 void WebFrameTree::RenderFrameHostChanged(
@@ -124,13 +128,15 @@ void WebFrameTree::DidCommitProvisionalLoadForFrame(
     return;
   }
 
-  FOR_EACH_OBSERVER(
-      WebFrameTreeObserver, observers_, LoadCommittedInFrame(frame));
+  for (auto& observer : observers_) {
+    observer.LoadCommittedInFrame(frame);
+  }
 }
 
 WebFrameTree::~WebFrameTree() {
-  FOR_EACH_OBSERVER(
-      WebFrameTreeObserver, observers_, OnFrameTreeDestruction());
+  for (auto& observer : observers_) {
+    observer.OnFrameTreeDestruction();
+  }
 }
 
 // static

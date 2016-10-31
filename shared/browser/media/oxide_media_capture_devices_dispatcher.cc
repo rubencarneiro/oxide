@@ -266,16 +266,16 @@ void MediaCaptureDevicesDispatcher::RemoveObserver(
 
 void MediaCaptureDevicesDispatcher::NotifyAudioCaptureDevicesChanged() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  FOR_EACH_OBSERVER(MediaCaptureDevicesDispatcherObserver,
-                    observers_,
-                    OnAudioCaptureDevicesChanged());
+  for (auto& observer : observers_) {
+    observer.OnAudioCaptureDevicesChanged();
+  }
 }
 
 void MediaCaptureDevicesDispatcher::NotifyVideoCaptureDevicesChanged() {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  FOR_EACH_OBSERVER(MediaCaptureDevicesDispatcherObserver,
-                    observers_,
-                    OnVideoCaptureDevicesChanged());
+  for (auto& observer : observers_) {
+    observer.OnVideoCaptureDevicesChanged();
+  }
 }
 
 void MediaCaptureDevicesDispatcher::OnAudioCaptureDevicesChanged() {
