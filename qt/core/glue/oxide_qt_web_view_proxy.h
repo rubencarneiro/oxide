@@ -27,6 +27,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/web_contents_id.h"
 
@@ -83,7 +84,7 @@ enum EditingCommands {
   EDITING_COMMAND_SELECT_ALL
 };
 
-class Q_DECL_EXPORT WebViewProxy : public ProxyBase<WebView> {
+class OXIDE_QTCORE_EXPORT WebViewProxy : public ProxyBase<WebView> {
  public:
   static WebViewProxy* create(
       WebViewProxyClient* client, // Must outlive returned proxy

@@ -87,6 +87,10 @@ set(OXIDE_QT_PACKAGE_QMLPLUGIN_DIR qml)
 add_subdirectory(qmlplugin)
 add_subdirectory(quick)
 
+if(ENABLE_UITK_WEBVIEW)
+  add_subdirectory(uitk)
+endif()
+
 if(ENABLE_OXIDEQMLSCENE)
   if(NOT ${Qt5Quick_VERSION_STRING} VERSION_LESS "5.4.0")
     message(FATAL_ERROR
@@ -124,3 +128,6 @@ add_custom_target(
 add_custom_target(
     test-package-qt
     DEPENDS test-package-qt-quick test-package-qt-qmlplugin test-package-qt-runner)
+if(ENABLE_UITK_WEBVIEW)
+  add_dependencies(test-package-qt test-package-uitk-lib test-package-uitk-qmlplugin)
+endif()

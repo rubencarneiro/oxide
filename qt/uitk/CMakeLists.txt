@@ -16,30 +16,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-declare_args() {
-  enable_hybris = false
+set(OXIDE_UITKLIB OxideUbuntuUITK)
 
-  enable_hybris_camera = false
-
-  enable_mediahub = false
-
-  use_qinputdevice = false
-
-  oxide_gettext_domain = false
-
-  oxide_libexec_subdir = ""
-
-  oxide_lib_extension = false
-
-  oxide_lib_name = false
-
-  oxide_renderer_name = false
-}
-
-assert(!enable_hybris_camera || enable_hybris)
-
-assert(oxide_gettext_domain != false, "oxide_gettext_domain must be defined by CMake")
-assert(oxide_libexec_subdir != false, "oxide_libexec_subdir must be defined by CMake")
-assert(oxide_lib_extension != false, "oxide_lib_extension must be defined by CMake")
-assert(oxide_lib_name != false, "oxide_lib_name must be defined by CMake")
-assert(oxide_renderer_name != false, "oxide_renderer_name must be defined by CMake")
+add_subdirectory(lib)
+add_subdirectory(qmlplugin)

@@ -25,6 +25,7 @@
 #include <QUrl>
 #include <QWeakPointer>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/oxide_qt_web_context_proxy_client.h"
 
@@ -42,7 +43,7 @@ class WebContext;
 class WebContextProxy;
 class WebContextProxyClient;
 
-class Q_DECL_EXPORT WebContextProxy : public ProxyBase<WebContext> {
+class OXIDE_QTCORE_EXPORT WebContextProxy : public ProxyBase<WebContext> {
  public:
   static WebContextProxy* create(WebContextProxyClient* client,
                                  QObject* handle);

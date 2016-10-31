@@ -37,3 +37,7 @@ cmake_dependent_option(ENABLE_DOCUMENTATION
                        "Enable the documentation"
                        ${_DOC_SUPPORTED}
                        "_DOC_SUPPORTED" OFF)
+
+option(ENABLE_UITK_WEBVIEW
+       "Enable the Ubuntu UI Toolkit implementation of the WebView"
+       OFF)

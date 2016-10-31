@@ -21,6 +21,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 
 QT_BEGIN_NAMESPACE
@@ -33,7 +34,7 @@ namespace qt {
 class UserScript;
 class UserScriptProxyClient;
 
-class Q_DECL_EXPORT UserScriptProxy : public ProxyBase<UserScript> {
+class OXIDE_QTCORE_EXPORT UserScriptProxy : public ProxyBase<UserScript> {
  public:
   static UserScriptProxy* create(UserScriptProxyClient* client,
                                  QObject* handle,

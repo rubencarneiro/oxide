@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_INIT_H_
-#define _OXIDE_QT_CORE_GLUE_INIT_H_
+#ifndef OXIDE_UBUNTU_WEB_VIEW
+#define OXIDE_UBUNTU_WEB_VIEW
 
-#include <QtGlobal>
+#include <QtCore/QtGlobal>
 
-#include "qt/core/api/oxideqglobal.h"
+#include <OxideQtQuick/oxideqquickwebview.h>
+#include <OxideUbuntuUITK/oxideubuntuglobal.h>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 QT_BEGIN_NAMESPACE
-class QOpenGLContext;
+class QQuickItem;
 QT_END_NAMESPACE
-#endif
 
-namespace oxide {
-namespace qt {
+class OxideUbuntuWebViewPrivate;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-OXIDE_QTCORE_EXPORT void SetSharedGLContext(QOpenGLContext* context);
-#endif
+class OXIDE_UITK_EXPORT OxideUbuntuWebView : public OxideQQuickWebView {
+  Q_OBJECT
 
-OXIDE_QTCORE_EXPORT void EnsureChromiumStarted();
+  Q_DECLARE_PRIVATE(OxideUbuntuWebView)
+  Q_DISABLE_COPY(OxideUbuntuWebView)
 
-} // namespace qt
-} // namespace oxide
+ public:
+  OxideUbuntuWebView(QQuickItem* parent = nullptr);
+  ~OxideUbuntuWebView() Q_DECL_OVERRIDE;
+};
 
-#endif // _OXIDE_QT_CORE_GLUE_INIT_H_
+#endif // OXIDE_UBUNTU_WEB_VIEW

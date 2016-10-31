@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,15 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_INIT_H_
-#define _OXIDE_QT_CORE_GLUE_INIT_H_
+#include <QtCore/QtGlobal>
 
-#include <QtGlobal>
+#ifndef OXIDE_UBUNTU_GLOBAL
+#define OXIDE_UBUNTU_GLOBAL
 
-#include "qt/core/api/oxideqglobal.h"
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-QT_BEGIN_NAMESPACE
-class QOpenGLContext;
-QT_END_NAMESPACE
+#if defined(OXIDE_UITK_IMPLEMENTATION)
+# define OXIDE_UITK_EXPORT Q_DECL_EXPORT
+#else
+# define OXIDE_UITK_EXPORT Q_DECL_IMPORT
 #endif
 
-namespace oxide {
-namespace qt {
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-OXIDE_QTCORE_EXPORT void SetSharedGLContext(QOpenGLContext* context);
-#endif
-
-OXIDE_QTCORE_EXPORT void EnsureChromiumStarted();
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_INIT_H_
+#endif // OXIDE_UBUNTU_GLOBAL

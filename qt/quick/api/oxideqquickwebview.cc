@@ -125,7 +125,6 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
     : q_ptr(view),
-      contents_view_(new oxide::qquick::ContentsView(view)),
       load_progress_(0),
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
@@ -994,6 +993,26 @@ to use it.
 \deprecated
 */
 
+OxideQQuickWebView::OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
+                                       QQuickItem* parent)
+    : QQuickItem(parent),
+      d_ptr(&dd) {
+  Q_D(OxideQQuickWebView);
+
+  d->contents_view_.reset(new oxide::qquick::ContentsView(this));
+
+  oxide::qquick::EnsureChromiumStarted();
+
+  setFlags(QQuickItem::ItemClipsChildrenToShape |
+           QQuickItem::ItemHasContents |
+           QQuickItem::ItemIsFocusScope |
+           QQuickItem::ItemAcceptsDrops);
+  setAcceptedMouseButtons(Qt::AllButtons);
+  setAcceptHoverEvents(true);
+
+  connect(&d->navigation_history_, &OxideQQuickNavigationHistory::changed,
+          this, &OxideQQuickWebView::navigationHistoryChanged);
+}
 
 void OxideQQuickWebView::connectNotify(const QMetaMethod& signal) {
   Q_D(OxideQQuickWebView);
@@ -1225,22 +1244,7 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 */
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
-    : QQuickItem(parent),
-      d_ptr(new OxideQQuickWebViewPrivate(this)) {
-  oxide::qquick::EnsureChromiumStarted();
-
-  Q_D(OxideQQuickWebView);
-
-  setFlags(QQuickItem::ItemClipsChildrenToShape |
-           QQuickItem::ItemHasContents |
-           QQuickItem::ItemIsFocusScope |
-           QQuickItem::ItemAcceptsDrops);
-  setAcceptedMouseButtons(Qt::AllButtons);
-  setAcceptHoverEvents(true);
-
-  connect(&d->navigation_history_, &OxideQQuickNavigationHistory::changed,
-          this, &OxideQQuickWebView::navigationHistoryChanged);
-}
+    : OxideQQuickWebView(*new OxideQQuickWebViewPrivate(this), parent) {}
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);

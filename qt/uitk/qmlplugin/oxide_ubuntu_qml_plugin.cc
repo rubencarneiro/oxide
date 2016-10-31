@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,29 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_INIT_H_
-#define _OXIDE_QT_CORE_GLUE_INIT_H_
+#include <QLatin1String>
+#include <QQmlEngine>
+#include <QQmlExtensionPlugin>
 
-#include <QtGlobal>
+#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/uitk/lib/api/oxideubuntuwebview.h"
 
-#include "qt/core/api/oxideqglobal.h"
+class OxideUbuntuQmlPlugin : public QQmlExtensionPlugin {
+  Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface" FILE "oxide_ubuntu_qml_plugin.json")
+  Q_OBJECT
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-QT_BEGIN_NAMESPACE
-class QOpenGLContext;
-QT_END_NAMESPACE
-#endif
+ public:
+  void registerTypes(const char* uri) {
+    Q_ASSERT(QLatin1String(uri) == QLatin1String("Oxide.Ubuntu"));
 
-namespace oxide {
-namespace qt {
+    qmlRegisterType<OxideUbuntuWebView>(uri, 1, 0, "UbuntuWebView");
+    qmlRegisterRevision<OxideQQuickWebView, 9>(uri, 1, 0);
+  }
+};
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-OXIDE_QTCORE_EXPORT void SetSharedGLContext(QOpenGLContext* context);
-#endif
-
-OXIDE_QTCORE_EXPORT void EnsureChromiumStarted();
-
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_INIT_H_
+#include "oxide_ubuntu_qml_plugin.moc"

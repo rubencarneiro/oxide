@@ -31,7 +31,6 @@
 #include "net/base/net_module.h"
 #include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
-#include "third_party/WebKit/public/web/WebView.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/common/chrome_version.h"
@@ -39,7 +38,6 @@
 #include "shared/common/oxide_net_resource_provider.h"
 
 #include "browser_controls_handler.h"
-#include "external_popup_menu.h"
 #include "oxide_renderer_user_agent_settings.h"
 #include "oxide_script_message_dispatcher_renderer.h"
 #include "oxide_user_script_scheduler.h"
@@ -75,8 +73,6 @@ void ContentRendererClient::RenderThreadStarted() {
   // Oxide does not support NavigatorContentUtils.
   // See https://launchpad.net/bugs/1214046
   blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
-
-  blink::WebView::setUseExternalPopupMenus(true);
 }
 
 void ContentRendererClient::RenderFrameCreated(
@@ -171,24 +167,6 @@ std::string ContentRendererClient::GetUserAgentOverrideForURL(
   }
 
   return user_agent_settings_->GetUserAgentOverrideForURL(url);
-}
-
-blink::WebExternalPopupMenu* ContentRendererClient::CreateExternalPopupMenu(
-    content::RenderFrame* render_frame,
-    const blink::WebPopupMenuInfo& popup_menu_info,
-    blink::WebExternalPopupMenuClient* popup_menu_client,
-    float origin_scale_for_emulation,
-    const gfx::PointF& origin_offset_for_emulation) {
-  if (ExternalPopupMenu::Get(render_frame)) {
-    return nullptr;
-  }
-
-  // We retain ownership of ExternalPopupMenu
-  return new ExternalPopupMenu(render_frame,
-                               popup_menu_info,
-                               popup_menu_client,
-                               origin_scale_for_emulation,
-                               origin_offset_for_emulation);
 }
 
 ContentRendererClient::ContentRendererClient() {}

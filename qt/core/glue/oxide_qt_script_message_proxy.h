@@ -23,12 +23,14 @@
 #include <QUrl>
 #include <QVariant>
 
+#include "qt/core/api/oxideqglobal.h"
+
 namespace oxide {
 namespace qt {
 
 class ScriptMessage;
 
-class Q_DECL_EXPORT ScriptMessageProxy {
+class OXIDE_QTCORE_EXPORT ScriptMessageProxy {
  public:
   virtual ~ScriptMessageProxy() {}
 
