@@ -18,10 +18,8 @@
 #include "oxide_web_popup_menu_impl.h"
 
 #include "base/threading/thread_task_runner_handle.h"
-#include "content/public/browser/render_frame_host.h"
+#include "content/browser/frame_host/render_frame_host_impl.h" // nogncheck
 #include "content/public/browser/web_contents.h"
-
-#include "shared/common/oxide_messages.h"
 
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
@@ -33,9 +31,7 @@ void WebPopupMenuImpl::SelectItems(const std::vector<int>& selected_indices) {
     return;
   }
 
-  render_frame_host_->Send(
-      new OxideMsg_DidSelectPopupMenuItems(render_frame_host_->GetRoutingID(),
-                                           selected_indices));
+  render_frame_host_->DidSelectPopupMenuItems(selected_indices);
   Hide();
 }
 
@@ -44,8 +40,7 @@ void WebPopupMenuImpl::Cancel() {
     return;
   }
 
-  render_frame_host_->Send(
-      new OxideMsg_DidCancelPopupMenu(render_frame_host_->GetRoutingID()));
+  render_frame_host_->DidCancelPopupMenu();
   Hide();
 }
 
@@ -64,7 +59,8 @@ WebPopupMenuImpl::WebPopupMenuImpl(content::RenderFrameHost* render_frame_host,
                                    bool allow_multiple_selection)
     : content::WebContentsObserver(
           content::WebContents::FromRenderFrameHost(render_frame_host)),
-      render_frame_host_(render_frame_host),
+      render_frame_host_(
+          static_cast<content::RenderFrameHostImpl*>(render_frame_host)),
       items_(items),
       selected_item_(selected_item),
       allow_multiple_selection_(allow_multiple_selection),

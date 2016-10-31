@@ -520,8 +520,6 @@ component("shared") {
     "common/oxide_user_script.h",
     "gpu/oxide_gl_context_dependent.cc",
     "gpu/oxide_gl_context_dependent.h",
-    "renderer/external_popup_menu.cc",
-    "renderer/external_popup_menu.h",
     "renderer/oxide_content_renderer_client.cc",
     "renderer/oxide_content_renderer_client.h",
     "renderer/oxide_isolated_world_map.cc",

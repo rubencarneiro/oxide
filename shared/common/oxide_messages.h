@@ -20,11 +20,9 @@
 
 #include "base/memory/shared_memory.h"
 #include "content/public/common/common_param_traits.h"
-#include "content/public/common/menu_item.h"
 #include "ipc/ipc_message_macros.h"
 #include "ipc/ipc_message_start.h"
 #include "third_party/WebKit/public/platform/WebTopControlsState.h"
-#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/ipc/geometry/gfx_param_traits.h"
 #include "url/gurl.h"
 
@@ -36,13 +34,6 @@
 IPC_ENUM_TRAITS(blink::WebTopControlsState)
 IPC_ENUM_TRAITS(oxide::ScriptMessageParams::Error)
 IPC_ENUM_TRAITS(oxide::ScriptMessageParams::Type)
-
-IPC_STRUCT_BEGIN(OxideHostMsg_ShowPopup_Params)
-  IPC_STRUCT_MEMBER(gfx::Rect, bounds)
-  IPC_STRUCT_MEMBER(int, selected_item)
-  IPC_STRUCT_MEMBER(std::vector<content::MenuItem>, popup_items)
-  IPC_STRUCT_MEMBER(bool, allow_multiple_selection)
-IPC_STRUCT_END()
 
 #define IPC_MESSAGE_START OxideMsgStart
 
@@ -72,19 +63,11 @@ IPC_MESSAGE_CONTROL1(OxideMsg_UpdateUserAgentOverrides,
 IPC_MESSAGE_CONTROL1(OxideMsg_SetLegacyUserAgentOverrideEnabled,
                      bool)
 
-IPC_MESSAGE_ROUTED1(OxideMsg_DidSelectPopupMenuItems,
-                    std::vector<int>)
-IPC_MESSAGE_ROUTED0(OxideMsg_DidCancelPopupMenu)
-
 IPC_MESSAGE_ROUTED1(OxideHostMsg_SendMessage,
                     oxide::ScriptMessageParams)
 
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockDisplayingInsecureContent)
 IPC_MESSAGE_ROUTED0(OxideHostMsg_DidBlockRunningInsecureContent)
-
-IPC_MESSAGE_ROUTED1(OxideHostMsg_ShowPopup,
-                    OxideHostMsg_ShowPopup_Params)
-IPC_MESSAGE_ROUTED0(OxideHostMsg_HidePopup)
 
 IPC_SYNC_MESSAGE_CONTROL1_1(OxideHostMsg_GetUserAgentOverride,
                             GURL,

@@ -31,6 +31,7 @@
 
 namespace content {
 class RenderFrameHost;
+class RenderFrameHostImpl;
 }
 
 namespace oxide {
@@ -59,7 +60,7 @@ class WebPopupMenuImpl : public WebPopupMenu,
   // content::WebContentsObserver implementation
   void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) override;
 
-  content::RenderFrameHost* render_frame_host_;
+  content::RenderFrameHostImpl* render_frame_host_;
 
   std::vector<content::MenuItem> items_;
 
