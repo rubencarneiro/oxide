@@ -22,6 +22,7 @@
 
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/web_contents_id.h"
 
@@ -34,7 +35,7 @@ namespace qt {
 
 class ChromeControllerClient;
 
-class Q_DECL_EXPORT ChromeController : public ProxyBase<ChromeController> {
+class OXIDE_QTCORE_EXPORT ChromeController : public ProxyBase<ChromeController> {
  public:
 
   enum class Mode {

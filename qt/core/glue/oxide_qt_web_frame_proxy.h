@@ -22,6 +22,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 
 QT_BEGIN_NAMESPACE
@@ -36,7 +37,7 @@ namespace qt {
 class WebFrame;
 class WebFrameProxyClient;
 
-class Q_DECL_EXPORT WebFrameProxy : public ProxyBase<WebFrame> {
+class OXIDE_QTCORE_EXPORT WebFrameProxy : public ProxyBase<WebFrame> {
  public:
   virtual ~WebFrameProxy() {}
 

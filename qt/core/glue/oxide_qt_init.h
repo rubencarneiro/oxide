@@ -20,6 +20,8 @@
 
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
 QT_BEGIN_NAMESPACE
 class QOpenGLContext;
@@ -30,10 +32,10 @@ namespace oxide {
 namespace qt {
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 3, 0)
-Q_DECL_EXPORT void SetSharedGLContext(QOpenGLContext* context);
+OXIDE_QTCORE_EXPORT void SetSharedGLContext(QOpenGLContext* context);
 #endif
 
-Q_DECL_EXPORT void EnsureChromiumStarted();
+OXIDE_QTCORE_EXPORT void EnsureChromiumStarted();
 
 } // namespace qt
 } // namespace oxide

@@ -23,6 +23,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 
 QT_BEGIN_NAMESPACE
@@ -35,7 +36,7 @@ namespace qt {
 class ScriptMessageHandler;
 class ScriptMessageHandlerProxyClient;
 
-class Q_DECL_EXPORT ScriptMessageHandlerProxy
+class OXIDE_QTCORE_EXPORT ScriptMessageHandlerProxy
     : public ProxyBase<ScriptMessageHandler>{
  public:
   static ScriptMessageHandlerProxy* create(

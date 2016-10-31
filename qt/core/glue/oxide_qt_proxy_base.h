@@ -21,6 +21,8 @@
 #include <QPointer>
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
+
 QT_BEGIN_NAMESPACE
 class QObject;
 QT_END_NAMESPACE
@@ -28,7 +30,7 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class Q_DECL_EXPORT ProxyBasePrivate {
+class OXIDE_QTCORE_EXPORT ProxyBasePrivate {
  public:
   ProxyBasePrivate(void* proxy);
   ~ProxyBasePrivate();
@@ -47,7 +49,7 @@ class Q_DECL_EXPORT ProxyBasePrivate {
 };
 
 template <typename Impl>
-class Q_DECL_EXPORT ProxyBase {
+class OXIDE_QTCORE_EXPORT ProxyBase {
  public:
   virtual ~ProxyBase() {}
 

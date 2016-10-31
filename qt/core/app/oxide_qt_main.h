@@ -20,14 +20,16 @@
 
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
+
 namespace oxide {
 namespace qt {
 
 class AllocatorHooks;
 
-Q_DECL_EXPORT int OxideMain(int argc,
-                            const char** argv,
-                            AllocatorHooks* allocator_hooks);
+OXIDE_QTCORE_EXPORT int OxideMain(int argc,
+                                  const char** argv,
+                                  AllocatorHooks* allocator_hooks);
 
 } // namespace qt
 } // namespace oxide

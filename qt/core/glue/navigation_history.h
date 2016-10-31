@@ -27,6 +27,7 @@
 #include <QtGlobal>
 #include <QUrl>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/web_contents_id.h"
 
@@ -44,7 +45,7 @@ namespace qt {
 class NavigationHistoryClient;
 class NavigationHistoryImpl;
 
-class Q_DECL_EXPORT NavigationHistoryItem : public QSharedData {
+class OXIDE_QTCORE_EXPORT NavigationHistoryItem : public QSharedData {
  public:
   NavigationHistoryItem();
   NavigationHistoryItem(NavigationHistoryImpl* history,
@@ -78,7 +79,8 @@ class Q_DECL_EXPORT NavigationHistoryItem : public QSharedData {
   QDateTime timestamp_;
 };
 
-class Q_DECL_EXPORT NavigationHistory : public ProxyBase<NavigationHistory> {
+class OXIDE_QTCORE_EXPORT NavigationHistory
+    : public ProxyBase<NavigationHistory> {
  public:
   static std::unique_ptr<NavigationHistory> create(
       NavigationHistoryClient* client,
