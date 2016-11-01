@@ -54,7 +54,6 @@
 #include "oxide_qt_skutils.h"
 #include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_type_conversions.h"
-#include "oxide_qt_web_context_menu.h"
 #include "oxide_qt_web_popup_menu.h"
 #include "qt_screen.h"
 
@@ -502,14 +501,6 @@ void ContentsView::UpdateCursor(const content::WebCursor& cursor) {
   } else {
     client_->UpdateCursor(QCursorFromWebCursor(cursor_info.type));
   }
-}
-
-oxide::WebContextMenu* ContentsView::CreateContextMenu(
-    content::RenderFrameHost* rfh,
-    const content::ContextMenuParams& params) {
-  WebContextMenu* menu = new WebContextMenu(rfh, params);
-  menu->SetProxy(client_->CreateWebContextMenu(menu));
-  return menu;
 }
 
 std::unique_ptr<oxide::WebPopupMenu> ContentsView::CreatePopupMenu(

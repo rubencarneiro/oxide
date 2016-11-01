@@ -149,6 +149,9 @@ class WebView : public oxide::WebViewClient,
       const std::string& user_agent) override;
   void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
+  std::unique_ptr<oxide::WebContextMenu> CreateContextMenu(
+      const content::ContextMenuParams& params,
+      oxide::WebContextMenuClient* client) override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
 
 #include <QPoint>
 #include <QString>
@@ -49,9 +49,9 @@ enum MediaStatusFlags {
   MEDIA_STATUS_CAN_ROTATE = 1 << 9
 };
 
-class WebContextMenuProxyClient {
+class WebContextMenuClient {
  public:
-  virtual ~WebContextMenuProxyClient() {}
+  virtual ~WebContextMenuClient() {}
 
   virtual MediaType mediaType() const = 0;
   virtual QPoint position() const = 0;
@@ -65,7 +65,7 @@ class WebContextMenuProxyClient {
   virtual QString selectionText() const = 0;
   virtual bool isEditable() const = 0;
 
-  virtual void cancel() = 0;
+  virtual void close() = 0;
 
   virtual int editFlags() const = 0;
 
@@ -79,4 +79,4 @@ class WebContextMenuProxyClient {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_

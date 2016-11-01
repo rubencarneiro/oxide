@@ -30,7 +30,6 @@
 #include "oxide_qquick_image_frame_node.h"
 #include "oxide_qquick_software_frame_node.h"
 #include "oxide_qquick_touch_handle_drawable.h"
-#include "oxide_qquick_web_context_menu.h"
 #include "oxide_qquick_web_popup_menu.h"
 
 namespace oxide {
@@ -141,11 +140,6 @@ void ContentsView::UpdateCursor(const QCursor& cursor) {
 void ContentsView::SetInputMethodEnabled(bool enabled) {
   item_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
-}
-
-oxide::qt::WebContextMenuProxy* ContentsView::CreateWebContextMenu(
-    oxide::qt::WebContextMenuProxyClient* client) {
-  return new WebContextMenu(item_, context_menu_, client);
 }
 
 std::unique_ptr<oxide::qt::WebPopupMenuProxy> ContentsView::CreateWebPopupMenu(

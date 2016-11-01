@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_web_context_menu.h"
+#include "qquick_web_context_menu.h"
 
 #include <QPointF>
 #include <QObject>
@@ -26,8 +26,7 @@
 #include <QtDebug>
 #include <QUrl>
 
-#include "qt/core/glue/oxide_qt_web_context_menu_proxy_client.h"
-#include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/core/glue/web_context_menu_client.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -55,7 +54,7 @@ class ContextMenuContext : public QObject {
 
  public:
   virtual ~ContextMenuContext() {}
-  ContextMenuContext(oxide::qt::WebContextMenuProxyClient* client);
+  ContextMenuContext(qt::WebContextMenuClient* client);
 
   OxideQQuickWebView::MediaType mediaType() const;
   QPointF position() const;
@@ -78,11 +77,11 @@ class ContextMenuContext : public QObject {
   Q_INVOKABLE void close();
 
  private:
-  oxide::qt::WebContextMenuProxyClient* client_;
+  qt::WebContextMenuClient* client_;
 };
 
 ContextMenuContext::ContextMenuContext(
-    oxide::qt::WebContextMenuProxyClient* client) :
+    qt::WebContextMenuClient* client) :
     client_(client) {}
 
 OxideQQuickWebView::MediaType ContextMenuContext::mediaType() const {
@@ -262,7 +261,7 @@ void ContextMenuContext::saveMedia() const {
 }
 
 void ContextMenuContext::close() {
-  client_->cancel();
+  client_->close();
 }
 
 } // namespace
@@ -270,7 +269,7 @@ void ContextMenuContext::close() {
 void WebContextMenu::Show() {
   if (!parent_) {
     qWarning() << "WebContextMenu::Show: Can't show after the view has gone";
-    client_->cancel();
+    client_->close();
     return;
   }
 
@@ -278,7 +277,7 @@ void WebContextMenu::Show() {
     qWarning() <<
         "WebContextMenu::Show: Content requested a context menu, but the "
         "application hasn't provided one";
-    client_->cancel();
+    client_->close();
     return;
   }
 
@@ -292,14 +291,14 @@ void WebContextMenu::Show() {
 
   context_->setContextProperty(QLatin1String("model"), contextObject);
   context_->setContextObject(contextObject);
-  contextObject->setParent(context_.data());
+  contextObject->setParent(context_.get());
 
   item_.reset(qobject_cast<QQuickItem*>(
-      component_->beginCreate(context_.data())));
+      component_->beginCreate(context_.get())));
   if (!item_) {
     qWarning() <<
         "WebContextMenu::Show: Failed to create instance of Qml context menu component";
-    client_->cancel();
+    client_->close();
     return;
   }
 
@@ -309,7 +308,7 @@ void WebContextMenu::Show() {
   OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
   if (web_view) {
     OxideQQuickWebViewPrivate::get(web_view)
-        ->addAttachedPropertyTo(item_.data());
+        ->addAttachedPropertyTo(item_.get());
   }
   item_->setParentItem(parent_);
 
@@ -324,7 +323,7 @@ void WebContextMenu::Hide() {
 
 WebContextMenu::WebContextMenu(QQuickItem* parent,
                                QQmlComponent* component,
-                               oxide::qt::WebContextMenuProxyClient* client)
+                               qt::WebContextMenuClient* client)
     : client_(client),
       parent_(parent),
       component_(component) {}
@@ -334,4 +333,4 @@ WebContextMenu::~WebContextMenu() {}
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_web_context_menu.moc"
+#include "qquick_web_context_menu.moc"

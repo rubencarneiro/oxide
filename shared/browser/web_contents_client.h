@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 #define _OXIDE_SHARED_BROWSER_WEB_CONTENTS_CLIENT_H_
 
+#include <memory>
 #include <string>
 
 #include "base/strings/string16.h"
@@ -28,6 +29,10 @@
 
 class GURL;
 
+namespace content {
+struct ContextMenuParams;
+}
+
 namespace gfx {
 class Rect;
 }
@@ -35,6 +40,8 @@ class Rect;
 namespace oxide {
 
 class ResourceDispatcherHostLoginDelegate;
+class WebContextMenu;
+class WebContextMenuClient;
 
 class OXIDE_SHARED_EXPORT WebContentsClient {
  public:
@@ -63,6 +70,10 @@ class OXIDE_SHARED_EXPORT WebContentsClient {
 
   virtual void HttpAuthenticationRequested(
       ResourceDispatcherHostLoginDelegate* login_delegate);
+
+  virtual std::unique_ptr<WebContextMenu> CreateContextMenu(
+      const content::ContextMenuParams& params,
+      WebContextMenuClient* client);
 };
 
 } // namespace oxide

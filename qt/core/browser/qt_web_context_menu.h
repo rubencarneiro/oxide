@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,31 +21,34 @@
 #include <memory>
 
 #include "base/macros.h"
+#include "content/public/common/context_menu_params.h"
 
-#include "qt/core/glue/oxide_qt_web_context_menu_proxy_client.h"
-#include "shared/browser/oxide_web_context_menu.h"
+#include "qt/core/glue/web_context_menu_client.h"
+#include "shared/browser/web_context_menu.h"
 
 namespace oxide {
+
+class WebContextMenuClient;
+
 namespace qt {
 
-class WebContextMenuProxy;
+class WebContextMenu;
 
-class WebContextMenu : public oxide::WebContextMenu,
-                       public WebContextMenuProxyClient {
+class WebContextMenuImpl : public oxide::WebContextMenu,
+                           public WebContextMenuClient {
  public:
-  WebContextMenu(content::RenderFrameHost* rfh,
-                 const content::ContextMenuParams& params);
+  WebContextMenuImpl(const content::ContextMenuParams& params,
+                     oxide::WebContextMenuClient* client);
+  ~WebContextMenuImpl() override;
 
-  void SetProxy(WebContextMenuProxy* proxy);
+  void Init(std::unique_ptr<qt::WebContextMenu> menu);
 
  private:
-  ~WebContextMenu() override;
-
   // oxide::WebContextMenu implementation
   void Show() override;
   void Hide() override;
 
-  // WebContextMenuProxyClient implementation
+  // WebContextMenuClient implementation
   MediaType mediaType() const override;
   QPoint position() const override;
   QUrl linkUrl() const override;
@@ -57,16 +60,20 @@ class WebContextMenu : public oxide::WebContextMenu,
   QUrl frameUrl() const override;
   QString selectionText() const override;
   bool isEditable() const override;
-  void cancel() override;
+  void close() override;
   int editFlags() const override;
   int mediaFlags() const override;
   void copyImage() const override;
   void saveLink() const override;
   void saveMedia() const override;
 
-  std::unique_ptr<WebContextMenuProxy> proxy_;
+  content::ContextMenuParams params_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebContextMenu);
+  oxide::WebContextMenuClient* client_;
+
+  std::unique_ptr<qt::WebContextMenu> menu_;
+
+  DISALLOW_COPY_AND_ASSIGN(WebContextMenuImpl);
 };
 
 } // namespace qt

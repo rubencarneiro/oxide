@@ -71,6 +71,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
 
  private:
   // oxide::qt::WebViewProxyClient implementation
+  std::unique_ptr<oxide::qt::WebContextMenu> CreateWebContextMenu(
+      oxide::qt::WebContextMenuClient* client) override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,
       oxide::qt::JavaScriptDialogProxyClient* client) override;
@@ -151,6 +153,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   QScopedPointer<OxideQSecurityStatus> security_status_;
   QScopedPointer<OxideQFindController> find_controller_;
 
+  QQmlComponent* context_menu_;
   QQmlComponent* alert_dialog_;
   QQmlComponent* confirm_dialog_;
   QQmlComponent* prompt_dialog_;

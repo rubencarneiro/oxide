@@ -52,9 +52,9 @@
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
-#include "oxide_web_context_menu.h"
 #include "oxide_web_popup_menu_impl.h"
 #include "screen.h"
+#include "web_context_menu_impl.h"
 
 namespace oxide {
 
@@ -313,15 +313,7 @@ void WebContentsView::ShowContextMenu(
     return;
   }
 
-  if (!client_) {
-    return;
-  }
-
-  WebContextMenu* menu = client_->CreateContextMenu(render_frame_host, params);
-  if (!menu) {
-    return;
-  }
-
+  WebContextMenuImpl* menu = new WebContextMenuImpl(render_frame_host, params);
   menu->Show();
 }
 

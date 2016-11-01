@@ -84,11 +84,6 @@ class ContentsView : public QObject,
   //  future. Instead, we should have an auxilliary UI client class. There'll
   //  be a WebView impl of this for the custom UI component APIs, and also an
   //  Ubuntu UI Toolkit impl
-  QQmlComponent* contextMenu() const { return context_menu_; }
-  void setContextMenu(QQmlComponent* context_menu) {
-    context_menu_ = context_menu;
-  }
-
   QQmlComponent* popupMenu() const { return popup_menu_; }
   void setPopupMenu(QQmlComponent* popup_menu) {
     popup_menu_ = popup_menu;
@@ -122,8 +117,6 @@ class ContentsView : public QObject,
   void EvictCurrentFrame() override;
   void UpdateCursor(const QCursor& cursor) override;
   void SetInputMethodEnabled(bool enabled) override;
-  oxide::qt::WebContextMenuProxy* CreateWebContextMenu(
-      oxide::qt::WebContextMenuProxyClient* client) override;
   std::unique_ptr<oxide::qt::WebPopupMenuProxy> CreateWebPopupMenu(
       const QList<oxide::qt::MenuItem>& items,
       bool allow_multiple_selection,
@@ -140,7 +133,6 @@ class ContentsView : public QObject,
   QPointer<QQuickItem> item_;
   QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
-  QPointer<QQmlComponent> context_menu_;
   QPointer<QQmlComponent> popup_menu_;
   QPointer<QQmlComponent> touch_handle_;
 

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,33 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_web_context_menu.h"
+#include "qt_web_context_menu.h"
 
-#include <QPoint>
 #include <QString>
 #include <QUrl>
 
 #include "base/strings/utf_string_conversions.h"
-#include "ui/display/display.h"
+#include "third_party/WebKit/public/web/WebContextMenuData.h"
+#include "ui/gfx/geometry/point.h"
+#include "url/gurl.h"
 
-#include "qt/core/glue/oxide_qt_web_context_menu_proxy.h"
+#include "qt/core/glue/web_context_menu.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
-#include "shared/browser/oxide_web_view.h"
+#include "shared/browser/web_context_menu_client.h"
+
+#include "oxide_qt_contents_view.h"
+#include "oxide_qt_dpi_utils.h"
+#include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
 
-WebContextMenu::~WebContextMenu() {}
-
-void WebContextMenu::Show() {
-  proxy_->Show();
+void WebContextMenuImpl::Show() {
+  menu_->Show();
 }
 
-void WebContextMenu::Hide() {
-  proxy_->Hide();
+void WebContextMenuImpl::Hide() {
+  menu_->Hide();
 }
 
-MediaType WebContextMenu::mediaType() const {
+MediaType WebContextMenuImpl::mediaType() const {
   switch (params_.media_type) {
     case blink::WebContextMenuData::MediaTypeNone:
     case blink::WebContextMenuData::MediaTypeFile:
@@ -61,56 +64,56 @@ MediaType WebContextMenu::mediaType() const {
   }
 }
 
-QPoint WebContextMenu::position() const {
-  // The position is expressed in device-independent pixels (DIP), it needs to
-  // be multiplied by the device pixel ratio (DPR) to obtain physical pixels.
-  // TODO: Stop using WebView here
-  oxide::WebView* webview = oxide::WebView::FromWebContents(web_contents());
-  const float dpr = webview->GetDisplay().device_scale_factor();
-  return QPoint(params_.x * dpr, params_.y * dpr);
+QPoint WebContextMenuImpl::position() const {
+  ContentsView* contents_view =
+      ContentsView::FromWebContents(client_->GetWebContents());
+  gfx::Point position =
+      DpiUtils::ConvertChromiumPixelsToQt(gfx::Point(params_.x, params_.y),
+                                          contents_view->GetScreen());
+  return ToQt(position);
 }
 
-QUrl WebContextMenu::linkUrl() const {
+QUrl WebContextMenuImpl::linkUrl() const {
   return QUrl(QString::fromStdString(params_.link_url.spec()));
 }
 
-QString WebContextMenu::linkText() const {
+QString WebContextMenuImpl::linkText() const {
   return QString::fromStdString(base::UTF16ToUTF8(params_.link_text));
 }
 
-QUrl WebContextMenu::unfilteredLinkUrl() const {
+QUrl WebContextMenuImpl::unfilteredLinkUrl() const {
   return QUrl(QString::fromStdString(params_.unfiltered_link_url.spec()));
 }
 
-QUrl WebContextMenu::srcUrl() const {
+QUrl WebContextMenuImpl::srcUrl() const {
   return QUrl(QString::fromStdString(params_.src_url.spec()));
 }
 
-bool WebContextMenu::hasImageContents() const {
+bool WebContextMenuImpl::hasImageContents() const {
   return params_.has_image_contents;
 }
 
-QUrl WebContextMenu::pageUrl() const {
+QUrl WebContextMenuImpl::pageUrl() const {
   return QUrl(QString::fromStdString(params_.page_url.spec()));
 }
 
-QUrl WebContextMenu::frameUrl() const {
+QUrl WebContextMenuImpl::frameUrl() const {
   return QUrl(QString::fromStdString(params_.frame_url.spec()));
 }
 
-QString WebContextMenu::selectionText() const {
+QString WebContextMenuImpl::selectionText() const {
   return QString::fromStdString(base::UTF16ToUTF8(params_.selection_text));
 }
 
-bool WebContextMenu::isEditable() const {
+bool WebContextMenuImpl::isEditable() const {
   return params_.is_editable;
 }
 
-void WebContextMenu::cancel() {
-  Close();
+void WebContextMenuImpl::close() {
+  client_->Close();
 }
 
-int WebContextMenu::editFlags() const {
+int WebContextMenuImpl::editFlags() const {
   int flags = NO_CAPABILITY;
   if (params_.edit_flags & blink::WebContextMenuData::CanUndo) {
     flags |= UNDO_CAPABILITY;
@@ -136,7 +139,7 @@ int WebContextMenu::editFlags() const {
   return flags;
 }
 
-int WebContextMenu::mediaFlags() const {
+int WebContextMenuImpl::mediaFlags() const {
   int flags = MEDIA_STATUS_NONE;
   if (params_.media_flags & blink::WebContextMenuData::MediaInError) {
     flags |= MEDIA_STATUS_IN_ERROR;
@@ -171,24 +174,27 @@ int WebContextMenu::mediaFlags() const {
   return flags;
 }
 
-void WebContextMenu::copyImage() const {
-  CopyImage();
+void WebContextMenuImpl::copyImage() const {
+  client_->CopyImage();
 }
 
-void WebContextMenu::saveLink() const {
-  SaveLink();
+void WebContextMenuImpl::saveLink() const {
+  client_->SaveLink();
 }
 
-void WebContextMenu::saveMedia() const {
-  SaveMedia();
+void WebContextMenuImpl::saveMedia() const {
+  client_->SaveMedia();
 }
 
-WebContextMenu::WebContextMenu(content::RenderFrameHost* rfh,
-                               const content::ContextMenuParams& params)
-    : oxide::WebContextMenu(rfh, params) {}
+WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
+                                       oxide::WebContextMenuClient* client)
+    : params_(params),
+      client_(client) {}
 
-void WebContextMenu::SetProxy(WebContextMenuProxy* proxy) {
-  proxy_.reset(proxy);
+WebContextMenuImpl::~WebContextMenuImpl() = default;
+
+void WebContextMenuImpl::Init(std::unique_ptr<qt::WebContextMenu> menu) {
+  menu_ = std::move(menu);
 }
 
 } // namespace qt

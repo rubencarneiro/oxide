@@ -56,6 +56,7 @@
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
+#include "qt/quick/qquick_web_context_menu.h"
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -129,6 +130,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
       constructed_(false),
+      context_menu_(nullptr),
       alert_dialog_(nullptr),
       confirm_dialog_(nullptr),
       prompt_dialog_(nullptr),
@@ -136,6 +138,15 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
       construct_props_(new ConstructProps()) {}
+
+std::unique_ptr<oxide::qt::WebContextMenu>
+OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    oxide::qt::WebContextMenuClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return std::unique_ptr<oxide::qt::WebContextMenu>(
+      new oxide::qquick::WebContextMenu(q, context_menu_, client));
+}
 
 oxide::qt::JavaScriptDialogProxy*
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
@@ -1773,17 +1784,17 @@ qreal OxideQQuickWebView::contentY() const {
 QQmlComponent* OxideQQuickWebView::contextMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->contents_view_->contextMenu();
+  return d->context_menu_;
 }
 
 void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->contents_view_->contextMenu() == contextMenu) {
+  if (d->context_menu_ == contextMenu) {
     return;
   }
 
-  d->contents_view_->setContextMenu(contextMenu);
+  d->context_menu_ = contextMenu;
   emit contextMenuChanged();
 }
 
