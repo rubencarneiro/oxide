@@ -72,6 +72,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
  private:
   // oxide::qt::WebViewProxyClient implementation
   std::unique_ptr<oxide::qt::WebContextMenu> CreateWebContextMenu(
+      const oxide::qt::WebContextMenuParams& params,
       oxide::qt::WebContextMenuClient* client) override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,

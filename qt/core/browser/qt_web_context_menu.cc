@@ -25,8 +25,8 @@
 #include "ui/gfx/geometry/point.h"
 #include "url/gurl.h"
 
+#include "qt/core/glue/edit_capability_flags.h"
 #include "qt/core/glue/web_context_menu.h"
-#include "qt/core/glue/oxide_qt_web_view_proxy.h"
 #include "shared/browser/web_context_menu_client.h"
 
 #include "oxide_qt_contents_view.h"
@@ -36,16 +36,10 @@
 namespace oxide {
 namespace qt {
 
-void WebContextMenuImpl::Show() {
-  menu_->Show();
-}
+namespace {
 
-void WebContextMenuImpl::Hide() {
-  menu_->Hide();
-}
-
-MediaType WebContextMenuImpl::mediaType() const {
-  switch (params_.media_type) {
+MediaType ToMediaType(blink::WebContextMenuData::MediaType type) {
+  switch (type) {
     case blink::WebContextMenuData::MediaTypeNone:
     case blink::WebContextMenuData::MediaTypeFile:
       return MEDIA_TYPE_NONE;
@@ -64,114 +58,79 @@ MediaType WebContextMenuImpl::mediaType() const {
   }
 }
 
-QPoint WebContextMenuImpl::position() const {
-  ContentsView* contents_view =
-      ContentsView::FromWebContents(client_->GetWebContents());
-  gfx::Point position =
-      DpiUtils::ConvertChromiumPixelsToQt(gfx::Point(params_.x, params_.y),
-                                          contents_view->GetScreen());
-  return ToQt(position);
+MediaStatusFlags ToMediaStatusFlags(int flags) {
+  MediaStatusFlags rv;
+  if (flags & blink::WebContextMenuData::MediaInError) {
+    rv |= MEDIA_STATUS_IN_ERROR;
+  }
+  if (flags & blink::WebContextMenuData::MediaPaused) {
+    rv |= MEDIA_STATUS_PAUSED;
+  }
+  if (flags & blink::WebContextMenuData::MediaMuted) {
+    rv |= MEDIA_STATUS_MUTED;
+  }
+  if (flags & blink::WebContextMenuData::MediaLoop) {
+    rv |= MEDIA_STATUS_LOOP;
+  }
+  if (flags & blink::WebContextMenuData::MediaCanSave) {
+    rv |= MEDIA_STATUS_CAN_SAVE;
+  }
+  if (flags & blink::WebContextMenuData::MediaHasAudio) {
+    rv |= MEDIA_STATUS_HAS_AUDIO;
+  }
+  if (flags & blink::WebContextMenuData::MediaCanToggleControls) {
+    rv |= MEDIA_STATUS_CAN_TOGGLE_CONTROLS;
+  }
+  if (flags & blink::WebContextMenuData::MediaControls) {
+    rv |= MEDIA_STATUS_CONTROLS;
+  }
+  if (flags & blink::WebContextMenuData::MediaCanPrint) {
+    rv |= MEDIA_STATUS_CAN_PRINT;
+  }
+  if (flags & blink::WebContextMenuData::MediaCanRotate) {
+    rv |= MEDIA_STATUS_CAN_ROTATE;
+  }
+  return rv;
 }
 
-QUrl WebContextMenuImpl::linkUrl() const {
-  return QUrl(QString::fromStdString(params_.link_url.spec()));
+EditCapabilityFlags ToEditCapabilityFlags(int flags) {
+  EditCapabilityFlags rv;
+  if (flags & blink::WebContextMenuData::CanUndo) {
+    rv |= EDIT_CAPABILITY_UNDO;
+  }
+  if (flags & blink::WebContextMenuData::CanRedo) {
+    rv |= EDIT_CAPABILITY_REDO;
+  }
+  if (flags & blink::WebContextMenuData::CanCut) {
+    rv |= EDIT_CAPABILITY_CUT;
+  }
+  if (flags & blink::WebContextMenuData::CanCopy) {
+    rv |= EDIT_CAPABILITY_COPY;
+  }
+  if (flags & blink::WebContextMenuData::CanPaste) {
+    rv |= EDIT_CAPABILITY_PASTE;
+  }
+  if (flags & blink::WebContextMenuData::CanDelete) {
+    rv |= EDIT_CAPABILITY_ERASE;
+  }
+  if (flags & blink::WebContextMenuData::CanSelectAll) {
+    rv |= EDIT_CAPABILITY_SELECT_ALL;
+  }
+  return rv;
 }
 
-QString WebContextMenuImpl::linkText() const {
-  return QString::fromStdString(base::UTF16ToUTF8(params_.link_text));
 }
 
-QUrl WebContextMenuImpl::unfilteredLinkUrl() const {
-  return QUrl(QString::fromStdString(params_.unfiltered_link_url.spec()));
+void WebContextMenuImpl::Show() {
+  menu_->Show();
 }
 
-QUrl WebContextMenuImpl::srcUrl() const {
-  return QUrl(QString::fromStdString(params_.src_url.spec()));
-}
-
-bool WebContextMenuImpl::hasImageContents() const {
-  return params_.has_image_contents;
-}
-
-QUrl WebContextMenuImpl::pageUrl() const {
-  return QUrl(QString::fromStdString(params_.page_url.spec()));
-}
-
-QUrl WebContextMenuImpl::frameUrl() const {
-  return QUrl(QString::fromStdString(params_.frame_url.spec()));
-}
-
-QString WebContextMenuImpl::selectionText() const {
-  return QString::fromStdString(base::UTF16ToUTF8(params_.selection_text));
-}
-
-bool WebContextMenuImpl::isEditable() const {
-  return params_.is_editable;
+void WebContextMenuImpl::Hide() {
+  menu_->Hide();
 }
 
 void WebContextMenuImpl::close() {
   client_->Close();
-}
-
-int WebContextMenuImpl::editFlags() const {
-  int flags = NO_CAPABILITY;
-  if (params_.edit_flags & blink::WebContextMenuData::CanUndo) {
-    flags |= UNDO_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanRedo) {
-    flags |= REDO_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanCut) {
-    flags |= CUT_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanCopy) {
-    flags |= COPY_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanPaste) {
-    flags |= PASTE_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanDelete) {
-    flags |= ERASE_CAPABILITY;
-  }
-  if (params_.edit_flags & blink::WebContextMenuData::CanSelectAll) {
-    flags |= SELECT_ALL_CAPABILITY;
-  }
-  return flags;
-}
-
-int WebContextMenuImpl::mediaFlags() const {
-  int flags = MEDIA_STATUS_NONE;
-  if (params_.media_flags & blink::WebContextMenuData::MediaInError) {
-    flags |= MEDIA_STATUS_IN_ERROR;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaPaused) {
-    flags |= MEDIA_STATUS_PAUSED;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaMuted) {
-    flags |= MEDIA_STATUS_MUTED;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaLoop) {
-    flags |= MEDIA_STATUS_LOOP;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaCanSave) {
-    flags |= MEDIA_STATUS_CAN_SAVE;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaHasAudio) {
-    flags |= MEDIA_STATUS_HAS_AUDIO;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaCanToggleControls) {
-    flags |= MEDIA_STATUS_CAN_TOGGLE_CONTROLS;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaControls) {
-    flags |= MEDIA_STATUS_CONTROLS;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaCanPrint) {
-    flags |= MEDIA_STATUS_CAN_PRINT;
-  }
-  if (params_.media_flags & blink::WebContextMenuData::MediaCanRotate) {
-    flags |= MEDIA_STATUS_CAN_ROTATE;
-  }
-  return flags;
 }
 
 void WebContextMenuImpl::copyImage() const {
@@ -195,6 +154,38 @@ WebContextMenuImpl::~WebContextMenuImpl() = default;
 
 void WebContextMenuImpl::Init(std::unique_ptr<qt::WebContextMenu> menu) {
   menu_ = std::move(menu);
+}
+
+WebContextMenuParams WebContextMenuImpl::GetParams() const {
+  WebContextMenuParams rv;
+
+  rv.page_url = QUrl(QString::fromStdString(params_.page_url.spec()));
+  rv.frame_url = QUrl(QString::fromStdString(params_.frame_url.spec()));
+
+  ContentsView* contents_view =
+      ContentsView::FromWebContents(client_->GetWebContents());
+  gfx::Point position =
+      DpiUtils::ConvertChromiumPixelsToQt(gfx::Point(params_.x, params_.y),
+                                          contents_view->GetScreen());
+  rv.position = ToQt(position);
+
+  rv.link_url = QUrl(QString::fromStdString(params_.link_url.spec()));
+  rv.unfiltered_link_url =
+      QUrl(QString::fromStdString(params_.unfiltered_link_url.spec()));
+  rv.link_text = QString::fromStdString(base::UTF16ToUTF8(params_.link_text));
+
+  rv.media_type = ToMediaType(params_.media_type);
+  rv.has_image_contents = params_.has_image_contents;
+  rv.src_url = QUrl(QString::fromStdString(params_.src_url.spec()));
+
+  rv.media_flags = ToMediaStatusFlags(params_.media_flags);
+
+  rv.selection_text =
+      QString::fromStdString(base::UTF16ToUTF8(params_.selection_text));
+  rv.is_editable = params_.is_editable;
+  rv.edit_flags = ToEditCapabilityFlags(params_.edit_flags);
+
+  return std::move(rv);
 }
 
 } // namespace qt

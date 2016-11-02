@@ -141,11 +141,12 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
 
 std::unique_ptr<oxide::qt::WebContextMenu>
 OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    const oxide::qt::WebContextMenuParams& params,
     oxide::qt::WebContextMenuClient* client) {
   Q_Q(OxideQQuickWebView);
 
   return std::unique_ptr<oxide::qt::WebContextMenu>(
-      new oxide::qquick::WebContextMenu(q, context_menu_, client));
+      new oxide::qquick::WebContextMenu(q, context_menu_, params, client));
 }
 
 oxide::qt::JavaScriptDialogProxy*
@@ -2467,7 +2468,8 @@ OxideQQuickWebView::editingCapabilities() const {
   }
 
   oxide::qt::EditCapabilityFlags flags = d->proxy_->editFlags();
-  return static_cast<EditCapabilities>(flags);
+  return static_cast<EditCapabilities>(
+      oxide::qt::EditCapabilityFlags::Int(flags));
 }
 
 /*!

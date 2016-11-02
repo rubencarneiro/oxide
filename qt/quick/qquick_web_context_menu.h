@@ -23,6 +23,7 @@
 #include <QPointer>
 
 #include "qt/core/glue/web_context_menu.h"
+#include "qt/core/glue/web_context_menu_params.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -42,6 +43,7 @@ class WebContextMenu : public qt::WebContextMenu {
  public:
   WebContextMenu(QQuickItem* parent,
                  QQmlComponent* component,
+                 const qt::WebContextMenuParams& params,
                  qt::WebContextMenuClient* client);
   ~WebContextMenu() override;
 
@@ -50,7 +52,9 @@ class WebContextMenu : public qt::WebContextMenu {
   void Show() override;
   void Hide() override;
 
+  qt::WebContextMenuParams params_;
   qt::WebContextMenuClient* client_;
+
   QPointer<QQuickItem> parent_;
   QPointer<QQmlComponent> component_;
   std::unique_ptr<QQuickItem> item_;

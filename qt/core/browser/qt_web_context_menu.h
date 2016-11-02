@@ -24,6 +24,7 @@
 #include "content/public/common/context_menu_params.h"
 
 #include "qt/core/glue/web_context_menu_client.h"
+#include "qt/core/glue/web_context_menu_params.h"
 #include "shared/browser/web_context_menu.h"
 
 namespace oxide {
@@ -43,26 +44,15 @@ class WebContextMenuImpl : public oxide::WebContextMenu,
 
   void Init(std::unique_ptr<qt::WebContextMenu> menu);
 
+  WebContextMenuParams GetParams() const;
+
  private:
   // oxide::WebContextMenu implementation
   void Show() override;
   void Hide() override;
 
   // WebContextMenuClient implementation
-  MediaType mediaType() const override;
-  QPoint position() const override;
-  QUrl linkUrl() const override;
-  QString linkText() const override;
-  QUrl unfilteredLinkUrl() const override;
-  QUrl srcUrl() const override;
-  bool hasImageContents() const override;
-  QUrl pageUrl() const override;
-  QUrl frameUrl() const override;
-  QString selectionText() const override;
-  bool isEditable() const override;
   void close() override;
-  int editFlags() const override;
-  int mediaFlags() const override;
   void copyImage() const override;
   void saveLink() const override;
   void saveMedia() const override;

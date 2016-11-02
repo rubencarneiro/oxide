@@ -48,6 +48,7 @@ class FilePickerProxyClient;
 class JavaScriptDialogProxy;
 class WebContextMenu;
 class WebContextMenuClient;
+class WebContextMenuParams;
 class WebFrameProxy;
 
 enum FrameMetadataChangeFlags {
@@ -63,6 +64,7 @@ class WebViewProxyClient {
   virtual ~WebViewProxyClient() {}
 
   virtual std::unique_ptr<WebContextMenu> CreateWebContextMenu(
+      const WebContextMenuParams& params,
       WebContextMenuClient* client) = 0;
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
       JavaScriptDialogProxyClient::Type type,

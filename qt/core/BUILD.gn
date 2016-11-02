@@ -308,6 +308,7 @@ source_set("core_sources") {
     "glue/oxide_qt_web_view_proxy_client.h",
     "glue/web_context_menu.h",
     "glue/web_context_menu_client.h",
+    "glue/web_context_menu_params.h",
     "gpu/oxide_qt_gl_context_dependent.cc",
     "gpu/oxide_qt_gl_context_dependent.h"
   ]
