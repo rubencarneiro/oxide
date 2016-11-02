@@ -995,6 +995,18 @@ to use it.
 */
 
 /*!
+\qmlsignal void WebView::loadingStateChanged()
+\since OxideQt 1.3
+
+This signal is emitted whenever the value of \l{loading} changes.
+*/
+
+/*!
+\qmlsignal void WebView::navigationHistoryChanged()
+\deprecated
+*/
+
+/*!
 \qmlsignal void WebView::loadingChanged(LoadEvent event)
 \deprecated
 */
@@ -1369,7 +1381,7 @@ QUrl OxideQQuickWebView::icon() const {
 This property will be true if the application can navigate the webview back by
 calling goBack. Else it will be false.
 
-\note The notification signal for this is \e{navigationHistoryChanged}.
+\note The notification signal for this is \l{navigationHistoryChanged}.
 
 \sa goBack
 */
@@ -1390,7 +1402,7 @@ bool OxideQQuickWebView::canGoBack() const {
 This property will be true if the application can navigate the webview forward
 by calling goForward. Else it will be false.
 
-\note The notification signal for this is \e{navigationHistoryChanged}.
+\note The notification signal for this is \l{navigationHistoryChanged}.
 
 \sa goForward
 */
@@ -1462,7 +1474,7 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
 
 This property indicates whether a load is currently in progress.
 
-\note The notifier signal for this property is \e{loadingStateChanged} rather
+\note The notifier signal for this property is \l{loadingStateChanged} rather
 than the expected \e{loadingChanged}.
 */
 
