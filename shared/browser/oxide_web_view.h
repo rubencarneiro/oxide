@@ -32,7 +32,6 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
-#include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
@@ -173,8 +172,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
   void PrepareToClose();
-
-  display::Display GetDisplay() const;
 
   JavaScriptDialog* CreateJavaScriptDialog(
       content::JavaScriptMessageType javascript_message_type);

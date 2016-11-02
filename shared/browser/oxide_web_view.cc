@@ -1186,10 +1186,6 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload();
 }
 
-display::Display WebView::GetDisplay() const {
-  return WebContentsView::FromWebContents(web_contents_.get())->GetDisplay();
-}
-
 JavaScriptDialog* WebView::CreateJavaScriptDialog(
     content::JavaScriptMessageType javascript_message_type) {
   return client_->CreateJavaScriptDialog(javascript_message_type);
