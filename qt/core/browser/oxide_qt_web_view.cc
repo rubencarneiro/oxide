@@ -65,6 +65,7 @@
 #include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/core/glue/web_context_menu.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_fullscreen_helper.h"
@@ -90,6 +91,7 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
+#include "qt_web_context_menu.h"
 #include "web_contents_id_tracker.h"
 #include "web_preferences.h"
 
@@ -555,6 +557,15 @@ void WebView::HttpAuthenticationRequested(
       OxideQHttpAuthenticationRequestPrivate::Create(login_delegate));
 }
 
+std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
+    const content::ContextMenuParams& params,
+    oxide::WebContextMenuClient* client) {
+  std::unique_ptr<WebContextMenuImpl> menu =
+      base::MakeUnique<WebContextMenuImpl>(params, client);
+  menu->Init(client_->CreateWebContextMenu(menu->GetParams(), menu.get()));
+  return std::move(menu);
+}
+
 size_t WebView::GetScriptMessageHandlerCount() const {
   return message_handlers_.size();
 }
@@ -877,30 +888,30 @@ QUrl WebView::targetUrl() const {
 }
 
 EditCapabilityFlags WebView::editFlags() const {
-  EditCapabilityFlags capabilities = NO_CAPABILITY;
+  EditCapabilityFlags caps;
   blink::WebContextMenuData::EditFlags flags = web_view_->GetEditFlags();
   if (flags & blink::WebContextMenuData::CanUndo) {
-    capabilities |= UNDO_CAPABILITY;
+    caps |= EDIT_CAPABILITY_UNDO;
   }
   if (flags & blink::WebContextMenuData::CanRedo) {
-    capabilities |= REDO_CAPABILITY;
+    caps |= EDIT_CAPABILITY_REDO;
   }
   if (flags & blink::WebContextMenuData::CanCut) {
-    capabilities |= CUT_CAPABILITY;
+    caps |= EDIT_CAPABILITY_CUT;
   }
   if (flags & blink::WebContextMenuData::CanCopy) {
-    capabilities |= COPY_CAPABILITY;
+    caps |= EDIT_CAPABILITY_COPY;
   }
   if (flags & blink::WebContextMenuData::CanPaste) {
-    capabilities |= PASTE_CAPABILITY;
+    caps |= EDIT_CAPABILITY_PASTE;
   }
   if (flags & blink::WebContextMenuData::CanDelete) {
-    capabilities |= ERASE_CAPABILITY;
+    caps |= EDIT_CAPABILITY_ERASE;
   }
   if (flags & blink::WebContextMenuData::CanSelectAll) {
-    capabilities |= SELECT_ALL_CAPABILITY;
+    caps |= EDIT_CAPABILITY_SELECT_ALL;
   }
-  return capabilities;
+  return caps;
 }
 
 qreal WebView::zoomFactor() const {

@@ -68,10 +68,6 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
 
   virtual void UpdateCursor(const content::WebCursor& cursor);
 
-  virtual WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params);
-
   virtual std::unique_ptr<WebPopupMenu> CreatePopupMenu(
       const std::vector<content::MenuItem> & items,
       int selected_item,

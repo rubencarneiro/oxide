@@ -107,9 +107,6 @@ class ContentsView : public QObject,
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const content::WebCursor& cursor) override;
-  oxide::WebContextMenu* CreateContextMenu(
-      content::RenderFrameHost* rfh,
-      const content::ContextMenuParams& params) override;
   std::unique_ptr<oxide::WebPopupMenu> CreatePopupMenu(
       const std::vector<content::MenuItem> & items,
       int selected_item,

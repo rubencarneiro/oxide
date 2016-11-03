@@ -17,6 +17,8 @@
 
 #include "web_contents_client.h"
 
+#include "web_context_menu.h"
+
 namespace oxide {
 
 WebContentsClient::~WebContentsClient() = default;
@@ -54,5 +56,11 @@ void WebContentsClient::DownloadRequested(const GURL& url,
 
 void WebContentsClient::HttpAuthenticationRequested(
     ResourceDispatcherHostLoginDelegate* login_delegate) {}
+
+std::unique_ptr<WebContextMenu> WebContentsClient::CreateContextMenu(
+    const content::ContextMenuParams& params,
+    WebContextMenuClient* client) {
+  return nullptr;
+}
 
 } // namespace oxide

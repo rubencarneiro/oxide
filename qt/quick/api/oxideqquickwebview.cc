@@ -56,6 +56,7 @@
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
+#include "qt/quick/qquick_web_context_menu.h"
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -129,6 +130,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
       constructed_(false),
+      context_menu_(nullptr),
       alert_dialog_(nullptr),
       confirm_dialog_(nullptr),
       prompt_dialog_(nullptr),
@@ -136,6 +138,16 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
       construct_props_(new ConstructProps()) {}
+
+std::unique_ptr<oxide::qt::WebContextMenu>
+OxideQQuickWebViewPrivate::CreateWebContextMenu(
+    const oxide::qt::WebContextMenuParams& params,
+    oxide::qt::WebContextMenuClient* client) {
+  Q_Q(OxideQQuickWebView);
+
+  return std::unique_ptr<oxide::qt::WebContextMenu>(
+      new oxide::qquick::WebContextMenu(q, context_menu_, params, client));
+}
 
 oxide::qt::JavaScriptDialogProxy*
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
@@ -984,6 +996,18 @@ to use it.
 */
 
 /*!
+\qmlsignal void WebView::loadingStateChanged()
+\since OxideQt 1.3
+
+This signal is emitted whenever the value of \l{loading} changes.
+*/
+
+/*!
+\qmlsignal void WebView::navigationHistoryChanged()
+\deprecated
+*/
+
+/*!
 \qmlsignal void WebView::loadingChanged(LoadEvent event)
 \deprecated
 */
@@ -1358,7 +1382,7 @@ QUrl OxideQQuickWebView::icon() const {
 This property will be true if the application can navigate the webview back by
 calling goBack. Else it will be false.
 
-\note The notification signal for this is \e{navigationHistoryChanged}.
+\note The notification signal for this is \l{navigationHistoryChanged}.
 
 \sa goBack
 */
@@ -1379,7 +1403,7 @@ bool OxideQQuickWebView::canGoBack() const {
 This property will be true if the application can navigate the webview forward
 by calling goForward. Else it will be false.
 
-\note The notification signal for this is \e{navigationHistoryChanged}.
+\note The notification signal for this is \l{navigationHistoryChanged}.
 
 \sa goForward
 */
@@ -1451,7 +1475,7 @@ void OxideQQuickWebView::setIncognito(bool incognito) {
 
 This property indicates whether a load is currently in progress.
 
-\note The notifier signal for this property is \e{loadingStateChanged} rather
+\note The notifier signal for this property is \l{loadingStateChanged} rather
 than the expected \e{loadingChanged}.
 */
 
@@ -1773,17 +1797,17 @@ qreal OxideQQuickWebView::contentY() const {
 QQmlComponent* OxideQQuickWebView::contextMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->contents_view_->contextMenu();
+  return d->context_menu_;
 }
 
 void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->contents_view_->contextMenu() == contextMenu) {
+  if (d->context_menu_ == contextMenu) {
     return;
   }
 
-  d->contents_view_->setContextMenu(contextMenu);
+  d->context_menu_ = contextMenu;
   emit contextMenuChanged();
 }
 
@@ -2444,7 +2468,8 @@ OxideQQuickWebView::editingCapabilities() const {
   }
 
   oxide::qt::EditCapabilityFlags flags = d->proxy_->editFlags();
-  return static_cast<EditCapabilities>(flags);
+  return static_cast<EditCapabilities>(
+      oxide::qt::EditCapabilityFlags::Int(flags));
 }
 
 /*!

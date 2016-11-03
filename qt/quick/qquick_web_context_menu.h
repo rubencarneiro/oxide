@@ -18,10 +18,12 @@
 #ifndef _OXIDE_QT_QUICK_WEB_CONTEXT_MENU_H_
 #define _OXIDE_QT_QUICK_WEB_CONTEXT_MENU_H_
 
-#include <QPointer>
-#include <QScopedPointer>
+#include <memory>
 
-#include "qt/core/glue/oxide_qt_web_context_menu_proxy.h"
+#include <QPointer>
+
+#include "qt/core/glue/web_context_menu.h"
+#include "qt/core/glue/web_context_menu_params.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -32,28 +34,31 @@ QT_END_NAMESPACE
 namespace oxide {
 
 namespace qt {
-class WebContextMenuProxyClient;
+class WebContextMenuClient;
 }
 
 namespace qquick {
 
-class WebContextMenu : public oxide::qt::WebContextMenuProxy {
+class WebContextMenu : public qt::WebContextMenu {
  public:
   WebContextMenu(QQuickItem* parent,
                  QQmlComponent* component,
-                 oxide::qt::WebContextMenuProxyClient* client);
+                 const qt::WebContextMenuParams& params,
+                 qt::WebContextMenuClient* client);
   ~WebContextMenu() override;
 
  private:
-  // oxide::qt::WebContextMenuProxy implementation
+  // qt::WebContextMenu implementation
   void Show() override;
   void Hide() override;
 
-  oxide::qt::WebContextMenuProxyClient* client_;
+  qt::WebContextMenuParams params_;
+  qt::WebContextMenuClient* client_;
+
   QPointer<QQuickItem> parent_;
   QPointer<QQmlComponent> component_;
-  QScopedPointer<QQuickItem> item_;
-  QScopedPointer<QQmlContext> context_;
+  std::unique_ptr<QQuickItem> item_;
+  std::unique_ptr<QQmlContext> context_;
 };
 
 } // namespace qquick

@@ -28,6 +28,7 @@
 #include <QUrl>
 
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/glue/edit_capability_flags.h"
 #include "qt/core/glue/oxide_qt_proxy_base.h"
 #include "qt/core/glue/web_contents_id.h"
 
@@ -61,17 +62,6 @@ enum WebProcessStatus {
   WEB_PROCESS_KILLED,
   WEB_PROCESS_CRASHED,
   WEB_PROCESS_UNRESPONSIVE
-};
-
-enum EditCapabilityFlags {
-  NO_CAPABILITY = 0,
-  UNDO_CAPABILITY = 1 << 0,
-  REDO_CAPABILITY = 1 << 1,
-  CUT_CAPABILITY = 1 << 2,
-  COPY_CAPABILITY = 1 << 3,
-  PASTE_CAPABILITY = 1 << 4,
-  ERASE_CAPABILITY = 1 << 5,
-  SELECT_ALL_CAPABILITY = 1 << 6
 };
 
 enum EditingCommands {

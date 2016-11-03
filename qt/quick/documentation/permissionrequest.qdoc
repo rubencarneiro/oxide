@@ -71,6 +71,8 @@ frame navigated to another page or was deleted.
 
 If the application is displaying a permission request UI to the user, it should
 hide it when this property indicates that the request has been cancelled.
+
+\note The notify signal for this is \l{cancelled}.
 */
 
 /*!
@@ -88,7 +90,16 @@ access.
 */
 
 /*!
+\qmlsignal void PermissionRequest::cancelled()
+
+Indicates that the permission request has been cancelled.
+
+\sa isCancelled
+*/
+
+/*!
 \qmltype GeolocationPermissionRequest
+\inherits PermissionRequest
 \inqmlmodule com.canonical.Oxide 1.0
 \instantiates OxideQGeolocationPermissionRequest
 
@@ -107,6 +118,7 @@ Please refer to the documentation for PermissionRequest.
 
 /*!
 \qmltype MediaAccessPermissionRequest
+\inherits PermissionRequest
 \inqmlmodule com.canonical.Oxide 1.8
 \instantiates OxideQMediaAccessPermissionRequest
 \since OxideQt 1.8

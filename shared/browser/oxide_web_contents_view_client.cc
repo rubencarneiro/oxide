@@ -33,13 +33,6 @@ WebContentsViewClient::~WebContentsViewClient() {
 
 void WebContentsViewClient::UpdateCursor(const content::WebCursor& cursor) {}
 
-WebContextMenu* WebContentsViewClient::CreateContextMenu(
-    content::RenderFrameHost* rfh,
-    const content::ContextMenuParams& params) {
-  NOTIMPLEMENTED();
-  return nullptr;
-}
-
 std::unique_ptr<WebPopupMenu> WebContentsViewClient::CreatePopupMenu(
     const std::vector<content::MenuItem> & items,
     int selected_item,

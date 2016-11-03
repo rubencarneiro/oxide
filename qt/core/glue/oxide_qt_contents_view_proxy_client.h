@@ -39,8 +39,6 @@ class ContentsView;
 class ContentsViewProxy;
 struct MenuItem;
 class TouchHandleDrawableProxy;
-class WebContextMenuProxy;
-class WebContextMenuProxyClient;
 class WebPopupMenuProxy;
 class WebPopupMenuProxyClient;
 
@@ -64,9 +62,6 @@ class ContentsViewProxyClient {
   virtual void UpdateCursor(const QCursor& cursor) = 0;
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
-
-  virtual WebContextMenuProxy* CreateWebContextMenu(
-      WebContextMenuProxyClient* client) = 0;
 
   virtual std::unique_ptr<WebPopupMenuProxy> CreateWebPopupMenu(
       const QList<MenuItem>& items,

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,13 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PARAMS_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PARAMS_H_
 
+#include <QFlags>
 #include <QPoint>
 #include <QString>
-#include <QtGlobal>
 #include <QUrl>
+
+#include "qt/core/api/oxideqglobal.h"
+#include "qt/core/glue/edit_capability_flags.h"
 
 namespace oxide {
 namespace qt {
@@ -35,7 +38,7 @@ enum MediaType {
   MEDIA_TYPE_PLUGIN
 };
 
-enum MediaStatusFlags {
+enum MediaStatusFlag {
   MEDIA_STATUS_NONE = 0,
   MEDIA_STATUS_IN_ERROR = 1 << 0,
   MEDIA_STATUS_PAUSED = 1 << 1,
@@ -49,34 +52,30 @@ enum MediaStatusFlags {
   MEDIA_STATUS_CAN_ROTATE = 1 << 9
 };
 
-class WebContextMenuProxyClient {
- public:
-  virtual ~WebContextMenuProxyClient() {}
+Q_DECLARE_FLAGS(MediaStatusFlags, MediaStatusFlag);
 
-  virtual MediaType mediaType() const = 0;
-  virtual QPoint position() const = 0;
-  virtual QUrl linkUrl() const = 0;
-  virtual QString linkText() const = 0;
-  virtual QUrl unfilteredLinkUrl() const = 0;
-  virtual QUrl srcUrl() const = 0;
-  virtual bool hasImageContents() const = 0;
-  virtual QUrl pageUrl() const = 0;
-  virtual QUrl frameUrl() const = 0;
-  virtual QString selectionText() const = 0;
-  virtual bool isEditable() const = 0;
+struct OXIDE_QTCORE_EXPORT WebContextMenuParams {
+  QUrl page_url;
+  QUrl frame_url;
 
-  virtual void cancel() = 0;
+  QPoint position;
 
-  virtual int editFlags() const = 0;
+  QUrl link_url;
+  QUrl unfiltered_link_url;
+  QString link_text;
 
-  virtual int mediaFlags() const = 0;
+  MediaType media_type = MEDIA_TYPE_NONE;
+  bool has_image_contents = false;
+  QUrl src_url;
 
-  virtual void copyImage() const = 0;
-  virtual void saveLink() const = 0;
-  virtual void saveMedia() const = 0;
+  MediaStatusFlags media_flags;
+
+  QString selection_text;
+  bool is_editable = false;
+  EditCapabilityFlags edit_flags;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PROXY_CLIENT_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_PARAMS_H_
