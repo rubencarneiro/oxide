@@ -22,6 +22,7 @@
 #include "third_party/WebKit/public/platform/WebMediaPlayer.h"
 #include "third_party/WebKit/public/platform/WebSize.h"
 #include "third_party/WebKit/public/platform/WebURL.h"
+#include "third_party/skia/include/core/SkXfermode.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -91,8 +92,8 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
 
   // Methods for painting.
   void paint(blink::WebCanvas* canvas,
-                     const blink::WebRect& rect,
-                     unsigned char alpha);
+             const blink::WebRect& rect,
+             SkPaint&);
 
   // True if the loaded media has a playable video/audio track.
   bool hasVideo() const;

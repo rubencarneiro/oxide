@@ -12,12 +12,13 @@
 #include "third_party/WebKit/public/platform/WebURLError.h"
 #include "third_party/WebKit/public/platform/WebURLLoader.h"
 #include "third_party/WebKit/public/platform/WebURLResponse.h"
+#include "third_party/WebKit/public/web/WebAssociatedURLLoader.h"
 #include "third_party/WebKit/public/web/WebFrame.h"
 
 using blink::WebFrame;
 using blink::WebURLError;
-using blink::WebURLLoader;
-using blink::WebURLLoaderOptions;
+using blink::WebAssociatedURLLoader;
+using blink::WebAssociatedURLLoaderOptions;
 using blink::WebURLRequest;
 using blink::WebURLResponse;
 
@@ -50,18 +51,18 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
   // TODO:
   frame->setReferrerForRequest(request, blink::WebURL());
 
-  std::unique_ptr<WebURLLoader> loader;
-  WebURLLoaderOptions options;
+  std::unique_ptr<WebAssociatedURLLoader> loader;
+  WebAssociatedURLLoaderOptions options;
   if (cors_mode_ == blink::WebMediaPlayer::CORSModeUnspecified) {
     options.allowCredentials = true;
     options.crossOriginRequestPolicy =
-        WebURLLoaderOptions::CrossOriginRequestPolicyAllow;
+        WebAssociatedURLLoaderOptions::CrossOriginRequestPolicyAllow;
   } else {
     options.exposeAllResponseHeaders = true;
     // The author header set is empty, no preflight should go ahead.
-    options.preflightPolicy = WebURLLoaderOptions::PreventPreflight;
+    options.preflightPolicy = WebAssociatedURLLoaderOptions::PreventPreflight;
     options.crossOriginRequestPolicy =
-        WebURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
+        WebAssociatedURLLoaderOptions::CrossOriginRequestPolicyUseAccessControl;
     if (cors_mode_ == blink::WebMediaPlayer::CORSModeUseCredentials) {
       options.allowCredentials = true;
     }
@@ -75,34 +76,30 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
 
 /////////////////////////////////////////////////////////////////////////////
 // blink::WebURLLoaderClient implementation.
-void MediaInfoLoader::willSendRequest(
-    WebURLLoader* loader,
-    WebURLRequest& newRequest,
+bool MediaInfoLoader::willFollowRedirect(
+    const WebURLRequest& newRequest,
     const WebURLResponse& redirectResponse) {
   // The load may have been stopped and |ready_cb| is destroyed.
   // In this case we shouldn't do anything.
-  if (ready_cb_.is_null()) {
-    // Set the url in the request to an invalid value (empty url).
-    newRequest.setURL(blink::WebURL());
-    return;
-  }
+  if (ready_cb_.is_null())
+    return false;
 
   // Only allow |single_origin_| if we haven't seen a different origin yet.
   if (single_origin_) {
     single_origin_ = url_.GetOrigin() == GURL(newRequest.url()).GetOrigin();
   }
   url_ = newRequest.url();
+
+  return true;
 }
 
 void MediaInfoLoader::didSendData(
-    WebURLLoader* loader,
     unsigned long long bytes_sent,
     unsigned long long total_bytes_to_be_sent) {
   NOTIMPLEMENTED();
 }
 
 void MediaInfoLoader::didReceiveResponse(
-    WebURLLoader* loader,
     const WebURLResponse& response) {
   DVLOG(1) << "didReceiveResponse: HTTP/"
            << (response.httpVersion() == WebURLResponse::HTTPVersion_0_9 ? "0.9" :
@@ -124,7 +121,6 @@ void MediaInfoLoader::didReceiveResponse(
 }
 
 void MediaInfoLoader::didReceiveData(
-    WebURLLoader* loader,
     const char* data,
     int data_length,
     int encoded_data_length) {
@@ -132,29 +128,24 @@ void MediaInfoLoader::didReceiveData(
 }
 
 void MediaInfoLoader::didDownloadData(
-    blink::WebURLLoader* loader,
     int dataLength,
     int encodedDataLength) {
   NOTIMPLEMENTED();
 }
 
 void MediaInfoLoader::didReceiveCachedMetadata(
-    WebURLLoader* loader,
     const char* data,
     int data_length) {
   NOTIMPLEMENTED();
 }
 
 void MediaInfoLoader::didFinishLoading(
-    WebURLLoader* loader,
-    double finishTime,
-    int64_t total_encoded_data_length) {
+    double finishTime) {
   DCHECK(active_loader_.get());
   DidBecomeReady(kOk);
 }
 
 void MediaInfoLoader::didFail(
-    WebURLLoader* loader,
     const WebURLError& error) {
   DVLOG(1) << "didFail: reason=" << error.reason
            << ", isCancellation=" << error.isCancellation

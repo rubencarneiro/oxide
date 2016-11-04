@@ -13,12 +13,12 @@
 #include "content/common/content_export.h"
 #include "media/blink/active_loader.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayer.h"
-#include "third_party/WebKit/public/platform/WebURLLoaderClient.h"
+#include "third_party/WebKit/public/web/WebAssociatedURLLoaderClient.h"
 #include "url/gurl.h"
 
 namespace blink {
 class WebFrame;
-class WebURLLoader;
+class WebAssociatedURLLoader;
 class WebURLRequest;
 }
 
@@ -27,7 +27,7 @@ namespace oxide {
 // This class provides additional information about a media URL. Currently it
 // can be used to determine if a media URL has a single security origin and
 // whether the URL passes a CORS access check.
-class MediaInfoLoader : private blink::WebURLLoaderClient {
+class MediaInfoLoader : private blink::WebAssociatedURLLoaderClient {
  public:
   // Status codes for start operations on MediaInfoLoader.
   enum Status {
@@ -73,36 +73,27 @@ class MediaInfoLoader : private blink::WebURLLoaderClient {
  private:
   friend class MediaInfoLoaderTest;
 
-  // blink::WebURLLoaderClient implementation.
-  void willSendRequest(
-      blink::WebURLLoader* loader,
-      blink::WebURLRequest& newRequest,
+  // blink::WebAssociatedURLLoaderClient implementation.
+  bool willFollowRedirect(
+      const blink::WebURLRequest& newRequest,
       const blink::WebURLResponse& redirectResponse);
   void didSendData(
-      blink::WebURLLoader* loader,
       unsigned long long bytesSent,
       unsigned long long totalBytesToBeSent);
   void didReceiveResponse(
-      blink::WebURLLoader* loader,
       const blink::WebURLResponse& response);
   void didDownloadData(
-      blink::WebURLLoader* loader,
       int data_length,
       int encodedDataLength);
   void didReceiveData(
-      blink::WebURLLoader* loader,
       const char* data,
       int data_length,
       int encoded_data_length);
   void didReceiveCachedMetadata(
-      blink::WebURLLoader* loader,
       const char* data, int dataLength);
   void didFinishLoading(
-      blink::WebURLLoader* loader,
-      double finishTime,
-      int64_t total_encoded_data_length);
+      double finishTime);
   void didFail(
-      blink::WebURLLoader* loader,
       const blink::WebURLError&);
 
   void DidBecomeReady(Status status);
