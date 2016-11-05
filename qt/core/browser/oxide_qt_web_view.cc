@@ -106,8 +106,6 @@ using oxide::WebFrameTreeObserver;
 using oxide::WebFrameTree;
 using oxide::WebProcessStatusMonitor;
 
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(EditCapabilityFlags)
-
 namespace {
 
 OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
