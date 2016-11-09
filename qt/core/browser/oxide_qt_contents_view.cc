@@ -510,7 +510,6 @@ std::unique_ptr<oxide::WebPopupMenu> ContentsView::CreatePopupMenu(
     oxide::WebPopupMenuClient* client) {
   return base::WrapUnique(new WebPopupMenu(this,
                                            items,
-                                           selected_index,
                                            allow_multiple_selection,
                                            client));
 }

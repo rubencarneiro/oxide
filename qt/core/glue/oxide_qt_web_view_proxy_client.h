@@ -19,9 +19,12 @@
 #define _OXIDE_QT_CORE_GLUE_WEB_VIEW_PROXY_CLIENT_H_
 
 #include <memory>
+#include <vector>
+
 #include <QRect>
 #include <QtGlobal>
 
+#include "qt/core/glue/menu_item.h"
 #include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 
 class OxideQCertificateError;
@@ -65,7 +68,9 @@ class WebViewProxyClient {
 
   virtual std::unique_ptr<WebContextMenu> CreateWebContextMenu(
       const WebContextMenuParams& params,
+      const std::vector<MenuItem>& items,
       WebContextMenuClient* client) = 0;
+
   virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
       JavaScriptDialogProxyClient::Type type,
       JavaScriptDialogProxyClient* client) = 0;

@@ -31,7 +31,7 @@ class WebPopupMenuProxyClient {
  public:
   virtual ~WebPopupMenuProxyClient() {}
 
-  virtual void selectItems(const QList<int>& selected_indices) = 0;
+  virtual void selectItems(const QList<unsigned>& selected_indices) = 0;
 
   virtual void cancel() = 0;
 };

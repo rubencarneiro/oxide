@@ -44,7 +44,7 @@ class PopupListModel : public QAbstractListModel {
 
  public:
   virtual ~PopupListModel() {}
-  PopupListModel(const QList<oxide::qt::MenuItem>& items,
+  PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
                  bool allow_multiple_selection);
 
   int rowCount(const QModelIndex& parent = QModelIndex()) const final;
@@ -55,7 +55,7 @@ class PopupListModel : public QAbstractListModel {
   Q_INVOKABLE void select(int index);
 
   bool allowMultiSelect() const { return allow_multi_select_; }
-  QList<int> selectedIndices() const;
+  QList<unsigned> selectedIndices() const;
 
  private:
   enum Roles {
@@ -66,12 +66,12 @@ class PopupListModel : public QAbstractListModel {
   };
 
   bool allow_multi_select_;
-  QList<oxide::qt::MenuItem> items_;
+  std::vector<oxide::qt::MenuItem> items_;
   int selected_index_;
   QHash<int, QByteArray> roles_;
 };
 
-PopupListModel::PopupListModel(const QList<oxide::qt::MenuItem>& items,
+PopupListModel::PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
                                bool allow_multiple_selection) :
     allow_multi_select_(allow_multiple_selection),
     selected_index_(-1) {
@@ -168,12 +168,12 @@ void PopupListModel::select(int index) {
   emit dataChanged(this->index(index), this->index(index));
 }
 
-QList<int> PopupListModel::selectedIndices() const {
-  QList<int> rv;
+QList<unsigned> PopupListModel::selectedIndices() const {
+  QList<unsigned> rv;
   for (int i = 0; i < items_.size(); ++i) {
     const oxide::qt::MenuItem& item = items_[i];
     if (item.checked) {
-      rv.append(item.index);
+      rv.append(item.action);
     }
   }
 
@@ -190,7 +190,7 @@ class PopupMenuContext : public QObject {
   virtual ~PopupMenuContext() {}
   PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
                    const QRect& bounds,
-                   const QList<oxide::qt::MenuItem>& items,
+                   const std::vector<oxide::qt::MenuItem>& items,
                    bool allow_multiple_selection);
 
   QRectF elementRect() const { return element_rect_; }
@@ -208,14 +208,14 @@ class PopupMenuContext : public QObject {
 
 PopupMenuContext::PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
                                    const QRect& bounds,
-                                   const QList<oxide::qt::MenuItem>& items,
+                                   const std::vector<oxide::qt::MenuItem>& items,
                                    bool allow_multiple_selection)
     : client_(client),
       element_rect_(bounds),
       items_(items, allow_multiple_selection) {}
 
 void PopupMenuContext::accept() {
-  QList<int> indices = items_.selectedIndices();
+  QList<unsigned> indices = items_.selectedIndices();
   Q_ASSERT(items_.allowMultiSelect() || indices.size() <= 1);
   client_->selectItems(indices);
 }
@@ -285,7 +285,7 @@ void WebPopupMenu::Hide() {
 
 WebPopupMenu::WebPopupMenu(QQuickItem* parent,
                            QQmlComponent* component,
-                           const QList<oxide::qt::MenuItem>& items,
+                           const std::vector<oxide::qt::MenuItem>& items,
                            bool allow_multiple_selection,
                            oxide::qt::WebPopupMenuProxyClient* client)
     : items_(items),

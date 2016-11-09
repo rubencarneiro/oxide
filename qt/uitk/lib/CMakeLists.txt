@@ -17,19 +17,26 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 set(OXIDE_UITKLIB_SRCS
-    api/oxideubuntuwebview.cc)
+    api/oxideubuntuwebview.cc
+    resources.qrc
+    uitk_auxiliary_ui_factory.cc
+    uitk_web_context_menu.cc)
 
 add_library(${OXIDE_UITKLIB} SHARED ${OXIDE_UITKLIB_SRCS})
 target_compile_definitions(
     ${OXIDE_UITKLIB} PRIVATE -DOXIDE_UITK_IMPLEMENTATION)
 target_include_directories(${OXIDE_UITKLIB}
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/api/includes)
-target_link_libraries(${OXIDE_UITKLIB}
-                      PUBLIC ${OXIDE_QUICKLIB})
+target_link_libraries(
+    ${OXIDE_UITKLIB}
+    PUBLIC ${OXIDE_QUICKLIB}
+    PRIVATE ${OXIDE_CORELIB} ${Qt5Core_LIBRARIES} ${Qt5Qml_LIBRARIES}
+            ${Qt5Quick_LIBRARIES} ${Qt5Gui_LIBRARIES})
 set_target_properties(
     ${OXIDE_UITKLIB} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_LIB_OUTPUT_DIR}
     AUTOMOC TRUE
+    AUTORCC TRUE
     SOVERSION ${OXIDE_LIB_VERSION})
 
 install(TARGETS ${OXIDE_UITKLIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})

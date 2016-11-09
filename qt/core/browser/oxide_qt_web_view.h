@@ -151,6 +151,7 @@ class WebView : public oxide::WebViewClient,
       ResourceDispatcherHostLoginDelegate* login_delegate) override;
   std::unique_ptr<oxide::WebContextMenu> CreateContextMenu(
       const content::ContextMenuParams& params,
+      const std::vector<content::MenuItem>& items,
       oxide::WebContextMenuClient* client) override;
 
   // oxide::ScriptMessageTarget implementation

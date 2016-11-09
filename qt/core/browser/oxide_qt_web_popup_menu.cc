@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "base/logging.h"
-#include "base/strings/utf_string_conversions.h"
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/geometry/rect.h"
 
@@ -34,6 +33,7 @@
 #include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
 #include "shared/browser/oxide_web_popup_menu_client.h"
 
+#include "menu_item_builder.h"
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_type_conversions.h"
@@ -43,54 +43,20 @@ namespace qt {
 
 namespace {
 
-QList<MenuItem> BuildMenuItems(const std::vector<content::MenuItem>& items,
-                               int selected_index,
-                               bool allow_multiple_selection) {
-  QList<MenuItem> results;
-
-  int i = -1;
-  QString current_group;
-
-  for (const auto& item : items) {
-    if (i == std::numeric_limits<int>::max()) {
-      LOG(WARNING) << "Truncating menu - there are too many items!";
-      break;
-    }
-
-    int index = ++i;
-
-    if (item.type == content::MenuItem::GROUP) {
-      current_group = QString::fromStdString(base::UTF16ToUTF8(item.label));
-      continue;
-    }
-
-    // We don't support submenus here
-    DCHECK(item.type == content::MenuItem::SEPARATOR ||
-           item.type == content::MenuItem::OPTION);
-
-    MenuItem mi;
-
-    mi.label = QString::fromStdString(base::UTF16ToUTF8(item.label));
-    mi.tooltip = QString::fromStdString(base::UTF16ToUTF8(item.tool_tip));
-    mi.group = current_group;
-    mi.index = index;
-    mi.enabled = item.enabled;
-    mi.checked =
-        item.checked || (!allow_multiple_selection && 
-                         selected_index == mi.index);
-    mi.separator = item.type == content::MenuItem::SEPARATOR;
-
-    // We're not using content::MenuItem::action here - if this function gets
-    // re-used for custom items in context menus, we'll need that
-
-    DCHECK(allow_multiple_selection ||
-           mi.index == selected_index ||
-           !mi.checked);
- 
-    results.append(mi);
+std::vector<MenuItem> BuildMenuItems(
+    const std::vector<content::MenuItem>& items) {
+  std::vector<content::MenuItem> local_items = items;
+  if (local_items.size() >
+      static_cast<size_t>(std::numeric_limits<int>::max() + 1)) {
+    LOG(WARNING) << "Truncating menu - there are too many items!";
+    local_items.resize(std::numeric_limits<int>::max() + 1);
   }
 
-  return results;
+  for (size_t i = 0; i < local_items.size(); ++i) {
+    local_items[i].action = static_cast<unsigned>(i);
+  }
+
+  return MenuItemBuilder::Build(local_items);
 }
 
 }
@@ -120,8 +86,13 @@ void WebPopupMenu::Hide() {
   proxy_->Hide();
 }
 
-void WebPopupMenu::selectItems(const QList<int>& selected_indices) {
-  client_->SelectItems(selected_indices.toVector().toStdVector());
+void WebPopupMenu::selectItems(const QList<unsigned>& selected_indices) {
+  std::vector<int> x;
+  for (unsigned i : selected_indices) {
+    DCHECK_LE(i, static_cast<unsigned>(std::numeric_limits<int>::max()));
+    x.push_back(static_cast<int>(i));
+  }
+  client_->SelectItems(x);
 }
 
 void WebPopupMenu::cancel() {
@@ -130,7 +101,6 @@ void WebPopupMenu::cancel() {
 
 WebPopupMenu::WebPopupMenu(ContentsView* view,
                            const std::vector<content::MenuItem>& items,
-                           int selected_index,
                            bool allow_multiple_selection,
                            oxide::WebPopupMenuClient* client)
     : client_(client),
@@ -141,11 +111,11 @@ WebPopupMenu::WebPopupMenu(ContentsView* view,
 
   proxy_ =
       view->client()->CreateWebPopupMenu(
-          BuildMenuItems(items, selected_index, allow_multiple_selection),
-          allow_multiple_selection, this);
+          BuildMenuItems(items), allow_multiple_selection, this);
 }
 
 WebPopupMenu::~WebPopupMenu() {}
 
 } // namespace qt
 } // namespace oxide
+

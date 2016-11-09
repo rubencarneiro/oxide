@@ -19,15 +19,24 @@
 #define _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_IMPL_H_
 
 #include <memory>
+#include <vector>
 
 #include "base/macros.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/context_menu_params.h"
+#include "content/public/common/menu_item.h"
+#include "content/public/common/referrer.h"
+#include "ui/base/window_open_disposition.h"
 
-#include "shared/browser/web_context_menu.h"
-#include "shared/browser/web_context_menu_client.h"
+#include "shared/browser/context_menu/web_context_menu.h"
+#include "shared/browser/context_menu/web_context_menu_client.h"
+
+class GURL;
 
 namespace oxide {
+
+enum class WebContextMenuAction : unsigned;
+enum class WebContextMenuActionGroup;
 
 class WebContextMenuImpl : public WebContextMenu,
                            public WebContextMenuClient,
@@ -42,12 +51,35 @@ class WebContextMenuImpl : public WebContextMenu,
   void Hide() override;
 
  private:
+  class MenuBuilder;
+
+  content::Referrer GetReferrer(const GURL& url) const;
+
+  void OpenURL(const GURL& url,
+               WindowOpenDisposition disposition);
+  void SaveLink();
+  void SaveImage();
+  void CopyImage();
+  void SaveMedia();
+
+  void AppendLinkItems(std::vector<content::MenuItem>* items);
+  void AppendImageItems(std::vector<content::MenuItem>* items);
+  void AppendCanvasItems(std::vector<content::MenuItem>* items);
+  void AppendAudioItems(std::vector<content::MenuItem>* items);
+  void AppendVideoItems(std::vector<content::MenuItem>* items);
+  void AppendEditableItems(std::vector<content::MenuItem>* items);
+  void AppendCopyItems(std::vector<content::MenuItem>* items);
+
+  bool IsCommandEnabled(WebContextMenuAction action) const;
+  bool SupportsActionGroup(WebContextMenuActionGroup group) const;
+  bool SupportsMediaActionGroup() const;
+
+  std::vector<content::MenuItem> BuildItems();
+
   // WebContextMenuClient implementation
   content::WebContents* GetWebContents() const override;
   void Close() override;
-  void CopyImage() const override;
-  void SaveLink() const override;
-  void SaveMedia() const override;
+  void ExecuteCommand(WebContextMenuAction action) override;
 
   // content::WebContentsObserver implementation
   void RenderFrameDeleted(content::RenderFrameHost* rfh) override;

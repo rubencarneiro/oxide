@@ -19,15 +19,17 @@
 #define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
 
 #include <memory>
+#include <vector>
+
 #include <QRect>
 #include <QtGlobal>
 
+#include "qt/core/glue/menu_item.h"
 #include "qt/core/glue/oxide_qt_contents_view_proxy.h"
 
 QT_BEGIN_NAMESPACE
 class QCursor;
 class QKeyEvent;
-template <typename T> class QList;
 class QRectF;
 class QWindow;
 QT_END_NAMESPACE
@@ -64,7 +66,7 @@ class ContentsViewProxyClient {
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
   virtual std::unique_ptr<WebPopupMenuProxy> CreateWebPopupMenu(
-      const QList<MenuItem>& items,
+      const std::vector<MenuItem>& items,
       bool allow_multiple_selection,
       WebPopupMenuProxyClient* client) = 0;
 

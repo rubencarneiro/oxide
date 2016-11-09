@@ -26,8 +26,11 @@
 #include "url/gurl.h"
 
 #include "qt/core/glue/edit_capability_flags.h"
+#include "qt/core/glue/macros.h"
 #include "qt/core/glue/web_context_menu.h"
-#include "shared/browser/web_context_menu_client.h"
+#include "qt/core/glue/web_context_menu_actions.h"
+#include "shared/browser/context_menu/web_context_menu_actions.h"
+#include "shared/browser/context_menu/web_context_menu_client.h"
 
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
@@ -133,16 +136,48 @@ void WebContextMenuImpl::close() {
   client_->Close();
 }
 
-void WebContextMenuImpl::copyImage() const {
-  client_->CopyImage();
-}
+void WebContextMenuImpl::execCommand(WebContextMenuAction action) {
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::OpenLinkInNewTab,
+                              oxide::WebContextMenuAction::OpenLinkInNewTab)
+  STATIC_ASSERT_MATCHING_ENUM(
+      WebContextMenuAction::OpenLinkInNewBackgroundTab,
+      oxide::WebContextMenuAction::OpenLinkInNewBackgroundTab)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::OpenLinkInNewWindow,
+                              oxide::WebContextMenuAction::OpenLinkInNewWindow)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::CopyLinkLocation,
+                              oxide::WebContextMenuAction::CopyLinkLocation)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::SaveLink,
+                              oxide::WebContextMenuAction::SaveLink)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::OpenImageInNewTab,
+                              oxide::WebContextMenuAction::OpenImageInNewTab)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::CopyImageLocation,
+                              oxide::WebContextMenuAction::CopyImageLocation)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::SaveImage,
+                              oxide::WebContextMenuAction::SaveImage)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::CopyImage,
+                              oxide::WebContextMenuAction::CopyImage)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::OpenMediaInNewTab,
+                              oxide::WebContextMenuAction::OpenMediaInNewTab)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::CopyMediaLocation,
+                              oxide::WebContextMenuAction::CopyMediaLocation)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::SaveMedia,
+                              oxide::WebContextMenuAction::SaveMedia)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Undo,
+                              oxide::WebContextMenuAction::Undo)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Redo,
+                              oxide::WebContextMenuAction::Redo)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Cut,
+                              oxide::WebContextMenuAction::Cut)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Copy,
+                              oxide::WebContextMenuAction::Copy)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Paste,
+                              oxide::WebContextMenuAction::Paste)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::Erase,
+                              oxide::WebContextMenuAction::Erase)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::SelectAll,
+                              oxide::WebContextMenuAction::SelectAll)
 
-void WebContextMenuImpl::saveLink() const {
-  client_->SaveLink();
-}
-
-void WebContextMenuImpl::saveMedia() const {
-  client_->SaveMedia();
+  client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action));
 }
 
 WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
@@ -152,8 +187,9 @@ WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
 
 WebContextMenuImpl::~WebContextMenuImpl() = default;
 
-void WebContextMenuImpl::Init(std::unique_ptr<qt::WebContextMenu> menu) {
+bool WebContextMenuImpl::Init(std::unique_ptr<qt::WebContextMenu> menu) {
   menu_ = std::move(menu);
+  return !!menu_;
 }
 
 WebContextMenuParams WebContextMenuImpl::GetParams() const {

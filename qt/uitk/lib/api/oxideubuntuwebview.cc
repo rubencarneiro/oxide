@@ -18,9 +18,14 @@
 #include "oxideubuntuwebview.h"
 #include "oxideubuntuwebview_p.h"
 
+#include "qt/uitk/lib/uitk_auxiliary_ui_factory.h"
+
 OxideUbuntuWebViewPrivate::OxideUbuntuWebViewPrivate(
     OxideUbuntuWebView* q)
-    : OxideQQuickWebViewPrivate(q) {}
+    : OxideQQuickWebViewPrivate(
+          q,
+          std::unique_ptr<oxide::qquick::AuxiliaryUIFactory>(
+              new oxide::uitk::AuxiliaryUIFactory())) {}
 
 OxideUbuntuWebView::OxideUbuntuWebView(QQuickItem* parent)
     : OxideQQuickWebView(*new OxideUbuntuWebViewPrivate(this), parent) {}

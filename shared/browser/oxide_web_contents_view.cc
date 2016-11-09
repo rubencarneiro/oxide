@@ -41,6 +41,7 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
+#include "shared/browser/context_menu/web_context_menu_impl.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -54,7 +55,6 @@
 #include "oxide_web_contents_view_client.h"
 #include "oxide_web_popup_menu_impl.h"
 #include "screen.h"
-#include "web_context_menu_impl.h"
 
 namespace oxide {
 

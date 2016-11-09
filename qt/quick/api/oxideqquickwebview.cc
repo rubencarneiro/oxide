@@ -49,6 +49,7 @@
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/glue/macros.h"
+#include "qt/quick/auxiliary_ui_factory.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
 #include "qt/quick/oxide_qquick_confirm_dialog.h"
@@ -124,12 +125,15 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
   QPointer<OxideQWebPreferences> preferences;
 };
 
-OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
+OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
+    OxideQQuickWebView* view,
+    std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory)
     : q_ptr(view),
+      aux_ui_factory_(std::move(aux_ui_factory)),
+      constructed_(false),
       load_progress_(0),
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
-      constructed_(false),
       context_menu_(nullptr),
       alert_dialog_(nullptr),
       confirm_dialog_(nullptr),
@@ -142,8 +146,17 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(OxideQQuickWebView* view)
 std::unique_ptr<oxide::qt::WebContextMenu>
 OxideQQuickWebViewPrivate::CreateWebContextMenu(
     const oxide::qt::WebContextMenuParams& params,
+    const std::vector<oxide::qt::MenuItem>& items,
     oxide::qt::WebContextMenuClient* client) {
   Q_Q(OxideQQuickWebView);
+
+  if (aux_ui_factory_) {
+    return aux_ui_factory_->CreateWebContextMenu(params, items, client);
+  }
+
+  if (!context_menu_) {
+    return nullptr;
+  }
 
   return std::unique_ptr<oxide::qt::WebContextMenu>(
       new oxide::qquick::WebContextMenu(q, context_menu_, params, client));
@@ -1024,6 +1037,9 @@ OxideQQuickWebView::OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
   Q_D(OxideQQuickWebView);
 
   d->contents_view_.reset(new oxide::qquick::ContentsView(this));
+  if (d->aux_ui_factory_) {
+    d->aux_ui_factory_->set_item(this);
+  }
 
   oxide::qquick::EnsureChromiumStarted();
 
@@ -1268,7 +1284,8 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 */
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
-    : OxideQQuickWebView(*new OxideQQuickWebViewPrivate(this), parent) {}
+    : OxideQQuickWebView(*new OxideQQuickWebViewPrivate(this, nullptr),
+                         parent) {}
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
@@ -1805,6 +1822,12 @@ void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
 
   if (d->context_menu_ == contextMenu) {
     return;
+  }
+
+  if (d->aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a contextMenu implementation has no "
+        "effect on this WebView, as it provides a built-in context menu";
   }
 
   d->context_menu_ = contextMenu;

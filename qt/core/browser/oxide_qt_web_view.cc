@@ -81,6 +81,7 @@
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_enum_flags.h"
 
+#include "menu_item_builder.h"
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
@@ -557,10 +558,16 @@ void WebView::HttpAuthenticationRequested(
 
 std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
     const content::ContextMenuParams& params,
+    const std::vector<content::MenuItem>& items,
     oxide::WebContextMenuClient* client) {
   std::unique_ptr<WebContextMenuImpl> menu =
       base::MakeUnique<WebContextMenuImpl>(params, client);
-  menu->Init(client_->CreateWebContextMenu(menu->GetParams(), menu.get()));
+  if (!menu->Init(client_->CreateWebContextMenu(menu->GetParams(),
+                                                MenuItemBuilder::Build(items),
+                                                menu.get()))) {
+    return nullptr;
+  }
+
   return std::move(menu);
 }
 

@@ -18,6 +18,8 @@
 #ifndef _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
 #define _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
 
+#include <vector>
+
 #include <QPointer>
 #include <QScopedPointer>
 
@@ -42,7 +44,7 @@ class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
  public:
   WebPopupMenu(QQuickItem* parent,
                QQmlComponent* component,
-               const QList<oxide::qt::MenuItem>& items,
+               const std::vector<oxide::qt::MenuItem>& items,
                bool allow_multiple_selection,
                oxide::qt::WebPopupMenuProxyClient* client);
   ~WebPopupMenu() override;
@@ -52,7 +54,7 @@ class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
   void Show(const QRect& bounds) override;
   void Hide() override;
 
-  QList<oxide::qt::MenuItem> items_;
+  std::vector<oxide::qt::MenuItem> items_;
   bool allow_multiple_selection_;
 
   oxide::qt::WebPopupMenuProxyClient* client_;
