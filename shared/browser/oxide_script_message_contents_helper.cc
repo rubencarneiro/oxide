@@ -122,6 +122,12 @@ void ScriptMessageContentsHelper::OnReceiveScriptMessage(
                                      &params.wrapped_payload));
     WebFrame* target = frame;
     WebView* view = frame->GetView();
+    if (!view) {
+        ReturnError(render_frame_host,
+                    ScriptMessageParams::ERROR_NO_HANDLER,
+                    params);
+        return;
+    }
 
     while (target) {
       DCHECK_EQ(target->GetView(), view);
