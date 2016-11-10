@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: oxide-qt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-13 11:23+0200\n"
+"POT-Creation-Date: 2016-11-09 21:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,106 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: qt/quick/oxide_qquick_before_unload_dialog.cc:58
+#: oxide/qt/quick/oxide_qquick_before_unload_dialog.cc:58
 msgid "Changes you made may not be saved."
 msgstr ""
 
-#: shared/browser/media/oxide_video_capture_device_factory_linux.cc:51
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:159
+msgid "Open link in new tab"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:162
+msgid "Open link in new background tab"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:165
+msgid "Open link in new window"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:171
+msgid "Copy link address"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:173
+msgid "Save link"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:185
+msgid "Open image in new tab"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:188
+msgid "Copy image address"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:190
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:200
+msgid "Save image"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:192
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:202
+msgid "Copy image"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:214
+msgid "Open audio in new tab"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:217
+msgid "Copy audio address"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:219
+msgid "Save audio"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:231
+msgid "Open video in new tab"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:234
+msgid "Copy video address"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:236
+msgid "Save video"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:244
+msgid "Undo"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:246
+msgid "Redo"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:251
+msgid "Cut"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:253
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:266
+msgid "Copy"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:255
+msgid "Paste"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:257
+msgid "Erase"
+msgstr ""
+
+#: oxide/shared/browser/context_menu/web_context_menu_impl.cc:259
+msgid "Select all"
+msgstr ""
+
+#: oxide/shared/browser/media/oxide_video_capture_device_factory_linux.cc:51
 msgid "Rear camera"
 msgstr ""
 
-#: shared/browser/media/oxide_video_capture_device_factory_linux.cc:53
+#: oxide/shared/browser/media/oxide_video_capture_device_factory_linux.cc:53
 msgid "Front camera"
 msgstr ""
 
@@ -33,6 +124,6 @@ msgstr ""
 #. translated as such. The expected value is a comma-separated list of
 #. language codes in order of decreasing preference (e.g. "es-ES,es,en,*").
 #. See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4.
-#: shared/browser/oxide_user_agent_settings.cc:104
+#: oxide/shared/browser/oxide_user_agent_settings.cc:107
 msgid "AcceptLanguage"
 msgstr ""

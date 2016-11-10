@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_MENU_ITEM_BUILDER_H_
+#define _OXIDE_QT_CORE_BROWSER_MENU_ITEM_BUILDER_H_
+
+#include <vector>
+
+#include "base/macros.h"
+#include "content/public/common/menu_item.h"
+
+#include "qt/core/glue/menu_item.h"
 
 namespace oxide {
 namespace qt {
 
-enum class WebContextMenuAction : unsigned;
-
-class WebContextMenuClient {
+class MenuItemBuilder {
  public:
-  virtual ~WebContextMenuClient() {}
+  static std::vector<MenuItem> Build(
+      const std::vector<content::MenuItem>& items);
 
-  virtual void close() = 0;
-
-  virtual void execCommand(WebContextMenuAction action) = 0;
+ private:
+  DISALLOW_IMPLICIT_CONSTRUCTORS(MenuItemBuilder);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
+#endif // _OXIDE_QT_CORE_BROWSER_MENU_ITEM_BUILDER_H_

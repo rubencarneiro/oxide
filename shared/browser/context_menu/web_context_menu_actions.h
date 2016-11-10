@@ -15,28 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_CLIENT_H_
-
-namespace content {
-class WebContents;
-}
+#ifndef _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_ACTIONS_H_
+#define _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_ACTIONS_H_
 
 namespace oxide {
 
-class WebContextMenuClient {
- public:
-  virtual ~WebContextMenuClient() {}
+enum class WebContextMenuAction : unsigned {
+  OpenLinkInNewTab,
+  OpenLinkInNewBackgroundTab,
+  OpenLinkInNewWindow,
+  CopyLinkLocation,
+  SaveLink,
 
-  virtual content::WebContents* GetWebContents() const = 0;
+  OpenImageInNewTab,
+  CopyImageLocation,
+  SaveImage,
+  CopyImage,
 
-  virtual void Close() = 0;
+  OpenMediaInNewTab,
+  CopyMediaLocation,
+  SaveMedia,
 
-  virtual void CopyImage() const = 0;
-  virtual void SaveLink() const = 0;
-  virtual void SaveMedia() const = 0;
+  Undo,
+  Redo,
+  Cut,
+  Copy,
+  Paste,
+  Erase,
+  SelectAll
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_ACTIONS_H_

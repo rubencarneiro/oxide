@@ -15,31 +15,32 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_
-#define _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_
+#include "screen_form_factor.h"
 
-#include <QString>
+#include "base/logging.h"
+#include "ui/display/display.h"
 
-#include "qt/core/api/oxideqglobal.h"
+#include "qt/core/browser/qt_screen.h"
+#include "shared/browser/display_form_factor.h"
+
+#include "macros.h"
 
 namespace oxide {
 namespace qt {
 
-struct OXIDE_QTCORE_EXPORT MenuItem {
-  MenuItem();
-  MenuItem(const MenuItem& other);
-  ~MenuItem();
+ScreenFormFactor GetScreenFormFactor(QScreen* screen) {
+  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Monitor,
+                              oxide::DisplayFormFactor::Monitor)
+  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Mobile,
+                              oxide::DisplayFormFactor::Mobile)
+  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Television,
+                              oxide::DisplayFormFactor::Television)
 
-  QString label;
-  QString tooltip;
-  QString group;
-  bool separator = false;
-  unsigned action = 0;
-  bool enabled = false;
-  bool checked = false;
-};
+  display::Display display = Screen::GetInstance()->DisplayFromQScreen(screen);
+  DCHECK(display.is_valid());
+  return static_cast<ScreenFormFactor>(
+      Screen::GetInstance()->GetDisplayFormFactor(display));
+}
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_

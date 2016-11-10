@@ -27,6 +27,7 @@
 #include <QUrl>
 
 #include "qt/core/glue/macros.h"
+#include "qt/core/glue/web_context_menu_actions.h"
 #include "qt/core/glue/web_context_menu_client.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
@@ -34,6 +35,7 @@
 namespace oxide {
 namespace qquick {
 
+using qt::WebContextMenuAction;
 using qt::WebContextMenuClient;
 using qt::WebContextMenuParams;
 
@@ -211,12 +213,12 @@ void ContextMenuContext::copyImage() const {
     return;
   }
 
-  client_->copyImage();
+  client_->execCommand(WebContextMenuAction::CopyImage);
 }
 
 void ContextMenuContext::saveLink() const {
   if (linkUrl().isValid()) {
-    client_->saveLink();
+    client_->execCommand(WebContextMenuAction::SaveLink);
   } else {
     qWarning() << "ContextMenuContext::saveLink(): not a valid link";
   }
@@ -224,24 +226,25 @@ void ContextMenuContext::saveLink() const {
 
 void ContextMenuContext::saveMedia() const {
   OxideQQuickWebView::MediaType media_type = mediaType();
-  if ((media_type == OxideQQuickWebView::MediaTypeImage) ||
-      (media_type == OxideQQuickWebView::MediaTypeCanvas)) {
+  if (media_type == OxideQQuickWebView::MediaTypeImage ||
+      media_type == OxideQQuickWebView::MediaTypeCanvas) {
     if (!hasImageContents()) {
       qWarning() << "ContextMenuContext::saveMedia(): image has no contents";
       return;
     }
-  } else if ((media_type == OxideQQuickWebView::MediaTypeVideo) ||
-      (media_type == OxideQQuickWebView::MediaTypeAudio)) {
+
+    client_->execCommand(WebContextMenuAction::SaveImage);
+  } else if (media_type == OxideQQuickWebView::MediaTypeVideo ||
+             media_type == OxideQQuickWebView::MediaTypeAudio) {
     if (!mediaFlags().testFlag(OxideQQuickWebView::MediaStatusCanSave)) {
       qWarning() << "ContextMenuContext::saveMedia(): cannot save media source";
       return;
     }
+
+    client_->execCommand(WebContextMenuAction::SaveMedia);
   } else {
     qWarning() << "ContextMenuContext::saveMedia(): invalid content";
-    return;
   }
-
-  client_->saveMedia();
 }
 
 void ContextMenuContext::close() {

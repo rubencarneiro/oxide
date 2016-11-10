@@ -118,7 +118,7 @@ class ContentsView : public QObject,
   void UpdateCursor(const QCursor& cursor) override;
   void SetInputMethodEnabled(bool enabled) override;
   std::unique_ptr<oxide::qt::WebPopupMenuProxy> CreateWebPopupMenu(
-      const QList<oxide::qt::MenuItem>& items,
+      const std::vector<oxide::qt::MenuItem>& items,
       bool allow_multiple_selection,
       oxide::qt::WebPopupMenuProxyClient* client) override;
   oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;

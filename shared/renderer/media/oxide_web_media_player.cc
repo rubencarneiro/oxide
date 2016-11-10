@@ -21,6 +21,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/renderer/render_frame.h"
 #include "media/base/key_systems.h"
+#include "media/base/media_content_type.h"
 #include "media/base/media_log.h"
 #include "media/blink/webcontentdecryptionmodule_impl.h"
 #include "media/blink/webmediaplayer_delegate.h"
@@ -351,8 +352,8 @@ bool WebMediaPlayer::didLoadingProgress() {
 }
 
 void WebMediaPlayer::paint(blink::WebCanvas* canvas,
-                                  const blink::WebRect& rect,
-                                  unsigned char alpha) {
+                           const blink::WebRect& rect,
+                           SkPaint&) {
   NOTIMPLEMENTED();
 }
 
@@ -672,7 +673,7 @@ void WebMediaPlayer::UpdatePlayingState(bool is_playing) {
                        hasVideo(),
                        !hasVideo(),
                        isRemote(),
-                       duration_);
+                       media::DurationToMediaContentType(duration_));
   } else {
     delegate_->DidPause(delegate_id_,
                         !pending_seek_ || currentTime() >= duration());

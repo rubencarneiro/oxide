@@ -45,7 +45,6 @@ class WebPopupMenu : public oxide::WebPopupMenu,
  public:
   WebPopupMenu(ContentsView* view,
                const std::vector<content::MenuItem>& items,
-               int selected_index,
                bool allow_multiple_selection,
                oxide::WebPopupMenuClient* client);
   ~WebPopupMenu() override;
@@ -56,7 +55,7 @@ class WebPopupMenu : public oxide::WebPopupMenu,
   void Hide() override;
 
   // WebPopupMenuProxyClient implementation
-  void selectItems(const QList<int>& selected_indices) override;
+  void selectItems(const QList<unsigned>& selected_indices) override;
   void cancel() override;
 
   oxide::WebPopupMenuClient* client_; // Owns us

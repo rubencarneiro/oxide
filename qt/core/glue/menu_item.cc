@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,24 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_
+#include "menu_item.h"
 
 namespace oxide {
 namespace qt {
 
-enum class WebContextMenuAction : unsigned;
+MenuItem::MenuItem() = default;
 
-class WebContextMenuClient {
- public:
-  virtual ~WebContextMenuClient() {}
+MenuItem::MenuItem(const MenuItem& other) = default;
 
-  virtual void close() = 0;
-
-  virtual void execCommand(WebContextMenuAction action) = 0;
-};
+MenuItem::~MenuItem() = default;
 
 } // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_CLIENT_H_

@@ -143,7 +143,7 @@ void ContentsView::SetInputMethodEnabled(bool enabled) {
 }
 
 std::unique_ptr<oxide::qt::WebPopupMenuProxy> ContentsView::CreateWebPopupMenu(
-    const QList<oxide::qt::MenuItem>& items,
+    const std::vector<oxide::qt::MenuItem>& items,
     bool allow_multiple_selection,
     oxide::qt::WebPopupMenuProxyClient* client) {
   return std::unique_ptr<oxide::qt::WebPopupMenuProxy>(

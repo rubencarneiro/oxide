@@ -20,8 +20,10 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/strings/string16.h"
+#include "content/public/common/menu_item.h"
 #include "ui/base/window_open_disposition.h"
 
 #include "shared/browser/web_contents_unique_ptr.h"
@@ -73,6 +75,7 @@ class OXIDE_SHARED_EXPORT WebContentsClient {
 
   virtual std::unique_ptr<WebContextMenu> CreateContextMenu(
       const content::ContextMenuParams& params,
+      const std::vector<content::MenuItem>& items,
       WebContextMenuClient* client);
 };
 

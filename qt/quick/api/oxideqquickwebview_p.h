@@ -49,6 +49,7 @@ QT_END_NAMESPACE
 
 namespace oxide {
 namespace qquick {
+class AuxiliaryUIFactory;
 class ContentsView;
 }
 }
@@ -65,7 +66,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   void addAttachedPropertyTo(QObject* object);
 
  protected:
-  OxideQQuickWebViewPrivate(OxideQQuickWebView* q);
+  OxideQQuickWebViewPrivate(
+      OxideQQuickWebView* q,
+      std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory);
 
   OxideQQuickWebView* q_ptr;
 
@@ -73,6 +76,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   // oxide::qt::WebViewProxyClient implementation
   std::unique_ptr<oxide::qt::WebContextMenu> CreateWebContextMenu(
       const oxide::qt::WebContextMenuParams& params,
+      const std::vector<oxide::qt::MenuItem>& items,
       oxide::qt::WebContextMenuClient* client) override;
   oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
       oxide::qt::JavaScriptDialogProxyClient::Type type,
@@ -142,6 +146,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   void detachContextSignals(OxideQQuickWebContextPrivate* context);
   void attachPreferencesSignals(OxideQWebPreferences* prefs);
   void preferencesDestroyed();
+
+  std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory_;
 
   QScopedPointer<oxide::qquick::ContentsView> contents_view_;
 

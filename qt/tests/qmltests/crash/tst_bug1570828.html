@@ -1,0 +1,14 @@
+<html>
+<head>
+<script>
+
+window.addEventListener("unload", function(e) {
+  var e = new CustomEvent("oxideunloadevent", { bubbles: true });
+  document.documentElement.dispatchEvent(e);
+});
+
+</script>
+</head>
+<body>
+</body>
+</html>

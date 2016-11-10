@@ -15,32 +15,50 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef OXIDE_UBUNTU_WEB_VIEW
-#define OXIDE_UBUNTU_WEB_VIEW
+#ifndef _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_
+#define _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_
 
-#include <QtCore/QtGlobal>
-#include <QtQml/QtQml>
+#include <memory>
+#include <vector>
 
-#include <OxideQtQuick/oxideqquickwebview.h>
-#include <OxideUbuntuUITK/oxideubuntuglobal.h>
+#include <QPointer>
+#include <QtGlobal>
+
+#include "qt/core/glue/menu_item.h"
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
 QT_END_NAMESPACE
 
-class OxideUbuntuWebViewPrivate;
+namespace oxide {
 
-class OXIDE_UITK_EXPORT OxideUbuntuWebView : public OxideQQuickWebView {
-  Q_OBJECT
+namespace qt{
+class WebContextMenu;
+class WebContextMenuClient;
+struct WebContextMenuParams;
+}
 
-  Q_DECLARE_PRIVATE(OxideUbuntuWebView)
-  Q_DISABLE_COPY(OxideUbuntuWebView)
+namespace qquick {
 
+class AuxiliaryUIFactory {
  public:
-  OxideUbuntuWebView(QQuickItem* parent = nullptr);
-  ~OxideUbuntuWebView() Q_DECL_OVERRIDE;
+  virtual ~AuxiliaryUIFactory() {}
+
+  void set_item(QQuickItem* item) { item_ = item; }
+
+  virtual std::unique_ptr<qt::WebContextMenu> CreateWebContextMenu(
+      const qt::WebContextMenuParams& params,
+      const std::vector<qt::MenuItem>& items,
+      qt::WebContextMenuClient* client) = 0;
+
+ protected:
+  QQuickItem* item() const { return item_; }
+
+ private:
+  QPointer<QQuickItem> item_;
 };
 
-QML_DECLARE_TYPE(OxideUbuntuWebView)
+} // namespace qquick
+} // namespace oxide
 
-#endif // OXIDE_UBUNTU_WEB_VIEW
+#endif // _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_

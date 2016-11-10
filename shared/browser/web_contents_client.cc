@@ -17,7 +17,7 @@
 
 #include "web_contents_client.h"
 
-#include "web_context_menu.h"
+#include "shared/browser/context_menu/web_context_menu.h"
 
 namespace oxide {
 
@@ -59,6 +59,7 @@ void WebContentsClient::HttpAuthenticationRequested(
 
 std::unique_ptr<WebContextMenu> WebContentsClient::CreateContextMenu(
     const content::ContextMenuParams& params,
+    const std::vector<content::MenuItem>& items,
     WebContextMenuClient* client) {
   return nullptr;
 }

@@ -81,6 +81,7 @@ void WebPopupMenuImpl::Show(const gfx::Rect& bounds) {
     return;
   }
 
+  DCHECK(!menu_);
   menu_ = view->client()->CreatePopupMenu(items_,
                                           selected_item_,
                                           allow_multiple_selection_,
