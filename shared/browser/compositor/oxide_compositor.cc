@@ -114,6 +114,7 @@ Compositor::Compositor(CompositorClient* client)
       output_surface_(nullptr),
       mailbox_buffer_map_(mode_),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
+      animation_host_(cc::AnimationHost::CreateMainInstance()),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
       num_failed_recreate_attempts_(0),
@@ -389,7 +390,7 @@ void Compositor::EnsureLayerTreeHost() {
       CompositorUtils::GetInstance()->GetTaskGraphRunner();
   params.settings = &settings;
   params.main_task_runner = base::ThreadTaskRunnerHandle::Get();
-  params.animation_host = cc::AnimationHost::CreateMainInstance();
+  params.mutator_host = animation_host_.get();
 
   layer_tree_host_ =
       cc::LayerTreeHostInProcess::CreateSingleThreaded(this, &params);

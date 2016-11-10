@@ -42,6 +42,7 @@ class SingleThreadTaskRunner;
 }
 
 namespace cc {
+class AnimationHost;
 class CompositorFrameSink;
 class Display;
 class Layer;
@@ -177,6 +178,8 @@ class Compositor : public cc::LayerTreeHostClient,
   cc::FrameSinkId frame_sink_id_;
   // This needs to outlive |layer_tree_host_|
   std::unique_ptr<cc::Display> display_;
+
+  std::unique_ptr<cc::AnimationHost> animation_host_;
 
   bool layer_tree_host_eviction_pending_;
   bool can_evict_layer_tree_host_;
