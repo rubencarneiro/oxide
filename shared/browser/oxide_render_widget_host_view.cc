@@ -246,12 +246,12 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
           base::MakeUnique<cc::SurfaceFactory>(frame_sink_id_, manager, this);
     }
 
-    if (local_frame_id_.is_null() ||
+    if (!local_frame_id_.is_valid() ||
         frame_size_dip != last_frame_size_dip_) {
       DestroyDelegatedContent();
 
       local_frame_id_ = id_allocator_->GenerateId();
-      DCHECK(!local_frame_id_.is_null());
+      DCHECK(local_frame_id_.is_valid());
       surface_factory_->Create(local_frame_id_);
 
       layer_ =
@@ -715,7 +715,7 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  if (!local_frame_id_.is_null()) {
+  if (local_frame_id_.is_valid()) {
     DCHECK(surface_factory_.get());
     surface_factory_->Destroy(local_frame_id_);
     local_frame_id_ = cc::LocalFrameId();
@@ -815,7 +815,7 @@ RenderWidgetHostView::RenderWidgetHostView(
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(!layer_);
   DCHECK(!surface_factory_);
-  DCHECK(local_frame_id_.is_null());
+  DCHECK(!local_frame_id_.is_valid());
 
   if (text_input_manager_) {
     text_input_manager_->RemoveObserver(this);
