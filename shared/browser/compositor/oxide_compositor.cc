@@ -344,6 +344,7 @@ Compositor::CreateCompositorFrameSink() {
           content::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
+          frame_sink_id_,
           std::move(begin_frame_source),
           std::move(output_surface),
           std::move(scheduler),

@@ -47,7 +47,7 @@ scoped_refptr<GLContextDependent> GLContextDependent::CloneFrom(
 }
 
 bool GLContextDependent::Initialize(gl::GLSurface* compatible_surface,
-                                    gl::GpuPreference gpu_preference) {
+                                    const gl::GLContextAttribs& attribs) {
   return true;
 }
 
