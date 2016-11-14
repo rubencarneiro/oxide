@@ -262,11 +262,11 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
                            double progress) override;
   void CloseContents(content::WebContents* source) override;
   void UpdateTargetURL(content::WebContents* source, const GURL& url) override;
-  bool AddMessageToConsole(content::WebContents* source,
-               int32_t level,
-               const base::string16& message,
-               int32_t line_no,
-               const base::string16& source_id) override;
+  bool DidAddMessageToConsole(content::WebContents* source,
+                              int32_t level,
+                              const base::string16& message,
+                              int32_t line_no,
+                              const base::string16& source_id) override;
   void BeforeUnloadFired(content::WebContents* source,
                          bool proceed,
                          bool* proceed_to_fire_unload) override;
