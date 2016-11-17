@@ -26,6 +26,7 @@
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
+#include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
@@ -199,7 +200,16 @@ void RenderWidgetHostView::FocusedNodeChanged(
 
 void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                                                  cc::CompositorFrame frame) {
-  if (frame.render_pass_list.empty()) {
+  if (!frame.delegated_frame_data) {
+    DLOG(ERROR) << "Non delegated renderer path is not supported";
+    host_->GetProcess()->ShutdownForBadMessage(
+        content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
+    return;
+  }
+
+  cc::DelegatedFrameData* frame_data = frame.delegated_frame_data.get();
+
+  if (frame_data->render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
     host_->GetProcess()->ShutdownForBadMessage(
         content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
@@ -224,7 +234,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
 
   float device_scale_factor = metadata.device_scale_factor;
-  cc::RenderPass* root_pass = frame.render_pass_list.back().get();
+  cc::RenderPass* root_pass = frame_data->render_pass_list.back().get();
 
   gfx::Size frame_size = root_pass->output_rect.size();
   gfx::Size frame_size_dip = gfx::Size(
