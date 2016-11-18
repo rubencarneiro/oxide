@@ -156,6 +156,7 @@ void ContentRendererClient::OverrideCompositorSettings(
     settings->scrollbar_fade_delay = base::TimeDelta::FromMilliseconds(300);
     settings->scrollbar_fade_resize_delay = base::TimeDelta::FromSeconds(2);
     settings->scrollbar_fade_duration = base::TimeDelta::FromMilliseconds(300);
+    settings->solid_color_scrollbar_color = SkColorSetARGB(128, 128, 128, 128);
   }
 }
 
