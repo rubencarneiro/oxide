@@ -45,6 +45,9 @@ namespace oxide {
 
 namespace {
 
+const char* kScriptMessageManagerInstance =
+    "__oxide_script_message_manager_instance";
+
 class StringResource : public v8::String::ExternalOneByteStringResource {
  public:
   StringResource(const base::StringPiece& string) :
@@ -73,16 +76,25 @@ std::string ScriptMessageManager::V8StringToStdString(
 }
 
 // static
-ScriptMessageManager* ScriptMessageManager::GetMessageManagerFromArgs(
-    const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::HandleScope handle_scope(args.GetIsolate());
-
-  v8::Handle<v8::External> mm(args.Data().As<v8::External>());
-  if (mm.IsEmpty() || mm->IsUndefined()) {
+ScriptMessageManager*
+ScriptMessageManager::GetMessageManagerForCurrentContext(v8::Isolate* isolate) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  if (context.IsEmpty()) {
     return nullptr;
   }
 
-  return static_cast<ScriptMessageManager *>(mm->Value());
+  v8::Local<v8::Value> value;
+  bool rv = context->Global()->GetPrivate(
+      context,
+      v8::Private::ForApi(
+          isolate,
+          v8::String::NewFromUtf8(isolate, kScriptMessageManagerInstance)))
+      .ToLocal(&value);
+  if (!rv || value.IsEmpty() || !value->IsExternal()) {
+    return nullptr;
+  }
+
+  return static_cast<ScriptMessageManager*>(value.As<v8::External>()->Value());
 }
 
 // static
@@ -131,14 +143,12 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
     return v8::Handle<v8::Object>();
   }
 
-  v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate));
-
   v8::Local<v8::FunctionTemplate> send_message_template(
-      v8::FunctionTemplate::New(isolate, SendMessage, local_data));
+      v8::FunctionTemplate::New(isolate, SendMessage));
   v8::Local<v8::FunctionTemplate> add_message_handler_template(
-      v8::FunctionTemplate::New(isolate, AddMessageHandler, local_data));
+      v8::FunctionTemplate::New(isolate, AddMessageHandler));
   v8::Local<v8::FunctionTemplate> remove_message_handler_template(
-      v8::FunctionTemplate::New(isolate, RemoveMessageHandler, local_data));
+      v8::FunctionTemplate::New(isolate, RemoveMessageHandler));
 
   v8::Local<v8::Object> exports(v8::Object::New(isolate));
 
@@ -185,7 +195,20 @@ void ScriptMessageManager::OxideLazyGetterInner(
 // static
 void ScriptMessageManager::SendMessage(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
-  GetMessageManagerFromArgs(args)->SendMessageInner(args);
+  v8::Isolate* isolate = args.GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  ScriptMessageManager* mm =
+      GetMessageManagerForCurrentContext(isolate);
+  if (!mm) {
+    isolate->ThrowException(
+        v8::Exception::Error(
+            v8::String::NewFromUtf8(isolate,
+                                    "Script context is being destroyed")));
+    return;
+  }
+
+  mm->SendMessageInner(args);
 }
 
 void ScriptMessageManager::SendMessageInner(
@@ -248,7 +271,20 @@ void ScriptMessageManager::SendMessageInner(
 // static
 void ScriptMessageManager::AddMessageHandler(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
-  GetMessageManagerFromArgs(args)->AddMessageHandlerInner(args);
+  v8::Isolate* isolate = args.GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  ScriptMessageManager* mm =
+      GetMessageManagerForCurrentContext(isolate);
+  if (!mm) {
+    isolate->ThrowException(
+        v8::Exception::Error(
+            v8::String::NewFromUtf8(isolate,
+                                    "Script context is being destroyed")));
+    return;
+  }
+
+  mm->AddMessageHandlerInner(args);
 }
 
 void ScriptMessageManager::AddMessageHandlerInner(
@@ -301,7 +337,20 @@ void ScriptMessageManager::AddMessageHandlerInner(
 // static
 void ScriptMessageManager::RemoveMessageHandler(
     const v8::FunctionCallbackInfo<v8::Value>& args) {
-  GetMessageManagerFromArgs(args)->RemoveMessageHandlerInner(args);
+  v8::Isolate* isolate = args.GetIsolate();
+  v8::HandleScope handle_scope(isolate);
+
+  ScriptMessageManager* mm =
+      GetMessageManagerForCurrentContext(isolate);
+  if (!mm) {
+    isolate->ThrowException(
+        v8::Exception::Error(
+            v8::String::NewFromUtf8(isolate,
+                                    "Script context is being destroyed")));
+    return;
+  }
+
+  mm->RemoveMessageHandlerInner(args);
 }
 
 void ScriptMessageManager::RemoveMessageHandlerInner(
@@ -377,8 +426,12 @@ ScriptMessageManager::ScriptMessageManager(content::RenderFrame* frame,
   v8::HandleScope handle_scope(isolate());
   v8::Context::Scope context_scope(context);
 
-  closure_data_.reset(isolate(), v8::External::New(isolate(), this));
-  v8::Local<v8::External> local_data(closure_data_.NewHandle(isolate()));
+  context->Global()->SetPrivate(
+      context,
+      v8::Private::ForApi(
+          isolate(),
+          v8::String::NewFromUtf8(isolate(), kScriptMessageManagerInstance)),
+      v8::External::New(isolate(), this)).FromJust();
 
   if (world_id_ != kMainWorldId) {
     v8::Local<v8::Object> global(context->Global());
@@ -392,7 +445,17 @@ ScriptMessageManager::ScriptMessageManager(content::RenderFrame* frame,
   }
 }
 
-ScriptMessageManager::~ScriptMessageManager() {}
+ScriptMessageManager::~ScriptMessageManager() {
+  v8::HandleScope handle_scope(isolate());
+  v8::Local<v8::Context> context = GetV8Context();
+  v8::Context::Scope context_scope(context);
+
+  context->Global()->DeletePrivate(
+      context,
+      v8::Private::ForApi(
+          isolate(),
+          v8::String::NewFromUtf8(isolate(), kScriptMessageManagerInstance)));
+}
 
 v8::Handle<v8::Context> ScriptMessageManager::GetV8Context() const {
   return context_.NewHandle(isolate());
