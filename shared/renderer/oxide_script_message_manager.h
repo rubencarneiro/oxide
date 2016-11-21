@@ -81,8 +81,8 @@ class ScriptMessageManager
 
   static std::string V8StringToStdString(v8::Local<v8::String> string);
 
-  static ScriptMessageManager* GetMessageManagerFromArgs(
-      const v8::FunctionCallbackInfo<v8::Value>& args);
+  static ScriptMessageManager* GetMessageManagerForCurrentContext(
+      v8::Isolate* isolate);
 
   static void OxideLazyGetter(v8::Local<v8::String> property,
                               const v8::PropertyCallbackInfo<v8::Value>& info);
@@ -117,8 +117,6 @@ class ScriptMessageManager
   ScriptMessageHandlerMap script_message_handler_map_;
 
   ScriptMessageObjectHandler script_message_object_handler_;
-
-  ScopedPersistent<v8::External> closure_data_;
 
   DISALLOW_COPY_AND_ASSIGN(ScriptMessageManager);
 };
