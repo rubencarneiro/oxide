@@ -29,6 +29,7 @@
 #include "content/public/renderer/render_thread.h"
 #include "content/public/renderer/render_view.h"
 #include "net/base/net_module.h"
+#include "ppapi/features/features.h"
 #include "third_party/WebKit/public/platform/WebURLResponse.h"
 #include "third_party/WebKit/public/web/WebRuntimeFeatures.h"
 #include "ui/native_theme/native_theme_switches.h"
@@ -44,7 +45,7 @@
 #include "oxide_user_script_slave.h"
 #include "oxide_web_content_settings_client.h"
 
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
 #include "pepper/oxide_pepper_render_frame_observer.h"
 #endif
 
@@ -79,7 +80,7 @@ void ContentRendererClient::RenderFrameCreated(
     content::RenderFrame* render_frame) {
   new ScriptMessageDispatcherRenderer(render_frame);
   new WebContentSettingsClient(render_frame);
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
   new PepperRenderFrameObserver(render_frame);
 #endif
 #if defined(ENABLE_MEDIAHUB)
