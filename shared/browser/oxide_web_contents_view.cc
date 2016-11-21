@@ -322,22 +322,26 @@ void WebContentsView::StartDragging(
     blink::WebDragOperationsMask allowed_ops,
     const gfx::ImageSkia& image,
     const gfx::Vector2d& image_offset,
-    const content::DragEventSourceInfo& event_info) {
+    const content::DragEventSourceInfo& event_info,
+    content::RenderWidgetHostImpl* source_rwh) {
   if (drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag when one is already in progress";
-    web_contents()->SystemDragEnded();
+    web_contents()->SystemDragEnded(source_rwh);
     return;
   }
+
+  DCHECK(!drag_source_rwh_.IsValid());
 
   drag_source_ =
       BrowserPlatformIntegration::GetInstance()->CreateDragSource(this);
   if (!drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag - not supported";
-    web_contents()->SystemDragEnded();
+    web_contents()->SystemDragEnded(source_rwh);
     return;
   }
+  drag_source_rwh_ = RenderWidgetHostID(source_rwh);
 
   HideTouchSelectionController();
 
@@ -582,6 +586,11 @@ void WebContentsView::CompositorEvictResources() {
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   DCHECK(drag_source_);
 
+  content::RenderWidgetHost* source_rwh = drag_source_rwh_.ToInstance();
+  if (!source_rwh) {
+    return;
+  }
+
   gfx::Point screen_point =
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
@@ -589,13 +598,16 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   gfx::Point view_point =
       screen_point - gfx::Vector2d(GetBounds().origin().x(),
                                    GetBounds().origin().y());
-  web_contents_impl()->DragSourceEndedAt(view_point.x(), view_point.y(),
-                                         screen_point.x(), screen_point.y(),
-                                         operation);
+  web_contents_impl()->DragSourceEndedAt(
+      view_point.x(), view_point.y(),
+      screen_point.x(), screen_point.y(),
+      operation,
+      content::RenderWidgetHostImpl::From(source_rwh));
 
-  web_contents()->SystemDragEnded();
+  web_contents()->SystemDragEnded(source_rwh);
 
   drag_source_.reset();
+  drag_source_rwh_ = RenderWidgetHostID();
 }
 
 void WebContentsView::InputPanelVisibilityChanged() {

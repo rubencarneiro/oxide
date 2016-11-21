@@ -203,7 +203,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
                      blink::WebDragOperationsMask allowed_ops,
                      const gfx::ImageSkia& image,
                      const gfx::Vector2d& image_offset,
-                     const content::DragEventSourceInfo& event_info) override;
+                     const content::DragEventSourceInfo& event_info,
+                     content::RenderWidgetHostImpl* source_rwh) override;
   void UpdateDragCursor(blink::WebDragOperation operation) override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
@@ -272,6 +273,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   RenderWidgetHostID current_drag_target_;
 
   std::unique_ptr<DragSource> drag_source_;
+  RenderWidgetHostID drag_source_rwh_;
 
   base::WeakPtr<WebPopupMenu> active_popup_menu_;
 
