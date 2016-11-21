@@ -41,7 +41,7 @@ class OXIDE_SHARED_EXPORT GLContextDependent : public gl::GLContext {
 
   // gfx::GLContext implementation
   bool Initialize(gl::GLSurface* compatible_surface,
-                  gl::GpuPreference gpu_preference) override;
+                  const gl::GLContextAttribs& attribs) override;
   bool MakeCurrent(gl::GLSurface* surface) override;
   void ReleaseCurrent(gl::GLSurface* surface) override;
   bool IsCurrent(gl::GLSurface* surface) override;

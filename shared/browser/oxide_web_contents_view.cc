@@ -322,22 +322,26 @@ void WebContentsView::StartDragging(
     blink::WebDragOperationsMask allowed_ops,
     const gfx::ImageSkia& image,
     const gfx::Vector2d& image_offset,
-    const content::DragEventSourceInfo& event_info) {
+    const content::DragEventSourceInfo& event_info,
+    content::RenderWidgetHostImpl* source_rwh) {
   if (drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag when one is already in progress";
-    web_contents()->SystemDragEnded();
+    web_contents()->SystemDragEnded(source_rwh);
     return;
   }
+
+  DCHECK(!drag_source_rwh_.IsValid());
 
   drag_source_ =
       BrowserPlatformIntegration::GetInstance()->CreateDragSource(this);
   if (!drag_source_) {
     LOG(WARNING) <<
         "Rejecting request to start a drag - not supported";
-    web_contents()->SystemDragEnded();
+    web_contents()->SystemDragEnded(source_rwh);
     return;
   }
+  drag_source_rwh_ = RenderWidgetHostID(source_rwh);
 
   HideTouchSelectionController();
 
@@ -582,6 +586,11 @@ void WebContentsView::CompositorEvictResources() {
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   DCHECK(drag_source_);
 
+  content::RenderWidgetHost* source_rwh = drag_source_rwh_.ToInstance();
+  if (!source_rwh) {
+    return;
+  }
+
   gfx::Point screen_point =
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
@@ -589,13 +598,16 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   gfx::Point view_point =
       screen_point - gfx::Vector2d(GetBounds().origin().x(),
                                    GetBounds().origin().y());
-  web_contents_impl()->DragSourceEndedAt(view_point.x(), view_point.y(),
-                                         screen_point.x(), screen_point.y(),
-                                         operation);
+  web_contents_impl()->DragSourceEndedAt(
+      view_point.x(), view_point.y(),
+      screen_point.x(), screen_point.y(),
+      operation,
+      content::RenderWidgetHostImpl::From(source_rwh));
 
-  web_contents()->SystemDragEnded();
+  web_contents()->SystemDragEnded(source_rwh);
 
   drag_source_.reset();
+  drag_source_rwh_ = RenderWidgetHostID();
 }
 
 void WebContentsView::InputPanelVisibilityChanged() {
@@ -872,14 +884,14 @@ void WebContentsView::HandleDragEnter(
   current_drop_data_.reset(new content::DropData(drop_data));
   current_drag_allowed_ops_ = allowed_ops;
 
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  current_drag_target_ = RenderWidgetHostID(rvh->GetWidget());
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  current_drag_target_ = RenderWidgetHostID(rwh);
 
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
           ->GetScreen()
           ->GetCursorScreenPoint();
-  rvh->DragTargetDragEnter(*current_drop_data_,
+  rwh->DragTargetDragEnter(*current_drop_data_,
                            location,
                            screen_location,
                            current_drag_allowed_ops_,
@@ -893,8 +905,8 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
     return blink::WebDragOperationNone;
   }
 
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (RenderWidgetHostID(rwh) != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
                     location,
                     current_drag_allowed_ops_,
@@ -905,7 +917,7 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
         ->GetCursorScreenPoint();
-  rvh->DragTargetDragOver(location,
+  rwh->DragTargetDragOver(location,
                           screen_location,
                           current_drag_allowed_ops_,
                           key_modifiers);
@@ -920,12 +932,12 @@ void WebContentsView::HandleDragLeave() {
 
   current_drop_data_.reset();
 
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (RenderWidgetHostID(rwh) != current_drag_target_) {
     return;
   }
 
-  rvh->DragTargetDragLeave();
+  rwh->DragTargetDragLeave();
 }
 
 blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
@@ -934,8 +946,8 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
     return blink::WebDragOperationNone;
   }
 
-  content::RenderViewHost* rvh = web_contents()->GetRenderViewHost();
-  if (RenderWidgetHostID(rvh->GetWidget()) != current_drag_target_) {
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (RenderWidgetHostID(rwh) != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
                     location,
                     current_drag_allowed_ops_,
@@ -946,7 +958,7 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
         ->GetCursorScreenPoint();
-  rvh->DragTargetDrop(*current_drop_data_,
+  rwh->DragTargetDrop(*current_drop_data_,
                       location,
                       screen_location,
                       key_modifiers);

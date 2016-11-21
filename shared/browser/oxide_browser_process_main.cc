@@ -35,7 +35,6 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/path_service.h"
-#include "base/posix/global_descriptors.h"
 #include "base/strings/string_split.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
@@ -494,10 +493,6 @@ void BrowserProcessMainImpl::Start(StartParams params) {
 
 #if defined(OS_POSIX)
   SetupAndVerifySignalHandlers();
-
-  base::GlobalDescriptors::GetInstance()->Set(
-      kPrimaryIPCChannel,
-      kPrimaryIPCChannel + base::GlobalDescriptors::kBaseDescriptor);
 #endif
 
   exit_manager_.reset(new base::AtExitManager());

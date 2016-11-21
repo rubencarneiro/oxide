@@ -620,11 +620,11 @@ void WebView::UpdateTargetURL(content::WebContents* source, const GURL& url) {
   }
 }
 
-bool WebView::AddMessageToConsole(content::WebContents* source,
-                                  int32_t level,
-                                  const base::string16& message,
-                                  int32_t line_no,
-                                  const base::string16& source_id) {
+bool WebView::DidAddMessageToConsole(content::WebContents* source,
+                                     int32_t level,
+                                     const base::string16& message,
+                                     int32_t line_no,
+                                     const base::string16& source_id) {
   DCHECK_VALID_SOURCE_CONTENTS
 
   return client_->AddMessageToConsole(level, message, line_no, source_id);

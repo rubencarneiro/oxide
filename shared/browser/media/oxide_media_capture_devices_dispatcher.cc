@@ -430,14 +430,6 @@ bool MediaCaptureDevicesDispatcher::GetDefaultCaptureDevicesForContext(
 void MediaCaptureDevicesDispatcher::RequestMediaAccessPermission(
     const content::MediaStreamRequest& request,
     const content::MediaResponseCallback& callback) {
-  if (request.video_type == content::MEDIA_DEVICE_AUDIO_OUTPUT ||
-      request.audio_type == content::MEDIA_DEVICE_AUDIO_OUTPUT) {
-    callback.Run(content::MediaStreamDevices(),
-                 content::MEDIA_DEVICE_INVALID_STATE,
-                 nullptr);
-    return;
-  }
-
   if (request.video_type == content::MEDIA_NO_SERVICE &&
       request.audio_type == content::MEDIA_NO_SERVICE) {
     callback.Run(content::MediaStreamDevices(),
