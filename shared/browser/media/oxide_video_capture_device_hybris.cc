@@ -198,7 +198,7 @@ void VideoCaptureDeviceHybris::AllocateAndStart(
   gl_surface_ = gl::init::CreateOffscreenGLSurface(gfx::Size(0, 0));
   gl_context_ = gl::init::CreateGLContext(nullptr,
                                           gl_surface_.get(),
-                                          gl::PreferIntegratedGpu);
+                                          gl::GLContextAttribs());
   if (!gl_context_) {
     client_->OnError(FROM_HERE, "Failed to create GL context");
     return;
