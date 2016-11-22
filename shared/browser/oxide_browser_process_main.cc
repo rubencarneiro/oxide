@@ -322,7 +322,8 @@ void InitializeCommandLine(const std::string& argv0,
     command_line->AppendSwitchASCII(switches::kRendererCmdPrefix,
                                     renderer_cmd_prefix);
   }
-  if (IsEnvironmentOptionEnabled("NO_SANDBOX", env)) {
+  if (IsEnvironmentOptionEnabled("NO_SANDBOX", env) ||
+      process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kNoSandbox);
   } else {
     // See https://launchpad.net/bugs/1447311
@@ -354,6 +355,7 @@ void InitializeCommandLine(const std::string& argv0,
 
   if (process_model == PROCESS_MODEL_SINGLE_PROCESS) {
     command_line->AppendSwitch(switches::kSingleProcess);
+    command_line->AppendSwitch(switches::kNoZygote);
   } else if (process_model == PROCESS_MODEL_PROCESS_PER_VIEW) {
     command_line->AppendSwitch(switches::kProcessPerTab);
   } else if (process_model == PROCESS_MODEL_PROCESS_PER_SITE) {
