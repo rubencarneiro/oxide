@@ -329,9 +329,6 @@ void InitializeCommandLine(const std::string& argv0,
     // See https://launchpad.net/bugs/1447311
     command_line->AppendSwitch(switches::kDisableNamespaceSandbox);
 
-    if (IsEnvironmentOptionEnabled("DISABLE_SETUID_SANDBOX", env)) {
-      command_line->AppendSwitch(switches::kDisableSetuidSandbox);
-    }
     if (IsEnvironmentOptionEnabled("DISABLE_SECCOMP_FILTER_SANDBOX",
                                    env)) {
       command_line->AppendSwitch(switches::kDisableSeccompFilterSandbox);
