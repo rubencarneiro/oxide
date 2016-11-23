@@ -32,7 +32,13 @@ int ImageFrameNode::textureId() const {
         1,
         &const_cast<ImageFrameNode*>(this)->texture_id_);
 #else
-    glGenTextures(1, &const_cast<ImageFrameNode*>(this)->texture_id_);
+    typedef void (*glGenTexturesProc)(GLsizei n, GLuint* textures);
+    static glGenTexturesProc glGenTexturesFn =
+        reinterpret_cast<glGenTexturesProc>(
+            QOpenGLContext::currentContext()->getProcAddress("glGenTextures"));
+    Q_ASSERT(glGenTexturesFn);
+
+    glGenTexturesFn(1, &const_cast<ImageFrameNode*>(this)->texture_id_);
 #endif
   }
 
@@ -62,8 +68,15 @@ void ImageFrameNode::bind() {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
   functions->glBindTexture(GL_TEXTURE_2D, textureId());
 #else
-  glBindTexture(GL_TEXTURE_2D, textureId());
+  typedef void (*glBindTextureProc)(GLenum target, GLuint texture);
+  static glBindTextureProc glBindTextureFn =
+      reinterpret_cast<glBindTextureProc>(
+          context->getProcAddress("glBindTexture"));
+  Q_ASSERT(glBindTextureFn);
+
+  glBindTextureFn(GL_TEXTURE_2D, textureId());
 #endif
+
   updateBindOptions(dirty_bind_options_);
   dirty_bind_options_ = false;
 
@@ -94,7 +107,13 @@ ImageFrameNode::~ImageFrameNode() {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 3, 0)
     context->functions()->glDeleteTextures(1, &texture_id_);
 #else
-    glDeleteTextures(1, &texture_id_);
+    typedef void (*glDeleteTexturesProc)(GLsizei n, const GLuint* textures);
+    static glDeleteTexturesProc glDeleteTexturesFn =
+        reinterpret_cast<glDeleteTexturesProc>(
+            context->getProcAddress("glDeleteTextures"));
+    Q_ASSERT(glDeleteTexturesFn);
+
+    glDeleteTexturesFn(1, &texture_id_);
 #endif
   }
 }
