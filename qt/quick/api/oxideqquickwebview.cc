@@ -61,6 +61,7 @@
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquicklocationbarcontroller_p.h"
+#include "oxideqquicknavigationhistory.h"
 #include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
@@ -132,6 +133,7 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
       aux_ui_factory_(std::move(aux_ui_factory)),
       constructed_(false),
       load_progress_(0),
+      navigation_history_(OxideQQuickNavigationHistoryPrivate::Create()),
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
       context_menu_(nullptr),
@@ -554,7 +556,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
         construct_props_->restore_type));
   }
 
-  OxideQQuickNavigationHistoryPrivate::get(&navigation_history_)->init(
+  OxideQQuickNavigationHistoryPrivate::get(navigation_history_.get())->init(
       proxy_->webContentsID());
   OxideQFindControllerPrivate::get(find_controller_.data())->Init(
       proxy_->webContentsID());
@@ -1050,7 +1052,7 @@ OxideQQuickWebView::OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
   setAcceptedMouseButtons(Qt::AllButtons);
   setAcceptHoverEvents(true);
 
-  connect(&d->navigation_history_, &OxideQQuickNavigationHistory::changed,
+  connect(d->navigation_history_.get(), &OxideQQuickNavigationHistory::changed,
           this, &OxideQQuickWebView::navigationHistoryChanged);
 }
 
@@ -1410,7 +1412,7 @@ bool OxideQQuickWebView::canGoBack() const {
   WARN_DEPRECATED_API_USAGE() <<
       "OxideQQuickWebView: canGoBack is deprecated. Please use the API "
       "provided by OxideQQuickNavigationHistory instead";
-  return d->navigation_history_.canGoBack();
+  return d->navigation_history_->canGoBack();
 }
 
 /*!
@@ -1431,7 +1433,7 @@ bool OxideQQuickWebView::canGoForward() const {
   WARN_DEPRECATED_API_USAGE() <<
       "OxideQQuickWebView: canGoForward is deprecated. Please use the API "
       "provided by OxideQQuickNavigationHistory instead";
-  return d->navigation_history_.canGoForward();
+  return d->navigation_history_->canGoForward();
 }
 
 /*!
@@ -2117,7 +2119,7 @@ NavigationHistory for more information about how to use this.
 OxideQQuickNavigationHistory* OxideQQuickWebView::navigationHistory() {
   Q_D(OxideQQuickWebView);
 
-  return &d->navigation_history_;
+  return d->navigation_history_.get();
 }
 
 /*!
@@ -2663,7 +2665,7 @@ void OxideQQuickWebView::goBack() {
   WARN_DEPRECATED_API_USAGE() <<
       "OxideQQuickWebView: goBack is deprecated. Please use the API "
       "provided by OxideQQuickNavigationHistory instead";
-  d->navigation_history_.goBack();
+  d->navigation_history_->goBack();
 }
 
 /*!
@@ -2682,7 +2684,7 @@ void OxideQQuickWebView::goForward() {
   WARN_DEPRECATED_API_USAGE() <<
       "OxideQQuickWebView: goForward is deprecated. Please use the API "
       "provided by OxideQQuickNavigationHistory instead";
-  d->navigation_history_.goForward();
+  d->navigation_history_->goForward();
 }
 
 /*!
