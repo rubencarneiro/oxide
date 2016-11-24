@@ -94,6 +94,13 @@ OxideQQuickNavigationHistoryPrivate* OxideQQuickNavigationHistoryPrivate::get(
   return q->d_func();
 }
 
+// static
+std::unique_ptr<OxideQQuickNavigationHistory>
+OxideQQuickNavigationHistoryPrivate::Create() {
+  return std::unique_ptr<OxideQQuickNavigationHistory>(
+      new OxideQQuickNavigationHistory());
+}
+
 void OxideQQuickNavigationHistoryPrivate::init(WebContentsID web_contents_id) {
   navigation_history_->init(web_contents_id);
 }
@@ -130,6 +137,12 @@ deprecated and should not be used in newly written code.
 This signal is emitted whenever the navigation history changes. This can happen
 multiple times during a single navigation.
 */
+
+OxideQQuickNavigationHistory::OxideQQuickNavigationHistory()
+    : d_ptr(new OxideQQuickNavigationHistoryPrivate(this)) {
+  Q_D(OxideQQuickNavigationHistory);
+  d->navigation_history_ = NavigationHistory::create(d, this);
+}
 
 QHash<int, QByteArray> OxideQQuickNavigationHistory::roleNames() const {
   static QHash<int, QByteArray> roles;
@@ -180,12 +193,6 @@ QVariant OxideQQuickNavigationHistory::data(const QModelIndex& index,
     default:
       return QVariant();
   }
-}
-
-OxideQQuickNavigationHistory::OxideQQuickNavigationHistory()
-    : d_ptr(new OxideQQuickNavigationHistoryPrivate(this)) {
-  Q_D(OxideQQuickNavigationHistory);
-  d->navigation_history_ = NavigationHistory::create(d, this);
 }
 
 OxideQQuickNavigationHistory::~OxideQQuickNavigationHistory() = default;

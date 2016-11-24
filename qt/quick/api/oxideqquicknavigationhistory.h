@@ -46,7 +46,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickNavigationHistory
   Q_DISABLE_COPY(OxideQQuickNavigationHistory)
 
  public:
-  OxideQQuickNavigationHistory();
   ~OxideQQuickNavigationHistory() Q_DECL_OVERRIDE;
 
   QVariantList backItems();
@@ -73,6 +72,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickNavigationHistory
   void currentIndexChanged();
 
  private:
+  OxideQQuickNavigationHistory();
+
   // reimplemented from QAbstractListModel
   QHash<int, QByteArray> roleNames() const Q_DECL_OVERRIDE;
   int rowCount(const QModelIndex& parent = QModelIndex()) const Q_DECL_OVERRIDE;

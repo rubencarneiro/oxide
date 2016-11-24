@@ -42,6 +42,8 @@ class OxideQQuickNavigationHistoryPrivate
   static OxideQQuickNavigationHistoryPrivate* get(
       OxideQQuickNavigationHistory* q);
 
+  static std::unique_ptr<OxideQQuickNavigationHistory> Create();
+
   void init(oxide::qt::WebContentsID web_contents_id);
 
  private:

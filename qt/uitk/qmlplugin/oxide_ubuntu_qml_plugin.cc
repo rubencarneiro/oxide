@@ -30,6 +30,11 @@ class OxideUbuntuQmlPlugin : public QQmlExtensionPlugin {
   void registerTypes(const char* uri) {
     Q_ASSERT(QLatin1String(uri) == QLatin1String("Oxide.Ubuntu"));
 
+    qWarning() <<
+        "Oxide.Ubuntu is an experimental module - future versions may "
+        "change in backwards-incompatible ways, and without bumping the module "
+        "version. Please use with caution";
+
     qmlRegisterType<OxideUbuntuWebView>(uri, 1, 0, "UbuntuWebView");
     qmlRegisterRevision<OxideQQuickWebView, 9>(uri, 1, 0);
   }

@@ -44,6 +44,7 @@ ui::GestureDetector::Config GetGestureDetectorConfig() {
   config.double_tap_slop = 100.0f;
   config.minimum_fling_velocity = 50.0f;
   config.maximum_fling_velocity = 10000.0f;
+  config.velocity_tracker_strategy = ui::VelocityTracker::LSQ2_RESTRICTED;
 
   return config;
 }

@@ -60,9 +60,6 @@ namespace oxide {
 
 namespace {
 int kUserDataKey;
-
-ChromeController* kUninitializedChromeController =
-    reinterpret_cast<ChromeController*>(1);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
@@ -74,7 +71,7 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone),
-      chrome_controller_(kUninitializedChromeController) {
+      chrome_controller_(nullptr) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
 
@@ -85,6 +82,9 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
   compositor_->SetRootLayer(root_layer_);
 
   CompositorObserver::Observe(compositor_.get());
+
+  ChromeController::CreateForWebContents(web_contents);
+  chrome_controller_ = ChromeController::FromWebContents(web_contents);
 }
 
 content::WebContentsImpl* WebContentsView::web_contents_impl() const {
@@ -655,12 +655,7 @@ bool WebContentsView::IsFullscreen() const {
 }
 
 float WebContentsView::GetTopControlsHeight() {
-  ChromeController* chrome_controller = GetChromeController();
-  if (!chrome_controller) {
-    return 0.f;
-  }
-
-  return chrome_controller->top_controls_height();
+  return chrome_controller_->top_controls_height();
 }
 
 ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
@@ -693,12 +688,7 @@ void WebContentsView::TouchSelectionChanged(RenderWidgetHostView* view,
     bounds = controller->GetRectBetweenBounds();
   }
 
-  float offset = 0.f;
-  ChromeController* chrome_controller = GetChromeController();
-  if (chrome_controller) {
-    offset = chrome_controller->GetTopContentOffset();
-  }
-  bounds.Offset(0, offset);
+  bounds.Offset(0, chrome_controller_->GetTopContentOffset());
 
   client_->TouchSelectionChanged(status,
                                  bounds,
@@ -1055,14 +1045,6 @@ void WebContentsView::HideTouchSelectionController() {
   if (selection_controller) {
     selection_controller->HideAndDisallowShowingAutomatically();
   }
-}
-
-ChromeController* WebContentsView::GetChromeController() {
-  if (chrome_controller_ == kUninitializedChromeController) {
-    chrome_controller_ = ChromeController::FromWebContents(web_contents());
-  }
-
-  return chrome_controller_;
 }
 
 } // namespace oxide

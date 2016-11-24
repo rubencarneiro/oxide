@@ -31,12 +31,12 @@
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 
 #include "qt/quick/api/oxideqquickglobal.h"
-#include "qt/quick/api/oxideqquicknavigationhistory.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 
 class OxideQNewViewRequest;
 class OxideQWebPreferences;
 class OxideQQuickLocationBarController;
+class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
@@ -156,7 +156,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   bool constructed_;
   int load_progress_;
 
-  OxideQQuickNavigationHistory navigation_history_;
+  std::unique_ptr<OxideQQuickNavigationHistory> navigation_history_;
   QScopedPointer<OxideQSecurityStatus> security_status_;
   QScopedPointer<OxideQFindController> find_controller_;
 
