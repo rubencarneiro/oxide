@@ -141,8 +141,8 @@ bool WebContextMenu::Init(const std::vector<MenuItem>& items,
                      !params.src_url.isEmpty() ?
                          params.src_url : params.link_url);
 
-  // TODO(chrisccoulson): Parent this to the root item and transform the
-  // position
+  // PopupBase.qml reparents the menu to the root item, but we need to set a
+  // parent item here first so that it can find the root
   item_->setParentItem(parent_);
 
   menu_component.completeCreate();
