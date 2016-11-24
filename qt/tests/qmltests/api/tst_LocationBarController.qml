@@ -798,5 +798,54 @@ Item {
 
       TestSupport.destroyQObjectNow(webView);
     }
+
+    function test_LocationBarController11_initial_on_window_open_data() {
+      return [
+        { mode: LocationBarController.ModeAuto },
+        { mode: LocationBarController.ModeShown }
+      ];
+    }
+
+    // Ensure that LocationBarController works for webviews that are script opened
+    // See https://launchpad.net/bugs/1631184
+    function test_LocationBarController11_initial_on_window_open(data) {
+      var webView = webViewFactory.createObject(top, {});
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+
+      var created = null;
+
+      webView.newViewRequested.connect(function(request) {
+        created = webViewFactory.createObject(top, {
+            request: request,
+            "locationBarController.height": 60,
+            "locationBarController.mode": data.mode
+        });
+        locationBarSpy.target = created;
+      });
+
+      webView.context.popupBlockerEnabled = false;
+      webView.getTestApi().evaluateCode("window.open(\"empty.html\")", false);
+      webView.context.popupBlockerEnabled = true;
+
+      TestUtils.waitFor(function() { return created != null; });
+
+      verify(locationBarSpy.waitUntilShown());
+
+      verify(!locationBarSpy.inconsistentPropertiesSeen);
+      verify(!locationBarSpy.missingSignal);
+      verify(locationBarSpy.shown);
+      verify(!locationBarSpy.hidden);
+      verify(!locationBarSpy.animating);
+      compare(locationBarSpy.animationCount, 0);
+      // This is 2 because we get a transition:
+      // - When we set the spy target
+      // - When the locationbar is shown (it's initially hidden until the
+      //   webview compositor produces a frame)
+      compare(locationBarSpy.transitionCount, 2);
+
+      TestSupport.destroyQObjectNow(created);
+      TestSupport.destroyQObjectNow(webView);
+    }
   }
 }

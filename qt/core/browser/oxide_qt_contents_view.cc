@@ -449,12 +449,7 @@ void ContentsView::hideTouchSelectionController() {
 }
 
 float ContentsView::GetTopContentOffset() const {
-  ChromeController* chrome_controller = view()->GetChromeController();
-  if (!chrome_controller) {
-    return 0.f;
-  }
-
-  return chrome_controller->GetTopContentOffset();
+  return view()->chrome_controller()->GetTopContentOffset();
 }
 
 void ContentsView::SetInputMethodEnabled(bool enabled) {
