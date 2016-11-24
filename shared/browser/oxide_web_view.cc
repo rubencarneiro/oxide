@@ -74,7 +74,6 @@
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
-#include "chrome_controller.h"
 #include "navigation_controller_observer.h"
 #include "oxide_browser_context.h"
 #include "oxide_browser_process_main.h"
@@ -140,7 +139,6 @@ void CreateHelpers(content::WebContents* contents) {
   FaviconHelper::CreateForWebContents(contents);
   FullscreenHelper::CreateForWebContents(contents);
   WebProcessStatusMonitor::CreateForWebContents(contents);
-  ChromeController::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)

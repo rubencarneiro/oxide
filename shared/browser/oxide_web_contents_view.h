@@ -147,7 +147,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void HideTouchSelectionController();
 
-  ChromeController* GetChromeController();
+  ChromeController* chrome_controller() const { return chrome_controller_; }
 
  private:
   WebContentsView(content::WebContents* web_contents);
