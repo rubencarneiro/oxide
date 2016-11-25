@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,7 @@ FindController::FindController(content::WebContents* contents)
     : client_(nullptr),
       contents_(contents),
       case_sensitive_(false),
-      current_request_id_(-1),
+      current_session_id_(s_request_id_counter_++),
       request_active_(false) {}
 
 FindController::~FindController() {}
@@ -62,7 +62,7 @@ void FindController::StartFinding(const std::string& text,
 
   text_ = text;
   case_sensitive_ = case_sensitive;
-  current_request_id_ = s_request_id_counter_++;
+  current_session_id_ = s_request_id_counter_++;
   request_active_ = true;
 
   blink::WebFindOptions options;
@@ -70,7 +70,7 @@ void FindController::StartFinding(const std::string& text,
   options.findNext = false;
   options.matchCase = case_sensitive_;
 
-  contents_->Find(current_request_id_, base::UTF8ToUTF16(text_), options);
+  contents_->Find(current_session_id_, base::UTF8ToUTF16(text_), options);
 }
 
 void FindController::StopFinding() {
@@ -96,7 +96,7 @@ void FindController::GotoNextMatch() {
   options.forward = true;
   options.findNext = true;
 
-  contents_->Find(current_request_id_, base::UTF8ToUTF16(text_), options);
+  contents_->Find(s_request_id_counter_++, base::UTF8ToUTF16(text_), options);
 }
 
 void FindController::GotoPreviousMatch() {
@@ -109,13 +109,13 @@ void FindController::GotoPreviousMatch() {
   options.forward = false;
   options.findNext = true;
 
-  contents_->Find(current_request_id_, base::UTF8ToUTF16(text_), options);
+  contents_->Find(s_request_id_counter_++, base::UTF8ToUTF16(text_), options);
 }
 
 void FindController::HandleFindReply(int request_id,
                                      int number_of_matches,
                                      int active_match_ordinal) {
-  if (!request_active_ || request_id != current_request_id_) {
+  if (!request_active_ || request_id < current_session_id_) {
     return;
   }
 
