@@ -64,15 +64,21 @@ TestWebView {
     }
 
     function test_movement_wraps() {
-      webView.findController.text = "dolor";
-      tryCompare(webView.findController, "count", 2);
+      webView.findController.text = "elit";
+      tryCompare(webView.findController, "count", 3);
       tryCompare(webView.findController, "current", 1);
 
       webView.findController.next();
+      tryCompare(webView.findController, "current", 2);
+      webView.findController.next();
+      tryCompare(webView.findController, "current", 3);
       webView.findController.next();
       tryCompare(webView.findController, "current", 1);
 
       webView.findController.previous();
+      tryCompare(webView.findController, "current", 3);
+      webView.findController.previous();
+      tryCompare(webView.findController, "current", 2);
       webView.findController.previous();
       tryCompare(webView.findController, "current", 1);
     }
