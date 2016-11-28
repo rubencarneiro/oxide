@@ -210,6 +210,8 @@ class TestSupport : public QObject {
 
   Q_INVOKABLE void wait(int ms);
 
+  Q_INVOKABLE QVariant toQtPixels(QQuickItem* item, const QVariant& v);
+
  Q_SIGNALS:
   void testLoadedChanged();
 

@@ -21,7 +21,7 @@
 #include <QQuickWindow>
 #include <QScreen>
 
-#include "qt/core/glue/screen_form_factor.h"
+#include "qt/core/glue/screen_utils.h"
 
 #include "uitk_web_context_menu.h"
 

@@ -21,8 +21,10 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QGuiApplication>
+#include <QJSValue>
 #include <QLatin1String>
 #include <QList>
+#include <QMap>
 #include <QPointer>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -35,6 +37,7 @@
 #include <QtQml>
 #include <QVariant>
 
+#include "qt/core/glue/screen_utils.h"
 #include "qt/quick/api/oxideqquickwebcontext.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
 #include "qt/quick/api/oxideqquickwebview.h"
@@ -328,4 +331,38 @@ void TestSupport::removeAppProperty(const QString& property) {
 
 void TestSupport::wait(int ms) {
   QTest::qWait(ms);
+}
+
+QVariant TestSupport::toQtPixels(QQuickItem* item, const QVariant& v) {
+  if (!item->window() || !item->window()->screen()) {
+    qWarning() << "Can't determine scale factor for item";
+    return v;
+  }
+
+  float scale =
+      oxide::qt::GetScreenScaleFactor(item->window()->screen()) /
+      item->window()->screen()->devicePixelRatio();
+
+  QVariant value = v;
+  if (value.userType() == qMetaTypeId<QJSValue>()) {
+    value = value.value<QJSValue>().toVariant();
+  }
+
+  if (value.type() != QVariant::Map) {
+    qWarning() << "Invalid type";
+    return QVariant();
+  }
+
+  QMap<QString, QVariant> map = value.toMap();
+  if (map.contains("x") && map.contains("y")) {
+    map["x"] = map["x"].toReal() * scale;
+    map["y"] = map["y"].toReal() * scale;
+  }
+
+  if (map.contains("width") && map.contains("height")) {
+    map["width"] = map["width"].toReal() * scale;
+    map["height"] = map["height"].toReal() * scale;
+  }
+
+  return map;
 }

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
-#define _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
+#ifndef _OXIDE_QT_CORE_GLUE_SCREEN_UTILS_H_
+#define _OXIDE_QT_CORE_GLUE_SCREEN_UTILS_H_
 
 #include <QtGlobal>
 
@@ -37,7 +37,9 @@ enum class ScreenFormFactor {
 
 OXIDE_QTCORE_EXPORT ScreenFormFactor GetScreenFormFactor(QScreen* screen);
 
+OXIDE_QTCORE_EXPORT float GetScreenScaleFactor(QScreen* screen);
+
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
+#endif // _OXIDE_QT_CORE_GLUE_SCREEN_UTILS_H_

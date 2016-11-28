@@ -15,11 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "screen_form_factor.h"
+#include "screen_utils.h"
 
 #include "base/logging.h"
 #include "ui/display/display.h"
 
+#include "qt/core/browser/oxide_qt_dpi_utils.h"
 #include "qt/core/browser/qt_screen.h"
 #include "shared/browser/display_form_factor.h"
 
@@ -40,6 +41,10 @@ ScreenFormFactor GetScreenFormFactor(QScreen* screen) {
   DCHECK(display.is_valid());
   return static_cast<ScreenFormFactor>(
       Screen::GetInstance()->GetDisplayFormFactor(display));
+}
+
+float GetScreenScaleFactor(QScreen* screen) {
+  return DpiUtils::GetScaleFactorForScreen(screen);
 }
 
 } // namespace qt
