@@ -252,7 +252,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
 
       local_frame_id_ = id_allocator_->GenerateId();
       DCHECK(local_frame_id_.is_valid());
-      surface_factory_->Create(local_frame_id_);
 
       layer_ =
           cc::SurfaceLayer::Create(base::Bind(&SatisfyCallback,
@@ -717,7 +716,7 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
   if (local_frame_id_.is_valid()) {
     DCHECK(surface_factory_.get());
-    surface_factory_->Destroy(local_frame_id_);
+    surface_factory_->EvictSurface();
     local_frame_id_ = cc::LocalFrameId();
   }
   layer_ = nullptr;
