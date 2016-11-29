@@ -160,6 +160,12 @@ class TestHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
       head, word = os.path.split(word)
       if word in (os.curdir, os.pardir): continue
       path = os.path.join(path, word)
+    (root, ext) = os.path.splitext(path)
+    # rewrite html queries as python ones if the html file doesn't exist
+    if ext == ".html" and not os.path.isfile(path):
+      py_path = root + ".py"
+      if os.path.isfile(py_path):
+        return py_path
     return path
 
 class TestHTTPServer(BaseHTTPServer.HTTPServer):

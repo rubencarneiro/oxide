@@ -135,6 +135,7 @@ bool WebContextMenu::Init(const std::vector<MenuItem>& items,
   item_->setProperty("isImage",
                      params.media_type == qt::MEDIA_TYPE_IMAGE ||
                          params.media_type == qt::MEDIA_TYPE_CANVAS);
+  item_->setProperty("openerName", parent_->objectName());
   item_->setProperty("position", params.position);
   item_->setProperty("sourceItem", QVariant::fromValue(parent_.data()));
   item_->setProperty("title",

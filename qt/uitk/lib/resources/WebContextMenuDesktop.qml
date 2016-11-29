@@ -26,6 +26,9 @@ Popups.Popover {
   property var position
   property Item sourceItem
   property string title
+  property string openerName
+
+  objectName: openerName ? openerName + "_WebContextMenu" : ""
 
   signal cancelled()
 
@@ -56,6 +59,7 @@ Popups.Popover {
 
     Label {
       id: titleLabel
+      objectName: openerName ? openerName + "_WebContextMenu_title" : ""
 
       anchors {
         left: parent.left
@@ -89,6 +93,7 @@ Popups.Popover {
         action: modelData
         visible: action.enabled
         showDivider: false
+        objectName: openerName ? openerName + "_WebContextMenu_item_" + index : ""
 
         height: units.gu(5)
 

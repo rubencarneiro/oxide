@@ -37,7 +37,8 @@ foreach(f
     TestUtils.js
     TestUtilsSlave.js
     TestWebContext.qml
-    TestWebView.qml)
+    TestWebView.qml
+    UbuntuTestWebView.qml)
   add_custom_command(
       OUTPUT ${QML_SUPPORT_MODULE_DIR}/${f}
       COMMAND ${CMAKE_COMMAND} -E copy
@@ -148,6 +149,8 @@ add_qml_test(EXEC qmltest_web_platform_screen
              MOCK_QPA)
 add_qml_test(EXEC qmltest_crash NAME qml-crash-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash)
+add_qml_test(EXEC qmltest_ubuntu_ui NAME qml-ubuntu-ui-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ubuntu_ui)
 add_qml_test(EXEC qmltest_api NAME qml-api-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/api
              SINGLE_PROCESS
@@ -164,3 +167,5 @@ add_qml_test(EXEC qmltest_web_platform_screen
              MOCK_QPA SINGLE_PROCESS)
 add_qml_test(EXEC qmltest_crash NAME qml-crash-single-process-test
              TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crash SINGLE_PROCESS)
+add_qml_test(EXEC qmltest_ubuntu_ui NAME qml-ubuntu-ui-single-process-test
+             TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ubuntu_ui SINGLE_PROCESS)

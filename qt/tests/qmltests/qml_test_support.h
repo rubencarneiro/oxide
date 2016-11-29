@@ -155,16 +155,23 @@ class TestWindowAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(int x READ x)
   Q_PROPERTY(int y READ y)
+  Q_PROPERTY(int width READ width)
+  Q_PROPERTY(int height READ height)
   Q_PROPERTY(QScreen* screen READ screen WRITE setScreen)
+  Q_PROPERTY(QQuickItem* rootItem READ rootItem)
 
  public:
   TestWindowAttached(QObject* attachee);
 
   int x() const;
   int y() const;
+  int width() const;
+  int height() const;
 
   QScreen* screen() const;
   void setScreen(QScreen* screen);
+
+  QQuickItem* rootItem() const;
 
  private:
   QQuickItem* item_;
@@ -211,6 +218,12 @@ class TestSupport : public QObject {
   Q_INVOKABLE void wait(int ms);
 
   Q_INVOKABLE QVariant toQtPixels(QQuickItem* item, const QVariant& v);
+
+  Q_INVOKABLE QQuickItem* findItemInScene(QQuickItem* root,
+                                          const QString& name);
+
+  Q_INVOKABLE QVariantList findItemsInScene(QQuickItem* root,
+                                            const QString& namePrefix);
 
  Q_SIGNALS:
   void testLoadedChanged();
