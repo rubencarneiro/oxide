@@ -181,8 +181,8 @@ int PermissionManager::RequestPermission(
     return kNoPendingOperation;
   }
 
-  RequestData* request_data = new RequestData(render_frame_host);
-  int request_id = requests_.Add(request_data);
+  int request_id =
+      requests_.Add(base::MakeUnique<RequestData>(render_frame_host));
 
   int dispatch_request_id = dispatcher->RequestPermission(
       permission,
@@ -197,7 +197,7 @@ int PermissionManager::RequestPermission(
                  callback));
   DCHECK_NE(dispatch_request_id, -1);
 
-  request_data = requests_.Lookup(request_id);
+  RequestData* request_data = requests_.Lookup(request_id);
   if (!request_data) {
     return kNoPendingOperation;
   }
@@ -294,7 +294,7 @@ int PermissionManager::SubscribePermissionStatusChange(
   Subscription* subscription = new Subscription();
   subscription->callback = callback;
 
-  return subscriptions_.Add(subscription);
+  return subscriptions_.Add(base::WrapUnique(subscription));
 }
 
 void PermissionManager::UnsubscribePermissionStatusChange(int subscription_id) {

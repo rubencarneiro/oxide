@@ -33,7 +33,7 @@ int PowerSaveBlockerService::CreatePowerSaveBlocker(
     return -1;
   }
 
-  return blockers_.Add(blocker.release());
+  return blockers_.Add(std::move(blocker));
 }
 
 void PowerSaveBlockerService::CancelPowerSaveBlocker(int id) {
