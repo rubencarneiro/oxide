@@ -39,7 +39,6 @@
 #include "shared/common/oxide_constants.h"
 
 #include "web_context_menu_actions.h"
-#include "web_context_menu_action_groups.h"
 
 namespace oxide {
 
@@ -332,65 +331,32 @@ bool WebContextMenuImpl::IsCommandEnabled(WebContextMenuAction action) const {
   return false;
 }
 
-bool WebContextMenuImpl::SupportsActionGroup(
-    WebContextMenuActionGroup group) const {
-  switch (group) {
-    case WebContextMenuActionGroup::Link:
-      return !params_.unfiltered_link_url.is_empty();
-
-    case WebContextMenuActionGroup::Image:
-      return params_.media_type == blink::WebContextMenuData::MediaTypeImage;
-
-    case WebContextMenuActionGroup::Canvas:
-      return params_.media_type == blink::WebContextMenuData::MediaTypeCanvas;
-
-    case WebContextMenuActionGroup::Audio:
-      return params_.media_type == blink::WebContextMenuData::MediaTypeAudio;
-
-    case WebContextMenuActionGroup::Video:
-      return params_.media_type == blink::WebContextMenuData::MediaTypeVideo;
-
-    case WebContextMenuActionGroup::Editable:
-      return params_.is_editable;
-
-    case WebContextMenuActionGroup::Copy:
-      return !params_.is_editable && !params_.selection_text.empty();
-  }
-
-  NOTREACHED();
-  return false;
-}
-
-bool WebContextMenuImpl::SupportsMediaActionGroup() const {
-  return SupportsActionGroup(WebContextMenuActionGroup::Image) ||
-         SupportsActionGroup(WebContextMenuActionGroup::Canvas) ||
-         SupportsActionGroup(WebContextMenuActionGroup::Audio) ||
-         SupportsActionGroup(WebContextMenuActionGroup::Video);
-}
-
 std::vector<content::MenuItem> WebContextMenuImpl::BuildItems() {
   std::vector<content::MenuItem> items;
 
-  if (SupportsActionGroup(WebContextMenuActionGroup::Link)) {
+  if (!params_.unfiltered_link_url.is_empty()) {
     AppendLinkItems(&items);
-    if (SupportsMediaActionGroup()) {
+    if (params_.media_type == blink::WebContextMenuData::MediaTypeImage ||
+        params_.media_type == blink::WebContextMenuData::MediaTypeCanvas ||
+        params_.media_type == blink::WebContextMenuData::MediaTypeAudio ||
+        params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
       MenuBuilder(this, &items).AppendSeparatorItem();
     }
   }
 
-  if (SupportsActionGroup(WebContextMenuActionGroup::Image)) {
+  if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
     AppendImageItems(&items);
-  } else if (SupportsActionGroup(WebContextMenuActionGroup::Canvas)) {
+  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) {
     AppendCanvasItems(&items);
-  } else if (SupportsActionGroup(WebContextMenuActionGroup::Audio)) {
+  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeAudio) {
     AppendAudioItems(&items);
-  } else if (SupportsActionGroup(WebContextMenuActionGroup::Video)) {
+  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
     AppendVideoItems(&items);
   }
 
-  if (SupportsActionGroup(WebContextMenuActionGroup::Editable)) {
+  if (params_.is_editable) {
     AppendEditableItems(&items);
-  } else if (SupportsActionGroup(WebContextMenuActionGroup::Copy)) {
+  } else if (!params_.selection_text.empty()) {
     AppendCopyItems(&items);
   }
 

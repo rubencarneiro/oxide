@@ -280,7 +280,6 @@ component("shared") {
     "browser/compositor/oxide_mailbox_buffer_map.h",
     "browser/context_menu/web_context_menu.h",
     "browser/context_menu/web_context_menu_actions.h",
-    "browser/context_menu/web_context_menu_action_groups.h",
     "browser/context_menu/web_context_menu_client.h",
     "browser/context_menu/web_context_menu_impl.cc",
     "browser/context_menu/web_context_menu_impl",
