@@ -82,10 +82,10 @@ class PermissionManager : public content::PermissionManager {
   BrowserContext* context_; // We're owned by |context_|
 
   struct Subscription;
-  IDMap<Subscription, IDMapOwnPointer> subscriptions_;
+  IDMap<std::unique_ptr<Subscription>> subscriptions_;
 
   struct RequestData;
-  IDMap<RequestData, IDMapOwnPointer> requests_;
+  IDMap<std::unique_ptr<RequestData>> requests_;
 
   base::WeakPtrFactory<PermissionManager> weak_factory_;
 

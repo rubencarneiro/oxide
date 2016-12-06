@@ -18,6 +18,8 @@
 #ifndef _OXIDE_SHARED_BROWSER_DEVICE_POWER_SAVE_BLOCKER_SERVICE_H_
 #define _OXIDE_SHARED_BROWSER_DEVICE_POWER_SAVE_BLOCKER_SERVICE_H_
 
+#include <memory>
+
 #include "base/id_map.h"
 #include "base/macros.h"
 #include "device/power_save_blocker/power_save_blocker_service.h"
@@ -39,7 +41,7 @@ class PowerSaveBlockerService : public device::PowerSaveBlockerService {
       const std::string& description) override;
   void CancelPowerSaveBlocker(int id) override;
 
-  IDMap<PowerSaveBlocker, IDMapOwnPointer> blockers_;
+  IDMap<std::unique_ptr<PowerSaveBlocker>> blockers_;
 
   DISALLOW_COPY_AND_ASSIGN(PowerSaveBlockerService);
 };
