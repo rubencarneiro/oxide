@@ -15,36 +15,43 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_
-#define _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_
+#ifndef _OXIDE_QT_CORE_API_WEB_CONTEXT_MENU_PARAMS_P_H_
+#define _OXIDE_QT_CORE_API_WEB_CONTEXT_MENU_PARAMS_P_H_
 
+#include <QSharedData>
 #include <QString>
+#include <QUrl>
 
 #include "qt/core/api/oxideqglobal.h"
+#include "qt/core/api/oxideqwebcontextmenuparams.h"
 
 namespace oxide {
 namespace qt {
+struct WebContextMenuParams;
+}
+}
 
-struct OXIDE_QTCORE_EXPORT MenuItem {
-  MenuItem();
-  MenuItem(const MenuItem& other);
-  ~MenuItem();
+class OXIDE_QTCORE_EXPORT OxideQWebContextMenuParamsData : public QSharedData {
+ public:
+  static OxideQWebContextMenuParams Create(
+      const oxide::qt::WebContextMenuParams& params);
 
-  enum class Type {
-    Option = 0,
-    Group = 2,
-    Separator = 3
-  };
+  OxideQWebContextMenuParamsData();
+  ~OxideQWebContextMenuParamsData();
 
-  QString label;
-  QString tooltip;
-  Type type = Type::Option;
-  unsigned action = 0;
-  bool enabled = false;
-  bool checked = false;
+  QUrl page_url;
+  QUrl frame_url;
+
+  bool is_link = false;
+  bool is_editable = false;
+  bool is_selection = false;
+  OxideQWebContextMenuParams::MediaType media_type =
+      OxideQWebContextMenuParams::MediaTypeNone;
+
+  QUrl link_url;
+  QString link_text;
+  QString title_text;
+  QUrl src_url;
 };
 
-} // namespace qt
-} // namespace oxide
-
-#endif // _OXIDE_QT_CORE_GLUE_MENU_ITEM_H_
+#endif // _OXIDE_QT_CORE_API_WEB_CONTEXT_MENU_PARAMS_P_H_

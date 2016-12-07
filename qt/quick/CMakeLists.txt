@@ -35,6 +35,7 @@ set(OXIDE_QUICKLIB_SRCS
     api/oxideqquickwebframe.cc
     api/oxideqquickwebview.cc
     api/oxidequseragentoverriderequest.cc
+    auxiliary_ui_factory.cc
     oxide_qquick_accelerated_frame_node.cc
     oxide_qquick_alert_dialog.cc
     oxide_qquick_before_unload_dialog.cc

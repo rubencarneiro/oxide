@@ -642,5 +642,31 @@ UbuntuTestWebView {
       verify(data.title == "" ? !title.visible : title.visible);
       compare(title.text, data.title);
     }
+
+    function test_WebViewContextMenu23_empty() {
+      var r = webView.getTestApi().getBoundingClientRectForSelector("#text");
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.RightButton);
+      TestSupport.wait(1000);
+
+      verify(!getContextMenu());
+    }
+
+    function test_WebViewContextMenu24_text() {
+      var r = webView.getTestApi().getBoundingClientRectForSelector("#text");
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2);
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2);
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2);
+
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.RightButton);
+      verify(waitForContextMenu());
+
+      compare(TestSupport.findItemsInScene(getContextMenu(), "webView_WebContextMenu_item_").length, 1);
+
+      var entry = getContextMenuEntryAtIndex(0);
+      verify(entry.visible);
+      mouseClick(entry);
+
+      verifyClipboardContents("text/plain", "Some text\n");
+    }
   }
 }

@@ -22,7 +22,9 @@ namespace oxide {
 namespace qt {
 
 enum class WebContextMenuAction : unsigned {
-  OpenLinkInNewTab,
+  Min,
+
+  OpenLinkInNewTab = Min,
   OpenLinkInNewBackgroundTab,
   OpenLinkInNewWindow,
   CopyLinkLocation,
@@ -43,7 +45,9 @@ enum class WebContextMenuAction : unsigned {
   Copy,
   Paste,
   Erase,
-  SelectAll
+  SelectAll,
+
+  Max
 };
 
 } // namespace qt

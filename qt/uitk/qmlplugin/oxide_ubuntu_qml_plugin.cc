@@ -18,8 +18,12 @@
 #include <QLatin1String>
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
+#include <QtQml/private/qqmlvaluetype_p.h> // for qmlRegisterValueTypeEnums
 
+#include "qt/core/api/oxideqwebcontextmenuparams.h"
 #include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/uitk/lib/api/oxideubuntuwebcontextmenu.h"
+#include "qt/uitk/lib/api/oxideubuntuwebcontextmenuitem.h"
 #include "qt/uitk/lib/api/oxideubuntuwebview.h"
 
 class OxideUbuntuQmlPlugin : public QQmlExtensionPlugin {
@@ -35,6 +39,14 @@ class OxideUbuntuQmlPlugin : public QQmlExtensionPlugin {
         "change in backwards-incompatible ways, and without bumping the module "
         "version. Please use with caution";
 
+    qRegisterMetaType<OxideQWebContextMenuParams>();
+    qmlRegisterValueTypeEnums<OxideQWebContextMenuParams>(
+        uri, 1, 0, "WebContextMenuParams");
+
+    qmlRegisterType<OxideUbuntuWebContextMenu>(
+        uri, 1, 0, "UbuntuWebContextMenu");
+    qmlRegisterType<OxideUbuntuWebContextMenuItem>(
+        uri, 1, 0, "UbuntuWebContextMenuItem");
     qmlRegisterType<OxideUbuntuWebView>(uri, 1, 0, "UbuntuWebView");
     qmlRegisterRevision<OxideQQuickWebView, 9>(uri, 1, 0);
   }

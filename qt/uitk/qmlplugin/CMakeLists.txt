@@ -38,11 +38,16 @@ add_library(${OXIDE_UITK_QMLPLUGIN} MODULE ${OXIDE_UITK_QMLPLUGIN_SRCS})
 target_link_libraries(${OXIDE_UITK_QMLPLUGIN}
                       ${Qt5Qml_LIBRARIES}
                       ${OXIDE_UITKLIB}
-                      ${OXIDE_QUICKLIB})
+                      ${OXIDE_QUICKLIB}
+                      ${OXIDE_LIB})
 set_target_properties(
     ${OXIDE_UITK_QMLPLUGIN} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${OXIDE_QMLPLUGIN_OUTPUT_DIR}/${OXIDE_UITK_QMLPLUGIN_MODULE_NAME}
     AUTOMOC TRUE)
+target_include_directories(
+    ${OXIDE_UITK_QMLPLUGIN} PRIVATE
+    ${Qt5Core_PRIVATE_INCLUDE_DIRS}
+    ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 
 add_custom_target(
     copy_${OXIDE_UITK_QMLPLUGIN}_qmldir ALL

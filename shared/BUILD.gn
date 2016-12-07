@@ -283,6 +283,7 @@ component("shared") {
     "browser/context_menu/web_context_menu_client.h",
     "browser/context_menu/web_context_menu_impl.cc",
     "browser/context_menu/web_context_menu_impl",
+    "browser/context_menu/web_context_menu_sections.h",
     "browser/device/oxide_device_client.cc",
     "browser/device/oxide_device_client.h",
     "browser/device/oxide_power_save_blocker_service.cc",

@@ -29,72 +29,33 @@
 #include "qt/core/glue/web_context_menu_actions.h"
 #include "qt/core/glue/web_context_menu_client.h"
 #include "qt/core/glue/web_context_menu_params.h"
+#include "qt/uitk/lib/api/oxideubuntuwebcontextmenu.h"
+#include "qt/uitk/lib/api/oxideubuntuwebcontextmenu_p.h"
+#include "qt/uitk/lib/api/oxideubuntuwebcontextmenuitem.h"
 
 namespace oxide {
 namespace uitk {
 
-using qt::MenuItem;
 using qt::WebContextMenuAction;
 using qt::WebContextMenuClient;
 using qt::WebContextMenuParams;
 
 WebContextMenu::WebContextMenu(QQuickItem* parent,
+                               std::unique_ptr<OxideUbuntuWebContextMenu> menu,
+                               const std::vector<QObject*>& stock_actions,
                                WebContextMenuClient* client)
     : parent_(parent),
-      client_(client) {}
+      client_(client),
+      menu_(std::move(menu)) {
+  for (const auto* stock_action : stock_actions) {
+    connect(stock_action, SIGNAL(triggered(const QVariant&)),
+            this, SLOT(OnStockActionTriggered(const QVariant&)));
+  }
+}
 
-bool WebContextMenu::Init(const std::vector<MenuItem>& items,
+bool WebContextMenu::Init(QQmlEngine* engine,
                           const WebContextMenuParams& params,
                           bool mobile) {
-  QQmlEngine* engine = qmlEngine(parent_);
-  if (!engine) {
-    qWarning() <<
-        "uitk::WebContextMenu: Failed to initialize - cannot determine "
-        "QQmlEngine for parent item";
-    return false;
-  }
-
-  QQmlComponent action_component(engine);
-  action_component.setData("import Ubuntu.Components 1.3; Action {}", QUrl());
-  if (action_component.isError()) {
-    qCritical() <<
-        "Failed to initialize Action component because of the following "
-        "errors: ";
-    for (const auto& error : action_component.errors()) {
-      qCritical() << error;
-    }
-    return false;
-  }
-
-  Q_ASSERT(action_component.isReady());
-
-  for (const auto& item : items) {
-    if (item.separator) {
-      continue;
-    }
-
-    QObject* action = action_component.beginCreate(engine->rootContext());
-    if (!action) {
-      qCritical() << "Failed to create Action instance";
-      return false;
-    }
-
-    action->setProperty("text", item.label);
-    action->setProperty("enabled", item.enabled);
-    action_component.completeCreate();
-
-    action->setProperty("__action", item.action);
-
-    connect(action, SIGNAL(triggered(const QVariant&)),
-            this, SLOT(OnActionTriggered(const QVariant&)));
-
-    actions_.push_back(std::unique_ptr<QObject>(action));
-  }
-
-  if (actions_.empty()) {
-    return false;
-  }
-
   QQmlComponent menu_component(engine);
   if (mobile) {
     menu_component.loadUrl(QUrl("qrc:///WebContextMenuMobile.qml"));
@@ -103,8 +64,8 @@ bool WebContextMenu::Init(const std::vector<MenuItem>& items,
   }
   if (menu_component.isError()) {
     qCritical() <<
-        "Failed to initialize context menu component because of the following "
-        "errors: ";
+        "uitk::WebContextMenu: Failed to initialize context menu component "
+        "because of the following errors: ";
     for (const auto& error : menu_component.errors()) {
       qCritical() << error;
     }
@@ -115,23 +76,23 @@ bool WebContextMenu::Init(const std::vector<MenuItem>& items,
 
   QObject* menu = menu_component.beginCreate(engine->rootContext());
   if (!menu) {
-    qCritical() << "Failed to create context menu instance";
+    qCritical() <<
+        "uitk::WebContextMenu: Failed to create context menu instance";
     return false;
   }
 
   item_.reset(qobject_cast<QQuickItem*>(menu));
   if (!item_) {
-    qCritical() << "Context menu instance is not a QQuickItem";
+    qCritical() <<
+        "uitk::WebContextMenu: Context menu instance is not a QQuickItem";
     delete menu;
     return false;
   }
 
-  QList<QObject*> actions;
-  for (const auto& action : actions_) {
-    actions.push_back(action.get());
-  }
-
-  item_->setProperty("actions", QVariant::fromValue(actions));
+  item_->setProperty(
+      "items",
+      OxideUbuntuWebContextMenuPrivate::get(
+          menu_.get())->GetItemsAsVariantList());
   item_->setProperty("isImage",
                      params.media_type == qt::MEDIA_TYPE_IMAGE ||
                          params.media_type == qt::MEDIA_TYPE_CANVAS);
@@ -150,8 +111,6 @@ bool WebContextMenu::Init(const std::vector<MenuItem>& items,
 
   connect(item_.get(), &QQuickItem::visibleChanged,
           this, &WebContextMenu::OnVisibleChanged);
-  connect(item_.get(), SIGNAL(cancelled()),
-          this, SLOT(OnCancelled()));
 
   return true;
 }
@@ -172,29 +131,29 @@ void WebContextMenu::OnVisibleChanged() {
   }
 }
 
-void WebContextMenu::OnCancelled() {
-  client_->close();
-}
-
-void WebContextMenu::OnActionTriggered(const QVariant&) {
-  unsigned action = sender()->property("__action").toUInt();
+void WebContextMenu::OnStockActionTriggered(const QVariant&) {
+  QVariant action_v = sender()->property("__stock_action");
+  Q_ASSERT(action_v.isValid());
+  unsigned action = action_v.toUInt();
   client_->execCommand(static_cast<WebContextMenuAction>(action));
-  client_->close();
 }
 
 // static
 std::unique_ptr<WebContextMenu> WebContextMenu::Create(
+    QQmlEngine* engine,
     QQuickItem* parent,
     const WebContextMenuParams& params,
-    const std::vector<MenuItem>& items,
+    std::unique_ptr<OxideUbuntuWebContextMenu> menu,
+    const std::vector<QObject*>& stock_actions,
     WebContextMenuClient* client,
     bool mobile) {
-  std::unique_ptr<WebContextMenu> menu(new WebContextMenu(parent, client));
-  if (!menu->Init(items, params, mobile)) {
+  std::unique_ptr<WebContextMenu> web_context_menu(
+      new WebContextMenu(parent, std::move(menu), stock_actions, client));
+  if (!web_context_menu->Init(engine, params, mobile)) {
     return nullptr;
   }
 
-  return std::move(menu);
+  return std::move(web_context_menu);
 }
 
 WebContextMenu::~WebContextMenu() = default;

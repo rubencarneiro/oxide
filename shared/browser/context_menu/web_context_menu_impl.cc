@@ -39,6 +39,7 @@
 #include "shared/common/oxide_constants.h"
 
 #include "web_context_menu_actions.h"
+#include "web_context_menu_sections.h"
 
 namespace oxide {
 
@@ -62,6 +63,14 @@ class WebContextMenuImpl::MenuBuilder {
       : menu_(menu),
         items_(items) {}
 
+  void BeginSection(WebContextMenuSection section) {
+    content::MenuItem item;
+    item.type = content::MenuItem::GROUP;
+    item.action = static_cast<unsigned>(section);
+
+    items_->push_back(item);
+  }
+
   void AppendMenuItem(const base::StringPiece& label,
                       WebContextMenuAction action) {
     content::MenuItem item;
@@ -70,12 +79,6 @@ class WebContextMenuImpl::MenuBuilder {
     item.action = static_cast<unsigned>(action);
     item.enabled = menu_->IsCommandEnabled(action);
 
-    items_->push_back(item);
-  }
-
-  void AppendSeparatorItem() {
-    content::MenuItem item;
-    item.type = content::MenuItem::SEPARATOR;
     items_->push_back(item);
   }
 
@@ -154,6 +157,8 @@ void WebContextMenuImpl::AppendLinkItems(std::vector<content::MenuItem>* items) 
   WebContentsClient* contents_client =
       WebContentsHelper::FromWebContents(web_contents())->client();
   if (contents_client && contents_client->CanCreateWindows()) {
+    builder.BeginSection(WebContextMenuSection::OpenLink);
+
     builder.AppendMenuItem(
         dgettext(OXIDE_GETTEXT_DOMAIN, "Open link in new tab"),
         WebContextMenuAction::OpenLinkInNewTab);
@@ -163,9 +168,9 @@ void WebContextMenuImpl::AppendLinkItems(std::vector<content::MenuItem>* items) 
     builder.AppendMenuItem(
         dgettext(OXIDE_GETTEXT_DOMAIN, "Open link in new window"),
         WebContextMenuAction::OpenLinkInNewWindow);
-
-    builder.AppendSeparatorItem();
   }
+
+  builder.BeginSection(WebContextMenuSection::Link);
 
   builder.AppendMenuItem(dgettext(OXIDE_GETTEXT_DOMAIN, "Copy link address"),
                          WebContextMenuAction::CopyLinkLocation);
@@ -240,12 +245,14 @@ void WebContextMenuImpl::AppendEditableItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
+  builder.BeginSection(WebContextMenuSection::Undo);
+
   builder.AppendMenuItem(dgettext(OXIDE_GETTEXT_DOMAIN, "Undo"),
                          WebContextMenuAction::Undo);
   builder.AppendMenuItem(dgettext(OXIDE_GETTEXT_DOMAIN, "Redo"),
                          WebContextMenuAction::Redo);
 
-  builder.AppendSeparatorItem();
+  builder.BeginSection(WebContextMenuSection::Editing);
 
   builder.AppendMenuItem(dgettext(OXIDE_GETTEXT_DOMAIN, "Cut"),
                          WebContextMenuAction::Cut);
@@ -261,6 +268,8 @@ void WebContextMenuImpl::AppendEditableItems(
 
 void WebContextMenuImpl::AppendCopyItems(std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
+
+  builder.BeginSection(WebContextMenuSection::Copy);
 
   builder.AppendMenuItem(dgettext(OXIDE_GETTEXT_DOMAIN, "Copy"),
                          WebContextMenuAction::Copy);
@@ -336,22 +345,23 @@ std::vector<content::MenuItem> WebContextMenuImpl::BuildItems() {
 
   if (!params_.unfiltered_link_url.is_empty()) {
     AppendLinkItems(&items);
-    if (params_.media_type == blink::WebContextMenuData::MediaTypeImage ||
-        params_.media_type == blink::WebContextMenuData::MediaTypeCanvas ||
-        params_.media_type == blink::WebContextMenuData::MediaTypeAudio ||
-        params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
-      MenuBuilder(this, &items).AppendSeparatorItem();
-    }
   }
 
-  if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
-    AppendImageItems(&items);
-  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) {
-    AppendCanvasItems(&items);
-  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeAudio) {
-    AppendAudioItems(&items);
-  } else if (params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
-    AppendVideoItems(&items);
+  if (params_.media_type == blink::WebContextMenuData::MediaTypeImage ||
+      params_.media_type == blink::WebContextMenuData::MediaTypeCanvas ||
+      params_.media_type == blink::WebContextMenuData::MediaTypeAudio ||
+      params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
+    MenuBuilder(this, &items).BeginSection(WebContextMenuSection::Media);
+
+    if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
+      AppendImageItems(&items);
+    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) {
+      AppendCanvasItems(&items);
+    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeAudio) {
+      AppendAudioItems(&items);
+    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
+      AppendVideoItems(&items);
+    }
   }
 
   if (params_.is_editable) {

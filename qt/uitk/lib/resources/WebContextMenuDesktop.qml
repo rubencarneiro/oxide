@@ -21,24 +21,24 @@ import Ubuntu.Components.ListItems 1.3 as ListItems
 import Ubuntu.Components.Popups 1.3 as Popups
 
 Popups.Popover {
-  property var actions
+  property var items
   property bool isImage
   property var position
   property Item sourceItem
   property string title
   property string openerName
 
-  objectName: openerName ? openerName + "_WebContextMenu" : ""
+  id: menu
 
-  signal cancelled()
+  objectName: openerName ? openerName + "_WebContextMenu" : ""
 
   QtObject {
     id: internal
 
     readonly property int lastEnabledActionIndex: {
       var last = -1
-      for (var i in actions) {
-        if (actions[i].enabled) {
+      for (var i in items) {
+        if (items[i].action && items[i].action.enabled) {
           last = i
         }
       }
@@ -88,10 +88,10 @@ Popups.Popover {
     }
 
     Repeater {
-      model: actions
+      model: items
       delegate: ListItems.Empty {
-        action: modelData
-        visible: action.enabled
+        action: modelData.action
+        visible: action && action.enabled && action.visible
         showDivider: false
         objectName: openerName ? openerName + "_WebContextMenu_item_" + index : ""
 
@@ -106,7 +106,7 @@ Popups.Popover {
             verticalCenter: parent.verticalCenter
           }
           fontSize: "small"
-          text: action.text
+          text: action ? action.text : ""
         }
 
         ListItems.ThinDivider {
@@ -119,6 +119,8 @@ Popups.Popover {
             bottom: parent.bottom
           }
         }
+
+        onTriggered: menu.hide()
       }
     }
   }

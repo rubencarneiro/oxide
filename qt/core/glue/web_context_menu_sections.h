@@ -15,27 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_UITK_LIB_API_UBUNTU_WEB_VIEW_P_H_
-#define _OXIDE_QT_UITK_LIB_API_UBUNTU_WEB_VIEW_P_H_
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_
 
-#include <QtGlobal>
+namespace oxide {
+namespace qt {
 
-#include "qt/quick/api/oxideqquickwebview_p.h"
-#include "qt/uitk/lib/uitk_auxiliary_ui_factory.h"
+enum class WebContextMenuSection : unsigned {
+  Min,
 
-class OxideUbuntuWebView;
+  OpenLink = Min,
+  Link,
+  Media,
+  Undo,
+  Editing,
+  Copy,
 
-class OxideUbuntuWebViewPrivate
-    : public OxideQQuickWebViewPrivate,
-      public oxide::uitk::AuxiliaryUIFactory::Delegate {
-  Q_DECLARE_PUBLIC(OxideUbuntuWebView)
-  Q_DISABLE_COPY(OxideUbuntuWebViewPrivate)
-
-  OxideUbuntuWebViewPrivate(OxideUbuntuWebView* q);
-
-  // oxide::uitk::AuxiliaryUIFactory::Delegate implementation
-  void ContextMenuOpening(const oxide::qt::WebContextMenuParams& params,
-                          OxideUbuntuWebContextMenu* menu) override;
+  Max
 };
 
-#endif // _OXIDE_QT_UITK_LIB_API_UBUNTU_WEB_VIEW_P_H_
+} // namespace qt
+} // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_

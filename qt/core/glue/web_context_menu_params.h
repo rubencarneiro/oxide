@@ -64,6 +64,8 @@ struct OXIDE_QTCORE_EXPORT WebContextMenuParams {
   QUrl unfiltered_link_url;
   QString link_text;
 
+  QString title_text;
+
   MediaType media_type = MEDIA_TYPE_NONE;
   bool has_image_contents = false;
   QUrl src_url;

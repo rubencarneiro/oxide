@@ -16,7 +16,16 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-add_subdirectory(oxideqcertificateerror)
-add_subdirectory(oxideqdownloadrequest)
-add_subdirectory(oxideqquicknavigationitem)
-add_subdirectory(oxideqwebcontextmenuparams)
+add_executable(tst_oxideqwebcontextmenuparams tst_oxideqwebcontextmenuparams.cc)
+target_link_libraries(tst_oxideqwebcontextmenuparams
+                      PRIVATE
+                      ${OXIDE_LIB}
+                      ${Qt5Core_LIBRARIES}
+                      ${Qt5Gui_LIBRARIES}
+                      ${Qt5Test_LIBRARIES})
+set_target_properties(tst_oxideqwebcontextmenuparams PROPERTIES
+                      AUTOMOC TRUE)
+
+add_test(NAME tst_oxideqwebcontextmenuparams
+         COMMAND ${OXIDE_BIN_OUTPUT_DIR}/run_qmlapp.sh
+                 ${CMAKE_CURRENT_BINARY_DIR}/tst_oxideqwebcontextmenuparams)

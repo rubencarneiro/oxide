@@ -29,13 +29,15 @@
 #include "qt/core/glue/web_context_menu.h"
 
 QT_BEGIN_NAMESPACE
+class QQmlEngine;
 class QQuickItem;
 QT_END_NAMESPACE
+
+class OxideUbuntuWebContextMenu;
 
 namespace oxide {
 
 namespace qt {
-struct MenuItem;
 class WebContextMenuClient;
 struct WebContextMenuParams;
 }
@@ -49,17 +51,21 @@ class WebContextMenu : public QObject,
 
  public:
   static std::unique_ptr<WebContextMenu> Create(
+      QQmlEngine* engine,
       QQuickItem* parent,
       const qt::WebContextMenuParams& params,
-      const std::vector<qt::MenuItem>& items,
+      std::unique_ptr<OxideUbuntuWebContextMenu> menu,
+      const std::vector<QObject*>& stock_actions,
       qt::WebContextMenuClient* client,
       bool mobile);
   ~WebContextMenu() override;
 
  private:
   WebContextMenu(QQuickItem* parent,
+                 std::unique_ptr<OxideUbuntuWebContextMenu> menu,
+                 const std::vector<QObject*>& stock_actions,
                  qt::WebContextMenuClient* client);
-  bool Init(const std::vector<qt::MenuItem>& items,
+  bool Init(QQmlEngine* engine,
             const qt::WebContextMenuParams& params,
             bool mobile);
 
@@ -69,14 +75,13 @@ class WebContextMenu : public QObject,
 
  private Q_SLOTS:
   void OnVisibleChanged();
-  void OnCancelled();
-  void OnActionTriggered(const QVariant&);
+  void OnStockActionTriggered(const QVariant&);
 
  private:
   QPointer<QQuickItem> parent_;
   qt::WebContextMenuClient* client_;
 
-  std::vector<std::unique_ptr<QObject>> actions_;
+  std::unique_ptr<OxideUbuntuWebContextMenu> menu_;
 
   std::unique_ptr<QQuickItem> item_;
 };

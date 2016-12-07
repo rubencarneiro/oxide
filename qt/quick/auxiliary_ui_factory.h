@@ -21,7 +21,6 @@
 #include <memory>
 #include <vector>
 
-#include <QPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/menu_item.h"
@@ -42,9 +41,7 @@ namespace qquick {
 
 class AuxiliaryUIFactory {
  public:
-  virtual ~AuxiliaryUIFactory() {}
-
-  void set_item(QQuickItem* item) { item_ = item; }
+  virtual ~AuxiliaryUIFactory();
 
   virtual std::unique_ptr<qt::WebContextMenu> CreateWebContextMenu(
       const qt::WebContextMenuParams& params,
@@ -52,10 +49,12 @@ class AuxiliaryUIFactory {
       qt::WebContextMenuClient* client) = 0;
 
  protected:
+  AuxiliaryUIFactory(QQuickItem* item);
+
   QQuickItem* item() const { return item_; }
 
  private:
-  QPointer<QQuickItem> item_;
+  QQuickItem* item_;
 };
 
 } // namespace qquick

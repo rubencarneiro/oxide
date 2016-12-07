@@ -21,13 +21,13 @@ import Ubuntu.Components.ListItems 1.3 as ListItems
 import Ubuntu.Components.Popups 1.3 as Popups
 
 Popups.Dialog {
-  property var actions
+  id: menu
+
+  property var items
   property bool isImage
   property var position
   property Item sourceItem
   property string title
-
-  signal cancelled()
 
   Row {
     id: header
@@ -84,10 +84,10 @@ Popups.Dialog {
   }
 
   Repeater {
-    model: actions
+    model: items
     delegate: ListItems.Empty {
-      action: modelData
-      visible: action.enabled
+      action: modelData.action
+      visible: action && action.enabled && action.visible
       showDivider: false
 
       height: units.gu(5)
@@ -101,7 +101,7 @@ Popups.Dialog {
           verticalCenter: parent.verticalCenter
         }
         fontSize: "x-small"
-        text: action.text
+        text: action ? action.text : ""
       }
 
       ListItems.ThinDivider {
@@ -113,6 +113,8 @@ Popups.Dialog {
           bottom: parent.bottom
         }
       }
+
+      onTriggered: menu.hide()
     }
   }
 
@@ -130,7 +132,7 @@ Popups.Dialog {
       fontSize: "x-small"
       text: i18n.dtr("oxide-qt", "Cancel")
     }
-    onTriggered: cancelled()
+    onTriggered: menu.hide()
   }
 
   // adjust default dialog visuals to custom requirements for the context menu

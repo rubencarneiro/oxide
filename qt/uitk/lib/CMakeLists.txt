@@ -17,6 +17,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 set(OXIDE_UITKLIB_SRCS
+    api/oxideubuntuwebcontextmenu.cc
+    api/oxideubuntuwebcontextmenuitem.cc
     api/oxideubuntuwebview.cc
     resources.qrc
     uitk_auxiliary_ui_factory.cc
