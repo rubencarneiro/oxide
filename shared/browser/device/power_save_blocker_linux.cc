@@ -43,22 +43,19 @@ std::unique_ptr<PowerSaveBlocker> PowerSaveBlocker::Create(
     case base::nix::DESKTOP_ENVIRONMENT_GNOME:
     case base::nix::DESKTOP_ENVIRONMENT_KDE4:
     case base::nix::DESKTOP_ENVIRONMENT_KDE5:
-    case base::nix::DESKTOP_ENVIRONMENT_UNITY:
     case base::nix::DESKTOP_ENVIRONMENT_XFCE:
-      // FIXME: Unity and Gnome don't support the FDO interface
+      // FIXME: Gnome doesn't support the FDO interface
       return base::MakeUnique<PowerSaveBlockerFDO>(type, description);
-    case base::nix::DESKTOP_ENVIRONMENT_OTHER: {
-      // This is kind of hacky - there's no way to identify that we're running on
-      // Unity 8, so we just assume that we are if QT_QPA_PLATFORM is set to
-      // "ubuntumirclient"
-      std::string qt_qpa_platform;
-      if (env->GetVar("QT_QPA_PLATFORM", &qt_qpa_platform) &&
-          qt_qpa_platform == "ubuntumirclient") {
+    case base::nix::DESKTOP_ENVIRONMENT_UNITY: {
+      std::string xdg_session_type;
+      if (env->GetVar("XDG_SESSION_TYPE", &xdg_session_type) &&
+          xdg_session_type == "mir") {
         return base::MakeUnique<PowerSaveBlockerUnity8>();
       }
-      return nullptr;
+      return base::MakeUnique<PowerSaveBlockerFDO>(type, description);
     }
     case base::nix::DESKTOP_ENVIRONMENT_KDE3:
+    case base::nix::DESKTOP_ENVIRONMENT_OTHER:
       return nullptr;
   }
 
