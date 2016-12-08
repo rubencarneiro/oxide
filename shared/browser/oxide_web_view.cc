@@ -769,8 +769,7 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 void WebView::DidStartProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
-    bool is_error_frame,
-    bool is_iframe_srcdoc) {
+    bool is_error_frame) {
   if (is_error_frame) {
     return;
   }
