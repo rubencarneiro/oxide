@@ -139,8 +139,8 @@ UbuntuTestWebView {
         },
         { selector: "#editable",
           actions: [
-            { action: UbuntuWebContextMenuItem.ActionUndo, section: UbuntuWebContextMenuItem.SectionUndo, enabled: false },
-            { action: UbuntuWebContextMenuItem.ActionRedo, section: UbuntuWebContextMenuItem.SectionUndo, enabled: false },
+            { action: UbuntuWebContextMenuItem.ActionUndo, section: UbuntuWebContextMenuItem.SectionEditing, enabled: false },
+            { action: UbuntuWebContextMenuItem.ActionRedo, section: UbuntuWebContextMenuItem.SectionEditing, enabled: false },
             { action: UbuntuWebContextMenuItem.ActionCut, section: UbuntuWebContextMenuItem.SectionEditing, enabled: false },
             { action: UbuntuWebContextMenuItem.ActionCopy, section: UbuntuWebContextMenuItem.SectionEditing, enabled: false },
             { action: UbuntuWebContextMenuItem.ActionPaste, section: UbuntuWebContextMenuItem.SectionEditing, enabled: true },

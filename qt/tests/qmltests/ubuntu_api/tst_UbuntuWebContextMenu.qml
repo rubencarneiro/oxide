@@ -397,7 +397,7 @@ UbuntuTestWebView {
 
         // Verify that specifying a non-existant section behaves as expected
         var helper = TestSupport.createQObjectTestHelper(action4);
-        compare(menu.appendActionToSection(UbuntuWebContextMenuItem.SectionUndo, action4), -1);
+        compare(menu.appendActionToSection(UbuntuWebContextMenuItem.SectionEditing, action4), -1);
         compare(spy.count, 3);
         compare(menu.items.length, 8);
         // The action shouldn't have been reparented or destroyed
@@ -646,7 +646,7 @@ UbuntuTestWebView {
         var helper = TestSupport.createQObjectTestHelper(action4);
         // Verify that calling prependActionToSection with a non-existant
         // section behaves as expected
-        compare(menu.prependActionToSection(UbuntuWebContextMenuItem.SectionUndo, action4), -1);
+        compare(menu.prependActionToSection(UbuntuWebContextMenuItem.SectionEditing, action4), -1);
         compare(spy.count, 3);
         compare(menu.items.length, 8);
         // The action shouldn't be reparented or destroyed

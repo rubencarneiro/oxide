@@ -81,7 +81,6 @@ OxideUbuntuWebContextMenuItem::Section ToSection(unsigned i) {
     case WebContextMenuSection::Media:
       return OxideUbuntuWebContextMenuItem::SectionMedia;
     case WebContextMenuSection::Undo:
-      return OxideUbuntuWebContextMenuItem::SectionUndo;
     case WebContextMenuSection::Editing:
       return OxideUbuntuWebContextMenuItem::SectionEditing;
     case WebContextMenuSection::Copy:

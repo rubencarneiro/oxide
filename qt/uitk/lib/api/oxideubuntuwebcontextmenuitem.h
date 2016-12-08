@@ -71,7 +71,6 @@ class OXIDE_UITK_EXPORT OxideUbuntuWebContextMenuItem : public QObject {
     SectionOpenLink,
     SectionLink,
     SectionMedia,
-    SectionUndo,
     SectionEditing,
     SectionCopy
   };
