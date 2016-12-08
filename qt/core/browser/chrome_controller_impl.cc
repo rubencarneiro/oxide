@@ -23,7 +23,7 @@
 #include "qt/core/glue/chrome_controller_client.h"
 #include "shared/browser/chrome_controller.h"
 
-#include "oxide_qt_contents_view.h"
+#include "contents_view_impl.h"
 #include "oxide_qt_dpi_utils.h"
 #include "web_contents_id_tracker.h"
 
@@ -67,7 +67,7 @@ void ChromeControllerImpl::init(WebContentsID web_contents_id) {
 
   controller_->set_client(this);
 
-  contents_view_ = ContentsView::FromWebContents(contents);
+  contents_view_ = ContentsViewImpl::FromWebContents(contents);
   DCHECK(contents_view_);
 
   std::unique_ptr<InitProps> init_props = std::move(init_props_);

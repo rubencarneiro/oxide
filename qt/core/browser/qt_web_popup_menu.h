@@ -22,14 +22,11 @@
 #include <vector>
 
 #include "base/macros.h"
+#include "content/public/common/menu_item.h"
 
-#include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
-#include "shared/browser/oxide_web_popup_menu.h"
-
-namespace content {
-struct MenuItem;
-class WebContents;
-}
+#include "qt/core/glue/menu_item.h"
+#include "qt/core/glue/web_popup_menu_client.h"
+#include "shared/browser/web_popup_menu.h"
 
 namespace oxide {
 
@@ -37,34 +34,33 @@ class WebPopupMenuClient;
 
 namespace qt {
 
-class ContentsView;
-class WebPopupMenuProxy;
+class WebPopupMenu;
 
-class WebPopupMenu : public oxide::WebPopupMenu,
-                     public WebPopupMenuProxyClient {
+class WebPopupMenuImpl : public oxide::WebPopupMenu,
+                         public WebPopupMenuClient {
  public:
-  WebPopupMenu(ContentsView* view,
-               const std::vector<content::MenuItem>& items,
-               bool allow_multiple_selection,
-               oxide::WebPopupMenuClient* client);
-  ~WebPopupMenu() override;
+  WebPopupMenuImpl(oxide::WebPopupMenuClient* client);
+  ~WebPopupMenuImpl() override;
+
+  bool Init(std::unique_ptr<qt::WebPopupMenu> menu);
+
+  static std::vector<MenuItem> BuildMenuItems(
+      const std::vector<content::MenuItem>& items);
 
  private:
   // oxide::WebPopupMenu implementation
-  void Show(const gfx::Rect& bounds) override;
+  void Show() override;
   void Hide() override;
 
-  // WebPopupMenuProxyClient implementation
+  // WebPopupMenuClient implementation
   void selectItems(const QList<unsigned>& selected_indices) override;
   void cancel() override;
 
   oxide::WebPopupMenuClient* client_; // Owns us
 
-  content::WebContents* contents_;
+  std::unique_ptr<qt::WebPopupMenu> menu_;
 
-  std::unique_ptr<WebPopupMenuProxy> proxy_;
-
-  DISALLOW_COPY_AND_ASSIGN(WebPopupMenu);
+  DISALLOW_COPY_AND_ASSIGN(WebPopupMenuImpl);
 };
 
 } // namespace qt

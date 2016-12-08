@@ -3,5 +3,6 @@
     <file alias="stock_link.svg">resources/stock_link.svg</file>
     <file alias="WebContextMenuMobile.qml">resources/WebContextMenuMobile.qml</file>
     <file alias="WebContextMenuDesktop.qml">resources/WebContextMenuDesktop.qml</file>
+    <file alias="WebPopupMenu.qml">resources/WebPopupMenu.qml</file>
 </qresource>
 </RCC>

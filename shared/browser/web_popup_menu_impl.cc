@@ -15,12 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_web_popup_menu_impl.h"
+#include "web_popup_menu_impl.h"
 
 #include "base/threading/thread_task_runner_handle.h"
 #include "content/browser/frame_host/render_frame_host_impl.h" // nogncheck
 #include "content/public/browser/web_contents.h"
+#include "ui/gfx/geometry/vector2d.h"
 
+#include "chrome_controller.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 
@@ -56,7 +58,8 @@ void WebPopupMenuImpl::RenderFrameDeleted(
 WebPopupMenuImpl::WebPopupMenuImpl(content::RenderFrameHost* render_frame_host,
                                    const std::vector<content::MenuItem>& items,
                                    int selected_item,
-                                   bool allow_multiple_selection)
+                                   bool allow_multiple_selection,
+                                   const gfx::Rect& bounds)
     : content::WebContentsObserver(
           content::WebContents::FromRenderFrameHost(render_frame_host)),
       render_frame_host_(
@@ -64,6 +67,7 @@ WebPopupMenuImpl::WebPopupMenuImpl(content::RenderFrameHost* render_frame_host,
       items_(items),
       selected_item_(selected_item),
       allow_multiple_selection_(allow_multiple_selection),
+      bounds_(bounds),
       weak_ptr_factory_(this) {}
 
 WebPopupMenuImpl::~WebPopupMenuImpl() {
@@ -74,23 +78,32 @@ base::WeakPtr<WebPopupMenuImpl> WebPopupMenuImpl::GetWeakPtr() {
   return weak_ptr_factory_.GetWeakPtr();
 }
 
-void WebPopupMenuImpl::Show(const gfx::Rect& bounds) {
+void WebPopupMenuImpl::Show() {
   WebContentsView* view = WebContentsView::FromWebContents(web_contents());
   if (!view->client()) {
     Cancel();
     return;
   }
 
-  DCHECK(!menu_);
+  gfx::Vector2d top_content_offset;
+  ChromeController* chrome_controller =
+      ChromeController::FromWebContents(web_contents());
+  if (chrome_controller) {
+    top_content_offset =
+        gfx::Vector2d(0, chrome_controller->GetTopContentOffset());
+  }
+
   menu_ = view->client()->CreatePopupMenu(items_,
                                           selected_item_,
                                           allow_multiple_selection_,
+                                          bounds_ + top_content_offset,
                                           this);
   if (!menu_) {
     Cancel();
-  } else {
-    menu_->Show(bounds);
+    return;
   }
+
+  menu_->Show();
 }
 
 void WebPopupMenuImpl::Hide() {

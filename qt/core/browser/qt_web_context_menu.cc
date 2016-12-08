@@ -34,7 +34,7 @@
 #include "shared/browser/context_menu/web_context_menu_client.h"
 #include "shared/browser/context_menu/web_context_menu_sections.h"
 
-#include "oxide_qt_contents_view.h"
+#include "contents_view_impl.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_type_conversions.h"
 
@@ -213,8 +213,8 @@ WebContextMenuParams WebContextMenuImpl::GetParams() const {
   rv.page_url = QUrl(QString::fromStdString(params_.page_url.spec()));
   rv.frame_url = QUrl(QString::fromStdString(params_.frame_url.spec()));
 
-  ContentsView* contents_view =
-      ContentsView::FromWebContents(client_->GetWebContents());
+  ContentsViewImpl* contents_view =
+      ContentsViewImpl::FromWebContents(client_->GetWebContents());
   gfx::Point position =
       DpiUtils::ConvertChromiumPixelsToQt(gfx::Point(params_.x, params_.y),
                                           contents_view->GetScreen());

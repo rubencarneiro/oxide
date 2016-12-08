@@ -50,10 +50,11 @@
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/glue/macros.h"
 #include "qt/quick/auxiliary_ui_factory.h"
+#include "qt/quick/contents_view.h"
+#include "qt/quick/legacy_contents_view.h"
 #include "qt/quick/oxide_qquick_alert_dialog.h"
 #include "qt/quick/oxide_qquick_before_unload_dialog.h"
 #include "qt/quick/oxide_qquick_confirm_dialog.h"
-#include "qt/quick/oxide_qquick_contents_view.h"
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_init.h"
 #include "qt/quick/oxide_qquick_prompt_dialog.h"
@@ -128,9 +129,11 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
 
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view,
+    std::unique_ptr<oxide::qquick::ContentsView> contents_view,
     std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory)
     : q_ptr(view),
       aux_ui_factory_(std::move(aux_ui_factory)),
+      contents_view_(std::move(contents_view)),
       constructed_(false),
       load_progress_(0),
       navigation_history_(OxideQQuickNavigationHistoryPrivate::Create()),
@@ -533,7 +536,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
     }
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, contents_view_.data(), q,
+        this, contents_view_.get(), q,
         construct_props_->new_view_request,
         initial_prefs));
   }
@@ -549,7 +552,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
     construct_props_->new_view_request = nullptr;
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, contents_view_.data(), q,
+        this, contents_view_.get(), q,
         construct_props_->context,
         construct_props_->incognito,
         construct_props_->restore_state,
@@ -1038,7 +1041,7 @@ OxideQQuickWebView::OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
       d_ptr(&dd) {
   Q_D(OxideQQuickWebView);
 
-  d->contents_view_.reset(new oxide::qquick::ContentsView(this));
+  d->contents_view_->init();
 
   oxide::qquick::EnsureChromiumStarted();
 
@@ -1283,8 +1286,13 @@ QSGNode* OxideQQuickWebView::updatePaintNode(
 */
 
 OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
-    : OxideQQuickWebView(*new OxideQQuickWebViewPrivate(this, nullptr),
-                         parent) {}
+    : OxideQQuickWebView(
+          *new OxideQQuickWebViewPrivate(
+              this,
+              std::unique_ptr<oxide::qquick::ContentsView>(
+                  new oxide::qquick::LegacyContentsView(this)),
+              nullptr),
+          parent) {}
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
@@ -1840,17 +1848,32 @@ void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
 QQmlComponent* OxideQQuickWebView::popupMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->contents_view_->popupMenu();
+  oxide::qquick::LegacyContentsView* legacy_view =
+      qobject_cast<oxide::qquick::LegacyContentsView*>(d->contents_view_.get());
+  if (!legacy_view) {
+    return nullptr;
+  }
+
+  return legacy_view->popup_menu();
 }
 
 void OxideQQuickWebView::setPopupMenu(QQmlComponent* popupMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->contents_view_->popupMenu() == popupMenu) {
+  oxide::qquick::LegacyContentsView* legacy_view =
+      qobject_cast<oxide::qquick::LegacyContentsView*>(d->contents_view_.get());
+  if (!legacy_view) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a popupMenu implementation has no "
+        "effect on this WebView, as it provides a build-in popup menu";
     return;
   }
 
-  d->contents_view_->setPopupMenu(popupMenu);
+  if (legacy_view->popup_menu() == popupMenu) {
+    return;
+  }
+
+  legacy_view->set_popup_menu(popupMenu);
   emit popupMenuChanged();
 }
 

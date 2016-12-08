@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_H_
-#define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_H_
+#ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_H_
+#define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_H_
 
 #include <Qt>
 #include <QtGlobal>
@@ -70,9 +70,9 @@ class CompositorFrameHandle {
   virtual EGLImageKHR GetImageFrame() = 0;
 };
 
-class ContentsViewProxy {
+class ContentsView {
  public:
-  virtual ~ContentsViewProxy() {}
+  virtual ~ContentsView() {}
 
   virtual QSharedPointer<CompositorFrameHandle> compositorFrameHandle() = 0;
   virtual void didCommitCompositorFrame() = 0;
@@ -106,4 +106,4 @@ class ContentsViewProxy {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_H_
+#endif // _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_H_

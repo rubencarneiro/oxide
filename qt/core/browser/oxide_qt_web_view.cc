@@ -61,8 +61,8 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/contents_view_client.h"
 #include "qt/core/glue/macros.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "qt/core/glue/web_context_menu.h"
@@ -81,8 +81,8 @@
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_enum_flags.h"
 
+#include "contents_view_impl.h"
 #include "menu_item_builder.h"
-#include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
@@ -225,9 +225,9 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 ContentsViewProxyClient* view_client,
+                 ContentsViewClient* view_client,
                  QObject* handle)
-    : contents_view_(new ContentsView(view_client, handle)),
+    : contents_view_(new ContentsViewImpl(view_client, handle)),
       client_(client),
       frame_tree_torn_down_(false) {
   DCHECK(client);
@@ -954,7 +954,7 @@ void WebView::teardownFrameTree() {
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 ContentsViewProxyClient* view_client,
+                 ContentsViewClient* view_client,
                  QObject* handle,
                  WebContext* context,
                  bool incognito,
@@ -990,7 +990,7 @@ WebView::WebView(WebViewProxyClient* client,
 // static
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
-    ContentsViewProxyClient* view_client,
+    ContentsViewClient* view_client,
     QObject* handle,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {

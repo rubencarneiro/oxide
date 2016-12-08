@@ -25,9 +25,10 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/menu_item.h"
+#include "ui/gfx/geometry/rect.h"
 
-#include "shared/browser/oxide_web_popup_menu.h"
-#include "shared/browser/oxide_web_popup_menu_client.h"
+#include "shared/browser/web_popup_menu.h"
+#include "shared/browser/web_popup_menu_client.h"
 
 namespace content {
 class RenderFrameHost;
@@ -43,13 +44,14 @@ class WebPopupMenuImpl : public WebPopupMenu,
   WebPopupMenuImpl(content::RenderFrameHost* render_frame_host,
                    const std::vector<content::MenuItem>& items,
                    int selected_item,
-                   bool allow_multiple_selection);
+                   bool allow_multiple_selection,
+                   const gfx::Rect& bounds);
   ~WebPopupMenuImpl() override;
 
   base::WeakPtr<WebPopupMenuImpl> GetWeakPtr();
 
   // WebPopupMenu implementation
-  void Show(const gfx::Rect& bounds) override;
+  void Show() override;
   void Hide() override;
 
  private:
@@ -67,6 +69,8 @@ class WebPopupMenuImpl : public WebPopupMenu,
   int selected_item_;
 
   bool allow_multiple_selection_;
+
+  gfx::Rect bounds_;
 
   std::unique_ptr<WebPopupMenu> menu_;
 

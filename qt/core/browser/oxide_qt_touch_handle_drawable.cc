@@ -24,14 +24,14 @@
 
 #include "qt/core/glue/oxide_qt_touch_handle_drawable_proxy.h"
 
-#include "oxide_qt_contents_view.h"
+#include "contents_view_impl.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_type_conversions.h"
 
 namespace oxide {
 namespace qt {
 
-TouchHandleDrawable::TouchHandleDrawable(const ContentsView* view)
+TouchHandleDrawable::TouchHandleDrawable(const ContentsViewImpl* view)
     : view_(view) {}
 
 TouchHandleDrawable::~TouchHandleDrawable() {}

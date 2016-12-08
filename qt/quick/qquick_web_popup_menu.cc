@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_web_popup_menu.h"
+#include "qquick_web_popup_menu.h"
 
 #include <QAbstractListModel>
 #include <QLatin1String>
@@ -25,12 +25,11 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
-#include <QRect>
 #include <QRectF>
 #include <QtDebug>
 
 #include "qt/core/glue/menu_item.h"
-#include "qt/core/glue/oxide_qt_web_popup_menu_proxy_client.h"
+#include "qt/core/glue/web_popup_menu_client.h"
 #include "qt/quick/api/oxideqquickwebview.h"
 #include "qt/quick/api/oxideqquickwebview_p.h"
 
@@ -55,7 +54,7 @@ class PopupListModel : public QAbstractListModel {
 
  public:
   virtual ~PopupListModel() {}
-  PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
+  PopupListModel(const std::vector<qt::MenuItem>& items,
                  bool allow_multiple_selection);
 
   int rowCount(const QModelIndex& parent = QModelIndex()) const final;
@@ -82,13 +81,13 @@ class PopupListModel : public QAbstractListModel {
   QHash<int, QByteArray> roles_;
 };
 
-PopupListModel::PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
+PopupListModel::PopupListModel(const std::vector<qt::MenuItem>& items,
                                bool allow_multiple_selection) :
     allow_multi_select_(allow_multiple_selection),
     selected_index_(-1) {
   QString current_group;
   for (const auto& item : items) {
-    if (item.type == oxide::qt::MenuItem::Type::Group) {
+    if (item.type == qt::MenuItem::Type::Group) {
       current_group = item.label;
       continue;
     }
@@ -99,7 +98,7 @@ PopupListModel::PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
     mi.group = current_group;
     mi.enabled = item.enabled;
     mi.checked = item.checked;
-    mi.separator = item.type == oxide::qt::MenuItem::Type::Separator;
+    mi.separator = item.type == qt::MenuItem::Type::Separator;
     mi.action = item.action;
 
     items_.push_back(mi);
@@ -216,9 +215,9 @@ class PopupMenuContext : public QObject {
 
  public:
   virtual ~PopupMenuContext() {}
-  PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
+  PopupMenuContext(qt::WebPopupMenuClient* client,
                    const QRect& bounds,
-                   const std::vector<oxide::qt::MenuItem>& items,
+                   const std::vector<qt::MenuItem>& items,
                    bool allow_multiple_selection);
 
   QRectF elementRect() const { return element_rect_; }
@@ -229,14 +228,14 @@ class PopupMenuContext : public QObject {
   Q_INVOKABLE void cancel();
 
  private:
-  oxide::qt::WebPopupMenuProxyClient* client_;
+  qt::WebPopupMenuClient* client_;
   QRectF element_rect_;
   PopupListModel items_;
 };
 
-PopupMenuContext::PopupMenuContext(oxide::qt::WebPopupMenuProxyClient* client,
+PopupMenuContext::PopupMenuContext(qt::WebPopupMenuClient* client,
                                    const QRect& bounds,
-                                   const std::vector<oxide::qt::MenuItem>& items,
+                                   const std::vector<qt::MenuItem>& items,
                                    bool allow_multiple_selection)
     : client_(client),
       element_rect_(bounds),
@@ -254,7 +253,7 @@ void PopupMenuContext::cancel() {
 
 } // namespace
 
-void WebPopupMenu::Show(const QRect& bounds) {
+void WebPopupMenu::Show() {
   if (!parent_) {
     qWarning() << "WebPopupMenu::Show: Can't show after the view has gone";
     client_->cancel();
@@ -270,7 +269,7 @@ void WebPopupMenu::Show(const QRect& bounds) {
   }
 
   PopupMenuContext* contextObject =
-      new PopupMenuContext(client_, bounds, items_, allow_multiple_selection_);
+      new PopupMenuContext(client_, bounds_, items_, allow_multiple_selection_);
 
   QQmlContext* baseContext = component_->creationContext();
   if (!baseContext) {
@@ -313,11 +312,13 @@ void WebPopupMenu::Hide() {
 
 WebPopupMenu::WebPopupMenu(QQuickItem* parent,
                            QQmlComponent* component,
-                           const std::vector<oxide::qt::MenuItem>& items,
+                           const std::vector<qt::MenuItem>& items,
                            bool allow_multiple_selection,
-                           oxide::qt::WebPopupMenuProxyClient* client)
+                           const QRect& bounds,
+                           qt::WebPopupMenuClient* client)
     : items_(items),
       allow_multiple_selection_(allow_multiple_selection),
+      bounds_(bounds),
       client_(client),
       parent_(parent),
       component_(component) {}
@@ -327,4 +328,4 @@ WebPopupMenu::~WebPopupMenu() {}
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_web_popup_menu.moc"
+#include "qquick_web_popup_menu.moc"

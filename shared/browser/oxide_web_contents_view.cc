@@ -53,8 +53,8 @@
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
-#include "oxide_web_popup_menu_impl.h"
 #include "screen.h"
+#include "web_popup_menu_impl.h"
 
 namespace oxide {
 
@@ -377,10 +377,11 @@ void WebContentsView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
   WebPopupMenuImpl* menu = new WebPopupMenuImpl(render_frame_host,
                                                 items,
                                                 selected_item,
-                                                allow_multiple_selection);
+                                                allow_multiple_selection,
+                                                bounds);
   active_popup_menu_ = menu->GetWeakPtr();
 
-  menu->Show(bounds);
+  menu->Show();
 }
 
 void WebContentsView::HidePopupMenu() {

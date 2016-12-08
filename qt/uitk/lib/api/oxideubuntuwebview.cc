@@ -20,11 +20,14 @@
 
 #include "qt/core/api/oxideqwebcontextmenuparams.h"
 #include "qt/core/api/oxideqwebcontextmenuparams_p.h"
+#include "qt/uitk/lib/uitk_contents_view.h"
 
 OxideUbuntuWebViewPrivate::OxideUbuntuWebViewPrivate(
     OxideUbuntuWebView* q)
     : OxideQQuickWebViewPrivate(
           q,
+          std::unique_ptr<oxide::qquick::ContentsView>(
+              new oxide::uitk::ContentsView(q)),
           std::unique_ptr<oxide::qquick::AuxiliaryUIFactory>(
               new oxide::uitk::AuxiliaryUIFactory(q, this))) {}
 

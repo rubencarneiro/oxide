@@ -22,7 +22,9 @@ set(OXIDE_UITKLIB_SRCS
     api/oxideubuntuwebview.cc
     resources.qrc
     uitk_auxiliary_ui_factory.cc
-    uitk_web_context_menu.cc)
+    uitk_contents_view.cc
+    uitk_web_context_menu.cc
+    uitk_web_popup_menu.cc)
 
 add_library(${OXIDE_UITKLIB} SHARED ${OXIDE_UITKLIB_SRCS})
 target_compile_definitions(

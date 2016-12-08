@@ -18,7 +18,7 @@
 #include "oxideqquicktouchselectioncontroller.h"
 
 #include "qt/core/api/oxideqglobal_p.h"
-#include "qt/quick/oxide_qquick_contents_view.h"
+#include "qt/quick/contents_view.h"
 
 #include "oxideqquickwebview_p.h"
 

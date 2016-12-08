@@ -33,7 +33,7 @@
 
 #include "shared/browser/oxide_drag_source_client.h"
 
-#include "oxide_qt_contents_view.h"
+#include "contents_view_impl.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_skutils.h"
@@ -46,7 +46,7 @@ void DragSource::StartDragging(content::WebContents* contents,
                                blink::WebDragOperationsMask allowed_ops,
                                const gfx::ImageSkia& image,
                                const gfx::Vector2d& image_offset) {
-  ContentsView* view = ContentsView::FromWebContents(contents);
+  ContentsViewImpl* view = ContentsViewImpl::FromWebContents(contents);
   if (!view) {
     client()->EndDrag(blink::WebDragOperationNone);
     return;

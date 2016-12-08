@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_CLIENT_H_
+#define _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_CLIENT_H_
 
 #include <memory>
 #include <vector>
@@ -25,7 +25,7 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/menu_item.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
+#include "qt/core/glue/contents_view.h"
 
 QT_BEGIN_NAMESPACE
 class QCursor;
@@ -38,17 +38,17 @@ namespace oxide {
 namespace qt {
 
 class ContentsView;
-class ContentsViewProxy;
+class ContentsViewImpl;
 struct MenuItem;
 class TouchHandleDrawableProxy;
-class WebPopupMenuProxy;
-class WebPopupMenuProxyClient;
+class WebPopupMenu;
+class WebPopupMenuClient;
 
-class ContentsViewProxyClient {
+class ContentsViewClient {
  public:
-  virtual ~ContentsViewProxyClient() {}
+  virtual ~ContentsViewClient() {}
 
-  ContentsViewProxy* proxy() const { return proxy_; }
+  ContentsView* view() const { return view_; }
 
   virtual QWindow* GetWindow() const = 0;
 
@@ -65,10 +65,11 @@ class ContentsViewProxyClient {
 
   virtual void SetInputMethodEnabled(bool enabled) = 0;
 
-  virtual std::unique_ptr<WebPopupMenuProxy> CreateWebPopupMenu(
+  virtual std::unique_ptr<WebPopupMenu> CreateWebPopupMenu(
       const std::vector<MenuItem>& items,
       bool allow_multiple_selection,
-      WebPopupMenuProxyClient* client) = 0;
+      const QRect& bounds,
+      WebPopupMenuClient* client) = 0;
 
   virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
 
@@ -83,15 +84,15 @@ class ContentsViewProxyClient {
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
  protected:
-  ContentsViewProxyClient() : proxy_(nullptr) {}
+  ContentsViewClient() : view_(nullptr) {}
 
  private:
-  friend class ContentsView;
+  friend class ContentsViewImpl;
 
-  ContentsViewProxy* proxy_;
+  ContentsView* view_;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_PROXY_CLIENT_H_
+#endif // _OXIDE_QT_CORE_GLUE_CONTENTS_VIEW_CLIENT_H_
