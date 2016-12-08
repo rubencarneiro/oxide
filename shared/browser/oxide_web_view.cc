@@ -336,19 +336,6 @@ content::WebContents* WebView::OpenURLFromTab(
     const content::OpenURLParams& params) {
   DCHECK_VALID_SOURCE_CONTENTS
 
-  // We get here from the following places:
-  // FIXME(chrisccoulson): 1 isn't really true anymore, and re-evaluate 2
-  //  1) RenderFrameHostManager::OnCrossSiteResponse. In this case, disposition
-  //     is always CURRENT_TAB and we always want to perform the navigation.
-  //     Asking the embedder whether to proceed is done via
-  //     NavigationInterceptResourceThrottle.
-  //  2) Non CURRENT_TAB navigations as a result of keyboard modifiers. In
-  //     this case, we want to ask the embedder whether to perform the
-  //     navigation unless we change it to CURRENT_TAB (in which case, we ask
-  //     the embedder via NavigationInterceptResourceThrottle)
-  //  3) CURRENT_TAB navigations in new webviews. Asking the embedder whether
-  //     to proceed is done via NavigationInterceptResourceThrottle
-
   if (params.disposition != WindowOpenDisposition::CURRENT_TAB &&
       params.disposition != WindowOpenDisposition::NEW_FOREGROUND_TAB &&
       params.disposition != WindowOpenDisposition::NEW_BACKGROUND_TAB &&
@@ -393,10 +380,8 @@ content::WebContents* WebView::OpenURLFromTab(
     return web_contents_.get();
   }
 
-  // At this point, we expect all navigations to be for the main frame and
-  // to be renderer initiated
+  // At this point, we expect all navigations to be for the main frame
   DCHECK_EQ(params.frame_tree_node_id, -1);
-  DCHECK(params.is_renderer_initiated);
 
   // Coerce all non CURRENT_TAB navigations that don't come from a user
   // gesture to NEW_POPUP
@@ -411,7 +396,8 @@ content::WebContents* WebView::OpenURLFromTab(
 
   // Give the application a chance to block the navigation if it is
   // renderer initiated
-  if (!contents_client->ShouldCreateNewWebContents(params.url,
+  if (params.is_renderer_initiated &&
+      !contents_client->ShouldCreateNewWebContents(params.url,
                                                    disposition,
                                                    params.user_gesture)) {
     return nullptr;

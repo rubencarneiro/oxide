@@ -26,6 +26,12 @@ UbuntuTestWebView {
   property var newViewCreated: null
   property var newViewDisposition
 
+  SignalSpy {
+    id: navigationRequestSpy
+    target: webView
+    signalName: "navigationRequested"
+  }
+
   Connections {
     id: newViewRequestedConnection
 
@@ -108,6 +114,7 @@ UbuntuTestWebView {
       webView.clearLoadEventCounters();
       ClipboardTestUtils.clearClipboard();
       downloadRequestSpy.clear();
+      navigationRequestSpy.clear();
     }
 
     function test_WebViewContextMenu01_position_data() {
@@ -245,6 +252,7 @@ UbuntuTestWebView {
 
       verify(waitForCreatedView());
       verify(webView.newViewCreated.waitForLoadSucceeded());
+      compare(navigationRequestSpy.count, 0);
 
       compare(webView.newViewCreated.getTestApi().documentURI, "http://testsuite/tst_WebViewContextMenu2.html");
       var headers = JSON.parse(
@@ -325,6 +333,7 @@ UbuntuTestWebView {
 
       verify(waitForCreatedView());
       verify(webView.newViewCreated.waitForLoadSucceeded());
+      compare(navigationRequestSpy.count, 0);
 
       compare(webView.newViewCreated.getTestApi().documentURI,
               data.url);
