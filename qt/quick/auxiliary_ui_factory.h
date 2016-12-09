@@ -24,6 +24,7 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/menu_item.h"
+#include "qt/quick/api/oxideqquickglobal.h"
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
@@ -39,7 +40,7 @@ struct WebContextMenuParams;
 
 namespace qquick {
 
-class AuxiliaryUIFactory {
+class OXIDE_QTQUICK_EXPORT AuxiliaryUIFactory {
  public:
   virtual ~AuxiliaryUIFactory();
 
