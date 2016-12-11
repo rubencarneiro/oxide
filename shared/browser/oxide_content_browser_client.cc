@@ -261,7 +261,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   contents_helper->GetPreferences()->ApplyToWebkitPrefs(prefs);
 
-  prefs->touch_event_api_enabled = true;
+  prefs->touch_event_feature_detection_enabled = true;
   prefs->device_supports_mouse = true; // XXX: Can we detect this?
   prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 

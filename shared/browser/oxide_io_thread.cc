@@ -276,7 +276,7 @@ IOThread::IOThread()
       "IOThread cannot be created after the IO thread has started";
 
   g_instance = this;
-  content::BrowserThread::SetDelegate(content::BrowserThread::IO, this);
+  content::BrowserThread::SetIOThreadDelegate(this);
 }
 
 IOThread::~IOThread() {
@@ -284,7 +284,7 @@ IOThread::~IOThread() {
   DCHECK(!globals_) << "We're being deleted before Cleanup() was called";
 
   g_instance = nullptr;
-  content::BrowserThread::SetDelegate(content::BrowserThread::IO, nullptr);
+  content::BrowserThread::SetIOThreadDelegate(nullptr);
 }
 
 net::NetLog* IOThread::net_log() const {
