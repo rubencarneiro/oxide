@@ -18,7 +18,6 @@
 #include "oxide_redirection_intercept_throttle.h"
 
 #include "base/memory/ref_counted.h"
-#include "content/public/browser/resource_controller.h"
 #include "net/url_request/redirect_info.h"
 
 #include "oxide_browser_context.h"
@@ -42,9 +41,9 @@ void RedirectionInterceptThrottle::WillRedirectRequest(
 
   int rv = delegate->OnBeforeRedirect(request_, redirect_info.new_url);
   if (rv == net::ERR_ABORTED) {
-    controller()->CancelAndIgnore();
+    CancelAndIgnore();
   } else if (rv != net::OK) {
-    controller()->CancelWithError(rv);
+    CancelWithError(rv);
   }
 }
 

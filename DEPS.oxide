@@ -1,12 +1,12 @@
 {
   "src": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/chromium", 
-    "rev": "bbf608900a63bf58267c78f3eff43a404f68acea", 
+    "rev": "1e9eaa9db199fbccb2c8f4114dc718ad24bfa438", 
     "upstream": "https://chromium.googlesource.com/chromium/src.git"
   }, 
   "src/third_party/ffmpeg": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/ffmpeg", 
-    "rev": "4ea8c383b83b7ff5da1a208018d456510288d0a4", 
+    "rev": "995ce7f770685241087ae3e21c7f322497e353d3", 
     "upstream": "https://chromium.googlesource.com/chromium/third_party/ffmpeg.git"
   }
 }
