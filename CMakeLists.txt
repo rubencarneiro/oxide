@@ -18,8 +18,9 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
-# CMake >= 3.5.1 warns when this is not set
-cmake_policy(SET CMP0063 OLD)
+if(POLICY CMP0063)
+  cmake_policy(SET CMP0063 NEW)
+endif()
 
 include(ProjectInit)
 oxide_project_init()
