@@ -296,6 +296,10 @@ void ContentsView::visibilityChanged() {
   view()->VisibilityChanged();
 }
 
+void ContentsView::activeFocusChanged() {
+  view()->FocusChanged();
+}
+
 QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
   return input_method_context_->Query(query);
 }
@@ -319,7 +323,6 @@ void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
 
 void ContentsView::handleFocusEvent(QFocusEvent* event) {
   input_method_context_->FocusChanged(event);
-  view()->FocusChanged();
 
   event->accept();
 }

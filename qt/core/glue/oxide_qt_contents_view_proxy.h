@@ -80,6 +80,7 @@ class ContentsViewProxy {
   virtual void windowChanged() = 0;
   virtual void wasResized() = 0;
   virtual void visibilityChanged() = 0;
+  virtual void activeFocusChanged() = 0;
 
   virtual QVariant inputMethodQuery(Qt::InputMethodQuery query) const = 0;
 

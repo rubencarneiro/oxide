@@ -79,6 +79,7 @@ class ContentsView : public QObject,
   void windowChanged() override;
   void wasResized() override;
   void visibilityChanged() override;
+  void activeFocusChanged() override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;

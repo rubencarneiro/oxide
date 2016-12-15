@@ -221,6 +221,8 @@ void ContentsView::handleItemChange(QQuickItem::ItemChange change) {
 
   if (change == QQuickItem::ItemVisibleHasChanged) {
     proxy()->visibilityChanged();
+  } else if (change == QQuickItem::ItemActiveFocusHasChanged) {
+    proxy()->activeFocusChanged();
   }
 }
 
