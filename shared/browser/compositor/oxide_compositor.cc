@@ -114,6 +114,10 @@ Compositor::Compositor(CompositorClient* client)
       output_surface_(nullptr),
       mailbox_buffer_map_(mode_),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
+      begin_frame_source_(
+          new cc::DelayBasedBeginFrameSource(
+              base::MakeUnique<cc::DelayBasedTimeSource>(
+                  base::ThreadTaskRunnerHandle::Get().get()))),
       animation_host_(cc::AnimationHost::CreateMainInstance()),
       layer_tree_host_eviction_pending_(false),
       can_evict_layer_tree_host_(false),
@@ -328,14 +332,8 @@ Compositor::CreateCompositorFrameSink() {
             this);
   }
 
-  std::unique_ptr<cc::BeginFrameSource> begin_frame_source(
-      new cc::DelayBasedBeginFrameSource(
-          base::MakeUnique<cc::DelayBasedTimeSource>(
-              base::ThreadTaskRunnerHandle::Get().get())));
-
   std::unique_ptr<cc::DisplayScheduler> scheduler(
       new cc::DisplayScheduler(
-          begin_frame_source.get(),
           base::ThreadTaskRunnerHandle::Get().get(),
           output_surface->capabilities().max_frames_pending));
 
@@ -345,7 +343,7 @@ Compositor::CreateCompositorFrameSink() {
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
           frame_sink_id_,
-          std::move(begin_frame_source),
+          begin_frame_source_.get(),
           std::move(output_surface),
           std::move(scheduler),
           base::MakeUnique<cc::TextureMailboxDeleter>(

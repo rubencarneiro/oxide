@@ -150,7 +150,7 @@ void PlatformNotificationService::ClosePersistentNotification(
   NOTIMPLEMENTED();
 }
 
-bool PlatformNotificationService::GetDisplayedPersistentNotifications(
+bool PlatformNotificationService::GetDisplayedNotifications(
     content::BrowserContext* browser_context,
     std::set<std::string>* displayed_notifications) {
   return false;

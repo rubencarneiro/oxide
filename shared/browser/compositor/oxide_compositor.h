@@ -44,6 +44,7 @@ class SingleThreadTaskRunner;
 namespace cc {
 class AnimationHost;
 class CompositorFrameSink;
+class DelayBasedBeginFrameSource;
 class Display;
 class Layer;
 class LayerTreeHost;
@@ -176,6 +177,10 @@ class Compositor : public cc::LayerTreeHostClient,
   CompositorClient::SwapAckCallback swap_ack_callback_;
 
   cc::FrameSinkId frame_sink_id_;
+
+  // This needs to outlive |display_|
+  std::unique_ptr<cc::DelayBasedBeginFrameSource> begin_frame_source_;
+
   // This needs to outlive |layer_tree_host_|
   std::unique_ptr<cc::Display> display_;
 
