@@ -108,7 +108,8 @@ void WebContentSettingsClient::OnSetAllowRunningInsecureContent(bool allow) {
 
 void WebContentSettingsClient::OnReloadFrame() {
   DCHECK(!render_frame()->GetWebFrame()->parent());
-  render_frame()->GetWebFrame()->reload();
+  render_frame()->GetWebFrame()->reload(
+      blink::WebFrameLoadType::ReloadMainResource);
 }
 
 WebContentSettingsClient::WebContentSettingsClient(
