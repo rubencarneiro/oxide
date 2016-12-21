@@ -39,6 +39,7 @@
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/page_navigator.h"
+#include "content/public/browser/reload_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -1064,7 +1065,7 @@ void WebView::Stop() {
 }
 
 void WebView::Reload() {
-  web_contents_->GetController().Reload(true);
+  web_contents_->GetController().Reload(content::ReloadType::NORMAL, true);
 }
 
 bool WebView::IsIncognito() const {
