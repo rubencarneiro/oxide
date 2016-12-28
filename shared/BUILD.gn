@@ -213,6 +213,7 @@ component("shared") {
     "//net:extras",
     "//ppapi/features",
     "//services/service_manager/public/cpp",
+    "//services/ui/public/cpp/gpu",
     "//skia",
     "//storage/common",
     "//third_party/WebKit/public:blink",

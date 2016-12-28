@@ -42,8 +42,6 @@
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
-#include "content/common/gpu/client/command_buffer_metrics.h" // nogncheck
-#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
 #include "content/common/host_shared_bitmap_manager.h" // nogncheck
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
@@ -51,6 +49,8 @@
 #include "gpu/command_buffer/common/gles2_cmd_utils.h"
 #include "gpu/GLES2/gl2extchromium.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
+#include "services/ui/public/cpp/gpu/command_buffer_metrics.h"
+#include "services/ui/public/cpp/gpu/context_provider_command_buffer.h"
 #include "ui/gfx/geometry/rect.h"
 #include "url/gurl.h"
 
@@ -91,7 +91,7 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
   attrs.lose_context_when_out_of_memory = true;
 
   return make_scoped_refptr(
-      new content::ContextProviderCommandBuffer(
+      new ui::ContextProviderCommandBuffer(
           gpu_channel_host.get(),
           gpu::GPU_STREAM_DEFAULT,
           gpu::GpuStreamPriority::NORMAL,
@@ -102,7 +102,7 @@ scoped_refptr<cc::ContextProvider> CreateOffscreenContextProvider() {
           gpu::SharedMemoryLimits(),
           attrs,
           nullptr,
-          content::command_buffer_metrics::CONTEXT_TYPE_UNKNOWN));
+          ui::command_buffer_metrics::CONTEXT_TYPE_UNKNOWN));
 }
 
 } // namespace

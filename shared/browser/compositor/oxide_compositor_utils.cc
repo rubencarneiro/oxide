@@ -32,11 +32,11 @@
 #include "content/browser/compositor/surface_utils.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
-#include "content/common/gpu/client/context_provider_command_buffer.h" // nogncheck
 #include "gpu/command_buffer/common/command_buffer_id.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "gpu/ipc/client/command_buffer_proxy_impl.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
+#include "services/ui/public/cpp/gpu/context_provider_command_buffer.h"
 #include "ui/gl/gl_implementation.h"
 #include "ui/gl/gl_switches.h"
 
@@ -512,7 +512,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
 
   FetchTextureIDTaskInfo* info =
       new FetchTextureIDTaskInfo(
-        static_cast<content::ContextProviderCommandBuffer*>(
+        static_cast<ui::ContextProviderCommandBuffer*>(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
@@ -546,7 +546,7 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
 
   FetchEGLImageTaskInfo* info =
       new FetchEGLImageTaskInfo(
-        static_cast<content::ContextProviderCommandBuffer*>(
+        static_cast<ui::ContextProviderCommandBuffer*>(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
         sync_point,
