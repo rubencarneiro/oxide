@@ -26,12 +26,12 @@
 #include "base/memory/scoped_vector.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
-#include "cc/output/delegated_frame_data.h"
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_id.h"
 #include "cc/surfaces/surface_id_allocator.h"
+#include "cc/surfaces/surface_info.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
@@ -77,24 +77,6 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
       frame_metadata.scrollable_viewport_size.width();
   float content_width_css = frame_metadata.root_layer_size.width();
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
-}
-
-void SatisfyCallback(cc::SurfaceManager* manager,
-                     const cc::SurfaceSequence& sequence) {
-  std::vector<uint32_t> sequences;
-  sequences.push_back(sequence.sequence);
-  manager->DidSatisfySequences(sequence.frame_sink_id, &sequences);
-}
-
-void RequireCallback(cc::SurfaceManager* manager,
-                     const cc::SurfaceId& id,
-                     const cc::SurfaceSequence& sequence) {
-  cc::Surface* surface = manager->GetSurfaceForId(id);
-  if (!surface) {
-    LOG(ERROR) << "Attempting to require callback on nonexistent surface";
-    return;
-  }
-  surface->AddDestructionDependency(sequence);
 }
 
 bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
@@ -200,16 +182,7 @@ void RenderWidgetHostView::FocusedNodeChanged(
 
 void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                                                  cc::CompositorFrame frame) {
-  if (!frame.delegated_frame_data) {
-    DLOG(ERROR) << "Non delegated renderer path is not supported";
-    host_->GetProcess()->ShutdownForBadMessage(
-        content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
-    return;
-  }
-
-  cc::DelegatedFrameData* frame_data = frame.delegated_frame_data.get();
-
-  if (frame_data->render_pass_list.empty()) {
+  if (frame.render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
     host_->GetProcess()->ShutdownForBadMessage(
         content::RenderProcessHost::CrashReportMode::GENERATE_CRASH_DUMP);
@@ -234,7 +207,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
 
   float device_scale_factor = metadata.device_scale_factor;
-  cc::RenderPass* root_pass = frame_data->render_pass_list.back().get();
+  cc::RenderPass* root_pass = frame.render_pass_list.back().get();
 
   gfx::Size frame_size = root_pass->output_rect.size();
   gfx::Size frame_size_dip = gfx::Size(
@@ -262,18 +235,15 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
 
       local_frame_id_ = id_allocator_->GenerateId();
       DCHECK(local_frame_id_.is_valid());
-      surface_factory_->Create(local_frame_id_);
 
-      layer_ =
-          cc::SurfaceLayer::Create(base::Bind(&SatisfyCallback,
-                                              base::Unretained(manager)),
-                                   base::Bind(&RequireCallback,
-                                              base::Unretained(manager)));
+      layer_ = cc::SurfaceLayer::Create(manager->reference_factory());
       DCHECK(layer_);
-      layer_->SetSurfaceId(
-          cc::SurfaceId(frame_sink_id_, local_frame_id_),
-          device_scale_factor,
-          frame_size);
+
+      layer_->SetSurfaceInfo(
+          cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_frame_id_),
+                          device_scale_factor,
+                          frame_size),
+          false);
       layer_->SetBounds(frame_size_dip);
       layer_->SetIsDrawable(true);
       layer_->SetContentsOpaque(true);
@@ -727,7 +697,7 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
   if (local_frame_id_.is_valid()) {
     DCHECK(surface_factory_.get());
-    surface_factory_->Destroy(local_frame_id_);
+    surface_factory_->EvictSurface();
     local_frame_id_ = cc::LocalFrameId();
   }
   layer_ = nullptr;

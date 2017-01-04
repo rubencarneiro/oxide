@@ -22,13 +22,14 @@
 
 #include "base/logging.h"
 #include "content/public/common/user_agent.h"
+#include "ppapi/features/features.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #include "shared/browser/oxide_content_browser_client.h"
 #include "shared/renderer/oxide_content_renderer_client.h"
 
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/json/json_reader.h"
@@ -53,7 +54,7 @@ namespace {
 
 ContentClient* g_instance;
 
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
 void GetPepperFlashPluginInfo(
     int key,
     std::vector<content::PepperPluginInfo>* plugins) {
@@ -158,7 +159,7 @@ const std::vector<content::PepperPluginInfo>::const_iterator FindNewestPlugin(
 
 void ContentClient::AddPepperPlugins(
     std::vector<content::PepperPluginInfo>* plugins) {
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
   std::vector<content::PepperPluginInfo> flash_plugins;
   GetPepperFlashPluginInfo(FILE_SYSTEM_PEPPER_FLASH_PLUGIN, &flash_plugins);
   GetPepperFlashPluginInfo(FILE_CHROME_PEPPER_FLASH_PLUGIN, &flash_plugins);

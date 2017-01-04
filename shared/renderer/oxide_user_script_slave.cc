@@ -206,7 +206,7 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
   blink::WebDataSource* data_source = frame->provisionalDataSource() ?
       frame->provisionalDataSource() : frame->dataSource();
   CHECK(data_source);
-  GURL data_source_url(data_source->request().url());
+  GURL data_source_url(data_source->getRequest().url());
   if (data_source_url.is_empty()) {
     return;
   }

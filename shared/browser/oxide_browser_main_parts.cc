@@ -202,9 +202,10 @@ class Screen : public ::display::Screen {
     return 1;
   }
 
-  std::vector<::display::Display> GetAllDisplays() const override {
+  const std::vector<::display::Display>& GetAllDisplays() const override {
     NOTREACHED();
-    return std::vector<::display::Display>();
+    static std::vector<::display::Display> g_displays;
+    return g_displays;
   }
 
   ::display::Display GetDisplayNearestWindow(gfx::NativeView view) const override {

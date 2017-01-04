@@ -21,6 +21,7 @@ import("//build/config/locales.gni")
 import("//oxide/build/config/build_flags.gni")
 import("//oxide/build/config/test_executable.gni")
 import("//oxide/build/config/version.gni")
+import("//ppapi/features/features.gni")
 import("//tools/grit/grit_rule.gni")
 import("//tools/grit/repack.gni")
 
@@ -210,7 +211,9 @@ component("shared") {
     "//mojo/edk/system",
     "//net",
     "//net:extras",
+    "//ppapi/features",
     "//services/service_manager/public/cpp",
+    "//services/ui/public/cpp/gpu",
     "//skia",
     "//storage/common",
     "//third_party/WebKit/public:blink",

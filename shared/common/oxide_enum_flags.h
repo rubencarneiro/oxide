@@ -23,7 +23,7 @@
 #ifndef _OXIDE_SHARED_BASE_ENUM_FLAGS_H_
 #define _OXIDE_SHARED_BASE_ENUM_FLAGS_H_
 
-#include "base/numerics/safe_math.h"
+#include <type_traits>
 
 namespace oxide {
 
@@ -37,12 +37,6 @@ class CastableTypedEnumResult {
 
  private:
   E value_;
-};
-
-template <typename E>
-struct UnsignedIntegerForEnum {
-  typedef typename base::internal::IntegerForSizeAndSign<sizeof(E),
-                                                         false>::type type;
 };
 
 } // namespace oxide
@@ -95,7 +89,7 @@ OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(^=)
 #define OXIDE_MAKE_ENUM_BINOP_IMPL(Name, Op) \
   inline ::oxide::CastableTypedEnumResult<Name> operator Op(Name lhs, \
                                                             Name rhs) { \
-    typedef ::oxide::UnsignedIntegerForEnum<Name>::type U; \
+    typedef std::make_unsigned<Name>::type U; \
     return ::oxide::CastableTypedEnumResult<Name>(Name(U(lhs) Op U(rhs))); \
   } \
   \
@@ -108,7 +102,7 @@ OXIDE_CASTABLETYPEDENUMRESULT_COMPOUND_ASSIGN_OP(^=)
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, &) \
   OXIDE_MAKE_ENUM_BINOP_IMPL(Name, ^) \
   inline ::oxide::CastableTypedEnumResult<Name> operator ~(Name a) { \
-    typedef ::oxide::UnsignedIntegerForEnum<Name>::type U; \
+    typedef std::make_unsigned<Name>::type U; \
     return ::oxide::CastableTypedEnumResult<Name>(Name(~U(a))); \
   }
 

@@ -184,38 +184,38 @@ QVariant ToVariantValueInternal(const base::Value* value,
   }
 
   switch (value->GetType()) {
-    case base::Value::TYPE_NULL:
+    case base::Value::Type::NONE:
       return QVariant();
-    case base::Value::TYPE_BOOLEAN: {
+    case base::Value::Type::BOOLEAN: {
       bool rv;
       value->GetAsBoolean(&rv);
       return rv;
     }
-    case base::Value::TYPE_INTEGER: {
+    case base::Value::Type::INTEGER: {
       int rv;
       value->GetAsInteger(&rv);
       return rv;
     }
-    case base::Value::TYPE_DOUBLE: {
+    case base::Value::Type::DOUBLE: {
       double rv;
       value->GetAsDouble(&rv);
       return rv;
     }
-    case base::Value::TYPE_STRING: {
+    case base::Value::Type::STRING: {
       std::string rv;
       value->GetAsString(&rv);
       return QString::fromStdString(rv);
     }
-    case base::Value::TYPE_BINARY: {
+    case base::Value::Type::BINARY: {
       *success = false;
       return QVariant();
     }
-    case base::Value::TYPE_DICTIONARY: {
+    case base::Value::Type::DICTIONARY: {
       const base::DictionaryValue* dict;
       value->GetAsDictionary(&dict);
       return ToVariantMapValueInternal(dict, state);
     }
-    case base::Value::TYPE_LIST: {
+    case base::Value::Type::LIST: {
       const base::ListValue* list;
       value->GetAsList(&list);
       return ToVariantListValueInternal(list, state);

@@ -229,10 +229,12 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void VisibleSecurityStateChanged(content::WebContents* source) override;
   bool ShouldCreateWebContents(
       content::WebContents* source,
-      int route_id,
-      int main_frame_route_id,
-      int main_frame_widget_route_id,
+      content::SiteInstance* source_site_instance,
+      int32_t route_id,
+      int32_t main_frame_route_id,
+      int32_t main_frame_widget_route_id,
       WindowContainerType window_container_type,
+      const GURL& opener_url,
       const std::string& frame_name,
       const GURL& target_url,
       const std::string& partition_id,
@@ -307,8 +309,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void DidStartProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& validated_url,
-      bool is_error_page,
-      bool is_iframe_srcdoc) override;
+      bool is_error_page) override;
   void DidCommitProvisionalLoadForFrame(
       content::RenderFrameHost* render_frame_host,
       const GURL& url,

@@ -35,6 +35,7 @@
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
 #include "device/vibration/vibration_manager_impl.h"
+#include "ppapi/features/features.h"
 #include "services/service_manager/public/cpp/interface_registry.h"
 #include "ui/display/display.h"
 #include "ui/native_theme/native_theme_switches.h"
@@ -69,7 +70,7 @@
 #include "hybris_utils.h"
 #endif
 
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
 #include "content/public/browser/browser_ppapi_host.h"
 #include "ppapi/host/ppapi_host.h"
 
@@ -260,8 +261,7 @@ void ContentBrowserClient::OverrideWebkitPrefs(
 
   contents_helper->GetPreferences()->ApplyToWebkitPrefs(prefs);
 
-  prefs->touch_enabled = true;
-  prefs->device_supports_mouse = true; // XXX: Can we detect this?
+  prefs->touch_event_feature_detection_enabled = true;
   prefs->device_supports_touch = platform_integration_->IsTouchSupported();
 
   prefs->javascript_can_open_windows_automatically =
@@ -333,7 +333,7 @@ void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
-#if defined(ENABLE_PLUGINS)
+#if BUILDFLAG(ENABLE_PLUGINS)
   host->GetPpapiHost()->AddHostFactoryFilter(
       base::WrapUnique(new PepperHostFactoryBrowser(host)));
 #endif

@@ -23,6 +23,7 @@
 #include "base/macros.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebMouseWheelEvent.h"
 
 QT_BEGIN_NAMESPACE
 class QHoverEvent;

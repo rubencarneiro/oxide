@@ -39,6 +39,7 @@
 #include "content/public/browser/notification_source.h"
 #include "content/public/browser/notification_types.h"
 #include "content/public/browser/page_navigator.h"
+#include "content/public/browser/reload_type.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/browser/render_view_host.h"
@@ -470,10 +471,12 @@ void WebView::VisibleSecurityStateChanged(content::WebContents* source) {
 
 bool WebView::ShouldCreateWebContents(
     content::WebContents* source,
-    int route_id,
-    int main_frame_route_id,
-    int main_frame_widget_route_id,
+    content::SiteInstance* source_site_instance,
+    int32_t route_id,
+    int32_t main_frame_route_id,
+    int32_t main_frame_widget_route_id,
     WindowContainerType window_container_type,
+    const GURL& opener_url,
     const std::string& frame_name,
     const GURL& target_url,
     const std::string& partition_id,
@@ -753,8 +756,7 @@ void WebView::DidFailLoad(content::RenderFrameHost* render_frame_host,
 void WebView::DidStartProvisionalLoadForFrame(
     content::RenderFrameHost* render_frame_host,
     const GURL& validated_url,
-    bool is_error_frame,
-    bool is_iframe_srcdoc) {
+    bool is_error_frame) {
   if (is_error_frame) {
     return;
   }
@@ -1049,7 +1051,7 @@ void WebView::Stop() {
 }
 
 void WebView::Reload() {
-  web_contents_->GetController().Reload(true);
+  web_contents_->GetController().Reload(content::ReloadType::NORMAL, true);
 }
 
 bool WebView::IsIncognito() const {
