@@ -17,8 +17,12 @@
 
 #include "oxide_resource_dispatcher_host_delegate.h"
 
+#include <memory>
+#include <vector>
+
 #include "base/bind.h"
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
@@ -65,7 +69,7 @@ void ResourceDispatcherHostDelegate::DownloadStarting(
     bool is_content_initiated,
     bool must_download,
     bool is_new_request,
-    ScopedVector<content::ResourceThrottle>* throttles) {
+    std::vector<std::unique_ptr<content::ResourceThrottle>>* throttles) {
   std::string suggested_name =
       content::ResourceRequestInfo::ForRequest(request)
           ->GetDownloadSuggestedName();
@@ -245,13 +249,13 @@ void ResourceDispatcherHostDelegate::RequestBeginning(
     content::ResourceContext* resource_context,
     content::AppCacheService* appcache_service,
     content::ResourceType resource_type,
-    ScopedVector<content::ResourceThrottle>* throttles) {
+    std::vector<std::unique_ptr<content::ResourceThrottle>>* throttles) {
   throttles->push_back(
-      new RedirectionInterceptThrottle(request, resource_context));
+      base::MakeUnique<RedirectionInterceptThrottle>(request, resource_context));
 
   if (resource_type == content::RESOURCE_TYPE_MAIN_FRAME) {
     throttles->push_back(
-        new NavigationInterceptResourceThrottle(request));
+        base::MakeUnique<NavigationInterceptResourceThrottle>(request));
   }
 }
 

@@ -489,15 +489,12 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
       new URLRequestDelegatedJobFactory(std::move(job_factory),
                                         this));
 
-  for (content::URLRequestInterceptorScopedVector::reverse_iterator it =
-          request_interceptors.rbegin();
-       it != request_interceptors.rend();
-       ++it) {
-    top_job_factory.reset(
-        new net::URLRequestInterceptingJobFactory(std::move(top_job_factory),
-                                                  base::WrapUnique(*it)));
+  for (auto& interceptor : request_interceptors) {
+    top_job_factory =
+        base::MakeUnique<net::URLRequestInterceptingJobFactory>(
+            std::move(top_job_factory),
+            std::move(interceptor));
   }
-  request_interceptors.weak_clear();
 
   storage->set_job_factory(std::move(top_job_factory));
 
