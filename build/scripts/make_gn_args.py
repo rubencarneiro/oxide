@@ -189,6 +189,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("enable_extensions", True)
   writer.WriteBool("use_external_popup_menu", True)
   writer.WriteBool("enable_media_remoting", False)
+  writer.WriteBool("enable_pdf", False)
 
 def WriteConfigurableArgs(writer, options):
   host_arch = HostArch()

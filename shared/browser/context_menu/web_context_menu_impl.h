@@ -36,7 +36,6 @@ class GURL;
 namespace oxide {
 
 enum class WebContextMenuAction : unsigned;
-enum class WebContextMenuActionGroup;
 
 class WebContextMenuImpl : public WebContextMenu,
                            public WebContextMenuClient,
@@ -71,8 +70,6 @@ class WebContextMenuImpl : public WebContextMenu,
   void AppendCopyItems(std::vector<content::MenuItem>* items);
 
   bool IsCommandEnabled(WebContextMenuAction action) const;
-  bool SupportsActionGroup(WebContextMenuActionGroup group) const;
-  bool SupportsMediaActionGroup() const;
 
   std::vector<content::MenuItem> BuildItems();
 

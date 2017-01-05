@@ -216,9 +216,8 @@ document.querySelector(\"" + data.link + "\").dispatchEvent(e);", true);
       var frame = webView.rootFrame.childFrames[0];
 
       frameSpy.target = frame;
-      var frameRect = webView.getTestApi().getBoundingClientRectForSelector("iframe");
       var r = webView.getTestApiForFrame(frame).getBoundingClientRectForSelector(data.link);
-      mouseClick(webView, (r.x + r.width / 2) + frameRect.x, (r.y + r.height / 2) + frameRect.y, Qt.LeftButton, data.modifiers);
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.LeftButton, data.modifiers);
 
       if (data.disposition == NavigationRequest.DispositionCurrentTab) {
         frameSpy.wait();

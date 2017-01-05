@@ -18,6 +18,10 @@
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build/cmake)
 
+if(POLICY CMP0063)
+  cmake_policy(SET CMP0063 NEW)
+endif()
+
 include(ProjectInit)
 oxide_project_init()
 
@@ -48,6 +52,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 # We have a script for loading apps from the tree
 set(CMAKE_SKIP_BUILD_RPATH TRUE)
 include_directories(${OXIDE_SOURCE_DIR})
+
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 # Allow the version number to be used in the build
 string(REGEX REPLACE "([^\\.]+)\\.([^\\.]+)\\.([^\\.]+)" "\\1" PROJECT_VERSION_MAJOR ${PROJECT_VERSION})

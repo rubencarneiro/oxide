@@ -4,3 +4,4 @@ ScriptMessageTestUtils 1.0 ScriptMessageTestUtils.js
 TestUtils 1.0 TestUtils.js
 TestWebContext 1.0 TestWebContext.qml
 TestWebView 1.0 TestWebView.qml
+UbuntuTestWebView 1.0 UbuntuTestWebView.qml

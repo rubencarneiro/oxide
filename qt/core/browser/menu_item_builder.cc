@@ -22,6 +22,8 @@
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
 
+#include "qt/core/glue/macros.h"
+
 namespace oxide {
 namespace qt {
 
@@ -30,24 +32,24 @@ std::vector<MenuItem> MenuItemBuilder::Build(
     const std::vector<content::MenuItem>& items) {
   std::vector<MenuItem> rv;
 
-  QString current_group;
+  STATIC_ASSERT_MATCHING_ENUM(MenuItem::Type::Option,
+                              content::MenuItem::OPTION)
+  STATIC_ASSERT_MATCHING_ENUM(MenuItem::Type::Group,
+                              content::MenuItem::GROUP)
+  STATIC_ASSERT_MATCHING_ENUM(MenuItem::Type::Separator,
+                              content::MenuItem::SEPARATOR)
 
   for (const auto& item : items) {
-    if (item.type == content::MenuItem::GROUP) {
-      current_group = QString::fromStdString(base::UTF16ToUTF8(item.label));
-      continue;
-    }
-
-    // We don't support submenus here
+    // We don't support submenus here yet
     DCHECK(item.type == content::MenuItem::SEPARATOR ||
+           item.type == content::MenuItem::GROUP ||
            item.type == content::MenuItem::OPTION);
 
     MenuItem mi;
 
     mi.label = QString::fromStdString(base::UTF16ToUTF8(item.label));
     mi.tooltip = QString::fromStdString(base::UTF16ToUTF8(item.tool_tip));
-    mi.group = current_group;
-    mi.separator = item.type == content::MenuItem::SEPARATOR;
+    mi.type = static_cast<MenuItem::Type>(item.type);
     mi.action = item.action;
     mi.enabled = item.enabled;
     mi.checked = item.checked;

@@ -17,16 +17,21 @@
 
 #include "qml_test_support.h"
 
+#include <queue>
+
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QGuiApplication>
+#include <QJSValue>
 #include <QLatin1String>
 #include <QList>
+#include <QMap>
 #include <QPointer>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickItem>
+#include <QQuickView>
 #include <QQuickWindow>
 #include <QScreen>
 #include <QString>
@@ -35,6 +40,7 @@
 #include <QtQml>
 #include <QVariant>
 
+#include "qt/core/glue/screen_utils.h"
 #include "qt/quick/api/oxideqquickwebcontext.h"
 #include "qt/quick/api/oxideqquickwebcontext_p.h"
 #include "qt/quick/api/oxideqquickwebview.h"
@@ -200,6 +206,22 @@ int TestWindowAttached::y() const {
   return item_->window()->y();
 }
 
+int TestWindowAttached::width() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->width();
+}
+
+int TestWindowAttached::height() const {
+  if (!item_ || !item_->window()) {
+    return 0;
+  }
+
+  return item_->window()->height();
+}
+
 QScreen* TestWindowAttached::screen() const {
   if (!item_ || !item_->window()) {
     return nullptr;
@@ -215,6 +237,25 @@ void TestWindowAttached::setScreen(QScreen* screen) {
   }
 
   item_->window()->setScreen(screen);
+}
+
+QQuickItem* TestWindowAttached::rootItem() const {
+  if (!item_ || !item_->window()) {
+    return nullptr;
+  }
+
+  QQuickView* view = qobject_cast<QQuickView*>(item_->window());
+  if (view) {
+    return view->rootObject();
+  }
+
+  QQuickItem* root = item_;
+  while (root->parentItem()) {
+    root = root->parentItem();
+  }
+
+  Q_ASSERT(root == item_->window()->contentItem());
+  return root->childItems()[0];
 }
 
 // static
@@ -328,4 +369,92 @@ void TestSupport::removeAppProperty(const QString& property) {
 
 void TestSupport::wait(int ms) {
   QTest::qWait(ms);
+}
+
+QVariant TestSupport::toQtPixels(QQuickItem* item, const QVariant& v) {
+  if (!item->window() || !item->window()->screen()) {
+    qWarning() << "Can't determine scale factor for item";
+    return v;
+  }
+
+  float scale =
+      oxide::qt::GetScreenScaleFactor(item->window()->screen()) /
+      item->window()->screen()->devicePixelRatio();
+
+  QVariant value = v;
+  if (value.userType() == qMetaTypeId<QJSValue>()) {
+    value = value.value<QJSValue>().toVariant();
+  }
+
+  if (value.type() != QVariant::Map) {
+    qWarning() << "Invalid type";
+    return QVariant();
+  }
+
+  QMap<QString, QVariant> map = value.toMap();
+  if (map.contains("x") && map.contains("y")) {
+    map["x"] = map["x"].toReal() * scale;
+    map["y"] = map["y"].toReal() * scale;
+  }
+
+  if (map.contains("width") && map.contains("height")) {
+    map["width"] = map["width"].toReal() * scale;
+    map["height"] = map["height"].toReal() * scale;
+  }
+
+  return map;
+}
+
+QQuickItem* TestSupport::findItemInScene(QQuickItem* root,
+                                         const QString& name) {
+  if (!root) {
+    qWarning() << "No root item specified";
+    return nullptr;
+  }
+
+  std::queue<QQuickItem*> stack;
+  stack.push(root);
+
+  while (!stack.empty()) {
+    QQuickItem* i = stack.front();
+    stack.pop();
+
+    if (i->objectName() == name) {
+      return i;
+    }
+
+    for (auto* child : i->childItems()) {
+      stack.push(child);
+    }
+  }
+
+  return nullptr;
+}
+
+QVariantList TestSupport::findItemsInScene(QQuickItem* root,
+                                           const QString& namePrefix) {
+  QVariantList rv;
+
+  if (!root) {
+    qWarning() << "No root item specified";
+    return rv;
+  }
+
+  std::queue<QQuickItem*> stack;
+  stack.push(root);
+
+  while (!stack.empty()) {
+    QQuickItem* i = stack.front();
+    stack.pop();
+
+    if (i->objectName().startsWith(namePrefix)) {
+      rv.push_back(QVariant::fromValue(i));
+    }
+
+    for (auto* child : i->childItems()) {
+      stack.push(child);
+    }
+  }
+
+  return rv;
 }

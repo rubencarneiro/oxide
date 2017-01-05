@@ -103,9 +103,8 @@ bool ContentsView::IsVisible() const {
 }
 
 bool ContentsView::HasFocus() const {
-  QQuickWindow* window = item_->window();
-  return window ? (window->isActive() &&
-      (window->activeFocusItem() == item_)) : false;
+  return item_->hasActiveFocus() &&
+      (item_->window() ? item_->window()->isActive() : false);
 }
 
 QRect ContentsView::GetBounds() const {

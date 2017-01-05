@@ -29,8 +29,10 @@
 #include "qt/core/glue/macros.h"
 #include "qt/core/glue/web_context_menu.h"
 #include "qt/core/glue/web_context_menu_actions.h"
+#include "qt/core/glue/web_context_menu_sections.h"
 #include "shared/browser/context_menu/web_context_menu_actions.h"
 #include "shared/browser/context_menu/web_context_menu_client.h"
+#include "shared/browser/context_menu/web_context_menu_sections.h"
 
 #include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
@@ -137,6 +139,13 @@ void WebContextMenuImpl::close() {
 }
 
 void WebContextMenuImpl::execCommand(WebContextMenuAction action) {
+  client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action));
+}
+
+WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
+                                       oxide::WebContextMenuClient* client)
+    : params_(params),
+      client_(client) {
   STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::OpenLinkInNewTab,
                               oxide::WebContextMenuAction::OpenLinkInNewTab)
   STATIC_ASSERT_MATCHING_ENUM(
@@ -177,13 +186,19 @@ void WebContextMenuImpl::execCommand(WebContextMenuAction action) {
   STATIC_ASSERT_MATCHING_ENUM(WebContextMenuAction::SelectAll,
                               oxide::WebContextMenuAction::SelectAll)
 
-  client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action));
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::OpenLink,
+                              oxide::WebContextMenuSection::OpenLink)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::Link,
+                              oxide::WebContextMenuSection::Link)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::Media,
+                              oxide::WebContextMenuSection::Media)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::Undo,
+                              oxide::WebContextMenuSection::Undo)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::Editing,
+                              oxide::WebContextMenuSection::Editing)
+  STATIC_ASSERT_MATCHING_ENUM(WebContextMenuSection::Copy,
+                              oxide::WebContextMenuSection::Copy)
 }
-
-WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
-                                       oxide::WebContextMenuClient* client)
-    : params_(params),
-      client_(client) {}
 
 WebContextMenuImpl::~WebContextMenuImpl() = default;
 
@@ -209,6 +224,8 @@ WebContextMenuParams WebContextMenuImpl::GetParams() const {
   rv.unfiltered_link_url =
       QUrl(QString::fromStdString(params_.unfiltered_link_url.spec()));
   rv.link_text = QString::fromStdString(base::UTF16ToUTF8(params_.link_text));
+
+  rv.title_text = QString::fromStdString(base::UTF16ToUTF8(params_.title_text));
 
   rv.media_type = ToMediaType(params_.media_type);
   rv.has_image_contents = params_.has_image_contents;

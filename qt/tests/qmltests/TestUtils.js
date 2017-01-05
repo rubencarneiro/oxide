@@ -43,7 +43,8 @@ function MessageError(error, desc) {
   this.message = desc;
 }
 
-function TestApiHost(frame) {
+function TestApiHost(view, frame) {
+  this._view = view;
   this._frame = frame;
 }
 
@@ -88,9 +89,11 @@ TestApiHost.prototype = {
   },
 
   getBoundingClientRectForSelector: function(selector) {
-    return this.waitForResult(
-        this._frame.sendMessage("oxide://testutils/",
-                                "GET-BOUNDING-CLIENT-RECT",
-                                selector));
+    return OxideTesting.TestSupport.toQtPixels(
+        this._view,
+        this.waitForResult(
+            this._frame.sendMessage("oxide://testutils/",
+                                    "GET-BOUNDING-CLIENT-RECT",
+                                    selector)));
   }
 };

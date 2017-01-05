@@ -37,6 +37,17 @@
 namespace oxide {
 namespace qquick {
 
+struct MenuItem {
+  QString label;
+  QString tooltip;
+  QString group;
+  bool enabled = true;
+  bool checked = false;
+  bool separator = false;
+
+  unsigned action = 0;
+};
+
 namespace {
 
 class PopupListModel : public QAbstractListModel {
@@ -66,7 +77,7 @@ class PopupListModel : public QAbstractListModel {
   };
 
   bool allow_multi_select_;
-  std::vector<oxide::qt::MenuItem> items_;
+  std::vector<MenuItem> items_;
   int selected_index_;
   QHash<int, QByteArray> roles_;
 };
@@ -75,7 +86,24 @@ PopupListModel::PopupListModel(const std::vector<oxide::qt::MenuItem>& items,
                                bool allow_multiple_selection) :
     allow_multi_select_(allow_multiple_selection),
     selected_index_(-1) {
-  items_ = items;
+  QString current_group;
+  for (const auto& item : items) {
+    if (item.type == oxide::qt::MenuItem::Type::Group) {
+      current_group = item.label;
+      continue;
+    }
+
+    MenuItem mi;
+    mi.label = item.label;
+    mi.tooltip = item.tooltip;
+    mi.group = current_group;
+    mi.enabled = item.enabled;
+    mi.checked = item.checked;
+    mi.separator = item.type == oxide::qt::MenuItem::Type::Separator;
+    mi.action = item.action;
+
+    items_.push_back(mi);
+  }
 
   if (!allow_multi_select_) {
     for (int i = 0; i < items_.size(); ++i) {
@@ -105,7 +133,7 @@ QVariant PopupListModel::data(const QModelIndex& index, int role) const {
     return QVariant();
   }
 
-  const oxide::qt::MenuItem& item = items_[index.row()];
+  const MenuItem& item = items_[index.row()];
   if (item.separator) {
     if (role == SeparatorRole) {
       return true;
@@ -138,7 +166,7 @@ void PopupListModel::select(int index) {
     return;
   }
 
-  oxide::qt::MenuItem& item = items_[index];
+  MenuItem& item = items_[index];
   if (!item.enabled) {
     return;
   }
@@ -153,7 +181,7 @@ void PopupListModel::select(int index) {
     Q_ASSERT(!item.checked);
 
     if (selected_index_ != -1) {
-      oxide::qt::MenuItem& old_item = items_[selected_index_];
+      MenuItem& old_item = items_[selected_index_];
       Q_ASSERT(old_item.checked);
 
       old_item.checked = false;
@@ -171,7 +199,7 @@ void PopupListModel::select(int index) {
 QList<unsigned> PopupListModel::selectedIndices() const {
   QList<unsigned> rv;
   for (int i = 0; i < items_.size(); ++i) {
-    const oxide::qt::MenuItem& item = items_[i];
+    const MenuItem& item = items_[i];
     if (item.checked) {
       rv.append(item.action);
     }

@@ -30,10 +30,15 @@ struct OXIDE_QTCORE_EXPORT MenuItem {
   MenuItem(const MenuItem& other);
   ~MenuItem();
 
+  enum class Type {
+    Option = 0,
+    Group = 2,
+    Separator = 3
+  };
+
   QString label;
   QString tooltip;
-  QString group;
-  bool separator = false;
+  Type type = Type::Option;
   unsigned action = 0;
   bool enabled = false;
   bool checked = false;

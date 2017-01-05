@@ -1039,9 +1039,6 @@ OxideQQuickWebView::OxideQQuickWebView(OxideQQuickWebViewPrivate& dd,
   Q_D(OxideQQuickWebView);
 
   d->contents_view_.reset(new oxide::qquick::ContentsView(this));
-  if (d->aux_ui_factory_) {
-    d->aux_ui_factory_->set_item(this);
-  }
 
   oxide::qquick::EnsureChromiumStarted();
 

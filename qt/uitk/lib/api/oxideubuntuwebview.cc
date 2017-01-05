@@ -18,14 +18,24 @@
 #include "oxideubuntuwebview.h"
 #include "oxideubuntuwebview_p.h"
 
-#include "qt/uitk/lib/uitk_auxiliary_ui_factory.h"
+#include "qt/core/api/oxideqwebcontextmenuparams.h"
+#include "qt/core/api/oxideqwebcontextmenuparams_p.h"
 
 OxideUbuntuWebViewPrivate::OxideUbuntuWebViewPrivate(
     OxideUbuntuWebView* q)
     : OxideQQuickWebViewPrivate(
           q,
           std::unique_ptr<oxide::qquick::AuxiliaryUIFactory>(
-              new oxide::uitk::AuxiliaryUIFactory())) {}
+              new oxide::uitk::AuxiliaryUIFactory(q, this))) {}
+
+void OxideUbuntuWebViewPrivate::ContextMenuOpening(
+    const oxide::qt::WebContextMenuParams& params,
+    OxideUbuntuWebContextMenu* menu) {
+  Q_Q(OxideUbuntuWebView);
+
+  Q_EMIT q->contextMenuOpening(OxideQWebContextMenuParamsData::Create(params),
+                               menu);
+}
 
 OxideUbuntuWebView::OxideUbuntuWebView(QQuickItem* parent)
     : OxideQQuickWebView(*new OxideUbuntuWebViewPrivate(this), parent) {}

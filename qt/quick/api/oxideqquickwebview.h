@@ -48,7 +48,7 @@ class OxideQQuickWebViewPrivate;
 class OxideQDownloadRequest;
 class OxideQSecurityStatus;
 
-class OxideQQuickWebViewAttached : public QObject {
+class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewAttached : public QObject {
   Q_OBJECT
   Q_PROPERTY(OxideQQuickWebView* view READ view)
 

@@ -21,14 +21,21 @@
 #include <QtGlobal>
 
 #include "qt/quick/api/oxideqquickwebview_p.h"
+#include "qt/uitk/lib/uitk_auxiliary_ui_factory.h"
 
 class OxideUbuntuWebView;
 
-class OxideUbuntuWebViewPrivate : public OxideQQuickWebViewPrivate {
+class OxideUbuntuWebViewPrivate
+    : public OxideQQuickWebViewPrivate,
+      public oxide::uitk::AuxiliaryUIFactory::Delegate {
   Q_DECLARE_PUBLIC(OxideUbuntuWebView)
   Q_DISABLE_COPY(OxideUbuntuWebViewPrivate)
 
   OxideUbuntuWebViewPrivate(OxideUbuntuWebView* q);
+
+  // oxide::uitk::AuxiliaryUIFactory::Delegate implementation
+  void ContextMenuOpening(const oxide::qt::WebContextMenuParams& params,
+                          OxideUbuntuWebContextMenu* menu) override;
 };
 
 #endif // _OXIDE_QT_UITK_LIB_API_UBUNTU_WEB_VIEW_P_H_

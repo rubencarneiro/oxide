@@ -19,3 +19,4 @@
 add_subdirectory(oxideqcertificateerror)
 add_subdirectory(oxideqdownloadrequest)
 add_subdirectory(oxideqquicknavigationitem)
+add_subdirectory(oxideqwebcontextmenuparams)

@@ -15,29 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
-#define _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
-
-#include <QtGlobal>
-
-#include "qt/core/api/oxideqglobal.h"
-
-QT_BEGIN_NAMESPACE
-class QScreen;
-QT_END_NAMESPACE
+#ifndef _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_SECTIONS_H_
+#define _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_SECTIONS_H_
 
 namespace oxide {
-namespace qt {
 
-enum class ScreenFormFactor {
-  Monitor,
-  Mobile,
-  Television
+enum class WebContextMenuSection : unsigned {
+  OpenLink,
+  Link,
+  Media,
+  Undo,
+  Editing,
+  Copy
 };
 
-OXIDE_QTCORE_EXPORT ScreenFormFactor GetScreenFormFactor(QScreen* screen);
-
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_SCREEN_FORM_FACTOR_H_
+#endif // _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_SECTIONS_H_

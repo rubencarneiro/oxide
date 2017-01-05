@@ -28,6 +28,8 @@ QT_BEGIN_NAMESPACE
 class QQuickItem;
 QT_END_NAMESPACE
 
+class OxideQWebContextMenuParams;
+class OxideUbuntuWebContextMenu;
 class OxideUbuntuWebViewPrivate;
 
 class OXIDE_UITK_EXPORT OxideUbuntuWebView : public OxideQQuickWebView {
@@ -39,6 +41,10 @@ class OXIDE_UITK_EXPORT OxideUbuntuWebView : public OxideQQuickWebView {
  public:
   OxideUbuntuWebView(QQuickItem* parent = nullptr);
   ~OxideUbuntuWebView() Q_DECL_OVERRIDE;
+
+ Q_SIGNALS:
+  void contextMenuOpening(const OxideQWebContextMenuParams& params,
+                          OxideUbuntuWebContextMenu* menu);
 };
 
 QML_DECLARE_TYPE(OxideUbuntuWebView)

@@ -22,12 +22,28 @@
 
 #include "qt/quick/auxiliary_ui_factory.h"
 
+class OxideUbuntuWebContextMenu;
+
 namespace oxide {
+
+namespace qt {
+struct WebContextMenuParams;
+}
+
 namespace uitk {
 
 class AuxiliaryUIFactory : public qquick::AuxiliaryUIFactory {
  public:
-  AuxiliaryUIFactory();
+  class Delegate {
+   public:
+    virtual ~Delegate();
+
+    virtual void ContextMenuOpening(const qt::WebContextMenuParams& params,
+                                    OxideUbuntuWebContextMenu* menu) = 0;
+  };
+
+  AuxiliaryUIFactory(QQuickItem* item,
+                     Delegate* delegate = nullptr);
   ~AuxiliaryUIFactory() override;
 
  private:
@@ -36,6 +52,8 @@ class AuxiliaryUIFactory : public qquick::AuxiliaryUIFactory {
       const qt::WebContextMenuParams& params,
       const std::vector<qt::MenuItem>& items,
       qt::WebContextMenuClient* client) override;
+
+  Delegate* delegate_;
 
   Q_DISABLE_COPY(AuxiliaryUIFactory)
 };

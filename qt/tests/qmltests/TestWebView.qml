@@ -31,7 +31,7 @@ WebView {
 
   function getTestApi() {
     if (!(rootFrame in qtest_testApiHosts)) {
-      qtest_testApiHosts[rootFrame] = new TestUtils.TestApiHost(rootFrame);
+      qtest_testApiHosts[rootFrame] = new TestUtils.TestApiHost(this, rootFrame);
     }
 
     return qtest_testApiHosts[rootFrame];
@@ -39,7 +39,7 @@ WebView {
 
   function getTestApiForFrame(frame) {
     if (!(frame in qtest_testApiHosts)) {
-      qtest_testApiHosts[frame] = new TestUtils.TestApiHost(frame);
+      qtest_testApiHosts[frame] = new TestUtils.TestApiHost(this, frame);
     }
 
     return qtest_testApiHosts[frame];

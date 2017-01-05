@@ -15,32 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "screen_form_factor.h"
-
-#include "base/logging.h"
-#include "ui/display/display.h"
-
-#include "qt/core/browser/qt_screen.h"
-#include "shared/browser/display_form_factor.h"
-
-#include "macros.h"
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_
 
 namespace oxide {
 namespace qt {
 
-ScreenFormFactor GetScreenFormFactor(QScreen* screen) {
-  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Monitor,
-                              oxide::DisplayFormFactor::Monitor)
-  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Mobile,
-                              oxide::DisplayFormFactor::Mobile)
-  STATIC_ASSERT_MATCHING_ENUM(ScreenFormFactor::Television,
-                              oxide::DisplayFormFactor::Television)
+enum class WebContextMenuSection : unsigned {
+  Min,
 
-  display::Display display = Screen::GetInstance()->DisplayFromQScreen(screen);
-  DCHECK(display.is_valid());
-  return static_cast<ScreenFormFactor>(
-      Screen::GetInstance()->GetDisplayFormFactor(display));
-}
+  OpenLink = Min,
+  Link,
+  Media,
+  Undo,
+  Editing,
+  Copy,
+
+  Max
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_WEB_CONTEXT_MENU_SECTIONS_H_
