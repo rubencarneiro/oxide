@@ -47,8 +47,8 @@ void MediaInfoLoader::Start(blink::WebFrame* frame) {
 
   // Prepare the request.
   WebURLRequest request(url_);
-//  request.setTargetType(WebURLRequest::TargetIsMedia);
-  // TODO:
+  request.setRequestContext(WebURLRequest::RequestContextAudio);
+
   frame->setReferrerForRequest(request, blink::WebURL());
 
   std::unique_ptr<WebAssociatedURLLoader> loader;

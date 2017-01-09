@@ -32,7 +32,6 @@
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/command_buffer/common/mailbox_holder.h"
 #include "media/base/bind_to_current_loop.h"
-#include "media/base/media_keys.h"
 #include "media/base/media_switches.h"
 #include "media/base/timestamp_constants.h"
 #include "media/base/video_frame.h"
@@ -406,10 +405,6 @@ size_t WebMediaPlayer::videoDecodedByteCount() const {
   return 0;
 }
 
-void WebMediaPlayer::paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode) {
-  NOTIMPLEMENTED();
-}
-
 void WebMediaPlayer::OnHidden() {
   // RendererMediaPlayerManager will not call SuspendAndReleaseResources() if we
   // were already in the paused state; thus notify the MediaWebContentsObserver
@@ -420,10 +415,11 @@ void WebMediaPlayer::OnHidden() {
 
 void WebMediaPlayer::OnShown() {}
 
-void WebMediaPlayer::OnSuspendRequested(bool must_suspend) {
+bool WebMediaPlayer::OnSuspendRequested(bool must_suspend) {
   if (must_suspend && delegate_) {
     delegate_->PlayerGone(delegate_id_);
   }
+  return true;
 }
 
 void WebMediaPlayer::OnPlay() {
