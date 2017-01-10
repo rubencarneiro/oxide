@@ -242,8 +242,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
       layer_->SetSurfaceInfo(
           cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_frame_id_),
                           device_scale_factor,
-                          frame_size),
-          false);
+                          frame_size));
       layer_->SetBounds(frame_size_dip);
       layer_->SetIsDrawable(true);
       layer_->SetContentsOpaque(true);
