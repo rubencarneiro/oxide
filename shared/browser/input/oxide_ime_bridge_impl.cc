@@ -69,7 +69,10 @@ void ImeBridgeImpl::CommitText(const base::string16& text,
   content::RenderWidgetHostImpl* rwhi =
       content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
-  rwhi->ImeCommitText(text, replacement_range, false);
+  rwhi->ImeCommitText(text,
+                      std::vector<blink::WebCompositionUnderline>(),
+                      replacement_range,
+                      false);
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
 }
 
