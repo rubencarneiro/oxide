@@ -39,6 +39,7 @@ Item {
       verify(webView.waitForLoadSucceeded());
 
       compare(webView.getTestApi().evaluateCode("document.cookie", false), "");
+      TestSupport.destroyQObjectNow(webView);
     }
   }
 }
