@@ -87,82 +87,82 @@ blink::WebGestureEvent MakeWebGestureEvent(
   result.globalX = gesture.raw_x;
   result.globalY = gesture.raw_y;
 
-  result.timeStampSeconds = (gesture.time - base::TimeTicks()).InSecondsF();
+  result.setTimeStampSeconds((gesture.time - base::TimeTicks()).InSecondsF());
   result.sourceDevice = blink::WebGestureDeviceTouchscreen;
 
   switch (gesture.type()) {
     case ui::ET_GESTURE_SHOW_PRESS:
-      result.type = blink::WebInputEvent::GestureShowPress;
+      result.setType(blink::WebInputEvent::GestureShowPress);
       result.data.showPress.width = gesture.details.bounding_box_f().width();
       result.data.showPress.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_DOUBLE_TAP:
-      result.type = blink::WebInputEvent::GestureDoubleTap;
+      result.setType(blink::WebInputEvent::GestureDoubleTap);
       DCHECK_EQ(1, gesture.details.tap_count());
       result.data.tap.tapCount = gesture.details.tap_count();
       result.data.tap.width = gesture.details.bounding_box_f().width();
       result.data.tap.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_TAP:
-      result.type = blink::WebInputEvent::GestureTap;
+      result.setType(blink::WebInputEvent::GestureTap);
       DCHECK_EQ(1, gesture.details.tap_count());
       result.data.tap.tapCount = gesture.details.tap_count();
       result.data.tap.width = gesture.details.bounding_box_f().width();
       result.data.tap.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_TAP_UNCONFIRMED:
-      result.type = blink::WebInputEvent::GestureTapUnconfirmed;
+      result.setType(blink::WebInputEvent::GestureTapUnconfirmed);
       DCHECK_EQ(1, gesture.details.tap_count());
       result.data.tap.tapCount = gesture.details.tap_count();
       result.data.tap.width = gesture.details.bounding_box_f().width();
       result.data.tap.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_LONG_PRESS:
-      result.type = blink::WebInputEvent::GestureLongPress;
+      result.setType(blink::WebInputEvent::GestureLongPress);
       result.data.longPress.width = gesture.details.bounding_box_f().width();
       result.data.longPress.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_LONG_TAP:
-      result.type = blink::WebInputEvent::GestureLongTap;
+      result.setType(blink::WebInputEvent::GestureLongTap);
       result.data.longPress.width = gesture.details.bounding_box_f().width();
       result.data.longPress.height = gesture.details.bounding_box_f().height();
       break;
     case ui::ET_GESTURE_SCROLL_BEGIN:
-      result.type = blink::WebInputEvent::GestureScrollBegin;
+      result.setType(blink::WebInputEvent::GestureScrollBegin);
       result.data.scrollBegin.deltaXHint = gesture.details.scroll_x_hint();
       result.data.scrollBegin.deltaYHint = gesture.details.scroll_y_hint();
       break;
     case ui::ET_GESTURE_SCROLL_UPDATE:
-      result.type = blink::WebInputEvent::GestureScrollUpdate;
+      result.setType(blink::WebInputEvent::GestureScrollUpdate);
       result.data.scrollUpdate.deltaX = gesture.details.scroll_x();
       result.data.scrollUpdate.deltaY = gesture.details.scroll_y();
       break;
     case ui::ET_GESTURE_SCROLL_END:
-      result.type = blink::WebInputEvent::GestureScrollEnd;
+      result.setType(blink::WebInputEvent::GestureScrollEnd);
       break;
     case ui::ET_SCROLL_FLING_START:
-      result.type = blink::WebInputEvent::GestureFlingStart;
+      result.setType(blink::WebInputEvent::GestureFlingStart);
       result.data.flingStart.velocityX = gesture.details.velocity_x();
       result.data.flingStart.velocityY = gesture.details.velocity_y();
       break;
     case ui::ET_SCROLL_FLING_CANCEL:
-      result.type = blink::WebInputEvent::GestureFlingCancel;
+      result.setType(blink::WebInputEvent::GestureFlingCancel);
       break;
     case ui::ET_GESTURE_PINCH_BEGIN:
-      result.type = blink::WebInputEvent::GesturePinchBegin;
+      result.setType(blink::WebInputEvent::GesturePinchBegin);
       break;
     case ui::ET_GESTURE_PINCH_UPDATE:
-      result.type = blink::WebInputEvent::GesturePinchUpdate;
+      result.setType(blink::WebInputEvent::GesturePinchUpdate);
       result.data.pinchUpdate.scale = gesture.details.scale();
       break;
     case ui::ET_GESTURE_PINCH_END:
-      result.type = blink::WebInputEvent::GesturePinchEnd;
+      result.setType(blink::WebInputEvent::GesturePinchEnd);
       break;
     case ui::ET_GESTURE_TAP_CANCEL:
-      result.type = blink::WebInputEvent::GestureTapCancel;
+      result.setType(blink::WebInputEvent::GestureTapCancel);
       break;
     case ui::ET_GESTURE_TAP_DOWN:
-      result.type = blink::WebInputEvent::GestureTapDown;
+      result.setType(blink::WebInputEvent::GestureTapDown);
       result.data.tapDown.width = gesture.details.bounding_box_f().width();
       result.data.tapDown.height = gesture.details.bounding_box_f().height();
       break;
@@ -178,31 +178,31 @@ blink::WebTouchEvent MakeWebTouchEvent(const ui::MotionEvent& event,
                                        bool moved_beyond_slop_region) {
   blink::WebTouchEvent result;
 
-  result.timeStampSeconds =
-      (event.GetEventTime() - base::TimeTicks()).InSecondsF();
+  result.setTimeStampSeconds(
+      (event.GetEventTime() - base::TimeTicks()).InSecondsF());
 
   switch (event.GetAction()) {
     case ui::MotionEvent::ACTION_DOWN:
     case ui::MotionEvent::ACTION_POINTER_DOWN:
-      result.type = blink::WebInputEvent::TouchStart;
+      result.setType(blink::WebInputEvent::TouchStart);
       break;
     case ui::MotionEvent::ACTION_UP:
     case ui::MotionEvent::ACTION_POINTER_UP:
-      result.type = blink::WebInputEvent::TouchEnd;
+      result.setType(blink::WebInputEvent::TouchEnd);
       break;
     case ui::MotionEvent::ACTION_MOVE:
-      result.type = blink::WebInputEvent::TouchMove;
+      result.setType(blink::WebInputEvent::TouchMove);
       break;
     case ui::MotionEvent::ACTION_CANCEL:
-      result.type = blink::WebInputEvent::TouchCancel;
+      result.setType(blink::WebInputEvent::TouchCancel);
       break;
     default:
       NOTREACHED();
-      result.type = blink::WebInputEvent::Undefined;
+      result.setType(blink::WebInputEvent::Undefined);
   }
 
   result.dispatchType =
-      result.type == blink::WebInputEvent::TouchCancel ?
+      result.type() == blink::WebInputEvent::TouchCancel ?
           blink::WebInputEvent::EventNonBlocking :
           blink::WebInputEvent::Blocking;
 

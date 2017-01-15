@@ -37,6 +37,7 @@
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/common/drop_data.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
+#include "third_party/WebKit/public/platform/WebInputEvent.h"
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/point.h"
 
@@ -556,8 +557,8 @@ void ContentsView::UnhandledKeyboardEvent(
     return;
   }
 
-  if (event.type != blink::WebInputEvent::RawKeyDown &&
-      event.type != blink::WebInputEvent::KeyUp) {
+  if (event.type() != blink::WebInputEvent::RawKeyDown &&
+      event.type() != blink::WebInputEvent::KeyUp) {
     return;
   }
 

@@ -489,16 +489,16 @@ void RenderWidgetHostView::OnGestureEvent(
     return;
   }
 
-  if (event.type == blink::WebInputEvent::GestureTapDown) {
+  if (event.type() == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
     // event to stop any in-progress flings.
     blink::WebGestureEvent fling_cancel = event;
-    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.setType(blink::WebInputEvent::GestureFlingCancel);
     fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
     host_->ForwardGestureEvent(fling_cancel);
   }
 
-  if (event.type == blink::WebInputEvent::Undefined) {
+  if (event.type() == blink::WebInputEvent::Undefined) {
     return;
   }
 
@@ -526,10 +526,10 @@ bool RenderWidgetHostView::HandleContextMenu(
 
 bool RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
-  switch (event.type) {
+  switch (event.type()) {
     case blink::WebInputEvent::GestureLongPress: {
       base::TimeTicks event_time = base::TimeTicks() +
-          base::TimeDelta::FromSecondsD(event.timeStampSeconds);
+          base::TimeDelta::FromSecondsD(event.timeStampSeconds());
       gfx::PointF location(event.x, event.y);
       if (selection_controller_->WillHandleLongPressEvent(
               event_time, location)) {
