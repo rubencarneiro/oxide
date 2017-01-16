@@ -51,7 +51,7 @@ class ResourceDispatcherHostDelegate
       bool is_content_initiated,
       bool must_download,
       bool is_new_request,
-      ScopedVector<content::ResourceThrottle>* throttles) override;
+      std::vector<std::unique_ptr<content::ResourceThrottle>>* throttles) override;
 
  private:
   struct DownloadRequestParams;
@@ -79,7 +79,7 @@ class ResourceDispatcherHostDelegate
       content::ResourceContext* resource_context,
       content::AppCacheService* appcache_service,
       content::ResourceType resource_type,
-      ScopedVector<content::ResourceThrottle>* throttles) override;
+      std::vector<std::unique_ptr<content::ResourceThrottle>>* throttles) override;
   bool HandleExternalProtocol(const GURL& url,
                               content::ResourceRequestInfo* info) override;
 

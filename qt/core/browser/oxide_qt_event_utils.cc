@@ -150,6 +150,20 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   return modifiers;
 }
 
+blink::WebInputEvent::Type QInputEventTypeToWebEventType(QInputEvent* event,
+                                                         bool is_char = false) {
+  switch (event->type()) {
+    case QEvent::KeyPress:
+      return is_char ?
+          blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
+    case QEvent::KeyRelease:
+      return blink::WebInputEvent::KeyUp;
+    default:
+      NOTREACHED();
+      return blink::WebInputEvent::Undefined;
+  }
+}
+
 void ReleaseKeyEvent(void* event) {
   delete reinterpret_cast<QKeyEvent*>(event);
 }
@@ -162,30 +176,17 @@ void* CopyKeyEvent(void* event) {
 
 content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
                                                            bool is_char) {
-  content::NativeWebKeyboardEvent result;
+  content::NativeWebKeyboardEvent result(
+      QInputEventTypeToWebEventType(event, is_char),
+      QInputEventStateToWebEventModifiers(event),
+      QInputEventTimeToWebEventTime(event));
 
   QKeyEvent* os_event = new QKeyEvent(*event);
   os_event->setAccepted(false);
   result.SetExtraData(os_event, ReleaseKeyEvent, CopyKeyEvent);
 
-  result.timeStampSeconds = QInputEventTimeToWebEventTime(event);
-  result.modifiers = QInputEventStateToWebEventModifiers(event);
-
   if (event->isAutoRepeat()) {
     result.modifiers |= blink::WebInputEvent::IsAutoRepeat;
-  }
-
-  switch (event->type()) {
-    case QEvent::KeyPress: {
-      result.type = is_char ?
-          blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
-      break;
-    }
-    case QEvent::KeyRelease:
-      result.type = blink::WebInputEvent::KeyUp;
-      break;
-    default:
-      NOTREACHED();
   }
 
   if (result.modifiers & blink::WebInputEvent::AltKey) {

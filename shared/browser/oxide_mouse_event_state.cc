@@ -21,6 +21,7 @@
 
 #include "base/logging.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebMouseEvent.h"
 
 #include "oxide_browser_platform_integration.h"
 

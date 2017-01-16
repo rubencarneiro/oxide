@@ -41,10 +41,9 @@ namespace {
 // (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
 void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
                                  blink::WebInputEvent::Type type) {
-  content::NativeWebKeyboardEvent fake_event;
+  content::NativeWebKeyboardEvent fake_event(type, 0, base::TimeTicks::Now());
   fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
   fake_event.skip_in_browser = true;
-  fake_event.type = type;
   fake_event.domKey = ui::DomKey::Key::PROCESS;
   host->ForwardKeyboardEvent(fake_event);
 }
@@ -70,7 +69,10 @@ void ImeBridgeImpl::CommitText(const base::string16& text,
   content::RenderWidgetHostImpl* rwhi =
       content::RenderWidgetHostImpl::From(rwhv_->GetRenderWidgetHost());
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
-  rwhi->ImeCommitText(text, replacement_range, false);
+  rwhi->ImeCommitText(text,
+                      std::vector<blink::WebCompositionUnderline>(),
+                      replacement_range,
+                      false);
   SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
 }
 

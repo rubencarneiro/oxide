@@ -30,6 +30,7 @@
 #include "third_party/skia/include/core/SkImage.h"
 #include "third_party/WebKit/public/platform/WebDragOperation.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebMouseEvent.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/ime/text_input_type.h"
 #include "ui/gfx/geometry/rect_conversions.h"
