@@ -59,7 +59,15 @@ UbuntuTestWebView {
     }
 
     function waitForContextMenuToClose() {
-      return TestUtils.waitFor(function() { return !getContextMenu(); });
+      var menu = getContextMenu();
+      if (!menu) {
+        return true;
+      }
+
+      var helper = TestSupport.createQObjectTestHelper(menu);
+
+      return TestUtils.waitFor(function() { return !getContextMenu(); }) &&
+             TestUtils.waitFor(function() { return helper.destroyed; });
     }
 
     function dismissContextMenu() {
@@ -676,6 +684,26 @@ UbuntuTestWebView {
       mouseClick(entry);
 
       verifyClipboardContents("text/plain", "Some text\n");
+    }
+
+    function test_WebViewContextMenu25_destroy_on_webview_close() {
+      var webView2 = webViewFactory.createObject(webView, { "anchors.fill": parent, objectName: "webView2" });
+      webView2.url = "http://testsuite/tst_WebViewContextMenu.html";
+      verify(webView2.waitForLoadSucceeded());
+
+      var r = webView2.getTestApi().getBoundingClientRectForSelector("#link");
+      mouseClick(webView2, r.x + r.width / 2, r.y + r.height / 2, Qt.RightButton);
+
+      function getContextMenu() {
+        return TestSupport.findItemInScene(TestWindow.rootItem, "webView2_WebContextMenu");
+      }
+      verify(TestUtils.waitFor(function() { return !!getContextMenu() && getContextMenu().visible; }));
+
+      var menu = getContextMenu();
+      var helper = TestSupport.createQObjectTestHelper(menu);
+
+      webView2.destroy();
+      verify(TestUtils.waitFor(function() { return helper.destroyed; }));
     }
   }
 }
