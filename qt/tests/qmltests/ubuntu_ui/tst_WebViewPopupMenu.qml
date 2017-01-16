@@ -39,7 +39,7 @@ UbuntuTestWebView {
     }
 
     function waitForPopupMenu() {
-      return TestUtils.waitFor(function() { return getPopupMenu(); });
+      return TestUtils.waitFor(function() { return !!getPopupMenu() && getPopupMenu().visible; });
     }
 
     function dismissPopupMenu() {
