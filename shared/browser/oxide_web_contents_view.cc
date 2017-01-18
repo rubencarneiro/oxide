@@ -42,7 +42,7 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
-#include "shared/browser/context_menu/web_context_menu_impl.h"
+#include "shared/browser/context_menu/web_context_menu_host.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -214,6 +214,14 @@ void WebContentsView::UpdateContentsSize() {
   }
 }
 
+void WebContentsView::DidCloseContextMenu() {
+  DCHECK(active_context_menu_);
+
+  base::ThreadTaskRunnerHandle::Get()->DeleteSoon(
+      FROM_HERE,
+      active_context_menu_.release());
+}
+
 void WebContentsView::DidHidePopupMenu() {
   DCHECK(active_popup_menu_);
 
@@ -321,8 +329,13 @@ void WebContentsView::ShowContextMenu(
     return;
   }
 
-  WebContextMenuImpl* menu = new WebContextMenuImpl(render_frame_host, params);
-  menu->Show();
+  active_context_menu_ =
+      base::MakeUnique<WebContextMenuHost>(
+          render_frame_host,
+          params,
+          base::Bind(&WebContentsView::DidCloseContextMenu,
+                     base::Unretained(this)));
+  active_context_menu_->Show();
 }
 
 void WebContentsView::StartDragging(
@@ -400,6 +413,11 @@ void WebContentsView::RenderFrameDeleted(
   if (active_popup_menu_ &&
       active_popup_menu_->GetRenderFrameHost() == render_frame_host) {
     active_popup_menu_.reset();
+  }
+
+  if (active_context_menu_ &&
+      active_context_menu_->GetRenderFrameHost() == render_frame_host) {
+    active_context_menu_.reset();
   }
 }
 

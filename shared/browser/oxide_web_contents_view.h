@@ -73,6 +73,7 @@ class CompositorFrameHandle;
 class DragSource;
 class RenderWidgetHostView;
 class WebContentsViewClient;
+class WebContextMenuHost;
 class WebPopupMenuHost;
 
 class OXIDE_SHARED_EXPORT WebContentsView
@@ -170,6 +171,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void ResizeCompositorViewport();
   void UpdateContentsSize();
 
+  void DidCloseContextMenu();
   void DidHidePopupMenu();
 
   // content::WebContentsView implementation
@@ -278,6 +280,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   RenderWidgetHostID drag_source_rwh_;
 
   std::unique_ptr<WebPopupMenuHost> active_popup_menu_;
+  std::unique_ptr<WebContextMenuHost> active_context_menu_;
 
   MouseEventState mouse_state_;
 
