@@ -55,7 +55,7 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "screen.h"
-#include "web_popup_menu_impl.h"
+#include "web_popup_menu_host.h"
 
 namespace oxide {
 
@@ -212,6 +212,13 @@ void WebContentsView::UpdateContentsSize() {
   if (rwhv) {
     rwhv->SetSize(size);
   }
+}
+
+void WebContentsView::DidHidePopupMenu() {
+  DCHECK(active_popup_menu_);
+
+  base::ThreadTaskRunnerHandle::Get()->DeleteSoon(FROM_HERE,
+                                                  active_popup_menu_.release());
 }
 
 gfx::NativeView WebContentsView::GetNativeView() const {
@@ -372,25 +379,28 @@ void WebContentsView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                                     const std::vector<content::MenuItem>& items,
                                     bool right_aligned,
                                     bool allow_multiple_selection) {
-  // XXX: We should do better than this
-  DCHECK(!active_popup_menu_);
-
-  WebPopupMenuImpl* menu = new WebPopupMenuImpl(render_frame_host,
-                                                items,
-                                                selected_item,
-                                                allow_multiple_selection,
-                                                bounds);
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show();
+  active_popup_menu_ =
+      base::MakeUnique<WebPopupMenuHost>(
+          render_frame_host,
+          items,
+          selected_item,
+          allow_multiple_selection,
+          bounds,
+          base::Bind(&WebContentsView::DidHidePopupMenu,
+                     base::Unretained(this)));
+  active_popup_menu_->Show();
 }
 
 void WebContentsView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
-  }
+  active_popup_menu_.reset();
+}
 
-  active_popup_menu_->Hide();
+void WebContentsView::RenderFrameDeleted(
+    content::RenderFrameHost* render_frame_host) {
+  if (active_popup_menu_ &&
+      active_popup_menu_->GetRenderFrameHost() == render_frame_host) {
+    active_popup_menu_.reset();
+  }
 }
 
 void WebContentsView::RenderViewHostChanged(
