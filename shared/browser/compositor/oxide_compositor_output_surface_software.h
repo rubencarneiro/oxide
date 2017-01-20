@@ -42,7 +42,8 @@ class CompositorOutputSurfaceSoftware : public CompositorOutputSurface {
   void Reshape(const gfx::Size& size,
                float device_scale_factor,
                const gfx::ColorSpace& color_space,
-               bool has_alpha) override;
+               bool has_alpha,
+               bool use_stencil) override;
   void SwapBuffers(cc::OutputSurfaceFrame frame) override;
 
   // CompositorOutputSurface implementation
