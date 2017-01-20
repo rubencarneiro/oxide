@@ -34,7 +34,7 @@ const int kMaxClicks = 3;
 
 bool MouseEventState::IsConsecutiveClick(const blink::WebMouseEvent& event) {
   DCHECK_EQ(event.clickCount, 1);
-  DCHECK_EQ(event.type, blink::WebInputEvent::MouseDown);
+  DCHECK_EQ(event.type(), blink::WebInputEvent::MouseDown);
 
   if (click_count_ == 0) {
     return false;
@@ -48,7 +48,7 @@ bool MouseEventState::IsConsecutiveClick(const blink::WebMouseEvent& event) {
     return false;
   }
 
-  if (int((event.timeStampSeconds - last_click_event_time_) * 1000) >
+  if (int((event.timeStampSeconds() - last_click_event_time_) * 1000) >
       BrowserPlatformIntegration::GetInstance()->GetClickInterval()) {
     return false;
   }
@@ -75,7 +75,7 @@ void MouseEventState::Reset() {
 }
 
 void MouseEventState::UpdateEvent(blink::WebMouseEvent* event) {
-  if (event->type != blink::WebInputEvent::MouseLeave &&
+  if (event->type() != blink::WebInputEvent::MouseLeave &&
       !mouse_entered_) {
     mouse_entered_ = true;
     global_position_.SetPoint(event->globalX, event->globalY);
@@ -83,9 +83,9 @@ void MouseEventState::UpdateEvent(blink::WebMouseEvent* event) {
     mouse_entered_ = false;
   }
 
-  if (event->type == blink::WebInputEvent::MouseEnter ||
-      event->type == blink::WebInputEvent::MouseLeave) {
-    event->type = blink::WebInputEvent::MouseMove;
+  if (event->type() == blink::WebInputEvent::MouseEnter ||
+      event->type() == blink::WebInputEvent::MouseLeave) {
+    event->setType(blink::WebInputEvent::MouseMove);
   }
 
   event->movementX = event->globalX - global_position_.x();
@@ -93,7 +93,7 @@ void MouseEventState::UpdateEvent(blink::WebMouseEvent* event) {
 
   global_position_.SetPoint(event->globalX, event->globalY);
 
-  if (event->type == blink::WebInputEvent::MouseDown) {
+  if (event->type() == blink::WebInputEvent::MouseDown) {
     if (IsConsecutiveClick(*event)) {
       event->clickCount = ++click_count_;
     } else {
@@ -101,7 +101,7 @@ void MouseEventState::UpdateEvent(blink::WebMouseEvent* event) {
       click_count_ = 1;
       click_position_.SetPoint(event->x, event->y);
     }
-    last_click_event_time_ = event->timeStampSeconds;
+    last_click_event_time_ = event->timeStampSeconds();
   }
 }
 

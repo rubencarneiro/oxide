@@ -281,8 +281,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   }
 
   const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
-  selection_controller_->OnSelectionEditable(selection.is_editable);
-  selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
   selection_controller_->OnSelectionBoundsChanged(selection.start,
                                                   selection.end);
 
@@ -485,20 +483,18 @@ void RenderWidgetHostView::OnGestureEvent(
     return;
   }
 
-  if (HandleGestureForTouchSelection(event)) {
-    return;
-  }
+  HandleGestureForTouchSelection(event);
 
-  if (event.type == blink::WebInputEvent::GestureTapDown) {
+  if (event.type() == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
     // event to stop any in-progress flings.
     blink::WebGestureEvent fling_cancel = event;
-    fling_cancel.type = blink::WebInputEvent::GestureFlingCancel;
+    fling_cancel.setType(blink::WebInputEvent::GestureFlingCancel);
     fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
     host_->ForwardGestureEvent(fling_cancel);
   }
 
-  if (event.type == blink::WebInputEvent::Undefined) {
+  if (event.type() == blink::WebInputEvent::Undefined) {
     return;
   }
 
@@ -524,25 +520,19 @@ bool RenderWidgetHostView::HandleContextMenu(
   return false;
 }
 
-bool RenderWidgetHostView::HandleGestureForTouchSelection(
+void RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
-  switch (event.type) {
+  switch (event.type()) {
     case blink::WebInputEvent::GestureLongPress: {
       base::TimeTicks event_time = base::TimeTicks() +
-          base::TimeDelta::FromSecondsD(event.timeStampSeconds);
+          base::TimeDelta::FromSecondsD(event.timeStampSeconds());
       gfx::PointF location(event.x, event.y);
-      if (selection_controller_->WillHandleLongPressEvent(
-              event_time, location)) {
-        return true;
-      }
+      selection_controller_->HandleLongPressEvent(event_time, location);
       break;
     }
     case blink::WebInputEvent::GestureTap: {
       gfx::PointF location(event.x, event.y);
-      if (selection_controller_->WillHandleTapEvent(
-              location, event.data.tap.tapCount)) {
-        return true;
-      }
+      selection_controller_->HandleTapEvent(location, event.data.tap.tapCount);
       break;
     }
     case blink::WebInputEvent::GestureScrollBegin:
@@ -558,7 +548,6 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
     default:
       break;
   }
-  return false;
 }
 
 void RenderWidgetHostView::NotifyTouchSelectionChanged(

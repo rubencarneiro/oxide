@@ -44,7 +44,8 @@ class CompositorOutputSurfaceGL : public CompositorOutputSurface {
   void Reshape(const gfx::Size& size,
                float scale_factor,
                const gfx::ColorSpace& color_space,
-               bool has_alpha) override;
+               bool has_alpha,
+               bool use_stencil) override;
   void BindFramebuffer() override;
   uint32_t GetFramebufferCopyTextureFormat() override;
   void SwapBuffers(cc::OutputSurfaceFrame frame) override;

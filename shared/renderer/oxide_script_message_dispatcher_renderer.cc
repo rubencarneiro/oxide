@@ -138,7 +138,6 @@ void ScriptMessageDispatcherRenderer::OnDestruct() {
 
 void ScriptMessageDispatcherRenderer::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
-    int extension_id,
     int world_id) {
   script_message_managers_.push_back(
       linked_ptr<ScriptMessageManager>(new ScriptMessageManager(render_frame(),

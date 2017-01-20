@@ -211,7 +211,7 @@ class RenderWidgetHostView
   void AttachLayer();
   void DetachLayer();
 
-  bool HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
+  void HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
   void NotifyTouchSelectionChanged(bool insertion_handle_tapped);
 
   content::RenderWidgetHostImpl* host_;
