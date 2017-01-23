@@ -36,6 +36,7 @@ class WebCursor;
 }
 
 namespace gfx {
+class Rect;
 class RectF;
 }
 
@@ -72,6 +73,7 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
       const std::vector<content::MenuItem> & items,
       int selected_item,
       bool allow_multiple_selection,
+      const gfx::Rect& bounds,
       WebPopupMenuClient* client);
 
   virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;

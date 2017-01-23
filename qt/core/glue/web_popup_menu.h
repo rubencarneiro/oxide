@@ -15,23 +15,17 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_
-#define _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_
-
-#include <QtGlobal>
-
-QT_BEGIN_NAMESPACE
-class QRect;
-QT_END_NAMESPACE
+#ifndef _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_H_
+#define _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_H_
 
 namespace oxide {
 namespace qt {
 
-class WebPopupMenuProxy {
+class WebPopupMenu {
  public:
-  virtual ~WebPopupMenuProxy() {}
+  virtual ~WebPopupMenu() {}
 
-  virtual void Show(const QRect& bounds) = 0;
+  virtual void Show() = 0;
 
   virtual void Hide() = 0;
 };
@@ -39,4 +33,4 @@ class WebPopupMenuProxy {
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_PROXY_H_
+#endif // _OXIDE_QT_CORE_GLUE_WEB_POPUP_MENU_H_

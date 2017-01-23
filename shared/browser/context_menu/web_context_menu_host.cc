@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "web_context_menu_impl.h"
+#include "web_context_menu_host.h"
 
 #include <libintl.h>
 
@@ -38,6 +38,7 @@
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_constants.h"
 
+#include "web_context_menu.h"
 #include "web_context_menu_actions.h"
 #include "web_context_menu_sections.h"
 
@@ -56,9 +57,9 @@ void WriteURLToClipboard(const GURL& url) {
 
 }
 
-class WebContextMenuImpl::MenuBuilder {
+class WebContextMenuHost::MenuBuilder {
  public:
-  MenuBuilder(WebContextMenuImpl* menu,
+  MenuBuilder(WebContextMenuHost* menu,
               std::vector<content::MenuItem>* items)
       : menu_(menu),
         items_(items) {}
@@ -83,11 +84,11 @@ class WebContextMenuImpl::MenuBuilder {
   }
 
  private:
-  WebContextMenuImpl* menu_;
+  WebContextMenuHost* menu_;
   std::vector<content::MenuItem>* items_;
 };
 
-content::Referrer WebContextMenuImpl::GetReferrer(const GURL& url) const {
+content::Referrer WebContextMenuHost::GetReferrer(const GURL& url) const {
   GURL referring_url =
       params_.frame_url.is_empty() ? params_.page_url : params_.frame_url;
   return content::Referrer::SanitizeForRequest(
@@ -96,22 +97,22 @@ content::Referrer WebContextMenuImpl::GetReferrer(const GURL& url) const {
                         params_.referrer_policy));
 }
 
-void WebContextMenuImpl::OpenURL(const GURL& url,
+void WebContextMenuHost::OpenURL(const GURL& url,
                                  WindowOpenDisposition disposition) {
   content::OpenURLParams params(url, GetReferrer(url), disposition,
                                 ui::PAGE_TRANSITION_LINK,
                                 false, true);
-  web_contents()->OpenURL(params);
+  GetWebContents()->OpenURL(params);
 }
 
-void WebContextMenuImpl::SaveLink() {
-  content::BrowserContext* context = web_contents()->GetBrowserContext();
+void WebContextMenuHost::SaveLink() {
+  content::BrowserContext* context = GetWebContents()->GetBrowserContext();
   content::DownloadManager* dlm =
       content::BrowserContext::GetDownloadManager(context);
   const GURL& url = params_.link_url;
   std::unique_ptr<content::DownloadUrlParameters> dl_params(
       content::DownloadUrlParameters::CreateForWebContentsMainFrame(
-          web_contents(), url));
+          GetWebContents(), url));
   dl_params->set_referrer(GetReferrer(url));
   dl_params->set_referrer_encoding(params_.frame_charset);
   dl_params->set_suggested_name(params_.suggested_filename);
@@ -120,11 +121,11 @@ void WebContextMenuImpl::SaveLink() {
   dlm->DownloadUrl(std::move(dl_params));
 }
 
-void WebContextMenuImpl::SaveImage() {
+void WebContextMenuHost::SaveImage() {
   bool is_large_data_url =
       params_.has_image_contents && params_.src_url.is_empty();
   if (is_large_data_url) {
-    render_frame_host_->SaveImageAt(params_.x, params_.y);
+    GetRenderFrameHost()->SaveImageAt(params_.x, params_.y);
   }
 
   const GURL& url = params_.src_url;
@@ -139,23 +140,23 @@ void WebContextMenuImpl::SaveImage() {
     headers.append(it->second);
   }
 
-  web_contents()->SaveFrameWithHeaders(url, GetReferrer(url), headers);
+  GetWebContents()->SaveFrameWithHeaders(url, GetReferrer(url), headers);
 }
 
-void WebContextMenuImpl::CopyImage() {
-  render_frame_host_->CopyImageAt(params_.x, params_.y);
+void WebContextMenuHost::CopyImage() {
+  GetRenderFrameHost()->CopyImageAt(params_.x, params_.y);
 }
 
-void WebContextMenuImpl::SaveMedia() {
+void WebContextMenuHost::SaveMedia() {
   const GURL& url = params_.src_url;
-  web_contents()->SaveFrame(url, GetReferrer(url));
+  GetWebContents()->SaveFrame(url, GetReferrer(url));
 }
 
-void WebContextMenuImpl::AppendLinkItems(std::vector<content::MenuItem>* items) {
+void WebContextMenuHost::AppendLinkItems(std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
   WebContentsClient* contents_client =
-      WebContentsHelper::FromWebContents(web_contents())->client();
+      WebContentsHelper::FromWebContents(GetWebContents())->client();
   if (contents_client && contents_client->CanCreateWindows()) {
     builder.BeginSection(WebContextMenuSection::OpenLink);
 
@@ -178,12 +179,12 @@ void WebContextMenuImpl::AppendLinkItems(std::vector<content::MenuItem>* items) 
                          WebContextMenuAction::SaveLink);
 }
 
-void WebContextMenuImpl::AppendImageItems(
+void WebContextMenuHost::AppendImageItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
   WebContentsClient* contents_client =
-      WebContentsHelper::FromWebContents(web_contents())->client();
+      WebContentsHelper::FromWebContents(GetWebContents())->client();
   if (contents_client && contents_client->CanCreateWindows()) {
     builder.AppendMenuItem(
         dgettext(OXIDE_GETTEXT_DOMAIN, "Open image in new tab"),
@@ -197,7 +198,7 @@ void WebContextMenuImpl::AppendImageItems(
                          WebContextMenuAction::CopyImage);
 }
 
-void WebContextMenuImpl::AppendCanvasItems(
+void WebContextMenuHost::AppendCanvasItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
@@ -207,12 +208,12 @@ void WebContextMenuImpl::AppendCanvasItems(
                          WebContextMenuAction::CopyImage);
 }
 
-void WebContextMenuImpl::AppendAudioItems(
+void WebContextMenuHost::AppendAudioItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
   WebContentsClient* contents_client =
-      WebContentsHelper::FromWebContents(web_contents())->client();
+      WebContentsHelper::FromWebContents(GetWebContents())->client();
   if (contents_client && contents_client->CanCreateWindows()) {
     builder.AppendMenuItem(
         dgettext(OXIDE_GETTEXT_DOMAIN, "Open audio in new tab"),
@@ -224,12 +225,12 @@ void WebContextMenuImpl::AppendAudioItems(
                          WebContextMenuAction::SaveMedia);
 }
 
-void WebContextMenuImpl::AppendVideoItems(
+void WebContextMenuHost::AppendVideoItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
   WebContentsClient* contents_client =
-      WebContentsHelper::FromWebContents(web_contents())->client();
+      WebContentsHelper::FromWebContents(GetWebContents())->client();
   if (contents_client && contents_client->CanCreateWindows()) {
     builder.AppendMenuItem(
         dgettext(OXIDE_GETTEXT_DOMAIN, "Open video in new tab"),
@@ -241,7 +242,7 @@ void WebContextMenuImpl::AppendVideoItems(
                          WebContextMenuAction::SaveMedia);
 }
 
-void WebContextMenuImpl::AppendEditableItems(
+void WebContextMenuHost::AppendEditableItems(
     std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
@@ -266,7 +267,7 @@ void WebContextMenuImpl::AppendEditableItems(
                          WebContextMenuAction::SelectAll);
 }
 
-void WebContextMenuImpl::AppendCopyItems(std::vector<content::MenuItem>* items) {
+void WebContextMenuHost::AppendCopyItems(std::vector<content::MenuItem>* items) {
   MenuBuilder builder(this, items);
 
   builder.BeginSection(WebContextMenuSection::Copy);
@@ -275,9 +276,9 @@ void WebContextMenuImpl::AppendCopyItems(std::vector<content::MenuItem>* items) 
                          WebContextMenuAction::Copy);
 }
 
-bool WebContextMenuImpl::IsCommandEnabled(WebContextMenuAction action) const {
+bool WebContextMenuHost::IsCommandEnabled(WebContextMenuAction action) const {
   WebContentsClient* contents_client =
-      WebContentsHelper::FromWebContents(web_contents())->client();
+      WebContentsHelper::FromWebContents(GetWebContents())->client();
 
   bool can_create_windows =
       contents_client && contents_client->CanCreateWindows();
@@ -340,7 +341,7 @@ bool WebContextMenuImpl::IsCommandEnabled(WebContextMenuAction action) const {
   return false;
 }
 
-std::vector<content::MenuItem> WebContextMenuImpl::BuildItems() {
+std::vector<content::MenuItem> WebContextMenuHost::BuildItems() {
   std::vector<content::MenuItem> items;
 
   if (!params_.unfiltered_link_url.is_empty()) {
@@ -373,21 +374,26 @@ std::vector<content::MenuItem> WebContextMenuImpl::BuildItems() {
   return std::move(items);
 }
 
-content::WebContents* WebContextMenuImpl::GetWebContents() const {
-  return web_contents();
+content::WebContents* WebContextMenuHost::GetWebContents() const {
+  return content::WebContents::FromRenderFrameHost(GetRenderFrameHost());
 }
 
-void WebContextMenuImpl::Close() {
+void WebContextMenuHost::Close() {
+  if (on_close_callback_.is_null()) {
+    return;
+  }
+
+  base::Closure on_close_callback = std::move(on_close_callback_);
+
   if (menu_) {
     menu_->Hide();
   }
 
-  render_frame_host_ = nullptr;
-  base::ThreadTaskRunnerHandle::Get()->DeleteSoon(FROM_HERE, this);
+  on_close_callback.Run();
 }
 
-void WebContextMenuImpl::ExecuteCommand(WebContextMenuAction action) {
-  if (!render_frame_host_) {
+void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action) {
+  if (on_close_callback_.is_null()) {
     return;
   }
 
@@ -436,56 +442,56 @@ void WebContextMenuImpl::ExecuteCommand(WebContextMenuAction action) {
       return SaveMedia();
 
     case WebContextMenuAction::Undo:
-      return web_contents()->Undo();
+      return GetWebContents()->Undo();
 
     case WebContextMenuAction::Redo:
-      return web_contents()->Redo();
+      return GetWebContents()->Redo();
 
     case WebContextMenuAction::Cut:
-      return web_contents()->Cut();
+      return GetWebContents()->Cut();
 
     case WebContextMenuAction::Copy:
-      return web_contents()->Copy();
+      return GetWebContents()->Copy();
 
     case WebContextMenuAction::Paste:
-      return web_contents()->Paste();
+      return GetWebContents()->Paste();
 
     case WebContextMenuAction::Erase:
-      return web_contents()->Delete();
+      return GetWebContents()->Delete();
 
     case WebContextMenuAction::SelectAll:
-      return web_contents()->SelectAll();
+      return GetWebContents()->SelectAll();
   };
 }
 
-void WebContextMenuImpl::RenderFrameDeleted(content::RenderFrameHost* rfh) {
-  if (rfh != render_frame_host_) {
-    return;
-  }
-
-  Close();
-}
-
-WebContextMenuImpl::WebContextMenuImpl(
+WebContextMenuHost::WebContextMenuHost(
     content::RenderFrameHost* render_frame_host,
-    const content::ContextMenuParams& params)
-    : content::WebContentsObserver(
-          content::WebContents::FromRenderFrameHost(render_frame_host)),
-      render_frame_host_(render_frame_host),
-      params_(params) {}
+    const content::ContextMenuParams& params,
+    const base::Closure& on_close_callback)
+    : render_frame_host_id_(render_frame_host),
+      params_(params),
+      on_close_callback_(on_close_callback) {}
 
-WebContextMenuImpl::~WebContextMenuImpl() = default;
+WebContextMenuHost::~WebContextMenuHost() = default;
 
-void WebContextMenuImpl::Show() {
+void WebContextMenuHost::Show() {
+  content::RenderFrameHost* render_frame_host =
+      render_frame_host_id_.ToInstance();
+  DCHECK(render_frame_host);
+
+  content::WebContents* web_contents =
+      content::WebContents::FromRenderFrameHost(render_frame_host);
+  DCHECK(web_contents);
+
   WebContentsHelper* helper =
-      WebContentsHelper::FromWebContents(web_contents());
+      WebContentsHelper::FromWebContents(web_contents);
   if (!helper->client()) {
     Close();
     return;
   }
 
   ChromeController* chrome_controller =
-      ChromeController::FromWebContents(web_contents());
+      ChromeController::FromWebContents(web_contents);
   if (chrome_controller) {
     params_.y += chrome_controller->GetTopContentOffset();
   }
@@ -501,8 +507,8 @@ void WebContextMenuImpl::Show() {
   menu_->Show();
 }
 
-void WebContextMenuImpl::Hide() {
-  Close();
+content::RenderFrameHost* WebContextMenuHost::GetRenderFrameHost() const {
+  return render_frame_host_id_.ToInstance();
 }
 
 } // namespace oxide

@@ -26,11 +26,11 @@ namespace oxide {
 namespace qt {
 
 class TouchHandleDrawableProxy;
-class ContentsView;
+class ContentsViewImpl;
 
 class TouchHandleDrawable : public ui::TouchHandleDrawable {
  public:
-  TouchHandleDrawable(const ContentsView* view);
+  TouchHandleDrawable(const ContentsViewImpl* view);
 
   void SetProxy(TouchHandleDrawableProxy* proxy);
 
@@ -48,7 +48,7 @@ class TouchHandleDrawable : public ui::TouchHandleDrawable {
   float GetDrawableHorizontalPaddingRatio() const override;
 
   std::unique_ptr<TouchHandleDrawableProxy> proxy_;
-  const ContentsView* view_;
+  const ContentsViewImpl* view_;
 };
 
 } // namespace qt

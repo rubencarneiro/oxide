@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_contents_view.h"
+#include "contents_view.h"
 
 #include <QGuiApplication>
 #include <QHoverEvent>
@@ -24,13 +24,13 @@
 #include <QScreen>
 #include <QTouchEvent>
 
+#include "qt/core/glue/web_popup_menu.h"
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 
 #include "oxide_qquick_accelerated_frame_node.h"
 #include "oxide_qquick_image_frame_node.h"
 #include "oxide_qquick_software_frame_node.h"
 #include "oxide_qquick_touch_handle_drawable.h"
-#include "oxide_qquick_web_popup_menu.h"
 
 namespace oxide {
 namespace qquick {
@@ -49,7 +49,7 @@ class UpdatePaintNodeScope {
 };
 
 void ContentsView::handleKeyEvent(QKeyEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
@@ -57,40 +57,40 @@ void ContentsView::handleKeyEvent(QKeyEvent* event) {
     return;
   }
 
-  proxy()->handleKeyEvent(event);
+  view()->handleKeyEvent(event);
 }
 
 void ContentsView::handleMouseEvent(QMouseEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleMouseEvent(event);
+  view()->handleMouseEvent(event);
 }
 
 void ContentsView::handleHoverEvent(QHoverEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
   QPointF window_pos = item_->mapToScene(event->posF());
-  proxy()->handleHoverEvent(event,
+  view()->handleHoverEvent(event,
                             window_pos,
                             (window_pos + item_->window()->position()).toPoint());
 }
 
 void ContentsView::handleFocusEvent(QFocusEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleFocusEvent(event);
+  view()->handleFocusEvent(event);
 }
 
 void ContentsView::didUpdatePaintNode() {
   if (received_new_compositor_frame_) {
     received_new_compositor_frame_ = false;
-    proxy()->didCommitCompositorFrame();
+    view()->didCommitCompositorFrame();
   }
 }
 
@@ -141,25 +141,20 @@ void ContentsView::SetInputMethodEnabled(bool enabled) {
   QGuiApplication::inputMethod()->update(Qt::ImEnabled);
 }
 
-std::unique_ptr<oxide::qt::WebPopupMenuProxy> ContentsView::CreateWebPopupMenu(
-    const std::vector<oxide::qt::MenuItem>& items,
+std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
+    const std::vector<qt::MenuItem>& items,
     bool allow_multiple_selection,
-    oxide::qt::WebPopupMenuProxyClient* client) {
-  return std::unique_ptr<oxide::qt::WebPopupMenuProxy>(
-      new WebPopupMenu(item_,
-                       popup_menu_,
-                       items,
-                       allow_multiple_selection,
-                       client));
+    const QRect& bounds,
+    qt::WebPopupMenuClient* client) {
+  return nullptr;
 }
 
-oxide::qt::TouchHandleDrawableProxy*
-ContentsView::CreateTouchHandleDrawable() {
+qt::TouchHandleDrawableProxy* ContentsView::CreateTouchHandleDrawable() {
   return new TouchHandleDrawable(item_, touch_selection_controller_.data());
 }
 
 void ContentsView::TouchSelectionChanged(
-    oxide::qt::TouchSelectionControllerActiveStatus status,
+    qt::TouchSelectionControllerActiveStatus status,
     const QRectF& bounds,
     bool handle_drag_in_progress,
     bool insertion_handle_tapped) {
@@ -197,39 +192,42 @@ ContentsView::ContentsView(QQuickItem* item)
           new OxideQQuickTouchSelectionController(this)),
       received_new_compositor_frame_(false),
       frame_evicted_(false),
-      last_composited_frame_type_(
-          oxide::qt::CompositorFrameHandle::TYPE_INVALID),
-      handling_unhandled_key_event_(false) {
-  connect(item_, SIGNAL(windowChanged(QQuickWindow*)), SLOT(windowChanged()));
-}
+      last_composited_frame_type_(qt::CompositorFrameHandle::TYPE_INVALID),
+      handling_unhandled_key_event_(false) {}
 
 ContentsView::~ContentsView() {}
+
+void ContentsView::init() {
+  connect(item_, SIGNAL(windowChanged(QQuickWindow*)), SLOT(windowChanged()));
+}
 
 QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
   switch (query) {
     case Qt::ImEnabled:
       return (item_->flags() & QQuickItem::ItemAcceptsInputMethod) != 0;
     default:
-      return proxy() ? proxy()->inputMethodQuery(query) : QVariant();
+      return view() ? view()->inputMethodQuery(query) : QVariant();
   }
 }
 
 void ContentsView::handleItemChange(QQuickItem::ItemChange change) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
   if (change == QQuickItem::ItemVisibleHasChanged) {
-    proxy()->visibilityChanged();
+    view()->visibilityChanged();
+  } else if (change == QQuickItem::ItemActiveFocusHasChanged) {
+    view()->activeFocusChanged();
   }
 }
 
 void ContentsView::windowChanged() {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->windowChanged();
+  view()->windowChanged();
 }
 
 void ContentsView::handleKeyPressEvent(QKeyEvent* event) {
@@ -241,11 +239,11 @@ void ContentsView::handleKeyReleaseEvent(QKeyEvent* event) {
 }
 
 void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleInputMethodEvent(event);
+  view()->handleInputMethodEvent(event);
 }
 
 void ContentsView::handleFocusInEvent(QFocusEvent* event) {
@@ -270,31 +268,31 @@ void ContentsView::handleMouseReleaseEvent(QMouseEvent* event) {
 }
 
 void ContentsView::handleTouchUngrabEvent() {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleTouchUngrabEvent();
+  view()->handleTouchUngrabEvent();
 }
 
 void ContentsView::handleWheelEvent(QWheelEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
   QPointF window_pos = item_->mapToScene(event->posF());
-  proxy()->handleWheelEvent(event, window_pos);
+  view()->handleWheelEvent(event, window_pos);
 }
 
 void ContentsView::handleTouchEvent(QTouchEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
   if (event->type() == QEvent::TouchBegin) {
     item_->forceActiveFocus();
   }
-  proxy()->handleTouchEvent(event);
+  view()->handleTouchEvent(event);
 }
 
 void ContentsView::handleHoverEnterEvent(QHoverEvent* event) {
@@ -310,39 +308,39 @@ void ContentsView::handleHoverLeaveEvent(QHoverEvent* event) {
 }
 
 void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleDragEnterEvent(event);
+  view()->handleDragEnterEvent(event);
 }
 
 void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleDragMoveEvent(event);
+  view()->handleDragMoveEvent(event);
 }
 
 void ContentsView::handleDragLeaveEvent(QDragLeaveEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleDragLeaveEvent(event);
+  view()->handleDragLeaveEvent(event);
 }
 
 void ContentsView::handleDropEvent(QDropEvent* event) {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->handleDropEvent(event);
+  view()->handleDropEvent(event);
 }
 
 void ContentsView::handleGeometryChanged() {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
@@ -350,18 +348,18 @@ void ContentsView::handleGeometryChanged() {
     return;
   }
 
-  proxy()->wasResized();
+  view()->wasResized();
 }
 
 QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
   UpdatePaintNodeScope scope(this);
 
-  oxide::qt::CompositorFrameHandle::Type type =
-      oxide::qt::CompositorFrameHandle::TYPE_INVALID;
-  QSharedPointer<oxide::qt::CompositorFrameHandle> handle;
+  qt::CompositorFrameHandle::Type type =
+      qt::CompositorFrameHandle::TYPE_INVALID;
+  QSharedPointer<qt::CompositorFrameHandle> handle;
 
-  if (proxy()) {
-    handle = proxy()->compositorFrameHandle();
+  if (view()) {
+    handle = view()->compositorFrameHandle();
     type = handle->GetType();
   }
 
@@ -380,7 +378,7 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
     return nullptr;
   }
 
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_ACCELERATED) {
+  if (type == qt::CompositorFrameHandle::TYPE_ACCELERATED) {
     AcceleratedFrameNode* node = static_cast<AcceleratedFrameNode *>(old_node);
     if (!node) {
       node = new AcceleratedFrameNode(item_);
@@ -393,7 +391,7 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
     return node;
   }
 
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_IMAGE) {
+  if (type == qt::CompositorFrameHandle::TYPE_IMAGE) {
     ImageFrameNode* node = static_cast<ImageFrameNode *>(old_node);
     if (!node) {
       node = new ImageFrameNode();
@@ -406,7 +404,7 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
     return node;
   }
 
-  if (type == oxide::qt::CompositorFrameHandle::TYPE_SOFTWARE) {
+  if (type == qt::CompositorFrameHandle::TYPE_SOFTWARE) {
     SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(old_node);
     if (!node) {
       node = new SoftwareFrameNode(item_);
@@ -419,7 +417,7 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
     return node;
   }
 
-  Q_ASSERT(type == oxide::qt::CompositorFrameHandle::TYPE_INVALID);
+  Q_ASSERT(type == qt::CompositorFrameHandle::TYPE_INVALID);
 
   SoftwareFrameNode* node = static_cast<SoftwareFrameNode *>(old_node);
   if (!node) {
@@ -440,11 +438,11 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
 }
 
 void ContentsView::hideTouchSelectionController() const {
-  if (!proxy()) {
+  if (!view()) {
     return;
   }
 
-  proxy()->hideTouchSelectionController();
+  view()->hideTouchSelectionController();
 }
 
 } // namespace qquick

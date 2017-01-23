@@ -32,6 +32,15 @@ if(CMAKE_CROSSCOMPILING)
     add_executable(Qt5::uic IMPORTED)
   endif()
 
+  # Dummy targets to restrict Qt5DBusConfigExtras.cmake looking for
+  # qdbuscpp2xml and qdbusxml2cpp when cross-compiling
+  if(NOT TARGET Qt5::qdbuscpp2xml)
+    add_executable(Qt5::qdbuscpp2xml IMPORTED)
+  endif()
+  if(NOT TARGET Qt5::qdbusxml2cpp)
+    add_executable(Qt5::qdbusxml2cpp IMPORTED)
+  endif()
+
   # QT_MOC_EXECUTABLE is set by Qt5CoreConfigExtras, but it sets it to
   # the target executable rather than the host executable, which is no
   # use for cross-compiling. For cross-compiling, we have a guess and

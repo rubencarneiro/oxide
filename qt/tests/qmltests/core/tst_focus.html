@@ -1,0 +1,13 @@
+<html>
+<body>
+  <input type="text"  id="input" onfocusout="focusChanged(false)"
+  onfocusin="focusChanged(true)" autofocus>
+  <script>
+    function focusChanged(value) {
+      var e = new CustomEvent("oxidefocusstate", { bubbles: true, detail: { status: value } });
+      document.documentElement.dispatchEvent(e);
+    }
+  </script>
+</body>
+</html>
+

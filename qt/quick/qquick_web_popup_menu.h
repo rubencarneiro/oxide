@@ -21,9 +21,10 @@
 #include <vector>
 
 #include <QPointer>
+#include <QRect>
 #include <QScopedPointer>
 
-#include "qt/core/glue/oxide_qt_web_popup_menu_proxy.h"
+#include "qt/core/glue/web_popup_menu.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -35,29 +36,31 @@ namespace oxide {
 
 namespace qt {
 class MenuItem;
-class WebPopupMenuProxyClient;
+class WebPopupMenuClient;
 }
 
 namespace qquick {
 
-class WebPopupMenu : public oxide::qt::WebPopupMenuProxy {
+class WebPopupMenu : public qt::WebPopupMenu {
  public:
   WebPopupMenu(QQuickItem* parent,
                QQmlComponent* component,
                const std::vector<oxide::qt::MenuItem>& items,
                bool allow_multiple_selection,
-               oxide::qt::WebPopupMenuProxyClient* client);
+               const QRect& bounds,
+               qt::WebPopupMenuClient* client);
   ~WebPopupMenu() override;
 
  private:
-  // oxide::qt::WebPopupMenuProxy implementation
-  void Show(const QRect& bounds) override;
+  // qt::WebPopupMenu implementation
+  void Show() override;
   void Hide() override;
 
-  std::vector<oxide::qt::MenuItem> items_;
+  std::vector<qt::MenuItem> items_;
   bool allow_multiple_selection_;
+  QRect bounds_;
 
-  oxide::qt::WebPopupMenuProxyClient* client_;
+  qt::WebPopupMenuClient* client_;
   QPointer<QQuickItem> parent_;
   QPointer<QQmlComponent> component_;
   QScopedPointer<QQuickItem> popup_item_;

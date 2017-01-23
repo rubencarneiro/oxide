@@ -20,7 +20,7 @@
 #include "base/logging.h"
 
 #include "oxide_web_contents_view.h"
-#include "oxide_web_popup_menu.h"
+#include "web_popup_menu.h"
 
 namespace oxide {
 
@@ -37,6 +37,7 @@ std::unique_ptr<WebPopupMenu> WebContentsViewClient::CreatePopupMenu(
     const std::vector<content::MenuItem> & items,
     int selected_item,
     bool allow_multiple_selection,
+    const gfx::Rect& bounds,
     WebPopupMenuClient* client) {
   NOTIMPLEMENTED();
   return nullptr;

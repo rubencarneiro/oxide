@@ -42,7 +42,7 @@
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
-#include "shared/browser/context_menu/web_context_menu_impl.h"
+#include "shared/browser/context_menu/web_context_menu_host.h"
 #include "shared/browser/input/oxide_input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
@@ -54,8 +54,8 @@
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
-#include "oxide_web_popup_menu_impl.h"
 #include "screen.h"
+#include "web_popup_menu_host.h"
 
 namespace oxide {
 
@@ -214,6 +214,21 @@ void WebContentsView::UpdateContentsSize() {
   }
 }
 
+void WebContentsView::DidCloseContextMenu() {
+  DCHECK(active_context_menu_);
+
+  base::ThreadTaskRunnerHandle::Get()->DeleteSoon(
+      FROM_HERE,
+      active_context_menu_.release());
+}
+
+void WebContentsView::DidHidePopupMenu() {
+  DCHECK(active_popup_menu_);
+
+  base::ThreadTaskRunnerHandle::Get()->DeleteSoon(FROM_HERE,
+                                                  active_popup_menu_.release());
+}
+
 gfx::NativeView WebContentsView::GetNativeView() const {
   return nullptr;
 }
@@ -314,8 +329,13 @@ void WebContentsView::ShowContextMenu(
     return;
   }
 
-  WebContextMenuImpl* menu = new WebContextMenuImpl(render_frame_host, params);
-  menu->Show();
+  active_context_menu_ =
+      base::MakeUnique<WebContextMenuHost>(
+          render_frame_host,
+          params,
+          base::Bind(&WebContentsView::DidCloseContextMenu,
+                     base::Unretained(this)));
+  active_context_menu_->Show();
 }
 
 void WebContentsView::StartDragging(
@@ -372,24 +392,33 @@ void WebContentsView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                                     const std::vector<content::MenuItem>& items,
                                     bool right_aligned,
                                     bool allow_multiple_selection) {
-  // XXX: We should do better than this
-  DCHECK(!active_popup_menu_);
-
-  WebPopupMenuImpl* menu = new WebPopupMenuImpl(render_frame_host,
-                                                items,
-                                                selected_item,
-                                                allow_multiple_selection);
-  active_popup_menu_ = menu->GetWeakPtr();
-
-  menu->Show(bounds);
+  active_popup_menu_ =
+      base::MakeUnique<WebPopupMenuHost>(
+          render_frame_host,
+          items,
+          selected_item,
+          allow_multiple_selection,
+          bounds,
+          base::Bind(&WebContentsView::DidHidePopupMenu,
+                     base::Unretained(this)));
+  active_popup_menu_->Show();
 }
 
 void WebContentsView::HidePopupMenu() {
-  if (!active_popup_menu_) {
-    return;
+  active_popup_menu_.reset();
+}
+
+void WebContentsView::RenderFrameDeleted(
+    content::RenderFrameHost* render_frame_host) {
+  if (active_popup_menu_ &&
+      active_popup_menu_->GetRenderFrameHost() == render_frame_host) {
+    active_popup_menu_.reset();
   }
 
-  active_popup_menu_->Hide();
+  if (active_context_menu_ &&
+      active_context_menu_->GetRenderFrameHost() == render_frame_host) {
+    active_context_menu_.reset();
+  }
 }
 
 void WebContentsView::RenderViewHostChanged(

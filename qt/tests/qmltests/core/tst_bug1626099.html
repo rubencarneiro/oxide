@@ -4,7 +4,7 @@
 
 window.addEventListener("unload", function(e) {
   while (true) {
-    console.log("Spinning unload handler");
+    document.documentElement.appendChild(document.createComment("Foo"));
   }
 });
 

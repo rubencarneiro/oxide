@@ -24,8 +24,10 @@
 #include <QScopedPointer>
 #include <QtGlobal>
 
-#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
+#include "qt/core/glue/contents_view.h"
+#include "qt/core/glue/contents_view_client.h"
+
+#include "qt/quick/api/oxideqquickglobal.h"
 
 QT_BEGIN_NAMESPACE
 class QDragEnterEvent;
@@ -47,13 +49,15 @@ class OxideQQuickTouchSelectionController;
 namespace oxide {
 namespace qquick {
 
-class ContentsView : public QObject,
-                     public oxide::qt::ContentsViewProxyClient {
+class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
+                                          public qt::ContentsViewClient {
   Q_OBJECT
 
  public:
   ContentsView(QQuickItem* item);
   ~ContentsView() override;
+
+  void init();
 
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const;
 
@@ -80,20 +84,14 @@ class ContentsView : public QObject,
 
   QSGNode* updatePaintNode(QSGNode* old_node);
 
-  // XXX(chrisccoulson): Remove these UI component accessors from here in
-  //  future. Instead, we should have an auxilliary UI client class. There'll
-  //  be a WebView impl of this for the custom UI component APIs, and also an
-  //  Ubuntu UI Toolkit impl
-  QQmlComponent* popupMenu() const { return popup_menu_; }
-  void setPopupMenu(QQmlComponent* popup_menu) {
-    popup_menu_ = popup_menu;
-  }
-
   OxideQQuickTouchSelectionController* touchSelectionController() const {
     return touch_selection_controller_.data();
   }
 
   void hideTouchSelectionController() const;
+
+ protected:
+  QQuickItem* item() const { return item_; }
 
  private Q_SLOTS:
   void windowChanged();
@@ -108,7 +106,7 @@ class ContentsView : public QObject,
 
   void didUpdatePaintNode();
 
-  // oxide::qt::ContentsViewProxyClient implementation
+  // qt::ContentsViewClient implementation
   QWindow* GetWindow() const override;
   bool IsVisible() const override;
   bool HasFocus() const override;
@@ -117,28 +115,29 @@ class ContentsView : public QObject,
   void EvictCurrentFrame() override;
   void UpdateCursor(const QCursor& cursor) override;
   void SetInputMethodEnabled(bool enabled) override;
-  std::unique_ptr<oxide::qt::WebPopupMenuProxy> CreateWebPopupMenu(
-      const std::vector<oxide::qt::MenuItem>& items,
+  std::unique_ptr<qt::WebPopupMenu> CreateWebPopupMenu(
+      const std::vector<qt::MenuItem>& items,
       bool allow_multiple_selection,
-      oxide::qt::WebPopupMenuProxyClient* client) override;
-  oxide::qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
+      const QRect& bounds,
+      qt::WebPopupMenuClient* client) override;
+  qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
   void TouchSelectionChanged(
-      oxide::qt::TouchSelectionControllerActiveStatus status,
+      qt::TouchSelectionControllerActiveStatus status,
       const QRectF& bounds,
       bool handle_drag_in_progress,
       bool insertion_handle_tapped) override;
   void ContextMenuIntercepted() const override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
-  QPointer<QQuickItem> item_;
+  QQuickItem* item_;
+
   QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
-  QPointer<QQmlComponent> popup_menu_;
   QPointer<QQmlComponent> touch_handle_;
 
   bool received_new_compositor_frame_;
   bool frame_evicted_;
-  oxide::qt::CompositorFrameHandle::Type last_composited_frame_type_;
+  qt::CompositorFrameHandle::Type last_composited_frame_type_;
 
   bool handling_unhandled_key_event_;
 

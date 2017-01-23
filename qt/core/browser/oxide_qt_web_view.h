@@ -53,9 +53,8 @@ class WebView;
 
 namespace qt {
 
-class ContentsView;
-class ContentsViewProxy;
-class ContentsViewProxyClient;
+class ContentsViewImpl;
+class ContentsViewClient;
 class WebContext;
 class WebViewProxyClient;
 
@@ -67,7 +66,7 @@ class WebView : public oxide::WebViewClient,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
-          ContentsViewProxyClient* view_client,
+          ContentsViewClient* view_client,
           QObject* handle,
           WebContext* context,
           bool incognito,
@@ -75,7 +74,7 @@ class WebView : public oxide::WebViewClient,
           RestoreType restore_type);
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
-      ContentsViewProxyClient* view_client,
+      ContentsViewClient* view_client,
       QObject* handle,
       OxideQNewViewRequest* new_view_request,
       OxideQWebPreferences* initial_prefs);
@@ -87,7 +86,7 @@ class WebView : public oxide::WebViewClient,
 
  private:
   WebView(WebViewProxyClient* client,
-          ContentsViewProxyClient* view_client,
+          ContentsViewClient* view_client,
           QObject* handle);
 
   void CommonInit();
@@ -245,7 +244,7 @@ class WebView : public oxide::WebViewClient,
 
   void teardownFrameTree() override;
 
-  std::unique_ptr<ContentsView> contents_view_;
+  std::unique_ptr<ContentsViewImpl> contents_view_;
 
   std::unique_ptr<oxide::WebView> web_view_;
 

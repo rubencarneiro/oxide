@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
-#define _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_IMPL_H_
+#define _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_IMPL_H_
 
 #include <memory>
 #include <QObject>
@@ -29,7 +29,7 @@
 
 #include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
 #include "qt/core/browser/oxide_qt_motion_event_factory.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy.h"
+#include "qt/core/glue/contents_view.h"
 #include "shared/browser/oxide_web_contents_view_client.h"
 
 QT_BEGIN_NAMESPACE
@@ -45,21 +45,21 @@ namespace oxide {
 namespace qt {
 
 class CompositorFrameHandle;
-class ContentsViewProxyClient;
+class ContentsViewClient;
 class InputMethodContext;
 
-class ContentsView : public QObject,
-                     public ContentsViewProxy,
-                     public InputMethodContextClient,
-                     public oxide::WebContentsViewClient {
+class ContentsViewImpl : public QObject,
+                         public ContentsView,
+                         public InputMethodContextClient,
+                         public oxide::WebContentsViewClient {
   Q_OBJECT
 
  public:
-  ContentsView(ContentsViewProxyClient* client,
-               QObject* native_view);
-  ~ContentsView() override;
+  ContentsViewImpl(ContentsViewClient* client,
+                   QObject* native_view);
+  ~ContentsViewImpl() override;
 
-  static ContentsView* FromWebContents(content::WebContents* contents);
+  static ContentsViewImpl* FromWebContents(content::WebContents* contents);
 
   content::WebContents* GetWebContents() const;
 
@@ -68,17 +68,18 @@ class ContentsView : public QObject,
   display::Display GetDisplay() const override;
   QScreen* GetScreen() const;
 
-  ContentsViewProxyClient* client() const { return client_; }
+  ContentsViewClient* client() const { return client_; }
 
   float GetTopContentOffset() const;
 
  private:
-  // ContentsViewProxy implementation
+  // ContentsView implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
   void windowChanged() override;
   void wasResized() override;
   void visibilityChanged() override;
+  void activeFocusChanged() override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
@@ -111,6 +112,7 @@ class ContentsView : public QObject,
       const std::vector<content::MenuItem> & items,
       int selected_item,
       bool allow_multiple_selection,
+      const gfx::Rect& bounds,
       oxide::WebPopupMenuClient* client) override;
   ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(ui::TouchSelectionController::ActiveStatus status,
@@ -126,7 +128,7 @@ class ContentsView : public QObject,
   void OnScreenChanged();
 
  private:
-  ContentsViewProxyClient* client_;
+  ContentsViewClient* client_;
 
   QPointer<QObject> native_view_;
 
@@ -138,10 +140,10 @@ class ContentsView : public QObject,
 
   std::unique_ptr<InputMethodContext> input_method_context_;
 
-  DISALLOW_COPY_AND_ASSIGN(ContentsView);
+  DISALLOW_COPY_AND_ASSIGN(ContentsViewImpl);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_H_
+#endif // _OXIDE_QT_CORE_BROWSER_CONTENTS_VIEW_IMPL_H_

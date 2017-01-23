@@ -39,7 +39,7 @@ class ChromeController;
 namespace qt {
 
 class ChromeControllerClient;
-class ContentsView;
+class ContentsViewImpl;
 
 class ChromeControllerImpl : public oxide::ChromeControllerClient,
                              public ChromeController,
@@ -73,7 +73,7 @@ class ChromeControllerImpl : public oxide::ChromeControllerClient,
 
   oxide::ChromeController* controller_;
 
-  ContentsView* contents_view_;
+  ContentsViewImpl* contents_view_;
 
   struct InitProps;
   std::unique_ptr<InitProps> init_props_;

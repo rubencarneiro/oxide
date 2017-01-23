@@ -15,39 +15,44 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_IMPL_H_
-#define _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_IMPL_H_
+#ifndef _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_HOST_H_
+#define _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_HOST_H_
 
 #include <memory>
 #include <vector>
 
+#include "base/callback.h"
 #include "base/macros.h"
-#include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/context_menu_params.h"
 #include "content/public/common/menu_item.h"
 #include "content/public/common/referrer.h"
 #include "ui/base/window_open_disposition.h"
 
-#include "shared/browser/context_menu/web_context_menu.h"
 #include "shared/browser/context_menu/web_context_menu_client.h"
+#include "shared/browser/oxide_render_object_id.h"
 
 class GURL;
 
+namespace content {
+class RenderFrameHost;
+class WebContents;
+}
+
 namespace oxide {
 
+class WebContextMenu;
 enum class WebContextMenuAction : unsigned;
 
-class WebContextMenuImpl : public WebContextMenu,
-                           public WebContextMenuClient,
-                           public content::WebContentsObserver {
+class WebContextMenuHost : public WebContextMenuClient {
  public:
-  WebContextMenuImpl(content::RenderFrameHost* render_frame_host,
-                     const content::ContextMenuParams& params);
-  ~WebContextMenuImpl() override;
+  WebContextMenuHost(content::RenderFrameHost* render_frame_host,
+                     const content::ContextMenuParams& params,
+                     const base::Closure& on_close_callback);
+  ~WebContextMenuHost() override;
 
-  // WebContextMenu implementation
-  void Show() override;
-  void Hide() override;
+  void Show();
+
+  content::RenderFrameHost* GetRenderFrameHost() const;
 
  private:
   class MenuBuilder;
@@ -78,18 +83,17 @@ class WebContextMenuImpl : public WebContextMenu,
   void Close() override;
   void ExecuteCommand(WebContextMenuAction action) override;
 
-  // content::WebContentsObserver implementation
-  void RenderFrameDeleted(content::RenderFrameHost* rfh) override;
-
-  content::RenderFrameHost* render_frame_host_;
+  RenderFrameHostID render_frame_host_id_;
 
   content::ContextMenuParams params_;
 
+  base::Closure on_close_callback_;
+
   std::unique_ptr<WebContextMenu> menu_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebContextMenuImpl);
+  DISALLOW_COPY_AND_ASSIGN(WebContextMenuHost);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_WEB_CONTEXT_MENU_IMPL_H_
+#endif // _OXIDE_SHARED_BROWSER_CONTEXT_MENU_WEB_CONTEXT_MENU_HOST_H_

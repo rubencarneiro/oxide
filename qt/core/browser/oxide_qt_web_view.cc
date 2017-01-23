@@ -34,6 +34,7 @@
 #include "base/macros.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/version.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/host_zoom_map.h"
 #include "content/public/browser/native_web_keyboard_event.h"
@@ -50,6 +51,7 @@
 #include "url/gurl.h"
 
 #include "qt/core/api/oxideqdownloadrequest.h"
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/api/oxideqloadevent.h"
 #include "qt/core/api/oxideqhttpauthenticationrequest_p.h"
 #include "qt/core/api/oxideqnavigationrequest.h"
@@ -61,8 +63,8 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/contents_view_client.h"
 #include "qt/core/glue/macros.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
 #include "qt/core/glue/web_context_menu.h"
@@ -81,8 +83,8 @@
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_enum_flags.h"
 
+#include "contents_view_impl.h"
 #include "menu_item_builder.h"
-#include "oxide_qt_contents_view.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
@@ -142,7 +144,7 @@ OxideQLoadEvent::ErrorDomain ErrorDomainFromErrorCode(int error_code) {
 }
 
 static const char* STATE_SERIALIZER_MAGIC_NUMBER = "oxide";
-static uint16_t STATE_SERIALIZER_VERSION = 1;
+static uint16_t STATE_SERIALIZER_VERSION = 2;
 
 void CreateRestoreEntriesFromRestoreState(
     const QByteArray& state,
@@ -167,9 +169,23 @@ void CreateRestoreEntriesFromRestoreState(
     WARN_INVALID_DATA;
     return;
   }
-  if (version != STATE_SERIALIZER_VERSION) {
+  if (version < 1 || version > STATE_SERIALIZER_VERSION) {
     WARN_INVALID_DATA;
     return;
+  }
+  base::Version oxide_version;
+  if (version >= 2) {
+    std::string v;
+    if (!i.ReadString(&v)) {
+      WARN_INVALID_DATA;
+      return;
+    }
+    oxide_version = base::Version(v);
+    if (oxide_version.CompareTo(base::Version(std::string("1.19.7"))) == -1) {
+      // The oxide version in the serialized state was added in oxide 1.19.7
+      WARN_INVALID_DATA;
+      return;
+    }
   }
   int count;
   if (!i.ReadLength(&count)) {
@@ -177,18 +193,133 @@ void CreateRestoreEntriesFromRestoreState(
     return;
   }
   entries.resize(count);
-  for (int j = 0; j < count; ++j) {
-    sessions::SerializedNavigationEntry entry;
-    if (!entry.ReadFromPickle(&i)) {
-      WARN_INVALID_DATA;
-      return;
-    }
-    entries[j] = entry;
-  }
   int index;
-  if (!i.ReadInt(&index)) {
-    WARN_INVALID_DATA; 
-    return;
+  switch (version) {
+    case 1: {
+      // In chromium < 55, the serialized navigation
+      // entries did not store extended info
+      // (https://chromium.googlesource.com/chromium/src/+/f62ca6f).
+      // Because of the way oxide concatenated all serialized navigation
+      // entries, oxide 1.19 would fail to deserialize entries stored with
+      // oxide < 1.19 (https://launchpad.net/bugs/1649861).
+      // To work around that issue, a bit of careful pointer arithmetic is
+      // required.
+      // Note that states serialized with oxide >=1.19.0 and <=1.19.6 still
+      // advertise version 1, but used chromium 55, so they store extended info,
+      // and therefore the pointer arithmetic is not needed. To detect that, we
+      // rely on the fact that each navigation entry will have an extra integer
+      // whose value is always 0 (the size of the extended info map), and if
+      // read as part of the next entry, it will be mistaken for the entry's
+      // index which should never be 0 (except maybe for the first entry).
+      bool reading_too_much_data = true;
+      base::PickleSizer sizer;
+      sizer.AddString(magic_number); // magic number
+      sizer.AddUInt16(); // version
+      sizer.AddInt(); // count
+      sizer.AddInt(); // index
+      const char* raw_data = nullptr;
+      int length = state.size() - sizer.payload_size();
+      if (!i.ReadBytes(&raw_data, length)) {
+        WARN_INVALID_DATA;
+        return;
+      }
+      for (int j = 0; j < count; ++j) {
+        base::Pickle pickled_entry;
+        pickled_entry.WriteBytes(raw_data, length);
+        base::PickleIterator k(pickled_entry);
+        sessions::SerializedNavigationEntry entry;
+        // This will potentially try to read too much data (the inexistent
+        // extended_info_map_), so we need to compute the actual size of the
+        // serialized entry to correctly advance the pointer to the beginning
+        // of the next entry.
+        // Reading too much data will potentially add garbage entries to the
+        // extended info map (if for any invalid entry two strings can be read,
+        // key and value). For each entry in the resulting map,
+        // ContentSerializedNavigationBuilder::ToNavigationEntry() looks up an
+        // extended info handler (by key). If it can't find one, it just skips
+        // the unknown entry (most likely case). As of today (January 2017),
+        // there's only one handler registered by chrome on android, which is
+        // not relevant here. This would become a concern if oxide registered
+        // its own handlers, and their implementation would need to check for
+        // value correctness and silently ignore garbage values.
+        if (j == 1) {
+          // Try to read an integer first, if its value is 0 (invalid entry
+          // index) then we were not actually reading too much data (the
+          // extended info map had been serialized).
+          int m = 0;
+          if (!k.ReadInt(&m)) {
+            WARN_INVALID_DATA;
+            return;
+          }
+          if (m == 0) {
+            reading_too_much_data = false;
+            base::PickleSizer int_sizer;
+            int_sizer.AddInt();
+            raw_data += int_sizer.payload_size();
+            length -= int_sizer.payload_size();
+          } else {
+            k = base::PickleIterator(pickled_entry);
+          }
+        }
+        if (!entry.ReadFromPickle(&k)) {
+          WARN_INVALID_DATA;
+          return;
+        }
+        entries[j] = entry;
+        base::PickleSizer entry_sizer;
+        entry_sizer.AddInt(); // index
+        entry_sizer.AddString(entry.virtual_url().spec());
+        entry_sizer.AddString16(entry.title());
+        entry_sizer.AddString(entry.encoded_page_state());
+        entry_sizer.AddInt(); // transition type
+        entry_sizer.AddInt(); // type mask
+        entry_sizer.AddString(entry.referrer_url().spec());
+        entry_sizer.AddInt(); // mapped referrer policy
+        entry_sizer.AddString(entry.original_request_url().spec());
+        entry_sizer.AddBool(); // is overriding user agent
+        entry_sizer.AddInt64(); // timestamp
+        entry_sizer.AddString16(entry.search_terms());
+        entry_sizer.AddInt(); // HTTP status code
+        entry_sizer.AddInt(); // referrer policy
+        if (!reading_too_much_data) {
+          entry_sizer.AddInt(); // extended info map size, always 0
+        }
+        raw_data += entry_sizer.payload_size();
+        length -= entry_sizer.payload_size();
+      }
+      base::Pickle remainder;
+      remainder.WriteBytes(raw_data, length);
+      i = base::PickleIterator(remainder);
+      if (!i.ReadInt(&index)) {
+        WARN_INVALID_DATA;
+        return;
+      }
+      break;
+    }
+    case 2:
+    default: {
+      for (int j = 0; j < count; ++j) {
+        const char* data;
+        int length;
+        if (!i.ReadData(&data, &length)) {
+          WARN_INVALID_DATA;
+          return;
+        }
+        base::Pickle pickled_entry(data, length);
+        base::PickleIterator k(pickled_entry);
+        sessions::SerializedNavigationEntry entry;
+        if (!entry.ReadFromPickle(&k)) {
+          WARN_INVALID_DATA;
+          return;
+        }
+        entries[j] = entry;
+      }
+      if (!i.ReadInt(&index)) {
+        WARN_INVALID_DATA;
+        return;
+      }
+      break;
+    }
   }
 #undef WARN_INVALID_DATA
 
@@ -225,9 +356,9 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 ContentsViewProxyClient* view_client,
+                 ContentsViewClient* view_client,
                  QObject* handle)
-    : contents_view_(new ContentsView(view_client, handle)),
+    : contents_view_(new ContentsViewImpl(view_client, handle)),
       client_(client),
       frame_tree_torn_down_(false) {
   DCHECK(client);
@@ -765,12 +896,15 @@ QByteArray WebView::currentState() const {
   base::Pickle pickle;
   pickle.WriteString(STATE_SERIALIZER_MAGIC_NUMBER);
   pickle.WriteUInt16(STATE_SERIALIZER_VERSION);
+  pickle.WriteString(oxideGetVersion().toStdString());
   pickle.WriteInt(entries.size());
   std::vector<sessions::SerializedNavigationEntry>::const_iterator i;
   static const size_t max_state_size =
       std::numeric_limits<uint16_t>::max() - 1024;
   for (i = entries.begin(); i != entries.end(); ++i) {
-    i->WriteToPickle(max_state_size, &pickle);
+    base::Pickle entry;
+    i->WriteToPickle(max_state_size, &entry);
+    pickle.WriteData(static_cast<const char*>(entry.data()), entry.size());
   }
   pickle.WriteInt(
       web_view_->GetWebContents()->GetController().GetCurrentEntryIndex());
@@ -954,7 +1088,7 @@ void WebView::teardownFrameTree() {
 }
 
 WebView::WebView(WebViewProxyClient* client,
-                 ContentsViewProxyClient* view_client,
+                 ContentsViewClient* view_client,
                  QObject* handle,
                  WebContext* context,
                  bool incognito,
@@ -990,7 +1124,7 @@ WebView::WebView(WebViewProxyClient* client,
 // static
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
-    ContentsViewProxyClient* view_client,
+    ContentsViewClient* view_client,
     QObject* handle,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {

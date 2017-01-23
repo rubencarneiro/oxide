@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qt_contents_view.h"
+#include "contents_view_impl.h"
 
 #include <QCursor>
 #include <QEvent>
@@ -42,7 +42,8 @@
 #include "ui/gfx/geometry/point.h"
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
-#include "qt/core/glue/oxide_qt_contents_view_proxy_client.h"
+#include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/web_popup_menu.h"
 #include "shared/browser/chrome_controller.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
@@ -55,8 +56,8 @@
 #include "oxide_qt_skutils.h"
 #include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_type_conversions.h"
-#include "oxide_qt_web_popup_menu.h"
 #include "qt_screen.h"
+#include "qt_web_popup_menu.h"
 
 namespace oxide {
 namespace qt {
@@ -253,7 +254,7 @@ EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
   return frame_->data()->gl_frame_data->resource.egl_image;
 }
 
-QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
+QSharedPointer<CompositorFrameHandle> ContentsViewImpl::compositorFrameHandle() {
   if (!compositor_frame_) {
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(
@@ -265,11 +266,11 @@ QSharedPointer<CompositorFrameHandle> ContentsView::compositorFrameHandle() {
   return compositor_frame_;
 }
 
-void ContentsView::didCommitCompositorFrame() {
+void ContentsViewImpl::didCommitCompositorFrame() {
   view()->DidCommitCompositorFrame();
 }
 
-void ContentsView::windowChanged() {
+void ContentsViewImpl::windowChanged() {
   if (window_) {
     window_->disconnect(this);
   }
@@ -289,19 +290,23 @@ void ContentsView::windowChanged() {
   view()->WasResized();
 }
 
-void ContentsView::wasResized() {
+void ContentsViewImpl::wasResized() {
   view()->WasResized();
 }
 
-void ContentsView::visibilityChanged() {
+void ContentsViewImpl::visibilityChanged() {
   view()->VisibilityChanged();
 }
 
-QVariant ContentsView::inputMethodQuery(Qt::InputMethodQuery query) const {
+void ContentsViewImpl::activeFocusChanged() {
+  view()->FocusChanged();
+}
+
+QVariant ContentsViewImpl::inputMethodQuery(Qt::InputMethodQuery query) const {
   return input_method_context_->Query(query);
 }
 
-void ContentsView::handleKeyEvent(QKeyEvent* event) {
+void ContentsViewImpl::handleKeyEvent(QKeyEvent* event) {
   content::NativeWebKeyboardEvent e(MakeNativeWebKeyboardEvent(event, false));
   view()->HandleKeyEvent(e);
 
@@ -313,19 +318,18 @@ void ContentsView::handleKeyEvent(QKeyEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
+void ContentsViewImpl::handleInputMethodEvent(QInputMethodEvent* event) {
   input_method_context_->HandleEvent(event);
   event->accept();
 }
 
-void ContentsView::handleFocusEvent(QFocusEvent* event) {
+void ContentsViewImpl::handleFocusEvent(QFocusEvent* event) {
   input_method_context_->FocusChanged(event);
-  view()->FocusChanged();
 
   event->accept();
 }
 
-void ContentsView::handleMouseEvent(QMouseEvent* event) {
+void ContentsViewImpl::handleMouseEvent(QMouseEvent* event) {
   if (!(event->button() == Qt::LeftButton ||
         event->button() == Qt::MidButton ||
         event->button() == Qt::RightButton ||
@@ -341,13 +345,13 @@ void ContentsView::handleMouseEvent(QMouseEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleTouchUngrabEvent() {
+void ContentsViewImpl::handleTouchUngrabEvent() {
   std::unique_ptr<ui::MotionEvent> cancel_event = motion_event_factory_.Cancel();
   view()->HandleMotionEvent(*cancel_event.get());
 }
 
-void ContentsView::handleWheelEvent(QWheelEvent* event,
-                                    const QPointF& window_pos) {
+void ContentsViewImpl::handleWheelEvent(QWheelEvent* event,
+                                        const QPointF& window_pos) {
   view()->HandleWheelEvent(
       MakeWebMouseWheelEvent(event,
                              window_pos,
@@ -356,7 +360,7 @@ void ContentsView::handleWheelEvent(QWheelEvent* event,
   event->accept();
 }
 
-void ContentsView::handleTouchEvent(QTouchEvent* event) {
+void ContentsViewImpl::handleTouchEvent(QTouchEvent* event) {
   MotionEventFactory::ResultVector events;
   motion_event_factory_.MakeMotionEvents(event,
                                          GetScreen(),
@@ -370,9 +374,9 @@ void ContentsView::handleTouchEvent(QTouchEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleHoverEvent(QHoverEvent* event,
-                                    const QPointF& window_pos,
-                                    const QPoint& global_pos) {
+void ContentsViewImpl::handleHoverEvent(QHoverEvent* event,
+                                        const QPointF& window_pos,
+                                        const QPoint& global_pos) {
   view()->HandleMouseEvent(
       MakeWebMouseEvent(event,
                         window_pos,
@@ -382,7 +386,7 @@ void ContentsView::handleHoverEvent(QHoverEvent* event,
   event->accept();
 }
 
-void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
+void ContentsViewImpl::handleDragEnterEvent(QDragEnterEvent* event) {
   content::DropData drop_data;
   gfx::Point location;
   blink::WebDragOperationsMask allowed_ops = blink::WebDragOperationNone;
@@ -401,7 +405,7 @@ void ContentsView::handleDragEnterEvent(QDragEnterEvent* event) {
   event->accept();
 }
 
-void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
+void ContentsViewImpl::handleDragMoveEvent(QDragMoveEvent* event) {
   gfx::Point location;
   int key_modifiers = 0;
 
@@ -421,11 +425,11 @@ void ContentsView::handleDragMoveEvent(QDragMoveEvent* event) {
   }
 }
 
-void ContentsView::handleDragLeaveEvent(QDragLeaveEvent* event) {
+void ContentsViewImpl::handleDragLeaveEvent(QDragLeaveEvent* event) {
   view()->HandleDragLeave();
 }
 
-void ContentsView::handleDropEvent(QDropEvent* event) {
+void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
   gfx::Point location;
   int key_modifiers = 0;
 
@@ -445,44 +449,44 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   }
 }
 
-void ContentsView::hideTouchSelectionController() {
+void ContentsViewImpl::hideTouchSelectionController() {
   view()->HideTouchSelectionController();
 }
 
-float ContentsView::GetTopContentOffset() const {
+float ContentsViewImpl::GetTopContentOffset() const {
   return view()->chrome_controller()->GetTopContentOffset();
 }
 
-void ContentsView::SetInputMethodEnabled(bool enabled) {
+void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
 }
 
-bool ContentsView::IsVisible() const {
+bool ContentsViewImpl::IsVisible() const {
   return client_->IsVisible();
 }
 
-bool ContentsView::HasFocus() const {
+bool ContentsViewImpl::HasFocus() const {
   return client_->HasFocus();
 }
 
-gfx::RectF ContentsView::GetBounds() const {
+gfx::RectF ContentsViewImpl::GetBounds() const {
   QRect bounds = client_->GetBounds();
   return DpiUtils::ConvertQtPixelsToChromium(
       gfx::RectF(ToChromium(bounds)),
       GetScreen());
 }
 
-void ContentsView::SwapCompositorFrame() {
+void ContentsViewImpl::SwapCompositorFrame() {
   compositor_frame_.reset();
   client_->ScheduleUpdate();
 }
 
-void ContentsView::EvictCurrentFrame() {
+void ContentsViewImpl::EvictCurrentFrame() {
   compositor_frame_.reset();
   client_->EvictCurrentFrame();
 }
 
-void ContentsView::UpdateCursor(const content::WebCursor& cursor) {
+void ContentsViewImpl::UpdateCursor(const content::WebCursor& cursor) {
   content::WebCursor::CursorInfo cursor_info;
 
   cursor.GetCursorInfo(&cursor_info);
@@ -499,24 +503,34 @@ void ContentsView::UpdateCursor(const content::WebCursor& cursor) {
   }
 }
 
-std::unique_ptr<oxide::WebPopupMenu> ContentsView::CreatePopupMenu(
+std::unique_ptr<oxide::WebPopupMenu> ContentsViewImpl::CreatePopupMenu(
     const std::vector<content::MenuItem>& items,
     int selected_index,
     bool allow_multiple_selection,
+    const gfx::Rect& bounds,
     oxide::WebPopupMenuClient* client) {
-  return base::WrapUnique(new WebPopupMenu(this,
-                                           items,
-                                           allow_multiple_selection,
-                                           client));
+  std::unique_ptr<WebPopupMenuImpl> menu =
+      base::MakeUnique<WebPopupMenuImpl>(client);
+  QRect qt_bounds =
+      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen()));
+  if (!menu->Init(client_->CreateWebPopupMenu(
+          WebPopupMenuImpl::BuildMenuItems(items),
+          allow_multiple_selection,
+          qt_bounds,
+          menu.get()))) {
+    return nullptr;
+  }
+
+  return std::move(menu);
 }
 
-ui::TouchHandleDrawable* ContentsView::CreateTouchHandleDrawable() const {
+ui::TouchHandleDrawable* ContentsViewImpl::CreateTouchHandleDrawable() const {
   TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
   drawable->SetProxy(client_->CreateTouchHandleDrawable());
   return drawable;
 }
 
-void ContentsView::TouchSelectionChanged(
+void ContentsViewImpl::TouchSelectionChanged(
     ui::TouchSelectionController::ActiveStatus status,
     const gfx::RectF& bounds,
     bool handle_drag_in_progress,
@@ -543,15 +557,15 @@ void ContentsView::TouchSelectionChanged(
       insertion_handle_tapped);
 }
 
-void ContentsView::ContextMenuIntercepted() const {
+void ContentsViewImpl::ContextMenuIntercepted() const {
   client_->ContextMenuIntercepted();
 }
 
-oxide::InputMethodContext* ContentsView::GetInputMethodContext() const {
+oxide::InputMethodContext* ContentsViewImpl::GetInputMethodContext() const {
   return input_method_context_.get();
 }
 
-void ContentsView::UnhandledKeyboardEvent(
+void ContentsViewImpl::UnhandledKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   if (event.skip_in_browser) {
     return;
@@ -572,39 +586,40 @@ void ContentsView::UnhandledKeyboardEvent(
   client_->HandleUnhandledKeyboardEvent(key_event);
 }
 
-void ContentsView::OnScreenChanged() {
+void ContentsViewImpl::OnScreenChanged() {
   view()->ScreenChanged();
 }
 
-ContentsView::ContentsView(ContentsViewProxyClient* client,
-                           QObject* native_view)
+ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
+                                   QObject* native_view)
     : client_(client),
       native_view_(native_view),
       input_method_context_(new InputMethodContext(this)) {
-  DCHECK(!client_->proxy_);
-  client_->proxy_ = this;
+  DCHECK(!client_->view_);
+  client_->view_ = this;
 
   windowChanged();
 }
 
-ContentsView::~ContentsView() {
-  DCHECK_EQ(client_->proxy_, this);
-  client_->proxy_ = nullptr;
+ContentsViewImpl::~ContentsViewImpl() {
+  DCHECK_EQ(client_->view_, this);
+  client_->view_ = nullptr;
   input_method_context_->DetachClient();
 }
 
 // static
-ContentsView* ContentsView::FromWebContents(content::WebContents* contents) {
+ContentsViewImpl* ContentsViewImpl::FromWebContents(
+    content::WebContents* contents) {
   oxide::WebContentsView* view =
       oxide::WebContentsView::FromWebContents(contents);
   if (!view) {
     return nullptr;
   }
 
-  return static_cast<ContentsView*>(view->client());
+  return static_cast<ContentsViewImpl*>(view->client());
 }
 
-content::WebContents* ContentsView::GetWebContents() const {
+content::WebContents* ContentsViewImpl::GetWebContents() const {
   if (!view()) {
     return nullptr;
   }
@@ -612,11 +627,11 @@ content::WebContents* ContentsView::GetWebContents() const {
   return view()->GetWebContents();
 }
 
-display::Display ContentsView::GetDisplay() const {
+display::Display ContentsViewImpl::GetDisplay() const {
   return Screen::GetInstance()->DisplayFromQScreen(GetScreen());
 }
 
-QScreen* ContentsView::GetScreen() const {
+QScreen* ContentsViewImpl::GetScreen() const {
   QScreen* screen = nullptr;
   if (window_) {
     screen = window_->screen();

@@ -68,6 +68,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
  protected:
   OxideQQuickWebViewPrivate(
       OxideQQuickWebView* q,
+      std::unique_ptr<oxide::qquick::ContentsView> contents_view,
       std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory);
 
   OxideQQuickWebView* q_ptr;
@@ -149,7 +150,7 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
 
   std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory_;
 
-  QScopedPointer<oxide::qquick::ContentsView> contents_view_;
+  std::unique_ptr<oxide::qquick::ContentsView> contents_view_;
 
   QScopedPointer<oxide::qt::WebViewProxy> proxy_;
 

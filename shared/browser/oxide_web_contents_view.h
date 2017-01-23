@@ -25,7 +25,6 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "base/memory/weak_ptr.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
@@ -74,7 +73,8 @@ class CompositorFrameHandle;
 class DragSource;
 class RenderWidgetHostView;
 class WebContentsViewClient;
-class WebPopupMenu;
+class WebContextMenuHost;
+class WebPopupMenuHost;
 
 class OXIDE_SHARED_EXPORT WebContentsView
     : public content::WebContentsViewOxide,
@@ -171,6 +171,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void ResizeCompositorViewport();
   void UpdateContentsSize();
 
+  void DidCloseContextMenu();
+  void DidHidePopupMenu();
+
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
   gfx::NativeView GetContentNativeView() const override;
@@ -217,6 +220,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void HidePopupMenu() override;
 
   // content::WebContentsObserver implementation
+  void RenderFrameDeleted(content::RenderFrameHost* render_frame_host) override;
   void RenderViewHostChanged(content::RenderViewHost* old_host,
                              content::RenderViewHost* new_host) override;
   void DidNavigateMainFrame(
@@ -275,7 +279,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::unique_ptr<DragSource> drag_source_;
   RenderWidgetHostID drag_source_rwh_;
 
-  base::WeakPtr<WebPopupMenu> active_popup_menu_;
+  std::unique_ptr<WebPopupMenuHost> active_popup_menu_;
+  std::unique_ptr<WebContextMenuHost> active_context_menu_;
 
   MouseEventState mouse_state_;
 
