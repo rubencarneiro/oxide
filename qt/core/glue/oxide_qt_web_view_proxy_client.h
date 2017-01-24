@@ -25,7 +25,6 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/menu_item.h"
-#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
 
 class OxideQCertificateError;
 class OxideQDownloadRequest;
@@ -41,6 +40,7 @@ QT_BEGIN_NAMESPACE
 class QKeyEvent;
 class QObject;
 class QString;
+class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
@@ -48,7 +48,9 @@ namespace qt {
 
 class FilePickerProxy;
 class FilePickerProxyClient;
-class JavaScriptDialogProxy;
+class JavaScriptDialog;
+class JavaScriptDialogClient;
+enum class JavaScriptDialogType;
 class WebContextMenu;
 class WebContextMenuClient;
 class WebContextMenuParams;
@@ -71,11 +73,16 @@ class WebViewProxyClient {
       const std::vector<MenuItem>& items,
       WebContextMenuClient* client) = 0;
 
-  virtual JavaScriptDialogProxy* CreateJavaScriptDialog(
-      JavaScriptDialogProxyClient::Type type,
-      JavaScriptDialogProxyClient* client) = 0;
-  virtual JavaScriptDialogProxy* CreateBeforeUnloadDialog(
-      JavaScriptDialogProxyClient* client) = 0;
+  virtual std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
+      const QUrl& origin_url,
+      JavaScriptDialogType type,
+      const QString& message_text,
+      const QString& default_prompt_text,
+      JavaScriptDialogClient* client) = 0;
+  virtual std::unique_ptr<JavaScriptDialog> CreateBeforeUnloadDialog(
+      const QUrl& origin_url,
+      JavaScriptDialogClient* client) = 0;
+
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
   virtual void WebProcessStatusChanged() = 0;

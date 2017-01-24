@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,39 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_javascript_dialog.h"
+#ifndef _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_H_
+#define _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_H_
 
-#include "shared/browser/oxide_javascript_dialog_manager.h"
+#include "base/strings/string16.h"
 
 namespace oxide {
 
-JavaScriptDialog::JavaScriptDialog()
-    : is_reload_(false),
-      is_before_unload_dialog_(false) {}
+class JavaScriptDialog {
+ public:
+  virtual ~JavaScriptDialog() {}
 
-void JavaScriptDialog::Hide() {}
+  virtual void Show() = 0;
 
-JavaScriptDialog::~JavaScriptDialog() {}
+  virtual void Hide() = 0;
 
-void JavaScriptDialog::Close(bool accept, const base::string16& user_input) {
-  if (callback_.is_null()) {
-    return;
-  }
-
-  callback_.Run(accept, user_input);
-  callback_.Reset();
-  Hide();
-  JavaScriptDialogManager::GetInstance()->DialogClosed(web_contents_, this);
-}
-
-void JavaScriptDialog::Cancel() {
-  if (callback_.is_null()) {
-    return;
-  }
-
-  callback_.Run(false, base::string16());
-  callback_.Reset();
-  Hide();
-}
+  virtual base::string16 GetCurrentPromptText() = 0;
+};
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_H_

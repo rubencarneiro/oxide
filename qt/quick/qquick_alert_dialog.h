@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2014-2015 Canonical Ltd.
+// Copyright (C) 2013-2015 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,34 +15,31 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
+#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG__H_
+#define _OXIDE_QT_QUICK_ALERT_DIALOG__H_
 
 #include <QString>
-#include <QUrl>
+
+#include "qt/quick/qquick_javascript_dialog.h"
 
 namespace oxide {
-namespace qt {
+namespace qquick {
 
-class JavaScriptDialogProxyClient {
+class AlertDialog : public JavaScriptDialog {
  public:
+  AlertDialog(QQuickItem* parent,
+              QQmlComponent* component,
+              const QString& message_text,
+              qt::JavaScriptDialogClient* client);
 
-  enum Type {
-    TypeAlert,
-    TypeConfirm,
-    TypePrompt
-  };
+ private:
+  // oxide::qt::JavaScriptDialog implementation
+  bool Show();
 
-  virtual ~JavaScriptDialogProxyClient() {}
-
-  virtual void close(bool accept, const QString& user_input = QString()) = 0;
-
-  virtual QUrl originUrl() const = 0;
-  virtual QString messageText() const = 0;
-  virtual QString defaultPromptText() const = 0;
+  QString message_text_;
 };
 
-} // namespace qt
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_JAVASCRIPT_DIALOG_PROXY_CLIENT_H_
+#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_H_

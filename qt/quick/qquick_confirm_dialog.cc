@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2014 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,23 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_confirm_dialog.h"
+#include "qquick_confirm_dialog.h"
 
 #include <QObject>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/core/glue/javascript_dialog_client.h"
 
 namespace oxide {
 namespace qquick {
+
+using qt::JavaScriptDialogClient;
 
 class ConfirmDialogContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString message READ message CONSTANT FINAL)
 
  public:
-  virtual ~ConfirmDialogContext() {}
-  ConfirmDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
+  ~ConfirmDialogContext() override {}
+  ConfirmDialogContext(JavaScriptDialogClient* client,
+                       const QString& message_text);
 
   QString message() const;
 
@@ -40,15 +42,17 @@ class ConfirmDialogContext : public QObject {
   void reject() const;
 
  private:
-  oxide::qt::JavaScriptDialogProxyClient* client_;
+  JavaScriptDialogClient* client_;
+  QString message_text_;
 };
 
-ConfirmDialogContext::ConfirmDialogContext(
-    oxide::qt::JavaScriptDialogProxyClient* client)
-    : client_(client) {}
+ConfirmDialogContext::ConfirmDialogContext(JavaScriptDialogClient* client,
+                                           const QString& message_text)
+    : client_(client),
+      message_text_(message_text) {}
 
 QString ConfirmDialogContext::message() const {
-  return client_->messageText();
+  return message_text_;
 }
 
 void ConfirmDialogContext::accept() const {
@@ -60,19 +64,17 @@ void ConfirmDialogContext::reject() const {
 }
 
 bool ConfirmDialog::Show() {
-  if (!view_) {
-    qWarning() << "ConfirmDialog::Show: Can't show after the view has gone";
-    return false;
-  }
-
-  return run(new ConfirmDialogContext(client_), view_->confirmDialog());
+  return run(new ConfirmDialogContext(client_, message_text_));
 }
 
-ConfirmDialog::ConfirmDialog(OxideQQuickWebView* view,
-                             oxide::qt::JavaScriptDialogProxyClient* client)
-    : JavaScriptDialog(view, client) {}
+ConfirmDialog::ConfirmDialog(QQuickItem* parent,
+                             QQmlComponent* component,
+                             const QString& message_text,
+                             JavaScriptDialogClient* client)
+    : JavaScriptDialog(parent, component, client),
+      message_text_(message_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_confirm_dialog.moc"
+#include "qquick_confirm_dialog.moc"

@@ -65,7 +65,7 @@ namespace oxide {
 
 class BrowserContext;
 class FilePicker;
-class JavaScriptDialog;
+class JavaScriptDialogFactory;
 class RenderWidgetHostView;
 class WebContentsClient;
 class WebContentsHelper;
@@ -114,6 +114,8 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   WebViewClient* client() const { return client_; }
 
+  void SetJavaScriptDialogFactory(JavaScriptDialogFactory* factory);
+
   // DEPRECATED. If you need to map a WebContents to WebView, then your code
   // belongs in a separate helper class
   static WebView* FromWebContents(const content::WebContents* web_contents);
@@ -151,9 +153,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
 
   BrowserContext* GetBrowserContext() const;
   content::WebContents* GetWebContents() const;
-
-  // Accessors for various helpers - clients of these should note that they can
-  // all outlive WebView (the lifetime of them is tied to WebContents)
   WebContentsHelper* GetWebContentsHelper() const;
 
   WebFrame* GetRootFrame() const;
@@ -172,10 +171,6 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
   void SetCanTemporarilyRunInsecureContent(bool allow);
 
   void PrepareToClose();
-
-  JavaScriptDialog* CreateJavaScriptDialog(
-      content::JavaScriptMessageType javascript_message_type);
-  JavaScriptDialog* CreateBeforeUnloadDialog();
 
   const GURL& target_url() const { return target_url_; }
 

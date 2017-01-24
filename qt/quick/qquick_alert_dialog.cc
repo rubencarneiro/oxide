@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,23 +15,25 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_alert_dialog.h"
+#include "qquick_alert_dialog.h"
 
 #include <QObject>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/core/glue/javascript_dialog_client.h"
 
 namespace oxide {
 namespace qquick {
+
+using qt::JavaScriptDialogClient;
 
 class AlertDialogContext : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString message READ message CONSTANT FINAL)
 
  public:
-  virtual ~AlertDialogContext() {}
-  AlertDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
+  ~AlertDialogContext() override {}
+  AlertDialogContext(JavaScriptDialogClient* client,
+                     const QString& message_text);
 
   QString message() const;
 
@@ -39,15 +41,18 @@ class AlertDialogContext : public QObject {
   void accept() const;
 
  private:
-  oxide::qt::JavaScriptDialogProxyClient* client_;
+  JavaScriptDialogClient* client_;
+  QString message_text_;
 };
 
 AlertDialogContext::AlertDialogContext(
-    oxide::qt::JavaScriptDialogProxyClient* client)
-    : client_(client) {}
+    JavaScriptDialogClient* client,
+    const QString& message_text)
+    : client_(client),
+      message_text_(message_text) {}
 
 QString AlertDialogContext::message() const {
-  return client_->messageText();
+  return message_text_;
 }
 
 void AlertDialogContext::accept() const {
@@ -55,19 +60,17 @@ void AlertDialogContext::accept() const {
 }
 
 bool AlertDialog::Show() {
-  if (!view_) {
-    qWarning() << "AlertDialog::Show: Can't show after the view has gone";
-    return false;
-  }
-
-  return run(new AlertDialogContext(client_), view_->alertDialog());
+  return run(new AlertDialogContext(client_, message_text_));
 }
 
-AlertDialog::AlertDialog(OxideQQuickWebView* view,
-                         oxide::qt::JavaScriptDialogProxyClient* client)
-    : JavaScriptDialog(view, client) {}
+AlertDialog::AlertDialog(QQuickItem* parent,
+                         QQmlComponent* component,
+                         const QString& message_text,
+                         JavaScriptDialogClient* client)
+    : JavaScriptDialog(parent, component, client),
+      message_text_(message_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_alert_dialog.moc"
+#include "qquick_alert_dialog.moc"

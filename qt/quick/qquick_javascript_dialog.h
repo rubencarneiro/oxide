@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,9 +24,7 @@
 #include <QQuickItem>
 #include <QScopedPointer>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_proxy.h"
-
-class OxideQQuickWebView;
+#include "qt/core/glue/javascript_dialog.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
@@ -35,26 +33,28 @@ QT_END_NAMESPACE
 namespace oxide {
 
 namespace qt {
-class JavaScriptDialogProxyClient;
+class JavaScriptDialogClient;
 }
 
 namespace qquick {
 
-class JavaScriptDialog : public oxide::qt::JavaScriptDialogProxy {
+class JavaScriptDialog : public qt::JavaScriptDialog {
  public:
-  JavaScriptDialog(OxideQQuickWebView* view,
-                   oxide::qt::JavaScriptDialogProxyClient* client);
+  JavaScriptDialog(QQuickItem* parent,
+                   QQmlComponent* component,
+                   qt::JavaScriptDialogClient* client);
 
  protected:
-  // oxide::qt::JavaScriptDialogProxy implementation
+  // qt::JavaScriptDialog implementation
   void Hide() override;
-  void Handle(bool accept, const QString& prompt_override) override;
+  QString GetCurrentPromptText() override;
 
   // takes ownership of contextObject
-  bool run(QObject* contextObject, QQmlComponent* component);
+  bool run(QObject* contextObject);
 
-  QPointer<OxideQQuickWebView> view_;
-  oxide::qt::JavaScriptDialogProxyClient* client_;
+  QPointer<QQuickItem> parent_;
+  QPointer<QQmlComponent> component_;
+  qt::JavaScriptDialogClient* client_;
 
   QScopedPointer<QQmlContext> context_;
   QScopedPointer<QQuickItem> item_;

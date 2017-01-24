@@ -79,11 +79,15 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
       const oxide::qt::WebContextMenuParams& params,
       const std::vector<oxide::qt::MenuItem>& items,
       oxide::qt::WebContextMenuClient* client) override;
-  oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
-      oxide::qt::JavaScriptDialogProxyClient::Type type,
-      oxide::qt::JavaScriptDialogProxyClient* client) override;
-  oxide::qt::JavaScriptDialogProxy* CreateBeforeUnloadDialog(
-      oxide::qt::JavaScriptDialogProxyClient* client) override;
+  std::unique_ptr<oxide::qt::JavaScriptDialog> CreateJavaScriptDialog(
+      const QUrl& origin_url,
+      oxide::qt::JavaScriptDialogType type,
+      const QString& message_text,
+      const QString& default_prompt_text,
+      oxide::qt::JavaScriptDialogClient* client) override;
+  std::unique_ptr<oxide::qt::JavaScriptDialog> CreateBeforeUnloadDialog(
+      const QUrl& origin_url,
+      oxide::qt::JavaScriptDialogClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
   void WebProcessStatusChanged() override;

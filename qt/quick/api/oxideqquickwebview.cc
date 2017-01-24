@@ -48,16 +48,18 @@
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/core/glue/javascript_dialog.h"
+#include "qt/core/glue/javascript_dialog_type.h"
 #include "qt/core/glue/macros.h"
 #include "qt/quick/auxiliary_ui_factory.h"
 #include "qt/quick/contents_view.h"
 #include "qt/quick/legacy_contents_view.h"
-#include "qt/quick/oxide_qquick_alert_dialog.h"
-#include "qt/quick/oxide_qquick_before_unload_dialog.h"
-#include "qt/quick/oxide_qquick_confirm_dialog.h"
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_init.h"
-#include "qt/quick/oxide_qquick_prompt_dialog.h"
+#include "qt/quick/qquick_alert_dialog.h"
+#include "qt/quick/qquick_before_unload_dialog.h"
+#include "qt/quick/qquick_confirm_dialog.h"
+#include "qt/quick/qquick_prompt_dialog.h"
 #include "qt/quick/qquick_web_context_menu.h"
 
 #include "oxideqquicklocationbarcontroller.h"
@@ -167,30 +169,59 @@ OxideQQuickWebViewPrivate::CreateWebContextMenu(
       new oxide::qquick::WebContextMenu(q, context_menu_, params, client));
 }
 
-oxide::qt::JavaScriptDialogProxy*
+std::unique_ptr<oxide::qt::JavaScriptDialog>
 OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
-    oxide::qt::JavaScriptDialogProxyClient::Type type,
-    oxide::qt::JavaScriptDialogProxyClient* client) {
+    const QUrl& origin_url,
+    oxide::qt::JavaScriptDialogType type,
+    const QString& message_text,
+    const QString& default_prompt_text,
+    oxide::qt::JavaScriptDialogClient* client) {
   Q_Q(OxideQQuickWebView);
 
   switch (type) {
-  case oxide::qt::JavaScriptDialogProxyClient::TypeAlert:
-    return new oxide::qquick::AlertDialog(q, client);
-  case oxide::qt::JavaScriptDialogProxyClient::TypeConfirm:
-    return new oxide::qquick::ConfirmDialog(q, client);
-  case oxide::qt::JavaScriptDialogProxyClient::TypePrompt:
-    return new oxide::qquick::PromptDialog(q, client);
-  default:
-    Q_UNREACHABLE();
+    case oxide::qt::JavaScriptDialogType::Alert:
+      if (!alert_dialog_) {
+        return nullptr;
+      }
+      return std::unique_ptr<oxide::qt::JavaScriptDialog>(
+          new oxide::qquick::AlertDialog(q,
+                                         alert_dialog_,
+                                         message_text,
+                                         client));
+    case oxide::qt::JavaScriptDialogType::Confirm:
+      if (!confirm_dialog_) {
+        return nullptr;
+      }
+      return std::unique_ptr<oxide::qt::JavaScriptDialog>(
+          new oxide::qquick::ConfirmDialog(q,
+                                           confirm_dialog_,
+                                           message_text,
+                                           client));
+    case oxide::qt::JavaScriptDialogType::Prompt:
+      if (!prompt_dialog_) {
+        return nullptr;
+      }
+      return std::unique_ptr<oxide::qt::JavaScriptDialog>(
+          new oxide::qquick::PromptDialog(q,
+                                          prompt_dialog_,
+                                          message_text,
+                                          default_prompt_text,
+                                          client));
   }
 }
 
-oxide::qt::JavaScriptDialogProxy*
+std::unique_ptr<oxide::qt::JavaScriptDialog>
 OxideQQuickWebViewPrivate::CreateBeforeUnloadDialog(
-    oxide::qt::JavaScriptDialogProxyClient* client) {
+    const QUrl& origin_url,
+    oxide::qt::JavaScriptDialogClient* client) {
   Q_Q(OxideQQuickWebView);
 
-  return new oxide::qquick::BeforeUnloadDialog(q, client);
+  if (!before_unload_dialog_) {
+    return nullptr;
+  }
+
+  return std::unique_ptr<oxide::qt::JavaScriptDialog>(
+      new oxide::qquick::BeforeUnloadDialog(q, before_unload_dialog_, client));
 }
 
 oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(

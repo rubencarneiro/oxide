@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,16 +15,16 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_prompt_dialog.h"
+#include "qquick_prompt_dialog.h"
 
 #include <QObject>
-#include <QString>
 
-#include "qt/core/glue/oxide_qt_javascript_dialog_proxy_client.h"
-#include "qt/quick/api/oxideqquickwebview.h"
+#include "qt/core/glue/javascript_dialog_client.h"
 
 namespace oxide {
 namespace qquick {
+
+using qt::JavaScriptDialogClient;
 
 class PromptDialogContext : public QObject {
   Q_OBJECT
@@ -33,8 +33,10 @@ class PromptDialogContext : public QObject {
   Q_PROPERTY(QString currentValue READ currentValue WRITE setCurrentValue NOTIFY currentValueChanged)
 
  public:
-  virtual ~PromptDialogContext() {}
-  PromptDialogContext(oxide::qt::JavaScriptDialogProxyClient* client);
+  ~PromptDialogContext() override {}
+  PromptDialogContext(JavaScriptDialogClient* client,
+                      const QString& message_text,
+                      const QString& default_prompt_text);
 
   QString message() const;
   QString defaultValue() const;
@@ -49,29 +51,35 @@ class PromptDialogContext : public QObject {
   void reject() const;
 
  private:
-  oxide::qt::JavaScriptDialogProxyClient* client_;
-  QString currentValue_;
+  JavaScriptDialogClient* client_;
+  QString message_text_;
+  QString default_prompt_text_;
+
+  QString current_value_;
 };
 
-PromptDialogContext::PromptDialogContext(
-    oxide::qt::JavaScriptDialogProxyClient* client)
-    : client_(client) {}
+PromptDialogContext::PromptDialogContext(JavaScriptDialogClient* client,
+                                         const QString& message_text,
+                                         const QString& default_prompt_text)
+    : client_(client),
+      message_text_(message_text),
+      default_prompt_text_(default_prompt_text) {}
 
 QString PromptDialogContext::message() const {
-  return client_->messageText();
+  return message_text_;
 }
 
 QString PromptDialogContext::defaultValue() const {
-  return client_->defaultPromptText();
+  return default_prompt_text_;
 }
 
 const QString& PromptDialogContext::currentValue() const {
-  return currentValue_;
+  return current_value_;
 }
 
 void PromptDialogContext::setCurrentValue(const QString& value) {
-  if (value != currentValue_) {
-    currentValue_ = value;
+  if (value != current_value_) {
+    current_value_ = value;
     Q_EMIT currentValueChanged();
   }
 }
@@ -85,33 +93,27 @@ void PromptDialogContext::reject() const {
 }
 
 bool PromptDialog::Show() {
-  if (!view_) {
-    qWarning() << "PromptDialog::Show: Can't show after the view has gone";
-    return false;
-  }
-
-  return run(new PromptDialogContext(client_), view_->promptDialog());
+  return run(new PromptDialogContext(client_,
+                                     message_text_,
+                                     default_prompt_text_));
 }
 
-void PromptDialog::Handle(bool accept, const QString& prompt_override) {
-  PromptDialogContext* contextObject =
-    qobject_cast<PromptDialogContext*>(context_->contextObject());
-  if (accept) {
-    if (prompt_override.isNull()) {
-      contextObject->accept(contextObject->currentValue());
-    } else {
-      contextObject->accept(prompt_override);
-    }
-  } else {
-    contextObject->reject();
-  }
+QString PromptDialog::GetCurrentPromptText() {
+  PromptDialogContext* context_object =
+      qobject_cast<PromptDialogContext*>(context_->contextObject());
+  return context_object->currentValue();
 }
 
-PromptDialog::PromptDialog(OxideQQuickWebView* view,
-                           oxide::qt::JavaScriptDialogProxyClient* client)
-    : JavaScriptDialog(view, client) {}
+PromptDialog::PromptDialog(QQuickItem* parent,
+                           QQmlComponent* component,
+                           const QString& message_text,
+                           const QString& default_prompt_text,
+                           JavaScriptDialogClient* client)
+    : JavaScriptDialog(parent, component, client),
+      message_text_(message_text),
+      default_prompt_text_(default_prompt_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_prompt_dialog.moc"
+#include "qquick_prompt_dialog.moc"

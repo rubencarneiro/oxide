@@ -39,16 +39,16 @@ set(OXIDE_QUICKLIB_SRCS
     contents_view.cc
     legacy_contents_view.cc
     oxide_qquick_accelerated_frame_node.cc
-    oxide_qquick_alert_dialog.cc
-    oxide_qquick_before_unload_dialog.cc
-    oxide_qquick_confirm_dialog.cc
     oxide_qquick_file_picker.cc
     oxide_qquick_image_frame_node.cc
     oxide_qquick_init.cc
-    oxide_qquick_javascript_dialog.cc
-    oxide_qquick_prompt_dialog.cc
     oxide_qquick_software_frame_node.cc
     oxide_qquick_touch_handle_drawable.cc
+    qquick_alert_dialog.cc
+    qquick_before_unload_dialog.cc
+    qquick_confirm_dialog.cc
+    qquick_javascript_dialog.cc
+    qquick_prompt_dialog.cc
     qquick_web_context_menu.cc
     qquick_web_popup_menu.cc
     ${MOC_EXTRA})

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,26 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_PROMPT_DIALOG_H_
-#define _OXIDE_QT_QUICK_PROMPT_DIALOG_H_
+#include "javascript_dialog_testing_utils.h"
 
-#include "qt/quick/oxide_qquick_javascript_dialog.h"
+#include "base/bind.h"
 
 namespace oxide {
-namespace qquick {
 
-class PromptDialog : public JavaScriptDialog {
- public:
-  PromptDialog(OxideQQuickWebView* view,
-               oxide::qt::JavaScriptDialogProxyClient* client);
+namespace {
 
- private:
-  // oxide::qt::JavaScriptDialogProxy implementation
-  bool Show() override;
-  void Handle(bool accept, const QString& prompt_override) override;
-};
+void TestCallback(int* count_out,
+                  bool* success_out,
+                  base::string16* user_input_out,
+                  bool success,
+                  const base::string16& user_input) {
+  ++(*count_out);
+  if (success_out) {
+    *success_out = success;
+  }
+  if (user_input_out) {
+    *user_input_out = user_input;
+  }
+}
 
-} // namespace qquick
+}
+
+content::JavaScriptDialogManager::DialogClosedCallback
+MakeJavaScriptDialogTestCallback(int* count_out,
+                                 bool* success_out,
+                                 base::string16* user_input_out) {
+  return base::Bind(&TestCallback, count_out, success_out, user_input_out);
+}
+
 } // namespace oxide
-
-#endif // _OXIDE_QT_QUICK_PROMPT_DIALOG_H_

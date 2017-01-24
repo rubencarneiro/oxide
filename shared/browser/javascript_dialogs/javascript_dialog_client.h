@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,25 +15,20 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
-#define _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
+#ifndef _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_CLIENT_H_
 
-#include "qt/quick/oxide_qquick_javascript_dialog.h"
+#include "base/strings/string16.h"
 
 namespace oxide {
-namespace qquick {
 
-class BeforeUnloadDialog : public JavaScriptDialog {
+class JavaScriptDialogClient {
  public:
-  BeforeUnloadDialog(OxideQQuickWebView* view,
-                     oxide::qt::JavaScriptDialogProxyClient* client);
+  virtual ~JavaScriptDialogClient() {}
 
- private:
-  // oxide::qt::JavaScriptDialogProxy implementation
-  bool Show();
+  virtual void Close(bool success, const base::string16& user_input) = 0;
 };
 
-} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
+#endif // _OXIDE_SHARED_BROWSER_JAVASCRIPT_DIALOGS_JAVASCRIPT_DIALOG_CLIENT_H_
