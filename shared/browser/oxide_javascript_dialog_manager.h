@@ -62,7 +62,6 @@ class JavaScriptDialogManager : public content::JavaScriptDialogManager {
                               bool accept,
                               const base::string16* prompt_override) override;
   void CancelDialogs(content::WebContents* web_contents,
-                     bool suppress_callbacks,
                      bool reset_state) override;
 
   // Note: chrome implements application-modal dialogs (only one dialog active

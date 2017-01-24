@@ -20,6 +20,7 @@
 
 #include "third_party/WebKit/public/platform/WebGestureEvent.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
+#include "third_party/WebKit/public/platform/WebTouchEvent.h"
 
 #include "shared/common/oxide_shared_export.h"
 

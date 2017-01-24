@@ -149,7 +149,6 @@ bool JavaScriptDialogManager::HandleJavaScriptDialog(
 }
 
 void JavaScriptDialogManager::CancelDialogs(content::WebContents* web_contents,
-                                            bool suppress_callbacks,
                                             bool reset_state) {
   if (web_contents_data_.find(web_contents) == web_contents_data_.end()) {
     return;
