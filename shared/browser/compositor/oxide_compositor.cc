@@ -37,7 +37,6 @@
 #include "cc/surfaces/display_scheduler.h"
 #include "cc/trees/layer_tree.h"
 #include "cc/trees/layer_tree_host.h"
-#include "cc/trees/layer_tree_host_in_process.h"
 #include "cc/trees/layer_tree_settings.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
@@ -383,7 +382,7 @@ void Compositor::EnsureLayerTreeHost() {
   cc::LayerTreeSettings settings;
   settings.renderer_settings.allow_antialiasing = false;
 
-  cc::LayerTreeHostInProcess::InitParams params;
+  cc::LayerTreeHost::InitParams params;
   params.client = this;
   params.task_graph_runner =
       CompositorUtils::GetInstance()->GetTaskGraphRunner();
@@ -392,7 +391,7 @@ void Compositor::EnsureLayerTreeHost() {
   params.mutator_host = animation_host_.get();
 
   layer_tree_host_ =
-      cc::LayerTreeHostInProcess::CreateSingleThreaded(this, &params);
+      cc::LayerTreeHost::CreateSingleThreaded(this, &params);
   DCHECK(layer_tree_host_);
 
   can_evict_layer_tree_host_ = true;
