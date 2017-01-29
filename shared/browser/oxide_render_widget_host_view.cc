@@ -229,18 +229,18 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
           base::MakeUnique<cc::SurfaceFactory>(frame_sink_id_, manager, this);
     }
 
-    if (!local_frame_id_.is_valid() ||
+    if (!local_surface_id_.is_valid() ||
         frame_size_dip != last_frame_size_dip_) {
       DestroyDelegatedContent();
 
-      local_frame_id_ = id_allocator_->GenerateId();
-      DCHECK(local_frame_id_.is_valid());
+      local_surface_id_ = id_allocator_->GenerateId();
+      DCHECK(local_surface_id_.is_valid());
 
       layer_ = cc::SurfaceLayer::Create(manager->reference_factory());
       DCHECK(layer_);
 
       layer_->SetSurfaceInfo(
-          cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_frame_id_),
+          cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_surface_id_),
                           device_scale_factor,
                           frame_size));
       layer_->SetBounds(frame_size_dip);
@@ -254,7 +254,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     cc::SurfaceFactory::DrawCallback ack_callback =
         base::Bind(&RenderWidgetHostView::RunAckCallbacks,
                    weak_ptr_factory_.GetWeakPtr());
-    surface_factory_->SubmitCompositorFrame(local_frame_id_,
+    surface_factory_->SubmitCompositorFrame(local_surface_id_,
                                             std::move(frame),
                                             ack_callback);
   }
@@ -683,10 +683,10 @@ void RenderWidgetHostView::UpdateCurrentCursor() {
 
 void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
-  if (local_frame_id_.is_valid()) {
+  if (local_surface_id_.is_valid()) {
     DCHECK(surface_factory_.get());
     surface_factory_->EvictSurface();
-    local_frame_id_ = cc::LocalFrameId();
+    local_surface_id_ = cc::LocalSurfaceId();
   }
   layer_ = nullptr;
 }
@@ -783,7 +783,7 @@ RenderWidgetHostView::RenderWidgetHostView(
 RenderWidgetHostView::~RenderWidgetHostView() {
   DCHECK(!layer_);
   DCHECK(!surface_factory_);
-  DCHECK(!local_frame_id_.is_valid());
+  DCHECK(!local_surface_id_.is_valid());
 
   if (text_input_manager_) {
     text_input_manager_->RemoveObserver(this);

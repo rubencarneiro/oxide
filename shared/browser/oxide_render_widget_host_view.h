@@ -29,7 +29,7 @@
 #include "cc/output/compositor_frame_metadata.h"
 #include "cc/resources/returned_resource.h"
 #include "cc/surfaces/frame_sink_id.h"
-#include "cc/surfaces/local_frame_id.h"
+#include "cc/surfaces/local_surface_id.h"
 #include "cc/surfaces/surface_factory_client.h"
 #include "content/browser/renderer_host/render_widget_host_view_oxide.h" // nogncheck
 #include "content/browser/renderer_host/text_input_manager.h" // nogncheck
@@ -222,7 +222,7 @@ class RenderWidgetHostView
   cc::FrameSinkId frame_sink_id_;
   std::unique_ptr<cc::SurfaceIdAllocator> id_allocator_;
   std::unique_ptr<cc::SurfaceFactory> surface_factory_;
-  cc::LocalFrameId local_frame_id_;
+  cc::LocalSurfaceId local_surface_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
 
   // The output surface ID for the last frame from the renderer
