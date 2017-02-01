@@ -178,6 +178,14 @@ OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
     oxide::qt::JavaScriptDialogClient* client) {
   Q_Q(OxideQQuickWebView);
 
+  if (aux_ui_factory_) {
+    return aux_ui_factory_->CreateJavaScriptDialog(origin_url,
+                                                   type,
+                                                   message_text,
+                                                   default_prompt_text,
+                                                   client);
+  }
+
   switch (type) {
     case oxide::qt::JavaScriptDialogType::Alert:
       if (!alert_dialog_) {
@@ -215,6 +223,10 @@ OxideQQuickWebViewPrivate::CreateBeforeUnloadDialog(
     const QUrl& origin_url,
     oxide::qt::JavaScriptDialogClient* client) {
   Q_Q(OxideQQuickWebView);
+
+  if (aux_ui_factory_) {
+    return aux_ui_factory_->CreateBeforeUnloadDialog(origin_url, client);
+  }
 
   if (!before_unload_dialog_) {
     return nullptr;

@@ -28,11 +28,16 @@
 
 QT_BEGIN_NAMESPACE
 class QQuickItem;
+class QString;
+class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
 
-namespace qt{
+namespace qt {
+class JavaScriptDialog;
+class JavaScriptDialogClient;
+enum class JavaScriptDialogType;
 class WebContextMenu;
 class WebContextMenuClient;
 struct WebContextMenuParams;
@@ -48,6 +53,16 @@ class OXIDE_QTQUICK_EXPORT AuxiliaryUIFactory {
       const qt::WebContextMenuParams& params,
       const std::vector<qt::MenuItem>& items,
       qt::WebContextMenuClient* client) = 0;
+
+  virtual std::unique_ptr<qt::JavaScriptDialog> CreateJavaScriptDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogType type,
+      const QString& message_text,
+      const QString& default_prompt_text,
+      qt::JavaScriptDialogClient* client) = 0;
+  virtual std::unique_ptr<qt::JavaScriptDialog> CreateBeforeUnloadDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogClient* client) = 0;
 
  protected:
   AuxiliaryUIFactory(QQuickItem* item);

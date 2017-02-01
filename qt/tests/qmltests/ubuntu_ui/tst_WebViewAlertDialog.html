@@ -1,0 +1,13 @@
+<html>
+<head>
+<script>
+  setTimeout(() => {
+    window.alert("Foo Alert!");
+    document.documentElement.dispatchEvent(
+        new CustomEvent("alert-response", { bubbles: true }));
+  }, 0);
+</script>
+</head>
+<body>
+</body>
+</html>

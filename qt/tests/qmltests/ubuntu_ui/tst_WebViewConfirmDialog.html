@@ -1,0 +1,13 @@
+<html>
+<head>
+<script>
+  setTimeout(() => {
+    var r = window.confirm("Bar Confirm");
+    document.documentElement.dispatchEvent(
+        new CustomEvent("confirm-response", { bubbles: true, detail: r }));
+  }, 0);
+</script>
+</head>
+<body>
+</body>
+</html>

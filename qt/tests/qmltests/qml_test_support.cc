@@ -249,12 +249,7 @@ QQuickItem* TestWindowAttached::rootItem() const {
     return view->rootObject();
   }
 
-  QQuickItem* root = item_;
-  while (root->parentItem()) {
-    root = root->parentItem();
-  }
-
-  Q_ASSERT(root == item_->window()->contentItem());
+  QQuickItem* root = item_->window()->contentItem();
   return root->childItems()[0];
 }
 

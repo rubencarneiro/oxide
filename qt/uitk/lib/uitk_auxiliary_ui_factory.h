@@ -52,6 +52,15 @@ class AuxiliaryUIFactory : public qquick::AuxiliaryUIFactory {
       const qt::WebContextMenuParams& params,
       const std::vector<qt::MenuItem>& items,
       qt::WebContextMenuClient* client) override;
+  std::unique_ptr<qt::JavaScriptDialog> CreateJavaScriptDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogType type,
+      const QString& message_text,
+      const QString& default_prompt_text,
+      qt::JavaScriptDialogClient* client) override;
+  std::unique_ptr<qt::JavaScriptDialog> CreateBeforeUnloadDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogClient* client) override;
 
   Delegate* delegate_;
 

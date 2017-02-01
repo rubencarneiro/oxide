@@ -35,6 +35,8 @@
 #include "qt/uitk/lib/api/oxideubuntuwebcontextmenuitem.h"
 #include "qt/uitk/lib/api/oxideubuntuwebcontextmenuitem_p.h"
 
+#include "uitk_before_unload_dialog.h"
+#include "uitk_javascript_dialog.h"
 #include "uitk_web_context_menu.h"
 
 static void InitResources() {
@@ -223,6 +225,26 @@ std::unique_ptr<qt::WebContextMenu> AuxiliaryUIFactory::CreateWebContextMenu(
   return WebContextMenu::Create(engine, item(), params, std::move(menu),
                                 stock_actions, client,
                                 IsItemOnMobileScreen(item()));
+}
+
+std::unique_ptr<qt::JavaScriptDialog>
+AuxiliaryUIFactory::CreateJavaScriptDialog(const QUrl& origin_url,
+                                           qt::JavaScriptDialogType type,
+                                           const QString& message_text,
+                                           const QString& default_prompt_text,
+                                           qt::JavaScriptDialogClient* client) {
+  return JavaScriptDialog::Create(item(),
+                                  type,
+                                  message_text,
+                                  default_prompt_text,
+                                  client);
+}
+
+std::unique_ptr<qt::JavaScriptDialog>
+AuxiliaryUIFactory::CreateBeforeUnloadDialog(
+    const QUrl& origin_url,
+    qt::JavaScriptDialogClient* client) {
+  return BeforeUnloadDialog::Create(item(), client);
 }
 
 AuxiliaryUIFactory::AuxiliaryUIFactory(QQuickItem* item, Delegate* delegate)
