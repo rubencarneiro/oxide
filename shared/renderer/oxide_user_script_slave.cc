@@ -68,7 +68,9 @@ int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
   int id = IsolatedWorldMap::IDFromURL(url);
 
   frame->setIsolatedWorldSecurityOrigin(
-      id, blink::WebSecurityOrigin::createFromString(base::UTF8ToUTF16(url.spec())));
+      id,
+      blink::WebSecurityOrigin::createFromString(
+          blink::WebString::fromUTF8(url.spec())));
   frame->setIsolatedWorldContentSecurityPolicy(
       id, blink::WebString::fromUTF8(kIsolatedWorldCSP));
 

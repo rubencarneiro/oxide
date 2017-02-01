@@ -394,8 +394,7 @@ URLRequestContext* BrowserContextIOData::CreateMainRequestContext(
 
   storage->set_channel_id_service(
       base::MakeUnique<net::ChannelIDService>(
-          new net::DefaultChannelIDStore(channel_id_store.get()),
-          base::WorkerPool::GetTaskRunner(true)));
+          new net::DefaultChannelIDStore(channel_id_store.get())));
 
   context->set_http_server_properties(http_server_properties_.get());
 
