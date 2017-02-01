@@ -34,7 +34,7 @@ class AlertDialog : public JavaScriptDialog {
 
  private:
   // oxide::qt::JavaScriptDialog implementation
-  bool Show();
+  void Show();
 
   QString message_text_;
 };

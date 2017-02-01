@@ -92,10 +92,8 @@ void PromptDialogContext::reject() const {
   client_->close(false);
 }
 
-bool PromptDialog::Show() {
-  return run(new PromptDialogContext(client_,
-                                     message_text_,
-                                     default_prompt_text_));
+void PromptDialog::Show() {
+  run(new PromptDialogContext(client_, message_text_, default_prompt_text_));
 }
 
 QString PromptDialog::GetCurrentPromptText() {

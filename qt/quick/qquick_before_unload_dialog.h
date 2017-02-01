@@ -31,7 +31,7 @@ class BeforeUnloadDialog : public JavaScriptDialog {
 
  private:
   // qt::JavaScriptDialog implementation
-  bool Show();
+  void Show();
 };
 
 } // namespace qquick

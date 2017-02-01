@@ -35,7 +35,7 @@ class PromptDialog : public JavaScriptDialog {
 
  private:
   // qt::JavaScriptDialog implementation
-  bool Show() override;
+  void Show() override;
   QString GetCurrentPromptText() override;
 
   QString message_text_;

@@ -50,7 +50,7 @@ class JavaScriptDialog : public qt::JavaScriptDialog {
   QString GetCurrentPromptText() override;
 
   // takes ownership of contextObject
-  bool run(QObject* contextObject);
+  void run(QObject* contextObject);
 
   QPointer<QQuickItem> parent_;
   QPointer<QQmlComponent> component_;

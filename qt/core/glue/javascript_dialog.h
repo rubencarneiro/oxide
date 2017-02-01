@@ -27,7 +27,7 @@ class JavaScriptDialog {
  public:
   virtual ~JavaScriptDialog() {}
 
-  virtual bool Show() = 0;
+  virtual void Show() = 0;
   virtual void Hide() = 0;
   virtual QString GetCurrentPromptText() = 0;
 };

@@ -40,12 +40,13 @@ QString JavaScriptDialog::GetCurrentPromptText() {
   Q_UNREACHABLE();
 }
 
-bool JavaScriptDialog::run(QObject* contextObject) {
+void JavaScriptDialog::run(QObject* contextObject) {
   if (!parent_) {
     qWarning() <<
         "JavaScriptDialog:run: Can't show after the parent item has gone";
     delete contextObject;
-    return false;
+    client_->close(false);
+    return;
   }
 
   if (!component_) {
@@ -53,7 +54,8 @@ bool JavaScriptDialog::run(QObject* contextObject) {
         "JavaScriptDialog::run: Content requested a javascript dialog, but "
         "the application hasn't provided one";
     delete contextObject;
-    return false;
+    client_->close(false);
+    return;
   }
 
   QQmlContext* baseContext = component_->creationContext();
@@ -72,7 +74,8 @@ bool JavaScriptDialog::run(QObject* contextObject) {
         "JavaScriptDialog::run: Failed to create instance of Qml JS dialog "
         "component";
     context_.reset();
-    return false;
+    client_->close(false);
+    return;
   }
 
   OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
@@ -83,8 +86,6 @@ bool JavaScriptDialog::run(QObject* contextObject) {
 
   item_->setParentItem(parent_);
   component_->completeCreate();
-
-  return true;
 }
 
 JavaScriptDialog::JavaScriptDialog(QQuickItem* parent,

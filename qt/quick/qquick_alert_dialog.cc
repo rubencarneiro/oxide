@@ -59,8 +59,8 @@ void AlertDialogContext::accept() const {
   client_->close(true);
 }
 
-bool AlertDialog::Show() {
-  return run(new AlertDialogContext(client_, message_text_));
+void AlertDialog::Show() {
+  run(new AlertDialogContext(client_, message_text_));
 }
 
 AlertDialog::AlertDialog(QQuickItem* parent,

@@ -67,8 +67,8 @@ void BeforeUnloadDialogContext::reject() const {
   client_->close(false);
 }
 
-bool BeforeUnloadDialog::Show() {
-  return run(new BeforeUnloadDialogContext(client_));
+void BeforeUnloadDialog::Show() {
+  run(new BeforeUnloadDialogContext(client_));
 }
 
 BeforeUnloadDialog::BeforeUnloadDialog(QQuickItem* parent,

@@ -63,8 +63,8 @@ void ConfirmDialogContext::reject() const {
   client_->close(false);
 }
 
-bool ConfirmDialog::Show() {
-  return run(new ConfirmDialogContext(client_, message_text_));
+void ConfirmDialog::Show() {
+  run(new ConfirmDialogContext(client_, message_text_));
 }
 
 ConfirmDialog::ConfirmDialog(QQuickItem* parent,
