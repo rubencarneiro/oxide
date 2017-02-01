@@ -96,15 +96,11 @@ bool WebContextMenu::Init(QQmlEngine* engine,
   item_->setProperty("isImage",
                      params.media_type == qt::MEDIA_TYPE_IMAGE ||
                          params.media_type == qt::MEDIA_TYPE_CANVAS);
-  item_->setProperty("openerName", parent_->objectName());
   item_->setProperty("position", params.position);
   item_->setProperty("sourceItem", QVariant::fromValue(parent_.data()));
   item_->setProperty("title",
                      !params.src_url.isEmpty() ?
                          params.src_url : params.link_url);
-
-  // PopupBase.qml reparents the menu to the root item, but we need to set a
-  // parent item here first so that it can find the root
   item_->setParentItem(parent_);
 
   menu_component.completeCreate();

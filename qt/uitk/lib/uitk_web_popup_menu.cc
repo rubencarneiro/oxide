@@ -192,9 +192,6 @@ bool WebPopupMenu::Init(QQuickItem* parent) {
   }
 
   item_->setProperty("model", QVariant::fromValue(model_.get()));
-
-  // PopupBase.qml reparents the menu to the root item, but we need to set a
-  // parent item here first so that it can find the root
   item_->setParentItem(parent);
 
   component.completeCreate();

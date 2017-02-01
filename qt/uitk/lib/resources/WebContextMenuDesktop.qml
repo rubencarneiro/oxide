@@ -26,11 +26,10 @@ Popups.Popover {
   property var position
   property Item sourceItem
   property string title
-  property string openerName
 
-  id: menu
+  id: root
 
-  objectName: openerName ? openerName + "_WebContextMenu" : ""
+  objectName: parent.objectName ? parent.objectName + "_WebContextMenu" : ""
 
   QtObject {
     id: internal
@@ -59,7 +58,7 @@ Popups.Popover {
 
     Label {
       id: titleLabel
-      objectName: openerName ? openerName + "_WebContextMenu_title" : ""
+      objectName: root.objectName ? root.objectName + "_title" : ""
 
       anchors {
         left: parent.left
@@ -93,7 +92,7 @@ Popups.Popover {
         action: modelData.action
         visible: action && action.enabled && action.visible
         showDivider: false
-        objectName: openerName ? openerName + "_WebContextMenu_item_" + index : ""
+        objectName: root.objectName ? root.objectName + "_item_" + index : ""
 
         height: units.gu(5)
 
@@ -120,7 +119,7 @@ Popups.Popover {
           }
         }
 
-        onTriggered: menu.hide()
+        onTriggered: root.hide()
       }
     }
   }

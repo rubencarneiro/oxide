@@ -21,7 +21,7 @@ import Ubuntu.Components.ListItems 1.3 as ListItems
 import Ubuntu.Components.Popups 1.3 as Popups
 
 Popups.Dialog {
-  id: menu
+  id: root
 
   property var items
   property bool isImage
@@ -114,7 +114,7 @@ Popups.Dialog {
         }
       }
 
-      onTriggered: menu.hide()
+      onTriggered: root.hide()
     }
   }
 
@@ -132,7 +132,7 @@ Popups.Dialog {
       fontSize: "x-small"
       text: i18n.dtr("oxide-qt", "Cancel")
     }
-    onTriggered: menu.hide()
+    onTriggered: root.hide()
   }
 
   // adjust default dialog visuals to custom requirements for the context menu
