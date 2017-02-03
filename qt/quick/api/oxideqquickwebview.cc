@@ -1937,6 +1937,12 @@ void OxideQQuickWebView::setAlertDialog(QQmlComponent* alertDialog) {
     return;
   }
 
+  if (d->aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying an alertDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
+  }
+
   d->alert_dialog_ = alertDialog;
   emit alertDialogChanged();
 }
@@ -1956,6 +1962,12 @@ void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirmDialog) {
 
   if (d->confirm_dialog_ == confirmDialog) {
     return;
+  }
+
+  if (d->aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a confirmDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
   }
 
   d->confirm_dialog_ = confirmDialog;
@@ -1979,6 +1991,12 @@ void OxideQQuickWebView::setPromptDialog(QQmlComponent* promptDialog) {
     return;
   }
 
+  if (d->aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a promptDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
+  }
+
   d->prompt_dialog_ = promptDialog;
   emit promptDialogChanged();
 }
@@ -1999,6 +2017,12 @@ void OxideQQuickWebView::setBeforeUnloadDialog(
 
   if (d->before_unload_dialog_ == beforeUnloadDialog) {
     return;
+  }
+
+  if (d->aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a beforeUnloadDialog implementation "
+        "has no effect on this WebView, as it provides a built-in dialog";
   }
 
   d->before_unload_dialog_ = beforeUnloadDialog;
