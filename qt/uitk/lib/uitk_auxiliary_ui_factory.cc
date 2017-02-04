@@ -149,7 +149,7 @@ std::unique_ptr<qt::WebContextMenu> AuxiliaryUIFactory::CreateWebContextMenu(
     const WebContextMenuParams& params,
     const std::vector<MenuItem>& items,
     WebContextMenuClient* client) {
-  QQmlEngine* engine = qmlEngine(item());
+  QQmlEngine* engine = qmlEngine(item_);
   if (!engine) {
     qWarning() <<
         "uitk::AuxiliaryUIFactory: Failed to create context menu - cannot "
@@ -222,9 +222,9 @@ std::unique_ptr<qt::WebContextMenu> AuxiliaryUIFactory::CreateWebContextMenu(
     return nullptr;
   }
 
-  return WebContextMenu::Create(engine, item(), params, std::move(menu),
+  return WebContextMenu::Create(engine, item_, params, std::move(menu),
                                 stock_actions, client,
-                                IsItemOnMobileScreen(item()));
+                                IsItemOnMobileScreen(item_));
 }
 
 std::unique_ptr<qt::JavaScriptDialog>
@@ -233,7 +233,7 @@ AuxiliaryUIFactory::CreateJavaScriptDialog(const QUrl& origin_url,
                                            const QString& message_text,
                                            const QString& default_prompt_text,
                                            qt::JavaScriptDialogClient* client) {
-  return JavaScriptDialog::Create(item(),
+  return JavaScriptDialog::Create(item_,
                                   type,
                                   message_text,
                                   default_prompt_text,
@@ -244,11 +244,11 @@ std::unique_ptr<qt::JavaScriptDialog>
 AuxiliaryUIFactory::CreateBeforeUnloadDialog(
     const QUrl& origin_url,
     qt::JavaScriptDialogClient* client) {
-  return BeforeUnloadDialog::Create(item(), client);
+  return BeforeUnloadDialog::Create(item_, client);
 }
 
 AuxiliaryUIFactory::AuxiliaryUIFactory(QQuickItem* item, Delegate* delegate)
-    : qquick::AuxiliaryUIFactory(item),
+    : item_(item),
       delegate_(delegate) {
   InitResources();
 }

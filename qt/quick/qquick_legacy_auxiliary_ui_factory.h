@@ -15,40 +15,43 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_UITK_LIB_AUXILIARY_UI_FACTORY_H_
-#define _OXIDE_QT_UITK_LIB_AUXILIARY_UI_FACTORY_H_
+#ifndef _OXIDE_QT_QUICK_LEGACY_AUXILIARY_UI_FACTORY_H_
+#define _OXIDE_QT_QUICK_LEGACY_AUXILIARY_UI_FACTORY_H_
 
+#include <QPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/auxiliary_ui_factory.h"
 
-class OxideUbuntuWebContextMenu;
-
 QT_BEGIN_NAMESPACE
+class QQmlComponent;
 class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
+namespace qquick {
 
-namespace qt {
-struct WebContextMenuParams;
-}
+class LegacyAuxiliaryUIFactory : public qt::AuxiliaryUIFactory {
+  Q_DISABLE_COPY(LegacyAuxiliaryUIFactory)
 
-namespace uitk {
-
-class AuxiliaryUIFactory : public qt::AuxiliaryUIFactory {
  public:
-  class Delegate {
-   public:
-    virtual ~Delegate();
+  LegacyAuxiliaryUIFactory(QQuickItem* item);
+  ~LegacyAuxiliaryUIFactory() override;
 
-    virtual void ContextMenuOpening(const qt::WebContextMenuParams& params,
-                                    OxideUbuntuWebContextMenu* menu) = 0;
-  };
+  QQmlComponent* context_menu() const { return context_menu_; }
+  void set_context_menu(QQmlComponent* c) { context_menu_ = c; }
 
-  AuxiliaryUIFactory(QQuickItem* item,
-                     Delegate* delegate = nullptr);
-  ~AuxiliaryUIFactory() override;
+  QQmlComponent* alert_dialog() const { return alert_dialog_; }
+  void set_alert_dialog(QQmlComponent* c) { alert_dialog_ = c; }
+
+  QQmlComponent* confirm_dialog() const { return confirm_dialog_; }
+  void set_confirm_dialog(QQmlComponent* c) { confirm_dialog_ = c; }
+
+  QQmlComponent* prompt_dialog() const { return prompt_dialog_; }
+  void set_prompt_dialog(QQmlComponent* c) { prompt_dialog_ = c; }
+
+  QQmlComponent* before_unload_dialog() const { return before_unload_dialog_; }
+  void set_before_unload_dialog(QQmlComponent* c) { before_unload_dialog_ = c; }
 
  private:
   // qt::AuxiliaryUIFactory implementation
@@ -68,12 +71,14 @@ class AuxiliaryUIFactory : public qt::AuxiliaryUIFactory {
 
   QQuickItem* item_;
 
-  Delegate* delegate_;
-
-  Q_DISABLE_COPY(AuxiliaryUIFactory)
+  QPointer<QQmlComponent> context_menu_;
+  QPointer<QQmlComponent> alert_dialog_;
+  QPointer<QQmlComponent> confirm_dialog_;
+  QPointer<QQmlComponent> prompt_dialog_;
+  QPointer<QQmlComponent> before_unload_dialog_;
 };
 
-} // namespace uitk
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_UITK_LIB_AUXILIARY_UI_FACTORY_H_
+#endif // _OXIDE_QT_QUICK_LEGACY_AUXILIARY_UI_FACTORY_H_

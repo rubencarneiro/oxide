@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
-#define _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
+#ifndef _OXIDE_QT_QUICK_LEGACY_WEB_POPUP_MENU_H_
+#define _OXIDE_QT_QUICK_LEGACY_WEB_POPUP_MENU_H_
 
 #include <vector>
 
@@ -41,15 +41,15 @@ class WebPopupMenuClient;
 
 namespace qquick {
 
-class WebPopupMenu : public qt::WebPopupMenu {
+class LegacyWebPopupMenu : public qt::WebPopupMenu {
  public:
-  WebPopupMenu(QQuickItem* parent,
-               QQmlComponent* component,
-               const std::vector<oxide::qt::MenuItem>& items,
-               bool allow_multiple_selection,
-               const QRect& bounds,
-               qt::WebPopupMenuClient* client);
-  ~WebPopupMenu() override;
+  LegacyWebPopupMenu(QQuickItem* parent,
+                     QQmlComponent* component,
+                     const std::vector<oxide::qt::MenuItem>& items,
+                     bool allow_multiple_selection,
+                     const QRect& bounds,
+                     qt::WebPopupMenuClient* client);
+  ~LegacyWebPopupMenu() override;
 
  private:
   // qt::WebPopupMenu implementation
@@ -70,4 +70,4 @@ class WebPopupMenu : public qt::WebPopupMenu {
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_WEB_POPUP_MENU_H_
+#endif // _OXIDE_QT_QUICK_LEGACY_WEB_POPUP_MENU_H_

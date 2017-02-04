@@ -28,7 +28,7 @@ OxideUbuntuWebViewPrivate::OxideUbuntuWebViewPrivate(
           q,
           std::unique_ptr<oxide::qquick::ContentsView>(
               new oxide::uitk::ContentsView(q)),
-          std::unique_ptr<oxide::qquick::AuxiliaryUIFactory>(
+          std::unique_ptr<oxide::qt::AuxiliaryUIFactory>(
               new oxide::uitk::AuxiliaryUIFactory(q, this))) {}
 
 void OxideUbuntuWebViewPrivate::ContextMenuOpening(

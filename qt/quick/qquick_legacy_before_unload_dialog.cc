@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_before_unload_dialog.h"
+#include "qquick_legacy_before_unload_dialog.h"
 
 #include <libintl.h>
 #include <QObject>
@@ -67,16 +67,17 @@ void BeforeUnloadDialogContext::reject() const {
   client_->close(false);
 }
 
-void BeforeUnloadDialog::Show() {
+void LegacyBeforeUnloadDialog::Show() {
   run(new BeforeUnloadDialogContext(client_));
 }
 
-BeforeUnloadDialog::BeforeUnloadDialog(QQuickItem* parent,
-                                       QQmlComponent* component,
-                                       JavaScriptDialogClient* client)
-    : JavaScriptDialog(parent, component, client) {}
+LegacyBeforeUnloadDialog::LegacyBeforeUnloadDialog(
+    QQuickItem* parent,
+    QQmlComponent* component,
+    JavaScriptDialogClient* client)
+    : LegacyJavaScriptDialog(parent, component, client) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_before_unload_dialog.moc"
+#include "qquick_legacy_before_unload_dialog.moc"

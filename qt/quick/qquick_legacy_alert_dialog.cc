@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_alert_dialog.h"
+#include "qquick_legacy_alert_dialog.h"
 
 #include <QObject>
 
@@ -59,18 +59,18 @@ void AlertDialogContext::accept() const {
   client_->close(true);
 }
 
-void AlertDialog::Show() {
+void LegacyAlertDialog::Show() {
   run(new AlertDialogContext(client_, message_text_));
 }
 
-AlertDialog::AlertDialog(QQuickItem* parent,
-                         QQmlComponent* component,
-                         const QString& message_text,
-                         JavaScriptDialogClient* client)
-    : JavaScriptDialog(parent, component, client),
+LegacyAlertDialog::LegacyAlertDialog(QQuickItem* parent,
+                                     QQmlComponent* component,
+                                     const QString& message_text,
+                                     JavaScriptDialogClient* client)
+    : LegacyJavaScriptDialog(parent, component, client),
       message_text_(message_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_alert_dialog.moc"
+#include "qquick_legacy_alert_dialog.moc"

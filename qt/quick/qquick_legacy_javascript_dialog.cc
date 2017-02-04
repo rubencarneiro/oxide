@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_javascript_dialog.h"
+#include "qquick_legacy_javascript_dialog.h"
 
 #include <QDebug>
 #include <QQmlComponent>
@@ -30,20 +30,20 @@ namespace qquick {
 
 using qt::JavaScriptDialogClient;
 
-void JavaScriptDialog::Hide() {
+void LegacyJavaScriptDialog::Hide() {
   if (item_) {
     item_->setVisible(false);
   }
 }
 
-QString JavaScriptDialog::GetCurrentPromptText() {
+QString LegacyJavaScriptDialog::GetCurrentPromptText() {
   Q_UNREACHABLE();
 }
 
-void JavaScriptDialog::run(QObject* contextObject) {
+void LegacyJavaScriptDialog::run(QObject* contextObject) {
   if (!parent_) {
     qWarning() <<
-        "JavaScriptDialog:run: Can't show after the parent item has gone";
+        "LegacyJavaScriptDialog:run: Can't show after the parent item has gone";
     delete contextObject;
     client_->close(false);
     return;
@@ -51,8 +51,8 @@ void JavaScriptDialog::run(QObject* contextObject) {
 
   if (!component_) {
     qWarning() <<
-        "JavaScriptDialog::run: Content requested a javascript dialog, but "
-        "the application hasn't provided one";
+        "LegacyJavaScriptDialog::run: Content requested a javascript dialog, "
+        "but the application hasn't provided one";
     delete contextObject;
     client_->close(false);
     return;
@@ -71,8 +71,8 @@ void JavaScriptDialog::run(QObject* contextObject) {
   item_.reset(qobject_cast<QQuickItem*>(component_->beginCreate(context_.data())));
   if (!item_) {
     qWarning() <<
-        "JavaScriptDialog::run: Failed to create instance of Qml JS dialog "
-        "component";
+        "LegacyJavaScriptDialog::run: Failed to create instance of Qml JS "
+        "dialog component";
     context_.reset();
     client_->close(false);
     return;
@@ -88,9 +88,9 @@ void JavaScriptDialog::run(QObject* contextObject) {
   component_->completeCreate();
 }
 
-JavaScriptDialog::JavaScriptDialog(QQuickItem* parent,
-                                   QQmlComponent* component,
-                                   JavaScriptDialogClient* client)
+LegacyJavaScriptDialog::LegacyJavaScriptDialog(QQuickItem* parent,
+                                               QQmlComponent* component,
+                                               JavaScriptDialogClient* client)
     : parent_(parent),
       component_(component),
       client_(client) {}

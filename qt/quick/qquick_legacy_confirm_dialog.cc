@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_confirm_dialog.h"
+#include "qquick_legacy_confirm_dialog.h"
 
 #include <QObject>
 
@@ -63,18 +63,18 @@ void ConfirmDialogContext::reject() const {
   client_->close(false);
 }
 
-void ConfirmDialog::Show() {
+void LegacyConfirmDialog::Show() {
   run(new ConfirmDialogContext(client_, message_text_));
 }
 
-ConfirmDialog::ConfirmDialog(QQuickItem* parent,
-                             QQmlComponent* component,
-                             const QString& message_text,
-                             JavaScriptDialogClient* client)
-    : JavaScriptDialog(parent, component, client),
+LegacyConfirmDialog::LegacyConfirmDialog(QQuickItem* parent,
+                                         QQmlComponent* component,
+                                         const QString& message_text,
+                                         JavaScriptDialogClient* client)
+    : LegacyJavaScriptDialog(parent, component, client),
       message_text_(message_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_confirm_dialog.moc"
+#include "qquick_legacy_confirm_dialog.moc"

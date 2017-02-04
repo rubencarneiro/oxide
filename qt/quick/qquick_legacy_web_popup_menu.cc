@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_web_popup_menu.h"
+#include "qquick_legacy_web_popup_menu.h"
 
 #include <QAbstractListModel>
 #include <QLatin1String>
@@ -253,16 +253,17 @@ void PopupMenuContext::cancel() {
 
 } // namespace
 
-void WebPopupMenu::Show() {
+void LegacyWebPopupMenu::Show() {
   if (!parent_) {
-    qWarning() << "WebPopupMenu::Show: Can't show after the view has gone";
+    qWarning() <<
+        "LegacyWebPopupMenu::Show: Can't show after the view has gone";
     client_->cancel();
     return;
   }
 
   if (!component_) {
     qWarning() <<
-        "WebPopupMenu::Show: Content requested a popup menu, but the "
+        "LegacyWebPopupMenu::Show: Content requested a popup menu, but the "
         "application hasn't provided one";
     client_->cancel();
     return;
@@ -285,7 +286,8 @@ void WebPopupMenu::Show() {
       component_->beginCreate(popup_context_.data())));
   if (!popup_item_) {
     qWarning() <<
-        "WebPopupMenu::Show: Failed to create instance of Qml popup component";
+        "LegacyWebPopupMenu::Show: Failed to create instance of Qml popup "
+        "component";
     client_->cancel();
     return;
   }
@@ -303,19 +305,19 @@ void WebPopupMenu::Show() {
   component_->completeCreate();
 }
 
-void WebPopupMenu::Hide() {
+void LegacyWebPopupMenu::Hide() {
   if (!popup_item_) {
     return;
   }
   popup_item_->setVisible(false);
 }
 
-WebPopupMenu::WebPopupMenu(QQuickItem* parent,
-                           QQmlComponent* component,
-                           const std::vector<qt::MenuItem>& items,
-                           bool allow_multiple_selection,
-                           const QRect& bounds,
-                           qt::WebPopupMenuClient* client)
+LegacyWebPopupMenu::LegacyWebPopupMenu(QQuickItem* parent,
+                                       QQmlComponent* component,
+                                       const std::vector<qt::MenuItem>& items,
+                                       bool allow_multiple_selection,
+                                       const QRect& bounds,
+                                       qt::WebPopupMenuClient* client)
     : items_(items),
       allow_multiple_selection_(allow_multiple_selection),
       bounds_(bounds),
@@ -323,9 +325,9 @@ WebPopupMenu::WebPopupMenu(QQuickItem* parent,
       parent_(parent),
       component_(component) {}
 
-WebPopupMenu::~WebPopupMenu() {}
+LegacyWebPopupMenu::~LegacyWebPopupMenu() {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_web_popup_menu.moc"
+#include "qquick_legacy_web_popup_menu.moc"

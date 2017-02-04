@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2013-2015 Canonical Ltd.
+// Copyright (C) 2013-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,31 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_ALERT_DIALOG__H_
-#define _OXIDE_QT_QUICK_ALERT_DIALOG__H_
+#ifndef _OXIDE_QT_QUICK_LEGACY_PROMPT_DIALOG_H_
+#define _OXIDE_QT_QUICK_LEGACY_PROMPT_DIALOG_H_
 
 #include <QString>
 
-#include "qt/quick/qquick_javascript_dialog.h"
+#include "qt/quick/qquick_legacy_javascript_dialog.h"
 
 namespace oxide {
 namespace qquick {
 
-class AlertDialog : public JavaScriptDialog {
+class LegacyPromptDialog : public LegacyJavaScriptDialog {
  public:
-  AlertDialog(QQuickItem* parent,
-              QQmlComponent* component,
-              const QString& message_text,
-              qt::JavaScriptDialogClient* client);
+  LegacyPromptDialog(QQuickItem* parent,
+                     QQmlComponent* component,
+                     const QString& message_text,
+                     const QString& default_prompt_text,
+                     qt::JavaScriptDialogClient* client);
 
  private:
-  // oxide::qt::JavaScriptDialog implementation
-  void Show();
+  // qt::JavaScriptDialog implementation
+  void Show() override;
+  QString GetCurrentPromptText() override;
 
   QString message_text_;
+  QString default_prompt_text_;
 };
 
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_ALERT_DIALOG_H_
+#endif // _OXIDE_QT_QUICK_LEGACY_PROMPT_DIALOG_H_

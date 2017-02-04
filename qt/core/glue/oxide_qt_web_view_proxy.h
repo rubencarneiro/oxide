@@ -38,6 +38,7 @@ class OxideQWebPreferences;
 namespace oxide {
 namespace qt {
 
+class AuxiliaryUIFactory;
 class ContentsViewClient;
 class ScriptMessageHandlerProxy;
 class WebContextProxy;
@@ -79,6 +80,7 @@ class OXIDE_QTCORE_EXPORT WebViewProxy : public ProxyBase<WebView> {
   static WebViewProxy* create(
       WebViewProxyClient* client, // Must outlive returned proxy
       ContentsViewClient* view_client, // Must outlive returned proxy
+      AuxiliaryUIFactory* aux_ui_factory, // Must outlive returned proxy
       QObject* handle,
       QObject* context,
       bool incognito,
@@ -86,6 +88,7 @@ class OXIDE_QTCORE_EXPORT WebViewProxy : public ProxyBase<WebView> {
       RestoreType restore_type);
   static WebViewProxy* create(WebViewProxyClient* client,
                               ContentsViewClient* view_client,
+                              AuxiliaryUIFactory* aux_ui_factory,
                               QObject* handle,
                               OxideQNewViewRequest* new_view_request,
                               OxideQWebPreferences* initial_prefs);

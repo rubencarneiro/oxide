@@ -19,7 +19,7 @@
 
 #include "qt/core/glue/web_popup_menu.h"
 
-#include "qquick_web_popup_menu.h"
+#include "qquick_legacy_web_popup_menu.h"
 
 namespace oxide {
 namespace qquick {
@@ -34,12 +34,12 @@ std::unique_ptr<qt::WebPopupMenu> LegacyContentsView::CreateWebPopupMenu(
   }
 
   return std::unique_ptr<qt::WebPopupMenu>(
-      new WebPopupMenu(item(),
-                       popup_menu_,
-                       items,
-                       allow_multiple_selection,
-                       bounds,
-                       client));
+      new LegacyWebPopupMenu(item(),
+                             popup_menu_,
+                             items,
+                             allow_multiple_selection,
+                             bounds,
+                             client));
 }
 
 LegacyContentsView::LegacyContentsView(QQuickItem* item)

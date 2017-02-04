@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_prompt_dialog.h"
+#include "qquick_legacy_prompt_dialog.h"
 
 #include <QObject>
 
@@ -92,26 +92,26 @@ void PromptDialogContext::reject() const {
   client_->close(false);
 }
 
-void PromptDialog::Show() {
+void LegacyPromptDialog::Show() {
   run(new PromptDialogContext(client_, message_text_, default_prompt_text_));
 }
 
-QString PromptDialog::GetCurrentPromptText() {
+QString LegacyPromptDialog::GetCurrentPromptText() {
   PromptDialogContext* context_object =
       qobject_cast<PromptDialogContext*>(context_->contextObject());
   return context_object->currentValue();
 }
 
-PromptDialog::PromptDialog(QQuickItem* parent,
-                           QQmlComponent* component,
-                           const QString& message_text,
-                           const QString& default_prompt_text,
-                           JavaScriptDialogClient* client)
-    : JavaScriptDialog(parent, component, client),
+LegacyPromptDialog::LegacyPromptDialog(QQuickItem* parent,
+                                       QQmlComponent* component,
+                                       const QString& message_text,
+                                       const QString& default_prompt_text,
+                                       JavaScriptDialogClient* client)
+    : LegacyJavaScriptDialog(parent, component, client),
       message_text_(message_text),
       default_prompt_text_(default_prompt_text) {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_prompt_dialog.moc"
+#include "qquick_legacy_prompt_dialog.moc"

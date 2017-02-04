@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qquick_web_context_menu.h"
+#include "qquick_legacy_web_context_menu.h"
 
 #include <QPointF>
 #include <QObject>
@@ -253,16 +253,17 @@ void ContextMenuContext::close() {
 
 } // namespace
 
-void WebContextMenu::Show() {
+void LegacyWebContextMenu::Show() {
   if (!parent_) {
-    qWarning() << "WebContextMenu::Show: Can't show after the view has gone";
+    qWarning() <<
+        "LegacyWebContextMenu::Show: Can't show after the view has gone";
     client_->close();
     return;
   }
 
   if (!component_) {
     qWarning() <<
-        "WebContextMenu::Show: Content requested a context menu, but the "
+        "LegacyWebContextMenu::Show: Content requested a context menu, but the "
         "application hasn't provided one";
     client_->close();
     return;
@@ -285,7 +286,8 @@ void WebContextMenu::Show() {
       component_->beginCreate(context_.get())));
   if (!item_) {
     qWarning() <<
-        "WebContextMenu::Show: Failed to create instance of Qml context menu component";
+        "LegacyWebContextMenu::Show: Failed to create instance of Qml context "
+        "menu component";
     client_->close();
     return;
   }
@@ -303,24 +305,24 @@ void WebContextMenu::Show() {
   component_->completeCreate();
 }
 
-void WebContextMenu::Hide() {
+void LegacyWebContextMenu::Hide() {
   if (item_) {
     item_->setVisible(false);
   }
 }
 
-WebContextMenu::WebContextMenu(QQuickItem* parent,
-                               QQmlComponent* component,
-                               const WebContextMenuParams& params,
-                               WebContextMenuClient* client)
+LegacyWebContextMenu::LegacyWebContextMenu(QQuickItem* parent,
+                                           QQmlComponent* component,
+                                           const WebContextMenuParams& params,
+                                           WebContextMenuClient* client)
     : params_(params),
       client_(client),
       parent_(parent),
       component_(component) {}
 
-WebContextMenu::~WebContextMenu() {}
+LegacyWebContextMenu::~LegacyWebContextMenu() {}
 
 } // namespace qquick
 } // namespace oxide
 
-#include "qquick_web_context_menu.moc"
+#include "qquick_legacy_web_context_menu.moc"

@@ -48,12 +48,6 @@ namespace qt {
 
 class FilePickerProxy;
 class FilePickerProxyClient;
-class JavaScriptDialog;
-class JavaScriptDialogClient;
-enum class JavaScriptDialogType;
-class WebContextMenu;
-class WebContextMenuClient;
-class WebContextMenuParams;
 class WebFrameProxy;
 
 enum FrameMetadataChangeFlags {
@@ -68,21 +62,7 @@ class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
 
-  virtual std::unique_ptr<WebContextMenu> CreateWebContextMenu(
-      const WebContextMenuParams& params,
-      const std::vector<MenuItem>& items,
-      WebContextMenuClient* client) = 0;
-
-  virtual std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
-      const QUrl& origin_url,
-      JavaScriptDialogType type,
-      const QString& message_text,
-      const QString& default_prompt_text,
-      JavaScriptDialogClient* client) = 0;
-  virtual std::unique_ptr<JavaScriptDialog> CreateBeforeUnloadDialog(
-      const QUrl& origin_url,
-      JavaScriptDialogClient* client) = 0;
-
+  // XXX: Move to AuxiliaryUIFactory
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;
 
   virtual void WebProcessStatusChanged() = 0;

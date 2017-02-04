@@ -63,6 +63,7 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/auxiliary_ui_factory.h"
 #include "qt/core/glue/contents_view_client.h"
 #include "qt/core/glue/javascript_dialog.h"
 #include "qt/core/glue/javascript_dialog_type.h"
@@ -359,9 +360,11 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewClient* view_client,
+                 AuxiliaryUIFactory* aux_ui_factory,
                  QObject* handle)
     : contents_view_(new ContentsViewImpl(view_client, handle)),
       client_(client),
+      aux_ui_factory_(aux_ui_factory),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -669,7 +672,8 @@ std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
     oxide::WebContextMenuClient* client) {
   std::unique_ptr<WebContextMenuImpl> menu =
       base::MakeUnique<WebContextMenuImpl>(params, client);
-  if (!menu->Init(client_->CreateWebContextMenu(menu->GetParams(),
+  if (!menu->Init(
+          aux_ui_factory_->CreateWebContextMenu(menu->GetParams(),
                                                 MenuItemBuilder::Build(items),
                                                 menu.get()))) {
     return nullptr;
@@ -777,7 +781,7 @@ std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateBeforeUnloadDialog(
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(client);
   std::unique_ptr<JavaScriptDialog> dialog =
-      client_->CreateBeforeUnloadDialog(
+      aux_ui_factory_->CreateBeforeUnloadDialog(
           QUrl(QString::fromStdString(origin_url.spec())),
           host.get());
   if (!dialog) {
@@ -805,7 +809,7 @@ std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateJavaScriptDialog(
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(client);
   std::unique_ptr<JavaScriptDialog> dialog =
-      client_->CreateJavaScriptDialog(
+      aux_ui_factory_->CreateJavaScriptDialog(
           QUrl(QString::fromStdString(origin_url.spec())),
           static_cast<JavaScriptDialogType>(type),
           QString::fromStdString(base::UTF16ToUTF8(message_text)),
@@ -1114,12 +1118,13 @@ void WebView::teardownFrameTree() {
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewClient* view_client,
+                 AuxiliaryUIFactory* aux_ui_factory,
                  QObject* handle,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, view_client, handle) {
+    : WebView(client, view_client, aux_ui_factory, handle) {
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
@@ -1150,6 +1155,7 @@ WebView::WebView(WebViewProxyClient* client,
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
     ContentsViewClient* view_client,
+    AuxiliaryUIFactory* aux_ui_factory,
     QObject* handle,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {
@@ -1159,7 +1165,7 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, view_client, handle);
+  WebView* new_view = new WebView(client, view_client, aux_ui_factory, handle);
 
   oxide::WebView::CommonParams params;
   params.client = new_view;

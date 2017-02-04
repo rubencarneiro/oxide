@@ -28,6 +28,7 @@ namespace qt {
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
                                    ContentsViewClient* view_client,
+                                   AuxiliaryUIFactory* aux_ui_factory,
                                    QObject* handle,
                                    QObject* context,
                                    bool incognito,
@@ -37,6 +38,7 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 
   return new WebView(client,
                      view_client,
+                     aux_ui_factory,
                      handle,
                      WebContext::FromProxyHandle(context),
                      incognito,
@@ -47,11 +49,13 @@ WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
 // static
 WebViewProxy* WebViewProxy::create(WebViewProxyClient* client,
                                    ContentsViewClient* view_client,
+                                   AuxiliaryUIFactory* aux_ui_factory,
                                    QObject* handle,
                                    OxideQNewViewRequest* new_view_request,
                                    OxideQWebPreferences* initial_prefs) {
   return WebView::CreateFromNewViewRequest(client,
                                            view_client,
+                                           aux_ui_factory,
                                            handle,
                                            new_view_request,
                                            initial_prefs);

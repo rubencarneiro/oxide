@@ -53,6 +53,7 @@ class WebView;
 
 namespace qt {
 
+class AuxiliaryUIFactory;
 class ContentsViewImpl;
 class ContentsViewClient;
 class WebContext;
@@ -68,6 +69,7 @@ class WebView : public oxide::WebViewClient,
  public:
   WebView(WebViewProxyClient* client,
           ContentsViewClient* view_client,
+          AuxiliaryUIFactory* aux_ui_factory,
           QObject* handle,
           WebContext* context,
           bool incognito,
@@ -76,6 +78,7 @@ class WebView : public oxide::WebViewClient,
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
       ContentsViewClient* view_client,
+      AuxiliaryUIFactory* aux_ui_factory,
       QObject* handle,
       OxideQNewViewRequest* new_view_request,
       OxideQWebPreferences* initial_prefs);
@@ -88,6 +91,7 @@ class WebView : public oxide::WebViewClient,
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewClient* view_client,
+          AuxiliaryUIFactory* aux_ui_factory,
           QObject* handle);
 
   void CommonInit();
@@ -258,6 +262,8 @@ class WebView : public oxide::WebViewClient,
   std::unique_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
+
+  AuxiliaryUIFactory* aux_ui_factory_;
 
   QList<QObject*> message_handlers_;
 

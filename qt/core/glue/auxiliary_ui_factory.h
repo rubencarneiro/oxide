@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_
-#define _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_
+#ifndef _OXIDE_QT_CORE_GLUE_AUXILIARY_UI_FACTORY_H_
+#define _OXIDE_QT_CORE_GLUE_AUXILIARY_UI_FACTORY_H_
 
 #include <memory>
 #include <vector>
@@ -24,56 +24,43 @@
 #include <QtGlobal>
 
 #include "qt/core/glue/menu_item.h"
-#include "qt/quick/api/oxideqquickglobal.h"
 
 QT_BEGIN_NAMESPACE
-class QQuickItem;
 class QString;
 class QUrl;
 QT_END_NAMESPACE
 
 namespace oxide {
-
 namespace qt {
+
 class JavaScriptDialog;
 class JavaScriptDialogClient;
 enum class JavaScriptDialogType;
 class WebContextMenu;
 class WebContextMenuClient;
 struct WebContextMenuParams;
-}
 
-namespace qquick {
-
-class OXIDE_QTQUICK_EXPORT AuxiliaryUIFactory {
+class AuxiliaryUIFactory {
  public:
-  virtual ~AuxiliaryUIFactory();
+  virtual ~AuxiliaryUIFactory() = default;
 
-  virtual std::unique_ptr<qt::WebContextMenu> CreateWebContextMenu(
-      const qt::WebContextMenuParams& params,
-      const std::vector<qt::MenuItem>& items,
-      qt::WebContextMenuClient* client) = 0;
+  virtual std::unique_ptr<WebContextMenu> CreateWebContextMenu(
+      const WebContextMenuParams& params,
+      const std::vector<MenuItem>& items,
+      WebContextMenuClient* client) = 0;
 
-  virtual std::unique_ptr<qt::JavaScriptDialog> CreateJavaScriptDialog(
+  virtual std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
       const QUrl& origin_url,
-      qt::JavaScriptDialogType type,
+      JavaScriptDialogType type,
       const QString& message_text,
       const QString& default_prompt_text,
-      qt::JavaScriptDialogClient* client) = 0;
-  virtual std::unique_ptr<qt::JavaScriptDialog> CreateBeforeUnloadDialog(
+      JavaScriptDialogClient* client) = 0;
+  virtual std::unique_ptr<JavaScriptDialog> CreateBeforeUnloadDialog(
       const QUrl& origin_url,
-      qt::JavaScriptDialogClient* client) = 0;
-
- protected:
-  AuxiliaryUIFactory(QQuickItem* item);
-
-  QQuickItem* item() const { return item_; }
-
- private:
-  QQuickItem* item_;
+      JavaScriptDialogClient* client) = 0;
 };
 
-} // namespace qquick
+} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_AUXILIARY_UI_FACTORY_H_
+#endif // _OXIDE_QT_CORE_GLUE_AUXILIARY_UI_FACTORY_H_

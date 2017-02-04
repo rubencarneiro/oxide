@@ -15,19 +15,19 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
-#define _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
+#ifndef _OXIDE_QT_QUICK_LEGACY_BEFORE_UNLOAD_DIALOG_H_
+#define _OXIDE_QT_QUICK_LEGACY_BEFORE_UNLOAD_DIALOG_H_
 
-#include "qt/quick/qquick_javascript_dialog.h"
+#include "qt/quick/qquick_legacy_javascript_dialog.h"
 
 namespace oxide {
 namespace qquick {
 
-class BeforeUnloadDialog : public JavaScriptDialog {
+class LegacyBeforeUnloadDialog : public LegacyJavaScriptDialog {
  public:
-  BeforeUnloadDialog(QQuickItem* parent,
-                     QQmlComponent* component,
-                     qt::JavaScriptDialogClient* client);
+  LegacyBeforeUnloadDialog(QQuickItem* parent,
+                           QQmlComponent* component,
+                           qt::JavaScriptDialogClient* client);
 
  private:
   // qt::JavaScriptDialog implementation
@@ -37,4 +37,4 @@ class BeforeUnloadDialog : public JavaScriptDialog {
 } // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_QUICK_BEFORE_UNLOAD_DIALOG_H_
+#endif // _OXIDE_QT_QUICK_LEGACY_BEFORE_UNLOAD_DIALOG_H_
