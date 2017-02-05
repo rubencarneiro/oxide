@@ -30,6 +30,7 @@
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/media_stream_request.h"
+#include "media/base/video_facing.h"
 
 #if defined(ENABLE_HYBRIS_CAMERA)
 #include "shared/browser/hybris_utils.h"
@@ -236,10 +237,10 @@ void UpdateMediaStreamDeviceFacing(content::MediaStreamDevices& devices) {
 
     switch(type) {
       case BACK_FACING_CAMERA_TYPE:
-        device.video_facing = content::MEDIA_VIDEO_FACING_ENVIRONMENT;
+        device.video_facing = media::MEDIA_VIDEO_FACING_ENVIRONMENT;
         break;
       case FRONT_FACING_CAMERA_TYPE:
-        device.video_facing = content::MEDIA_VIDEO_FACING_USER;
+        device.video_facing = media::MEDIA_VIDEO_FACING_USER;
         break;
       default:
         break;
@@ -365,7 +366,7 @@ const content::MediaStreamDevice*
 MediaCaptureDevicesDispatcher::GetPreferredDefaultVideoCaptureDevice() {
   const auto& devices = GetVideoCaptureDevices();
   for (auto& device : devices) {
-    if (device.video_facing == content::MEDIA_VIDEO_FACING_USER) {
+    if (device.video_facing == media::MEDIA_VIDEO_FACING_USER) {
       return &device;
     }
   }

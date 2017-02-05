@@ -21,6 +21,7 @@
 
 #include "base/macros.h"
 #include "content/public/common/media_stream_request.h"
+#include "media/base/video_facing.h"
 
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher_observer.h"
@@ -30,11 +31,11 @@ namespace {
 Q_GLOBAL_STATIC(OxideQMediaCaptureDevices, g_instance)
 
 OxideQVideoCaptureDevice::Position VideoFacingModeToPosition(
-    content::VideoFacingMode mode) {
+    media::VideoFacingMode mode) {
   switch (mode) {
-    case content::MEDIA_VIDEO_FACING_USER:
+    case media::MEDIA_VIDEO_FACING_USER:
       return OxideQVideoCaptureDevice::PositionFrontFace;
-    case content::MEDIA_VIDEO_FACING_ENVIRONMENT:
+    case media::MEDIA_VIDEO_FACING_ENVIRONMENT:
       return OxideQVideoCaptureDevice::PositionBackFace;
     default:
       return OxideQVideoCaptureDevice::PositionUnspecified;

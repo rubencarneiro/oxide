@@ -281,6 +281,8 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   }
 
   const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
+  selection_controller_->OnSelectionEditable(selection.is_editable);
+  selection_controller_->OnSelectionEmpty(selection.is_empty_text_form_control);
   selection_controller_->OnSelectionBoundsChanged(selection.start,
                                                   selection.end);
 
@@ -483,7 +485,9 @@ void RenderWidgetHostView::OnGestureEvent(
     return;
   }
 
-  HandleGestureForTouchSelection(event);
+  if (HandleGestureForTouchSelection(event)) {
+    return;
+  }
 
   if (event.type() == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
@@ -520,19 +524,25 @@ bool RenderWidgetHostView::HandleContextMenu(
   return false;
 }
 
-void RenderWidgetHostView::HandleGestureForTouchSelection(
+bool RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
   switch (event.type()) {
     case blink::WebInputEvent::GestureLongPress: {
       base::TimeTicks event_time = base::TimeTicks() +
           base::TimeDelta::FromSecondsD(event.timeStampSeconds());
       gfx::PointF location(event.x, event.y);
-      selection_controller_->HandleLongPressEvent(event_time, location);
+      if (selection_controller_->WillHandleLongPressEvent(
+              event_time, location)) {
+        return true;
+      }
       break;
     }
     case blink::WebInputEvent::GestureTap: {
       gfx::PointF location(event.x, event.y);
-      selection_controller_->HandleTapEvent(location, event.data.tap.tapCount);
+      if (selection_controller_->WillHandleTapEvent(
+              location, event.data.tap.tapCount)) {
+        return true;
+      }
       break;
     }
     case blink::WebInputEvent::GestureScrollBegin:
@@ -548,6 +558,7 @@ void RenderWidgetHostView::HandleGestureForTouchSelection(
     default:
       break;
   }
+  return false;
 }
 
 void RenderWidgetHostView::NotifyTouchSelectionChanged(
