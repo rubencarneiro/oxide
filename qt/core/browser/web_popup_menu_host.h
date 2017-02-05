@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
-#define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_HOST_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_HOST_H_
 
 #include <memory>
 #include <vector>
@@ -36,13 +36,13 @@ namespace qt {
 
 class WebPopupMenu;
 
-class WebPopupMenuImpl : public oxide::WebPopupMenu,
+class WebPopupMenuHost : public oxide::WebPopupMenu,
                          public WebPopupMenuClient {
  public:
-  WebPopupMenuImpl(oxide::WebPopupMenuClient* client);
-  ~WebPopupMenuImpl() override;
+  WebPopupMenuHost(oxide::WebPopupMenuClient* client);
+  ~WebPopupMenuHost() override;
 
-  bool Init(std::unique_ptr<qt::WebPopupMenu> menu);
+  void Init(std::unique_ptr<qt::WebPopupMenu> menu);
 
   static std::vector<MenuItem> BuildMenuItems(
       const std::vector<content::MenuItem>& items);
@@ -60,10 +60,10 @@ class WebPopupMenuImpl : public oxide::WebPopupMenu,
 
   std::unique_ptr<qt::WebPopupMenu> menu_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebPopupMenuImpl);
+  DISALLOW_COPY_AND_ASSIGN(WebPopupMenuHost);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_QQUICK_H_
+#endif // _OXIDE_QT_CORE_BROWSER_WEB_POPUP_MENU_HOST_H_

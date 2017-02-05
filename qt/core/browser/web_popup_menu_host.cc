@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qt_web_popup_menu.h"
+#include "web_popup_menu_host.h"
 
 #include <QList>
 
@@ -29,15 +29,15 @@
 namespace oxide {
 namespace qt {
 
-void WebPopupMenuImpl::Show() {
+void WebPopupMenuHost::Show() {
   menu_->Show();
 }
 
-void WebPopupMenuImpl::Hide() {
+void WebPopupMenuHost::Hide() {
   menu_->Hide();
 }
 
-void WebPopupMenuImpl::selectItems(const QList<unsigned>& selected_indices) {
+void WebPopupMenuHost::selectItems(const QList<unsigned>& selected_indices) {
   std::vector<int> x;
   for (unsigned i : selected_indices) {
     DCHECK_LE(i, static_cast<unsigned>(std::numeric_limits<int>::max()));
@@ -46,22 +46,21 @@ void WebPopupMenuImpl::selectItems(const QList<unsigned>& selected_indices) {
   client_->SelectItems(x);
 }
 
-void WebPopupMenuImpl::cancel() {
+void WebPopupMenuHost::cancel() {
   client_->Cancel();
 }
 
-WebPopupMenuImpl::WebPopupMenuImpl(oxide::WebPopupMenuClient* client)
+WebPopupMenuHost::WebPopupMenuHost(oxide::WebPopupMenuClient* client)
     : client_(client) {}
 
-WebPopupMenuImpl::~WebPopupMenuImpl() = default;
+WebPopupMenuHost::~WebPopupMenuHost() = default;
 
-bool WebPopupMenuImpl::Init(std::unique_ptr<qt::WebPopupMenu> menu) {
+void WebPopupMenuHost::Init(std::unique_ptr<qt::WebPopupMenu> menu) {
   menu_ = std::move(menu);
-  return !!menu_;
 }
 
 // static
-std::vector<MenuItem> WebPopupMenuImpl::BuildMenuItems(
+std::vector<MenuItem> WebPopupMenuHost::BuildMenuItems(
     const std::vector<content::MenuItem>& items) {
   std::vector<content::MenuItem> local_items = items;
   if (local_items.size() >

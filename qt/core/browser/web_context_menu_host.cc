@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "qt_web_context_menu.h"
+#include "web_context_menu_host.h"
 
 #include <QString>
 #include <QUrl>
@@ -126,23 +126,23 @@ EditCapabilityFlags ToEditCapabilityFlags(int flags) {
 
 }
 
-void WebContextMenuImpl::Show() {
+void WebContextMenuHost::Show() {
   menu_->Show();
 }
 
-void WebContextMenuImpl::Hide() {
+void WebContextMenuHost::Hide() {
   menu_->Hide();
 }
 
-void WebContextMenuImpl::close() {
+void WebContextMenuHost::close() {
   client_->Close();
 }
 
-void WebContextMenuImpl::execCommand(WebContextMenuAction action) {
+void WebContextMenuHost::execCommand(WebContextMenuAction action) {
   client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action));
 }
 
-WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
+WebContextMenuHost::WebContextMenuHost(const content::ContextMenuParams& params,
                                        oxide::WebContextMenuClient* client)
     : params_(params),
       client_(client) {
@@ -200,14 +200,13 @@ WebContextMenuImpl::WebContextMenuImpl(const content::ContextMenuParams& params,
                               oxide::WebContextMenuSection::Copy)
 }
 
-WebContextMenuImpl::~WebContextMenuImpl() = default;
+WebContextMenuHost::~WebContextMenuHost() = default;
 
-bool WebContextMenuImpl::Init(std::unique_ptr<qt::WebContextMenu> menu) {
+void WebContextMenuHost::Init(std::unique_ptr<qt::WebContextMenu> menu) {
   menu_ = std::move(menu);
-  return !!menu_;
 }
 
-WebContextMenuParams WebContextMenuImpl::GetParams() const {
+WebContextMenuParams WebContextMenuHost::GetParams() const {
   WebContextMenuParams rv;
 
   rv.page_url = QUrl(QString::fromStdString(params_.page_url.spec()));

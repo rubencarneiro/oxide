@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_H_
-#define _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_H_
+#ifndef _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_HOST_H_
+#define _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_HOST_H_
 
 #include <memory>
 
@@ -35,14 +35,14 @@ namespace qt {
 
 class WebContextMenu;
 
-class WebContextMenuImpl : public oxide::WebContextMenu,
+class WebContextMenuHost : public oxide::WebContextMenu,
                            public WebContextMenuClient {
  public:
-  WebContextMenuImpl(const content::ContextMenuParams& params,
+  WebContextMenuHost(const content::ContextMenuParams& params,
                      oxide::WebContextMenuClient* client);
-  ~WebContextMenuImpl() override;
+  ~WebContextMenuHost() override;
 
-  bool Init(std::unique_ptr<qt::WebContextMenu> menu);
+  void Init(std::unique_ptr<qt::WebContextMenu> menu);
 
   WebContextMenuParams GetParams() const;
 
@@ -61,10 +61,10 @@ class WebContextMenuImpl : public oxide::WebContextMenu,
 
   std::unique_ptr<qt::WebContextMenu> menu_;
 
-  DISALLOW_COPY_AND_ASSIGN(WebContextMenuImpl);
+  DISALLOW_COPY_AND_ASSIGN(WebContextMenuHost);
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_H_
+#endif // _OXIDE_QT_CORE_BROWSER_WEB_CONTEXT_MENU_HOST_H_

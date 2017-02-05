@@ -97,8 +97,8 @@
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
-#include "qt_web_context_menu.h"
 #include "web_contents_id_tracker.h"
+#include "web_context_menu_host.h"
 #include "web_preferences.h"
 
 namespace oxide {
@@ -670,16 +670,19 @@ std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
     const content::ContextMenuParams& params,
     const std::vector<content::MenuItem>& items,
     oxide::WebContextMenuClient* client) {
-  std::unique_ptr<WebContextMenuImpl> menu =
-      base::MakeUnique<WebContextMenuImpl>(params, client);
-  if (!menu->Init(
-          aux_ui_factory_->CreateWebContextMenu(menu->GetParams(),
-                                                MenuItemBuilder::Build(items),
-                                                menu.get()))) {
+  std::unique_ptr<WebContextMenuHost> host =
+      base::MakeUnique<WebContextMenuHost>(params, client);
+  std::unique_ptr<WebContextMenu> menu =
+      aux_ui_factory_->CreateWebContextMenu(host->GetParams(),
+                                            MenuItemBuilder::Build(items),
+                                            host.get());
+  if (!menu) {
     return nullptr;
   }
 
-  return std::move(menu);
+  host->Init(std::move(menu));
+
+  return std::move(host);
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
