@@ -93,7 +93,6 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
                               bool accept,
                               const base::string16* prompt_override) override;
   void CancelDialogs(content::WebContents* source_web_contents,
-                     bool suppress_callbacks,
                      bool reset_state) override;
 
   // content::WebContentsObserver implementation

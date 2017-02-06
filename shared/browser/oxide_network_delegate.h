@@ -91,7 +91,6 @@ class NetworkDelegate final : public net::NetworkDelegate {
       const GURL& first_party_for_cookies) const final;
 
   bool OnAreExperimentalCookieFeaturesEnabled() const final;
-  bool OnAreStrictSecureCookiesEnabled() const final;
 
   bool OnCancelURLRequestWithPolicyViolatingReferrerHeader(
       const net::URLRequest& request,

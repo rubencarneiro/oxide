@@ -50,7 +50,6 @@ class CookieStoreProxy::Core : public base::RefCountedThreadSafe<Core> {
       bool secure,
       bool http_only,
       net::CookieSameSite same_site,
-      bool enforce_strict_secure,
       net::CookiePriority priority,
       const net::CookieStore::SetCookiesCallback& callback);
   void GetCookiesWithOptionsAsync(
@@ -112,7 +111,6 @@ void CookieStoreProxy::Core::SetCookieWithDetailsAsync(
     bool secure,
     bool http_only,
     net::CookieSameSite same_site,
-    bool enforce_strict_secure,
     net::CookiePriority priority,
     const net::CookieStore::SetCookiesCallback& callback) {
   net::CookieStore* store = GetStore();
@@ -125,8 +123,7 @@ void CookieStoreProxy::Core::SetCookieWithDetailsAsync(
 
   store->SetCookieWithDetailsAsync(
       url, name, value, domain, path, creation_time, expiration_time,
-      last_access_time, secure, http_only, same_site, enforce_strict_secure,
-      priority, callback);
+      last_access_time, secure, http_only, same_site, priority, callback);
 }
 
 void CookieStoreProxy::Core::GetCookiesWithOptionsAsync(
@@ -259,7 +256,6 @@ void CookieStoreProxy::SetCookieWithDetailsAsync(
     bool secure,
     bool http_only,
     net::CookieSameSite same_site,
-    bool enforce_strict_secure,
     net::CookiePriority priority,
     const SetCookiesCallback& callback) {
   DCHECK(IsOnClientThread());
@@ -268,8 +264,7 @@ void CookieStoreProxy::SetCookieWithDetailsAsync(
                  core_,
                  url, name, value, domain, path, creation_time,
                  expiration_time, last_access_time, secure, http_only,
-                 same_site, enforce_strict_secure, priority,
-                 WrapCallback(callback)));
+                 same_site, priority, WrapCallback(callback)));
 }
 
 void CookieStoreProxy::GetCookiesWithOptionsAsync(

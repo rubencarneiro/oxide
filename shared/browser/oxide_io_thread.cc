@@ -22,7 +22,6 @@
 
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
-#include "base/threading/worker_pool.h"
 #include "content/public/browser/browser_thread.h"
 #include "net/cert/cert_verifier.h"
 #include "net/cert/ct_known_logs.h"
@@ -158,8 +157,7 @@ void IOThread::InitSystemRequestContextOnIOThread() {
   storage->set_ssl_config_service(new SSLConfigService());
   storage->set_channel_id_service(
       base::WrapUnique(new net::ChannelIDService(
-          new net::DefaultChannelIDStore(nullptr),
-          base::WorkerPool::GetTaskRunner(true))));
+          new net::DefaultChannelIDStore(nullptr))));
   storage->set_http_server_properties(
       base::WrapUnique(new net::HttpServerPropertiesImpl()));
   storage->set_cookie_store(

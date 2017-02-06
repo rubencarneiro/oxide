@@ -466,7 +466,7 @@ TEST_P(JavaScriptDialogContentsHelperTestP, CancelActiveDialog) {
   ASSERT_TRUE(factory.last_dialog()->client());
 
   EXPECT_CALL(factory, Hide());
-  manager->CancelDialogs(web_contents(), false, false);
+  manager->CancelDialogs(web_contents(), false);
 
   EXPECT_EQ(1, callback_count);
   EXPECT_FALSE(success);
@@ -686,7 +686,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, CancelPendingDialog) {
   EXPECT_TRUE(user_input.empty());
   EXPECT_FALSE(factory.last_dialog());
 
-  manager->CancelDialogs(web_contents(), false, false);
+  manager->CancelDialogs(web_contents(), false);
 
   web_contents()->WasShown();
   EXPECT_FALSE(factory.last_dialog());
