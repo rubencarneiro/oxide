@@ -385,14 +385,6 @@ void RenderWidgetHostView::ShowDisambiguationPopup(
     const gfx::Rect& rect_pixels,
     const SkBitmap& zoomed_bitmap) {}
 
-void RenderWidgetHostView::LockCompositingSurface() {
-  NOTIMPLEMENTED();
-}
-
-void RenderWidgetHostView::UnlockCompositingSurface() {
-  NOTIMPLEMENTED();
-}
-
 void RenderWidgetHostView::InitAsChild(gfx::NativeView parent_view) {}
 
 gfx::Vector2dF RenderWidgetHostView::GetLastScrollOffset() const {
