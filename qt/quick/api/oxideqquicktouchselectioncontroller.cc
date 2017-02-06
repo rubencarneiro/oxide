@@ -18,7 +18,7 @@
 #include "oxideqquicktouchselectioncontroller.h"
 
 #include "qt/core/api/oxideqglobal_p.h"
-#include "qt/quick/contents_view.h"
+#include "qt/quick/legacy_contents_view.h"
 
 #include "oxideqquickwebview_p.h"
 
@@ -34,7 +34,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
       , handle_drag_in_progress(false)
       , status(OxideQQuickTouchSelectionController::StatusInactive) {}
 
-  oxide::qquick::ContentsView* view;
+  oxide::qquick::LegacyContentsView* view;
   QQmlComponent* handle;
   QRectF bounds;
   bool handle_drag_in_progress;
@@ -69,7 +69,7 @@ class OxideQQuickTouchSelectionControllerPrivate {
 */
 
 OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
-    oxide::qquick::ContentsView* view)
+    oxide::qquick::LegacyContentsView* view)
     : d_ptr(new OxideQQuickTouchSelectionControllerPrivate()) {
   Q_D(OxideQQuickTouchSelectionController);
 
@@ -90,7 +90,7 @@ OxideQQuickTouchSelectionController::~OxideQQuickTouchSelectionController() {}
 void OxideQQuickTouchSelectionController::hide() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  d->view->hideTouchSelectionController();
+  d->view->HideTouchSelectionController();
 }
 
 /*!

@@ -42,6 +42,20 @@ std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
   return WebPopupMenu::Create(item(), items, bounds, client);
 }
 
+qt::TouchHandleDrawableProxy* ContentsView::CreateTouchHandleDrawable() {
+  return nullptr;
+}
+
+void ContentsView::TouchSelectionChanged(
+    qt::TouchSelectionControllerActiveStatus status,
+    const QRectF& bounds,
+    bool handle_drag_in_progress,
+    bool insertion_handle_tapped) {
+}
+
+void ContentsView::ContextMenuIntercepted() const {
+}
+
 ContentsView::ContentsView(QQuickItem* item)
     : qquick::ContentsView(item) {}
 

@@ -25,12 +25,10 @@
 #include <QTouchEvent>
 
 #include "qt/core/glue/web_popup_menu.h"
-#include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 
 #include "oxide_qquick_accelerated_frame_node.h"
 #include "oxide_qquick_image_frame_node.h"
 #include "oxide_qquick_software_frame_node.h"
-#include "oxide_qquick_touch_handle_drawable.h"
 
 namespace oxide {
 namespace qquick {
@@ -149,30 +147,6 @@ std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
   return nullptr;
 }
 
-qt::TouchHandleDrawableProxy* ContentsView::CreateTouchHandleDrawable() {
-  return new TouchHandleDrawable(item_, touch_selection_controller_.data());
-}
-
-void ContentsView::TouchSelectionChanged(
-    qt::TouchSelectionControllerActiveStatus status,
-    const QRectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) {
-  if (touch_selection_controller_) {
-    touch_selection_controller_->onTouchSelectionChanged(
-        static_cast<OxideQQuickTouchSelectionController::Status>(status),
-        bounds,
-        handle_drag_in_progress,
-        insertion_handle_tapped);
-  }
-}
-
-void ContentsView::ContextMenuIntercepted() const {
-  if (touch_selection_controller_) {
-    Q_EMIT touch_selection_controller_->contextMenuIntercepted();
-  }
-}
-
 void ContentsView::HandleUnhandledKeyboardEvent(QKeyEvent* event) {
   QQuickWindow* w = item_->window();
   if (!w) {
@@ -188,8 +162,6 @@ void ContentsView::HandleUnhandledKeyboardEvent(QKeyEvent* event) {
 
 ContentsView::ContentsView(QQuickItem* item)
     : item_(item),
-      touch_selection_controller_(
-          new OxideQQuickTouchSelectionController(this)),
       received_new_compositor_frame_(false),
       frame_evicted_(false),
       last_composited_frame_type_(qt::CompositorFrameHandle::TYPE_INVALID),
@@ -435,14 +407,6 @@ QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
   }
 
   return node;
-}
-
-void ContentsView::hideTouchSelectionController() const {
-  if (!view()) {
-    return;
-  }
-
-  view()->hideTouchSelectionController();
 }
 
 } // namespace qquick

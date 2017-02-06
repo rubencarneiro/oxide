@@ -21,7 +21,6 @@
 #include <QObject>
 #include <QPointer>
 #include <QQuickItem>
-#include <QScopedPointer>
 #include <QtGlobal>
 
 #include "qt/core/glue/contents_view.h"
@@ -43,8 +42,6 @@ class QSGNode;
 class QTouchEvent;
 class QWheelEvent;
 QT_END_NAMESPACE
-
-class OxideQQuickTouchSelectionController;
 
 namespace oxide {
 namespace qquick {
@@ -84,12 +81,6 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
 
   QSGNode* updatePaintNode(QSGNode* old_node);
 
-  OxideQQuickTouchSelectionController* touchSelectionController() const {
-    return touch_selection_controller_.data();
-  }
-
-  void hideTouchSelectionController() const;
-
  protected:
   QQuickItem* item() const { return item_; }
 
@@ -120,18 +111,9 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
       bool allow_multiple_selection,
       const QRect& bounds,
       qt::WebPopupMenuClient* client) override;
-  qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
-  void TouchSelectionChanged(
-      qt::TouchSelectionControllerActiveStatus status,
-      const QRectF& bounds,
-      bool handle_drag_in_progress,
-      bool insertion_handle_tapped) override;
-  void ContextMenuIntercepted() const override;
   void HandleUnhandledKeyboardEvent(QKeyEvent* event) override;
 
   QQuickItem* item_;
-
-  QScopedPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
   QPointer<QQmlComponent> touch_handle_;
 

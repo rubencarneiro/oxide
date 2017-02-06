@@ -35,7 +35,7 @@ class OxideQQuickWebViewPrivate;
 
 namespace oxide {
 namespace qquick {
-class ContentsView;
+class LegacyContentsView;
 }
 }
 
@@ -95,10 +95,10 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
 
  private:
   friend class OxideQQuickWebViewPrivate;
-  friend class oxide::qquick::ContentsView;
+  friend class oxide::qquick::LegacyContentsView;
 
   Q_DECL_HIDDEN OxideQQuickTouchSelectionController(
-      oxide::qquick::ContentsView* view);
+      oxide::qquick::LegacyContentsView* view);
 
   void onTouchSelectionChanged(
       Status status,
