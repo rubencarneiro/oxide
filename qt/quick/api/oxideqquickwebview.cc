@@ -48,17 +48,13 @@
 #include "qt/core/api/oxideqsecuritystatus.h"
 #include "qt/core/api/oxideqsecuritystatus_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
+#include "qt/core/glue/auxiliary_ui_factory.h"
 #include "qt/core/glue/macros.h"
-#include "qt/quick/auxiliary_ui_factory.h"
 #include "qt/quick/contents_view.h"
 #include "qt/quick/legacy_contents_view.h"
-#include "qt/quick/oxide_qquick_alert_dialog.h"
-#include "qt/quick/oxide_qquick_before_unload_dialog.h"
-#include "qt/quick/oxide_qquick_confirm_dialog.h"
 #include "qt/quick/oxide_qquick_file_picker.h"
 #include "qt/quick/oxide_qquick_init.h"
-#include "qt/quick/oxide_qquick_prompt_dialog.h"
-#include "qt/quick/qquick_web_context_menu.h"
+#include "qt/quick/qquick_legacy_auxiliary_ui_factory.h"
 
 #include "oxideqquicklocationbarcontroller.h"
 #include "oxideqquicklocationbarcontroller_p.h"
@@ -130,68 +126,19 @@ struct OxideQQuickWebViewPrivate::ConstructProps {
 OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
     OxideQQuickWebView* view,
     std::unique_ptr<oxide::qquick::ContentsView> contents_view,
-    std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory)
+    std::unique_ptr<oxide::qt::AuxiliaryUIFactory> aux_ui_factory)
     : q_ptr(view),
       aux_ui_factory_(std::move(aux_ui_factory)),
+      legacy_aux_ui_factory_(nullptr),
       contents_view_(std::move(contents_view)),
       constructed_(false),
       load_progress_(0),
       navigation_history_(OxideQQuickNavigationHistoryPrivate::Create()),
       security_status_(OxideQSecurityStatusPrivate::Create()),
       find_controller_(OxideQFindControllerPrivate::Create()),
-      context_menu_(nullptr),
-      alert_dialog_(nullptr),
-      confirm_dialog_(nullptr),
-      prompt_dialog_(nullptr),
-      before_unload_dialog_(nullptr),
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
       construct_props_(new ConstructProps()) {}
-
-std::unique_ptr<oxide::qt::WebContextMenu>
-OxideQQuickWebViewPrivate::CreateWebContextMenu(
-    const oxide::qt::WebContextMenuParams& params,
-    const std::vector<oxide::qt::MenuItem>& items,
-    oxide::qt::WebContextMenuClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  if (aux_ui_factory_) {
-    return aux_ui_factory_->CreateWebContextMenu(params, items, client);
-  }
-
-  if (!context_menu_) {
-    return nullptr;
-  }
-
-  return std::unique_ptr<oxide::qt::WebContextMenu>(
-      new oxide::qquick::WebContextMenu(q, context_menu_, params, client));
-}
-
-oxide::qt::JavaScriptDialogProxy*
-OxideQQuickWebViewPrivate::CreateJavaScriptDialog(
-    oxide::qt::JavaScriptDialogProxyClient::Type type,
-    oxide::qt::JavaScriptDialogProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  switch (type) {
-  case oxide::qt::JavaScriptDialogProxyClient::TypeAlert:
-    return new oxide::qquick::AlertDialog(q, client);
-  case oxide::qt::JavaScriptDialogProxyClient::TypeConfirm:
-    return new oxide::qquick::ConfirmDialog(q, client);
-  case oxide::qt::JavaScriptDialogProxyClient::TypePrompt:
-    return new oxide::qquick::PromptDialog(q, client);
-  default:
-    Q_UNREACHABLE();
-  }
-}
-
-oxide::qt::JavaScriptDialogProxy*
-OxideQQuickWebViewPrivate::CreateBeforeUnloadDialog(
-    oxide::qt::JavaScriptDialogProxyClient* client) {
-  Q_Q(OxideQQuickWebView);
-
-  return new oxide::qquick::BeforeUnloadDialog(q, client);
-}
 
 oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
     oxide::qt::FilePickerProxyClient* client) {
@@ -536,7 +483,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
     }
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, contents_view_.get(), q,
+        this, contents_view_.get(), aux_ui_factory_.get(), q,
         construct_props_->new_view_request,
         initial_prefs));
   }
@@ -552,7 +499,7 @@ void OxideQQuickWebViewPrivate::completeConstruction() {
     construct_props_->new_view_request = nullptr;
 
     proxy_.reset(oxide::qt::WebViewProxy::create(
-        this, contents_view_.get(), q,
+        this, contents_view_.get(), aux_ui_factory_.get(), q,
         construct_props_->context,
         construct_props_->incognito,
         construct_props_->restore_state,
@@ -1291,8 +1238,14 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
               this,
               std::unique_ptr<oxide::qquick::ContentsView>(
                   new oxide::qquick::LegacyContentsView(this)),
-              nullptr),
-          parent) {}
+              std::unique_ptr<oxide::qt::AuxiliaryUIFactory>(
+                  new oxide::qquick::LegacyAuxiliaryUIFactory(this))),
+          parent) {
+  Q_D(OxideQQuickWebView);
+  d->legacy_aux_ui_factory_ =
+      static_cast<oxide::qquick::LegacyAuxiliaryUIFactory*>(
+          d->aux_ui_factory_.get());
+}
 
 OxideQQuickWebView::~OxideQQuickWebView() {
   Q_D(OxideQQuickWebView);
@@ -1821,23 +1774,28 @@ qreal OxideQQuickWebView::contentY() const {
 QQmlComponent* OxideQQuickWebView::contextMenu() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->context_menu_;
+  if (!d->legacy_aux_ui_factory_) {
+    return nullptr;
+  }
+
+  return d->legacy_aux_ui_factory_->context_menu();
 }
 
 void OxideQQuickWebView::setContextMenu(QQmlComponent* contextMenu) {
   Q_D(OxideQQuickWebView);
 
-  if (d->context_menu_ == contextMenu) {
-    return;
-  }
-
-  if (d->aux_ui_factory_) {
+  if (!d->legacy_aux_ui_factory_) {
     qWarning() <<
         "OxideQQuickWebView: Specifying a contextMenu implementation has no "
         "effect on this WebView, as it provides a built-in context menu";
+    return;
   }
 
-  d->context_menu_ = contextMenu;
+  if (d->legacy_aux_ui_factory_->context_menu() == contextMenu) {
+    return;
+  }
+
+  d->legacy_aux_ui_factory_->set_context_menu(contextMenu);
   emit contextMenuChanged();
 }
 
@@ -1884,17 +1842,28 @@ void OxideQQuickWebView::setPopupMenu(QQmlComponent* popupMenu) {
 QQmlComponent* OxideQQuickWebView::alertDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->alert_dialog_;
+  if (!d->legacy_aux_ui_factory_) {
+    return nullptr;
+  }
+
+  return d->legacy_aux_ui_factory_->alert_dialog();
 }
 
 void OxideQQuickWebView::setAlertDialog(QQmlComponent* alertDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->alert_dialog_ == alertDialog) {
+  if (!d->legacy_aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying an alertDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
     return;
   }
 
-  d->alert_dialog_ = alertDialog;
+  if (d->legacy_aux_ui_factory_->alert_dialog() == alertDialog) {
+    return;
+  }
+
+  d->legacy_aux_ui_factory_->set_alert_dialog(alertDialog);
   emit alertDialogChanged();
 }
 
@@ -1905,17 +1874,28 @@ void OxideQQuickWebView::setAlertDialog(QQmlComponent* alertDialog) {
 QQmlComponent* OxideQQuickWebView::confirmDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->confirm_dialog_;
+  if (!d->legacy_aux_ui_factory_) {
+    return nullptr;
+  }
+
+  return d->legacy_aux_ui_factory_->confirm_dialog();
 }
 
 void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirmDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->confirm_dialog_ == confirmDialog) {
+  if (!d->legacy_aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a confirmDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
     return;
   }
 
-  d->confirm_dialog_ = confirmDialog;
+  if (d->legacy_aux_ui_factory_->confirm_dialog() == confirmDialog) {
+    return;
+  }
+
+  d->legacy_aux_ui_factory_->set_confirm_dialog(confirmDialog);
   emit confirmDialogChanged();
 }
 
@@ -1926,17 +1906,28 @@ void OxideQQuickWebView::setConfirmDialog(QQmlComponent* confirmDialog) {
 QQmlComponent* OxideQQuickWebView::promptDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->prompt_dialog_;
+  if (!d->legacy_aux_ui_factory_) {
+    return nullptr;
+  }
+
+  return d->legacy_aux_ui_factory_->prompt_dialog();
 }
 
 void OxideQQuickWebView::setPromptDialog(QQmlComponent* promptDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->prompt_dialog_ == promptDialog) {
+  if (!d->legacy_aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a promptDialog implementation has no "
+        "effect on this WebView, as it provides a built-in dialog";
     return;
   }
 
-  d->prompt_dialog_ = promptDialog;
+  if (d->legacy_aux_ui_factory_->prompt_dialog() == promptDialog) {
+    return;
+  }
+
+  d->legacy_aux_ui_factory_->set_prompt_dialog(promptDialog);
   emit promptDialogChanged();
 }
 
@@ -1947,18 +1938,29 @@ void OxideQQuickWebView::setPromptDialog(QQmlComponent* promptDialog) {
 QQmlComponent* OxideQQuickWebView::beforeUnloadDialog() const {
   Q_D(const OxideQQuickWebView);
 
-  return d->before_unload_dialog_;
+  if (!d->legacy_aux_ui_factory_) {
+    return nullptr;
+  }
+
+  return d->legacy_aux_ui_factory_->before_unload_dialog();
 }
 
 void OxideQQuickWebView::setBeforeUnloadDialog(
     QQmlComponent* beforeUnloadDialog) {
   Q_D(OxideQQuickWebView);
 
-  if (d->before_unload_dialog_ == beforeUnloadDialog) {
+  if (!d->legacy_aux_ui_factory_) {
+    qWarning() <<
+        "OxideQQuickWebView: Specifying a beforeUnloadDialog implementation "
+        "has no effect on this WebView, as it provides a built-in dialog";
     return;
   }
 
-  d->before_unload_dialog_ = beforeUnloadDialog;
+  if (d->legacy_aux_ui_factory_->before_unload_dialog() == beforeUnloadDialog) {
+    return;
+  }
+
+  d->legacy_aux_ui_factory_->set_before_unload_dialog(beforeUnloadDialog);
   emit beforeUnloadDialogChanged();
 }
 

@@ -63,7 +63,10 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/glue/auxiliary_ui_factory.h"
 #include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/javascript_dialog.h"
+#include "qt/core/glue/javascript_dialog_type.h"
 #include "qt/core/glue/macros.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
@@ -84,18 +87,18 @@
 #include "shared/common/oxide_enum_flags.h"
 
 #include "contents_view_impl.h"
+#include "javascript_dialog_host.h"
 #include "menu_item_builder.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_file_picker.h"
-#include "oxide_qt_javascript_dialog.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_script_message_handler.h"
 #include "oxide_qt_type_conversions.h"
 #include "oxide_qt_web_context.h"
 #include "oxide_qt_web_frame.h"
-#include "qt_web_context_menu.h"
 #include "web_contents_id_tracker.h"
+#include "web_context_menu_host.h"
 #include "web_preferences.h"
 
 namespace oxide {
@@ -357,9 +360,11 @@ bool TeardownFrameTreeForEachHelper(std::deque<oxide::WebFrame*>* d,
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewClient* view_client,
+                 AuxiliaryUIFactory* aux_ui_factory,
                  QObject* handle)
     : contents_view_(new ContentsViewImpl(view_client, handle)),
       client_(client),
+      aux_ui_factory_(aux_ui_factory),
       frame_tree_torn_down_(false) {
   DCHECK(client);
   DCHECK(handle);
@@ -388,6 +393,8 @@ void WebView::CommonInit() {
           base::Bind(&WebView::OnWebProcessStatusChanged,
                      base::Unretained(this)));
 
+  web_view_->SetJavaScriptDialogFactory(this);
+
   CHECK_EQ(web_view_->GetRootFrame()->GetChildFrames().size(), 0U);
   WebFrame* root_frame = new WebFrame(web_view_->GetRootFrame());
   web_view_->GetRootFrame()->set_script_message_target_delegate(root_frame);
@@ -401,34 +408,6 @@ void WebView::OnZoomLevelChanged(
 
 void WebView::OnWebProcessStatusChanged() {
   client_->WebProcessStatusChanged();
-}
-
-oxide::JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type) {
-  JavaScriptDialogProxyClient::Type type;
-  switch (javascript_message_type) {
-  case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
-    type = JavaScriptDialogProxyClient::TypeAlert;
-    break;
-  case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
-    type = JavaScriptDialogProxyClient::TypeConfirm;
-    break;
-  case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
-    type = JavaScriptDialogProxyClient::TypePrompt;
-    break;
-  default:
-    Q_UNREACHABLE();
-  }
-
-  JavaScriptDialog* dialog = new JavaScriptDialog();
-  dialog->SetProxy(client_->CreateJavaScriptDialog(type, dialog));
-  return dialog;
-}
-
-oxide::JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  JavaScriptDialog* dialog = new JavaScriptDialog();
-  dialog->SetProxy(client_->CreateBeforeUnloadDialog(dialog));
-  return dialog;
 }
 
 void WebView::URLChanged() {
@@ -691,15 +670,19 @@ std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
     const content::ContextMenuParams& params,
     const std::vector<content::MenuItem>& items,
     oxide::WebContextMenuClient* client) {
-  std::unique_ptr<WebContextMenuImpl> menu =
-      base::MakeUnique<WebContextMenuImpl>(params, client);
-  if (!menu->Init(client_->CreateWebContextMenu(menu->GetParams(),
-                                                MenuItemBuilder::Build(items),
-                                                menu.get()))) {
+  std::unique_ptr<WebContextMenuHost> host =
+      base::MakeUnique<WebContextMenuHost>(params, client);
+  std::unique_ptr<WebContextMenu> menu =
+      aux_ui_factory_->CreateWebContextMenu(host->GetParams(),
+                                            MenuItemBuilder::Build(items),
+                                            host.get());
+  if (!menu) {
     return nullptr;
   }
 
-  return std::move(menu);
+  host->Init(std::move(menu));
+
+  return std::move(host);
 }
 
 size_t WebView::GetScriptMessageHandlerCount() const {
@@ -793,6 +776,55 @@ void WebView::EnterFullscreenMode(const GURL& origin) {
 
 void WebView::ExitFullscreenMode() {
   client_->ToggleFullscreenMode(false);
+}
+
+std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateBeforeUnloadDialog(
+    oxide::JavaScriptDialogClient* client,
+    const GURL& origin_url) {
+  std::unique_ptr<JavaScriptDialogHost> host =
+      base::MakeUnique<JavaScriptDialogHost>(client);
+  std::unique_ptr<JavaScriptDialog> dialog =
+      aux_ui_factory_->CreateBeforeUnloadDialog(
+          QUrl(QString::fromStdString(origin_url.spec())),
+          host.get());
+  if (!dialog) {
+    return nullptr;
+  }
+
+  host->Init(std::move(dialog));
+
+  return std::move(host);
+}
+
+std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateJavaScriptDialog(
+    oxide::JavaScriptDialogClient* client,
+    const GURL& origin_url,
+    content::JavaScriptMessageType type,
+    const base::string16& message_text,
+    const base::string16& default_prompt_text) {
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+                              JavaScriptDialogType::Alert);
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+                              JavaScriptDialogType::Prompt);
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+                              JavaScriptDialogType::Confirm);
+
+  std::unique_ptr<JavaScriptDialogHost> host =
+      base::MakeUnique<JavaScriptDialogHost>(client);
+  std::unique_ptr<JavaScriptDialog> dialog =
+      aux_ui_factory_->CreateJavaScriptDialog(
+          QUrl(QString::fromStdString(origin_url.spec())),
+          static_cast<JavaScriptDialogType>(type),
+          QString::fromStdString(base::UTF16ToUTF8(message_text)),
+          QString::fromStdString(base::UTF16ToUTF8(default_prompt_text)),
+          host.get());
+  if (!dialog) {
+    return nullptr;
+  }
+
+  host->Init(std::move(dialog));
+
+  return std::move(host);
 }
 
 WebContentsID WebView::webContentsID() const {
@@ -1089,12 +1121,13 @@ void WebView::teardownFrameTree() {
 
 WebView::WebView(WebViewProxyClient* client,
                  ContentsViewClient* view_client,
+                 AuxiliaryUIFactory* aux_ui_factory,
                  QObject* handle,
                  WebContext* context,
                  bool incognito,
                  const QByteArray& restore_state,
                  RestoreType restore_type)
-    : WebView(client, view_client, handle) {
+    : WebView(client, view_client, aux_ui_factory, handle) {
   oxide::WebView::CommonParams common_params;
   common_params.client = this;
   common_params.view_client = contents_view_.get();
@@ -1125,6 +1158,7 @@ WebView::WebView(WebViewProxyClient* client,
 WebView* WebView::CreateFromNewViewRequest(
     WebViewProxyClient* client,
     ContentsViewClient* view_client,
+    AuxiliaryUIFactory* aux_ui_factory,
     QObject* handle,
     OxideQNewViewRequest* new_view_request,
     OxideQWebPreferences* initial_prefs) {
@@ -1134,7 +1168,7 @@ WebView* WebView::CreateFromNewViewRequest(
     return nullptr;
   }
 
-  WebView* new_view = new WebView(client, view_client, handle);
+  WebView* new_view = new WebView(client, view_client, aux_ui_factory, handle);
 
   oxide::WebView::CommonParams params;
   params.client = new_view;
@@ -1162,6 +1196,7 @@ WebView::~WebView() {
   CertificateErrorDispatcher::FromWebContents(contents)->SetCallback(
       CertificateErrorDispatcher::Callback());
   FullscreenHelper::FromWebContents(contents)->set_client(nullptr);
+  web_view_->SetJavaScriptDialogFactory(nullptr);
   DCHECK(frame_tree_torn_down_);
 
   oxide::PermissionRequestDispatcher::FromWebContents(

@@ -1,0 +1,13 @@
+<html>
+<head>
+<script>
+  setTimeout(() => {
+    var r = window.prompt("Test Prompt", "Zzz");
+    document.documentElement.dispatchEvent(
+        new CustomEvent("prompt-response", { bubbles: true, detail: r }));
+  }, 0);
+</script>
+</head>
+<body>
+</body>
+</html>

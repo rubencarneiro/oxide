@@ -384,6 +384,10 @@ void WebContentsView::UpdateDragCursor(blink::WebDragOperation operation) {
   current_drag_op_ = operation;
 }
 
+void WebContentsView::GotFocus() {
+  web_contents_impl()->NotifyWebContentsFocused();
+}
+
 void WebContentsView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                                     const gfx::Rect& bounds,
                                     int item_height,

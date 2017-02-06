@@ -57,7 +57,7 @@
 #include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_type_conversions.h"
 #include "qt_screen.h"
-#include "qt_web_popup_menu.h"
+#include "web_popup_menu_host.h"
 
 namespace oxide {
 namespace qt {
@@ -509,19 +509,23 @@ std::unique_ptr<oxide::WebPopupMenu> ContentsViewImpl::CreatePopupMenu(
     bool allow_multiple_selection,
     const gfx::Rect& bounds,
     oxide::WebPopupMenuClient* client) {
-  std::unique_ptr<WebPopupMenuImpl> menu =
-      base::MakeUnique<WebPopupMenuImpl>(client);
+  std::unique_ptr<WebPopupMenuHost> host =
+      base::MakeUnique<WebPopupMenuHost>(client);
+
   QRect qt_bounds =
       ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen()));
-  if (!menu->Init(client_->CreateWebPopupMenu(
-          WebPopupMenuImpl::BuildMenuItems(items),
-          allow_multiple_selection,
-          qt_bounds,
-          menu.get()))) {
+  std::unique_ptr<WebPopupMenu> menu =
+      client_->CreateWebPopupMenu(WebPopupMenuHost::BuildMenuItems(items),
+                                  allow_multiple_selection,
+                                  qt_bounds,
+                                  host.get());
+  if (!menu) {
     return nullptr;
   }
 
-  return std::move(menu);
+  host->Init(std::move(menu));
+
+  return std::move(host);
 }
 
 ui::TouchHandleDrawable* ContentsViewImpl::CreateTouchHandleDrawable() const {

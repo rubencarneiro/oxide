@@ -209,6 +209,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
                      const content::DragEventSourceInfo& event_info,
                      content::RenderWidgetHostImpl* source_rwh) override;
   void UpdateDragCursor(blink::WebDragOperation operation) override;
+  void GotFocus() override;
   void ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                      const gfx::Rect& bounds,
                      int item_height,

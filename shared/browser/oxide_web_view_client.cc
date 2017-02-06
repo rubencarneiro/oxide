@@ -21,15 +21,6 @@ namespace oxide {
 
 WebViewClient::~WebViewClient() {}
 
-JavaScriptDialog* WebViewClient::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type) {
-  return nullptr;
-}
-
-JavaScriptDialog* WebViewClient::CreateBeforeUnloadDialog() {
-  return nullptr;
-}
-
 void WebViewClient::URLChanged() {}
 
 void WebViewClient::TitleChanged() {}

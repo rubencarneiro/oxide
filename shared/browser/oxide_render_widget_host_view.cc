@@ -876,7 +876,7 @@ void RenderWidgetHostView::SetBounds(const gfx::Rect& rect) {
 }
 
 void RenderWidgetHostView::Focus() {
-  host_->Focus();
+  host_->GotFocus();
   host_->SetActive(true);
 }
 

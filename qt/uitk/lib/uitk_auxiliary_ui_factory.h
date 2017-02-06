@@ -20,9 +20,13 @@
 
 #include <QtGlobal>
 
-#include "qt/quick/auxiliary_ui_factory.h"
+#include "qt/core/glue/auxiliary_ui_factory.h"
 
 class OxideUbuntuWebContextMenu;
+
+QT_BEGIN_NAMESPACE
+class QQuickItem;
+QT_END_NAMESPACE
 
 namespace oxide {
 
@@ -32,7 +36,7 @@ struct WebContextMenuParams;
 
 namespace uitk {
 
-class AuxiliaryUIFactory : public qquick::AuxiliaryUIFactory {
+class AuxiliaryUIFactory : public qt::AuxiliaryUIFactory {
  public:
   class Delegate {
    public:
@@ -47,11 +51,22 @@ class AuxiliaryUIFactory : public qquick::AuxiliaryUIFactory {
   ~AuxiliaryUIFactory() override;
 
  private:
-  // qquick::AuxiliaryUIFactory implementation
+  // qt::AuxiliaryUIFactory implementation
   std::unique_ptr<qt::WebContextMenu> CreateWebContextMenu(
       const qt::WebContextMenuParams& params,
       const std::vector<qt::MenuItem>& items,
       qt::WebContextMenuClient* client) override;
+  std::unique_ptr<qt::JavaScriptDialog> CreateJavaScriptDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogType type,
+      const QString& message_text,
+      const QString& default_prompt_text,
+      qt::JavaScriptDialogClient* client) override;
+  std::unique_ptr<qt::JavaScriptDialog> CreateBeforeUnloadDialog(
+      const QUrl& origin_url,
+      qt::JavaScriptDialogClient* client) override;
+
+  QQuickItem* item_;
 
   Delegate* delegate_;
 

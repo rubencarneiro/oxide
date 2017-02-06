@@ -22,7 +22,6 @@
 #include <string>
 
 #include "base/strings/string16.h"
-#include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/platform/WebScreenInfo.h"
 
 #include "shared/browser/oxide_script_message_target.h"
@@ -44,7 +43,6 @@ namespace oxide {
 
 class CertificateError;
 class FilePicker;
-class JavaScriptDialog;
 class WebView;
 
 // A class for customizing the behaviour of WebView
@@ -52,13 +50,6 @@ class WebView;
 class OXIDE_SHARED_EXPORT WebViewClient : public ScriptMessageTarget {
  public:
   virtual ~WebViewClient();
-
-  // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
-  virtual JavaScriptDialog* CreateJavaScriptDialog(
-      content::JavaScriptMessageType javascript_message_type);
-
-  // TODO(chrisccoulson): Make a delegate for JavaScriptDialogManager and move there
-  virtual JavaScriptDialog* CreateBeforeUnloadDialog();
 
   virtual void URLChanged();
 

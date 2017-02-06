@@ -43,21 +43,23 @@ TestWebView {
     return (currentDialog == null);
   }
 
-  function checkContents() {
-    return (webView.getTestApi().evaluateCode(
-        "document.querySelector(\"#contents\").innerHTML") === "OK");
-  }
-
   TestCase {
     id: test
     name: "WebView_beforeUnloadDialog"
     when: windowShown
 
+    function init() {
+      webView.clearLoadEventCounters();
+    }
+
     function test_noDialogComponent() {
       webView.beforeUnloadDialog = null;
       webView.url = "http://testsuite/tst_WebView_beforeUnloadDialog.html";
-      tryCompare(webView, "url",
-                 "http://testsuite/tst_WebView_beforeUnloadDialog2.html");
+      verify(webView.waitForLoadSucceeded());
+
+      webView.url = "http://testsuite/empty.html";
+      verify(webView.waitForLoadSucceeded());
+      compare(webView.getTestApi().documentURI, "http://testsuite/empty.html");
     }
 
     function test_customDialogComponent_data() {
@@ -70,8 +72,12 @@ TestWebView {
     function test_customDialogComponent(data) {
       webView.beforeUnloadDialog = customDialogComponent;
       webView.url = "http://testsuite/tst_WebView_beforeUnloadDialog.html";
+      verify(webView.waitForLoadSucceeded());
+
+      webView.url = "http://testsuite/empty.html";
       verify(TestUtils.waitFor(webView.dialogShown),
              "Before unload dialog not shown");
+
       var dialog = webView.currentDialog;
       compare(dialog.width, webView.width);
       compare(dialog.height, webView.height);
@@ -80,10 +86,10 @@ TestWebView {
       verify(TestUtils.waitFor(webView.dialogDismissed),
              "Before unload dialog not dismissed");
       if (data.leave) {
-        tryCompare(webView, "url",
-                   "http://testsuite/tst_WebView_beforeUnloadDialog2.html");
+        verify(webView.waitForLoadSucceeded());
+        compare(webView.getTestApi().documentURI, "http://testsuite/empty.html");
       } else {
-        verify(TestUtils.waitFor(webView.checkContents));
+        compare(webView.getTestApi().documentURI, "http://testsuite/tst_WebView_beforeUnloadDialog.html");
       }
     }
   }

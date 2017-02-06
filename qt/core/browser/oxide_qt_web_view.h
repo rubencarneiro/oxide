@@ -29,8 +29,8 @@
 #include "content/public/browser/host_zoom_map.h"
 
 #include "qt/core/glue/oxide_qt_web_view_proxy.h"
+#include "shared/browser/javascript_dialogs/javascript_dialog_factory.h"
 #include "shared/browser/oxide_fullscreen_helper_client.h"
-#include "shared/browser/oxide_javascript_dialog_manager.h"
 #include "shared/browser/oxide_web_view_client.h"
 #include "shared/browser/oxide_web_frame_tree_observer.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher_client.h"
@@ -53,6 +53,7 @@ class WebView;
 
 namespace qt {
 
+class AuxiliaryUIFactory;
 class ContentsViewImpl;
 class ContentsViewClient;
 class WebContext;
@@ -63,10 +64,12 @@ class WebView : public oxide::WebViewClient,
                 public oxide::PermissionRequestDispatcherClient,
                 public oxide::WebFrameTreeObserver,
                 public oxide::FullscreenHelperClient,
+                public oxide::JavaScriptDialogFactory,
                 public WebViewProxy {
  public:
   WebView(WebViewProxyClient* client,
           ContentsViewClient* view_client,
+          AuxiliaryUIFactory* aux_ui_factory,
           QObject* handle,
           WebContext* context,
           bool incognito,
@@ -75,6 +78,7 @@ class WebView : public oxide::WebViewClient,
   static WebView* CreateFromNewViewRequest(
       WebViewProxyClient* client,
       ContentsViewClient* view_client,
+      AuxiliaryUIFactory* aux_ui_factory,
       QObject* handle,
       OxideQNewViewRequest* new_view_request,
       OxideQWebPreferences* initial_prefs);
@@ -87,6 +91,7 @@ class WebView : public oxide::WebViewClient,
  private:
   WebView(WebViewProxyClient* client,
           ContentsViewClient* view_client,
+          AuxiliaryUIFactory* aux_ui_factory,
           QObject* handle);
 
   void CommonInit();
@@ -96,9 +101,6 @@ class WebView : public oxide::WebViewClient,
   void OnWebProcessStatusChanged();
 
   // oxide::WebViewClient implementation
-  oxide::JavaScriptDialog* CreateJavaScriptDialog(
-      content::JavaScriptMessageType javascript_message_type) override;
-  oxide::JavaScriptDialog* CreateBeforeUnloadDialog() override;
   void URLChanged() override;
   void TitleChanged() override;
   void FaviconChanged() override;
@@ -178,6 +180,17 @@ class WebView : public oxide::WebViewClient,
   void EnterFullscreenMode(const GURL& origin) override;
   void ExitFullscreenMode() override;
 
+  // oxide::JavaScriptDialogFactory implementation
+  std::unique_ptr<oxide::JavaScriptDialog> CreateBeforeUnloadDialog(
+      oxide::JavaScriptDialogClient* client,
+      const GURL& origin_url) override;
+  std::unique_ptr<oxide::JavaScriptDialog> CreateJavaScriptDialog(
+      oxide::JavaScriptDialogClient* client,
+      const GURL& origin_url,
+      content::JavaScriptMessageType type,
+      const base::string16& message_text,
+      const base::string16& default_prompt_text) override;
+
   // WebViewProxy implementation
   WebContentsID webContentsID() const override;
 
@@ -249,6 +262,8 @@ class WebView : public oxide::WebViewClient,
   std::unique_ptr<oxide::WebView> web_view_;
 
   WebViewProxyClient* client_;
+
+  AuxiliaryUIFactory* aux_ui_factory_;
 
   QList<QObject*> message_handlers_;
 

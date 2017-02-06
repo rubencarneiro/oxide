@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file alias="stock_link.svg">resources/stock_link.svg</file>
+    <file alias="BeforeUnloadDialog.qml">resources/BeforeUnloadDialog.qml</file>
+    <file alias="JavaScriptDialog.qml">resources/JavaScriptDialog.qml</file>
     <file alias="WebContextMenuMobile.qml">resources/WebContextMenuMobile.qml</file>
     <file alias="WebContextMenuDesktop.qml">resources/WebContextMenuDesktop.qml</file>
     <file alias="WebPopupMenu.qml">resources/WebPopupMenu.qml</file>

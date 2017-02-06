@@ -308,7 +308,7 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsync) {
       "foo", "bar", std::string(), std::string(),
       creation_time, expiration_time, base::Time(),
       false, false, net::CookieSameSite::NO_RESTRICTION,
-      false, net::COOKIE_PRIORITY_DEFAULT, callback.MakeCallback());
+      net::COOKIE_PRIORITY_DEFAULT, callback.MakeCallback());
 
   EXPECT_TRUE(callback.WaitForCallback());
   EXPECT_TRUE(callback.result());
@@ -340,7 +340,7 @@ TEST_F(CookieStoreProxyTest, SetCookieWithDetailsAsyncNoCallback) {
       "foo", "bar", std::string(), std::string(),
       creation_time, expiration_time, base::Time(),
       false, false, net::CookieSameSite::NO_RESTRICTION,
-      false, net::COOKIE_PRIORITY_DEFAULT,
+      net::COOKIE_PRIORITY_DEFAULT,
       net::CookieStore::SetCookiesCallback());
 
   CookieStoreCallback<const net::CookieList&, net::CookieList> callback;
@@ -373,7 +373,7 @@ TEST_F(CookieStoreProxyTest, GetCookiesWithOptionsAsync) {
       "foo", "bar", std::string(), std::string(),
       creation_time, expiration_time, base::Time(),
       false, true, net::CookieSameSite::NO_RESTRICTION,
-      false, net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
+      net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
   EXPECT_TRUE(set_callback.WaitForCallback());
 
   net::CookieOptions options;
@@ -417,7 +417,7 @@ TEST_F(CookieStoreProxyTest, GetCookieListWithOptionsAsync) {
       "foo", "bar", std::string(), std::string(),
       creation_time, expiration_time, base::Time(),
       false, true, net::CookieSameSite::NO_RESTRICTION,
-      false, net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
+      net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
   EXPECT_TRUE(set_callback.WaitForCallback());
 
   net::CookieOptions options;
@@ -472,7 +472,7 @@ TEST_F(CookieStoreProxyTest, GetAllCookiesAsync) {
       "foo", "bar", std::string(), std::string(),
       creation_time, expiration_time, base::Time(),
       false, false, net::CookieSameSite::NO_RESTRICTION,
-      false, net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
+      net::COOKIE_PRIORITY_DEFAULT, set_callback.MakeCallback());
   EXPECT_TRUE(set_callback.WaitForCallback());
 
   CookieStoreCallback<const net::CookieList&, net::CookieList> callback;

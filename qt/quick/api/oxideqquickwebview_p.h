@@ -48,9 +48,12 @@ class QQuickItem;
 QT_END_NAMESPACE
 
 namespace oxide {
-namespace qquick {
+namespace qt {
 class AuxiliaryUIFactory;
+}
+namespace qquick {
 class ContentsView;
+class LegacyAuxiliaryUIFactory;
 }
 }
 
@@ -69,21 +72,12 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   OxideQQuickWebViewPrivate(
       OxideQQuickWebView* q,
       std::unique_ptr<oxide::qquick::ContentsView> contents_view,
-      std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory);
+      std::unique_ptr<oxide::qt::AuxiliaryUIFactory> aux_ui_factory);
 
   OxideQQuickWebView* q_ptr;
 
  private:
   // oxide::qt::WebViewProxyClient implementation
-  std::unique_ptr<oxide::qt::WebContextMenu> CreateWebContextMenu(
-      const oxide::qt::WebContextMenuParams& params,
-      const std::vector<oxide::qt::MenuItem>& items,
-      oxide::qt::WebContextMenuClient* client) override;
-  oxide::qt::JavaScriptDialogProxy* CreateJavaScriptDialog(
-      oxide::qt::JavaScriptDialogProxyClient::Type type,
-      oxide::qt::JavaScriptDialogProxyClient* client) override;
-  oxide::qt::JavaScriptDialogProxy* CreateBeforeUnloadDialog(
-      oxide::qt::JavaScriptDialogProxyClient* client) override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
   void WebProcessStatusChanged() override;
@@ -148,7 +142,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   void attachPreferencesSignals(OxideQWebPreferences* prefs);
   void preferencesDestroyed();
 
-  std::unique_ptr<oxide::qquick::AuxiliaryUIFactory> aux_ui_factory_;
+  std::unique_ptr<oxide::qt::AuxiliaryUIFactory> aux_ui_factory_;
+  oxide::qquick::LegacyAuxiliaryUIFactory* legacy_aux_ui_factory_;
 
   std::unique_ptr<oxide::qquick::ContentsView> contents_view_;
 
@@ -161,11 +156,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   QScopedPointer<OxideQSecurityStatus> security_status_;
   QScopedPointer<OxideQFindController> find_controller_;
 
-  QQmlComponent* context_menu_;
-  QQmlComponent* alert_dialog_;
-  QQmlComponent* confirm_dialog_;
-  QQmlComponent* prompt_dialog_;
-  QQmlComponent* before_unload_dialog_;
   QQmlComponent* file_picker_;
 
   bool using_old_load_event_signal_;

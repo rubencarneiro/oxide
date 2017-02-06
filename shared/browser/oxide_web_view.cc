@@ -65,6 +65,7 @@
 
 #include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/input/oxide_ime_bridge.h"
+#include "shared/browser/javascript_dialogs/javascript_dialog_contents_helper.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_temporary_saved_permission_context.h"
@@ -84,7 +85,6 @@
 #include "oxide_file_picker.h"
 #include "oxide_find_controller.h"
 #include "oxide_fullscreen_helper.h"
-#include "oxide_javascript_dialog_manager.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_script_message_contents_helper.h"
 #include "oxide_user_agent_settings.h"
@@ -140,6 +140,7 @@ void CreateHelpers(content::WebContents* contents) {
   FaviconHelper::CreateForWebContents(contents);
   FullscreenHelper::CreateForWebContents(contents);
   WebProcessStatusMonitor::CreateForWebContents(contents);
+  JavaScriptDialogContentsHelper::CreateForWebContents(contents);
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
@@ -631,7 +632,7 @@ void WebView::BeforeUnloadFired(content::WebContents* source,
 content::JavaScriptDialogManager* WebView::GetJavaScriptDialogManager(
     content::WebContents* source) {
   DCHECK_VALID_SOURCE_CONTENTS
-  return JavaScriptDialogManager::GetInstance();
+  return JavaScriptDialogContentsHelper::FromWebContents(web_contents_.get());
 }
 
 void WebView::RunFileChooser(content::RenderFrameHost* render_frame_host,
@@ -924,6 +925,11 @@ WebView::~WebView() {
   web_contents_->RemoveUserData(&kUserDataKey);
 }
 
+void WebView::SetJavaScriptDialogFactory(JavaScriptDialogFactory* factory) {
+  JavaScriptDialogContentsHelper::FromWebContents(web_contents_.get())
+      ->set_factory(factory);
+}
+
 // static
 WebView* WebView::FromWebContents(const content::WebContents* web_contents) {
   UnownedUserData<WebView>* data =
@@ -1173,15 +1179,6 @@ void WebView::PrepareToClose() {
   web_contents_->DispatchBeforeUnload();
 }
 
-JavaScriptDialog* WebView::CreateJavaScriptDialog(
-    content::JavaScriptMessageType javascript_message_type) {
-  return client_->CreateJavaScriptDialog(javascript_message_type);
-}
-
-JavaScriptDialog* WebView::CreateBeforeUnloadDialog() {
-  return client_->CreateBeforeUnloadDialog();
-}
-
 blink::WebContextMenuData::EditFlags WebView::GetEditFlags() const {
   return edit_flags_;
 }
@@ -1202,4 +1199,3 @@ void WebView::TerminateWebProcess() {
 }
 
 } // namespace oxide
-
