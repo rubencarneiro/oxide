@@ -40,7 +40,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "cc/base/switches.h"
 #include "content/app/mojo/mojo_init.h" // nogncheck
-#include "content/browser/gpu/gpu_process_host.h" // nogncheck
+#include "content/browser/gpu/gpu_main_thread_factory.h" // nogncheck
 #include "content/browser/renderer_host/render_process_host_impl.h" // nogncheck
 #include "content/browser/utility_process_host_impl.h" // nogncheck
 #include "content/common/url_schemes.h" // nogncheck
@@ -554,8 +554,7 @@ void BrowserProcessMainImpl::Start(StartParams params) {
       content::CreateInProcessUtilityThread);
   content::RenderProcessHostImpl::RegisterRendererMainThreadFactory(
       content::CreateInProcessRendererThread);
-  content::GpuProcessHost::RegisterGpuMainThreadFactory(
-      content::CreateInProcessGpuThread);
+  content::RegisterGpuMainThreadFactory(content::CreateInProcessGpuThread);
 
   browser_main_runner_.reset(content::BrowserMainRunner::Create());
   CHECK(browser_main_runner_.get()) << "Failed to create BrowserMainRunner";
