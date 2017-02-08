@@ -153,8 +153,6 @@ class RenderWidgetHostView
   gfx::Rect GetBoundsInRootWindow() override;
   void ShowDisambiguationPopup(const gfx::Rect& rect_pixels,
                                const SkBitmap& zoomed_bitmap) override;
-  void LockCompositingSurface() override;
-  void UnlockCompositingSurface() override;
 
   // content::RenderWidgetHostView implementation
   void InitAsChild(gfx::NativeView parent_view) override;
