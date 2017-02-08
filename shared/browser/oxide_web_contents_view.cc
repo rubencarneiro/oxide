@@ -907,17 +907,18 @@ void WebContentsView::HandleDragEnter(
     int key_modifiers) {
   current_drop_data_.reset(new content::DropData(drop_data));
   current_drag_allowed_ops_ = allowed_ops;
+  current_drag_location_ = location;
+  current_drag_screen_location_ =
+      BrowserPlatformIntegration::GetInstance()
+          ->GetScreen()
+          ->GetCursorScreenPoint();
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   current_drag_target_ = RenderWidgetHostID(rwh);
 
-  gfx::Point screen_location =
-      BrowserPlatformIntegration::GetInstance()
-          ->GetScreen()
-          ->GetCursorScreenPoint();
   rwh->DragTargetDragEnter(*current_drop_data_,
-                           location,
-                           screen_location,
+                           current_drag_location_,
+                           current_drag_screen_location_,
                            current_drag_allowed_ops_,
                            key_modifiers);
 }
@@ -929,20 +930,22 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
     return blink::WebDragOperationNone;
   }
 
+  current_drag_location_ = location;
+
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (RenderWidgetHostID(rwh) != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
-                    location,
+                    current_drag_location_,
                     current_drag_allowed_ops_,
                     key_modifiers);
   }
 
-  gfx::Point screen_location =
+  current_drag_screen_location_ =
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
         ->GetCursorScreenPoint();
-  rwh->DragTargetDragOver(location,
-                          screen_location,
+  rwh->DragTargetDragOver(current_drag_location_,
+                          current_drag_screen_location_,
                           current_drag_allowed_ops_,
                           key_modifiers);
 
@@ -956,12 +959,14 @@ void WebContentsView::HandleDragLeave() {
 
   current_drop_data_.reset();
 
-  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  if (RenderWidgetHostID(rwh) != current_drag_target_) {
+  content::RenderWidgetHost* rwh = current_drag_target_.ToInstance();
+  current_drag_target_ = RenderWidgetHostID();
+  if (!rwh) {
     return;
   }
 
-  rwh->DragTargetDragLeave();
+  rwh->DragTargetDragLeave(current_drag_location_,
+                           current_drag_screen_location_);
 }
 
 blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,

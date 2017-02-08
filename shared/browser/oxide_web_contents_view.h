@@ -274,6 +274,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   std::unique_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
+  gfx::Point current_drag_location_;
+  gfx::Point current_drag_screen_location_;
   blink::WebDragOperation current_drag_op_;
   RenderWidgetHostID current_drag_target_;
 
