@@ -39,7 +39,7 @@ class ContentsView : public qquick::ContentsView {
       bool allow_multiple_selection,
       const QRect& bounds,
       qt::WebPopupMenuClient* client) override;
-  qt::TouchHandleDrawableProxy* CreateTouchHandleDrawable() override;
+  std::unique_ptr<qt::TouchHandleDrawable> CreateTouchHandleDrawable() override;
   void TouchSelectionChanged(
       qt::TouchSelectionControllerActiveStatus status,
       const QRectF& bounds,

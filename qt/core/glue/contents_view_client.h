@@ -40,7 +40,7 @@ namespace qt {
 class ContentsView;
 class ContentsViewImpl;
 struct MenuItem;
-class TouchHandleDrawableProxy;
+class TouchHandleDrawable;
 class WebPopupMenu;
 class WebPopupMenuClient;
 
@@ -71,7 +71,7 @@ class ContentsViewClient {
       const QRect& bounds,
       WebPopupMenuClient* client) = 0;
 
-  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
+  virtual std::unique_ptr<TouchHandleDrawable> CreateTouchHandleDrawable() = 0;
 
   virtual void TouchSelectionChanged(
       TouchSelectionControllerActiveStatus status,

@@ -76,7 +76,9 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
       const gfx::Rect& bounds,
       WebPopupMenuClient* client);
 
-  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const;
+  virtual std::unique_ptr<ui::TouchHandleDrawable> 
+  CreateTouchHandleDrawable() const;
+
   virtual void TouchSelectionChanged(
       ui::TouchSelectionController::ActiveStatus status,
       const gfx::RectF& bounds,

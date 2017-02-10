@@ -253,7 +253,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   gfx::Size GetViewSizeInPixels() const override;
   bool IsFullscreen() const override;
   float GetTopControlsHeight() override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  std::unique_ptr<ui::TouchHandleDrawable>
+  CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(RenderWidgetHostView* view,
                              bool handle_drag_in_progress,
                              bool insertion_handle_tapped) override;

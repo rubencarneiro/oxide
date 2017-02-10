@@ -20,7 +20,7 @@
 #include "qt/core/glue/web_popup_menu.h"
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 
-#include "oxide_qquick_touch_handle_drawable.h"
+#include "qquick_legacy_touch_handle_drawable.h"
 #include "qquick_legacy_web_popup_menu.h"
 
 namespace oxide {
@@ -44,8 +44,10 @@ std::unique_ptr<qt::WebPopupMenu> LegacyContentsView::CreateWebPopupMenu(
                              client));
 }
 
-qt::TouchHandleDrawableProxy* LegacyContentsView::CreateTouchHandleDrawable() {
-  return new TouchHandleDrawable(item(), touch_selection_controller_.get());
+std::unique_ptr<qt::TouchHandleDrawable>
+LegacyContentsView::CreateTouchHandleDrawable() {
+  return std::unique_ptr<qt::TouchHandleDrawable>(
+      new LegacyTouchHandleDrawable(item(), touch_selection_controller_.get()));
 }
 
 void LegacyContentsView::TouchSelectionChanged(

@@ -654,7 +654,7 @@ RenderWidgetHostView::CreateDrawable() {
     return nullptr;
   }
 
-  return base::WrapUnique(container_->CreateTouchHandleDrawable());
+  return container_->CreateTouchHandleDrawable();
 }
 
 void RenderWidgetHostView::UpdateCurrentCursor() {

@@ -18,6 +18,7 @@
 #ifndef _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 #define _OXIDE_SHARED_BROWSER_RENDER_WIDGET_HOST_VIEW_CONTAINER_H_
 
+#include <memory>
 #include <vector>
 
 #include "base/memory/ref_counted.h"
@@ -64,7 +65,8 @@ class RenderWidgetHostViewContainer {
 
   virtual float GetTopControlsHeight() = 0;
 
-  virtual ui::TouchHandleDrawable* CreateTouchHandleDrawable() const = 0;
+  virtual std::unique_ptr<ui::TouchHandleDrawable>
+  CreateTouchHandleDrawable() const = 0;
 
   virtual void TouchSelectionChanged(RenderWidgetHostView* view,
                                      bool handle_drag_in_progress,

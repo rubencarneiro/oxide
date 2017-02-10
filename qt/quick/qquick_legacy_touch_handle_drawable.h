@@ -15,43 +15,62 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
-#define _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
+#ifndef _OXIDE_QT_QUICK_LEGACY_TOUCH_HANDLE_DRAWABLE_H_
+#define _OXIDE_QT_QUICK_LEGACY_TOUCH_HANDLE_DRAWABLE_H_
 
 #include <memory>
 
-#include "ui/touch_selection/touch_handle.h"
+#include <QPointer>
+#include <QtGlobal>
+
+#include "qt/core/glue/touch_handle_drawable.h"
+
+QT_BEGIN_NAMESPACE
+class QQmlComponent;
+class QQmlContext;
+class QQuickItem;
+QT_END_NAMESPACE
+
+class OxideQQuickTouchSelectionController;
 
 namespace oxide {
-namespace qt {
+namespace qquick {
 
-class TouchHandleDrawableProxy;
-class ContentsViewImpl;
+class LegacyTouchHandleDrawable
+    : public QObject,
+      public qt::TouchHandleDrawable {
+  Q_OBJECT
 
-class TouchHandleDrawable : public ui::TouchHandleDrawable {
  public:
-  TouchHandleDrawable(const ContentsViewImpl* view);
+  LegacyTouchHandleDrawable(QQuickItem* parent,
+                            OxideQQuickTouchSelectionController* controller);
 
-  void SetProxy(TouchHandleDrawableProxy* proxy);
+ private Q_SLOTS:
+  void HandleComponentChanged();
 
  private:
-  ~TouchHandleDrawable() override;
+  ~LegacyTouchHandleDrawable() override;
 
-  // ui::TouchHandleDrawable implementation
+  void InstantiateComponent();
+
+  // qt::TouchHandleDrawable implementation
   void SetEnabled(bool enabled) override;
-  void SetOrientation(ui::TouchHandleOrientation orientation,
+  void SetOrientation(Orientation orientation,
                       bool mirror_vertical,
                       bool mirror_horizontal) override;
-  void SetOrigin(const gfx::PointF& origin) override;
+  void SetOrigin(const QPointF& origin) override;
   void SetAlpha(float alpha) override;
-  gfx::RectF GetVisibleBounds() const override;
+  QRectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
 
-  std::unique_ptr<TouchHandleDrawableProxy> proxy_;
-  const ContentsViewImpl* view_;
+  QPointer<QQuickItem> parent_;
+  QPointer<OxideQQuickTouchSelectionController> controller_;
+
+  std::unique_ptr<QQmlContext> context_;
+  std::unique_ptr<QQuickItem> item_;
 };
 
-} // namespace qt
+} // namespace qquick
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_BROWSER_TOUCH_HANDLE_DRAWABLE_H_
+#endif // _OXIDE_QT_QUICK_LEGACY_TOUCH_HANDLE_DRAWABLE_H_

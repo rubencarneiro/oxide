@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_qquick_touch_handle_drawable.h"
+#include "qquick_legacy_touch_handle_drawable.h"
 
 #include <QDebug>
 #include <QObject>
@@ -121,18 +121,102 @@ void TouchHandleDrawableContext::setHorizontalPaddingRatio(qreal ratio) {
   }
 }
 
-TouchHandleDrawable::~TouchHandleDrawable() {}
+void LegacyTouchHandleDrawable::HandleComponentChanged() {
+  bool visible = item_ ? item_->isVisible() : false;
+  OxideQQuickTouchSelectionController::HandleOrientation orientation =
+      OxideQQuickTouchSelectionController::HandleOrientationUndefined;
+  bool mirror_vertical = false;
+  bool mirror_horizontal = false;
+  if (context_) {
+    TouchHandleDrawableContext* context =
+        qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
+    orientation = context->orientation();
+    mirror_vertical = context->mirrorVertical();
+    mirror_horizontal = context->mirrorHorizontal();
+  }
+  QPointF position(item_ ? item_->x() : 0.0,
+                   item_ ? item_->y() : 0.0);
+  qreal opacity = item_ ? item_->opacity() : 0.0;
 
-void TouchHandleDrawable::SetEnabled(bool enabled) {
-  if (!item_.isNull()) {
+  item_.reset();
+  context_.reset();
+  InstantiateComponent();
+
+  if (item_) {
+    SetEnabled(visible);
+    TouchHandleDrawableContext* context =
+        qobject_cast<TouchHandleDrawableContext*>(
+          context_->contextObject());
+    context->setOrientation(orientation);
+    context->setMirrorVertical(mirror_vertical);
+    context->setMirrorHorizontal(mirror_horizontal);
+    SetOrigin(position);
+    SetAlpha(opacity);
+  }
+}
+
+LegacyTouchHandleDrawable::~LegacyTouchHandleDrawable() = default;
+
+void LegacyTouchHandleDrawable::InstantiateComponent() {
+  if (!parent_) {
+    qWarning() <<
+        "qt::LegacyTouchHandleDrawable: "
+        "Can't instantiate after the view has gone";
+    return;
+  }
+
+  TouchHandleDrawableContext* contextObject =
+      new TouchHandleDrawableContext();
+  QQmlComponent* component = controller_->handle();
+  if (!component) {
+    qWarning() <<
+        "qt::LegacyTouchHandleDrawable: Content requested a touch handle "
+        "drawable, but the application hasn't provided one";
+    delete contextObject;
+    return;
+  }
+
+  QQmlContext* baseContext = component->creationContext();
+  if (!baseContext) {
+    baseContext = QQmlEngine::contextForObject(parent_);
+  }
+  context_.reset(new QQmlContext(baseContext));
+
+  context_->setContextObject(contextObject);
+  contextObject->setParent(context_.get());
+
+  item_.reset(
+      qobject_cast<QQuickItem*>(component->beginCreate(context_.get())));
+  if (!item_) {
+    qWarning() <<
+        "qt::LegacyTouchHandleDrawable: Failed to create instance of "
+        "Qml touch selection handle component";
+    context_.reset();
+    return;
+  }
+
+  // This is a bit hacky - not sure what we'll do here if we introduce
+  // other items that can use a ContentView and which support custom UI
+  // components
+  OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
+  if (web_view) {
+    OxideQQuickWebViewPrivate::get(web_view)
+        ->addAttachedPropertyTo(item_.get());
+  }
+  item_->setParentItem(parent_);
+  component->completeCreate();
+}
+
+void LegacyTouchHandleDrawable::SetEnabled(bool enabled) {
+  if (item_) {
     item_->setVisible(enabled);
   }
 }
 
-void TouchHandleDrawable::SetOrientation(Orientation orientation,
-                                         bool mirror_vertical,
-                                         bool mirror_horizontal) {
-  if (!context_.isNull()) {
+void LegacyTouchHandleDrawable::SetOrientation(Orientation orientation,
+                                               bool mirror_vertical,
+                                               bool mirror_horizontal) {
+  if (context_) {
     TouchHandleDrawableContext* context =
         qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
     if (context) {
@@ -160,29 +244,29 @@ void TouchHandleDrawable::SetOrientation(Orientation orientation,
   }
 }
 
-void TouchHandleDrawable::SetOrigin(const QPointF& origin) {
-  if (!item_.isNull()) {
+void LegacyTouchHandleDrawable::SetOrigin(const QPointF& origin) {
+  if (item_) {
     item_->setX(origin.x());
     item_->setY(origin.y());
   }
 }
 
-void TouchHandleDrawable::SetAlpha(float alpha) {
-  if (!item_.isNull()) {
+void LegacyTouchHandleDrawable::SetAlpha(float alpha) {
+  if (item_) {
     item_->setOpacity(alpha);
   }
 }
 
-QRectF TouchHandleDrawable::GetVisibleBounds() const {
-  if (item_.isNull()) {
+QRectF LegacyTouchHandleDrawable::GetVisibleBounds() const {
+  if (!item_) {
     return QRectF();
   }
 
   return QRectF(item_->x(), item_->y(), item_->width(), item_->height());
 }
 
-float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
-  if (context_.isNull()) {
+float LegacyTouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
+  if (!context_) {
     return 0.0f;
   }
 
@@ -191,101 +275,17 @@ float TouchHandleDrawable::GetDrawableHorizontalPaddingRatio() const {
   return context->horizontalPaddingRatio();
 }
 
-void TouchHandleDrawable::instantiateComponent() {
-  if (!parent_) {
-    qWarning() <<
-        "TouchHandleDrawable: "
-        "Can't instantiate after the view has gone";
-    return;
-  }
-
-  TouchHandleDrawableContext* contextObject =
-      new TouchHandleDrawableContext();
-  QQmlComponent* component = controller_->handle();
-  if (!component) {
-    qWarning() <<
-        "TouchHandleDrawable: Content requested a touch handle "
-        "drawable, but the application hasn't provided one";
-    delete contextObject;
-    return;
-  }
-
-  QQmlContext* baseContext = component->creationContext();
-  if (!baseContext) {
-    baseContext = QQmlEngine::contextForObject(parent_);
-  }
-  context_.reset(new QQmlContext(baseContext));
-
-  context_->setContextObject(contextObject);
-  contextObject->setParent(context_.data());
-
-  item_.reset(
-      qobject_cast<QQuickItem*>(component->beginCreate(context_.data())));
-  if (!item_) {
-    qWarning() <<
-        "TouchHandleDrawable: Failed to create instance of "
-        "Qml touch selection handle component";
-    context_.reset();
-    return;
-  }
-
-  // This is a bit hacky - not sure what we'll do here if we introduce
-  // other items that can use a ContentView and which support custom UI
-  // components
-  OxideQQuickWebView* web_view = qobject_cast<OxideQQuickWebView*>(parent_);
-  if (web_view) {
-    OxideQQuickWebViewPrivate::get(web_view)
-        ->addAttachedPropertyTo(item_.data());
-  }
-  item_->setParentItem(parent_);
-  component->completeCreate();
-}
-
-TouchHandleDrawable::TouchHandleDrawable(
+LegacyTouchHandleDrawable::LegacyTouchHandleDrawable(
     QQuickItem* parent,
     OxideQQuickTouchSelectionController* controller)
     : parent_(parent),
       controller_(controller) {
-  instantiateComponent();
+  InstantiateComponent();
 
-  connect(controller, SIGNAL(handleChanged()), SLOT(handleComponentChanged()));
-}
-
-void TouchHandleDrawable::handleComponentChanged() {
-  bool visible = item_.isNull() ? false : item_->isVisible();
-  OxideQQuickTouchSelectionController::HandleOrientation orientation =
-      OxideQQuickTouchSelectionController::HandleOrientationUndefined;
-  bool mirror_vertical = false;
-  bool mirror_horizontal = false;
-  if (!context_.isNull()) {
-    TouchHandleDrawableContext* context =
-        qobject_cast<TouchHandleDrawableContext*>(context_->contextObject());
-    orientation = context->orientation();
-    mirror_vertical = context->mirrorVertical();
-    mirror_horizontal = context->mirrorHorizontal();
-  }
-  QPointF position(item_.isNull() ? 0.0 : item_->x(),
-                   item_.isNull() ? 0.0 : item_->y());
-  qreal opacity = item_.isNull() ? 0.0 : item_->opacity();
-
-  item_.reset();
-  context_.reset();
-  instantiateComponent();
-
-  if (!item_.isNull()) {
-    SetEnabled(visible);
-    TouchHandleDrawableContext* context =
-        qobject_cast<TouchHandleDrawableContext*>(
-          context_->contextObject());
-    context->setOrientation(orientation);
-    context->setMirrorVertical(mirror_vertical);
-    context->setMirrorHorizontal(mirror_horizontal);
-    SetOrigin(position);
-    SetAlpha(opacity);
-  }
+  connect(controller, SIGNAL(handleChanged()), SLOT(HandleComponentChanged()));
 }
 
 } // namespace qquick
 } // namespace oxide
 
-#include "oxide_qquick_touch_handle_drawable.moc"
+#include "qquick_legacy_touch_handle_drawable.moc"

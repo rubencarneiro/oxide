@@ -43,7 +43,7 @@ std::unique_ptr<WebPopupMenu> WebContentsViewClient::CreatePopupMenu(
   return nullptr;
 }
 
-ui::TouchHandleDrawable*
+std::unique_ptr<ui::TouchHandleDrawable>
 WebContentsViewClient::CreateTouchHandleDrawable() const {
   NOTIMPLEMENTED();
   return nullptr;

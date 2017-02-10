@@ -70,9 +70,9 @@ class ContentsViewImpl : public QObject,
 
   ContentsViewClient* client() const { return client_; }
 
+ private:
   float GetTopContentOffset() const;
 
- private:
   // ContentsView implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
@@ -114,7 +114,8 @@ class ContentsViewImpl : public QObject,
       bool allow_multiple_selection,
       const gfx::Rect& bounds,
       oxide::WebPopupMenuClient* client) override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
+  std::unique_ptr<ui::TouchHandleDrawable>
+  CreateTouchHandleDrawable() const override;
   void TouchSelectionChanged(ui::TouchSelectionController::ActiveStatus status,
                              const gfx::RectF& bounds,
                              bool handle_drag_in_progress,

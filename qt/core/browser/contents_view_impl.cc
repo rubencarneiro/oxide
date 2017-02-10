@@ -43,6 +43,7 @@
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/touch_handle_drawable.h"
 #include "qt/core/glue/web_popup_menu.h"
 #include "shared/browser/chrome_controller.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
@@ -54,9 +55,9 @@
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_skutils.h"
-#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_type_conversions.h"
 #include "qt_screen.h"
+#include "touch_handle_drawable_host.h"
 #include "web_popup_menu_host.h"
 
 namespace oxide {
@@ -252,6 +253,10 @@ unsigned int CompositorFrameHandleImpl::GetAcceleratedFrameTexture() {
 
 EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
   return frame_->data()->gl_frame_data->resource.egl_image;
+}
+
+float ContentsViewImpl::GetTopContentOffset() const {
+  return view()->chrome_controller()->GetTopContentOffset();
 }
 
 QSharedPointer<CompositorFrameHandle> ContentsViewImpl::compositorFrameHandle() {
@@ -453,10 +458,6 @@ void ContentsViewImpl::hideTouchSelectionController() {
   view()->HideTouchSelectionController();
 }
 
-float ContentsViewImpl::GetTopContentOffset() const {
-  return view()->chrome_controller()->GetTopContentOffset();
-}
-
 void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
 }
@@ -528,10 +529,20 @@ std::unique_ptr<oxide::WebPopupMenu> ContentsViewImpl::CreatePopupMenu(
   return std::move(host);
 }
 
-ui::TouchHandleDrawable* ContentsViewImpl::CreateTouchHandleDrawable() const {
-  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
-  drawable->SetProxy(client_->CreateTouchHandleDrawable());
-  return drawable;
+std::unique_ptr<ui::TouchHandleDrawable>
+ContentsViewImpl::CreateTouchHandleDrawable() const {
+  std::unique_ptr<TouchHandleDrawableHost> host =
+      base::MakeUnique<TouchHandleDrawableHost>(this);
+
+  std::unique_ptr<TouchHandleDrawable> drawable =
+      client_->CreateTouchHandleDrawable();
+  if (!drawable) {
+    return nullptr;
+  }
+
+  host->Init(std::move(drawable));
+
+  return std::move(host);
 }
 
 void ContentsViewImpl::TouchSelectionChanged(

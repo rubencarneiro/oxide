@@ -55,6 +55,7 @@
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "screen.h"
+#include "touch_handle_drawable_host.h"
 #include "web_popup_menu_host.h"
 
 namespace oxide {
@@ -692,12 +693,24 @@ float WebContentsView::GetTopControlsHeight() {
   return chrome_controller_->top_controls_height();
 }
 
-ui::TouchHandleDrawable* WebContentsView::CreateTouchHandleDrawable() const {
+std::unique_ptr<ui::TouchHandleDrawable>
+WebContentsView::CreateTouchHandleDrawable() const {
   if (!client_) {
     return nullptr;
   }
 
-  return client_->CreateTouchHandleDrawable();
+  std::unique_ptr<TouchHandleDrawableHost> host =
+      base::MakeUnique<TouchHandleDrawableHost>(web_contents());
+
+  std::unique_ptr<ui::TouchHandleDrawable> drawable =
+      client_->CreateTouchHandleDrawable();
+  if (!drawable) {
+    return nullptr;
+  }
+
+  host->Init(std::move(drawable));
+
+  return std::move(host);
 }
 
 void WebContentsView::TouchSelectionChanged(RenderWidgetHostView* view,
