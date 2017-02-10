@@ -25,9 +25,6 @@ if(CMAKE_CROSSCOMPILING)
   if(NOT TARGET Qt5::qmake)
     add_executable(Qt5::qmake IMPORTED)
   endif()
-  if(NOT TARGET Qt5::rcc)
-    add_executable(Qt5::rcc IMPORTED)
-  endif()
   if(NOT TARGET Qt5::uic)
     add_executable(Qt5::uic IMPORTED)
   endif()
@@ -57,5 +54,19 @@ if(CMAKE_CROSSCOMPILING)
     set_target_properties(Qt5::moc PROPERTIES
         IMPORTED_LOCATION "${QT_MOC_EXECUTABLE}")
     unset(QT_MOC_EXECUTABLE)
+  endif()
+
+  if(NOT TARGET Qt5::rcc)
+    find_program(
+      QT_RCC_EXECUTABLE rcc
+        PATHS /usr/lib/qt5/bin /usr/lib/${OXIDE_LIBRARY_HOST_ARCHITECTURE}/qt5/bin
+        NO_DEFAULT_PATH)
+    if(QT_RCC_EXECUTABLE STREQUAL "QT_RCC_EXECUTABLE-NOTFOUND")
+      message(FATAL_ERROR "Can't find a rcc executable for the host arch")
+    endif()
+    add_executable(Qt5::rcc IMPORTED)
+    set_target_properties(Qt5::rcc PROPERTIES
+      IMPORTED_LOCATION "${QT_RCC_EXECUTABLE}")
+    unset(QT_RCC_EXECUTABLE)
   endif()
 endif()
