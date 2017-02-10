@@ -468,10 +468,7 @@ BrowserProcessMainImpl::BrowserProcessMainImpl()
     : state_(STATE_NOT_STARTED),
       process_model_(PROCESS_MODEL_MULTI_PROCESS) {}
 
-BrowserProcessMainImpl::~BrowserProcessMainImpl() {
-  CHECK(state_ == STATE_NOT_STARTED || state_ == STATE_SHUTDOWN) <<
-      "BrowserProcessMain::Shutdown() should be called before process exit";
-}
+BrowserProcessMainImpl::~BrowserProcessMainImpl() = default;
 
 void BrowserProcessMainImpl::Start(StartParams params) {
   CHECK_EQ(state_, STATE_NOT_STARTED) <<
@@ -633,8 +630,8 @@ ProcessModel BrowserProcessMain::GetProcessModelOverrideFromEnv() {
 
 // static
 BrowserProcessMain* BrowserProcessMain::GetInstance() {
-  static BrowserProcessMainImpl g_instance;
-  return &g_instance;
+  static BrowserProcessMainImpl* g_instance = new BrowserProcessMainImpl();
+  return g_instance;
 }
 
 } // namespace oxide
