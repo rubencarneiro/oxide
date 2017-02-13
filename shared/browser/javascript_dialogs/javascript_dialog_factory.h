@@ -20,7 +20,7 @@
 
 #include <memory>
 
-#include "content/public/common/javascript_message_type.h"
+#include "content/public/common/javascript_dialog_type.h"
 
 class GURL;
 
@@ -40,7 +40,7 @@ class JavaScriptDialogFactory {
   virtual std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
       JavaScriptDialogClient* client,
       const GURL& origin_url,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text) = 0;
 };

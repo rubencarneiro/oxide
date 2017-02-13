@@ -799,14 +799,14 @@ std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateBeforeUnloadDialog(
 std::unique_ptr<oxide::JavaScriptDialog> WebView::CreateJavaScriptDialog(
     oxide::JavaScriptDialogClient* client,
     const GURL& origin_url,
-    content::JavaScriptMessageType type,
+    content::JavaScriptDialogType type,
     const base::string16& message_text,
     const base::string16& default_prompt_text) {
-  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_DIALOG_TYPE_ALERT,
                               JavaScriptDialogType::Alert);
-  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
                               JavaScriptDialogType::Prompt);
-  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+  STATIC_ASSERT_MATCHING_ENUM(content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
                               JavaScriptDialogType::Confirm);
 
   std::unique_ptr<JavaScriptDialogHost> host =

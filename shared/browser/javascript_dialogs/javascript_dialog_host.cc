@@ -40,7 +40,7 @@ JavaScriptDialogHost::JavaScriptDialogHost(
     base::WeakPtr<JavaScriptDialogContentsHelper> owner,
     const GURL& origin_url,
     bool is_before_unload_dialog,
-    content::JavaScriptMessageType type,
+    content::JavaScriptDialogType type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
     const content::JavaScriptDialogManager::DialogClosedCallback& callback)

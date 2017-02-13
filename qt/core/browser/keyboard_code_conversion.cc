@@ -586,13 +586,11 @@ ui::DomKey GetDomKeyFromQKeyEvent(QKeyEvent* event) {
     // AUDIO_BALANCE_LEFT
     // AUDIO_BALANCE_RIGHT
     case Qt::Key_BassDown:
-      return ui::DomKey::Key::AUDIO_BASS_DOWN;
-    // AUDIO_BASS_BOOST_DOWN
+      return ui::DomKey::Key::AUDIO_BASS_BOOST_DOWN;
     case Qt::Key_BassBoost:
       return ui::DomKey::Key::AUDIO_BASS_BOOST_TOGGLE;
-    // AUDIO_BASS_BOOST_UP
     case Qt::Key_BassUp:
-      return ui::DomKey::Key::AUDIO_BASS_UP;
+      return ui::DomKey::Key::AUDIO_BASS_BOOST_UP;
     // AUDIO_FADER_FRONT
     // AUDIO_FADER_REAR
     // AUDIO_SURROUND_MODE_NEXT

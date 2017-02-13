@@ -30,7 +30,6 @@
 #include "content/public/browser/restore_type.h"
 #include "content/public/browser/web_contents_delegate.h"
 #include "content/public/browser/web_contents_observer.h"
-#include "content/public/common/javascript_message_type.h"
 #include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/gfx/geometry/point.h"
 #include "ui/gfx/geometry/rect.h"
@@ -228,7 +227,7 @@ class OXIDE_SHARED_EXPORT WebView : public ScriptMessageTarget,
       int32_t route_id,
       int32_t main_frame_route_id,
       int32_t main_frame_widget_route_id,
-      WindowContainerType window_container_type,
+      content::mojom::WindowContainerType window_container_type,
       const GURL& opener_url,
       const std::string& frame_name,
       const GURL& target_url,
