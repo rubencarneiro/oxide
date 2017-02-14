@@ -18,6 +18,7 @@
 #include "oxide_web_contents_view_client.h"
 
 #include "base/logging.h"
+#include "ui/touch_selection/touch_handle.h"
 
 #include "oxide_web_contents_view.h"
 #include "web_popup_menu.h"
@@ -49,15 +50,12 @@ WebContentsViewClient::CreateTouchHandleDrawable() const {
   return nullptr;
 }
 
-void WebContentsViewClient::TouchSelectionChanged(
-    ui::TouchSelectionController::ActiveStatus status,
-    const gfx::RectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) const {}
-
-void WebContentsViewClient::ContextMenuIntercepted() const {}
-
 InputMethodContext* WebContentsViewClient::GetInputMethodContext() const {
+  return nullptr;
+}
+
+LegacyTouchEditingClient*
+WebContentsViewClient::GetLegacyTouchEditingClient() const {
   return nullptr;
 }
 

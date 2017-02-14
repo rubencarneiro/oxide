@@ -36,6 +36,7 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/legacy_touch_editing_controller.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_object_id.h"
@@ -71,6 +72,7 @@ class ChromeController;
 class Compositor;
 class CompositorFrameHandle;
 class DragSource;
+class LegacyTouchEditingClient;
 class RenderWidgetHostView;
 class WebContentsViewClient;
 class WebContextMenuHost;
@@ -83,6 +85,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
       public CompositorObserver,
       public DragSourceClient,
       public InputMethodContextObserver,
+      public LegacyTouchEditingController,
       public RenderWidgetHostViewContainer,
       public ScreenObserver {
  public:
@@ -143,8 +146,6 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void FocusChanged();
   void ScreenChanged();
 
-  void HideTouchSelectionController();
-
   ChromeController* chrome_controller() const { return chrome_controller_; }
 
  private:
@@ -173,6 +174,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void DidCloseContextMenu();
   void DidHidePopupMenu();
+
+  void HideTouchSelectionController();
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -246,6 +249,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   // InputMethodContextObserver implementation
   void InputPanelVisibilityChanged() override;
 
+  // LegacyTouchEditingController implementation
+  void HideAndDisallowShowingAutomatically() override;
+
   // RenderWidgetHostViewContainer implementation
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;
   void DetachLayer(scoped_refptr<cc::Layer> layer) override;
@@ -255,9 +261,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   float GetTopControlsHeight() override;
   std::unique_ptr<ui::TouchHandleDrawable>
   CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(RenderWidgetHostView* view,
-                             bool handle_drag_in_progress,
-                             bool insertion_handle_tapped) override;
+  void TouchEditingStatusChanged(RenderWidgetHostView* view,
+                                 bool handle_drag_in_progress) override;
+  void TouchInsertionHandleTapped(RenderWidgetHostView* view) override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
   // ScreenObserver implementation
@@ -292,6 +298,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   // Avoid calling ChromeController::FromWebContentsView on every frame
   ChromeController* chrome_controller_;
+
+  LegacyTouchEditingClient* legacy_touch_editing_client_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

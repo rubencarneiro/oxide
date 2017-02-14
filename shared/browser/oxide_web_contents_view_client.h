@@ -23,7 +23,7 @@
 
 #include "base/macros.h"
 #include "ui/display/display.h"
-#include "ui/touch_selection/touch_selection_controller.h"
+#include "ui/gfx/geometry/rect_f.h"
 
 #include "shared/common/oxide_shared_export.h"
 
@@ -37,7 +37,6 @@ class WebCursor;
 
 namespace gfx {
 class Rect;
-class RectF;
 }
 
 namespace ui {
@@ -47,6 +46,7 @@ class TouchHandleDrawable;
 namespace oxide {
 
 class InputMethodContext;
+class LegacyTouchEditingClient;
 class WebContentsView;
 class WebContextMenu;
 class WebPopupMenu;
@@ -79,14 +79,9 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
   virtual std::unique_ptr<ui::TouchHandleDrawable> 
   CreateTouchHandleDrawable() const;
 
-  virtual void TouchSelectionChanged(
-      ui::TouchSelectionController::ActiveStatus status,
-      const gfx::RectF& bounds,
-      bool handle_drag_in_progress,
-      bool insertion_handle_tapped) const;
-  virtual void ContextMenuIntercepted() const;
-
   virtual InputMethodContext* GetInputMethodContext() const;
+
+  virtual LegacyTouchEditingClient* GetLegacyTouchEditingClient() const;
 
   virtual void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event);

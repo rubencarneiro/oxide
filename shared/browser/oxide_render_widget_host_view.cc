@@ -458,7 +458,7 @@ void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
   if ((selection_controller_->active_status() !=
           ui::TouchSelectionController::INACTIVE) &&
       HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    NotifyTouchSelectionChanged(false);
+    NotifyTouchSelectionChanged();
     // XXX: hack to ensure the position of the handles is updated.
     selection_controller_->SetTemporarilyHidden(true);
     selection_controller_->SetTemporarilyHidden(false);
@@ -500,18 +500,6 @@ void RenderWidgetHostView::OnUserInput() const {
   }
 }
 
-bool RenderWidgetHostView::HandleContextMenu(
-    const content::ContextMenuParams& params) {
-  if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
-      params.is_editable &&
-      params.selection_text.empty()) {
-    return true;
-  }
-
-  selection_controller_->HideAndDisallowShowingAutomatically();
-  return false;
-}
-
 void RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
   switch (event.type()) {
@@ -542,15 +530,13 @@ void RenderWidgetHostView::HandleGestureForTouchSelection(
   }
 }
 
-void RenderWidgetHostView::NotifyTouchSelectionChanged(
-    bool insertion_handle_tapped) {
+void RenderWidgetHostView::NotifyTouchSelectionChanged() {
   if (!container_) {
     return;
   }
 
-  container_->TouchSelectionChanged(this,
-                                    handle_drag_in_progress_,
-                                    insertion_handle_tapped);
+  container_->TouchEditingStatusChanged(this,
+                                        handle_drag_in_progress_);
 }
 
 void RenderWidgetHostView::ReturnResources(
@@ -629,7 +615,6 @@ void RenderWidgetHostView::SelectBetweenCoordinates(const gfx::PointF& base,
 }
 
 void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
-  bool insertion_handle_tapped = false;
   switch (event) {
     case ui::SELECTION_HANDLE_DRAG_STARTED:
     case ui::INSERTION_HANDLE_DRAG_STARTED:
@@ -640,12 +625,14 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
       handle_drag_in_progress_ = false;
       break;
     case ui::INSERTION_HANDLE_TAPPED:
-      insertion_handle_tapped = true;
-      break;
+      if (container_) {
+        container_->TouchInsertionHandleTapped(this);
+      }
+      return;
     default:
       break;
   }
-  NotifyTouchSelectionChanged(insertion_handle_tapped);
+  NotifyTouchSelectionChanged();
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>

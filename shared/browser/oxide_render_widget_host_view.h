@@ -106,8 +106,6 @@ class RenderWidgetHostView
 
   void OnUserInput() const;
 
-  bool HandleContextMenu(const content::ContextMenuParams& params);
-
  private:
   // content::RenderWidgetHostViewOxide implementation
   void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
@@ -210,7 +208,7 @@ class RenderWidgetHostView
   void DetachLayer();
 
   void HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
-  void NotifyTouchSelectionChanged(bool insertion_handle_tapped);
+  void NotifyTouchSelectionChanged();
 
   content::RenderWidgetHostImpl* host_;
 

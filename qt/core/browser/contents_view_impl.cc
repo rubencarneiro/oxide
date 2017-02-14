@@ -43,6 +43,7 @@
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/legacy_touch_editing_client.h"
 #include "qt/core/glue/touch_handle_drawable.h"
 #include "qt/core/glue/web_popup_menu.h"
 #include "shared/browser/chrome_controller.h"
@@ -50,6 +51,7 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 
+#include "legacy_touch_editing_client_proxy.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_event_utils.h"
@@ -454,10 +456,6 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
   }
 }
 
-void ContentsViewImpl::hideTouchSelectionController() {
-  view()->HideTouchSelectionController();
-}
-
 void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
   client_->SetInputMethodEnabled(enabled);
 }
@@ -545,39 +543,13 @@ ContentsViewImpl::CreateTouchHandleDrawable() const {
   return std::move(host);
 }
 
-void ContentsViewImpl::TouchSelectionChanged(
-    ui::TouchSelectionController::ActiveStatus status,
-    const gfx::RectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) const {
-  TouchSelectionControllerActiveStatus active_status;
-  switch (status) {
-  case ui::TouchSelectionController::INACTIVE:
-    active_status = ACTIVE_STATUS_INACTIVE;
-    break;
-  case ui::TouchSelectionController::INSERTION_ACTIVE:
-    active_status = ACTIVE_STATUS_INSERTION_ACTIVE;
-    break;
-  case ui::TouchSelectionController::SELECTION_ACTIVE:
-    active_status = ACTIVE_STATUS_SELECTION_ACTIVE;
-    break;
-  default:
-    Q_UNREACHABLE();
-  }
-
-  client_->TouchSelectionChanged(
-      active_status,
-      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
-      handle_drag_in_progress,
-      insertion_handle_tapped);
-}
-
-void ContentsViewImpl::ContextMenuIntercepted() const {
-  client_->ContextMenuIntercepted();
-}
-
 oxide::InputMethodContext* ContentsViewImpl::GetInputMethodContext() const {
   return input_method_context_.get();
+}
+
+oxide::LegacyTouchEditingClient*
+ContentsViewImpl::GetLegacyTouchEditingClient() const {
+  return legacy_touch_editing_client_.get();
 }
 
 void ContentsViewImpl::UnhandledKeyboardEvent(
@@ -612,6 +584,14 @@ ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
       input_method_context_(new InputMethodContext(this)) {
   DCHECK(!client_->view_);
   client_->view_ = this;
+
+  LegacyTouchEditingClient* legacy_touch_editing_client =
+      client_->GetLegacyTouchEditingClient();
+  if (legacy_touch_editing_client) {
+    legacy_touch_editing_client_ =
+        base::MakeUnique<LegacyTouchEditingClientProxy>(
+            this, legacy_touch_editing_client);
+  }
 
   windowChanged();
 }

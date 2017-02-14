@@ -68,9 +68,9 @@ class RenderWidgetHostViewContainer {
   virtual std::unique_ptr<ui::TouchHandleDrawable>
   CreateTouchHandleDrawable() const = 0;
 
-  virtual void TouchSelectionChanged(RenderWidgetHostView* view,
-                                     bool handle_drag_in_progress,
-                                     bool insertion_handle_tapped) = 0;
+  virtual void TouchEditingStatusChanged(RenderWidgetHostView* view,
+                                         bool handle_drag_in_progress) = 0;
+  virtual void TouchInsertionHandleTapped(RenderWidgetHostView* view) = 0;
 
   virtual void EditingCapabilitiesChanged(RenderWidgetHostView* view) = 0;
 };

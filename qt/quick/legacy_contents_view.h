@@ -49,8 +49,6 @@ class LegacyContentsView : public ContentsView {
     return touch_selection_controller_.get();
   }
 
-  void HideTouchSelectionController() const;
-
  private:
   // qt::ContentsViewClient implementation
   std::unique_ptr<qt::WebPopupMenu> CreateWebPopupMenu(
@@ -59,12 +57,7 @@ class LegacyContentsView : public ContentsView {
       const QRect& bounds,
       qt::WebPopupMenuClient* client) override;
   std::unique_ptr<qt::TouchHandleDrawable> CreateTouchHandleDrawable() override;
-  void TouchSelectionChanged(
-      qt::TouchSelectionControllerActiveStatus status,
-      const QRectF& bounds,
-      bool handle_drag_in_progress,
-      bool insertion_handle_tapped) override;
-  void ContextMenuIntercepted() const override;
+  qt::LegacyTouchEditingClient* GetLegacyTouchEditingClient() override;
 
   std::unique_ptr<OxideQQuickTouchSelectionController> touch_selection_controller_;
 

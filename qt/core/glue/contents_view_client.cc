@@ -15,34 +15,18 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_UITK_LIB_CONTENTS_VIEW_H_
-#define _OXIDE_UITK_LIB_CONTENTS_VIEW_H_
-
-#include <QtGlobal>
-
-#include "qt/quick/contents_view.h"
+#include "contents_view_client.h"
 
 namespace oxide {
-namespace uitk {
+namespace qt {
 
-class ContentsView : public qquick::ContentsView {
-  Q_DISABLE_COPY(ContentsView)
+ContentsViewClient::ContentsViewClient() = default;
 
- public:
-  ContentsView(QQuickItem* item);
-  ~ContentsView() override;
+ContentsViewClient::~ContentsViewClient() = default;
 
- private:
-  // qt::ContentsViewClient implementation
-  std::unique_ptr<qt::WebPopupMenu> CreateWebPopupMenu(
-      const std::vector<qt::MenuItem>& items,
-      bool allow_multiple_selection,
-      const QRect& bounds,
-      qt::WebPopupMenuClient* client) override;
-  std::unique_ptr<qt::TouchHandleDrawable> CreateTouchHandleDrawable() override;
-};
+LegacyTouchEditingClient* ContentsViewClient::GetLegacyTouchEditingClient() {
+  return nullptr;
+}
 
-} // namespace uitk
+} // namespace qt
 } // namespace oxide
-
-#endif // _OXIDE_UITK_LIB_CONTENTS_VIEW_H_

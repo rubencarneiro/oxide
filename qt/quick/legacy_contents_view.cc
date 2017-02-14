@@ -19,6 +19,7 @@
 
 #include "qt/core/glue/web_popup_menu.h"
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller_p.h"
 
 #include "qquick_legacy_touch_handle_drawable.h"
 #include "qquick_legacy_web_popup_menu.h"
@@ -50,40 +51,18 @@ LegacyContentsView::CreateTouchHandleDrawable() {
       new LegacyTouchHandleDrawable(item(), touch_selection_controller_.get()));
 }
 
-void LegacyContentsView::TouchSelectionChanged(
-    qt::TouchSelectionControllerActiveStatus status,
-    const QRectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) {
-  if (touch_selection_controller_) {
-    touch_selection_controller_->onTouchSelectionChanged(
-        static_cast<OxideQQuickTouchSelectionController::Status>(status),
-        bounds,
-        handle_drag_in_progress,
-        insertion_handle_tapped);
-  }
-}
-
-void LegacyContentsView::ContextMenuIntercepted() const {
-  if (touch_selection_controller_) {
-    Q_EMIT touch_selection_controller_->contextMenuIntercepted();
-  }
+qt::LegacyTouchEditingClient*
+LegacyContentsView::GetLegacyTouchEditingClient() {
+  return OxideQQuickTouchSelectionControllerPrivate::get(
+      touch_selection_controller_.get());
 }
 
 LegacyContentsView::LegacyContentsView(QQuickItem* item)
     : ContentsView(item),
       touch_selection_controller_(
-          new OxideQQuickTouchSelectionController(this)) {}
+          new OxideQQuickTouchSelectionController()) {}
 
 LegacyContentsView::~LegacyContentsView() = default;
-
-void LegacyContentsView::HideTouchSelectionController() const {
-  if (!view()) {
-    return;
-  }
-
-  view()->hideTouchSelectionController();
-}
 
 } // namespace qquick
 } // namespace oxide

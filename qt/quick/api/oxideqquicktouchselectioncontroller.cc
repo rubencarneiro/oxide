@@ -16,30 +16,73 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "oxideqquicktouchselectioncontroller.h"
+#include "oxideqquicktouchselectioncontroller_p.h"
+
+#include <QQmlComponent>
 
 #include "qt/core/api/oxideqglobal_p.h"
-#include "qt/quick/legacy_contents_view.h"
-
-#include "oxideqquickwebview_p.h"
+#include "qt/core/glue/legacy_touch_editing_controller.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
 
-class OxideQQuickTouchSelectionControllerPrivate {
- public:
-  OxideQQuickTouchSelectionControllerPrivate()
-      : view(nullptr)
-      , handle(nullptr)
-      , handle_drag_in_progress(false)
-      , status(OxideQQuickTouchSelectionController::StatusInactive) {}
+OxideQQuickTouchSelectionControllerPrivate
+    ::OxideQQuickTouchSelectionControllerPrivate(
+        OxideQQuickTouchSelectionController* q)
+        : q_ptr(q),
+          handle_drag_in_progress_(false),
+          status_(OxideQQuickTouchSelectionController::StatusInactive) {}
 
-  oxide::qquick::LegacyContentsView* view;
-  QQmlComponent* handle;
-  QRectF bounds;
-  bool handle_drag_in_progress;
-  OxideQQuickTouchSelectionController::Status status;
-};
+void OxideQQuickTouchSelectionControllerPrivate::StatusChanged(
+    ActiveStatus status,
+    const QRectF& bounds,
+    bool handle_drag_in_progress) {
+  Q_Q(OxideQQuickTouchSelectionController);
+
+  OxideQQuickTouchSelectionController::Status s =
+      static_cast<OxideQQuickTouchSelectionController::Status>(status);
+  if (s != status_) {
+    bool was_active =
+        (status_ != OxideQQuickTouchSelectionController::StatusInactive);
+    status_ = s;
+    Q_EMIT q->statusChanged();
+    bool active =
+        (s != OxideQQuickTouchSelectionController::StatusInactive);
+    if (active != was_active) {
+      Q_EMIT q->activeChanged();
+    }
+  }
+
+  if (bounds != bounds_) {
+    bounds_ = bounds;
+    Q_EMIT q->boundsChanged();
+  }
+
+  if (handle_drag_in_progress != handle_drag_in_progress_) {
+    handle_drag_in_progress_ = handle_drag_in_progress;
+    Q_EMIT q->handleDragInProgressChanged();
+  }
+}
+
+void OxideQQuickTouchSelectionControllerPrivate::InsertionHandleTapped() {
+  Q_Q(OxideQQuickTouchSelectionController);
+
+  Q_EMIT q->insertionHandleTapped();
+}
+
+void OxideQQuickTouchSelectionControllerPrivate::ContextMenuIntercepted() {
+  Q_Q(OxideQQuickTouchSelectionController);
+
+  Q_EMIT q->contextMenuIntercepted();
+}
+
+// static
+OxideQQuickTouchSelectionControllerPrivate*
+OxideQQuickTouchSelectionControllerPrivate::get(
+    OxideQQuickTouchSelectionController* q) {
+  return q->d_func();
+}
 
 /*!
 \class OxideQQuickTouchSelectionController
@@ -68,13 +111,12 @@ class OxideQQuickTouchSelectionControllerPrivate {
 \since OxideQt 1.15
 */
 
-OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController(
-    oxide::qquick::LegacyContentsView* view)
-    : d_ptr(new OxideQQuickTouchSelectionControllerPrivate()) {
-  Q_D(OxideQQuickTouchSelectionController);
+/*!
+\internal
+*/
 
-  d->view = view;
-}
+OxideQQuickTouchSelectionController::OxideQQuickTouchSelectionController()
+    : d_ptr(new OxideQQuickTouchSelectionControllerPrivate(this)) {}
 
 /*!
 \internal
@@ -90,7 +132,7 @@ OxideQQuickTouchSelectionController::~OxideQQuickTouchSelectionController() {}
 void OxideQQuickTouchSelectionController::hide() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  d->view->HideTouchSelectionController();
+  d->controller()->HideAndDisallowShowingAutomatically();
 }
 
 /*!
@@ -105,7 +147,7 @@ bool OxideQQuickTouchSelectionController::active() const {
       "TouchSelectionController::active is deprecated, use "
       "TouchSelectionController::status instead";
 
-  return (d->status != StatusInactive);
+  return (d->status_ != StatusInactive);
 }
 
 /*!
@@ -115,17 +157,17 @@ bool OxideQQuickTouchSelectionController::active() const {
 QQmlComponent* OxideQQuickTouchSelectionController::handle() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->handle;
+  return d->handle_;
 }
 
 void OxideQQuickTouchSelectionController::setHandle(QQmlComponent* handle) {
   Q_D(OxideQQuickTouchSelectionController);
 
-  if (handle == d->handle) {
+  if (handle == d->handle_) {
     return;
   }
 
-  d->handle = handle;
+  d->handle_ = handle;
   Q_EMIT handleChanged();
 }
 
@@ -136,7 +178,7 @@ void OxideQQuickTouchSelectionController::setHandle(QQmlComponent* handle) {
 const QRectF& OxideQQuickTouchSelectionController::bounds() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->bounds;
+  return d->bounds_;
 }
 
 /*!
@@ -147,7 +189,7 @@ const QRectF& OxideQQuickTouchSelectionController::bounds() const {
 bool OxideQQuickTouchSelectionController::handleDragInProgress() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->handle_drag_in_progress;
+  return d->handle_drag_in_progress_;
 }
 
 /*!
@@ -159,37 +201,5 @@ OxideQQuickTouchSelectionController::Status
 OxideQQuickTouchSelectionController::status() const {
   Q_D(const OxideQQuickTouchSelectionController);
 
-  return d->status;
-}
-
-void OxideQQuickTouchSelectionController::onTouchSelectionChanged(
-    Status status,
-    const QRectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) {
-  Q_D(OxideQQuickTouchSelectionController);
-
-  if (status != d->status) {
-    bool was_active = (d->status != StatusInactive);
-    d->status = status;
-    Q_EMIT statusChanged();
-    bool active = (status != StatusInactive);
-    if (active != was_active) {
-      Q_EMIT activeChanged();
-    }
-  }
-
-  if (bounds != d->bounds) {
-    d->bounds = bounds;
-    Q_EMIT boundsChanged();
-  }
-
-  if (handle_drag_in_progress != d->handle_drag_in_progress) {
-    d->handle_drag_in_progress = handle_drag_in_progress;
-    Q_EMIT handleDragInProgressChanged();
-  }
-
-  if (insertion_handle_tapped) {
-    Q_EMIT insertionHandleTapped();
-  }
+  return d->status_;
 }

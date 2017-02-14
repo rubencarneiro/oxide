@@ -49,6 +49,7 @@
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "chrome_controller.h"
+#include "legacy_touch_editing_client.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_drag_source.h"
 #include "oxide_fullscreen_helper.h"
@@ -230,6 +231,14 @@ void WebContentsView::DidHidePopupMenu() {
                                                   active_popup_menu_.release());
 }
 
+void WebContentsView::HideTouchSelectionController() {
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
+}
+
 gfx::NativeView WebContentsView::GetNativeView() const {
   return nullptr;
 }
@@ -322,12 +331,18 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv && rwhv->HandleContextMenu(params)) {
-    if (client_) {
-      client_->ContextMenuIntercepted();
+  if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
+      params.is_editable &&
+      params.selection_text.empty()) {
+    if (legacy_touch_editing_client_) {
+      legacy_touch_editing_client_->ContextMenuIntercepted();
     }
     return;
+  }
+
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (rwhv) {
+    rwhv->selection_controller()->HideAndDisallowShowingAutomatically();
   }
 
   active_context_menu_ =
@@ -464,7 +479,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged(GetRenderWidgetHostView());
-  TouchSelectionChanged(GetRenderWidgetHostView(), false, false);
+  TouchEditingStatusChanged(GetRenderWidgetHostView(), false);
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -503,7 +518,7 @@ void WebContentsView::DidShowFullscreenWidget() {
   web_contents()->GetRenderWidgetHostView()->Hide();
 
   EditingCapabilitiesChanged(rwhv);
-  TouchSelectionChanged(rwhv, false, false);
+  TouchEditingStatusChanged(rwhv, false);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget() {
@@ -530,7 +545,7 @@ void WebContentsView::DidDestroyFullscreenWidget() {
   // FIXME: This actually doesn't work, because GetRenderWidgetHostView still
   // returns the fullscreen view
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchSelectionChanged(orig_rwhv, false, false);
+  TouchEditingStatusChanged(orig_rwhv, false);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -559,7 +574,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   // messages, so there's nothing else to do with |rwhv|
 
   EditingCapabilitiesChanged(rwhv),
-  TouchSelectionChanged(rwhv, false, false);
+  TouchEditingStatusChanged(rwhv, false);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -580,7 +595,7 @@ void WebContentsView::DidDetachInterstitialPage() {
   }
 
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchSelectionChanged(orig_rwhv, false, false);
+  TouchEditingStatusChanged(orig_rwhv, false);
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
@@ -649,6 +664,14 @@ void WebContentsView::InputPanelVisibilityChanged() {
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
+void WebContentsView::HideAndDisallowShowingAutomatically() {
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
+}
+
 void WebContentsView::AttachLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(layer.get());
   root_layer_->InsertChild(layer, 0);
@@ -713,9 +736,8 @@ WebContentsView::CreateTouchHandleDrawable() const {
   return std::move(host);
 }
 
-void WebContentsView::TouchSelectionChanged(RenderWidgetHostView* view,
-                                            bool handle_drag_in_progress,
-                                            bool insertion_handle_tapped) {
+void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view,
+                                                bool handle_drag_in_progress) {
   if (!client_) {
     return;
   }
@@ -737,10 +759,25 @@ void WebContentsView::TouchSelectionChanged(RenderWidgetHostView* view,
 
   bounds.Offset(0, chrome_controller_->GetTopContentOffset());
 
-  client_->TouchSelectionChanged(status,
-                                 bounds,
-                                 handle_drag_in_progress,
-                                 insertion_handle_tapped);
+  if (legacy_touch_editing_client_) {
+    legacy_touch_editing_client_->StatusChanged(status,
+                                                bounds,
+                                                handle_drag_in_progress);
+  }
+}
+
+void WebContentsView::TouchInsertionHandleTapped(RenderWidgetHostView* view) {
+  if (!client_) {
+    return;
+  }
+
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
+  if (legacy_touch_editing_client_) {
+    legacy_touch_editing_client_->InsertionHandleTapped();
+  }
 }
 
 void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {
@@ -801,11 +838,24 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
     InputMethodContextObserver::Observe(nullptr);
     client_->view_ = nullptr;
   }
+
+  if (legacy_touch_editing_client_) {
+    LegacyTouchEditingController::DetachFromClient(legacy_touch_editing_client_);
+    legacy_touch_editing_client_ = nullptr;
+  }
+
   client_ = client;
+
   if (client_) {
     DCHECK(!client_->view_);
     client_->view_ = this;
     InputMethodContextObserver::Observe(client_->GetInputMethodContext());
+
+    legacy_touch_editing_client_ = client_->GetLegacyTouchEditingClient();
+  }
+
+  if (legacy_touch_editing_client_) {
+    LegacyTouchEditingController::AttachToClient(legacy_touch_editing_client_);
   }
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
@@ -822,7 +872,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged(GetRenderWidgetHostView());
-  TouchSelectionChanged(GetRenderWidgetHostView(), false, false);
+  TouchEditingStatusChanged(GetRenderWidgetHostView(), false);
 }
 
 bool WebContentsView::IsVisible() const {
@@ -1084,14 +1134,6 @@ void WebContentsView::ScreenChanged() {
   }
 
   content::RenderWidgetHostImpl::From(rwh)->NotifyScreenInfoChanged();
-}
-
-void WebContentsView::HideTouchSelectionController() {
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
 }
 
 } // namespace oxide
