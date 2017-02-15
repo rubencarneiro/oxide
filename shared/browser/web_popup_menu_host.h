@@ -24,13 +24,16 @@
 #include "base/callback.h"
 #include "base/macros.h"
 #include "content/public/common/menu_item.h"
-#include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/web_popup_menu_client.h"
 
 namespace content {
 class RenderFrameHost;
+}
+
+namespace gfx {
+class Rect;
 }
 
 namespace oxide {
@@ -59,14 +62,6 @@ class WebPopupMenuHost : public WebPopupMenuClient {
   void Cancel() override;
 
   RenderFrameHostID render_frame_host_id_;
-
-  std::vector<content::MenuItem> items_;
-
-  int selected_item_;
-
-  bool allow_multiple_selection_;
-
-  gfx::Rect bounds_;
 
   base::Closure hidden_callback_;
 

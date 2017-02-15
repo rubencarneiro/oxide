@@ -20,6 +20,7 @@
 #include "base/logging.h"
 #include "content/browser/frame_host/render_frame_host_impl.h" // nogncheck
 #include "content/public/browser/web_contents.h"
+#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
 
 #include "chrome_controller.h"
@@ -75,28 +76,13 @@ WebPopupMenuHost::WebPopupMenuHost(content::RenderFrameHost* render_frame_host,
                                    const gfx::Rect& bounds,
                                    const base::Closure& hidden_callback)
     : render_frame_host_id_(render_frame_host),
-      items_(items),
-      selected_item_(selected_item),
-      allow_multiple_selection_(allow_multiple_selection),
-      bounds_(bounds),
-      hidden_callback_(hidden_callback) {}
-
-WebPopupMenuHost::~WebPopupMenuHost() {
-  hidden_callback_.Reset();
-}
-
-void WebPopupMenuHost::Show() {
-  content::RenderFrameHost* render_frame_host =
-      render_frame_host_id_.ToInstance();
-  DCHECK(render_frame_host);
-
+      hidden_callback_(hidden_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   DCHECK(web_contents);
 
   WebContentsView* view = WebContentsView::FromWebContents(web_contents);
   if (!view->client()) {
-    Cancel();
     return;
   }
 
@@ -108,11 +94,18 @@ void WebPopupMenuHost::Show() {
         gfx::Vector2d(0, chrome_controller->GetTopContentOffset());
   }
 
-  menu_ = view->client()->CreatePopupMenu(items_,
-                                          selected_item_,
-                                          allow_multiple_selection_,
-                                          bounds_ + top_content_offset,
+  menu_ = view->client()->CreatePopupMenu(items,
+                                          selected_item,
+                                          allow_multiple_selection,
+                                          bounds + top_content_offset,
                                           this);
+}
+
+WebPopupMenuHost::~WebPopupMenuHost() {
+  hidden_callback_.Reset();
+}
+
+void WebPopupMenuHost::Show() {
   if (!menu_) {
     Cancel();
     return;

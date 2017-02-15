@@ -59,8 +59,7 @@ JavaScriptDialogContentsHelper::JavaScriptDialogContentsHelper(
     content::WebContents* contents)
     : content::WebContentsObserver(contents),
       factory_(nullptr),
-      is_displaying_before_unload_dialog_(false),
-      weak_ptr_factory_(this) {}
+      is_displaying_before_unload_dialog_(false) {}
 
 void JavaScriptDialogContentsHelper::ReportDialogUnsupported(
     content::JavaScriptMessageType type) const {
@@ -124,7 +123,7 @@ void JavaScriptDialogContentsHelper::RunPendingDialog(
 
   active_dialog_ =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetWeakPtr(),
+          this,
           data->origin_url,
           false,
           data->type,
@@ -265,7 +264,7 @@ void JavaScriptDialogContentsHelper::RunBeforeUnloadDialog(
 
   active_dialog_ =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetWeakPtr(),
+          this,
           web_contents()->GetLastCommittedURL(),
           true,
           content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
@@ -355,10 +354,5 @@ JavaScriptDialogContentsHelper* JavaScriptDialogContentsHelper::FromWebContents(
 }
 
 JavaScriptDialogContentsHelper::~JavaScriptDialogContentsHelper() = default;
-
-base::WeakPtr<JavaScriptDialogContentsHelper>
-JavaScriptDialogContentsHelper::GetWeakPtr() {
-  return weak_ptr_factory_.GetWeakPtr();
-}
 
 } // namespace oxide

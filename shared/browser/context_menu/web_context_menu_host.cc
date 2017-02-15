@@ -470,15 +470,7 @@ WebContextMenuHost::WebContextMenuHost(
     const base::Closure& on_close_callback)
     : render_frame_host_id_(render_frame_host),
       params_(params),
-      on_close_callback_(on_close_callback) {}
-
-WebContextMenuHost::~WebContextMenuHost() = default;
-
-void WebContextMenuHost::Show() {
-  content::RenderFrameHost* render_frame_host =
-      render_frame_host_id_.ToInstance();
-  DCHECK(render_frame_host);
-
+      on_close_callback_(on_close_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   DCHECK(web_contents);
@@ -486,7 +478,6 @@ void WebContextMenuHost::Show() {
   WebContentsHelper* helper =
       WebContentsHelper::FromWebContents(web_contents);
   if (!helper->client()) {
-    Close();
     return;
   }
 
@@ -496,9 +487,12 @@ void WebContextMenuHost::Show() {
     params_.y += chrome_controller->GetTopContentOffset();
   }
 
-  DCHECK(!menu_);
   menu_ = helper->client()->CreateContextMenu(params_, BuildItems(), this);
+}
 
+WebContextMenuHost::~WebContextMenuHost() = default;
+
+void WebContextMenuHost::Show() {
   if (!menu_) {
     Close();
     return;

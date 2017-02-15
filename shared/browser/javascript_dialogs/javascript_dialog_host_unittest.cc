@@ -34,6 +34,8 @@
 
 namespace oxide {
 
+using testing::_;
+
 class JavaScriptDialogHostTest : public testing::Test {
  protected:
   content::WebContents* web_contents() const { return web_contents_; }
@@ -87,7 +89,7 @@ class JavaScriptDialogHostConstructTest
   std::unique_ptr<JavaScriptDialogHost> CreateJavaScriptDialogHost(
       const content::JavaScriptDialogManager::DialogClosedCallback& callback) {
     return base::MakeUnique<JavaScriptDialogHost>(
-        GetJSDialogContentsHelper()->GetWeakPtr(),
+        GetJSDialogContentsHelper(),
         GetParam().origin_url,
         GetParam().is_before_unload_dialog,
         GetParam().type,
@@ -134,6 +136,8 @@ TEST_P(JavaScriptDialogHostConstructTest, NoFactory) {
           MakeJavaScriptDialogTestCallback(&callback_count,
                                            &success,
                                            &user_input));
+  EXPECT_EQ(0, callback_count);
+
   host->Show();
 
   EXPECT_EQ(1, callback_count);
@@ -172,23 +176,24 @@ TEST_P(JavaScriptDialogHostConstructTest, MockFactory) {
   MockJavaScriptDialogFactory factory;
   GetJSDialogContentsHelper()->set_factory(&factory);
 
-  std::unique_ptr<JavaScriptDialogHost> host =
-      CreateJavaScriptDialogHost(
-          MakeJavaScriptDialogTestCallback(&callback_count,
-                                           &success,
-                                           &user_input));
-
   if (params.is_before_unload_dialog) {
     EXPECT_CALL(factory,
-                CreateBeforeUnloadDialog(host.get(), params.origin_url));
+                CreateBeforeUnloadDialog(_, params.origin_url));
   } else {
     EXPECT_CALL(factory,
-                CreateJavaScriptDialog(host.get(),
+                CreateJavaScriptDialog(_,
                                        params.origin_url,
                                        params.type,
                                        params.message_text,
                                        params.default_prompt_text));
   }
+
+  std::unique_ptr<JavaScriptDialogHost> host =
+      CreateJavaScriptDialogHost(
+          MakeJavaScriptDialogTestCallback(&callback_count,
+                                           &success,
+                                           &user_input));
+  EXPECT_EQ(0, callback_count);
 
   host->Show();
 
@@ -263,7 +268,7 @@ TEST_F(JavaScriptDialogHostTest, Show) {
 
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetJSDialogContentsHelper()->GetWeakPtr(),
+          GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
           false, content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
           base::string16(), base::string16(),
@@ -286,7 +291,7 @@ TEST_F(JavaScriptDialogHostTest, Close) {
 
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetJSDialogContentsHelper()->GetWeakPtr(),
+          GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
           false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
           base::string16(), base::string16(),
@@ -316,7 +321,7 @@ TEST_F(JavaScriptDialogHostTest, Dismiss) {
 
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetJSDialogContentsHelper()->GetWeakPtr(),
+          GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
           false, content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
           base::string16(), base::string16(),
@@ -345,7 +350,7 @@ TEST_F(JavaScriptDialogHostTest, HandleWithOverride) {
 
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetJSDialogContentsHelper()->GetWeakPtr(),
+          GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
           false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
           base::string16(), base::string16(),
@@ -375,7 +380,7 @@ TEST_F(JavaScriptDialogHostTest, HandleNoOverride) {
 
   std::unique_ptr<JavaScriptDialogHost> host =
       base::MakeUnique<JavaScriptDialogHost>(
-          GetJSDialogContentsHelper()->GetWeakPtr(),
+          GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
           false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
           base::string16(), base::string16(),
