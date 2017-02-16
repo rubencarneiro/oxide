@@ -31,7 +31,7 @@ const double kVibrationIntensity = 1.0;
 
 // static
 void VibrationManager::Create(
-    mojo::InterfaceRequest<device::VibrationManager> request) {
+    mojo::InterfaceRequest<device::mojom::VibrationManager> request) {
   mojo::MakeStrongBinding(base::MakeUnique<VibrationManager>(),
                           std::move(request));
 }

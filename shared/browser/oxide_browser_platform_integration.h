@@ -24,7 +24,7 @@
 #include "base/macros.h"
 #include "base/observer_list.h"
 #include "content/public/browser/browser_thread.h"
-#include "device/vibration/vibration_manager_impl.h"
+#include "device/vibration/vibration_manager.mojom.h"
 
 #include "shared/common/oxide_shared_export.h"
 
@@ -32,6 +32,10 @@ class GURL;
 
 namespace device {
 class LocationProvider;
+
+namespace mojom {
+class VibrationManager;
+}
 }
 
 namespace oxide {
@@ -119,7 +123,7 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
 
   // Get the proper vibration manager factory
   virtual void CreateVibrationManager(
-      mojo::InterfaceRequest<device::VibrationManager> request);
+      mojo::InterfaceRequest<device::mojom::VibrationManager> request);
 
  protected:
   BrowserPlatformIntegration();
