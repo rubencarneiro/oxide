@@ -28,8 +28,8 @@
 #include "content/public/common/referrer.h"
 #include "ui/base/window_open_disposition.h"
 
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/context_menu/web_context_menu_client.h"
-#include "shared/browser/oxide_render_object_id.h"
 
 class GURL;
 
@@ -83,7 +83,7 @@ class WebContextMenuHost : public WebContextMenuClient {
   void Close() override;
   void ExecuteCommand(WebContextMenuAction action) override;
 
-  RenderFrameHostID render_frame_host_id_;
+  RenderFrameHostWeakPtr render_frame_host_;
 
   content::ContextMenuParams params_;
 

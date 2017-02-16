@@ -39,7 +39,6 @@
 #include "shared/browser/clipboard/oxide_clipboard_observer.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/oxide_content_types.h"
-#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_script_message_target.h"
 #include "shared/browser/web_contents_unique_ptr.h"
 #include "shared/common/oxide_message_enums.h"

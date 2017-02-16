@@ -21,9 +21,9 @@
 #include "content/public/browser/permission_type.h"
 #include "device/geolocation/geolocation_provider.h"
 
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/oxide_browser_context.h"
-#include "shared/browser/oxide_render_object_id.h"
 
 #include "oxide_permission_request_dispatcher.h"
 #include "oxide_temporary_saved_permission_context.h"
@@ -95,10 +95,10 @@ struct PermissionManager::Subscription {
 struct PermissionManager::RequestData {
   RequestData(content::RenderFrameHost* render_frame_host)
       : request_id(-1),
-        render_frame_host_id(render_frame_host) {}
+        render_frame_host(render_frame_host) {}
 
   int request_id;
-  RenderFrameHostID render_frame_host_id;
+  RenderFrameHostWeakPtr render_frame_host;
 };
 
 void PermissionManager::RespondToPermissionRequest(
@@ -233,12 +233,10 @@ void PermissionManager::CancelPermissionRequest(int request_id) {
   RequestData* data = requests_.Lookup(request_id);
 
   int dispatcher_request_id = data->request_id;
-  RenderFrameHostID render_frame_host_id = data->render_frame_host_id;
+  content::RenderFrameHost* render_frame_host = data->render_frame_host.get();
 
   requests_.Remove(request_id);
 
-  content::RenderFrameHost* render_frame_host =
-      render_frame_host_id.ToInstance();
   if (!render_frame_host) {
     return;
   }

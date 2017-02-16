@@ -33,13 +33,13 @@
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
 #include "shared/browser/legacy_touch_editing_controller.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
-#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/screen_observer.h"
 #include "shared/common/oxide_shared_export.h"
@@ -282,10 +282,10 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::unique_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
   blink::WebDragOperation current_drag_op_;
-  RenderWidgetHostID current_drag_target_;
+  RenderWidgetHostWeakPtr current_drag_target_;
 
   std::unique_ptr<DragSource> drag_source_;
-  RenderWidgetHostID drag_source_rwh_;
+  RenderWidgetHostWeakPtr drag_source_rwh_;
 
   std::unique_ptr<WebPopupMenuHost> active_popup_menu_;
   std::unique_ptr<WebContextMenuHost> active_context_menu_;
@@ -294,7 +294,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   cc::CompositorFrameMetadata committed_frame_metadata_;
 
-  RenderWidgetHostID interstitial_rwh_id_;
+  RenderWidgetHostWeakPtr interstitial_rwh_;
 
   // Avoid calling ChromeController::FromWebContentsView on every frame
   ChromeController* chrome_controller_;

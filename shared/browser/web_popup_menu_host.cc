@@ -46,10 +46,9 @@ void WebPopupMenuHost::SelectItems(const std::vector<int>& selected_indices) {
     return;
   }
 
+  DCHECK(render_frame_host_);
   content::RenderFrameHostImpl* render_frame_host =
-      static_cast<content::RenderFrameHostImpl*>(
-          render_frame_host_id_.ToInstance());
-  DCHECK(render_frame_host);
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host_.get());
 
   render_frame_host->DidSelectPopupMenuItems(selected_indices);
   Hide();
@@ -60,10 +59,9 @@ void WebPopupMenuHost::Cancel() {
     return;
   }
 
+  DCHECK(render_frame_host_);
   content::RenderFrameHostImpl* render_frame_host =
-      static_cast<content::RenderFrameHostImpl*>(
-          render_frame_host_id_.ToInstance());
-  DCHECK(render_frame_host);
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host_.get());
 
   render_frame_host->DidCancelPopupMenu();
   Hide();
@@ -75,7 +73,7 @@ WebPopupMenuHost::WebPopupMenuHost(content::RenderFrameHost* render_frame_host,
                                    bool allow_multiple_selection,
                                    const gfx::Rect& bounds,
                                    const base::Closure& hidden_callback)
-    : render_frame_host_id_(render_frame_host),
+    : render_frame_host_(render_frame_host),
       hidden_callback_(hidden_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
@@ -115,7 +113,7 @@ void WebPopupMenuHost::Show() {
 }
 
 content::RenderFrameHost* WebPopupMenuHost::GetRenderFrameHost() const {
-  return render_frame_host_id_.ToInstance();
+  return render_frame_host_.get();
 }
 
 } // namespace oxide

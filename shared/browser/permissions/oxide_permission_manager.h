@@ -24,7 +24,6 @@
 #include "base/memory/weak_ptr.h"
 #include "content/public/browser/permission_manager.h"
 
-#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 
 namespace oxide {

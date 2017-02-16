@@ -468,7 +468,7 @@ WebContextMenuHost::WebContextMenuHost(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params,
     const base::Closure& on_close_callback)
-    : render_frame_host_id_(render_frame_host),
+    : render_frame_host_(render_frame_host),
       params_(params),
       on_close_callback_(on_close_callback) {
   content::WebContents* web_contents =
@@ -502,7 +502,7 @@ void WebContextMenuHost::Show() {
 }
 
 content::RenderFrameHost* WebContextMenuHost::GetRenderFrameHost() const {
-  return render_frame_host_id_.ToInstance();
+  return render_frame_host_.get();
 }
 
 } // namespace oxide

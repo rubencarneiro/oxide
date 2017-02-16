@@ -21,10 +21,14 @@
 #include "base/macros.h"
 #include "url/gurl.h"
 
-#include "shared/browser/oxide_render_object_id.h"
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_response.h"
 #include "shared/common/oxide_shared_export.h"
+
+namespace content {
+class RenderFrameHost;
+}
 
 namespace oxide {
 
@@ -34,7 +38,7 @@ namespace oxide {
 class OXIDE_SHARED_EXPORT PermissionRequest {
  public:
   PermissionRequest(int request_id,
-                    const RenderFrameHostID& frame_id,
+                    content::RenderFrameHost* frame,
                     const GURL& origin,
                     const GURL& embedder,
                     const PermissionRequestCallback& callback);
@@ -75,8 +79,8 @@ class OXIDE_SHARED_EXPORT PermissionRequest {
   // PermissionManager
   int request_id_;
 
-  // The ID of the RenderFrameHost that initiated this request
-  RenderFrameHostID frame_id_;
+  // The RenderFrameHost that initiated this request
+  RenderFrameHostWeakPtr frame_;
 
   PermissionRequestDispatcher* dispatcher_;
 
@@ -95,7 +99,7 @@ class OXIDE_SHARED_EXPORT PermissionRequest {
 class MediaAccessPermissionRequest : public PermissionRequest {
  public:
   MediaAccessPermissionRequest(int request_id,
-                               const RenderFrameHostID& frame_id,
+                               content::RenderFrameHost* frame,
                                const GURL& origin,
                                const GURL& embedder,
                                bool audio_requested,

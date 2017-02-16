@@ -369,7 +369,7 @@ void WebContentsView::StartDragging(
     return;
   }
 
-  DCHECK(!drag_source_rwh_.IsValid());
+  DCHECK(!drag_source_rwh_);
 
   drag_source_ =
       BrowserPlatformIntegration::GetInstance()->CreateDragSource(this);
@@ -379,7 +379,7 @@ void WebContentsView::StartDragging(
     web_contents()->SystemDragEnded(source_rwh);
     return;
   }
-  drag_source_rwh_ = RenderWidgetHostID(source_rwh);
+  drag_source_rwh_ = source_rwh;
 
   HideTouchSelectionController();
 
@@ -550,7 +550,7 @@ void WebContentsView::DidDestroyFullscreenWidget() {
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
-  DCHECK(!interstitial_rwh_id_.IsValid());
+  DCHECK(!interstitial_rwh_);
   DCHECK(web_contents()->GetInterstitialPage());
 
   if (web_contents()->GetFullscreenRenderWidgetHostView()) {
@@ -567,9 +567,9 @@ void WebContentsView::DidAttachInterstitialPage() {
   // RWHV was created and now
   rwhv->SetSize(GetSize());
 
-  // Save the ID, as it's detached by the time DidDetachInterstitialPage is
+  // Save the host, as it's detached by the time DidDetachInterstitialPage is
   // called
-  interstitial_rwh_id_ = rwhv->GetRenderWidgetHost();
+  interstitial_rwh_ = rwhv->GetRenderWidgetHost();
 
   // Content takes care of adjusting visibility and sending focus / resize
   // messages, so there's nothing else to do with |rwhv|
@@ -579,11 +579,10 @@ void WebContentsView::DidAttachInterstitialPage() {
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
-  DCHECK(interstitial_rwh_id_.IsValid());
+  DCHECK(interstitial_rwh_);
 
-  content::RenderWidgetHost* interstitial_rwh =
-      interstitial_rwh_id_.ToInstance();
-  interstitial_rwh_id_ = RenderWidgetHostID();
+  content::RenderWidgetHost* interstitial_rwh = interstitial_rwh_.get();
+  interstitial_rwh_ = nullptr;
   if (interstitial_rwh) {
     static_cast<RenderWidgetHostView*>(
         interstitial_rwh->GetView())->SetContainer(nullptr);
@@ -637,8 +636,7 @@ void WebContentsView::CompositorEvictResources() {
 void WebContentsView::EndDrag(blink::WebDragOperation operation) {
   DCHECK(drag_source_);
 
-  content::RenderWidgetHost* source_rwh = drag_source_rwh_.ToInstance();
-  if (!source_rwh) {
+  if (!drag_source_rwh_) {
     return;
   }
 
@@ -653,12 +651,12 @@ void WebContentsView::EndDrag(blink::WebDragOperation operation) {
       view_point.x(), view_point.y(),
       screen_point.x(), screen_point.y(),
       operation,
-      content::RenderWidgetHostImpl::From(source_rwh));
+      content::RenderWidgetHostImpl::From(drag_source_rwh_.get()));
 
-  web_contents()->SystemDragEnded(source_rwh);
+  web_contents()->SystemDragEnded(drag_source_rwh_.get());
 
   drag_source_.reset();
-  drag_source_rwh_ = RenderWidgetHostID();
+  drag_source_rwh_ = nullptr;
 }
 
 void WebContentsView::InputPanelVisibilityChanged() {
@@ -973,7 +971,7 @@ void WebContentsView::HandleDragEnter(
   current_drag_allowed_ops_ = allowed_ops;
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  current_drag_target_ = RenderWidgetHostID(rwh);
+  current_drag_target_ = rwh;
 
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
@@ -994,7 +992,7 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
   }
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  if (RenderWidgetHostID(rwh) != current_drag_target_) {
+  if (rwh != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
                     location,
                     current_drag_allowed_ops_,
@@ -1021,7 +1019,7 @@ void WebContentsView::HandleDragLeave() {
   current_drop_data_.reset();
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  if (RenderWidgetHostID(rwh) != current_drag_target_) {
+  if (rwh != current_drag_target_) {
     return;
   }
 
@@ -1035,7 +1033,7 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
   }
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  if (RenderWidgetHostID(rwh) != current_drag_target_) {
+  if (rwh != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
                     location,
                     current_drag_allowed_ops_,
