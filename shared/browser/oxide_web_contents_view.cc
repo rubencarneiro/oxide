@@ -74,7 +74,8 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone),
-      chrome_controller_(nullptr) {
+      chrome_controller_(nullptr),
+      legacy_touch_editing_client_(nullptr) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
 
