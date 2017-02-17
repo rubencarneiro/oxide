@@ -21,6 +21,7 @@
 #include "base/callback.h"
 #include "base/files/file_path.h"
 #include "base/files/file_proxy.h"
+#include "base/task_runner.h"
 
 namespace oxide {
 

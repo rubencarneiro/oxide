@@ -68,7 +68,8 @@ BrowserThreadQEventDispatcher::TimerData::TimerData()
       instance(nullptr) {}
 BrowserThreadQEventDispatcher::TimerData::~TimerData() {}
 
-BrowserThreadQEventDispatcher::SocketNotifierData::SocketNotifierData() {}
+BrowserThreadQEventDispatcher::SocketNotifierData::SocketNotifierData()
+    : controller(FROM_HERE) {}
 BrowserThreadQEventDispatcher::SocketNotifierData::~SocketNotifierData() {}
 
 bool BrowserThreadQEventDispatcher::CalledOnValidThread() const {
