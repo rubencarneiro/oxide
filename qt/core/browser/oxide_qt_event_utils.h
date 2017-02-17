@@ -43,21 +43,17 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
                                                            bool is_char);
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
-                                       QScreen* screen,
-                                       float location_bar_content_offset);
+                                       QScreen* screen);
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
     const QPointF& window_pos,
-    QScreen* screen,
-    float location_bar_content_offset);
+    QScreen* screen);
 
-blink::WebMouseEvent MakeWebMouseEvent(
-    QHoverEvent* event,
-    const QPointF& window_pos,
-    const QPoint& global_pos,
-    QScreen* screen,
-    float location_bar_content_offset);
+blink::WebMouseEvent MakeWebMouseEvent(QHoverEvent* event,
+                                       const QPointF& window_pos,
+                                       const QPoint& global_pos,
+                                       QScreen* screen);
 
 } // namespace qt
 } // namespace oxide

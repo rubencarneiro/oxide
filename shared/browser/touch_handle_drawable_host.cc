@@ -20,17 +20,23 @@
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/vector2d_f.h"
 
-#include "chrome_controller.h"
-
 namespace oxide {
 
-float TouchHandleDrawableHost::GetTopContentOffset() const {
-  if (!web_contents()) {
-    return 0.f;
+void TouchHandleDrawableHost::OnSwapCompositorFrame(
+    const CompositorFrameData* data,
+    const cc::CompositorFrameMetadata& metadata) {
+  float old_offset = content_offset_;
+  content_offset_ =
+      metadata.top_controls_height * metadata.top_controls_shown_ratio;
+  if (content_offset_ == old_offset) {
+    return;
   }
+  UpdatePosition();
+}
 
-  return ChromeController::FromWebContents(web_contents())
-      ->GetTopContentOffset();
+void TouchHandleDrawableHost::UpdatePosition() {
+  gfx::Vector2dF offset(0, content_offset_);
+  drawable_->SetOrigin(origin_ + offset);
 }
 
 void TouchHandleDrawableHost::SetEnabled(bool enabled) {
@@ -45,12 +51,8 @@ void TouchHandleDrawableHost::SetOrientation(
 }
 
 void TouchHandleDrawableHost::SetOrigin(const gfx::PointF& origin) {
-  if (!web_contents()) {
-    return;
-  }
-
-  gfx::Vector2dF offset(0, GetTopContentOffset());
-  drawable_->SetOrigin(origin + offset);
+  origin_ = origin;
+  UpdatePosition();
 }
 
 void TouchHandleDrawableHost::SetAlpha(float alpha) {
@@ -58,7 +60,7 @@ void TouchHandleDrawableHost::SetAlpha(float alpha) {
 }
 
 gfx::RectF TouchHandleDrawableHost::GetVisibleBounds() const {
-  gfx::Vector2dF offset(0, -GetTopContentOffset());
+  gfx::Vector2dF offset(0, -content_offset_);
   return drawable_->GetVisibleBounds() + offset;
 }
 
@@ -66,8 +68,12 @@ float TouchHandleDrawableHost::GetDrawableHorizontalPaddingRatio() const {
   return drawable_->GetDrawableHorizontalPaddingRatio();
 }
 
-TouchHandleDrawableHost::TouchHandleDrawableHost(content::WebContents* contents)
-    : content::WebContentsObserver(contents) {}
+TouchHandleDrawableHost::TouchHandleDrawableHost(WebContentsView* view) {
+  swap_compositor_frame_subscription_ =
+      view->AddSwapCompositorFrameCallback(
+          base::Bind(&TouchHandleDrawableHost::OnSwapCompositorFrame,
+                     base::Unretained(this)));
+}
 
 TouchHandleDrawableHost::~TouchHandleDrawableHost() = default;
 

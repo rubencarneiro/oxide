@@ -18,21 +18,25 @@
 #ifndef _OXIDE_SHARED_BROWSER_TOUCH_HANDLE_DRAWABLE_HOST_H_
 #define _OXIDE_SHARED_BROWSER_TOUCH_HANDLE_DRAWABLE_HOST_H_
 
-#include "content/public/browser/web_contents_observer.h"
+#include "cc/output/compositor_frame_metadata.h"
+#include "ui/gfx/geometry/point_f.h"
 #include "ui/touch_selection/touch_handle.h"
+
+#include "shared/browser/oxide_web_contents_view.h"
 
 namespace oxide {
 
-class TouchHandleDrawableHost : public ui::TouchHandleDrawable,
-                                public content::WebContentsObserver {
+class TouchHandleDrawableHost : public ui::TouchHandleDrawable {
  public:
-  TouchHandleDrawableHost(content::WebContents* contents);
+  TouchHandleDrawableHost(WebContentsView* view);
   ~TouchHandleDrawableHost() override;
 
   void Init(std::unique_ptr<ui::TouchHandleDrawable> drawable);
 
  private:
-  float GetTopContentOffset() const;
+  void OnSwapCompositorFrame(const CompositorFrameData* data,
+                             const cc::CompositorFrameMetadata& metadata);
+  void UpdatePosition();
 
   // ui::TouchHandleDrawable implementation
   void SetEnabled(bool enabled) override;
@@ -43,6 +47,12 @@ class TouchHandleDrawableHost : public ui::TouchHandleDrawable,
   void SetAlpha(float alpha) override;
   gfx::RectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
+
+  std::unique_ptr<WebContentsView::SwapCompositorFrameSubscription>
+      swap_compositor_frame_subscription_;
+
+  float content_offset_ = 0.f;
+  gfx::PointF origin_;
 
   std::unique_ptr<ui::TouchHandleDrawable> drawable_;
 };

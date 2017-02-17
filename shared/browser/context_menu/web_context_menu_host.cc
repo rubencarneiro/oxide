@@ -33,7 +33,6 @@
 #include "ui/base/clipboard/scoped_clipboard_writer.h"
 #include "url/gurl.h"
 
-#include "shared/browser/chrome_controller.h"
 #include "shared/browser/web_contents_client.h"
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_constants.h"
@@ -125,7 +124,8 @@ void WebContextMenuHost::SaveImage() {
   bool is_large_data_url =
       params_.has_image_contents && params_.src_url.is_empty();
   if (is_large_data_url) {
-    GetRenderFrameHost()->SaveImageAt(params_.x, params_.y);
+    GetRenderFrameHost()->SaveImageAt(params_.x,
+                                      params_.y - top_content_offset_);
   }
 
   const GURL& url = params_.src_url;
@@ -144,7 +144,7 @@ void WebContextMenuHost::SaveImage() {
 }
 
 void WebContextMenuHost::CopyImage() {
-  GetRenderFrameHost()->CopyImageAt(params_.x, params_.y);
+  GetRenderFrameHost()->CopyImageAt(params_.x, params_.y - top_content_offset_);
 }
 
 void WebContextMenuHost::SaveMedia() {
@@ -467,9 +467,11 @@ void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action) {
 WebContextMenuHost::WebContextMenuHost(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params,
+    float top_content_offset,
     const base::Closure& on_close_callback)
     : render_frame_host_(render_frame_host),
       params_(params),
+      top_content_offset_(top_content_offset),
       on_close_callback_(on_close_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
@@ -481,11 +483,7 @@ WebContextMenuHost::WebContextMenuHost(
     return;
   }
 
-  ChromeController* chrome_controller =
-      ChromeController::FromWebContents(web_contents);
-  if (chrome_controller) {
-    params_.y += chrome_controller->GetTopContentOffset();
-  }
+  params_.y += top_content_offset;
 
   menu_ = helper->client()->CreateContextMenu(params_, BuildItems(), this);
 }

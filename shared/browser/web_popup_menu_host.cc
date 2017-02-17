@@ -23,7 +23,6 @@
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
 
-#include "chrome_controller.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "web_popup_menu.h"
@@ -84,18 +83,10 @@ WebPopupMenuHost::WebPopupMenuHost(content::RenderFrameHost* render_frame_host,
     return;
   }
 
-  gfx::Vector2d top_content_offset;
-  ChromeController* chrome_controller =
-      ChromeController::FromWebContents(web_contents);
-  if (chrome_controller) {
-    top_content_offset =
-        gfx::Vector2d(0, chrome_controller->GetTopContentOffset());
-  }
-
   menu_ = view->client()->CreatePopupMenu(items,
                                           selected_item,
                                           allow_multiple_selection,
-                                          bounds + top_content_offset,
+                                          bounds,
                                           this);
 }
 

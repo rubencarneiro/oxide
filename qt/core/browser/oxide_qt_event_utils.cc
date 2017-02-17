@@ -224,8 +224,7 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
 }
 
 blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
-                                       QScreen* screen,
-                                       float location_bar_content_offset) {
+                                       QScreen* screen) {
   blink::WebMouseEvent result;
 
   result.setTimeStampSeconds(QInputEventTimeToWebEventTime(event));
@@ -235,7 +234,7 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
-  result.y = std::floor(pos.y() - location_bar_content_offset);
+  result.y = pos.y();
 
   gfx::PointF window_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->windowPos()),
@@ -297,8 +296,7 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
                                                  const QPointF& window_pos,
-                                                 QScreen* screen,
-                                                 float location_bar_content_offset) {
+                                                 QScreen* screen) {
   blink::WebMouseWheelEvent result;
 
   // The timestamp has be referenced to TimeTicks as ui::InputHandlerProxy uses
@@ -325,7 +323,7 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
-  result.y = std::floor(pos.y() - location_bar_content_offset);
+  result.y = pos.y();
 
   gfx::PointF converted_window_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
@@ -366,8 +364,7 @@ blink::WebMouseEvent MakeWebMouseEvent(
     QHoverEvent* event,
     const QPointF& window_pos,
     const QPoint& global_pos,
-    QScreen* screen,
-    float location_bar_content_offset) {
+    QScreen* screen) {
   blink::WebMouseEvent result;
 
   result.setTimeStampSeconds(QInputEventTimeToWebEventTime(event));
@@ -377,7 +374,7 @@ blink::WebMouseEvent MakeWebMouseEvent(
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
-  result.y = std::floor(pos.y() - location_bar_content_offset);
+  result.y = pos.y();
 
   gfx::PointF converted_window_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);

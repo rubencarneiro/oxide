@@ -482,6 +482,7 @@ component("shared") {
     "browser/touch_handle_drawable_host.h",
     "browser/web_contents_client.cc",
     "browser/web_contents_client.h",
+    "browser/web_contents_data_tracker.h",
     "browser/web_contents_helper.cc",
     "browser/web_contents_helper.h",
     "browser/web_popup_menu.h",

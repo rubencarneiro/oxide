@@ -212,7 +212,6 @@ blink::WebDragOperation ToWebDragOperation(Qt::DropAction action) {
 
 void GetDragEnterEventParams(QDragEnterEvent* event,
                              QScreen* screen,
-                             float location_bar_content_offset,
                              content::DropData* drop_data,
                              gfx::Point* location,
                              blink::WebDragOperationsMask* allowed_ops,
@@ -220,18 +219,15 @@ void GetDragEnterEventParams(QDragEnterEvent* event,
   ToDropData(event->mimeData(), drop_data);
   *allowed_ops = ToWebDragOperations(event->possibleActions());
 
-  GetDropEventParams(event, screen, location_bar_content_offset,
-                     location, key_modifiers);
+  GetDropEventParams(event, screen, location, key_modifiers);
 }
 
 void GetDropEventParams(QDropEvent* event,
                         QScreen* screen,
-                        float location_bar_content_offset,
                         gfx::Point* location,
                         int* key_modifiers) {
   *location =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
-  *location -= gfx::Vector2d(0, location_bar_content_offset);
 
   Qt::KeyboardModifiers modifiers = event->keyboardModifiers();
   if (modifiers & Qt::ShiftModifier) {

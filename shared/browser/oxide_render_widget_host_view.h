@@ -81,8 +81,8 @@ class RenderWidgetHostView
   base::string16 GetSelectionText() const;
   gfx::Range GetSelectionRange() const;
 
-  const cc::CompositorFrameMetadata& last_submitted_frame_metadata() const {
-    return last_submitted_frame_metadata_;
+  const cc::CompositorFrameMetadata& last_drawn_frame_metadata() const {
+    return last_drawn_frame_metadata_;
   }
 
   const content::WebCursor& current_cursor() const { return current_cursor_; }
@@ -102,6 +102,10 @@ class RenderWidgetHostView
 
   ui::TouchSelectionController* selection_controller() const {
     return selection_controller_.get();
+  }
+
+  bool selection_handle_drag_in_progress() const {
+    return selection_handle_drag_in_progress_;
   }
 
   void OnUserInput() const;
@@ -166,8 +170,6 @@ class RenderWidgetHostView
   void SetNeedsBeginFrames(bool needs_begin_frames) override;
 
   // CompositorObserver implementation
-  void CompositorDidCommit() override;
-  void CompositorWillRequestSwapFrame() override;
   void CompositorEvictResources() override;
 
   // GestureProviderClient implementation
@@ -203,6 +205,8 @@ class RenderWidgetHostView
   void DestroyDelegatedContent();
   void SendDelegatedFrameAck(uint32_t surface_id);
   void SendReturnedDelegatedResources();
+  void SurfaceDrawn(const cc::LocalSurfaceId& id,
+                    cc::CompositorFrameMetadata metadata);
   void RunAckCallbacks();
   void AttachLayer();
   void DetachLayer();
@@ -224,9 +228,10 @@ class RenderWidgetHostView
   // The output surface ID for the last frame from the renderer
   uint32_t last_output_surface_id_;
 
-  std::queue<base::Closure> ack_callbacks_;
-
   gfx::Size last_frame_size_dip_;
+  cc::CompositorFrameMetadata last_drawn_frame_metadata_;
+
+  std::queue<base::Closure> ack_callbacks_;
 
   ImeBridgeImpl ime_bridge_;
 
@@ -237,16 +242,12 @@ class RenderWidgetHostView
   bool is_showing_;
   gfx::Size last_size_;
 
-  cc::CompositorFrameMetadata last_submitted_frame_metadata_;
-  cc::CompositorFrameMetadata committed_frame_metadata_;
-  cc::CompositorFrameMetadata displayed_frame_metadata_;
-
   bool browser_controls_shrink_blink_size_;
 
   std::unique_ptr<GestureProvider> gesture_provider_;
 
   std::unique_ptr<ui::TouchSelectionController> selection_controller_;
-  bool handle_drag_in_progress_;
+  bool selection_handle_drag_in_progress_;
 
   base::WeakPtrFactory<RenderWidgetHostView> weak_ptr_factory_;
 

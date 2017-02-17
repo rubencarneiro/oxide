@@ -79,17 +79,6 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
-bool HasLocationBarOffsetChanged(const cc::CompositorFrameMetadata& old,
-                                 const cc::CompositorFrameMetadata& current) {
-  if (old.top_controls_height != current.top_controls_height) {
-    return true;
-  }
-  if (old.top_controls_shown_ratio != current.top_controls_shown_ratio) {
-    return true;
-  }
-  return false;
-}
-
 } // namespace
 
 void RenderWidgetHostView::OnSelectionBoundsChanged(
@@ -204,7 +193,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                  output_surface_id);
   ack_callbacks_.push(ack_callback);
 
-  cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
+  const cc::CompositorFrameMetadata& metadata = frame.metadata;
 
   float device_scale_factor = metadata.device_scale_factor;
   cc::RenderPass* root_pass = frame.render_pass_list.back().get();
@@ -214,9 +203,12 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
       std::lround(frame_size.width() / device_scale_factor),
       std::lround(frame_size.height() / device_scale_factor));
 
-  gfx::Rect damage_rect_dip = gfx::ToEnclosingRect(
-      gfx::ScaleRect(gfx::RectF(root_pass->damage_rect),
-                     1.0f / device_scale_factor));
+  bool shrink =
+      metadata.top_controls_height > 0.f &&
+      metadata.top_controls_shown_ratio == 1.f;
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
+  cc::Selection<gfx::SelectionBound> selection = metadata.selection;
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -252,40 +244,31 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     }
 
     cc::SurfaceFactory::DrawCallback ack_callback =
-        base::Bind(&RenderWidgetHostView::RunAckCallbacks,
-                   weak_ptr_factory_.GetWeakPtr());
+        base::Bind(&RenderWidgetHostView::SurfaceDrawn,
+                   weak_ptr_factory_.GetWeakPtr(),
+                   local_surface_id_,
+                   base::Passed(metadata.Clone()));
     surface_factory_->SubmitCompositorFrame(local_surface_id_,
                                             std::move(frame),
                                             ack_callback);
   }
 
-  if (layer_.get()) {
-    layer_->SetNeedsDisplayRect(damage_rect_dip);
-  }
+  last_frame_size_dip_ = frame_size_dip;
 
-  bool shrink =
-      metadata.top_controls_height > 0.f &&
-      metadata.top_controls_shown_ratio == 1.f;
   if (shrink != browser_controls_shrink_blink_size_) {
     browser_controls_shrink_blink_size_ = shrink;
     host_->WasResized();
   }
 
-  bool has_mobile_viewport = HasMobileViewport(metadata);
-  bool has_fixed_page_scale = HasFixedPageScale(metadata);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
+
+  selection_controller_->OnSelectionBoundsChanged(selection.start,
+                                                  selection.end);
 
   if (host_->is_hidden()) {
     RunAckCallbacks();
   }
-
-  const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
-  selection_controller_->OnSelectionBoundsChanged(selection.start,
-                                                  selection.end);
-
-  last_submitted_frame_metadata_ = std::move(metadata);
-  last_frame_size_dip_ = frame_size_dip;
 }
 
 void RenderWidgetHostView::ClearCompositorFrame() {
@@ -440,31 +423,6 @@ void RenderWidgetHostView::UnlockMouse() {}
 
 void RenderWidgetHostView::SetNeedsBeginFrames(bool needs_begin_frames) {}
 
-void RenderWidgetHostView::CompositorDidCommit() {
-  committed_frame_metadata_ = std::move(last_submitted_frame_metadata_);
-  RunAckCallbacks();
-}
-
-void RenderWidgetHostView::CompositorWillRequestSwapFrame() {
-  cc::CompositorFrameMetadata old = std::move(displayed_frame_metadata_);
-  displayed_frame_metadata_ = std::move(committed_frame_metadata_);
-
-  if (!container_) {
-    return;
-  }
-
-  // If the location bar offset changes while a touch selection is active,
-  // the bounding rect and the position of the handles need to be updated.
-  if ((selection_controller_->active_status() !=
-          ui::TouchSelectionController::INACTIVE) &&
-      HasLocationBarOffsetChanged(old, displayed_frame_metadata_)) {
-    NotifyTouchSelectionChanged();
-    // XXX: hack to ensure the position of the handles is updated.
-    selection_controller_->SetTemporarilyHidden(true);
-    selection_controller_->SetTemporarilyHidden(false);
-  }
-}
-
 void RenderWidgetHostView::CompositorEvictResources() {
   DestroyDelegatedContent();
 }
@@ -535,8 +493,7 @@ void RenderWidgetHostView::NotifyTouchSelectionChanged() {
     return;
   }
 
-  container_->TouchEditingStatusChanged(this,
-                                        handle_drag_in_progress_);
+  container_->TouchEditingStatusChanged(this);
 }
 
 void RenderWidgetHostView::ReturnResources(
@@ -618,11 +575,11 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
   switch (event) {
     case ui::SELECTION_HANDLE_DRAG_STARTED:
     case ui::INSERTION_HANDLE_DRAG_STARTED:
-      handle_drag_in_progress_ = true;
+      selection_handle_drag_in_progress_ = true;
       break;
     case ui::SELECTION_HANDLE_DRAG_STOPPED:
     case ui::INSERTION_HANDLE_DRAG_STOPPED:
-      handle_drag_in_progress_ = false;
+      selection_handle_drag_in_progress_ = false;
       break;
     case ui::INSERTION_HANDLE_TAPPED:
       if (container_) {
@@ -664,8 +621,8 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
   DetachLayer();
   if (local_surface_id_.is_valid()) {
     DCHECK(surface_factory_.get());
-    surface_factory_->EvictSurface();
     local_surface_id_ = cc::LocalSurfaceId();
+    surface_factory_->EvictSurface();
   }
   layer_ = nullptr;
 }
@@ -690,6 +647,15 @@ void RenderWidgetHostView::SendReturnedDelegatedResources() {
       false, // is_swap_ack
       surface_returned_resources_);
   surface_returned_resources_.clear();
+}
+
+void RenderWidgetHostView::SurfaceDrawn(const cc::LocalSurfaceId& id,
+                                        cc::CompositorFrameMetadata metadata) {
+  if (id == local_surface_id_) {
+    last_drawn_frame_metadata_ = std::move(metadata);
+  }
+
+  RunAckCallbacks();
 }
 
 void RenderWidgetHostView::RunAckCallbacks() {
@@ -733,7 +699,7 @@ RenderWidgetHostView::RenderWidgetHostView(
       is_showing_(!host->is_hidden()),
       browser_controls_shrink_blink_size_(false),
       gesture_provider_(GestureProvider::Create(this)),
-      handle_drag_in_progress_(false),
+      selection_handle_drag_in_progress_(false),
       weak_ptr_factory_(this) {
   CHECK(host_) << "Implementation didn't supply a RenderWidgetHost";
 
@@ -812,13 +778,6 @@ gfx::Range RenderWidgetHostView::GetSelectionRange() const {
   return self->GetTextInputManager()->GetTextSelection(self)->range;
 }
 
-void RenderWidgetHostView::Blur() {
-  host_->SetActive(false);
-  host_->Blur();
-
-  selection_controller_->HideAndDisallowShowingAutomatically();
-}
-
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
   if (selection_controller_->WillHandleTouchEvent(event)) {
     return;
@@ -848,6 +807,13 @@ void RenderWidgetHostView::ResetGestureDetection() {
   }
 
   gesture_provider_->ResetDetection();
+}
+
+void RenderWidgetHostView::Blur() {
+  host_->SetActive(false);
+  host_->Blur();
+
+  selection_controller_->HideAndDisallowShowingAutomatically();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {

@@ -173,7 +173,6 @@ inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            float location_bar_content_offset,
                             QScreen* screen);
   ~CompositorFrameHandleImpl() override {}
 
@@ -192,21 +191,17 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
 CompositorFrameHandleImpl::CompositorFrameHandleImpl(
     oxide::CompositorFrameHandle* frame,
-    float location_bar_content_offset,
     QScreen* screen)
     : frame_(frame) {
   if (!frame_) {
     return;
   }
 
-  size_in_pixels_ = QSize(frame->data()->size_in_pixels.width(),
-                          frame->data()->size_in_pixels.height());
-
+  size_in_pixels_ = QSize(frame->data()->rect_in_pixels.width(),
+                          frame->data()->rect_in_pixels.height());
   gfx::RectF rect =
-      gfx::ScaleRect(gfx::RectF(gfx::SizeF(ToChromium(size_in_pixels_))),
+      gfx::ScaleRect(gfx::RectF(frame->data()->rect_in_pixels),
                      1 / frame->data()->device_scale);
-  rect += gfx::Vector2dF(0, location_bar_content_offset);
-
   rect_ = ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, screen));
 }
 
@@ -243,8 +238,8 @@ QImage CompositorFrameHandleImpl::GetSoftwareFrame() {
   DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
   return QImage(
       frame_->data()->software_frame_data->pixels->front(),
-      frame_->data()->size_in_pixels.width(),
-      frame_->data()->size_in_pixels.height(),
+      frame_->data()->rect_in_pixels.width(),
+      frame_->data()->rect_in_pixels.height(),
       QImage::Format_ARGB32);
 }
 
@@ -266,7 +261,6 @@ QSharedPointer<CompositorFrameHandle> ContentsViewImpl::compositorFrameHandle() 
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(
             new CompositorFrameHandleImpl(view()->GetCompositorFrameHandle(),
-                                          GetTopContentOffset(),
                                           GetScreen()));
   }
 
@@ -345,10 +339,7 @@ void ContentsViewImpl::handleMouseEvent(QMouseEvent* event) {
     return;
   }
 
-  view()->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        GetScreen(),
-                        GetTopContentOffset()));
+  view()->HandleMouseEvent(MakeWebMouseEvent(event, GetScreen()));
   event->accept();
 }
 
@@ -360,10 +351,7 @@ void ContentsViewImpl::handleTouchUngrabEvent() {
 void ContentsViewImpl::handleWheelEvent(QWheelEvent* event,
                                         const QPointF& window_pos) {
   view()->HandleWheelEvent(
-      MakeWebMouseWheelEvent(event,
-                             window_pos,
-                             GetScreen(),
-                             GetTopContentOffset()));
+      MakeWebMouseWheelEvent(event, window_pos, GetScreen()));
   event->accept();
 }
 
@@ -385,11 +373,7 @@ void ContentsViewImpl::handleHoverEvent(QHoverEvent* event,
                                         const QPointF& window_pos,
                                         const QPoint& global_pos) {
   view()->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        window_pos,
-                        global_pos,
-                        GetScreen(),
-                        GetTopContentOffset()));
+      MakeWebMouseEvent(event, window_pos, global_pos, GetScreen()));
   event->accept();
 }
 
@@ -401,7 +385,6 @@ void ContentsViewImpl::handleDragEnterEvent(QDragEnterEvent* event) {
 
   GetDragEnterEventParams(event,
                           GetScreen(),
-                          GetTopContentOffset(),
                           &drop_data,
                           &location,
                           &allowed_ops,
@@ -418,7 +401,6 @@ void ContentsViewImpl::handleDragMoveEvent(QDragMoveEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDragMove(location, key_modifiers);
@@ -442,7 +424,6 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDrop(location, key_modifiers);

@@ -40,7 +40,7 @@
 
 namespace oxide {
 
-DEFINE_WEB_CONTENTS_USER_DATA_KEY(ChromeController);
+DEFINE_WEB_CONTENTS_DATA_TRACKER_KEY(ChromeController);
 
 ChromeController::ChromeController(content::WebContents* contents)
     : content::WebContentsObserver(contents),
@@ -48,9 +48,6 @@ ChromeController::ChromeController(content::WebContents* contents)
       top_controls_height_(0),
       constraints_(blink::WebBrowserControlsBoth),
       animation_enabled_(true) {
-  CompositorObserver::Observe(
-      WebContentsView::FromWebContents(contents)->GetCompositor());
-
   FullscreenHelper::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
   WebProcessStatusMonitor::CreateForWebContents(contents);
@@ -123,10 +120,10 @@ void ChromeController::UpdateBrowserControlsState(
     return;
   }
 
-  committed_frame_metadata_ = DefaultMetadata();
-  WebContentsView::FromWebContents(web_contents())
-      ->GetCompositor()
-      ->SetNeedsRedraw();
+  WebContentsView* view = WebContentsView::FromWebContents(web_contents());
+  if (view) {
+    view->GetCompositor()->SetNeedsRedraw();
+  }
 }
 
 RenderWidgetHostView* ChromeController::GetRenderWidgetHostView() {
@@ -155,7 +152,7 @@ bool ChromeController::RendererIsUnresponsive() const {
          WebProcessStatusMonitor::Status::Unresponsive;
 }
 
-cc::CompositorFrameMetadata ChromeController::DefaultMetadata() const {
+cc::CompositorFrameMetadata ChromeController::FallbackMetadata() const {
   cc::CompositorFrameMetadata metadata;
   metadata.top_controls_height = top_controls_height();
   metadata.top_controls_shown_ratio =
@@ -274,27 +271,10 @@ void ChromeController::DidDetachInterstitialPage() {
   RefreshBrowserControlsState();
 }
 
-void ChromeController::CompositorDidCommit() {
-  committed_frame_metadata_ =
-      GetRenderWidgetHostView() && !RendererIsUnresponsive() ?
-          GetRenderWidgetHostView()->last_submitted_frame_metadata().Clone()
-          : DefaultMetadata();
-}
-
-void ChromeController::CompositorWillRequestSwapFrame() {
-  current_frame_metadata_ = committed_frame_metadata_.Clone();
-
-  if (!client_) {
-    return;
-  }
-
-  client_->ChromePositionUpdated();
-}
-
 // static
 ChromeController* ChromeController::FromWebContents(
     content::WebContents* contents) {
-  return content::WebContentsUserData<ChromeController>::FromWebContents(contents);
+  return WebContentsDataTracker<ChromeController>::FromWebContents(contents);
 }
 
 ChromeController::~ChromeController() = default;
@@ -308,7 +288,6 @@ void ChromeController::SetTopControlsHeight(float height) {
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host || RendererIsUnresponsive()) {
-    committed_frame_metadata_ = DefaultMetadata();
     WebContentsView::FromWebContents(web_contents())
         ->GetCompositor()
         ->SetNeedsRedraw();
@@ -356,6 +335,24 @@ float ChromeController::GetTopControlsOffset() const {
 float ChromeController::GetTopContentOffset() const {
   return current_frame_metadata_.top_controls_height *
          current_frame_metadata_.top_controls_shown_ratio;
+}
+
+void ChromeController::FrameMetadataUpdated(
+    const base::Optional<cc::CompositorFrameMetadata>& metadata) {
+  // FIXME(chrisccoulson): Override mode should only affect the top controls
+  //  offset (the content offset should reflect the actual displayed content
+  //  position, which we don't shift in override mode), but doing this breaks
+  //  the tests because we check that both the content and controls offsets are
+  //  in sync
+  current_frame_metadata_ =
+      RendererIsUnresponsive() || !metadata ?
+          FallbackMetadata() : metadata->Clone();
+
+  if (!client_) {
+    return;
+  }
+
+  client_->ChromePositionUpdated();
 }
 
 } // namespace oxide

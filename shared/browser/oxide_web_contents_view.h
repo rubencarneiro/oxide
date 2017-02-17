@@ -23,9 +23,9 @@
 #include <vector>
 
 #include "base/callback.h"
+#include "base/callback_list.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
@@ -50,6 +50,7 @@ class WebMouseWheelEvent;
 }
 
 namespace cc {
+class CompositorFrameMetadata;
 class SolidColorLayer;
 }
 
@@ -70,6 +71,7 @@ namespace oxide {
 
 class ChromeController;
 class Compositor;
+class CompositorFrameData;
 class CompositorFrameHandle;
 class DragSource;
 class LegacyTouchEditingClient;
@@ -116,9 +118,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   display::Display GetDisplay() const;
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
-  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleMouseEvent(blink::WebMouseEvent event);
   void HandleMotionEvent(const ui::MotionEvent& event);
-  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
+  void HandleWheelEvent(blink::WebMouseWheelEvent event);
 
   // XXX(chrisccoulson): Make a new class for these events - we don't use
   //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
@@ -137,16 +139,24 @@ class OXIDE_SHARED_EXPORT WebContentsView
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
-  const cc::CompositorFrameMetadata& committed_frame_metadata() const {
-    return committed_frame_metadata_;
-  }
+  using SwapCompositorFrameSubscription =
+      base::CallbackList<void(const CompositorFrameData*,
+                              const cc::CompositorFrameMetadata&)>::Subscription;
+  std::unique_ptr<SwapCompositorFrameSubscription>
+  AddSwapCompositorFrameCallback(
+      const base::Callback<void(const CompositorFrameData*,
+                                const cc::CompositorFrameMetadata&)>& callback);
 
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
   void ScreenChanged();
 
-  ChromeController* chrome_controller() const { return chrome_controller_; }
+  // XXX(chrisccoulson): This will probably be removed, please don't use it
+  //  See https://launchpad.net/bugs/1665722
+  ChromeController* chrome_controller() const {
+    return chrome_controller_.get();
+  }
 
  private:
   WebContentsView(content::WebContents* web_contents);
@@ -259,10 +269,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   gfx::Size GetViewSizeInPixels() const override;
   bool IsFullscreen() const override;
   float GetTopControlsHeight() override;
-  std::unique_ptr<ui::TouchHandleDrawable>
-  CreateTouchHandleDrawable() const override;
-  void TouchEditingStatusChanged(RenderWidgetHostView* view,
-                                 bool handle_drag_in_progress) override;
+  std::unique_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() override;
+  void TouchEditingStatusChanged(RenderWidgetHostView* view) override;
   void TouchInsertionHandleTapped(RenderWidgetHostView* view) override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
@@ -279,6 +287,11 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
   std::queue<SwapAckCallback> compositor_ack_callbacks_;
 
+  RenderWidgetHostWeakPtr rwh_at_last_commit_;
+  base::CallbackList<void(const CompositorFrameData*,
+                          const cc::CompositorFrameMetadata&)>
+      swap_compositor_frame_callbacks_;
+
   std::unique_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
   blink::WebDragOperation current_drag_op_;
@@ -292,12 +305,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   MouseEventState mouse_state_;
 
-  cc::CompositorFrameMetadata committed_frame_metadata_;
-
   RenderWidgetHostWeakPtr interstitial_rwh_;
 
-  // Avoid calling ChromeController::FromWebContentsView on every frame
-  ChromeController* chrome_controller_;
+  std::unique_ptr<ChromeController> chrome_controller_;
 
   LegacyTouchEditingClient* legacy_touch_editing_client_;
 

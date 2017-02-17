@@ -21,13 +21,13 @@
 #include <memory>
 
 #include "base/macros.h"
+#include "base/optional.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/web_contents_observer.h"
-#include "content/public/browser/web_contents_user_data.h"
 #include "third_party/WebKit/public/platform/WebBrowserControlsState.h"
 
-#include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/ssl/oxide_security_status.h"
+#include "shared/browser/web_contents_data_tracker.h"
 #include "shared/browser/web_process_status_monitor.h"
 #include "shared/common/oxide_shared_export.h"
 
@@ -45,9 +45,8 @@ class RenderWidgetHostView;
 // A mechanism to allow Oxide to position an application's UI, using the
 // renderer compositor cc::BrowserControlsOffsetManager
 class OXIDE_SHARED_EXPORT ChromeController
-    : public content::WebContentsUserData<ChromeController>,
-      public content::WebContentsObserver,
-      public CompositorObserver {
+    : public WebContentsDataTracker<ChromeController>,
+      public content::WebContentsObserver {
  public:
   static ChromeController* FromWebContents(content::WebContents* contents);
 
@@ -70,8 +69,11 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   void set_client(ChromeControllerClient* client) { client_ = client; }
 
+  void FrameMetadataUpdated(
+      const base::Optional<cc::CompositorFrameMetadata>& metadata);
+
  private:
-  friend class content::WebContentsUserData<ChromeController>;
+  friend class WebContentsDataTracker<ChromeController>;
   ChromeController(content::WebContents* contents);
 
   void InitializeForHost(content::RenderFrameHost* render_frame_host,
@@ -85,7 +87,7 @@ class OXIDE_SHARED_EXPORT ChromeController
 
   bool RendererIsUnresponsive() const;
 
-  cc::CompositorFrameMetadata DefaultMetadata() const;
+  cc::CompositorFrameMetadata FallbackMetadata() const;
 
   bool CanHideBrowserControls() const;
   bool CanShowBrowserControls() const;
@@ -110,17 +112,12 @@ class OXIDE_SHARED_EXPORT ChromeController
   void DidAttachInterstitialPage() override;
   void DidDetachInterstitialPage() override;
 
-  // CompositorObserver implementation
-  void CompositorDidCommit() override;
-  void CompositorWillRequestSwapFrame() override;
-
   ChromeControllerClient* client_;
 
   float top_controls_height_;
   blink::WebBrowserControlsState constraints_;
   bool animation_enabled_;
 
-  cc::CompositorFrameMetadata committed_frame_metadata_;
   cc::CompositorFrameMetadata current_frame_metadata_;
 
   std::unique_ptr<SecurityStatus::Subscription> security_status_subscription_;

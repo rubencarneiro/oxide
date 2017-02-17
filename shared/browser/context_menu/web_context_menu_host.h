@@ -47,6 +47,7 @@ class WebContextMenuHost : public WebContextMenuClient {
  public:
   WebContextMenuHost(content::RenderFrameHost* render_frame_host,
                      const content::ContextMenuParams& params,
+                     float top_content_offset,
                      const base::Closure& on_close_callback);
   ~WebContextMenuHost() override;
 
@@ -86,6 +87,7 @@ class WebContextMenuHost : public WebContextMenuClient {
   RenderFrameHostWeakPtr render_frame_host_;
 
   content::ContextMenuParams params_;
+  float top_content_offset_;
 
   base::Closure on_close_callback_;
 

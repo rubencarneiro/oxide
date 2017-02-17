@@ -20,7 +20,9 @@
 #include "base/auto_reset.h"
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
+#include "base/optional.h"
 #include "cc/layers/solid_color_layer.h"
+#include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
 #include "content/browser/web_contents/web_contents_impl.h" // nogncheck
 #include "content/public/browser/native_web_keyboard_event.h"
@@ -74,7 +76,7 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone),
-      chrome_controller_(nullptr),
+      chrome_controller_(ChromeController::CreateForWebContents(web_contents)),
       legacy_touch_editing_client_(nullptr) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
@@ -86,9 +88,6 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
   compositor_->SetRootLayer(root_layer_);
 
   CompositorObserver::Observe(compositor_.get());
-
-  ChromeController::CreateForWebContents(web_contents);
-  chrome_controller_ = ChromeController::FromWebContents(web_contents);
 }
 
 content::WebContentsImpl* WebContentsView::web_contents_impl() const {
@@ -350,6 +349,7 @@ void WebContentsView::ShowContextMenu(
       base::MakeUnique<WebContextMenuHost>(
           render_frame_host,
           params,
+          chrome_controller_->GetTopContentOffset(),
           base::Bind(&WebContentsView::DidCloseContextMenu,
                      base::Unretained(this)));
   active_context_menu_->Show();
@@ -413,13 +413,15 @@ void WebContentsView::ShowPopupMenu(content::RenderFrameHost* render_frame_host,
                                     const std::vector<content::MenuItem>& items,
                                     bool right_aligned,
                                     bool allow_multiple_selection) {
+  gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
+
   active_popup_menu_ =
       base::MakeUnique<WebPopupMenuHost>(
           render_frame_host,
           items,
           selected_item,
           allow_multiple_selection,
-          bounds,
+          bounds + offset,
           base::Bind(&WebContentsView::DidHidePopupMenu,
                      base::Unretained(this)));
   active_popup_menu_->Show();
@@ -480,7 +482,7 @@ void WebContentsView::RenderViewHostChanged(
   }
 
   EditingCapabilitiesChanged(GetRenderWidgetHostView());
-  TouchEditingStatusChanged(GetRenderWidgetHostView(), false);
+  TouchEditingStatusChanged(GetRenderWidgetHostView());
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -519,7 +521,7 @@ void WebContentsView::DidShowFullscreenWidget() {
   web_contents()->GetRenderWidgetHostView()->Hide();
 
   EditingCapabilitiesChanged(rwhv);
-  TouchEditingStatusChanged(rwhv, false);
+  TouchEditingStatusChanged(rwhv);
 }
 
 void WebContentsView::DidDestroyFullscreenWidget() {
@@ -546,7 +548,7 @@ void WebContentsView::DidDestroyFullscreenWidget() {
   // FIXME: This actually doesn't work, because GetRenderWidgetHostView still
   // returns the fullscreen view
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchEditingStatusChanged(orig_rwhv, false);
+  TouchEditingStatusChanged(orig_rwhv);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -575,7 +577,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   // messages, so there's nothing else to do with |rwhv|
 
   EditingCapabilitiesChanged(rwhv),
-  TouchEditingStatusChanged(rwhv, false);
+  TouchEditingStatusChanged(rwhv);
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -595,7 +597,7 @@ void WebContentsView::DidDetachInterstitialPage() {
   }
 
   EditingCapabilitiesChanged(orig_rwhv);
-  TouchEditingStatusChanged(orig_rwhv, false);
+  TouchEditingStatusChanged(orig_rwhv);
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
@@ -607,6 +609,27 @@ void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
   }
   current_compositor_frame_ = handle;
 
+  RenderWidgetHostView* rwhv =
+      rwh_at_last_commit_ ?
+          static_cast<RenderWidgetHostView*>(rwh_at_last_commit_->GetView())
+          : nullptr;
+  float last_top_content_offset = chrome_controller_->GetTopContentOffset();
+  static cc::CompositorFrameMetadata null_metadata;
+  const cc::CompositorFrameMetadata& metadata =
+      rwhv ? rwhv->last_drawn_frame_metadata() : null_metadata;
+  chrome_controller_->FrameMetadataUpdated(
+      rwhv ? base::make_optional(metadata.Clone()) : base::nullopt);
+  if (last_top_content_offset != chrome_controller_->GetTopContentOffset()) {
+    TouchEditingStatusChanged(rwhv);
+  }
+
+  gfx::Vector2d offset(0,
+                       chrome_controller_->GetTopContentOffset() *
+                           metadata.device_scale_factor);
+  handle->data()->rect_in_pixels += offset;
+
+  swap_compositor_frame_callbacks_.Notify(handle->data(), metadata);
+
   if (client_) {
     client_->SwapCompositorFrame();
   } else {
@@ -615,11 +638,8 @@ void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
 }
 
 void WebContentsView::CompositorDidCommit() {
-  // XXX: Not sure if the behaviour here when there's no view is correct
-  committed_frame_metadata_ =
-      GetRenderWidgetHostView() ?
-        GetRenderWidgetHostView()->last_submitted_frame_metadata().Clone()
-        : cc::CompositorFrameMetadata();
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  rwh_at_last_commit_ = rwhv ? rwhv->GetRenderWidgetHost() : nullptr;
 }
 
 void WebContentsView::CompositorEvictResources() {
@@ -716,13 +736,13 @@ float WebContentsView::GetTopControlsHeight() {
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>
-WebContentsView::CreateTouchHandleDrawable() const {
+WebContentsView::CreateTouchHandleDrawable() {
   if (!client_) {
     return nullptr;
   }
 
   std::unique_ptr<TouchHandleDrawableHost> host =
-      base::MakeUnique<TouchHandleDrawableHost>(web_contents());
+      base::MakeUnique<TouchHandleDrawableHost>(this);
 
   std::unique_ptr<ui::TouchHandleDrawable> drawable =
       client_->CreateTouchHandleDrawable();
@@ -735,8 +755,7 @@ WebContentsView::CreateTouchHandleDrawable() const {
   return std::move(host);
 }
 
-void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view,
-                                                bool handle_drag_in_progress) {
+void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view) {
   if (!client_) {
     return;
   }
@@ -755,13 +774,12 @@ void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view,
   if (controller) {
     bounds = controller->GetRectBetweenBounds();
   }
-
   bounds.Offset(0, chrome_controller_->GetTopContentOffset());
 
   if (legacy_touch_editing_client_) {
-    legacy_touch_editing_client_->StatusChanged(status,
-                                                bounds,
-                                                handle_drag_in_progress);
+    legacy_touch_editing_client_->StatusChanged(
+        status, bounds,
+        view ? view->selection_handle_drag_in_progress() : false);
   }
 }
 
@@ -871,7 +889,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   // Update client from view
   CursorChanged(GetRenderWidgetHostView());
-  TouchEditingStatusChanged(GetRenderWidgetHostView(), false);
+  TouchEditingStatusChanged(GetRenderWidgetHostView());
 }
 
 bool WebContentsView::IsVisible() const {
@@ -926,10 +944,9 @@ void WebContentsView::HandleKeyEvent(
   host->ForwardKeyboardEvent(event);
 }
 
-void WebContentsView::HandleMouseEvent(const blink::WebMouseEvent& event) {
-  blink::WebMouseEvent e(event);
-
-  mouse_state_.UpdateEvent(&e);
+void WebContentsView::HandleMouseEvent(blink::WebMouseEvent event) {
+  event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
+  mouse_state_.UpdateEvent(&event);
 
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
@@ -938,7 +955,7 @@ void WebContentsView::HandleMouseEvent(const blink::WebMouseEvent& event) {
 
   GetRenderWidgetHostView()->OnUserInput();
 
-  host->ForwardMouseEvent(e);
+  host->ForwardMouseEvent(event);
 }
 
 void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
@@ -950,8 +967,9 @@ void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
   rwhv->HandleTouchEvent(event);
 }
 
-void WebContentsView::HandleWheelEvent(
-    const blink::WebMouseWheelEvent& event) {
+void WebContentsView::HandleWheelEvent(blink::WebMouseWheelEvent event) {
+  event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
+
   content::RenderWidgetHost* host = GetRenderWidgetHost();
   if (!host) {
     return;
@@ -973,12 +991,14 @@ void WebContentsView::HandleDragEnter(
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   current_drag_target_ = rwh;
 
+  gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
+
   gfx::Point screen_location =
       BrowserPlatformIntegration::GetInstance()
           ->GetScreen()
           ->GetCursorScreenPoint();
   rwh->DragTargetDragEnter(*current_drop_data_,
-                           location,
+                           location - offset,
                            screen_location,
                            current_drag_allowed_ops_,
                            key_modifiers);
@@ -991,10 +1011,12 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
     return blink::WebDragOperationNone;
   }
 
+  gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
+
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (rwh != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
-                    location,
+                    location - offset,
                     current_drag_allowed_ops_,
                     key_modifiers);
   }
@@ -1003,7 +1025,7 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
         ->GetCursorScreenPoint();
-  rwh->DragTargetDragOver(location,
+  rwh->DragTargetDragOver(location - offset,
                           screen_location,
                           current_drag_allowed_ops_,
                           key_modifiers);
@@ -1032,10 +1054,12 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
     return blink::WebDragOperationNone;
   }
 
+  gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
+
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (rwh != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
-                    location,
+                    location - offset,
                     current_drag_allowed_ops_,
                     key_modifiers);
   }
@@ -1045,7 +1069,7 @@ blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
         ->GetScreen()
         ->GetCursorScreenPoint();
   rwh->DragTargetDrop(*current_drop_data_,
-                      location,
+                      location - offset,
                       screen_location,
                       key_modifiers);
 
@@ -1068,6 +1092,13 @@ void WebContentsView::DidCommitCompositorFrame() {
         std::move(previous_compositor_frames_));
     compositor_ack_callbacks_.pop();
   }
+}
+
+std::unique_ptr<WebContentsView::SwapCompositorFrameSubscription>
+WebContentsView::AddSwapCompositorFrameCallback(
+    const base::Callback<void(const CompositorFrameData*,
+                              const cc::CompositorFrameMetadata&)>& callback) {
+  return swap_compositor_frame_callbacks_.Add(callback);
 }
 
 void WebContentsView::WasResized() {

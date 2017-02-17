@@ -72,6 +72,8 @@ class ContentsViewImpl : public QObject,
   ContentsViewClient* client() const { return client_; }
 
  private:
+  // XXX(chrisccoulson): This is going to be removed, please don't use it
+  //  See https://launchpad.net/bugs/1665722
   float GetTopContentOffset() const;
 
   // ContentsView implementation
