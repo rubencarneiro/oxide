@@ -29,12 +29,14 @@
 #include "cc/quads/render_pass.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
+#include "cc/surfaces/surface_hittest.h"
 #include "cc/surfaces/surface_id.h"
 #include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_info.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_input_event_router.h" // nogncheck
 #include "content/common/text_input_state.h" // nogncheck
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -45,6 +47,7 @@
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
 #include "ui/events/gesture_detection/motion_event.h"
+#include "ui/gfx/geometry/dip_util.h"
 #include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
@@ -287,6 +290,124 @@ cc::FrameSinkId RenderWidgetHostView::GetFrameSinkId() {
   return frame_sink_id_;
 }
 
+cc::FrameSinkId RenderWidgetHostView::FrameSinkIdAtPoint(
+    cc::SurfaceHittestDelegate* delegate,
+    const gfx::Point& point,
+    gfx::Point* transformed_point) {
+  if (!container_) {
+    return cc::FrameSinkId();
+  }
+
+  gfx::Point point_in_pixels =
+      gfx::ConvertPointToPixel(
+          container_->GetCompositor()->device_scale_factor(), point);
+
+  cc::SurfaceId surface_id(frame_sink_id_, local_surface_id_);
+  if (!surface_id.is_valid()) {
+    return cc::FrameSinkId();
+  }
+
+  gfx::Transform transform;
+  cc::SurfaceHittest hittest(
+      delegate,
+      CompositorUtils::GetInstance()->GetSurfaceManager());
+  cc::SurfaceId id =
+      hittest.GetTargetSurfaceAtPoint(surface_id, point_in_pixels,
+                                      &transform);
+
+  *transformed_point = point_in_pixels;
+  if (id.is_valid()) {
+    transform.TransformPoint(transformed_point);
+  }
+
+  *transformed_point =
+      gfx::ConvertPointToDIP(
+          container_->GetCompositor()->device_scale_factor(),
+          *transformed_point);
+
+  if (!id.is_valid()) {
+    return GetFrameSinkId();
+  }
+
+  return id.frame_sink_id();
+}
+
+void RenderWidgetHostView::ProcessMouseEvent(const blink::WebMouseEvent& event,
+                                             const ui::LatencyInfo& latency) {
+  GetRenderWidgetHost()->ForwardMouseEvent(event);
+}
+
+void RenderWidgetHostView::ProcessMouseWheelEvent(
+    const blink::WebMouseWheelEvent& event,
+    const ui::LatencyInfo& latency) {
+  GetRenderWidgetHost()->ForwardWheelEvent(event);
+}
+
+void RenderWidgetHostView::ProcessTouchEvent(const blink::WebTouchEvent& event,
+                                             const ui::LatencyInfo& latency) {
+  host_->ForwardTouchEventWithLatencyInfo(event, latency);
+}
+
+void RenderWidgetHostView::ProcessGestureEvent(
+    const blink::WebGestureEvent& event,
+    const ui::LatencyInfo& latency) {
+  host_->ForwardGestureEventWithLatencyInfo(event, latency);
+}
+
+bool RenderWidgetHostView::TransformPointToLocalCoordSpace(
+    const gfx::Point& point,
+    const cc::SurfaceId& original_surface,
+    gfx::Point* transformed_point) {
+  if (!container_) {
+    return false;
+  }
+
+  gfx::Point point_in_pixels =
+      gfx::ConvertPointToPixel(
+          container_->GetCompositor()->device_scale_factor(), point);
+
+  cc::SurfaceId surface_id(frame_sink_id_, local_surface_id_);
+  if (!surface_id.is_valid()) {
+    return false;
+  }
+
+  *transformed_point = point_in_pixels;
+  if (original_surface != surface_id) {
+    cc::SurfaceHittest hittest(
+        nullptr,
+        CompositorUtils::GetInstance()->GetSurfaceManager());
+    if (!hittest.TransformPointToTargetSurface(original_surface, surface_id,
+                                               transformed_point)) {
+      return false;
+    }
+  }
+
+  *transformed_point =
+      gfx::ConvertPointToDIP(
+          container_->GetCompositor()->device_scale_factor(),
+          *transformed_point);
+  return true;
+}
+
+bool RenderWidgetHostView::TransformPointToCoordSpaceForView(
+    const gfx::Point& point,
+    content::RenderWidgetHostViewBase* target_view,
+    gfx::Point* transformed_point) {
+  if (target_view == this) {
+    *transformed_point = point;
+    return true;
+  }
+
+  if (!local_surface_id_.is_valid()) {
+    return false;
+  }
+
+  return target_view->TransformPointToLocalCoordSpace(
+      point,
+      cc::SurfaceId(frame_sink_id_, local_surface_id_),
+      transformed_point);
+}
+
 void RenderWidgetHostView::InitAsPopup(
     content::RenderWidgetHostView* parent_host_view,
     const gfx::Rect& pos) {
@@ -427,13 +548,15 @@ void RenderWidgetHostView::CompositorEvictResources() {
   DestroyDelegatedContent();
 }
 
-void RenderWidgetHostView::OnGestureEvent(
-    const blink::WebGestureEvent& event) {
+void RenderWidgetHostView::OnGestureEvent(blink::WebGestureEvent event) {
   if (!host_) {
     return;
   }
 
   HandleGestureForTouchSelection(event);
+
+  content::RenderWidgetHostInputEventRouter* router =
+      host_->delegate()->GetInputEventRouter();
 
   if (event.type() == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
@@ -441,14 +564,14 @@ void RenderWidgetHostView::OnGestureEvent(
     blink::WebGestureEvent fling_cancel = event;
     fling_cancel.setType(blink::WebInputEvent::GestureFlingCancel);
     fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
-    host_->ForwardGestureEvent(fling_cancel);
+    router->RouteGestureEvent(this, &fling_cancel, ui::LatencyInfo());
   }
 
   if (event.type() == blink::WebInputEvent::Undefined) {
     return;
   }
 
-  host_->ForwardGestureEvent(event);
+  router->RouteGestureEvent(this, &event, ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::OnUserInput() const {
@@ -793,9 +916,11 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
     return;
   }
 
-  host_->ForwardTouchEventWithLatencyInfo(
-      MakeWebTouchEvent(event, rv.moved_beyond_slop_region),
-      ui::LatencyInfo());
+  content::RenderWidgetHostInputEventRouter* router =
+      host_->delegate()->GetInputEventRouter();
+  blink::WebTouchEvent web_touch_event =
+      MakeWebTouchEvent(event, rv.moved_beyond_slop_region);
+  router->RouteTouchEvent(this, &web_touch_event, ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::ResetGestureDetection() {

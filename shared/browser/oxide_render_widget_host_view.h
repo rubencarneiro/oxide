@@ -131,6 +131,25 @@ class RenderWidgetHostView
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
                               content::InputEventAckState ack_result) override;
   cc::FrameSinkId GetFrameSinkId() override;
+  cc::FrameSinkId FrameSinkIdAtPoint(cc::SurfaceHittestDelegate* delegate,
+                                     const gfx::Point& point,
+                                     gfx::Point* transformed_point) override;
+  void ProcessMouseEvent(const blink::WebMouseEvent& event,
+                         const ui::LatencyInfo& latency) override;
+  void ProcessMouseWheelEvent(const blink::WebMouseWheelEvent& event,
+                              const ui::LatencyInfo& latency) override;
+  void ProcessTouchEvent(const blink::WebTouchEvent& event,
+                         const ui::LatencyInfo& latency) override;
+  void ProcessGestureEvent(const blink::WebGestureEvent& event,
+                           const ui::LatencyInfo& latency) override;
+  bool TransformPointToLocalCoordSpace(
+      const gfx::Point& point,
+      const cc::SurfaceId& original_surface,
+      gfx::Point* transformed_point) override;
+  bool TransformPointToCoordSpaceForView(
+      const gfx::Point& point,
+      content::RenderWidgetHostViewBase* target_view,
+      gfx::Point* transformed_point) override;
   void InitAsPopup(content::RenderWidgetHostView* parent_host_view,
                    const gfx::Rect& pos) override;
   void InitAsFullscreen(
@@ -173,7 +192,7 @@ class RenderWidgetHostView
   void CompositorEvictResources() override;
 
   // GestureProviderClient implementation
-  void OnGestureEvent(const blink::WebGestureEvent& event) override;
+  void OnGestureEvent(blink::WebGestureEvent event) override;
 
   // cc::SurfaceFactoryClient implementation
   void ReturnResources(const cc::ReturnedResourceArray& resources) override;

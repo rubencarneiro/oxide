@@ -24,6 +24,7 @@
 #include "cc/layers/solid_color_layer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_input_event_router.h" // nogncheck
 #include "content/browser/web_contents/web_contents_impl.h" // nogncheck
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
@@ -948,14 +949,17 @@ void WebContentsView::HandleMouseEvent(blink::WebMouseEvent event) {
   event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
   mouse_state_.UpdateEvent(&event);
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return;
   }
 
-  GetRenderWidgetHostView()->OnUserInput();
+  rwhv->OnUserInput();
 
-  host->ForwardMouseEvent(event);
+  content::RenderWidgetHostInputEventRouter* router =
+      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost())
+          ->delegate()->GetInputEventRouter();
+  router->RouteMouseEvent(rwhv, &event, ui::LatencyInfo());
 }
 
 void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
@@ -970,14 +974,17 @@ void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
 void WebContentsView::HandleWheelEvent(blink::WebMouseWheelEvent event) {
   event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return;
   }
 
-  GetRenderWidgetHostView()->OnUserInput();
+  rwhv->OnUserInput();
 
-  host->ForwardWheelEvent(event);
+  content::RenderWidgetHostInputEventRouter* router =
+      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost())
+          ->delegate()->GetInputEventRouter();
+  router->RouteMouseWheelEvent(rwhv, &event, ui::LatencyInfo());
 }
 
 void WebContentsView::HandleDragEnter(
