@@ -19,6 +19,9 @@
 
 #include <QtDebug>
 
+#include "qt/core/glue/touch_handle_drawable.h"
+
+#include "uitk_touch_handle_drawable.h"
 #include "uitk_web_popup_menu.h"
 
 namespace oxide {
@@ -40,6 +43,11 @@ std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
   }
 
   return WebPopupMenu::Create(item(), items, bounds, client);
+}
+
+std::unique_ptr<qt::TouchHandleDrawable>
+ContentsView::CreateTouchHandleDrawable() {
+  return TouchHandleDrawable::Create(item());
 }
 
 ContentsView::ContentsView(QQuickItem* item)

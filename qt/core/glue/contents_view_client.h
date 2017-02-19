@@ -24,13 +24,13 @@
 #include <QRect>
 #include <QtGlobal>
 
+#include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/menu_item.h"
 #include "qt/core/glue/contents_view.h"
 
 QT_BEGIN_NAMESPACE
 class QCursor;
 class QKeyEvent;
-class QRectF;
 class QWindow;
 QT_END_NAMESPACE
 
@@ -39,14 +39,15 @@ namespace qt {
 
 class ContentsView;
 class ContentsViewImpl;
+class LegacyTouchEditingClient;
 struct MenuItem;
-class TouchHandleDrawableProxy;
+class TouchHandleDrawable;
 class WebPopupMenu;
 class WebPopupMenuClient;
 
-class ContentsViewClient {
+class OXIDE_QTCORE_EXPORT ContentsViewClient {
  public:
-  virtual ~ContentsViewClient() {}
+  virtual ~ContentsViewClient() = default;
 
   ContentsView* view() const { return view_; }
 
@@ -71,25 +72,21 @@ class ContentsViewClient {
       const QRect& bounds,
       WebPopupMenuClient* client) = 0;
 
-  virtual TouchHandleDrawableProxy* CreateTouchHandleDrawable() = 0;
+  virtual std::unique_ptr<TouchHandleDrawable> CreateTouchHandleDrawable() = 0;
 
-  virtual void TouchSelectionChanged(
-      TouchSelectionControllerActiveStatus status,
-      const QRectF& bounds,
-      bool handle_drag_in_progress,
-      bool insertion_handle_tapped) = 0;
-
-  virtual void ContextMenuIntercepted() const = 0;
+  virtual LegacyTouchEditingClient* GetLegacyTouchEditingClient() {
+    return nullptr;
+  }
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 
  protected:
-  ContentsViewClient() : view_(nullptr) {}
+  ContentsViewClient() = default;
 
  private:
   friend class ContentsViewImpl;
 
-  ContentsView* view_;
+  ContentsView* view_ = nullptr;
 };
 
 } // namespace qt

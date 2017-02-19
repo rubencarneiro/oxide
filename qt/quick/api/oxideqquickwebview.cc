@@ -2891,7 +2891,13 @@ documentation for TouchSelectionController for more details about how to use it.
 OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
   Q_D(OxideQQuickWebView);
 
-  return d->contents_view_->touchSelectionController();
+  oxide::qquick::LegacyContentsView* legacy_view =
+      qobject_cast<oxide::qquick::LegacyContentsView*>(d->contents_view_.get());
+  if (!legacy_view) {
+    return nullptr;
+  }
+
+  return legacy_view->touch_selection_controller();
 }
 
 #include "moc_oxideqquickwebview.cpp"

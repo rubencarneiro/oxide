@@ -20,9 +20,9 @@
 #include "base/logging.h"
 #include "content/browser/frame_host/render_frame_host_impl.h" // nogncheck
 #include "content/public/browser/web_contents.h"
+#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/vector2d.h"
 
-#include "chrome_controller.h"
 #include "oxide_web_contents_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "web_popup_menu.h"
@@ -45,10 +45,9 @@ void WebPopupMenuHost::SelectItems(const std::vector<int>& selected_indices) {
     return;
   }
 
+  DCHECK(render_frame_host_);
   content::RenderFrameHostImpl* render_frame_host =
-      static_cast<content::RenderFrameHostImpl*>(
-          render_frame_host_id_.ToInstance());
-  DCHECK(render_frame_host);
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host_.get());
 
   render_frame_host->DidSelectPopupMenuItems(selected_indices);
   Hide();
@@ -59,10 +58,9 @@ void WebPopupMenuHost::Cancel() {
     return;
   }
 
+  DCHECK(render_frame_host_);
   content::RenderFrameHostImpl* render_frame_host =
-      static_cast<content::RenderFrameHostImpl*>(
-          render_frame_host_id_.ToInstance());
-  DCHECK(render_frame_host);
+      static_cast<content::RenderFrameHostImpl*>(render_frame_host_.get());
 
   render_frame_host->DidCancelPopupMenu();
   Hide();
@@ -74,45 +72,29 @@ WebPopupMenuHost::WebPopupMenuHost(content::RenderFrameHost* render_frame_host,
                                    bool allow_multiple_selection,
                                    const gfx::Rect& bounds,
                                    const base::Closure& hidden_callback)
-    : render_frame_host_id_(render_frame_host),
-      items_(items),
-      selected_item_(selected_item),
-      allow_multiple_selection_(allow_multiple_selection),
-      bounds_(bounds),
-      hidden_callback_(hidden_callback) {}
-
-WebPopupMenuHost::~WebPopupMenuHost() {
-  hidden_callback_.Reset();
-}
-
-void WebPopupMenuHost::Show() {
-  content::RenderFrameHost* render_frame_host =
-      render_frame_host_id_.ToInstance();
-  DCHECK(render_frame_host);
-
+    : render_frame_host_(render_frame_host),
+      hidden_callback_(hidden_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   DCHECK(web_contents);
 
   WebContentsView* view = WebContentsView::FromWebContents(web_contents);
   if (!view->client()) {
-    Cancel();
     return;
   }
 
-  gfx::Vector2d top_content_offset;
-  ChromeController* chrome_controller =
-      ChromeController::FromWebContents(web_contents);
-  if (chrome_controller) {
-    top_content_offset =
-        gfx::Vector2d(0, chrome_controller->GetTopContentOffset());
-  }
-
-  menu_ = view->client()->CreatePopupMenu(items_,
-                                          selected_item_,
-                                          allow_multiple_selection_,
-                                          bounds_ + top_content_offset,
+  menu_ = view->client()->CreatePopupMenu(items,
+                                          selected_item,
+                                          allow_multiple_selection,
+                                          bounds,
                                           this);
+}
+
+WebPopupMenuHost::~WebPopupMenuHost() {
+  hidden_callback_.Reset();
+}
+
+void WebPopupMenuHost::Show() {
   if (!menu_) {
     Cancel();
     return;
@@ -122,7 +104,7 @@ void WebPopupMenuHost::Show() {
 }
 
 content::RenderFrameHost* WebPopupMenuHost::GetRenderFrameHost() const {
-  return render_frame_host_id_.ToInstance();
+  return render_frame_host_.get();
 }
 
 } // namespace oxide

@@ -194,7 +194,7 @@ void CompositorOutputSurfaceGL::SwapBuffers(cc::OutputSurfaceFrame frame) {
   gl->Flush();
 
   std::unique_ptr<CompositorFrameData> data(new CompositorFrameData());
-  data->size_in_pixels = back_buffer_->size;
+  data->rect_in_pixels = gfx::Rect(back_buffer_->size);
   data->device_scale = device_scale_factor_;
   data->gl_frame_data = base::WrapUnique(new GLFrameData());
   data->gl_frame_data->mailbox = back_buffer_->mailbox;

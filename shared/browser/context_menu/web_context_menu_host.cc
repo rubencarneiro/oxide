@@ -33,7 +33,6 @@
 #include "ui/base/clipboard/scoped_clipboard_writer.h"
 #include "url/gurl.h"
 
-#include "shared/browser/chrome_controller.h"
 #include "shared/browser/web_contents_client.h"
 #include "shared/browser/web_contents_helper.h"
 #include "shared/common/oxide_constants.h"
@@ -125,7 +124,8 @@ void WebContextMenuHost::SaveImage() {
   bool is_large_data_url =
       params_.has_image_contents && params_.src_url.is_empty();
   if (is_large_data_url) {
-    GetRenderFrameHost()->SaveImageAt(params_.x, params_.y);
+    GetRenderFrameHost()->SaveImageAt(params_.x,
+                                      params_.y - top_content_offset_);
   }
 
   const GURL& url = params_.src_url;
@@ -144,7 +144,7 @@ void WebContextMenuHost::SaveImage() {
 }
 
 void WebContextMenuHost::CopyImage() {
-  GetRenderFrameHost()->CopyImageAt(params_.x, params_.y);
+  GetRenderFrameHost()->CopyImageAt(params_.x, params_.y - top_content_offset_);
 }
 
 void WebContextMenuHost::SaveMedia() {
@@ -467,18 +467,12 @@ void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action) {
 WebContextMenuHost::WebContextMenuHost(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params,
+    float top_content_offset,
     const base::Closure& on_close_callback)
-    : render_frame_host_id_(render_frame_host),
+    : render_frame_host_(render_frame_host),
       params_(params),
-      on_close_callback_(on_close_callback) {}
-
-WebContextMenuHost::~WebContextMenuHost() = default;
-
-void WebContextMenuHost::Show() {
-  content::RenderFrameHost* render_frame_host =
-      render_frame_host_id_.ToInstance();
-  DCHECK(render_frame_host);
-
+      top_content_offset_(top_content_offset),
+      on_close_callback_(on_close_callback) {
   content::WebContents* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   DCHECK(web_contents);
@@ -486,19 +480,17 @@ void WebContextMenuHost::Show() {
   WebContentsHelper* helper =
       WebContentsHelper::FromWebContents(web_contents);
   if (!helper->client()) {
-    Close();
     return;
   }
 
-  ChromeController* chrome_controller =
-      ChromeController::FromWebContents(web_contents);
-  if (chrome_controller) {
-    params_.y += chrome_controller->GetTopContentOffset();
-  }
+  params_.y += top_content_offset;
 
-  DCHECK(!menu_);
   menu_ = helper->client()->CreateContextMenu(params_, BuildItems(), this);
+}
 
+WebContextMenuHost::~WebContextMenuHost() = default;
+
+void WebContextMenuHost::Show() {
   if (!menu_) {
     Close();
     return;
@@ -508,7 +500,7 @@ void WebContextMenuHost::Show() {
 }
 
 content::RenderFrameHost* WebContextMenuHost::GetRenderFrameHost() const {
-  return render_frame_host_id_.ToInstance();
+  return render_frame_host_.get();
 }
 
 } // namespace oxide

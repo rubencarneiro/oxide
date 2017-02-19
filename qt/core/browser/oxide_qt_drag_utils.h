@@ -49,7 +49,6 @@ blink::WebDragOperation ToWebDragOperation(Qt::DropAction action);
 
 void GetDragEnterEventParams(QDragEnterEvent* event,
                              QScreen* screen,
-                             float location_bar_content_offset,
                              content::DropData* drop_data,
                              gfx::Point* location,
                              blink::WebDragOperationsMask* allowed_ops,
@@ -57,7 +56,6 @@ void GetDragEnterEventParams(QDragEnterEvent* event,
 
 void GetDropEventParams(QDropEvent* event,
                         QScreen* screen,
-                        float location_bar_content_offset,
                         gfx::Point* location,
                         int* key_modifiers);
 

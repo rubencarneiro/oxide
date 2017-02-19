@@ -39,6 +39,7 @@ class ContentsView : public qquick::ContentsView {
       bool allow_multiple_selection,
       const QRect& bounds,
       qt::WebPopupMenuClient* client) override;
+  std::unique_ptr<qt::TouchHandleDrawable> CreateTouchHandleDrawable() override;
 };
 
 } // namespace uitk

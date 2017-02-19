@@ -29,15 +29,13 @@ QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
 
-class OxideQQuickTouchSelectionControllerPrivate;
-class OxideQQuickWebView;
-class OxideQQuickWebViewPrivate;
-
 namespace oxide {
 namespace qquick {
-class ContentsView;
+class LegacyContentsView;
 }
 }
+
+class OxideQQuickTouchSelectionControllerPrivate;
 
 class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
     : public QObject {
@@ -94,17 +92,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   Q_REVISION(1) void contextMenuIntercepted();
 
  private:
-  friend class OxideQQuickWebViewPrivate;
-  friend class oxide::qquick::ContentsView;
-
-  Q_DECL_HIDDEN OxideQQuickTouchSelectionController(
-      oxide::qquick::ContentsView* view);
-
-  void onTouchSelectionChanged(
-      Status status,
-      const QRectF& bounds,
-      bool handle_drag_in_progress,
-      bool insertion_handle_tapped);
+  friend class oxide::qquick::LegacyContentsView;
+  Q_DECL_HIDDEN OxideQQuickTouchSelectionController();
 
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;
 };

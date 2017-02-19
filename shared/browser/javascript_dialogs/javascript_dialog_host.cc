@@ -37,46 +37,39 @@ void JavaScriptDialogHost::Close(bool success,
 }
 
 JavaScriptDialogHost::JavaScriptDialogHost(
-    base::WeakPtr<JavaScriptDialogContentsHelper> owner,
+    JavaScriptDialogContentsHelper* owner,
     const GURL& origin_url,
     bool is_before_unload_dialog,
     content::JavaScriptDialogType type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
     const content::JavaScriptDialogManager::DialogClosedCallback& callback)
-    : owner_(owner),
-      origin_url_(origin_url),
-      is_before_unload_dialog_(is_before_unload_dialog),
-      type_(type),
-      message_text_(message_text),
-      default_prompt_text_(default_prompt_text),
-      callback_(callback) {}
+    : is_before_unload_dialog_(is_before_unload_dialog),
+      callback_(callback) {
+  if (!owner->factory()) {
+    return;
+  }
+
+  if (is_before_unload_dialog) {
+    dialog_ = owner->factory()->CreateBeforeUnloadDialog(this, origin_url);
+  } else {
+    dialog_ = owner->factory()->CreateJavaScriptDialog(this,
+                                                       origin_url,
+                                                       type,
+                                                       message_text,
+                                                       default_prompt_text);
+  }
+}
 
 JavaScriptDialogHost::~JavaScriptDialogHost() = default;
 
 bool JavaScriptDialogHost::Show() {
-  if (!owner_->factory()) {
-    callback_.Run(is_before_unload_dialog_, base::string16());
-    return false;
-  }
-
-  if (is_before_unload_dialog_) {
-    dialog_ = owner_->factory()->CreateBeforeUnloadDialog(this, origin_url_);
-  } else {
-    dialog_ = owner_->factory()->CreateJavaScriptDialog(this,
-                                                        origin_url_,
-                                                        type_,
-                                                        message_text_,
-                                                        default_prompt_text_);
-  }
-
   if (!dialog_) {
     callback_.Run(is_before_unload_dialog_, base::string16());
     return false;
   }
 
   dialog_->Show();
-
   return true;
 }
 

@@ -47,6 +47,7 @@ namespace qt {
 class CompositorFrameHandle;
 class ContentsViewClient;
 class InputMethodContext;
+class LegacyTouchEditingClientProxy;
 
 class ContentsViewImpl : public QObject,
                          public ContentsView,
@@ -70,9 +71,11 @@ class ContentsViewImpl : public QObject,
 
   ContentsViewClient* client() const { return client_; }
 
+ private:
+  // XXX(chrisccoulson): This is going to be removed, please don't use it
+  //  See https://launchpad.net/bugs/1665722
   float GetTopContentOffset() const;
 
- private:
   // ContentsView implementation
   QSharedPointer<CompositorFrameHandle> compositorFrameHandle() override;
   void didCommitCompositorFrame() override;
@@ -96,7 +99,6 @@ class ContentsViewImpl : public QObject,
   void handleDragMoveEvent(QDragMoveEvent* event) override;
   void handleDragLeaveEvent(QDragLeaveEvent* event) override;
   void handleDropEvent(QDropEvent* event) override;
-  void hideTouchSelectionController() override;
 
   // InputMethodContextClient implementation
   void SetInputMethodEnabled(bool enabled);
@@ -114,13 +116,10 @@ class ContentsViewImpl : public QObject,
       bool allow_multiple_selection,
       const gfx::Rect& bounds,
       oxide::WebPopupMenuClient* client) override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(ui::TouchSelectionController::ActiveStatus status,
-                             const gfx::RectF& bounds,
-                             bool handle_drag_in_progress,
-                             bool insertion_handle_tapped) const override;
-  void ContextMenuIntercepted() const override;
+  std::unique_ptr<ui::TouchHandleDrawable>
+  CreateTouchHandleDrawable() const override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
+  oxide::LegacyTouchEditingClient* GetLegacyTouchEditingClient() const override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
 
@@ -139,6 +138,8 @@ class ContentsViewImpl : public QObject,
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   std::unique_ptr<InputMethodContext> input_method_context_;
+
+  std::unique_ptr<LegacyTouchEditingClientProxy> legacy_touch_editing_client_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsViewImpl);
 };

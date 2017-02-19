@@ -43,20 +43,23 @@
 
 #include "qt/core/browser/input/oxide_qt_input_method_context.h"
 #include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/legacy_touch_editing_client.h"
+#include "qt/core/glue/touch_handle_drawable.h"
 #include "qt/core/glue/web_popup_menu.h"
 #include "shared/browser/chrome_controller.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 
+#include "legacy_touch_editing_client_proxy.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_event_utils.h"
 #include "oxide_qt_screen_utils.h"
 #include "oxide_qt_skutils.h"
-#include "oxide_qt_touch_handle_drawable.h"
 #include "oxide_qt_type_conversions.h"
 #include "qt_screen.h"
+#include "touch_handle_drawable_host.h"
 #include "web_popup_menu_host.h"
 
 namespace oxide {
@@ -170,7 +173,6 @@ inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
 class CompositorFrameHandleImpl : public CompositorFrameHandle {
  public:
   CompositorFrameHandleImpl(oxide::CompositorFrameHandle* frame,
-                            float location_bar_content_offset,
                             QScreen* screen);
   ~CompositorFrameHandleImpl() override {}
 
@@ -189,21 +191,17 @@ class CompositorFrameHandleImpl : public CompositorFrameHandle {
 
 CompositorFrameHandleImpl::CompositorFrameHandleImpl(
     oxide::CompositorFrameHandle* frame,
-    float location_bar_content_offset,
     QScreen* screen)
     : frame_(frame) {
   if (!frame_) {
     return;
   }
 
-  size_in_pixels_ = QSize(frame->data()->size_in_pixels.width(),
-                          frame->data()->size_in_pixels.height());
-
+  size_in_pixels_ = QSize(frame->data()->rect_in_pixels.width(),
+                          frame->data()->rect_in_pixels.height());
   gfx::RectF rect =
-      gfx::ScaleRect(gfx::RectF(gfx::SizeF(ToChromium(size_in_pixels_))),
+      gfx::ScaleRect(gfx::RectF(frame->data()->rect_in_pixels),
                      1 / frame->data()->device_scale);
-  rect += gfx::Vector2dF(0, location_bar_content_offset);
-
   rect_ = ToQt(DpiUtils::ConvertChromiumPixelsToQt(rect, screen));
 }
 
@@ -240,8 +238,8 @@ QImage CompositorFrameHandleImpl::GetSoftwareFrame() {
   DCHECK_EQ(GetType(), CompositorFrameHandle::TYPE_SOFTWARE);
   return QImage(
       frame_->data()->software_frame_data->pixels->front(),
-      frame_->data()->size_in_pixels.width(),
-      frame_->data()->size_in_pixels.height(),
+      frame_->data()->rect_in_pixels.width(),
+      frame_->data()->rect_in_pixels.height(),
       QImage::Format_ARGB32);
 }
 
@@ -254,12 +252,15 @@ EGLImageKHR CompositorFrameHandleImpl::GetImageFrame() {
   return frame_->data()->gl_frame_data->resource.egl_image;
 }
 
+float ContentsViewImpl::GetTopContentOffset() const {
+  return view()->chrome_controller()->GetTopContentOffset();
+}
+
 QSharedPointer<CompositorFrameHandle> ContentsViewImpl::compositorFrameHandle() {
   if (!compositor_frame_) {
     compositor_frame_ =
         QSharedPointer<CompositorFrameHandle>(
             new CompositorFrameHandleImpl(view()->GetCompositorFrameHandle(),
-                                          GetTopContentOffset(),
                                           GetScreen()));
   }
 
@@ -338,10 +339,7 @@ void ContentsViewImpl::handleMouseEvent(QMouseEvent* event) {
     return;
   }
 
-  view()->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        GetScreen(),
-                        GetTopContentOffset()));
+  view()->HandleMouseEvent(MakeWebMouseEvent(event, GetScreen()));
   event->accept();
 }
 
@@ -353,10 +351,7 @@ void ContentsViewImpl::handleTouchUngrabEvent() {
 void ContentsViewImpl::handleWheelEvent(QWheelEvent* event,
                                         const QPointF& window_pos) {
   view()->HandleWheelEvent(
-      MakeWebMouseWheelEvent(event,
-                             window_pos,
-                             GetScreen(),
-                             GetTopContentOffset()));
+      MakeWebMouseWheelEvent(event, window_pos, GetScreen()));
   event->accept();
 }
 
@@ -378,11 +373,7 @@ void ContentsViewImpl::handleHoverEvent(QHoverEvent* event,
                                         const QPointF& window_pos,
                                         const QPoint& global_pos) {
   view()->HandleMouseEvent(
-      MakeWebMouseEvent(event,
-                        window_pos,
-                        global_pos,
-                        GetScreen(),
-                        GetTopContentOffset()));
+      MakeWebMouseEvent(event, window_pos, global_pos, GetScreen()));
   event->accept();
 }
 
@@ -394,7 +385,6 @@ void ContentsViewImpl::handleDragEnterEvent(QDragEnterEvent* event) {
 
   GetDragEnterEventParams(event,
                           GetScreen(),
-                          GetTopContentOffset(),
                           &drop_data,
                           &location,
                           &allowed_ops,
@@ -411,7 +401,6 @@ void ContentsViewImpl::handleDragMoveEvent(QDragMoveEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDragMove(location, key_modifiers);
@@ -435,7 +424,6 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
 
   GetDropEventParams(event,
                      GetScreen(),
-                     GetTopContentOffset(),
                      &location, &key_modifiers);
 
   blink::WebDragOperation op = view()->HandleDrop(location, key_modifiers);
@@ -447,14 +435,6 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
   } else {
     event->ignore();
   }
-}
-
-void ContentsViewImpl::hideTouchSelectionController() {
-  view()->HideTouchSelectionController();
-}
-
-float ContentsViewImpl::GetTopContentOffset() const {
-  return view()->chrome_controller()->GetTopContentOffset();
 }
 
 void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
@@ -528,45 +508,29 @@ std::unique_ptr<oxide::WebPopupMenu> ContentsViewImpl::CreatePopupMenu(
   return std::move(host);
 }
 
-ui::TouchHandleDrawable* ContentsViewImpl::CreateTouchHandleDrawable() const {
-  TouchHandleDrawable* drawable = new TouchHandleDrawable(this);
-  drawable->SetProxy(client_->CreateTouchHandleDrawable());
-  return drawable;
-}
+std::unique_ptr<ui::TouchHandleDrawable>
+ContentsViewImpl::CreateTouchHandleDrawable() const {
+  std::unique_ptr<TouchHandleDrawableHost> host =
+      base::MakeUnique<TouchHandleDrawableHost>(this);
 
-void ContentsViewImpl::TouchSelectionChanged(
-    ui::TouchSelectionController::ActiveStatus status,
-    const gfx::RectF& bounds,
-    bool handle_drag_in_progress,
-    bool insertion_handle_tapped) const {
-  TouchSelectionControllerActiveStatus active_status;
-  switch (status) {
-  case ui::TouchSelectionController::INACTIVE:
-    active_status = ACTIVE_STATUS_INACTIVE;
-    break;
-  case ui::TouchSelectionController::INSERTION_ACTIVE:
-    active_status = ACTIVE_STATUS_INSERTION_ACTIVE;
-    break;
-  case ui::TouchSelectionController::SELECTION_ACTIVE:
-    active_status = ACTIVE_STATUS_SELECTION_ACTIVE;
-    break;
-  default:
-    Q_UNREACHABLE();
+  std::unique_ptr<TouchHandleDrawable> drawable =
+      client_->CreateTouchHandleDrawable();
+  if (!drawable) {
+    return nullptr;
   }
 
-  client_->TouchSelectionChanged(
-      active_status,
-      ToQt(DpiUtils::ConvertChromiumPixelsToQt(bounds, GetScreen())),
-      handle_drag_in_progress,
-      insertion_handle_tapped);
-}
+  host->Init(std::move(drawable));
 
-void ContentsViewImpl::ContextMenuIntercepted() const {
-  client_->ContextMenuIntercepted();
+  return std::move(host);
 }
 
 oxide::InputMethodContext* ContentsViewImpl::GetInputMethodContext() const {
   return input_method_context_.get();
+}
+
+oxide::LegacyTouchEditingClient*
+ContentsViewImpl::GetLegacyTouchEditingClient() const {
+  return legacy_touch_editing_client_.get();
 }
 
 void ContentsViewImpl::UnhandledKeyboardEvent(
@@ -601,6 +565,14 @@ ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
       input_method_context_(new InputMethodContext(this)) {
   DCHECK(!client_->view_);
   client_->view_ = this;
+
+  LegacyTouchEditingClient* legacy_touch_editing_client =
+      client_->GetLegacyTouchEditingClient();
+  if (legacy_touch_editing_client) {
+    legacy_touch_editing_client_ =
+        base::MakeUnique<LegacyTouchEditingClientProxy>(
+            this, legacy_touch_editing_client);
+  }
 
   windowChanged();
 }

@@ -41,7 +41,7 @@ CompositorFrameData::~CompositorFrameData() {}
 
 CompositorFrameData::CompositorFrameData(CompositorFrameData&& other)
     : CompositorFrameData() {
-  std::swap(size_in_pixels, other.size_in_pixels);
+  std::swap(rect_in_pixels, other.rect_in_pixels);
   std::swap(device_scale, other.device_scale);
   std::swap(gl_frame_data, other.gl_frame_data);
   std::swap(software_frame_data, other.software_frame_data);

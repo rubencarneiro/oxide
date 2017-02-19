@@ -17,12 +17,10 @@
 #include "content/public/renderer/render_frame_observer.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "media/base/demuxer_stream.h"
-#include "media/base/media_keys.h"
 #include "media/blink/webmediaplayer_delegate.h"
 #include "third_party/WebKit/public/platform/WebMediaPlayer.h"
 #include "third_party/WebKit/public/platform/WebSize.h"
 #include "third_party/WebKit/public/platform/WebURL.h"
-#include "third_party/skia/include/core/SkXfermode.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "shared/common/oxide_message_enums.h"
 
@@ -93,7 +91,7 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   // Methods for painting.
   void paint(blink::WebCanvas* canvas,
              const blink::WebRect& rect,
-             SkPaint&);
+             SkPaint&) override;
 
   // True if the loaded media has a playable video/audio track.
   bool hasVideo() const;
@@ -127,8 +125,6 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   size_t audioDecodedByteCount() const;
   size_t videoDecodedByteCount() const;
 
-  void paint(blink::WebCanvas*, const blink::WebRect&, unsigned char alpha, SkXfermode::Mode);
-    //
   // Media player callback handlers.
   void OnMediaMetadataChanged(const base::TimeDelta& duration, int width,
                               int height, bool success);
@@ -167,7 +163,7 @@ class WebMediaPlayer : public blink::WebMediaPlayer,
   // WebMediaPlayerDelegate::Observer implementation.
   void OnHidden() override;
   void OnShown() override;
-  void OnSuspendRequested(bool must_suspend) override;
+  bool OnSuspendRequested(bool must_suspend) override;
   void OnPlay() override;
   void OnPause() override;
   void OnVolumeMultiplierUpdate(double multiplier) override;

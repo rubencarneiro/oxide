@@ -18,7 +18,10 @@
 #include "legacy_contents_view.h"
 
 #include "qt/core/glue/web_popup_menu.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
+#include "qt/quick/api/oxideqquicktouchselectioncontroller_p.h"
 
+#include "qquick_legacy_touch_handle_drawable.h"
 #include "qquick_legacy_web_popup_menu.h"
 
 namespace oxide {
@@ -42,8 +45,22 @@ std::unique_ptr<qt::WebPopupMenu> LegacyContentsView::CreateWebPopupMenu(
                              client));
 }
 
+std::unique_ptr<qt::TouchHandleDrawable>
+LegacyContentsView::CreateTouchHandleDrawable() {
+  return std::unique_ptr<qt::TouchHandleDrawable>(
+      new LegacyTouchHandleDrawable(item(), touch_selection_controller_.get()));
+}
+
+qt::LegacyTouchEditingClient*
+LegacyContentsView::GetLegacyTouchEditingClient() {
+  return OxideQQuickTouchSelectionControllerPrivate::get(
+      touch_selection_controller_.get());
+}
+
 LegacyContentsView::LegacyContentsView(QQuickItem* item)
-    : ContentsView(item) {}
+    : ContentsView(item),
+      touch_selection_controller_(
+          new OxideQQuickTouchSelectionController()) {}
 
 LegacyContentsView::~LegacyContentsView() = default;
 

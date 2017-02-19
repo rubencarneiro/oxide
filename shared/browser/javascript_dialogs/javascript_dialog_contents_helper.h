@@ -22,7 +22,6 @@
 
 #include "base/gtest_prod_util.h"
 #include "base/macros.h"
-#include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -55,8 +54,6 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
   void set_factory(JavaScriptDialogFactory* factory) {
     factory_ = factory;
   }
-
-  base::WeakPtr<JavaScriptDialogContentsHelper> GetWeakPtr();
 
  private:
   friend class content::WebContentsUserData<JavaScriptDialogContentsHelper>;
@@ -114,8 +111,6 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
   std::unique_ptr<JavaScriptDialogHost> active_dialog_;
 
   bool is_displaying_before_unload_dialog_;
-
-  base::WeakPtrFactory<JavaScriptDialogContentsHelper> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(JavaScriptDialogContentsHelper);
 };

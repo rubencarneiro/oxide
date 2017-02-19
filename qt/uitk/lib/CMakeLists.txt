@@ -25,6 +25,7 @@ set(OXIDE_UITKLIB_SRCS
     uitk_before_unload_dialog.cc
     uitk_contents_view.cc
     uitk_javascript_dialog.cc
+    uitk_touch_handle_drawable.cc
     uitk_web_context_menu.cc
     uitk_web_popup_menu.cc)
 

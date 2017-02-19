@@ -23,9 +23,9 @@
 #include <vector>
 
 #include "base/callback.h"
+#include "base/callback_list.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
-#include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
@@ -33,12 +33,13 @@
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
 
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/legacy_touch_editing_controller.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
-#include "shared/browser/oxide_render_object_id.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/screen_observer.h"
 #include "shared/common/oxide_shared_export.h"
@@ -49,6 +50,7 @@ class WebMouseWheelEvent;
 }
 
 namespace cc {
+class CompositorFrameMetadata;
 class SolidColorLayer;
 }
 
@@ -69,8 +71,10 @@ namespace oxide {
 
 class ChromeController;
 class Compositor;
+class CompositorFrameData;
 class CompositorFrameHandle;
 class DragSource;
+class LegacyTouchEditingClient;
 class RenderWidgetHostView;
 class WebContentsViewClient;
 class WebContextMenuHost;
@@ -83,6 +87,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
       public CompositorObserver,
       public DragSourceClient,
       public InputMethodContextObserver,
+      public LegacyTouchEditingController,
       public RenderWidgetHostViewContainer,
       public ScreenObserver {
  public:
@@ -113,9 +118,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   display::Display GetDisplay() const;
 
   void HandleKeyEvent(const content::NativeWebKeyboardEvent& event);
-  void HandleMouseEvent(const blink::WebMouseEvent& event);
+  void HandleMouseEvent(blink::WebMouseEvent event);
   void HandleMotionEvent(const ui::MotionEvent& event);
-  void HandleWheelEvent(const blink::WebMouseWheelEvent& event);
+  void HandleWheelEvent(blink::WebMouseWheelEvent event);
 
   // XXX(chrisccoulson): Make a new class for these events - we don't use
   //  ui::DragTargetEvent because it's based on ui::OSExchangeData, which I
@@ -134,18 +139,24 @@ class OXIDE_SHARED_EXPORT WebContentsView
   CompositorFrameHandle* GetCompositorFrameHandle() const;
   void DidCommitCompositorFrame();
 
-  const cc::CompositorFrameMetadata& committed_frame_metadata() const {
-    return committed_frame_metadata_;
-  }
+  using SwapCompositorFrameSubscription =
+      base::CallbackList<void(const CompositorFrameData*,
+                              const cc::CompositorFrameMetadata&)>::Subscription;
+  std::unique_ptr<SwapCompositorFrameSubscription>
+  AddSwapCompositorFrameCallback(
+      const base::Callback<void(const CompositorFrameData*,
+                                const cc::CompositorFrameMetadata&)>& callback);
 
   void WasResized();
   void VisibilityChanged();
   void FocusChanged();
   void ScreenChanged();
 
-  void HideTouchSelectionController();
-
-  ChromeController* chrome_controller() const { return chrome_controller_; }
+  // XXX(chrisccoulson): This will probably be removed, please don't use it
+  //  See https://launchpad.net/bugs/1665722
+  ChromeController* chrome_controller() const {
+    return chrome_controller_.get();
+  }
 
  private:
   WebContentsView(content::WebContents* web_contents);
@@ -173,6 +184,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void DidCloseContextMenu();
   void DidHidePopupMenu();
+
+  void HideTouchSelectionController();
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -246,6 +259,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   // InputMethodContextObserver implementation
   void InputPanelVisibilityChanged() override;
 
+  // LegacyTouchEditingController implementation
+  void HideAndDisallowShowingAutomatically() override;
+
   // RenderWidgetHostViewContainer implementation
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;
   void DetachLayer(scoped_refptr<cc::Layer> layer) override;
@@ -253,10 +269,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
   gfx::Size GetViewSizeInPixels() const override;
   bool IsFullscreen() const override;
   float GetTopControlsHeight() override;
-  ui::TouchHandleDrawable* CreateTouchHandleDrawable() const override;
-  void TouchSelectionChanged(RenderWidgetHostView* view,
-                             bool handle_drag_in_progress,
-                             bool insertion_handle_tapped) override;
+  std::unique_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() override;
+  void TouchEditingStatusChanged(RenderWidgetHostView* view) override;
+  void TouchInsertionHandleTapped(RenderWidgetHostView* view) override;
   void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
 
   // ScreenObserver implementation
@@ -272,27 +287,31 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::vector<scoped_refptr<CompositorFrameHandle>> previous_compositor_frames_;
   std::queue<SwapAckCallback> compositor_ack_callbacks_;
 
+  RenderWidgetHostWeakPtr rwh_at_last_commit_;
+  base::CallbackList<void(const CompositorFrameData*,
+                          const cc::CompositorFrameMetadata&)>
+      swap_compositor_frame_callbacks_;
+
   std::unique_ptr<content::DropData> current_drop_data_;
   blink::WebDragOperationsMask current_drag_allowed_ops_;
   gfx::Point current_drag_location_;
   gfx::Point current_drag_screen_location_;
   blink::WebDragOperation current_drag_op_;
-  RenderWidgetHostID current_drag_target_;
+  RenderWidgetHostWeakPtr current_drag_target_;
 
   std::unique_ptr<DragSource> drag_source_;
-  RenderWidgetHostID drag_source_rwh_;
+  RenderWidgetHostWeakPtr drag_source_rwh_;
 
   std::unique_ptr<WebPopupMenuHost> active_popup_menu_;
   std::unique_ptr<WebContextMenuHost> active_context_menu_;
 
   MouseEventState mouse_state_;
 
-  cc::CompositorFrameMetadata committed_frame_metadata_;
+  RenderWidgetHostWeakPtr interstitial_rwh_;
 
-  RenderWidgetHostID interstitial_rwh_id_;
+  std::unique_ptr<ChromeController> chrome_controller_;
 
-  // Avoid calling ChromeController::FromWebContentsView on every frame
-  ChromeController* chrome_controller_;
+  LegacyTouchEditingClient* legacy_touch_editing_client_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

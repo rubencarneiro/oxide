@@ -289,7 +289,7 @@ void CompositorSoftwareOutputDevice::PopulateFrameDataForSwap(
 
   const BufferData* buffer = GetLastPaintedBuffer();
 
-  data->size_in_pixels = buffer->size;
+  data->rect_in_pixels = gfx::Rect(buffer->size);
   data->device_scale = device_scale_factor_;
   data->software_frame_data->id = buffer->id;
   data->software_frame_data->damage_rect = damage_rect_;

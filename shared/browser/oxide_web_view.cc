@@ -186,11 +186,13 @@ void WebView::CommonInit(WebContentsUniquePtr contents,
   view->set_editing_capabilities_changed_callback(
       base::Bind(&WebView::EditingCapabilitiesChanged,
                  base::Unretained(this)));
+  swap_compositor_frame_subscription_ =
+      view->AddSwapCompositorFrameCallback(
+          base::Bind(&WebView::OnSwapCompositorFrame,
+                     base::Unretained(this)));
 
   DCHECK(GetWebContentsHelper());
   GetWebContentsHelper()->set_client(contents_client);
-
-  CompositorObserver::Observe(view->GetCompositor());
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
@@ -279,6 +281,15 @@ void WebView::MaybeCancelFullscreenMode() {
   web_contents_->ExitFullscreen(false);
 }
 
+void WebView::OnSwapCompositorFrame(
+    const CompositorFrameData* data,
+    const cc::CompositorFrameMetadata& metadata) {
+  cc::CompositorFrameMetadata old = std::move(compositor_frame_metadata_);
+  compositor_frame_metadata_ = metadata.Clone();
+
+  client_->FrameMetadataUpdated(old);
+}
+
 void WebView::EditingCapabilitiesChanged() {
   blink::WebContextMenuData::EditFlags flags =
       blink::WebContextMenuData::CanDoNone;
@@ -322,15 +333,6 @@ size_t WebView::GetScriptMessageHandlerCount() const {
 const ScriptMessageHandler* WebView::GetScriptMessageHandlerAt(
     size_t index) const {
   return client_->GetScriptMessageHandlerAt(index);
-}
-
-void WebView::CompositorWillRequestSwapFrame() {
-  cc::CompositorFrameMetadata old = std::move(compositor_frame_metadata_);
-  compositor_frame_metadata_ =
-      WebContentsView::FromWebContents(web_contents_.get())
-        ->committed_frame_metadata().Clone();
-
-  client_->FrameMetadataUpdated(old);
 }
 
 content::WebContents* WebView::OpenURLFromTab(

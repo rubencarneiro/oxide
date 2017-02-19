@@ -22,7 +22,6 @@
 
 #include "base/gtest_prod_util.h"
 #include "base/macros.h"
-#include "base/memory/weak_ptr.h"
 #include "base/strings/string16.h"
 #include "content/public/browser/javascript_dialog_manager.h"
 #include "content/public/common/javascript_dialog_type.h"
@@ -38,7 +37,7 @@ class JavaScriptDialogContentsHelper;
 class OXIDE_SHARED_EXPORT JavaScriptDialogHost : public JavaScriptDialogClient {
  public:
   JavaScriptDialogHost(
-      base::WeakPtr<JavaScriptDialogContentsHelper> owner,
+      JavaScriptDialogContentsHelper* owner,
       const GURL& origin_url,
       bool is_before_unload_dialog,
       content::JavaScriptDialogType type,
@@ -57,12 +56,7 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogHost : public JavaScriptDialogClient {
   // JavaScriptDialogClient implementation
   void Close(bool success, const base::string16& user_input) override;
 
-  base::WeakPtr<JavaScriptDialogContentsHelper> owner_;
-  GURL origin_url_;
   bool is_before_unload_dialog_;
-  content::JavaScriptDialogType type_;
-  base::string16 message_text_;
-  base::string16 default_prompt_text_;
   content::JavaScriptDialogManager::DialogClosedCallback callback_;
 
   std::unique_ptr<JavaScriptDialog> dialog_;

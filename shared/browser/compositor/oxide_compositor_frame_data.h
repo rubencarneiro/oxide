@@ -29,7 +29,6 @@
 #include "cc/resources/shared_bitmap.h"
 #include "gpu/command_buffer/common/mailbox.h"
 #include "ui/gfx/geometry/rect.h"
-#include "ui/gfx/geometry/size.h"
 
 namespace base {
 class RefCountedMemory;
@@ -77,7 +76,7 @@ class CompositorFrameData {
   static std::unique_ptr<CompositorFrameData> AllocFrom(
       CompositorFrameData* other);
 
-  gfx::Size size_in_pixels;
+  gfx::Rect rect_in_pixels;
   float device_scale;
 
   std::unique_ptr<GLFrameData> gl_frame_data;
