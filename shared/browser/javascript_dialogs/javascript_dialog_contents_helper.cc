@@ -27,7 +27,7 @@
 #include "content/public/browser/render_widget_host_view.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/console_message_level.h"
-#include "content/public/common/javascript_message_type.h"
+#include "content/public/common/javascript_dialog_type.h"
 
 #include "javascript_dialog_host.h"
 
@@ -39,13 +39,13 @@ namespace {
 
 content::WebContents* g_last_focused_web_contents;
 
-const char* ToDialogTypeString(content::JavaScriptMessageType type) {
+const char* ToDialogTypeString(content::JavaScriptDialogType type) {
   switch (type) {
-    case content::JAVASCRIPT_MESSAGE_TYPE_ALERT:
+    case content::JAVASCRIPT_DIALOG_TYPE_ALERT:
       return "alert";
-    case content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM:
+    case content::JAVASCRIPT_DIALOG_TYPE_CONFIRM:
       return "confirm";
-    case content::JAVASCRIPT_MESSAGE_TYPE_PROMPT:
+    case content::JAVASCRIPT_DIALOG_TYPE_PROMPT:
       return "prompt";
   }
 
@@ -62,7 +62,7 @@ JavaScriptDialogContentsHelper::JavaScriptDialogContentsHelper(
       is_displaying_before_unload_dialog_(false) {}
 
 void JavaScriptDialogContentsHelper::ReportDialogUnsupported(
-    content::JavaScriptMessageType type) const {
+    content::JavaScriptDialogType type) const {
   std::ostringstream msg;
   msg << "A window." << ToDialogTypeString(type) << "() "
       << "dialog requested by this page was suppressed because the "
@@ -170,7 +170,7 @@ void JavaScriptDialogContentsHelper::HandleFocusOrVisibilityChange() {
 void JavaScriptDialogContentsHelper::RunJavaScriptDialog(
     content::WebContents* source_web_contents,
     const GURL& origin_url,
-    content::JavaScriptMessageType javascript_message_type,
+    content::JavaScriptDialogType dialog_type,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
     const DialogClosedCallback& callback,
@@ -186,37 +186,36 @@ void JavaScriptDialogContentsHelper::RunJavaScriptDialog(
 
   if (!factory_) {
     *did_suppress_message = true;
-    ReportDialogUnsupported(javascript_message_type);
+    ReportDialogUnsupported(dialog_type);
     return;
   }
 
   bool is_web_contents_foreground = IsWebContentsForeground();
 
   if (is_web_contents_foreground ||
-      javascript_message_type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT) {
+      dialog_type == content::JAVASCRIPT_DIALOG_TYPE_ALERT) {
     DismissPendingOrActiveDialog();
 
     pending_dialog_request_data_ = base::MakeUnique<DialogRequestData>();
     pending_dialog_request_data_->origin_url = origin_url;
-    pending_dialog_request_data_->type = javascript_message_type;
+    pending_dialog_request_data_->type = dialog_type;
     pending_dialog_request_data_->message_text = message_text;
     pending_dialog_request_data_->default_prompt_text = default_prompt_text;
   } else {
     // Suppress window.prompt and window.confirm dialogs from background views
     *did_suppress_message = true;
     std::ostringstream msg;
-    msg << "A window." << ToDialogTypeString(javascript_message_type) << "() "
-        << "dialog requested by this page was suppressed because the "
-        << "embedding view does not have active focus. Please ensure that "
-        << "dialogs are requested based on user interactions";
+    msg << "A window." << ToDialogTypeString(dialog_type) << "() dialog "
+        << "requested by this page was suppressed because the embedding view "
+        << "does not have active focus. Please ensure that dialogs are "
+        << "requested based on user interactions";
     web_contents()->GetMainFrame()->AddMessageToConsole(
         content::CONSOLE_MESSAGE_LEVEL_WARNING, msg.str());
     return;
   }
 
   if (!is_web_contents_foreground) {
-    DCHECK_EQ(javascript_message_type,
-              content::JAVASCRIPT_MESSAGE_TYPE_ALERT);
+    DCHECK_EQ(dialog_type, content::JAVASCRIPT_DIALOG_TYPE_ALERT);
     // Queue window.alert dialogs from background views, but don't block
     // script execution, as this might block the foreground view
     callback.Run(true, base::string16());
@@ -267,7 +266,7 @@ void JavaScriptDialogContentsHelper::RunBeforeUnloadDialog(
           this,
           web_contents()->GetLastCommittedURL(),
           true,
-          content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+          content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
           base::string16(),
           base::string16(),
           base::Bind(&JavaScriptDialogContentsHelper::OnDialogClosed,

@@ -66,7 +66,7 @@ struct JavaScriptDialogHostConstructTestRow {
   JavaScriptDialogHostConstructTestRow(
       const GURL& origin_url,
       bool is_before_unload_dialog,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text)
       : origin_url(origin_url),
@@ -77,7 +77,7 @@ struct JavaScriptDialogHostConstructTestRow {
 
   GURL origin_url;
   bool is_before_unload_dialog;
-  content::JavaScriptMessageType type;
+  content::JavaScriptDialogType type;
   base::string16 message_text;
   base::string16 default_prompt_text;
 };
@@ -106,22 +106,22 @@ INSTANTIATE_TEST_CASE_P(
         JavaScriptDialogHostConstructTestRow(
             GURL("https://www.google.com/"),
             false,
-            content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+            content::JAVASCRIPT_DIALOG_TYPE_ALERT,
             base::ASCIIToUTF16("Foo"), base::string16()),
         JavaScriptDialogHostConstructTestRow(
             GURL("https://www.twitter.com/"),
             false,
-            content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+            content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
             base::ASCIIToUTF16("Bar"), base::string16()),
         JavaScriptDialogHostConstructTestRow(
             GURL("https://www.google.com/"),
             false,
-            content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+            content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
             base::ASCIIToUTF16("Foo"), base::ASCIIToUTF16("bar")),
         JavaScriptDialogHostConstructTestRow(
             GURL("https://www.google.com/"),
             true,
-            content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+            content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
             base::string16(), base::string16())));
 
 TEST_P(JavaScriptDialogHostConstructTest, NoFactory) {
@@ -159,7 +159,7 @@ class MockJavaScriptDialogFactory : public JavaScriptDialogFactory {
       std::unique_ptr<JavaScriptDialog>(
           JavaScriptDialogClient* client,
           const GURL& origin_url,
-          content::JavaScriptMessageType type,
+          content::JavaScriptDialogType type,
           const base::string16& message_text,
           const base::string16& default_prompt_text));
 };
@@ -219,7 +219,7 @@ class FakeJavaScriptDialogFactory : public JavaScriptDialogFactory,
   std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
       JavaScriptDialogClient* client,
       const GURL& origin_url,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text) override;
 };
@@ -252,7 +252,7 @@ std::unique_ptr<JavaScriptDialog>
 FakeJavaScriptDialogFactory::CreateJavaScriptDialog(
     JavaScriptDialogClient* client,
     const GURL& origin_url,
-    content::JavaScriptMessageType type,
+    content::JavaScriptDialogType type,
     const base::string16& message_text,
     const base::string16& default_prompt_text) {
   return base::MakeUnique<MockJavaScriptDialog>(this);
@@ -270,7 +270,7 @@ TEST_F(JavaScriptDialogHostTest, Show) {
       base::MakeUnique<JavaScriptDialogHost>(
           GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
-          false, content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+          false, content::JAVASCRIPT_DIALOG_TYPE_ALERT,
           base::string16(), base::string16(),
           MakeJavaScriptDialogTestCallback(&callback_count));
 
@@ -293,7 +293,7 @@ TEST_F(JavaScriptDialogHostTest, Close) {
       base::MakeUnique<JavaScriptDialogHost>(
           GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
-          false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+          false, content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
           base::string16(), base::string16(),
           MakeJavaScriptDialogTestCallback(&callback_count,
                                            &success,
@@ -323,7 +323,7 @@ TEST_F(JavaScriptDialogHostTest, Dismiss) {
       base::MakeUnique<JavaScriptDialogHost>(
           GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
-          false, content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+          false, content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
           base::string16(), base::string16(),
           MakeJavaScriptDialogTestCallback(&callback_count,
                                            &success,
@@ -352,7 +352,7 @@ TEST_F(JavaScriptDialogHostTest, HandleWithOverride) {
       base::MakeUnique<JavaScriptDialogHost>(
           GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
-          false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+          false, content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
           base::string16(), base::string16(),
           MakeJavaScriptDialogTestCallback(&callback_count,
                                            &success,
@@ -382,7 +382,7 @@ TEST_F(JavaScriptDialogHostTest, HandleNoOverride) {
       base::MakeUnique<JavaScriptDialogHost>(
           GetJSDialogContentsHelper(),
           GURL("https://www.google.com/"),
-          false, content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+          false, content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
           base::string16(), base::string16(),
           MakeJavaScriptDialogTestCallback(&callback_count,
                                            &success,

@@ -988,18 +988,20 @@ void WebContentsView::HandleDragEnter(
   current_drop_data_.reset(new content::DropData(drop_data));
   current_drag_allowed_ops_ = allowed_ops;
 
-  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
-  current_drag_target_ = rwh;
-
   gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
 
-  gfx::Point screen_location =
+  current_drag_location_ = location - offset;
+  current_drag_screen_location_ =
       BrowserPlatformIntegration::GetInstance()
           ->GetScreen()
           ->GetCursorScreenPoint();
+
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  current_drag_target_ = rwh;
+
   rwh->DragTargetDragEnter(*current_drop_data_,
-                           location - offset,
-                           screen_location,
+                           current_drag_location_,
+                           current_drag_screen_location_,
                            current_drag_allowed_ops_,
                            key_modifiers);
 }
@@ -1012,21 +1014,22 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
   }
 
   gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
+  current_drag_location_ = location - offset;
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (rwh != current_drag_target_) {
     HandleDragEnter(*current_drop_data_,
-                    location - offset,
+                    current_drag_location_,
                     current_drag_allowed_ops_,
                     key_modifiers);
   }
 
-  gfx::Point screen_location =
+  current_drag_screen_location_ =
       BrowserPlatformIntegration::GetInstance()
         ->GetScreen()
         ->GetCursorScreenPoint();
-  rwh->DragTargetDragOver(location - offset,
-                          screen_location,
+  rwh->DragTargetDragOver(current_drag_location_,
+                          current_drag_screen_location_,
                           current_drag_allowed_ops_,
                           key_modifiers);
 
@@ -1045,7 +1048,8 @@ void WebContentsView::HandleDragLeave() {
     return;
   }
 
-  rwh->DragTargetDragLeave();
+  rwh->DragTargetDragLeave(current_drag_location_,
+                           current_drag_screen_location_);
 }
 
 blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,

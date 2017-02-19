@@ -25,7 +25,8 @@
 
 #include <string>
 
-#include "content/public/common/child_process_sandbox_support_linux.h"
+#include "content/public/child/child_process_sandbox_support_linux.h"
+#include "content/public/common/common_sandbox_support_linux.h"
 #include "content/public/renderer/renderer_ppapi_host.h"
 #include "ppapi/c/pp_errors.h"
 #include "ppapi/c/trusted/ppb_browser_font_trusted.h"

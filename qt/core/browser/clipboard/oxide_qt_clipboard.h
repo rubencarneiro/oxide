@@ -46,6 +46,7 @@ class Clipboard : public QObject,
 
  private:
   // ui::Clipboard overrides
+  void OnPreShutdown() override;
   uint64_t GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;

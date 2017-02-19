@@ -34,7 +34,7 @@
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/web_preferences.h"
-#include "device/vibration/vibration_manager_impl.h"
+#include "device/vibration/vibration_manager.mojom.h"
 #include "ppapi/features/features.h"
 #include "services/service_manager/public/cpp/interface_registry.h"
 #include "ui/display/display.h"
@@ -82,7 +82,7 @@ namespace oxide {
 namespace {
 
 void CreateVibrationManager(
-    mojo::InterfaceRequest<device::VibrationManager> request) {
+    mojo::InterfaceRequest<device::mojom::VibrationManager> request) {
   BrowserPlatformIntegration::GetInstance()
       ->CreateVibrationManager(std::move(request));
 }
@@ -211,12 +211,12 @@ bool ContentBrowserClient::CanCreateWindow(
     const GURL& opener_url,
     const GURL& opener_top_level_frame_url,
     const GURL& source_origin,
-    WindowContainerType container_type,
+    content::mojom::WindowContainerType container_type,
     const GURL& target_url,
     const content::Referrer& referrer,
     const std::string& frame_name,
     WindowOpenDisposition disposition,
-    const blink::WebWindowFeatures& features,
+    const blink::mojom::WindowFeatures& features,
     bool user_gesture,
     bool opener_suppressed,
     content::ResourceContext* context,

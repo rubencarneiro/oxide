@@ -187,7 +187,7 @@ class WebView : public oxide::WebViewClient,
   std::unique_ptr<oxide::JavaScriptDialog> CreateJavaScriptDialog(
       oxide::JavaScriptDialogClient* client,
       const GURL& origin_url,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text) override;
 

@@ -66,7 +66,7 @@ class BrowserPlatformIntegration : public QObject,
   std::unique_ptr<oxide::DragSource> CreateDragSource(
       oxide::DragSourceClient* client) override;
   void CreateVibrationManager(
-      mojo::InterfaceRequest<device::VibrationManager> request) override;
+      mojo::InterfaceRequest<device::mojom::VibrationManager> request) override;
 
   // QObject implementation
   bool eventFilter(QObject* watched, QEvent* event) override;

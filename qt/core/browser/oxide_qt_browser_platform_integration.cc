@@ -215,7 +215,7 @@ BrowserPlatformIntegration::~BrowserPlatformIntegration() {
 }
 
 void BrowserPlatformIntegration::CreateVibrationManager(
-      mojo::InterfaceRequest<device::VibrationManager> request) {
+      mojo::InterfaceRequest<device::mojom::VibrationManager> request) {
   VibrationManager::Create(std::move(request));
 }
 

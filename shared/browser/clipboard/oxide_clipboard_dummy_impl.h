@@ -31,6 +31,7 @@ class ClipboardDummyImpl : public Clipboard {
 
  private:
   // ui::Clipboard implementation
+  void OnPreShutdown() override;
   uint64_t GetSequenceNumber(ui::ClipboardType type) const override;
   bool IsFormatAvailable(const FormatType& format,
                          ui::ClipboardType type) const override;

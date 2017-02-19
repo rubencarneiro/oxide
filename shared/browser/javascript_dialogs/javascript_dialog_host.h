@@ -24,7 +24,7 @@
 #include "base/macros.h"
 #include "base/strings/string16.h"
 #include "content/public/browser/javascript_dialog_manager.h"
-#include "content/public/common/javascript_message_type.h"
+#include "content/public/common/javascript_dialog_type.h"
 
 #include "shared/browser/javascript_dialogs/javascript_dialog_client.h"
 #include "shared/common/oxide_shared_export.h"
@@ -40,7 +40,7 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogHost : public JavaScriptDialogClient {
       JavaScriptDialogContentsHelper* owner,
       const GURL& origin_url,
       bool is_before_unload_dialog,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
       const content::JavaScriptDialogManager::DialogClosedCallback& callback);

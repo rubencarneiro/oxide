@@ -84,7 +84,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, RunJavaScriptDialogWithNoFactory) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::string16(), base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count),
       &did_suppress_message);
@@ -160,7 +160,7 @@ class MockJavaScriptDialogFactory : public JavaScriptDialogFactory,
       std::unique_ptr<JavaScriptDialog>(
           JavaScriptDialogClient* client,
           const GURL& origin_url,
-          content::JavaScriptMessageType type,
+          content::JavaScriptDialogType type,
           const base::string16& message_text,
           const base::string16& default_prompt_text));
 
@@ -175,7 +175,7 @@ class MockJavaScriptDialogFactory : public JavaScriptDialogFactory,
   std::unique_ptr<JavaScriptDialog> RealCreateJavaScriptDialog(
       JavaScriptDialogClient* client,
       const GURL& origin_url,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text);
 
@@ -208,7 +208,7 @@ std::unique_ptr<JavaScriptDialog>
 MockJavaScriptDialogFactory::RealCreateJavaScriptDialog(
     JavaScriptDialogClient* client,
     const GURL& origin_url,
-    content::JavaScriptMessageType type,
+    content::JavaScriptDialogType type,
     const base::string16& message_text,
     const base::string16& default_prompt_text) {
   std::unique_ptr<MockJavaScriptDialog> dialog =
@@ -222,7 +222,7 @@ MockJavaScriptDialogFactory::RealCreateJavaScriptDialog(
 struct JavaScriptDialogContentsHelperTestPRow {
   JavaScriptDialogContentsHelperTestPRow(
       const GURL& origin_url,
-      content::JavaScriptMessageType type,
+      content::JavaScriptDialogType type,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
       bool success,
@@ -235,7 +235,7 @@ struct JavaScriptDialogContentsHelperTestPRow {
         user_input(user_input) {}
 
   GURL origin_url;
-  content::JavaScriptMessageType type;
+  content::JavaScriptDialogType type;
   base::string16 message_text;
   base::string16 default_prompt_text;
 
@@ -254,17 +254,17 @@ INSTANTIATE_TEST_CASE_P(
     testing::Values(
         JavaScriptDialogContentsHelperTestPRow(
             GURL("https://www.google.com/"),
-            content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+            content::JAVASCRIPT_DIALOG_TYPE_ALERT,
             base::ASCIIToUTF16("Foo"), base::string16(),
             true, base::string16()),
         JavaScriptDialogContentsHelperTestPRow(
             GURL("https://www.twitter.com/"),
-            content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+            content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
             base::ASCIIToUTF16("Bar"), base::string16(),
             false, base::string16()),
         JavaScriptDialogContentsHelperTestPRow(
             GURL("https://www.google.com/"),
-            content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+            content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
             base::ASCIIToUTF16("Foo"), base::ASCIIToUTF16("bar"),
             true, base::ASCIIToUTF16("result"))));
 
@@ -347,21 +347,21 @@ TEST_P(JavaScriptDialogContentsHelperTestP, RunDialogBackground) {
                                        &user_input),
       &did_suppress_dialog);
 
-  EXPECT_EQ(params.type != content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+  EXPECT_EQ(params.type != content::JAVASCRIPT_DIALOG_TYPE_ALERT,
             did_suppress_dialog);
-  EXPECT_EQ(params.type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT ? 1 : 0,
+  EXPECT_EQ(params.type == content::JAVASCRIPT_DIALOG_TYPE_ALERT ? 1 : 0,
             callback_count);
-  if (params.type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT) {
+  if (params.type == content::JAVASCRIPT_DIALOG_TYPE_ALERT) {
     EXPECT_TRUE(success);
     EXPECT_TRUE(user_input.empty());
   }
   EXPECT_FALSE(factory.last_dialog());
 
-  if (params.type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT) {
+  if (params.type == content::JAVASCRIPT_DIALOG_TYPE_ALERT) {
     EXPECT_CALL(factory,
                 CreateJavaScriptDialog(_,
                                        params.origin_url,
-                                       content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+                                       content::JAVASCRIPT_DIALOG_TYPE_ALERT,
                                        params.message_text,
                                        params.default_prompt_text));
     EXPECT_CALL(factory, Show());
@@ -369,7 +369,7 @@ TEST_P(JavaScriptDialogContentsHelperTestP, RunDialogBackground) {
 
   web_contents()->WasShown();
 
-  if (params.type == content::JAVASCRIPT_MESSAGE_TYPE_ALERT) {
+  if (params.type == content::JAVASCRIPT_DIALOG_TYPE_ALERT) {
     ASSERT_TRUE(factory.last_dialog());
     ASSERT_TRUE(factory.last_dialog()->client());
     EXPECT_CALL(factory, Hide());
@@ -542,7 +542,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplaceActiveDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::ASCIIToUTF16("Bar"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count1,
@@ -558,7 +558,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplaceActiveDialog) {
   EXPECT_CALL(factory,
               CreateJavaScriptDialog(_,
                                      GURL("https://www.twitter.com/"),
-                                     content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+                                     content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
                                      base::ASCIIToUTF16("Foo"),
                                      base::string16()));
   EXPECT_CALL(factory, Show());
@@ -573,7 +573,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplaceActiveDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.twitter.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+      content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
       base::ASCIIToUTF16("Foo"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count2,
@@ -607,7 +607,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplacePendingDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::ASCIIToUTF16("Bar"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count1,
@@ -629,7 +629,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplacePendingDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.twitter.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::ASCIIToUTF16("Foo"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count2,
@@ -646,7 +646,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, ReplacePendingDialog) {
   EXPECT_CALL(factory,
               CreateJavaScriptDialog(_,
                                      GURL("https://www.twitter.com/"),
-                                     content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+                                     content::JAVASCRIPT_DIALOG_TYPE_ALERT,
                                      base::ASCIIToUTF16("Foo"),
                                      base::string16()));
   EXPECT_CALL(factory, Show());
@@ -672,7 +672,7 @@ TEST_F(JavaScriptDialogContentsHelperTest, CancelPendingDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::ASCIIToUTF16("Bar"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count,
@@ -710,7 +710,7 @@ TEST_F(JavaScriptDialogContentsHelperTest,
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::ASCIIToUTF16("Bar"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count1,
@@ -730,7 +730,7 @@ TEST_F(JavaScriptDialogContentsHelperTest,
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.twitter.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+      content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
       base::ASCIIToUTF16("Foo"),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count2),
@@ -743,7 +743,7 @@ TEST_F(JavaScriptDialogContentsHelperTest,
   EXPECT_CALL(factory,
               CreateJavaScriptDialog(_,
                                      GURL("https://www.google.com/"),
-                                     content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+                                     content::JAVASCRIPT_DIALOG_TYPE_ALERT,
                                      base::ASCIIToUTF16("Bar"),
                                      base::string16()));
   EXPECT_CALL(factory, Show());
@@ -908,7 +908,7 @@ TEST_F(JavaScriptDialogContentsHelperTest,
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/a"),
-      content::JAVASCRIPT_MESSAGE_TYPE_CONFIRM,
+      content::JAVASCRIPT_DIALOG_TYPE_CONFIRM,
       base::string16(), base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count1,
                                        &success1,
@@ -965,7 +965,7 @@ TEST_F(JavaScriptDialogContentsHelperTest,
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/a"),
-      content::JAVASCRIPT_MESSAGE_TYPE_ALERT,
+      content::JAVASCRIPT_DIALOG_TYPE_ALERT,
       base::string16(), base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count1,
                                        &success1,
@@ -1034,7 +1034,7 @@ TEST_P(JavaScriptDialogContentsHelperHandleTestP, HandleJavaScriptDialog) {
   manager->RunJavaScriptDialog(
       web_contents(),
       GURL("https://www.google.com/"),
-      content::JAVASCRIPT_MESSAGE_TYPE_PROMPT,
+      content::JAVASCRIPT_DIALOG_TYPE_PROMPT,
       base::string16(),
       base::string16(),
       MakeJavaScriptDialogTestCallback(&callback_count,

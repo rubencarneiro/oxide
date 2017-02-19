@@ -22,6 +22,8 @@
 
 namespace oxide {
 
+void ClipboardDummyImpl::OnPreShutdown() {}
+
 uint64_t ClipboardDummyImpl::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   return 0;

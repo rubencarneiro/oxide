@@ -60,7 +60,7 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
 
   JavaScriptDialogContentsHelper(content::WebContents* contents);
 
-  void ReportDialogUnsupported(content::JavaScriptMessageType type) const;
+  void ReportDialogUnsupported(content::JavaScriptDialogType type) const;
   bool IsWebContentsForeground() const;
   void DismissActiveDialog();
   void DismissPendingOrActiveDialog();
@@ -75,7 +75,7 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
   void RunJavaScriptDialog(
       content::WebContents* source_web_contents,
       const GURL& origin_url,
-      content::JavaScriptMessageType javascript_message_type,
+      content::JavaScriptDialogType dialog_type,
       const base::string16& message_text,
       const base::string16& default_prompt_text,
       const DialogClosedCallback& callback,
@@ -102,7 +102,7 @@ class OXIDE_SHARED_EXPORT JavaScriptDialogContentsHelper
 
   struct DialogRequestData {
     GURL origin_url;
-    content::JavaScriptMessageType type = content::JAVASCRIPT_MESSAGE_TYPE_ALERT;
+    content::JavaScriptDialogType type = content::JAVASCRIPT_DIALOG_TYPE_ALERT;
     base::string16 message_text;
     base::string16 default_prompt_text;
   };
