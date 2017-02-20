@@ -153,7 +153,7 @@ void ContentRendererClient::OverrideCompositorSettings(
   if (ui::IsOverlayScrollbarEnabled()) {
     // XXX: This will need updating if we support overlay scrollbars on
     //  desktop. See https://launchpad.net/bugs/1426567
-    settings->scrollbar_animator = cc::LayerTreeSettings::LINEAR_FADE;
+    settings->scrollbar_animator = cc::LayerTreeSettings::ANDROID_OVERLAY;
     settings->scrollbar_fade_delay = base::TimeDelta::FromMilliseconds(300);
     settings->scrollbar_fade_resize_delay = base::TimeDelta::FromSeconds(2);
     settings->scrollbar_fade_duration = base::TimeDelta::FromMilliseconds(300);
