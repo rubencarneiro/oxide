@@ -277,11 +277,6 @@ void PermissionManager::ResetPermission(content::PermissionType permission,
   NOTIMPLEMENTED();
 }
 
-void PermissionManager::RegisterPermissionUsage(
-    content::PermissionType permission,
-    const GURL& requesting_origin,
-    const GURL& embedding_origin) {}
-
 int PermissionManager::SubscribePermissionStatusChange(
     content::PermissionType permission,
     const GURL& requesting_origin,
