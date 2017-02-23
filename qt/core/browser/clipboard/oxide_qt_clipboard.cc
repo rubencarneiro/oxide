@@ -62,6 +62,8 @@ void Clipboard::OnClipboardDataChanged() {
   NotifyClipboardDataChanged(ui::CLIPBOARD_TYPE_COPY_PASTE);
 }
 
+void Clipboard::OnPreShutdown() {}
+
 uint64_t Clipboard::GetSequenceNumber(ui::ClipboardType type) const {
   DCHECK(CalledOnValidThread());
   return type == ui::CLIPBOARD_TYPE_COPY_PASTE ?
