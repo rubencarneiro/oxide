@@ -837,15 +837,20 @@ void WebContentsView::SetComposingText(
 
   rwhv->OnUserInput();
 
-  content::RenderWidgetHostImpl* rwhi =
-      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost());
-  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
-  rwhi->ImeSetComposition(text,
-                          underlines,
-                          gfx::Range::InvalidRange(),
-                          selection_range.start(),
-                          selection_range.end());
-  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
+  content::TextInputManager* text_input_manager =
+      rwhv->GetTextInputManager();
+  content::RenderWidgetHostImpl* widget = text_input_manager->GetActiveWidget();
+  if (!widget) {
+    return;
+  }
+
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  widget->ImeSetComposition(text,
+                            underlines,
+                            gfx::Range::InvalidRange(),
+                            selection_range.start(),
+                            selection_range.end());
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
 }
 
 void WebContentsView::CommitText(const base::string16& text,
@@ -857,14 +862,19 @@ void WebContentsView::CommitText(const base::string16& text,
 
   rwhv->OnUserInput();
 
-  content::RenderWidgetHostImpl* rwhi =
-      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost());
-  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::RawKeyDown);
-  rwhi->ImeCommitText(text,
-                      std::vector<blink::WebCompositionUnderline>(),
-                      replacement_range,
-                      false);
-  SendFakeCompositionKeyEvent(rwhi, blink::WebInputEvent::KeyUp);
+  content::TextInputManager* text_input_manager =
+      rwhv->GetTextInputManager();
+  content::RenderWidgetHostImpl* widget = text_input_manager->GetActiveWidget();
+  if (!widget) {
+    return;
+  }
+
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  widget->ImeCommitText(text,
+                        std::vector<blink::WebCompositionUnderline>(),
+                        replacement_range,
+                        false);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
 }
 
 base::string16 WebContentsView::GetSelectionText() const {
