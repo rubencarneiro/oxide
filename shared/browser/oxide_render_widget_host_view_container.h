@@ -22,12 +22,18 @@
 #include <vector>
 
 #include "base/memory/ref_counted.h"
+#include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
 class Layer;
+}
+
+namespace content {
+class RenderWidgetHostViewBase;
+class TextInputState;
 }
 
 namespace gfx {
@@ -65,13 +71,25 @@ class RenderWidgetHostViewContainer {
 
   virtual float GetTopControlsHeight() = 0;
 
+  // Touch editing support
   virtual std::unique_ptr<ui::TouchHandleDrawable>
   CreateTouchHandleDrawable() = 0;
-
   virtual void TouchEditingStatusChanged(RenderWidgetHostView* view) = 0;
   virtual void TouchInsertionHandleTapped(RenderWidgetHostView* view) = 0;
 
-  virtual void EditingCapabilitiesChanged(RenderWidgetHostView* view) = 0;
+  // IME integration
+  virtual void TextInputStateChanged(RenderWidgetHostView* view,
+                                     const content::TextInputState* state) = 0;
+  virtual void ImeCancelComposition(RenderWidgetHostView* view) = 0;
+  virtual void SelectionBoundsChanged(
+      RenderWidgetHostView* view,
+      const content::TextInputManager::SelectionRegion* region) = 0;
+  virtual void TextSelectionChanged(
+      RenderWidgetHostView* view,
+      content::RenderWidgetHostViewBase* focused_view,
+      const content::TextInputManager::TextSelection* selection) = 0;
+  virtual void FocusedNodeChanged(RenderWidgetHostView* view,
+                                  bool is_editable_node) = 0;
 };
 
 } // namespace oxide

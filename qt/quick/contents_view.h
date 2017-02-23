@@ -62,8 +62,6 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
   void handleKeyPressEvent(QKeyEvent* event);
   void handleKeyReleaseEvent(QKeyEvent* event);
   void handleInputMethodEvent(QInputMethodEvent* event);
-  void handleFocusInEvent(QFocusEvent* event);
-  void handleFocusOutEvent(QFocusEvent* event);
   void handleMousePressEvent(QMouseEvent* event);
   void handleMouseMoveEvent(QMouseEvent* event);
   void handleMouseReleaseEvent(QMouseEvent* event);
@@ -93,7 +91,6 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
   void handleKeyEvent(QKeyEvent* event);
   void handleMouseEvent(QMouseEvent* event);
   void handleHoverEvent(QHoverEvent* event);
-  void handleFocusEvent(QFocusEvent* event);
 
   void didUpdatePaintNode();
 
@@ -105,7 +102,7 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
   void ScheduleUpdate() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const QCursor& cursor) override;
-  void SetInputMethodEnabled(bool enabled) override;
+  void SetInputMethodAccepted(bool accepted) override;
   std::unique_ptr<qt::WebPopupMenu> CreateWebPopupMenu(
       const std::vector<qt::MenuItem>& items,
       bool allow_multiple_selection,

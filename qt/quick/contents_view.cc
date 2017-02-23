@@ -77,14 +77,6 @@ void ContentsView::handleHoverEvent(QHoverEvent* event) {
                             (window_pos + item_->window()->position()).toPoint());
 }
 
-void ContentsView::handleFocusEvent(QFocusEvent* event) {
-  if (!view()) {
-    return;
-  }
-
-  view()->handleFocusEvent(event);
-}
-
 void ContentsView::didUpdatePaintNode() {
   if (received_new_compositor_frame_) {
     received_new_compositor_frame_ = false;
@@ -134,9 +126,8 @@ void ContentsView::UpdateCursor(const QCursor& cursor) {
   item_->setCursor(cursor);
 }
 
-void ContentsView::SetInputMethodEnabled(bool enabled) {
-  item_->setFlag(QQuickItem::ItemAcceptsInputMethod, enabled);
-  QGuiApplication::inputMethod()->update(Qt::ImEnabled);
+void ContentsView::SetInputMethodAccepted(bool accepted) {
+  item_->setFlag(QQuickItem::ItemAcceptsInputMethod, accepted);
 }
 
 std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
@@ -216,14 +207,6 @@ void ContentsView::handleInputMethodEvent(QInputMethodEvent* event) {
   }
 
   view()->handleInputMethodEvent(event);
-}
-
-void ContentsView::handleFocusInEvent(QFocusEvent* event) {
-  handleFocusEvent(event);
-}
-
-void ContentsView::handleFocusOutEvent(QFocusEvent* event) {
-  handleFocusEvent(event);
 }
 
 void ContentsView::handleMousePressEvent(QMouseEvent* event) {

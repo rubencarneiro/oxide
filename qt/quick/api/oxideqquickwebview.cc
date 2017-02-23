@@ -1110,14 +1110,12 @@ void OxideQQuickWebView::focusInEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::focusInEvent(event);
-  d->contents_view_->handleFocusInEvent(event);
 }
 
 void OxideQQuickWebView::focusOutEvent(QFocusEvent* event) {
   Q_D(OxideQQuickWebView);
 
   QQuickItem::focusOutEvent(event);
-  d->contents_view_->handleFocusOutEvent(event);
 }
 
 void OxideQQuickWebView::mousePressEvent(QMouseEvent* event) {

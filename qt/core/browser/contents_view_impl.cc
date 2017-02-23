@@ -41,7 +41,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/point.h"
 
-#include "qt/core/browser/input/oxide_qt_input_method_context.h"
+#include "qt/core/browser/input/qt_input_method_context.h"
 #include "qt/core/glue/contents_view_client.h"
 #include "qt/core/glue/legacy_touch_editing_client.h"
 #include "qt/core/glue/touch_handle_drawable.h"
@@ -324,12 +324,6 @@ void ContentsViewImpl::handleInputMethodEvent(QInputMethodEvent* event) {
   event->accept();
 }
 
-void ContentsViewImpl::handleFocusEvent(QFocusEvent* event) {
-  input_method_context_->FocusChanged(event);
-
-  event->accept();
-}
-
 void ContentsViewImpl::handleMouseEvent(QMouseEvent* event) {
   if (!(event->button() == Qt::LeftButton ||
         event->button() == Qt::MidButton ||
@@ -437,8 +431,8 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
   }
 }
 
-void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
-  client_->SetInputMethodEnabled(enabled);
+void ContentsViewImpl::SetInputMethodAccepted(bool accepted) {
+  client_->SetInputMethodAccepted(accepted);
 }
 
 bool ContentsViewImpl::IsVisible() const {
@@ -580,7 +574,6 @@ ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
 ContentsViewImpl::~ContentsViewImpl() {
   DCHECK_EQ(client_->view_, this);
   client_->view_ = nullptr;
-  input_method_context_->DetachClient();
 }
 
 // static

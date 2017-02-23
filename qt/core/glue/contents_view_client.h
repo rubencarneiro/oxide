@@ -64,7 +64,7 @@ class OXIDE_QTCORE_EXPORT ContentsViewClient {
 
   virtual void UpdateCursor(const QCursor& cursor) = 0;
 
-  virtual void SetInputMethodEnabled(bool enabled) = 0;
+  virtual void SetInputMethodAccepted(bool accepted) = 0;
 
   virtual std::unique_ptr<WebPopupMenu> CreateWebPopupMenu(
       const std::vector<MenuItem>& items,

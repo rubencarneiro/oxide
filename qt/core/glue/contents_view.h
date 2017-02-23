@@ -29,7 +29,6 @@ class QDragEnterEvent;
 class QDragLeaveEvent;
 class QDragMoveEvent;
 class QDropEvent;
-class QFocusEvent;
 class QHoverEvent;
 class QInputMethodEvent;
 class QKeyEvent;
@@ -86,7 +85,6 @@ class ContentsView {
 
   virtual void handleKeyEvent(QKeyEvent* event) = 0;
   virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
-  virtual void handleFocusEvent(QFocusEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchUngrabEvent() = 0;
   virtual void handleWheelEvent(QWheelEvent* event,

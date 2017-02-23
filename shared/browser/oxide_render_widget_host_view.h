@@ -31,14 +31,15 @@
 #include "cc/surfaces/frame_sink_id.h"
 #include "cc/surfaces/local_surface_id.h"
 #include "cc/surfaces/surface_factory_client.h"
-#include "content/browser/renderer_host/render_widget_host_view_oxide.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_view_base.h" // nogncheck
 #include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/common/cursors/webcursor.h" // nogncheck
+#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor_observer.h"
-#include "shared/browser/input/oxide_ime_bridge_impl.h"
+#include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/oxide_gesture_provider.h"
 
 namespace cc {
@@ -63,7 +64,7 @@ namespace oxide {
 class RenderWidgetHostViewContainer;
 
 class RenderWidgetHostView
-    : public content::RenderWidgetHostViewOxide,
+    : public content::RenderWidgetHostViewBase,
       public CompositorObserver,
       public GestureProviderClient,
       public cc::SurfaceFactoryClient,
@@ -76,10 +77,7 @@ class RenderWidgetHostView
 
   void SetContainer(RenderWidgetHostViewContainer* container);
 
-  ImeBridgeImpl* ime_bridge() { return &ime_bridge_; }
-
-  base::string16 GetSelectionText() const;
-  gfx::Range GetSelectionRange() const;
+  blink::WebContextMenuData::EditFlags GetEditFlags();
 
   const cc::CompositorFrameMetadata& last_drawn_frame_metadata() const {
     return last_drawn_frame_metadata_;
@@ -91,6 +89,8 @@ class RenderWidgetHostView
   void ResetGestureDetection();
 
   void Blur();
+
+  content::RenderWidgetHostViewBase* GetFocusedViewForTextSelection() const;
 
   // content::RenderWidgetHostView implementation
   content::RenderWidgetHost* GetRenderWidgetHost() const override;
@@ -111,15 +111,7 @@ class RenderWidgetHostView
   void OnUserInput() const;
 
  private:
-  // content::RenderWidgetHostViewOxide implementation
-  void OnSelectionBoundsChanged(const gfx::Rect& anchor_rect,
-                                const gfx::Rect& focus_rect,
-                                bool is_anchor_first) override;
-
   // content::RenderWidgetHostViewBase implementation
-  void SelectionChanged(const base::string16& text,
-                        size_t offset,
-                        const gfx::Range& range) override;
   gfx::Size GetPhysicalBackingSize() const override;
   bool DoBrowserControlsShrinkBlinkSize() const override;
   float GetTopControlsHeight() const override;
@@ -206,6 +198,12 @@ class RenderWidgetHostView
   void OnImeCancelComposition(
       content::TextInputManager* text_input_manager,
       content::RenderWidgetHostViewBase* updated_view) override;
+  void OnSelectionBoundsChanged(
+      content::TextInputManager* text_input_manager,
+      content::RenderWidgetHostViewBase* updated_view) override;
+  void OnTextSelectionChanged(
+      content::TextInputManager* text_input_manager,
+      content::RenderWidgetHostViewBase* updated_view) override;
 
   // ui::TouchSelectionControllerClient implementation
   bool SupportsAnimation() const override;
@@ -251,8 +249,6 @@ class RenderWidgetHostView
   cc::CompositorFrameMetadata last_drawn_frame_metadata_;
 
   std::queue<base::Closure> ack_callbacks_;
-
-  ImeBridgeImpl ime_bridge_;
 
   bool is_loading_;
   content::WebCursor web_cursor_;

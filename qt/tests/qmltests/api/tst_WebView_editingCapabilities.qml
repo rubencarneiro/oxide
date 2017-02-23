@@ -65,6 +65,7 @@ TestWebView {
 
       webView.executeEditingCommand(WebView.EditingCommandSelectAll);
       editingCapabilitiesSpy.wait();
+      editingCapabilitiesSpy.wait();
       compare(webView.editingCapabilities,
               WebView.CutCapability | WebView.CopyCapability |
               WebView.EraseCapability | WebView.SelectAllCapability);

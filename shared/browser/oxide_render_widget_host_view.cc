@@ -54,9 +54,10 @@
 #include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
+#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/browser/input/oxide_input_method_context.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -82,65 +83,9 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
+
 } // namespace
-
-void RenderWidgetHostView::OnSelectionBoundsChanged(
-    const gfx::Rect& anchor_rect,
-    const gfx::Rect& focus_rect,
-    bool is_anchor_first) {
-  gfx::Rect caret_rect;
-  if (anchor_rect == focus_rect) {
-    caret_rect = anchor_rect;
-  }
-
-  size_t selection_cursor_position = 0;
-  size_t selection_anchor_position = 0;
-
-  const content::TextInputManager::TextSelection* selection =
-      GetTextInputManager()->GetTextSelection();
-  if (selection && selection->range.IsValid()) {
-    if (is_anchor_first) {
-      selection_cursor_position =
-          selection->range.GetMax() - selection->offset;
-      selection_anchor_position =
-          selection->range.GetMin() - selection->offset;
-    } else {
-      selection_cursor_position =
-          selection->range.GetMin() - selection->offset;
-      selection_anchor_position =
-          selection->range.GetMax() - selection->offset;
-    }
-  }
-
-  ime_bridge_.SelectionBoundsChanged(caret_rect,
-                                     selection_cursor_position,
-                                     selection_anchor_position);
-
-  if (container_) {
-    container_->EditingCapabilitiesChanged(this);
-  }
-}
-
-void RenderWidgetHostView::SelectionChanged(const base::string16& text,
-                                            size_t offset,
-                                            const gfx::Range& range) {
-  if ((range.GetMin() - offset) > text.length()) {
-    // Got an invalid selection (see https://launchpad.net/bugs/1375900).
-    // The issue lies in content::RenderFrameImpl::SyncSelectionIfRequired(…)
-    // where the selection text and the corresponding range are computed
-    // separately. If the word that just got committed is at the beginning of a
-    // new line, the selection range includes the trailing newline character(s)
-    // whereas the selection text truncates them.
-    // This looks very similar to https://crbug.com/101435.
-    return;
-  }
-
-  content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
-
-  if (ime_bridge_.context()) {
-    ime_bridge_.context()->SelectionChanged();
-  }
-}
 
 gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   if (!container_) {
@@ -169,7 +114,11 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
 void RenderWidgetHostView::FocusedNodeChanged(
     bool is_editable_node,
     const gfx::Rect& node_bounds_in_screen) {
-  ime_bridge_.FocusedNodeChanged(is_editable_node);
+  if (!container_) {
+    return;
+  }
+
+  container_->FocusedNodeChanged(this, is_editable_node);
 }
 
 void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
@@ -638,26 +587,55 @@ void RenderWidgetHostView::OnUpdateTextInputStateCalled(
     content::TextInputManager* text_input_manager,
     content::RenderWidgetHostViewBase* updated_view,
     bool did_update_state) {
-  if (updated_view != this) {
+  if (!container_) {
     return;
   }
 
   const content::TextInputState* state =
       GetTextInputManager()->GetTextInputState();
-
-  ime_bridge_.TextInputStateChanged(
-      state ? state->type : ui::TEXT_INPUT_TYPE_NONE,
-      state ? state->show_ime_if_needed : false);
+  container_->TextInputStateChanged(this, state);
 }
 
 void RenderWidgetHostView::OnImeCancelComposition(
     content::TextInputManager* text_input_manager,
     content::RenderWidgetHostViewBase* updated_view) {
-  if (ime_bridge_.context() || updated_view != this) {
+  if (!container_) {
     return;
   }
 
-  ime_bridge_.context()->CancelComposition();
+  container_->ImeCancelComposition(this);
+}
+
+void RenderWidgetHostView::OnSelectionBoundsChanged(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view) {
+  if (!container_) {
+    return;
+  }
+
+  if (updated_view != GetFocusedViewForTextSelection()) {
+    return;
+  }
+
+  const content::TextInputManager::SelectionRegion* region =
+      GetTextInputManager()->GetSelectionRegion(updated_view);
+  container_->SelectionBoundsChanged(this, region);
+}
+
+void RenderWidgetHostView::OnTextSelectionChanged(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view) {
+  if (!container_) {
+    return;
+  }
+
+  if (updated_view != GetFocusedViewForTextSelection()) {
+    return;
+  }
+
+  const content::TextInputManager::TextSelection* selection =
+      GetTextInputManager()->GetTextSelection(updated_view);
+  container_->TextSelectionChanged(this, updated_view, selection);
 }
 
 bool RenderWidgetHostView::SupportsAnimation() const {
@@ -817,7 +795,6 @@ RenderWidgetHostView::RenderWidgetHostView(
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
       id_allocator_(new cc::SurfaceIdAllocator()),
       last_output_surface_id_(0),
-      ime_bridge_(this),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
       browser_controls_shrink_blink_size_(false),
@@ -883,22 +860,44 @@ void RenderWidgetHostView::SetContainer(
   host_->WasResized();
 }
 
-base::string16 RenderWidgetHostView::GetSelectionText() const {
-  auto* self = const_cast<RenderWidgetHostView*>(this);
-  if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection(self)) {
-    return base::string16();
-  }
-  return self->GetTextInputManager()->GetTextSelection(self)->text;
-}
+blink::WebContextMenuData::EditFlags RenderWidgetHostView::GetEditFlags() {
+  blink::WebContextMenuData::EditFlags flags =
+      blink::WebContextMenuData::CanDoNone;
 
-gfx::Range RenderWidgetHostView::GetSelectionRange() const {
-  auto* self = const_cast<RenderWidgetHostView*>(this);
-  if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection(self)) {
-    return gfx::Range();
+  content::RenderWidgetHostViewBase* view = GetFocusedViewForTextSelection();
+  if (!view) {
+    return flags;
   }
-  return self->GetTextInputManager()->GetTextSelection(self)->range;
+
+  const content::TextInputState* state =
+      GetTextInputManager()->GetTextInputState();
+  ui::TextInputType text_input_type =
+      state ? state->type : ui::TEXT_INPUT_TYPE_NONE;
+
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+
+  const content::TextInputManager::TextSelection* selection =
+      GetTextInputManager()->GetTextSelection(state ? nullptr : view);
+  bool has_selection = selection && !selection->range.is_empty();
+
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable &&
+      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+
+  return flags;
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
@@ -939,6 +938,16 @@ void RenderWidgetHostView::Blur() {
   host_->Blur();
 
   selection_controller_->HideAndDisallowShowingAutomatically();
+}
+
+content::RenderWidgetHostViewBase*
+RenderWidgetHostView::GetFocusedViewForTextSelection() const {
+  content::RenderWidgetHostImpl* host = GetFocusedWidget();
+  if (!host) {
+    return nullptr;
+  }
+
+  return host->GetView();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {
