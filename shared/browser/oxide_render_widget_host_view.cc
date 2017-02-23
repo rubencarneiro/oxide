@@ -183,7 +183,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
       layer_ = cc::SurfaceLayer::Create(manager->reference_factory());
       DCHECK(layer_);
 
-      layer_->SetSurfaceInfo(
+      layer_->SetPrimarySurfaceInfo(
           cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_surface_id_),
                           device_scale_factor,
                           frame_size));
