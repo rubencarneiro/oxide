@@ -386,10 +386,6 @@ QVariant InputMethodContext::Query(Qt::InputMethodQuery query) const {
 }
 
 void InputMethodContext::HandleEvent(QInputMethodEvent* event) {
-  if (!has_focus_) {
-    LOG(ERROR) << "Receiving IM event without focus";
-  }
-
   QString commit_string = event->commitString();
 
   if (!commit_string.isEmpty()) {
