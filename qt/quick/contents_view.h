@@ -75,7 +75,8 @@ class OXIDE_QTQUICK_EXPORT ContentsView : public QObject,
   void handleDragMoveEvent(QDragMoveEvent* event);
   void handleDragLeaveEvent(QDragLeaveEvent* event);
   void handleDropEvent(QDropEvent* event);
-  void handleGeometryChanged();
+  void handleGeometryChanged(const QRectF& new_geometry,
+                             const QRectF& old_geometry);
 
   QSGNode* updatePaintNode(QSGNode* old_node);
 

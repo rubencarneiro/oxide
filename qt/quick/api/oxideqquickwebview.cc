@@ -1214,7 +1214,7 @@ void OxideQQuickWebView::geometryChanged(const QRectF& newGeometry,
   Q_D(OxideQQuickWebView);
 
   QQuickItem::geometryChanged(newGeometry, oldGeometry);
-  d->contents_view_->handleGeometryChanged();
+  d->contents_view_->handleGeometryChanged(newGeometry, oldGeometry);
 }
 
 QSGNode* OxideQQuickWebView::updatePaintNode(

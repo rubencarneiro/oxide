@@ -150,6 +150,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
                                 const cc::CompositorFrameMetadata&)>& callback);
 
   void WasResized();
+  void ScreenRectsChanged();
   void VisibilityChanged();
   void FocusChanged();
   void ScreenChanged();

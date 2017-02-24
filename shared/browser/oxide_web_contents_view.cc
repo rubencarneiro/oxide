@@ -1380,11 +1380,19 @@ void WebContentsView::WasResized() {
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (rwh) {
-    content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
     rwh->WasResized();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::ScreenRectsChanged() {
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (!rwh) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
 }
 
 void WebContentsView::VisibilityChanged() {

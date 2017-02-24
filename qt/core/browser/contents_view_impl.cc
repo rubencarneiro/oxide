@@ -25,6 +25,7 @@
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QRect>
+#include <QScreen>
 #include <QTouchEvent>
 #include <QWindow>
 
@@ -279,8 +280,12 @@ void ContentsViewImpl::windowChanged() {
   window_ = client_->GetWindow();
 
   if (window_) {
-    connect(window_, SIGNAL(screenChanged(QScreen*)),
-            SLOT(OnScreenChanged()));
+    connect(window_, &QWindow::screenChanged,
+            this, &ContentsViewImpl::OnScreenChanged);
+    connect(window_, &QWindow::xChanged,
+            this, &ContentsViewImpl::OnWindowMoved);
+    connect(window_, &QWindow::yChanged,
+            this, &ContentsViewImpl::OnWindowMoved);
   }
 
   if (!view()) {
@@ -288,11 +293,16 @@ void ContentsViewImpl::windowChanged() {
   }
 
   view()->ScreenChanged();
+  view()->ScreenRectsChanged();
   view()->WasResized();
 }
 
 void ContentsViewImpl::wasResized() {
   view()->WasResized();
+}
+
+void ContentsViewImpl::screenRectsChanged() {
+  view()->ScreenRectsChanged();
 }
 
 void ContentsViewImpl::visibilityChanged() {
@@ -548,8 +558,12 @@ void ContentsViewImpl::UnhandledKeyboardEvent(
   client_->HandleUnhandledKeyboardEvent(key_event);
 }
 
-void ContentsViewImpl::OnScreenChanged() {
+void ContentsViewImpl::OnScreenChanged(QScreen* screen) {
   view()->ScreenChanged();
+}
+
+void ContentsViewImpl::OnWindowMoved(int arg) {
+  view()->ScreenRectsChanged();
 }
 
 ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,

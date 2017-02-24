@@ -81,6 +81,7 @@ class ContentsViewImpl : public QObject,
   void didCommitCompositorFrame() override;
   void windowChanged() override;
   void wasResized() override;
+  void screenRectsChanged() override;
   void visibilityChanged() override;
   void activeFocusChanged() override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
@@ -123,7 +124,8 @@ class ContentsViewImpl : public QObject,
       const content::NativeWebKeyboardEvent& event) override;
 
  private Q_SLOTS:
-  void OnScreenChanged();
+  void OnScreenChanged(QScreen* screen);
+  void OnWindowMoved(int arg);
 
  private:
   ContentsViewClient* client_;

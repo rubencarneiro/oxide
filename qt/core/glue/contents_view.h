@@ -78,6 +78,7 @@ class ContentsView {
 
   virtual void windowChanged() = 0;
   virtual void wasResized() = 0;
+  virtual void screenRectsChanged() = 0;
   virtual void visibilityChanged() = 0;
   virtual void activeFocusChanged() = 0;
 

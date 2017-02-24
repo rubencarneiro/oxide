@@ -294,7 +294,8 @@ void ContentsView::handleDropEvent(QDropEvent* event) {
   view()->handleDropEvent(event);
 }
 
-void ContentsView::handleGeometryChanged() {
+void ContentsView::handleGeometryChanged(const QRectF& new_geometry,
+                                         const QRectF& old_geometry) {
   if (!view()) {
     return;
   }
@@ -303,7 +304,10 @@ void ContentsView::handleGeometryChanged() {
     return;
   }
 
-  view()->wasResized();
+  view()->screenRectsChanged();
+  if (new_geometry.size() != old_geometry.size()) {
+    view()->wasResized();
+  }
 }
 
 QSGNode* ContentsView::updatePaintNode(QSGNode* old_node) {
