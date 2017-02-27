@@ -27,10 +27,10 @@
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/quads/render_pass.h"
+#include "cc/surfaces/local_surface_id_allocator.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_id.h"
-#include "cc/surfaces/surface_id_allocator.h"
 #include "cc/surfaces/surface_info.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
@@ -692,7 +692,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     : host_(host),
       container_(nullptr),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
-      id_allocator_(new cc::SurfaceIdAllocator()),
+      id_allocator_(new cc::LocalSurfaceIdAllocator()),
       last_output_surface_id_(0),
       ime_bridge_(this),
       is_loading_(false),
