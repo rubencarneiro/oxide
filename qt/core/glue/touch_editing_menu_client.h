@@ -15,22 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "legacy_touch_editing_controller.h"
-
-#include "base/logging.h"
-
-#include "legacy_touch_editing_client.h"
+#ifndef _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_
+#define _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_
 
 namespace oxide {
 namespace qt {
 
-void LegacyTouchEditingController::AttachToClient(
-    LegacyTouchEditingClient* client) {
-  DCHECK(!client->controller_);
-  client->controller_ = this;
-}
+enum class WebContextMenuAction : unsigned;
 
-LegacyTouchEditingController::~LegacyTouchEditingController() = default;
+class TouchEditingMenuClient {
+ public:
+  virtual ~TouchEditingMenuClient() = default;
+
+  virtual void ExecuteCommand(WebContextMenuAction action) = 0;
+
+  virtual void Close() = 0;
+
+  virtual void WasResized() = 0;
+};
 
 } // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_

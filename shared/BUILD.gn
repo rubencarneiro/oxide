@@ -246,7 +246,8 @@ component("shared") {
     "browser/browser_object_weak_ptrs.h",
     "browser/chrome_controller.cc",
     "browser/chrome_controller.h",
-    "browser/chrome_controller_client.h",
+    "browser/chrome_controller_observer.cc",
+    "browser/chrome_controller_observer.h",
     "browser/clipboard/oxide_clipboard.cc",
     "browser/clipboard/oxide_clipboard.h",
     "browser/clipboard/oxide_clipboard_dummy_impl.cc",
@@ -307,9 +308,6 @@ component("shared") {
     "browser/javascript_dialogs/javascript_dialog_factory.h",
     "browser/javascript_dialogs/javascript_dialog_host.cc",
     "browser/javascript_dialogs/javascript_dialog_host.h",
-    "browser/legacy_touch_editing_client.h",
-    "browser/legacy_touch_editing_controller.cc",
-    "browser/legacy_touch_editing_controller.h",
     "browser/media/oxide_media_capture_devices_context.cc",
     "browser/media/oxide_media_capture_devices_context.h",
     "browser/media/oxide_media_capture_devices_context_client.h",
@@ -473,8 +471,14 @@ component("shared") {
     "browser/ssl/oxide_ssl_config_service.h",
     "browser/ssl/oxide_ssl_host_state_delegate.cc",
     "browser/ssl/oxide_ssl_host_state_delegate.h",
-    "browser/touch_handle_drawable_host.cc",
-    "browser/touch_handle_drawable_host.h",
+    "browser/touch_selection/touch_editing_menu.h",
+    "browser/touch_selection/touch_editing_menu_client.h",
+    "browser/touch_selection/touch_editing_menu_controller.h",
+    "browser/touch_selection/touch_editing_menu_controller_impl.cc",
+    "browser/touch_selection/touch_editing_menu_controller_impl.h",
+    "browser/touch_selection/touch_editing_menu_controller_client.h",
+    "browser/touch_selection/touch_handle_drawable_host.cc",
+    "browser/touch_selection/touch_handle_drawable_host.h",
     "browser/web_contents_client.cc",
     "browser/web_contents_client.h",
     "browser/web_contents_data_tracker.h",
@@ -706,6 +710,7 @@ test_executable("shared_unittests") {
     ":shared_testutils",
     "//base",
     "//base/test:test_support",
+    "//cc",
     "//content/public/browser",
     "//content/public/common",
     "//content/test:test_support",
@@ -713,6 +718,10 @@ test_executable("shared_unittests") {
     "//net",
     "//testing/gmock",
     "//testing/gtest",
+    "//third_party/WebKit/public:blink",
+    "//ui/gfx",
+    "//ui/gfx/geometry",
+    "//ui/touch_selection",
     "//url"
   ]
 
@@ -726,6 +735,7 @@ test_executable("shared_unittests") {
     "browser/ssl/oxide_certificate_error_dispatcher_unittest.cc",
     "browser/ssl/oxide_security_status_unittest.cc",
     "browser/ssl/oxide_ssl_host_state_delegate_unittest.cc",
+    "browser/touch_selection/touch_editing_menu_controller_impl_unittest.cc",
     "test/run_all_unittests.cc"
   ]
 }

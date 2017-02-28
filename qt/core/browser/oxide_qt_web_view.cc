@@ -32,6 +32,7 @@
 
 #include "base/logging.h"
 #include "base/macros.h"
+#include "base/memory/ptr_util.h"
 #include "base/pickle.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/version.h"
@@ -63,14 +64,19 @@
 #include "qt/core/api/oxideqcertificateerror_p.h"
 #include "qt/core/api/oxideqwebpreferences.h"
 #include "qt/core/api/oxideqwebpreferences_p.h"
+#include "qt/core/browser/touch_selection/legacy_external_touch_editing_menu_controller_impl.h"
+#include "qt/core/browser/touch_selection/touch_editing_menu_host.h"
 #include "qt/core/glue/auxiliary_ui_factory.h"
 #include "qt/core/glue/contents_view_client.h"
+#include "qt/core/glue/edit_capability_flags.h"
 #include "qt/core/glue/javascript_dialog.h"
 #include "qt/core/glue/javascript_dialog_type.h"
 #include "qt/core/glue/macros.h"
 #include "qt/core/glue/oxide_qt_web_frame_proxy_client.h"
 #include "qt/core/glue/oxide_qt_web_view_proxy_client.h"
+#include "qt/core/glue/touch_editing_menu.h"
 #include "qt/core/glue/web_context_menu.h"
+#include "qt/core/glue/web_context_menu_params.h"
 #include "shared/browser/oxide_browser_process_main.h"
 #include "shared/browser/oxide_content_types.h"
 #include "shared/browser/oxide_fullscreen_helper.h"
@@ -370,6 +376,7 @@ WebView::WebView(WebViewProxyClient* client,
   DCHECK(handle);
 
   setHandle(handle);
+
 }
 
 void WebView::CommonInit() {
@@ -671,11 +678,64 @@ std::unique_ptr<oxide::WebContextMenu> WebView::CreateContextMenu(
     const std::vector<content::MenuItem>& items,
     oxide::WebContextMenuClient* client) {
   std::unique_ptr<WebContextMenuHost> host =
-      base::MakeUnique<WebContextMenuHost>(params, client);
+      base::MakeUnique<WebContextMenuHost>(client);
   std::unique_ptr<WebContextMenu> menu =
-      aux_ui_factory_->CreateWebContextMenu(host->GetParams(),
-                                            MenuItemBuilder::Build(items),
-                                            host.get());
+      aux_ui_factory_->CreateWebContextMenu(
+          WebContextMenuParams::From(params, contents_view_->GetScreen()),
+          MenuItemBuilder::Build(items),
+          host.get());
+  if (!menu) {
+    return nullptr;
+  }
+
+  host->Init(std::move(menu));
+
+  return std::move(host);
+}
+
+std::unique_ptr<oxide::TouchEditingMenuController>
+WebView::CreateOverrideTouchEditingMenuController(
+    oxide::TouchEditingMenuControllerClient* client) {
+  if (!client_->GetLegacyExternalTouchEditingMenuControllerDelegate()) {
+    return nullptr;
+  }
+
+  return base::MakeUnique<LegacyExternalTouchEditingMenuControllerImpl>(
+      contents_view_.get(), client,
+      client_->GetLegacyExternalTouchEditingMenuControllerDelegate());
+}
+
+std::unique_ptr<oxide::TouchEditingMenu> WebView::CreateTouchEditingMenu(
+    blink::WebContextMenuData::EditFlags edit_flags,
+    oxide::TouchEditingMenuClient* client) {
+  std::unique_ptr<TouchEditingMenuHost> host =
+      base::MakeUnique<TouchEditingMenuHost>(contents_view_.get(), client);
+
+  EditCapabilityFlags edit_caps;
+  if (edit_flags & blink::WebContextMenuData::CanUndo) {
+    edit_caps |= EDIT_CAPABILITY_UNDO;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanRedo) {
+    edit_caps |= EDIT_CAPABILITY_REDO;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanCut) {
+    edit_caps |= EDIT_CAPABILITY_CUT;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanCopy) {
+    edit_caps |= EDIT_CAPABILITY_COPY;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanPaste) {
+    edit_caps |= EDIT_CAPABILITY_PASTE;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanDelete) {
+    edit_caps |= EDIT_CAPABILITY_ERASE;
+  }
+  if (edit_flags & blink::WebContextMenuData::CanSelectAll) {
+    edit_caps |= EDIT_CAPABILITY_SELECT_ALL;
+  }
+
+  std::unique_ptr<TouchEditingMenu> menu =
+      aux_ui_factory_->CreateTouchEditingMenu(edit_caps, host.get());
   if (!menu) {
     return nullptr;
   }

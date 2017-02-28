@@ -43,8 +43,8 @@
 #include "ui/gfx/geometry/point.h"
 
 #include "qt/core/browser/input/qt_input_method_context.h"
+#include "qt/core/browser/touch_selection/touch_handle_drawable_host.h"
 #include "qt/core/glue/contents_view_client.h"
-#include "qt/core/glue/legacy_touch_editing_client.h"
 #include "qt/core/glue/touch_handle_drawable.h"
 #include "qt/core/glue/web_popup_menu.h"
 #include "shared/browser/chrome_controller.h"
@@ -52,7 +52,6 @@
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/oxide_web_contents_view.h"
 
-#include "legacy_touch_editing_client_proxy.h"
 #include "oxide_qt_dpi_utils.h"
 #include "oxide_qt_drag_utils.h"
 #include "oxide_qt_event_utils.h"
@@ -60,7 +59,6 @@
 #include "oxide_qt_skutils.h"
 #include "oxide_qt_type_conversions.h"
 #include "qt_screen.h"
-#include "touch_handle_drawable_host.h"
 #include "web_popup_menu_host.h"
 
 namespace oxide {
@@ -282,10 +280,14 @@ void ContentsViewImpl::windowChanged() {
   if (window_) {
     connect(window_.data(), &QWindow::screenChanged,
             this, &ContentsViewImpl::OnScreenChanged);
+    connect(window_.data(), &QWindow::widthChanged,
+            this, &ContentsViewImpl::OnWindowGeometryChanged);
+    connect(window_.data(), &QWindow::heightChanged,
+            this, &ContentsViewImpl::OnWindowGeometryChanged);
     connect(window_.data(), &QWindow::xChanged,
-            this, &ContentsViewImpl::OnWindowMoved);
+            this, &ContentsViewImpl::OnWindowGeometryChanged);
     connect(window_.data(), &QWindow::yChanged,
-            this, &ContentsViewImpl::OnWindowMoved);
+            this, &ContentsViewImpl::OnWindowGeometryChanged);
   }
 
   if (!view()) {
@@ -295,6 +297,7 @@ void ContentsViewImpl::windowChanged() {
   view()->ScreenChanged();
   view()->ScreenRectsChanged();
   view()->WasResized();
+  view()->TopLevelWindowBoundsChanged();
 }
 
 void ContentsViewImpl::wasResized() {
@@ -460,6 +463,15 @@ gfx::RectF ContentsViewImpl::GetBounds() const {
       GetScreen());
 }
 
+gfx::Rect ContentsViewImpl::GetTopLevelWindowBounds() const {
+  if (!window_) {
+    return gfx::Rect();
+  }
+
+  return DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_->geometry()),
+                                             GetScreen());
+}
+
 void ContentsViewImpl::SwapCompositorFrame() {
   compositor_frame_.reset();
   client_->ScheduleUpdate();
@@ -513,7 +525,7 @@ std::unique_ptr<oxide::WebPopupMenu> ContentsViewImpl::CreatePopupMenu(
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>
-ContentsViewImpl::CreateTouchHandleDrawable() const {
+ContentsViewImpl::CreateTouchHandleDrawable() {
   std::unique_ptr<TouchHandleDrawableHost> host =
       base::MakeUnique<TouchHandleDrawableHost>(this);
 
@@ -530,11 +542,6 @@ ContentsViewImpl::CreateTouchHandleDrawable() const {
 
 oxide::InputMethodContext* ContentsViewImpl::GetInputMethodContext() const {
   return input_method_context_.get();
-}
-
-oxide::LegacyTouchEditingClient*
-ContentsViewImpl::GetLegacyTouchEditingClient() const {
-  return legacy_touch_editing_client_.get();
 }
 
 void ContentsViewImpl::UnhandledKeyboardEvent(
@@ -562,8 +569,9 @@ void ContentsViewImpl::OnScreenChanged(QScreen* screen) {
   view()->ScreenChanged();
 }
 
-void ContentsViewImpl::OnWindowMoved(int arg) {
+void ContentsViewImpl::OnWindowGeometryChanged(int arg) {
   view()->ScreenRectsChanged();
+  view()->TopLevelWindowBoundsChanged();
 }
 
 ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
@@ -573,14 +581,6 @@ ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
       input_method_context_(new InputMethodContext(this)) {
   DCHECK(!client_->view_);
   client_->view_ = this;
-
-  LegacyTouchEditingClient* legacy_touch_editing_client =
-      client_->GetLegacyTouchEditingClient();
-  if (legacy_touch_editing_client) {
-    legacy_touch_editing_client_ =
-        base::MakeUnique<LegacyTouchEditingClientProxy>(
-            this, legacy_touch_editing_client);
-  }
 
   windowChanged();
 }

@@ -28,12 +28,13 @@ namespace oxide {
 namespace uitk {
 
 using qt::MenuItem;
+using qt::WebPopupMenuClient;
 
 std::unique_ptr<qt::WebPopupMenu> ContentsView::CreateWebPopupMenu(
-    const std::vector<qt::MenuItem>& items,
+    const std::vector<MenuItem>& items,
     bool allow_multiple_selection,
     const QRect& bounds,
-    qt::WebPopupMenuClient* client) {
+    WebPopupMenuClient* client) {
   if (allow_multiple_selection) {
     qCritical() <<
         "uitk::ContentsView: Failed to create popup menu - menus that allow "

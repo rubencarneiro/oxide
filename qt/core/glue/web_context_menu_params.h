@@ -26,6 +26,14 @@
 #include "qt/core/api/oxideqglobal.h"
 #include "qt/core/glue/edit_capability_flags.h"
 
+QT_BEGIN_NAMESPACE
+class QScreen;
+QT_END_NAMESPACE
+
+namespace content {
+struct ContextMenuParams;
+}
+
 namespace oxide {
 namespace qt {
 
@@ -55,6 +63,14 @@ enum MediaStatusFlag {
 Q_DECLARE_FLAGS(MediaStatusFlags, MediaStatusFlag);
 
 struct OXIDE_QTCORE_EXPORT WebContextMenuParams {
+  enum class SourceType {
+    Mouse,
+    Keyboard,
+    Touch,
+    LongPress,
+    LongTap
+  };
+
   QUrl page_url;
   QUrl frame_url;
 
@@ -75,6 +91,13 @@ struct OXIDE_QTCORE_EXPORT WebContextMenuParams {
   QString selection_text;
   bool is_editable = false;
   EditCapabilityFlags edit_flags;
+
+  SourceType source_type;
+
+#if defined(OXIDE_QTCORE_IMPLEMENTATION)
+  static WebContextMenuParams From(const content::ContextMenuParams& params,
+                                   QScreen* screen);
+#endif
 };
 
 } // namespace qt

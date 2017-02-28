@@ -15,26 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "legacy_touch_editing_controller.h"
+#include "legacy_external_touch_editing_menu_controller.h"
 
 #include "base/logging.h"
 
-#include "legacy_touch_editing_client.h"
+#include "legacy_external_touch_editing_menu_controller_delegate.h"
 
 namespace oxide {
+namespace qt {
 
-void LegacyTouchEditingController::AttachToClient(
-    LegacyTouchEditingClient* client) {
-  DCHECK(!client->controller_);
-  client->controller_ = this;
+LegacyExternalTouchEditingMenuController
+    ::LegacyExternalTouchEditingMenuController(
+        LegacyExternalTouchEditingMenuControllerDelegate* delegate)
+        : delegate_(delegate) {
+  DCHECK(!delegate_->controller_);
+  delegate_->controller_ = this;
 }
 
-void LegacyTouchEditingController::DetachFromClient(
-    LegacyTouchEditingClient* client) {
-  DCHECK_EQ(client->controller_, this);
-  client->controller_ = nullptr;
+void LegacyExternalTouchEditingMenuController::ClearDelegate() {
+  DCHECK(delegate_);
+  DCHECK_EQ(delegate_->controller_, this);
+  delegate_->controller_ = nullptr;
+  delegate_ = nullptr;
 }
 
-LegacyTouchEditingController::~LegacyTouchEditingController() = default;
+LegacyExternalTouchEditingMenuController
+    ::~LegacyExternalTouchEditingMenuController() {
+  if (delegate_) {
+    ClearDelegate();
+  }
+}
 
+} // namespace qt
 } // namespace oxide

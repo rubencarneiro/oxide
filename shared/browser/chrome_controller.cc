@@ -33,7 +33,7 @@
 #include "shared/browser/ssl/oxide_security_types.h"
 #include "shared/common/oxide_messages.h"
 
-#include "chrome_controller_client.h"
+#include "chrome_controller_observer.h"
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view.h"
@@ -44,7 +44,6 @@ DEFINE_WEB_CONTENTS_DATA_TRACKER_KEY(ChromeController);
 
 ChromeController::ChromeController(content::WebContents* contents)
     : content::WebContentsObserver(contents),
-      client_(nullptr),
       top_controls_height_(0),
       constraints_(blink::WebBrowserControlsBoth),
       animation_enabled_(true) {
@@ -62,6 +61,14 @@ ChromeController::ChromeController(content::WebContents* contents)
                      base::Unretained(this)));
 
   InitializeForHost(contents->GetMainFrame(), true);
+}
+
+void ChromeController::AddObserver(ChromeControllerObserver* observer) {
+  observers_.AddObserver(observer);
+}
+
+void ChromeController::RemoveObserver(ChromeControllerObserver* observer) {
+  observers_.RemoveObserver(observer);
 }
 
 void ChromeController::InitializeForHost(
@@ -277,7 +284,11 @@ ChromeController* ChromeController::FromWebContents(
   return WebContentsDataTracker<ChromeController>::FromWebContents(contents);
 }
 
-ChromeController::~ChromeController() = default;
+ChromeController::~ChromeController() {
+  for (auto& observer : observers_) {
+    observer.controller_ = nullptr;
+  }
+}
 
 void ChromeController::SetTopControlsHeight(float height) {
   if (height == top_controls_height_) {
@@ -348,11 +359,9 @@ void ChromeController::FrameMetadataUpdated(
       RendererIsUnresponsive() || !metadata ?
           FallbackMetadata() : metadata->Clone();
 
-  if (!client_) {
-    return;
+  for (auto& observer : observers_) {
+    observer.ContentOrTopControlsOffsetChanged();
   }
-
-  client_->ChromePositionUpdated();
 }
 
 } // namespace oxide

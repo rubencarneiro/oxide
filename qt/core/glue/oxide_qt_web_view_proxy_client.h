@@ -48,6 +48,7 @@ namespace qt {
 
 class FilePickerProxy;
 class FilePickerProxyClient;
+class LegacyExternalTouchEditingMenuControllerDelegate;
 class WebFrameProxy;
 
 enum FrameMetadataChangeFlags {
@@ -61,6 +62,11 @@ enum FrameMetadataChangeFlags {
 class WebViewProxyClient {
  public:
   virtual ~WebViewProxyClient() {}
+
+  virtual LegacyExternalTouchEditingMenuControllerDelegate*
+  GetLegacyExternalTouchEditingMenuControllerDelegate() const {
+    return nullptr;
+  }
 
   // XXX: Move to AuxiliaryUIFactory
   virtual FilePickerProxy* CreateFilePicker(FilePickerProxyClient* client) = 0;

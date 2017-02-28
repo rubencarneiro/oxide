@@ -92,7 +92,6 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickTouchSelectionController
   Q_REVISION(1) void contextMenuIntercepted();
 
  private:
-  friend class oxide::qquick::LegacyContentsView;
   Q_DECL_HIDDEN OxideQQuickTouchSelectionController();
 
   QScopedPointer<OxideQQuickTouchSelectionControllerPrivate> d_ptr;

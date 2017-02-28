@@ -15,29 +15,44 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "screen_observer.h"
+#include "chrome_controller_observer.h"
 
-#include "oxide_browser_platform_integration.h"
-#include "screen.h"
+#include "chrome_controller.h"
 
 namespace oxide {
 
-void ScreenObserver::OnScreenDestruction() {
-  screen_ = nullptr;
-}
+ChromeControllerObserver::ChromeControllerObserver() = default;
 
-ScreenObserver::ScreenObserver()
-    : screen_(Screen::GetInstance()) {
-  if (screen_) {
-    // Can be null in unit tests
-    screen_->AddObserver(this);
+ChromeControllerObserver::ChromeControllerObserver(
+    ChromeController* controller)
+    : controller_(controller) {
+  if (controller) {
+    controller->AddObserver(this);
   }
 }
 
-ScreenObserver::~ScreenObserver() {
-  if (screen_) {
-    screen_->RemoveObserver(this);
+void ChromeControllerObserver::Observe(ChromeController* controller) {
+  if (controller == controller_) {
+    return;
+  }
+
+  if (controller_) {
+    controller_->RemoveObserver(this);
+  }
+
+  controller_ = controller;
+
+  if (controller_) {
+    controller_->AddObserver(this);
   }
 }
+
+ChromeControllerObserver::~ChromeControllerObserver() {
+  if (controller_) {
+    controller_->RemoveObserver(this);
+  }
+}
+
+void ChromeControllerObserver::ContentOrTopControlsOffsetChanged() {}
 
 } // namespace oxide

@@ -34,7 +34,6 @@
 #include "content/browser/renderer_host/render_widget_host_view_base.h" // nogncheck
 #include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/common/cursors/webcursor.h" // nogncheck
-#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/gfx/geometry/size.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
@@ -76,8 +75,6 @@ class RenderWidgetHostView
   ~RenderWidgetHostView();
 
   void SetContainer(RenderWidgetHostViewContainer* container);
-
-  blink::WebContextMenuData::EditFlags GetEditFlags();
 
   const cc::CompositorFrameMetadata& last_drawn_frame_metadata() const {
     return last_drawn_frame_metadata_;
@@ -219,7 +216,6 @@ class RenderWidgetHostView
   void DetachLayer();
 
   void HandleGestureForTouchSelection(const blink::WebGestureEvent& event) const;
-  void NotifyTouchSelectionChanged();
 
   content::RenderWidgetHostImpl* host_;
 

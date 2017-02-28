@@ -15,18 +15,39 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_CLIENT_H_
-#define _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_CLIENT_H_
+#ifndef _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_OBSERVER_H_
+#define _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_OBSERVER_H_
+
+#include "base/macros.h"
+
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
-class ChromeControllerClient {
- public:
-  virtual ~ChromeControllerClient() {}
+class ChromeController;
 
-  virtual void ChromePositionUpdated() = 0;
+class OXIDE_SHARED_EXPORT ChromeControllerObserver {
+ public:
+  virtual ~ChromeControllerObserver();
+
+  virtual void ContentOrTopControlsOffsetChanged();
+
+ protected:
+  ChromeControllerObserver();
+  ChromeControllerObserver(ChromeController* controller);
+
+  void Observe(ChromeController* controller);
+
+  ChromeController* controller() const { return controller_; }
+
+ private:
+  friend class ChromeController;
+
+  ChromeController* controller_ = nullptr;
+
+  DISALLOW_COPY_AND_ASSIGN(ChromeControllerObserver);
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_CLIENT_H_
+#endif // _OXIDE_SHARED_BROWSER_CHROME_CONTROLLER_OBSERVER_H_

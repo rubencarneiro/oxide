@@ -59,7 +59,7 @@ class OXIDE_SHARED_EXPORT WebContentsHelper
   static bool IsContextInUse(BrowserContext* context);
 
   WebContentsClient* client() const { return client_; }
-  void set_client(WebContentsClient* client) { client_ = client; }
+  void SetClient(WebContentsClient* client);
 
   content::WebContents* GetWebContents() const;
   BrowserContext* GetBrowserContext() const;

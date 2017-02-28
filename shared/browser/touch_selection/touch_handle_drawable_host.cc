@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015-2016 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,16 +17,17 @@
 
 #include "touch_handle_drawable_host.h"
 
-#include "ui/touch_selection/touch_handle_orientation.h"
+#include "ui/gfx/geometry/point_f.h"
+#include "ui/gfx/geometry/vector2d_f.h"
 
-#include "qt/core/glue/touch_handle_drawable.h"
-
-#include "contents_view_impl.h"
-#include "oxide_qt_dpi_utils.h"
-#include "oxide_qt_type_conversions.h"
+#include "shared/browser/chrome_controller.h"
 
 namespace oxide {
-namespace qt {
+
+void TouchHandleDrawableHost::UpdatePosition() {
+  gfx::Vector2dF offset(0, controller()->GetTopContentOffset());
+  drawable_->SetOrigin(origin_ + offset);
+}
 
 void TouchHandleDrawableHost::SetEnabled(bool enabled) {
   drawable_->SetEnabled(enabled);
@@ -36,14 +37,12 @@ void TouchHandleDrawableHost::SetOrientation(
     ui::TouchHandleOrientation orientation,
     bool mirror_vertical,
     bool mirror_horizontal) {
-  drawable_->SetOrientation(
-      static_cast<qt::TouchHandleDrawable::Orientation>(orientation),
-      mirror_vertical, mirror_horizontal);
+  drawable_->SetOrientation(orientation, mirror_vertical, mirror_horizontal);
 }
 
 void TouchHandleDrawableHost::SetOrigin(const gfx::PointF& origin) {
-  drawable_->SetOrigin(
-      ToQt(DpiUtils::ConvertChromiumPixelsToQt(origin, view_->GetScreen())));
+  origin_ = origin;
+  UpdatePosition();
 }
 
 void TouchHandleDrawableHost::SetAlpha(float alpha) {
@@ -51,23 +50,27 @@ void TouchHandleDrawableHost::SetAlpha(float alpha) {
 }
 
 gfx::RectF TouchHandleDrawableHost::GetVisibleBounds() const {
-  return DpiUtils::ConvertQtPixelsToChromium(
-      ToChromium(drawable_->GetVisibleBounds()), view_->GetScreen());
+  gfx::Vector2dF offset(0, controller()->GetTopContentOffset());
+  return drawable_->GetVisibleBounds() - offset;
 }
 
 float TouchHandleDrawableHost::GetDrawableHorizontalPaddingRatio() const {
   return drawable_->GetDrawableHorizontalPaddingRatio();
 }
 
-TouchHandleDrawableHost::TouchHandleDrawableHost(const ContentsViewImpl* view)
-    : view_(view) {}
+void TouchHandleDrawableHost::ContentOrTopControlsOffsetChanged() {
+  UpdatePosition();
+}
+
+TouchHandleDrawableHost::TouchHandleDrawableHost(
+    ChromeController* chrome_controller)
+    : ChromeControllerObserver(chrome_controller) {}
 
 TouchHandleDrawableHost::~TouchHandleDrawableHost() = default;
 
 void TouchHandleDrawableHost::Init(
-    std::unique_ptr<qt::TouchHandleDrawable> drawable) {
+    std::unique_ptr<ui::TouchHandleDrawable> drawable) {
   drawable_ = std::move(drawable);
 }
 
-} // namespace qt
 } // namespace oxide

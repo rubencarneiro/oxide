@@ -24,6 +24,7 @@
 
 #include "base/strings/string16.h"
 #include "content/public/common/menu_item.h"
+#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/base/window_open_disposition.h"
 
 #include "shared/browser/web_contents_unique_ptr.h"
@@ -33,6 +34,7 @@ class GURL;
 
 namespace content {
 struct ContextMenuParams;
+class WebContents;
 }
 
 namespace gfx {
@@ -42,12 +44,18 @@ class Rect;
 namespace oxide {
 
 class ResourceDispatcherHostLoginDelegate;
+class TouchEditingMenu;
+class TouchEditingMenuClient;
+class TouchEditingMenuController;
+class TouchEditingMenuControllerClient;
 class WebContextMenu;
 class WebContextMenuClient;
 
 class OXIDE_SHARED_EXPORT WebContentsClient {
  public:
   virtual ~WebContentsClient();
+
+  static WebContentsClient* FromWebContents(content::WebContents* contents);
 
   virtual bool ShouldHandleNavigation(const GURL& url,
                                       bool user_gesture);
@@ -77,6 +85,16 @@ class OXIDE_SHARED_EXPORT WebContentsClient {
       const content::ContextMenuParams& params,
       const std::vector<content::MenuItem>& items,
       WebContextMenuClient* client);
+
+  // This exists purely to support the legacy OxideQQuickTouchSelectionController
+  // API. Don't add new implementations of it
+  virtual std::unique_ptr<TouchEditingMenuController>
+  CreateOverrideTouchEditingMenuController(
+      TouchEditingMenuControllerClient* client);
+
+  virtual std::unique_ptr<TouchEditingMenu> CreateTouchEditingMenu(
+      blink::WebContextMenuData::EditFlags edit_flags,
+      TouchEditingMenuClient* client);
 };
 
 } // namespace oxide

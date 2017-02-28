@@ -18,10 +18,24 @@
 #include "web_contents_client.h"
 
 #include "shared/browser/context_menu/web_context_menu.h"
+#include "shared/browser/touch_selection/touch_editing_menu.h"
+#include "shared/browser/touch_selection/touch_editing_menu_controller.h"
+
+#include "web_contents_helper.h"
 
 namespace oxide {
 
 WebContentsClient::~WebContentsClient() = default;
+
+// static
+WebContentsClient* WebContentsClient::FromWebContents(
+    content::WebContents* contents) {
+  WebContentsHelper* helper = WebContentsHelper::FromWebContents(contents);
+  if (!helper) {
+    return nullptr;
+  }
+  return helper->client();
+}
 
 bool WebContentsClient::ShouldHandleNavigation(const GURL& url,
                                                bool user_gesture) {
@@ -61,6 +75,18 @@ std::unique_ptr<WebContextMenu> WebContentsClient::CreateContextMenu(
     const content::ContextMenuParams& params,
     const std::vector<content::MenuItem>& items,
     WebContextMenuClient* client) {
+  return nullptr;
+}
+
+std::unique_ptr<TouchEditingMenuController>
+WebContentsClient::CreateOverrideTouchEditingMenuController(
+    TouchEditingMenuControllerClient* client) {
+  return nullptr;
+}
+
+std::unique_ptr<TouchEditingMenu> WebContentsClient::CreateTouchEditingMenu(
+      blink::WebContextMenuData::EditFlags edit_flags,
+      TouchEditingMenuClient* client) {
   return nullptr;
 }
 

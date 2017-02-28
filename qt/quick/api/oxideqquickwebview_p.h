@@ -38,6 +38,7 @@ class OxideQWebPreferences;
 class OxideQQuickLocationBarController;
 class OxideQQuickNavigationHistory;
 class OxideQQuickScriptMessageHandler;
+class OxideQQuickTouchSelectionController;
 class OxideQQuickWebContextPrivate;
 class OxideQQuickWebView;
 
@@ -78,6 +79,8 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
 
  private:
   // oxide::qt::WebViewProxyClient implementation
+  oxide::qt::LegacyExternalTouchEditingMenuControllerDelegate*
+  GetLegacyExternalTouchEditingMenuControllerDelegate() const override;
   oxide::qt::FilePickerProxy* CreateFilePicker(
       oxide::qt::FilePickerProxyClient* client) override;
   void WebProcessStatusChanged() override;
@@ -155,6 +158,9 @@ class OXIDE_QTQUICK_EXPORT OxideQQuickWebViewPrivate
   std::unique_ptr<OxideQQuickNavigationHistory> navigation_history_;
   QScopedPointer<OxideQSecurityStatus> security_status_;
   QScopedPointer<OxideQFindController> find_controller_;
+
+  std::unique_ptr<OxideQQuickTouchSelectionController>
+      touch_selection_controller_;
 
   QQmlComponent* file_picker_;
 

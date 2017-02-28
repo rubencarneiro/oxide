@@ -189,7 +189,7 @@ void WebView::CommonInit(WebContentsUniquePtr contents,
                      base::Unretained(this)));
 
   DCHECK(GetWebContentsHelper());
-  GetWebContentsHelper()->set_client(contents_client);
+  GetWebContentsHelper()->SetClient(contents_client);
 }
 
 RenderWidgetHostView* WebView::GetRenderWidgetHostView() const {
@@ -289,11 +289,8 @@ void WebView::OnSwapCompositorFrame(
 
 void WebView::EditingCapabilitiesChanged() {
   blink::WebContextMenuData::EditFlags flags =
-      blink::WebContextMenuData::CanDoNone;
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    flags = rwhv->GetEditFlags();
-  }
+      WebContentsView::FromWebContents(web_contents_.get())
+          ->GetEditingCapabilities();
 
   if (flags != edit_flags_) {
     edit_flags_ = flags;
@@ -889,7 +886,7 @@ WebView::~WebView() {
   view->SetClient(nullptr);
   view->set_editing_capabilities_changed_callback(base::Closure());
 
-  GetWebContentsHelper()->set_client(nullptr);
+  GetWebContentsHelper()->SetClient(nullptr);
 
   // Stop WebContents from calling back in to us
   content::WebContentsObserver::Observe(nullptr);

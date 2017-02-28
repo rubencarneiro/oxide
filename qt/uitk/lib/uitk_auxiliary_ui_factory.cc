@@ -37,6 +37,7 @@
 
 #include "uitk_before_unload_dialog.h"
 #include "uitk_javascript_dialog.h"
+#include "uitk_touch_editing_menu.h"
 #include "uitk_web_context_menu.h"
 
 static void InitResources() {
@@ -46,9 +47,11 @@ static void InitResources() {
 namespace oxide {
 namespace uitk {
 
+using qt::EditCapabilityFlags;
 using qt::GetScreenFormFactor;
 using qt::MenuItem;
 using qt::ScreenFormFactor;
+using qt::TouchEditingMenuClient;
 using qt::WebContextMenuAction;
 using qt::WebContextMenuClient;
 using qt::WebContextMenuParams;
@@ -225,6 +228,13 @@ std::unique_ptr<qt::WebContextMenu> AuxiliaryUIFactory::CreateWebContextMenu(
   return WebContextMenu::Create(engine, item_, params, std::move(menu),
                                 stock_actions, client,
                                 IsItemOnMobileScreen(item_));
+}
+
+std::unique_ptr<qt::TouchEditingMenu>
+AuxiliaryUIFactory::CreateTouchEditingMenu(
+    EditCapabilityFlags edit_flags,
+    TouchEditingMenuClient* client) {
+  return TouchEditingMenu::Create(item_, edit_flags, client);
 }
 
 std::unique_ptr<qt::JavaScriptDialog>

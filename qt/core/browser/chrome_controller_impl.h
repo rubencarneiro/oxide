@@ -25,7 +25,7 @@
 #include "base/macros.h"
 
 #include "qt/core/glue/chrome_controller.h"
-#include "shared/browser/chrome_controller_client.h"
+#include "shared/browser/chrome_controller_observer.h"
 #include "shared/browser/screen_observer.h"
 
 QT_BEGIN_NAMESPACE
@@ -33,15 +33,12 @@ class QObject;
 QT_END_NAMESPACE
 
 namespace oxide {
-
-class ChromeController;
-
 namespace qt {
 
 class ChromeControllerClient;
 class ContentsViewImpl;
 
-class ChromeControllerImpl : public oxide::ChromeControllerClient,
+class ChromeControllerImpl : public oxide::ChromeControllerObserver,
                              public ChromeController,
                              public oxide::ScreenObserver {
  public:
@@ -50,8 +47,8 @@ class ChromeControllerImpl : public oxide::ChromeControllerClient,
   ~ChromeControllerImpl() override;
 
  private:
-  // oxide::ChromeControllerClient implementation
-  void ChromePositionUpdated() override;
+  // oxide::ChromeControllerObserver implementation
+  void ContentOrTopControlsOffsetChanged() override;
 
   // ChromeController implementation
   void init(WebContentsID web_contents_id) override;
@@ -70,8 +67,6 @@ class ChromeControllerImpl : public oxide::ChromeControllerClient,
   void OnDisplayPropertiesChanged(const display::Display& display) override;
 
   qt::ChromeControllerClient* client_;
-
-  oxide::ChromeController* controller_;
 
   ContentsViewImpl* contents_view_;
 

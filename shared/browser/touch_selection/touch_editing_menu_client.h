@@ -15,24 +15,24 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_SHARED_BROWSER_LEGACY_TOUCH_EDITING_CONTROLLER_H_
-#define _OXIDE_SHARED_BROWSER_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#ifndef _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CLIENT_H_
+#define _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CLIENT_H_
 
 namespace oxide {
 
-class LegacyTouchEditingClient;
+enum class WebContextMenuAction : unsigned;
 
-class LegacyTouchEditingController {
+class TouchEditingMenuClient {
  public:
-  virtual ~LegacyTouchEditingController();
+  virtual ~TouchEditingMenuClient() = default;
 
-  virtual void HideAndDisallowShowingAutomatically() = 0;
+  virtual void ExecuteCommand(WebContextMenuAction action) = 0;
 
- protected:
-  void AttachToClient(LegacyTouchEditingClient* client);
-  void DetachFromClient(LegacyTouchEditingClient* client);
+  virtual void Close() = 0;
+
+  virtual void WasResized() = 0;
 };
 
 } // namespace oxide
 
-#endif // _OXIDE_SHARED_BROWSER_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#endif // _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CLIENT_H_

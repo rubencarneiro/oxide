@@ -15,29 +15,37 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "screen_observer.h"
+#ifndef _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CONTROLLER_H_
+#define _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CONTROLLER_H_
 
-#include "oxide_browser_platform_integration.h"
-#include "screen.h"
+#include "ui/touch_selection/selection_event_type.h"
+
+namespace content {
+class ContextMenuParams;
+}
+
+namespace gfx {
+class Rect;
+class RectF;
+}
 
 namespace oxide {
 
-void ScreenObserver::OnScreenDestruction() {
-  screen_ = nullptr;
-}
+class TouchEditingMenuController {
+ public:
+  virtual ~TouchEditingMenuController() = default;
 
-ScreenObserver::ScreenObserver()
-    : screen_(Screen::GetInstance()) {
-  if (screen_) {
-    // Can be null in unit tests
-    screen_->AddObserver(this);
-  }
-}
+  virtual void OnSelectionEvent(ui::SelectionEventType event) = 0;
 
-ScreenObserver::~ScreenObserver() {
-  if (screen_) {
-    screen_->RemoveObserver(this);
-  }
-}
+  virtual bool HandleContextMenu(const content::ContextMenuParams& params) = 0;
+
+  virtual void TouchSelectionControllerSwapped() = 0;
+
+  virtual void SetViewportBounds(const gfx::RectF& bounds) = 0;
+
+  virtual void SetTopLevelWindowBounds(const gfx::Rect& bounds) = 0;
+};
 
 } // namespace oxide
+
+#endif // _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_CONTROLLER_H_

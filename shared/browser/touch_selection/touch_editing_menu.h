@@ -15,27 +15,35 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
-#define _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#ifndef _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_H_
+#define _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_H_
+
+#include "ui/gfx/geometry/size.h"
+
+namespace gfx {
+class PointF;
+}
 
 namespace oxide {
-namespace qt {
 
-class LegacyTouchEditingClient;
-
-class LegacyTouchEditingController {
+// An interface that should be implemented by the platform's touch editing
+// menu implementation
+class TouchEditingMenu {
  public:
-  virtual ~LegacyTouchEditingController();
+  virtual ~TouchEditingMenu() = default;
 
-  virtual void HideAndDisallowShowingAutomatically() = 0;
+  virtual void Show() = 0;
 
- protected:
-#if defined(OXIDE_QTCORE_IMPLEMENTATION)
-  void AttachToClient(LegacyTouchEditingClient* client);
-#endif
+  virtual void Hide() = 0;
+
+  virtual gfx::Size GetSizeIncludingMargin() const = 0;
+
+  // Set the origin of the menu in view coordinates. The origin can be outside
+  // of the view, as TouchEditingMenuControllerImpl assumes it can position the
+  // menu anywhere inside the window
+  virtual void SetOrigin(const gfx::PointF& origin) = 0;
 };
 
-} // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#endif // _OXIDE_SHARED_BROWSER_TOUCH_EDITING_MENU_H_

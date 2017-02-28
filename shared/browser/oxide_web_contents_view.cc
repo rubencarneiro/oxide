@@ -49,24 +49,26 @@
 #include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
+#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/context_menu/web_context_menu_host.h"
 #include "shared/browser/input/input_method_context.h"
+#include "shared/browser/touch_selection/touch_editing_menu_controller_impl.h"
+#include "shared/browser/touch_selection/touch_handle_drawable_host.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
 
 #include "chrome_controller.h"
-#include "legacy_touch_editing_client.h"
 #include "oxide_browser_platform_integration.h"
 #include "oxide_drag_source.h"
 #include "oxide_fullscreen_helper.h"
 #include "oxide_render_widget_host_view.h"
 #include "oxide_web_contents_view_client.h"
 #include "screen.h"
-#include "touch_handle_drawable_host.h"
+#include "web_contents_client.h"
 #include "web_popup_menu_host.h"
 
 namespace oxide {
@@ -111,8 +113,7 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       root_layer_(cc::SolidColorLayer::Create()),
       current_drag_allowed_ops_(blink::WebDragOperationNone),
       current_drag_op_(blink::WebDragOperationNone),
-      chrome_controller_(ChromeController::CreateForWebContents(web_contents)),
-      legacy_touch_editing_client_(nullptr) {
+      chrome_controller_(ChromeController::CreateForWebContents(web_contents)) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
 
@@ -189,6 +190,31 @@ void WebContentsView::MaybeScrollFocusedEditableNodeIntoView() {
       ->ScrollFocusedEditableNodeIntoRect(GetBounds());
 }
 
+bool WebContentsView::IsVisible() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->IsVisible();
+}
+
+bool WebContentsView::HasFocus() const {
+  if (!client_) {
+    return false;
+  }
+
+  return client_->HasFocus();
+}
+
+gfx::Size WebContentsView::GetSize() const {
+  return GetBounds().size();
+}
+
+gfx::Size WebContentsView::GetSizeInPixels() const {
+  return gfx::ToRoundedSize(
+      gfx::ScaleSize(GetBoundsF().size(), GetDisplay().device_scale_factor()));
+}
+
 gfx::RectF WebContentsView::GetBoundsF() const {
   if (!client_) {
     return gfx::RectF();
@@ -199,6 +225,14 @@ gfx::RectF WebContentsView::GetBoundsF() const {
   }
 
   return client_->GetBounds();
+}
+
+gfx::Rect WebContentsView::GetTopLevelWindowBounds() const {
+  if (!client_) {
+    return gfx::Rect();
+  }
+
+  return client_->GetTopLevelWindowBounds();
 }
 
 bool WebContentsView::ViewSizeShouldBeScreenSize() const {
@@ -261,37 +295,8 @@ void WebContentsView::DidHidePopupMenu() {
                                                   active_popup_menu_.release());
 }
 
-void WebContentsView::HideTouchSelectionController() {
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
-}
-
 void WebContentsView::CursorChangedInternal(RenderWidgetHostView* view) {
   client_->UpdateCursor(view ? view->current_cursor() : content::WebCursor());
-}
-
-void WebContentsView::TouchEditingStatusChangedInternal(
-    RenderWidgetHostView* view) {
-  ui::TouchSelectionController* controller =
-      view ? view->selection_controller() : nullptr;
-  ui::TouchSelectionController::ActiveStatus status =
-      controller ? controller->active_status()
-                 : ui::TouchSelectionController::INACTIVE;
-
-  gfx::RectF bounds;
-  if (controller) {
-    bounds = controller->GetRectBetweenBounds();
-  }
-  bounds.Offset(0, chrome_controller_->GetTopContentOffset());
-
-  if (legacy_touch_editing_client_) {
-    legacy_touch_editing_client_->StatusChanged(
-        status, bounds,
-        view ? view->selection_handle_drag_in_progress() : false);
-  }
 }
 
 void WebContentsView::TextInputStateChangedInternal(
@@ -347,7 +352,10 @@ void WebContentsView::SyncClientWithNewView(RenderWidgetHostView* view) {
   }
 
   CursorChangedInternal(view);
-  TouchEditingStatusChangedInternal(view);
+
+  if (touch_editing_menu_controller_) {
+    touch_editing_menu_controller_->TouchSelectionControllerSwapped();
+  }
 
   content::TextInputManager* text_input_manager =
       view ? view->GetTextInputManager() : nullptr;
@@ -367,6 +375,15 @@ void WebContentsView::SyncClientWithNewView(RenderWidgetHostView* view) {
       view ? text_input_manager->GetTextSelection(focused_view) : nullptr;
   TextSelectionChangedInternal(
       selection ? *selection : content::TextInputManager::TextSelection());
+}
+
+const content::TextInputState* WebContentsView::GetTextInputState() const {
+  RenderWidgetHostView* view = GetRenderWidgetHostView();
+  if (!view) {
+    return nullptr;
+  }
+
+  return view->GetTextInputManager()->GetTextInputState();
 }
 
 const content::TextInputManager::TextSelection*
@@ -472,18 +489,14 @@ void WebContentsView::SetOverscrollControllerEnabled(bool enabled) {}
 void WebContentsView::ShowContextMenu(
     content::RenderFrameHost* render_frame_host,
     const content::ContextMenuParams& params) {
-  if ((params.source_type == ui::MENU_SOURCE_LONG_PRESS) &&
-      params.is_editable &&
-      params.selection_text.empty()) {
-    if (legacy_touch_editing_client_) {
-      legacy_touch_editing_client_->ContextMenuIntercepted();
-    }
+  if (touch_editing_menu_controller_ &&
+      touch_editing_menu_controller_->HandleContextMenu(params)) {
     return;
   }
 
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->selection_controller()->HideAndDisallowShowingAutomatically();
+  ui::TouchSelectionController* tsc = GetTouchSelectionController();
+  if (tsc) {
+    tsc->HideAndDisallowShowingAutomatically();
   }
 
   active_context_menu_ =
@@ -522,7 +535,11 @@ void WebContentsView::StartDragging(
   }
   drag_source_rwh_ = source_rwh;
 
-  HideTouchSelectionController();
+  ui::TouchSelectionController* selection_controller =
+      GetTouchSelectionController();
+  if (selection_controller) {
+    selection_controller->HideAndDisallowShowingAutomatically();
+  }
 
   // As our implementation of gfx::Screen::GetDisplayNearestWindow always
   // returns an invalid display, the passed in image isn't quite correct.
@@ -754,7 +771,6 @@ void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
   chrome_controller_->FrameMetadataUpdated(
       rwhv ? base::make_optional(metadata.Clone()) : base::nullopt);
   if (last_top_content_offset != chrome_controller_->GetTopContentOffset()) {
-    TouchEditingStatusChangedInternal(rwhv);
     if (rwhv && last_focused_widget_for_text_selection_ && client_) {
       content::TextInputManager* text_input_manager =
           rwhv->GetTextInputManager();
@@ -899,14 +915,6 @@ bool WebContentsView::GetSelectedText(base::string16* text) const {
   return true;
 }
 
-void WebContentsView::HideAndDisallowShowingAutomatically() {
-  ui::TouchSelectionController* selection_controller =
-      GetTouchSelectionController();
-  if (selection_controller) {
-    selection_controller->HideAndDisallowShowingAutomatically();
-  }
-}
-
 void WebContentsView::AttachLayer(scoped_refptr<cc::Layer> layer) {
   DCHECK(layer.get());
   root_layer_->InsertChild(layer, 0);
@@ -958,7 +966,7 @@ WebContentsView::CreateTouchHandleDrawable() {
   }
 
   std::unique_ptr<TouchHandleDrawableHost> host =
-      base::MakeUnique<TouchHandleDrawableHost>(this);
+      base::MakeUnique<TouchHandleDrawableHost>(chrome_controller_.get());
 
   std::unique_ptr<ui::TouchHandleDrawable> drawable =
       client_->CreateTouchHandleDrawable();
@@ -971,7 +979,8 @@ WebContentsView::CreateTouchHandleDrawable() {
   return std::move(host);
 }
 
-void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view) {
+void WebContentsView::OnTouchSelectionEvent(RenderWidgetHostView* view,
+                                            ui::SelectionEventType event) {
   if (!client_) {
     return;
   }
@@ -980,21 +989,11 @@ void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view) {
     return;
   }
 
-  TouchEditingStatusChangedInternal(view);
-}
-
-void WebContentsView::TouchInsertionHandleTapped(RenderWidgetHostView* view) {
-  if (!client_) {
+  if (!touch_editing_menu_controller_) {
     return;
   }
 
-  if (view != GetRenderWidgetHostView()) {
-    return;
-  }
-
-  if (legacy_touch_editing_client_) {
-    legacy_touch_editing_client_->InsertionHandleTapped();
-  }
+  touch_editing_menu_controller_->OnSelectionEvent(event);
 }
 
 void WebContentsView::TextInputStateChanged(
@@ -1085,6 +1084,10 @@ void WebContentsView::OnDisplayPropertiesChanged(
   ScreenChanged();
 }
 
+ChromeController* WebContentsView::GetChromeController() const {
+  return chrome_controller_.get();
+}
+
 WebContentsView::~WebContentsView() {
   if (client_) {
     DCHECK_EQ(client_->view_, this);
@@ -1126,11 +1129,6 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 
   InputMethodContextClient::DetachFromContext();
 
-  if (legacy_touch_editing_client_) {
-    LegacyTouchEditingController::DetachFromClient(legacy_touch_editing_client_);
-    legacy_touch_editing_client_ = nullptr;
-  }
-
   client_ = client;
 
   if (client_) {
@@ -1138,12 +1136,6 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
     client_->view_ = this;
 
     InputMethodContextClient::AttachToContext(client_->GetInputMethodContext());
-
-    legacy_touch_editing_client_ = client_->GetLegacyTouchEditingClient();
-  }
-
-  if (legacy_touch_editing_client_) {
-    LegacyTouchEditingController::AttachToClient(legacy_touch_editing_client_);
   }
 
   // Update view from client
@@ -1151,34 +1143,45 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
   VisibilityChanged();
   FocusChanged();
   ScreenChanged();
+  TopLevelWindowBoundsChanged();
 
   // Update client from view
   SyncClientWithNewView();
 }
 
-bool WebContentsView::IsVisible() const {
-  if (!client_) {
-    return false;
+blink::WebContextMenuData::EditFlags
+WebContentsView::GetEditingCapabilities() const {
+  blink::WebContextMenuData::EditFlags flags =
+      blink::WebContextMenuData::CanDoNone;
+
+  const content::TextInputState* state = GetTextInputState();
+  ui::TextInputType text_input_type =
+      state ? state->type : ui::TEXT_INPUT_TYPE_NONE;
+
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+
+  const content::TextInputManager::TextSelection* selection =
+      GetTextSelection();
+  bool has_selection = selection && !selection->range().is_empty();
+
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
   }
-
-  return client_->IsVisible();
-}
-
-bool WebContentsView::HasFocus() const {
-  if (!client_) {
-    return false;
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
   }
+  if (editable &&
+      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
 
-  return client_->HasFocus();
-}
-
-gfx::Size WebContentsView::GetSize() const {
-  return GetBounds().size();
-}
-
-gfx::Size WebContentsView::GetSizeInPixels() const {
-  return gfx::ToRoundedSize(
-      gfx::ScaleSize(GetBoundsF().size(), GetDisplay().device_scale_factor()));
+  return flags;
 }
 
 gfx::Rect WebContentsView::GetBounds() const {
@@ -1384,6 +1387,10 @@ void WebContentsView::WasResized() {
     rwh->WasResized();
   }
 
+  if (touch_editing_menu_controller_) {
+    touch_editing_menu_controller_->SetViewportBounds(GetBoundsF());
+  }
+
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
@@ -1455,6 +1462,34 @@ void WebContentsView::ScreenChanged() {
   }
 
   content::RenderWidgetHostImpl::From(rwh)->NotifyScreenInfoChanged();
+}
+
+void WebContentsView::TopLevelWindowBoundsChanged() {
+  if (!touch_editing_menu_controller_) {
+    return;
+  }
+
+  touch_editing_menu_controller_->SetTopLevelWindowBounds(
+      GetTopLevelWindowBounds());
+}
+
+void WebContentsView::InitializeTouchEditingController() {
+  WebContentsClient* contents_client =
+      WebContentsClient::FromWebContents(web_contents());
+
+  if (contents_client) {
+    touch_editing_menu_controller_ =
+        contents_client->CreateOverrideTouchEditingMenuController(this);
+    if (!touch_editing_menu_controller_) {
+      touch_editing_menu_controller_ =
+          base::MakeUnique<TouchEditingMenuControllerImpl>(this);
+    }
+    touch_editing_menu_controller_->SetViewportBounds(GetBoundsF());
+    touch_editing_menu_controller_->SetTopLevelWindowBounds(
+        GetTopLevelWindowBounds());
+  } else {
+    touch_editing_menu_controller_.reset();
+  }
 }
 
 } // namespace oxide

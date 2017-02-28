@@ -62,8 +62,11 @@ WebContentsHelper::WebContentsHelper(content::WebContents* contents)
       web_contents_->GetMutableRendererPrefs();
   UserAgentSettings* ua_settings =
       UserAgentSettings::Get(contents->GetBrowserContext());
-  renderer_prefs->enable_do_not_track = ua_settings->GetDoNotTrack();
-  renderer_prefs->accept_languages = ua_settings->GetAcceptLangs();
+  if (ua_settings) {
+    // ua_settings can be null in unit tests
+    renderer_prefs->enable_do_not_track = ua_settings->GetDoNotTrack();
+    renderer_prefs->accept_languages = ua_settings->GetAcceptLangs();
+  }
 
   // Hardcoded selection colors to match the current Ambiance theme from the
   // Ubuntu UI Toolkit (https://bazaar.launchpad.net/~ubuntu-sdk-team/ubuntu-ui-toolkit/trunk/view/head:/src/Ubuntu/Components/Themes/Ambiance/1.3/Palette.qml)
@@ -188,6 +191,22 @@ bool WebContentsHelper::IsContextInUse(BrowserContext* context) {
   }
 
   return false;
+}
+
+void WebContentsHelper::SetClient(WebContentsClient* client) {
+  if (client == client_) {
+    return;
+  }
+
+  client_ = client;
+
+  WebContentsView* view = WebContentsView::FromWebContents(web_contents_);
+  if (!view) {
+    // Can be null in unit tests
+    return;
+  }
+
+  view->InitializeTouchEditingController();
 }
 
 content::WebContents* WebContentsHelper::GetWebContents() const {
