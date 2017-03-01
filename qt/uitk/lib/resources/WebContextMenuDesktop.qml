@@ -31,6 +31,8 @@ Popups.Popover {
 
   objectName: parent.objectName ? parent.objectName + "_WebContextMenu" : ""
 
+  signal actionTriggered(var action)
+
   QtObject {
     id: internal
 
@@ -119,7 +121,7 @@ Popups.Popover {
           }
         }
 
-        onTriggered: root.hide()
+        onTriggered: actionTriggered(action)
       }
     }
   }

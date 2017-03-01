@@ -374,36 +374,7 @@ std::vector<content::MenuItem> WebContextMenuHost::BuildItems() {
   return std::move(items);
 }
 
-content::WebContents* WebContextMenuHost::GetWebContents() const {
-  return content::WebContents::FromRenderFrameHost(GetRenderFrameHost());
-}
-
-void WebContextMenuHost::Close() {
-  if (on_close_callback_.is_null()) {
-    return;
-  }
-
-  base::Closure on_close_callback = std::move(on_close_callback_);
-
-  if (menu_) {
-    menu_->Hide();
-  }
-
-  on_close_callback.Run();
-}
-
-void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action) {
-  if (on_close_callback_.is_null()) {
-    return;
-  }
-
-  if (!IsCommandEnabled(action)) {
-    LOG(ERROR)
-        << "Attempting to execute disabled action: "
-        << static_cast<unsigned>(action);
-    return;
-  }
-
+void WebContextMenuHost::ExecuteCommandInternal(WebContextMenuAction action) {
   switch (action) {
     case WebContextMenuAction::OpenLinkInNewTab:
       return OpenURL(params_.link_url,
@@ -462,6 +433,44 @@ void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action) {
     case WebContextMenuAction::SelectAll:
       return GetWebContents()->SelectAll();
   };
+}
+
+content::WebContents* WebContextMenuHost::GetWebContents() const {
+  return content::WebContents::FromRenderFrameHost(GetRenderFrameHost());
+}
+
+void WebContextMenuHost::Close() {
+  if (on_close_callback_.is_null()) {
+    return;
+  }
+
+  base::Closure on_close_callback = std::move(on_close_callback_);
+
+  if (menu_) {
+    menu_->Hide();
+  }
+
+  on_close_callback.Run();
+}
+
+void WebContextMenuHost::ExecuteCommand(WebContextMenuAction action,
+                                        bool close) {
+  if (on_close_callback_.is_null()) {
+    return;
+  }
+
+  if (!IsCommandEnabled(action)) {
+    LOG(ERROR)
+        << "Attempting to execute disabled action: "
+        << static_cast<unsigned>(action);
+    return;
+  }
+
+  ExecuteCommandInternal(action);
+
+  if (close) {
+    Close();
+  }
 }
 
 WebContextMenuHost::WebContextMenuHost(

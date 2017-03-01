@@ -79,10 +79,12 @@ class WebContextMenuHost : public WebContextMenuClient {
 
   std::vector<content::MenuItem> BuildItems();
 
+  void ExecuteCommandInternal(WebContextMenuAction action);
+
   // WebContextMenuClient implementation
   content::WebContents* GetWebContents() const override;
   void Close() override;
-  void ExecuteCommand(WebContextMenuAction action) override;
+  void ExecuteCommand(WebContextMenuAction action, bool close) override;
 
   RenderFrameHostWeakPtr render_frame_host_;
 

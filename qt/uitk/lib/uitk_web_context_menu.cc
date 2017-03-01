@@ -107,6 +107,8 @@ bool WebContextMenu::Init(QQmlEngine* engine,
 
   connect(item_.get(), &QQuickItem::visibleChanged,
           this, &WebContextMenu::OnVisibleChanged);
+  connect(item_.get(), SIGNAL(actionTriggered(const QVariant&)),
+          SLOT(OnActionTriggered(const QVariant&)));
 
   return true;
 }
@@ -132,6 +134,14 @@ void WebContextMenu::OnStockActionTriggered(const QVariant&) {
   Q_ASSERT(action_v.isValid());
   unsigned action = action_v.toUInt();
   client_->execCommand(static_cast<WebContextMenuAction>(action));
+}
+
+void WebContextMenu::OnActionTriggered(const QVariant& action) {
+  QObject* a = action.value<QObject*>();
+  if (a->property("__stock_action").isValid()) {
+    return;
+  }
+  client_->close();
 }
 
 // static

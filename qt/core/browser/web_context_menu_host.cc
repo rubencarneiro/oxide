@@ -138,8 +138,10 @@ void WebContextMenuHost::close() {
   client_->Close();
 }
 
-void WebContextMenuHost::execCommand(WebContextMenuAction action) {
-  client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action));
+void WebContextMenuHost::execCommand(WebContextMenuAction action,
+                                     bool close) {
+  client_->ExecuteCommand(static_cast<oxide::WebContextMenuAction>(action),
+                          close);
 }
 
 WebContextMenuHost::WebContextMenuHost(const content::ContextMenuParams& params,

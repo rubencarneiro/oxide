@@ -53,7 +53,7 @@ class WebContextMenuHost : public oxide::WebContextMenu,
 
   // WebContextMenuClient implementation
   void close() override;
-  void execCommand(WebContextMenuAction action) override;
+  void execCommand(WebContextMenuAction action, bool close) override;
 
   content::ContextMenuParams params_;
 
