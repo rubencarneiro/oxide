@@ -280,11 +280,11 @@ void ContentsViewImpl::windowChanged() {
   window_ = client_->GetWindow();
 
   if (window_) {
-    connect(window_, &QWindow::screenChanged,
+    connect(window_.data(), &QWindow::screenChanged,
             this, &ContentsViewImpl::OnScreenChanged);
-    connect(window_, &QWindow::xChanged,
+    connect(window_.data(), &QWindow::xChanged,
             this, &ContentsViewImpl::OnWindowMoved);
-    connect(window_, &QWindow::yChanged,
+    connect(window_.data(), &QWindow::yChanged,
             this, &ContentsViewImpl::OnWindowMoved);
   }
 
