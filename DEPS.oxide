@@ -6,7 +6,7 @@
   }, 
   "src/third_party/ffmpeg": {
     "origin": "https://git.launchpad.net/~oxide-developers/oxide/+git/ffmpeg", 
-    "rev": "8d0e3560456aa053aed0161df1b0e18037ba0800", 
+    "rev": "f4fe12305ba3fd95cea2d326b653c76e4856a367", 
     "upstream": "https://chromium.googlesource.com/chromium/third_party/ffmpeg.git"
   }
 }
