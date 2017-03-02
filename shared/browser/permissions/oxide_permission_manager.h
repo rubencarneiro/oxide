@@ -67,9 +67,6 @@ class PermissionManager : public content::PermissionManager {
   void ResetPermission(content::PermissionType permission,
                        const GURL& requesting_origin,
                        const GURL& embedding_origin) override;
-  void RegisterPermissionUsage(content::PermissionType permission,
-                               const GURL& requesting_origin,
-                               const GURL& embedding_origin) override;
   int SubscribePermissionStatusChange(
       content::PermissionType permission,
       const GURL& requesting_origin,

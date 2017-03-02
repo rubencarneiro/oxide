@@ -43,8 +43,8 @@
 #include "shared/browser/oxide_gesture_provider.h"
 
 namespace cc {
+class LocalSurfaceIdAllocator;
 class SurfaceFactory;
-class SurfaceIdAllocator;
 class SurfaceLayer;
 }
 
@@ -237,7 +237,7 @@ class RenderWidgetHostView
 
   scoped_refptr<cc::SurfaceLayer> layer_;
   cc::FrameSinkId frame_sink_id_;
-  std::unique_ptr<cc::SurfaceIdAllocator> id_allocator_;
+  std::unique_ptr<cc::LocalSurfaceIdAllocator> id_allocator_;
   std::unique_ptr<cc::SurfaceFactory> surface_factory_;
   cc::LocalSurfaceId local_surface_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
