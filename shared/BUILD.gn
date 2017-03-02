@@ -54,8 +54,8 @@ grit("shared_resources") {
 
 repack("packed_resources") {
   sources = [
-    "$root_gen_dir/blink/devtools_resources.pak",
     "$root_gen_dir/blink/public/resources/blink_resources.pak",
+    "$root_gen_dir/content/browser/devtools/devtools_resources.pak",
     "$root_gen_dir/content/browser/tracing/tracing_resources.pak",
     "$root_gen_dir/content/content_resources.pak",
     "$root_gen_dir/net/net_resources.pak",
