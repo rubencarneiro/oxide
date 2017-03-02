@@ -26,6 +26,7 @@
 #include "base/callback_list.h"
 #include "base/macros.h"
 #include "base/memory/ref_counted.h"
+#include "content/browser/renderer_host/text_input_manager.h" // nogncheck
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
@@ -36,7 +37,7 @@
 #include "shared/browser/browser_object_weak_ptrs.h"
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
-#include "shared/browser/input/oxide_input_method_context_observer.h"
+#include "shared/browser/input/input_method_context_client.h"
 #include "shared/browser/legacy_touch_editing_controller.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
@@ -58,6 +59,7 @@ namespace content {
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class RenderWidgetHost;
+class TextInputManager;
 class WebContents;
 class WebContentsImpl;
 }
@@ -86,7 +88,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
       public CompositorClient,
       public CompositorObserver,
       public DragSourceClient,
-      public InputMethodContextObserver,
+      public InputMethodContextClient,
       public LegacyTouchEditingController,
       public RenderWidgetHostViewContainer,
       public ScreenObserver {
@@ -148,6 +150,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
                                 const cc::CompositorFrameMetadata&)>& callback);
 
   void WasResized();
+  void ScreenRectsChanged();
   void VisibilityChanged();
   void FocusChanged();
   void ScreenChanged();
@@ -186,6 +189,18 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void DidHidePopupMenu();
 
   void HideTouchSelectionController();
+
+  void CursorChangedInternal(RenderWidgetHostView* view);
+  void TouchEditingStatusChangedInternal(RenderWidgetHostView* view);
+  void TextInputStateChangedInternal(const content::TextInputState* state);
+  void SelectionBoundsChangedInternal(
+      const content::TextInputManager::SelectionRegion& region);
+  void TextSelectionChangedInternal(
+      const content::TextInputManager::TextSelection& selection);
+
+  void SyncClientWithNewView(RenderWidgetHostView* view = nullptr);
+
+  const content::TextInputManager::TextSelection* GetTextSelection() const;
 
   // content::WebContentsView implementation
   gfx::NativeView GetNativeView() const override;
@@ -256,8 +271,16 @@ class OXIDE_SHARED_EXPORT WebContentsView
   // DragSourceClient implementaion
   void EndDrag(blink::WebDragOperation operation) override;
 
-  // InputMethodContextObserver implementation
+  // InputMethodContextClient implementation
   void InputPanelVisibilityChanged() override;
+  void SetComposingText(
+      const base::string16& text,
+      const std::vector<blink::WebCompositionUnderline>& underlines,
+      const gfx::Range& selection_range) override;
+  void CommitText(const base::string16& text,
+                  const gfx::Range& replacement_range) override;
+  base::string16 GetSelectionText() const override;
+  bool GetSelectedText(base::string16* text) const override;
 
   // LegacyTouchEditingController implementation
   void HideAndDisallowShowingAutomatically() override;
@@ -272,7 +295,18 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::unique_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() override;
   void TouchEditingStatusChanged(RenderWidgetHostView* view) override;
   void TouchInsertionHandleTapped(RenderWidgetHostView* view) override;
-  void EditingCapabilitiesChanged(RenderWidgetHostView* view) override;
+  void TextInputStateChanged(RenderWidgetHostView* view,
+                             const content::TextInputState* state) override;
+  void ImeCancelComposition(RenderWidgetHostView* view) override;
+  void SelectionBoundsChanged(
+      RenderWidgetHostView* view,
+      const content::TextInputManager::SelectionRegion* region) override;
+  void TextSelectionChanged(
+      RenderWidgetHostView* view,
+      content::RenderWidgetHostViewBase* focused_view,
+      const content::TextInputManager::TextSelection* selection) override;
+  void FocusedNodeChanged(RenderWidgetHostView* view,
+                          bool is_editable_node) override;
 
   // ScreenObserver implementation
   void OnDisplayPropertiesChanged(const display::Display& display) override;
@@ -312,6 +346,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   std::unique_ptr<ChromeController> chrome_controller_;
 
   LegacyTouchEditingClient* legacy_touch_editing_client_;
+
+  RenderWidgetHostWeakPtr last_focused_widget_for_text_selection_;
 
   DISALLOW_COPY_AND_ASSIGN(WebContentsView);
 };

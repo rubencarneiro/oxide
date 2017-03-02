@@ -114,7 +114,7 @@ Popups.Dialog {
         }
       }
 
-      onTriggered: root.hide()
+      onTriggered: actionTriggered(action)
     }
   }
 

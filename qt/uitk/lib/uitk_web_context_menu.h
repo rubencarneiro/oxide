@@ -76,6 +76,7 @@ class WebContextMenu : public QObject,
  private Q_SLOTS:
   void OnVisibleChanged();
   void OnStockActionTriggered(const QVariant&);
+  void OnActionTriggered(const QVariant& action);
 
  private:
   QPointer<QQuickItem> parent_;

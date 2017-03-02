@@ -24,7 +24,9 @@
 #include "cc/layers/solid_color_layer.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_input_event_router.h" // nogncheck
 #include "content/browser/web_contents/web_contents_impl.h" // nogncheck
+#include "content/common/text_input_state.h" // nogncheck
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_widget_host.h"
 #include "content/public/browser/render_widget_host_view.h"
@@ -35,17 +37,23 @@
 #include "third_party/WebKit/public/platform/WebMouseEvent.h"
 #include "ui/base/clipboard/clipboard.h"
 #include "ui/base/ime/text_input_type.h"
+#include "ui/events/keycodes/dom/dom_key.h"
+#include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
+#include "ui/gfx/geometry/vector2d.h"
+#include "ui/gfx/geometry/vector2d_conversions.h"
+#include "ui/gfx/geometry/vector2d_f.h"
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/image/image_skia_rep.h"
+#include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_frame_data.h"
 #include "shared/browser/compositor/oxide_compositor_frame_handle.h"
 #include "shared/browser/context_menu/web_context_menu_host.h"
-#include "shared/browser/input/oxide_input_method_context.h"
+#include "shared/browser/input/input_method_context.h"
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/common/oxide_messages.h"
 #include "shared/common/oxide_unowned_user_data.h"
@@ -64,7 +72,34 @@
 namespace oxide {
 
 namespace {
+
 int kUserDataKey;
+
+// Qt input methods don’t generate key events, but a lot of web pages out there
+// rely on keydown and keyup events to e.g. perform search-as-you-type or
+// enable/disable a submit button based on the contents of a text input field,
+// so we send a fake pair of keydown/keyup events.
+// This mimicks what is done in GtkIMContextWrapper::HandlePreeditChanged(…)
+// and GtkIMContextWrapper::HandleCommit(…)
+// (see content/browser/renderer_host/gtk_im_context_wrapper.cc).
+void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
+                                 blink::WebInputEvent::Type type) {
+  content::NativeWebKeyboardEvent fake_event(type, 0, base::TimeTicks::Now());
+  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
+  fake_event.skip_in_browser = true;
+  fake_event.domKey = ui::DomKey::Key::PROCESS;
+  host->ForwardKeyboardEvent(fake_event);
+}
+
+gfx::SelectionBound ComputeOffsetSelectionBound(
+    const gfx::SelectionBound& in,
+    const gfx::Vector2dF& offset) {
+  gfx::SelectionBound bound(in);
+  bound.SetEdge(bound.edge_top() + offset, bound.edge_bottom() + offset);
+
+  return std::move(bound);
+}
+
 }
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
@@ -134,11 +169,6 @@ bool WebContentsView::ShouldScrollFocusedEditableNodeIntoView() {
 
   if (!client_->GetInputMethodContext() ||
       !client_->GetInputMethodContext()->IsInputPanelVisible()) {
-    return false;
-  }
-
-  if (!GetRenderWidgetHostView() ||
-      !GetRenderWidgetHostView()->ime_bridge()->focused_node_is_editable()) {
     return false;
   }
 
@@ -239,6 +269,120 @@ void WebContentsView::HideTouchSelectionController() {
   }
 }
 
+void WebContentsView::CursorChangedInternal(RenderWidgetHostView* view) {
+  client_->UpdateCursor(view ? view->current_cursor() : content::WebCursor());
+}
+
+void WebContentsView::TouchEditingStatusChangedInternal(
+    RenderWidgetHostView* view) {
+  ui::TouchSelectionController* controller =
+      view ? view->selection_controller() : nullptr;
+  ui::TouchSelectionController::ActiveStatus status =
+      controller ? controller->active_status()
+                 : ui::TouchSelectionController::INACTIVE;
+
+  gfx::RectF bounds;
+  if (controller) {
+    bounds = controller->GetRectBetweenBounds();
+  }
+  bounds.Offset(0, chrome_controller_->GetTopContentOffset());
+
+  if (legacy_touch_editing_client_) {
+    legacy_touch_editing_client_->StatusChanged(
+        status, bounds,
+        view ? view->selection_handle_drag_in_progress() : false);
+  }
+}
+
+void WebContentsView::TextInputStateChangedInternal(
+    const content::TextInputState* state) {
+  InputMethodContext* context = client_->GetInputMethodContext();
+  if (context) {
+    context->TextInputStateChanged(
+        state ? state->type : ui::TEXT_INPUT_TYPE_NONE,
+        state ? state->selection_start : -1,
+        state ? state->selection_end : -1,
+        state ? state->show_ime_if_needed : false);
+  }
+
+  if (!editing_capabilities_changed_callback_.is_null()) {
+    editing_capabilities_changed_callback_.Run();
+  }
+}
+
+void WebContentsView::SelectionBoundsChangedInternal(
+    const content::TextInputManager::SelectionRegion& region) {
+  InputMethodContext* context = client_->GetInputMethodContext();
+  if (!context) {
+    return;
+  }
+
+  gfx::Vector2dF offset(0, chrome_controller_->GetTopContentOffset());
+
+  context->SelectionBoundsChanged(
+      ComputeOffsetSelectionBound(region.anchor, offset),
+      ComputeOffsetSelectionBound(region.focus, offset),
+      region.caret_rect + gfx::ToRoundedVector2d(offset));
+}
+
+void WebContentsView::TextSelectionChangedInternal(
+    const content::TextInputManager::TextSelection& selection) {
+  InputMethodContext* context = client_->GetInputMethodContext();
+  if (context) {
+    context->TextSelectionChanged(selection.offset, selection.range);
+  }
+
+  if (!editing_capabilities_changed_callback_.is_null()) {
+    editing_capabilities_changed_callback_.Run();
+  }
+}
+
+void WebContentsView::SyncClientWithNewView(RenderWidgetHostView* view) {
+  if (!client_) {
+    return;
+  }
+
+  if (!view) {
+    view = GetRenderWidgetHostView();
+  }
+
+  CursorChangedInternal(view);
+  TouchEditingStatusChangedInternal(view);
+
+  content::TextInputManager* text_input_manager =
+      view ? view->GetTextInputManager() : nullptr;
+
+  TextInputStateChangedInternal(
+      view ? text_input_manager->GetTextInputState() : nullptr);
+
+  content::RenderWidgetHostViewBase* focused_view =
+      view ? view->GetFocusedViewForTextSelection() : nullptr;
+
+  const content::TextInputManager::SelectionRegion* region =
+      view ? text_input_manager->GetSelectionRegion(focused_view) : nullptr;
+  SelectionBoundsChangedInternal(
+      region ? *region : content::TextInputManager::SelectionRegion());
+
+  const content::TextInputManager::TextSelection* selection =
+      view ? text_input_manager->GetTextSelection(focused_view) : nullptr;
+  TextSelectionChangedInternal(
+      selection ? *selection : content::TextInputManager::TextSelection());
+}
+
+const content::TextInputManager::TextSelection*
+WebContentsView::GetTextSelection() const {
+  RenderWidgetHostView* view = GetRenderWidgetHostView();
+  if (!view) {
+    return nullptr;
+  }
+
+  content::TextInputManager* text_input_manager = view->GetTextInputManager();
+  content::RenderWidgetHostViewBase* focused_view =
+      view->GetFocusedViewForTextSelection();
+
+  return text_input_manager->GetTextSelection(focused_view);
+}
+
 gfx::NativeView WebContentsView::GetNativeView() const {
   return nullptr;
 }
@@ -306,9 +450,6 @@ content::RenderWidgetHostViewBase* WebContentsView::CreateViewForWidget(
   if (web_contents()->GetRenderViewHost() &&
       web_contents()->GetRenderViewHost()->GetWidget() == render_widget_host) {
     view->SetContainer(this);
-    if (client_) {
-      view->ime_bridge()->SetContext(client_->GetInputMethodContext());
-    }
   }
 
   return view;
@@ -451,7 +592,6 @@ void WebContentsView::RenderViewHostChanged(
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(old_host->GetWidget()->GetView());
     rwhv->SetContainer(nullptr);
-    rwhv->ime_bridge()->SetContext(nullptr);
   }
 
   if (!new_host) {
@@ -462,7 +602,6 @@ void WebContentsView::RenderViewHostChanged(
     RenderWidgetHostView* rwhv =
         static_cast<RenderWidgetHostView*>(new_host->GetWidget()->GetView());
     rwhv->SetContainer(this);
-    rwhv->ime_bridge()->SetContext(client_->GetInputMethodContext());
 
     // For the initial view, we need to sync its visibility and focus state
     // with us. For subsequent views, RFHM does this for us
@@ -481,8 +620,7 @@ void WebContentsView::RenderViewHostChanged(
     }
   }
 
-  EditingCapabilitiesChanged(GetRenderWidgetHostView());
-  TouchEditingStatusChanged(GetRenderWidgetHostView());
+  SyncClientWithNewView();
 }
 
 void WebContentsView::DidNavigateMainFrame(
@@ -520,8 +658,7 @@ void WebContentsView::DidShowFullscreenWidget() {
   // Hide the original RWHV
   web_contents()->GetRenderWidgetHostView()->Hide();
 
-  EditingCapabilitiesChanged(rwhv);
-  TouchEditingStatusChanged(rwhv);
+  SyncClientWithNewView();
 }
 
 void WebContentsView::DidDestroyFullscreenWidget() {
@@ -545,10 +682,9 @@ void WebContentsView::DidDestroyFullscreenWidget() {
     }
   }
 
-  // FIXME: This actually doesn't work, because GetRenderWidgetHostView still
+  // We pass the view explicitly here because GetRenderWidgetHostView() still
   // returns the fullscreen view
-  EditingCapabilitiesChanged(orig_rwhv);
-  TouchEditingStatusChanged(orig_rwhv);
+  SyncClientWithNewView(orig_rwhv);
 }
 
 void WebContentsView::DidAttachInterstitialPage() {
@@ -576,8 +712,7 @@ void WebContentsView::DidAttachInterstitialPage() {
   // Content takes care of adjusting visibility and sending focus / resize
   // messages, so there's nothing else to do with |rwhv|
 
-  EditingCapabilitiesChanged(rwhv),
-  TouchEditingStatusChanged(rwhv);
+  SyncClientWithNewView();
 }
 
 void WebContentsView::DidDetachInterstitialPage() {
@@ -596,8 +731,7 @@ void WebContentsView::DidDetachInterstitialPage() {
     orig_rwhv->SetSize(GetSize());
   }
 
-  EditingCapabilitiesChanged(orig_rwhv);
-  TouchEditingStatusChanged(orig_rwhv);
+  SyncClientWithNewView();
 }
 
 void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
@@ -620,7 +754,16 @@ void WebContentsView::CompositorSwapFrame(CompositorFrameHandle* handle,
   chrome_controller_->FrameMetadataUpdated(
       rwhv ? base::make_optional(metadata.Clone()) : base::nullopt);
   if (last_top_content_offset != chrome_controller_->GetTopContentOffset()) {
-    TouchEditingStatusChanged(rwhv);
+    TouchEditingStatusChangedInternal(rwhv);
+    if (rwhv && last_focused_widget_for_text_selection_ && client_) {
+      content::TextInputManager* text_input_manager =
+          rwhv->GetTextInputManager();
+      const content::TextInputManager::SelectionRegion* region =
+          text_input_manager->GetSelectionRegion(
+              static_cast<content::RenderWidgetHostViewBase*>(
+                  last_focused_widget_for_text_selection_->GetView()));
+      SelectionBoundsChangedInternal(*region);
+    }
   }
 
   gfx::Vector2d offset(0,
@@ -683,6 +826,78 @@ void WebContentsView::InputPanelVisibilityChanged() {
   MaybeScrollFocusedEditableNodeIntoView();
 }
 
+void WebContentsView::SetComposingText(
+    const base::string16& text,
+    const std::vector<blink::WebCompositionUnderline>& underlines,
+    const gfx::Range& selection_range) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->OnUserInput();
+
+  content::TextInputManager* text_input_manager =
+      rwhv->GetTextInputManager();
+  content::RenderWidgetHostImpl* widget = text_input_manager->GetActiveWidget();
+  if (!widget) {
+    return;
+  }
+
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  widget->ImeSetComposition(text,
+                            underlines,
+                            gfx::Range::InvalidRange(),
+                            selection_range.start(),
+                            selection_range.end());
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
+}
+
+void WebContentsView::CommitText(const base::string16& text,
+                                 const gfx::Range& replacement_range) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
+    return;
+  }
+
+  rwhv->OnUserInput();
+
+  content::TextInputManager* text_input_manager =
+      rwhv->GetTextInputManager();
+  content::RenderWidgetHostImpl* widget = text_input_manager->GetActiveWidget();
+  if (!widget) {
+    return;
+  }
+
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  widget->ImeCommitText(text,
+                        std::vector<blink::WebCompositionUnderline>(),
+                        replacement_range,
+                        false);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
+}
+
+base::string16 WebContentsView::GetSelectionText() const {
+  const content::TextInputManager::TextSelection* selection =
+      GetTextSelection();
+  if (!selection) {
+    return base::string16();
+  }
+
+  return selection->text;
+}
+
+bool WebContentsView::GetSelectedText(base::string16* text) const {
+  const content::TextInputManager::TextSelection* selection =
+      GetTextSelection();
+  if (!selection) {
+    text->clear();
+    return false;
+  }
+
+  return selection->GetSelectedText(text);
+}
+
 void WebContentsView::HideAndDisallowShowingAutomatically() {
   ui::TouchSelectionController* selection_controller =
       GetTouchSelectionController();
@@ -715,7 +930,7 @@ void WebContentsView::CursorChanged(RenderWidgetHostView* view) {
     return;
   }
 
-  client_->UpdateCursor(view ? view->current_cursor() : content::WebCursor());
+  CursorChangedInternal(view);
 }
 
 gfx::Size WebContentsView::GetViewSizeInPixels() const {
@@ -764,23 +979,7 @@ void WebContentsView::TouchEditingStatusChanged(RenderWidgetHostView* view) {
     return;
   }
 
-  ui::TouchSelectionController* controller =
-      view ? view->selection_controller() : nullptr;
-  ui::TouchSelectionController::ActiveStatus status =
-      controller ? controller->active_status()
-                 : ui::TouchSelectionController::INACTIVE;
-
-  gfx::RectF bounds;
-  if (controller) {
-    bounds = controller->GetRectBetweenBounds();
-  }
-  bounds.Offset(0, chrome_controller_->GetTopContentOffset());
-
-  if (legacy_touch_editing_client_) {
-    legacy_touch_editing_client_->StatusChanged(
-        status, bounds,
-        view ? view->selection_handle_drag_in_progress() : false);
-  }
+  TouchEditingStatusChangedInternal(view);
 }
 
 void WebContentsView::TouchInsertionHandleTapped(RenderWidgetHostView* view) {
@@ -797,14 +996,83 @@ void WebContentsView::TouchInsertionHandleTapped(RenderWidgetHostView* view) {
   }
 }
 
-void WebContentsView::EditingCapabilitiesChanged(RenderWidgetHostView* view) {
+void WebContentsView::TextInputStateChanged(
+    RenderWidgetHostView* view,
+    const content::TextInputState* state) {
+  if (!client_) {
+    return;
+  }
+
   if (view != GetRenderWidgetHostView()) {
     return;
   }
 
-  if (!editing_capabilities_changed_callback_.is_null()) {
-    editing_capabilities_changed_callback_.Run();
+  TextInputStateChangedInternal(state);
+}
+
+void WebContentsView::ImeCancelComposition(RenderWidgetHostView* view) {
+  if (!client_) {
+    return;
   }
+
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
+  InputMethodContext* context = client_->GetInputMethodContext();
+  if (!context) {
+    return;
+  }
+
+  context->CancelComposition();
+}
+
+void WebContentsView::SelectionBoundsChanged(
+    RenderWidgetHostView* view,
+    const content::TextInputManager::SelectionRegion* region) {
+  if (!client_) {
+    return;
+  }
+
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
+  SelectionBoundsChangedInternal(*region);
+}
+
+void WebContentsView::TextSelectionChanged(
+    RenderWidgetHostView* view,
+    content::RenderWidgetHostViewBase* focused_view,
+    const content::TextInputManager::TextSelection* selection) {
+  if (!client_) {
+    return;
+  }
+
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
+  last_focused_widget_for_text_selection_ = focused_view->GetRenderWidgetHost();
+  TextSelectionChangedInternal(*selection);
+}
+
+void WebContentsView::FocusedNodeChanged(RenderWidgetHostView* view,
+                                         bool is_editable_node) {
+  if (!client_) {
+    return;
+  }
+
+  if (view != GetRenderWidgetHostView()) {
+    return;
+  }
+
+  InputMethodContext* context = client_->GetInputMethodContext();
+  if (!context) {
+    return;
+  }
+
+  context->FocusedNodeChanged(is_editable_node);
 }
 
 void WebContentsView::OnDisplayPropertiesChanged(
@@ -852,9 +1120,10 @@ content::WebContents* WebContentsView::GetWebContents() const {
 void WebContentsView::SetClient(WebContentsViewClient* client) {
   if (client_) {
     DCHECK_EQ(client_->view_, this);
-    InputMethodContextObserver::Observe(nullptr);
     client_->view_ = nullptr;
   }
+
+  InputMethodContextClient::DetachFromContext();
 
   if (legacy_touch_editing_client_) {
     LegacyTouchEditingController::DetachFromClient(legacy_touch_editing_client_);
@@ -866,19 +1135,14 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
   if (client_) {
     DCHECK(!client_->view_);
     client_->view_ = this;
-    InputMethodContextObserver::Observe(client_->GetInputMethodContext());
+
+    InputMethodContextClient::AttachToContext(client_->GetInputMethodContext());
 
     legacy_touch_editing_client_ = client_->GetLegacyTouchEditingClient();
   }
 
   if (legacy_touch_editing_client_) {
     LegacyTouchEditingController::AttachToClient(legacy_touch_editing_client_);
-  }
-
-  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (rwhv) {
-    rwhv->ime_bridge()->SetContext(
-        client_ ? client_->GetInputMethodContext() : nullptr);
   }
 
   // Update view from client
@@ -888,8 +1152,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
   ScreenChanged();
 
   // Update client from view
-  CursorChanged(GetRenderWidgetHostView());
-  TouchEditingStatusChanged(GetRenderWidgetHostView());
+  SyncClientWithNewView();
 }
 
 bool WebContentsView::IsVisible() const {
@@ -948,14 +1211,17 @@ void WebContentsView::HandleMouseEvent(blink::WebMouseEvent event) {
   event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
   mouse_state_.UpdateEvent(&event);
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return;
   }
 
-  GetRenderWidgetHostView()->OnUserInput();
+  rwhv->OnUserInput();
 
-  host->ForwardMouseEvent(event);
+  content::RenderWidgetHostInputEventRouter* router =
+      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost())
+          ->delegate()->GetInputEventRouter();
+  router->RouteMouseEvent(rwhv, &event, ui::LatencyInfo());
 }
 
 void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
@@ -970,14 +1236,17 @@ void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
 void WebContentsView::HandleWheelEvent(blink::WebMouseWheelEvent event) {
   event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
 
-  content::RenderWidgetHost* host = GetRenderWidgetHost();
-  if (!host) {
+  RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
+  if (!rwhv) {
     return;
   }
 
-  GetRenderWidgetHostView()->OnUserInput();
+  rwhv->OnUserInput();
 
-  host->ForwardWheelEvent(event);
+  content::RenderWidgetHostInputEventRouter* router =
+      content::RenderWidgetHostImpl::From(rwhv->GetRenderWidgetHost())
+          ->delegate()->GetInputEventRouter();
+  router->RouteMouseWheelEvent(rwhv, &event, ui::LatencyInfo());
 }
 
 void WebContentsView::HandleDragEnter(
@@ -1111,11 +1380,19 @@ void WebContentsView::WasResized() {
 
   content::RenderWidgetHost* rwh = GetRenderWidgetHost();
   if (rwh) {
-    content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
     rwh->WasResized();
   }
 
   MaybeScrollFocusedEditableNodeIntoView();
+}
+
+void WebContentsView::ScreenRectsChanged() {
+  content::RenderWidgetHost* rwh = GetRenderWidgetHost();
+  if (!rwh) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl::From(rwh)->SendScreenRects();
 }
 
 void WebContentsView::VisibilityChanged() {
@@ -1134,14 +1411,23 @@ void WebContentsView::VisibilityChanged() {
 
 void WebContentsView::FocusChanged() {
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    return;
-  }
+  InputMethodContext* im_context =
+      client_ ? client_->GetInputMethodContext() : nullptr;
 
   if (HasFocus()) {
-    rwhv->Focus();
+    if (rwhv) {
+      rwhv->Focus();
+    }
+    if (im_context) {
+      im_context->FocusIn();
+    }
   } else {
-    rwhv->Blur();
+    if (rwhv) {
+      rwhv->Blur();
+    }
+    if (im_context) {
+      im_context->FocusOut();
+    }
   }
 
   MaybeScrollFocusedEditableNodeIntoView();

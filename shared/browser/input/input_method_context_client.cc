@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,34 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_
-#define _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_
+#include "input_method_context_client.h"
+
+#include "base/logging.h"
+
+#include "input_method_context.h"
 
 namespace oxide {
-namespace qt {
 
-class InputMethodContextClient {
- public:
-  virtual ~InputMethodContextClient() {}
+InputMethodContextClient::InputMethodContextClient() = default;
 
-  virtual bool HasFocus() const = 0;
+void InputMethodContextClient::AttachToContext(InputMethodContext* context) {
+  if (context_) {
+    DCHECK_EQ(context_->client_, this);
+    context_->client_ = nullptr;
+  }
 
-  virtual void SetInputMethodEnabled(bool enabled) = 0;
-};
+  context_ = context;
 
-} // namespace qt
+  if (context_) {
+    DCHECK(!context_->client_);
+    context_->client_ = this;
+  }
+}
+
+void InputMethodContextClient::DetachFromContext() {
+  AttachToContext(nullptr);
+}
+
+InputMethodContextClient::~InputMethodContextClient() = default;
+
 } // namespace oxide
-
-#endif // _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_CLIENT_H_

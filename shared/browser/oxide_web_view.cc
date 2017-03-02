@@ -63,8 +63,6 @@
 #include "url/gurl.h"
 #include "url/url_constants.h"
 
-#include "shared/browser/clipboard/oxide_clipboard.h"
-#include "shared/browser/input/oxide_ime_bridge.h"
 #include "shared/browser/javascript_dialogs/javascript_dialog_contents_helper.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/permissions/oxide_permission_request_dispatcher.h"
@@ -145,7 +143,6 @@ void CreateHelpers(content::WebContents* contents) {
 
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ui::PageTransition)
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(ContentType)
-OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
 }
 
@@ -294,32 +291,10 @@ void WebView::EditingCapabilitiesChanged() {
   blink::WebContextMenuData::EditFlags flags =
       blink::WebContextMenuData::CanDoNone;
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
-  if (!rwhv) {
-    edit_flags_ = flags;
-    return;
+  if (rwhv) {
+    flags = rwhv->GetEditFlags();
   }
 
-  ui::TextInputType text_input_type = rwhv->ime_bridge()->text_input_type();
-  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
-  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
-  bool has_selection = !rwhv->GetSelectionRange().is_empty();
-
-  // XXX: if editable, can we determine whether undo/redo is available?
-  if (editable && readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCut;
-  }
-  if (readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCopy;
-  }
-  if (editable &&
-      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
-    flags |= blink::WebContextMenuData::CanPaste;
-  }
-  if (editable && has_selection) {
-    flags |= blink::WebContextMenuData::CanDelete;
-  }
-  flags |= blink::WebContextMenuData::CanSelectAll;
-  
   if (flags != edit_flags_) {
     edit_flags_ = flags;
     client_->OnEditingCapabilitiesChanged();

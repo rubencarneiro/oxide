@@ -36,7 +36,7 @@ class GestureProviderClient {
  public:
   virtual ~GestureProviderClient();
 
-  virtual void OnGestureEvent(const blink::WebGestureEvent& event) = 0;
+  virtual void OnGestureEvent(blink::WebGestureEvent event) = 0;
 };
 
 class GestureProvider {

@@ -27,7 +27,7 @@
 #include "base/callback.h"
 #include "base/macros.h"
 
-#include "qt/core/browser/input/oxide_qt_input_method_context_client.h"
+#include "qt/core/browser/input/input_method_context_owner_client.h"
 #include "qt/core/browser/oxide_qt_motion_event_factory.h"
 #include "qt/core/glue/contents_view.h"
 #include "shared/browser/oxide_web_contents_view_client.h"
@@ -51,7 +51,7 @@ class LegacyTouchEditingClientProxy;
 
 class ContentsViewImpl : public QObject,
                          public ContentsView,
-                         public InputMethodContextClient,
+                         public InputMethodContextOwnerClient,
                          public oxide::WebContentsViewClient {
   Q_OBJECT
 
@@ -81,12 +81,12 @@ class ContentsViewImpl : public QObject,
   void didCommitCompositorFrame() override;
   void windowChanged() override;
   void wasResized() override;
+  void screenRectsChanged() override;
   void visibilityChanged() override;
   void activeFocusChanged() override;
   QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
   void handleKeyEvent(QKeyEvent* event) override;
   void handleInputMethodEvent(QInputMethodEvent* event) override;
-  void handleFocusEvent(QFocusEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchUngrabEvent() override;
   void handleWheelEvent(QWheelEvent* event,
@@ -100,8 +100,8 @@ class ContentsViewImpl : public QObject,
   void handleDragLeaveEvent(QDragLeaveEvent* event) override;
   void handleDropEvent(QDropEvent* event) override;
 
-  // InputMethodContextClient implementation
-  void SetInputMethodEnabled(bool enabled);
+  // InputMethodContextOwnerClient implementation
+  void SetInputMethodAccepted(bool accepted) override;
 
   // oxide::WebContentsViewClient implementation
   bool IsVisible() const override;
@@ -124,7 +124,8 @@ class ContentsViewImpl : public QObject,
       const content::NativeWebKeyboardEvent& event) override;
 
  private Q_SLOTS:
-  void OnScreenChanged();
+  void OnScreenChanged(QScreen* screen);
+  void OnWindowMoved(int arg);
 
  private:
   ContentsViewClient* client_;

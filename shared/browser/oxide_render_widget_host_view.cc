@@ -30,11 +30,13 @@
 #include "cc/surfaces/local_surface_id_allocator.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
+#include "cc/surfaces/surface_hittest.h"
 #include "cc/surfaces/surface_id.h"
 #include "cc/surfaces/surface_info.h"
 #include "cc/surfaces/surface_manager.h"
 #include "content/browser/renderer_host/render_widget_host_delegate.h" // nogncheck
 #include "content/browser/renderer_host/render_widget_host_impl.h" // nogncheck
+#include "content/browser/renderer_host/render_widget_host_input_event_router.h" // nogncheck
 #include "content/common/text_input_state.h" // nogncheck
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_process_host.h"
@@ -45,15 +47,17 @@
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
 #include "ui/events/gesture_detection/motion_event.h"
+#include "ui/gfx/geometry/dip_util.h"
 #include "ui/gfx/geometry/point_conversions.h"
 #include "ui/gfx/geometry/rect_conversions.h"
 #include "ui/gfx/geometry/size_conversions.h"
 #include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
+#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
-#include "shared/browser/input/oxide_input_method_context.h"
+#include "shared/common/oxide_enum_flags.h"
 
 #include "oxide_browser_platform_integration.h"
 #include "oxide_browser_process_main.h"
@@ -79,65 +83,9 @@ bool HasMobileViewport(const cc::CompositorFrameMetadata& frame_metadata) {
   return content_width_css <= window_width_dip + kMobileViewportWidthEpsilon;
 }
 
+OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
+
 } // namespace
-
-void RenderWidgetHostView::OnSelectionBoundsChanged(
-    const gfx::Rect& anchor_rect,
-    const gfx::Rect& focus_rect,
-    bool is_anchor_first) {
-  gfx::Rect caret_rect;
-  if (anchor_rect == focus_rect) {
-    caret_rect = anchor_rect;
-  }
-
-  size_t selection_cursor_position = 0;
-  size_t selection_anchor_position = 0;
-
-  const content::TextInputManager::TextSelection* selection =
-      GetTextInputManager()->GetTextSelection();
-  if (selection && selection->range.IsValid()) {
-    if (is_anchor_first) {
-      selection_cursor_position =
-          selection->range.GetMax() - selection->offset;
-      selection_anchor_position =
-          selection->range.GetMin() - selection->offset;
-    } else {
-      selection_cursor_position =
-          selection->range.GetMin() - selection->offset;
-      selection_anchor_position =
-          selection->range.GetMax() - selection->offset;
-    }
-  }
-
-  ime_bridge_.SelectionBoundsChanged(caret_rect,
-                                     selection_cursor_position,
-                                     selection_anchor_position);
-
-  if (container_) {
-    container_->EditingCapabilitiesChanged(this);
-  }
-}
-
-void RenderWidgetHostView::SelectionChanged(const base::string16& text,
-                                            size_t offset,
-                                            const gfx::Range& range) {
-  if ((range.GetMin() - offset) > text.length()) {
-    // Got an invalid selection (see https://launchpad.net/bugs/1375900).
-    // The issue lies in content::RenderFrameImpl::SyncSelectionIfRequired(…)
-    // where the selection text and the corresponding range are computed
-    // separately. If the word that just got committed is at the beginning of a
-    // new line, the selection range includes the trailing newline character(s)
-    // whereas the selection text truncates them.
-    // This looks very similar to https://crbug.com/101435.
-    return;
-  }
-
-  content::RenderWidgetHostViewBase::SelectionChanged(text, offset, range);
-
-  if (ime_bridge_.context()) {
-    ime_bridge_.context()->SelectionChanged();
-  }
-}
 
 gfx::Size RenderWidgetHostView::GetPhysicalBackingSize() const {
   if (!container_) {
@@ -166,7 +114,11 @@ float RenderWidgetHostView::GetTopControlsHeight() const {
 void RenderWidgetHostView::FocusedNodeChanged(
     bool is_editable_node,
     const gfx::Rect& node_bounds_in_screen) {
-  ime_bridge_.FocusedNodeChanged(is_editable_node);
+  if (!container_) {
+    return;
+  }
+
+  container_->FocusedNodeChanged(this, is_editable_node);
 }
 
 void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
@@ -285,6 +237,124 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
 
 cc::FrameSinkId RenderWidgetHostView::GetFrameSinkId() {
   return frame_sink_id_;
+}
+
+cc::FrameSinkId RenderWidgetHostView::FrameSinkIdAtPoint(
+    cc::SurfaceHittestDelegate* delegate,
+    const gfx::Point& point,
+    gfx::Point* transformed_point) {
+  if (!container_) {
+    return cc::FrameSinkId();
+  }
+
+  gfx::Point point_in_pixels =
+      gfx::ConvertPointToPixel(
+          container_->GetCompositor()->device_scale_factor(), point);
+
+  cc::SurfaceId surface_id(frame_sink_id_, local_surface_id_);
+  if (!surface_id.is_valid()) {
+    return cc::FrameSinkId();
+  }
+
+  gfx::Transform transform;
+  cc::SurfaceHittest hittest(
+      delegate,
+      CompositorUtils::GetInstance()->GetSurfaceManager());
+  cc::SurfaceId id =
+      hittest.GetTargetSurfaceAtPoint(surface_id, point_in_pixels,
+                                      &transform);
+
+  *transformed_point = point_in_pixels;
+  if (id.is_valid()) {
+    transform.TransformPoint(transformed_point);
+  }
+
+  *transformed_point =
+      gfx::ConvertPointToDIP(
+          container_->GetCompositor()->device_scale_factor(),
+          *transformed_point);
+
+  if (!id.is_valid()) {
+    return GetFrameSinkId();
+  }
+
+  return id.frame_sink_id();
+}
+
+void RenderWidgetHostView::ProcessMouseEvent(const blink::WebMouseEvent& event,
+                                             const ui::LatencyInfo& latency) {
+  GetRenderWidgetHost()->ForwardMouseEvent(event);
+}
+
+void RenderWidgetHostView::ProcessMouseWheelEvent(
+    const blink::WebMouseWheelEvent& event,
+    const ui::LatencyInfo& latency) {
+  GetRenderWidgetHost()->ForwardWheelEvent(event);
+}
+
+void RenderWidgetHostView::ProcessTouchEvent(const blink::WebTouchEvent& event,
+                                             const ui::LatencyInfo& latency) {
+  host_->ForwardTouchEventWithLatencyInfo(event, latency);
+}
+
+void RenderWidgetHostView::ProcessGestureEvent(
+    const blink::WebGestureEvent& event,
+    const ui::LatencyInfo& latency) {
+  host_->ForwardGestureEventWithLatencyInfo(event, latency);
+}
+
+bool RenderWidgetHostView::TransformPointToLocalCoordSpace(
+    const gfx::Point& point,
+    const cc::SurfaceId& original_surface,
+    gfx::Point* transformed_point) {
+  if (!container_) {
+    return false;
+  }
+
+  gfx::Point point_in_pixels =
+      gfx::ConvertPointToPixel(
+          container_->GetCompositor()->device_scale_factor(), point);
+
+  cc::SurfaceId surface_id(frame_sink_id_, local_surface_id_);
+  if (!surface_id.is_valid()) {
+    return false;
+  }
+
+  *transformed_point = point_in_pixels;
+  if (original_surface != surface_id) {
+    cc::SurfaceHittest hittest(
+        nullptr,
+        CompositorUtils::GetInstance()->GetSurfaceManager());
+    if (!hittest.TransformPointToTargetSurface(original_surface, surface_id,
+                                               transformed_point)) {
+      return false;
+    }
+  }
+
+  *transformed_point =
+      gfx::ConvertPointToDIP(
+          container_->GetCompositor()->device_scale_factor(),
+          *transformed_point);
+  return true;
+}
+
+bool RenderWidgetHostView::TransformPointToCoordSpaceForView(
+    const gfx::Point& point,
+    content::RenderWidgetHostViewBase* target_view,
+    gfx::Point* transformed_point) {
+  if (target_view == this) {
+    *transformed_point = point;
+    return true;
+  }
+
+  if (!local_surface_id_.is_valid()) {
+    return false;
+  }
+
+  return target_view->TransformPointToLocalCoordSpace(
+      point,
+      cc::SurfaceId(frame_sink_id_, local_surface_id_),
+      transformed_point);
 }
 
 void RenderWidgetHostView::InitAsPopup(
@@ -427,13 +497,15 @@ void RenderWidgetHostView::CompositorEvictResources() {
   DestroyDelegatedContent();
 }
 
-void RenderWidgetHostView::OnGestureEvent(
-    const blink::WebGestureEvent& event) {
+void RenderWidgetHostView::OnGestureEvent(blink::WebGestureEvent event) {
   if (!host_) {
     return;
   }
 
   HandleGestureForTouchSelection(event);
+
+  content::RenderWidgetHostInputEventRouter* router =
+      host_->delegate()->GetInputEventRouter();
 
   if (event.type() == blink::WebInputEvent::GestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
@@ -441,14 +513,14 @@ void RenderWidgetHostView::OnGestureEvent(
     blink::WebGestureEvent fling_cancel = event;
     fling_cancel.setType(blink::WebInputEvent::GestureFlingCancel);
     fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
-    host_->ForwardGestureEvent(fling_cancel);
+    router->RouteGestureEvent(this, &fling_cancel, ui::LatencyInfo());
   }
 
   if (event.type() == blink::WebInputEvent::Undefined) {
     return;
   }
 
-  host_->ForwardGestureEvent(event);
+  router->RouteGestureEvent(this, &event, ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::OnUserInput() const {
@@ -515,26 +587,55 @@ void RenderWidgetHostView::OnUpdateTextInputStateCalled(
     content::TextInputManager* text_input_manager,
     content::RenderWidgetHostViewBase* updated_view,
     bool did_update_state) {
-  if (updated_view != this) {
+  if (!container_) {
     return;
   }
 
   const content::TextInputState* state =
       GetTextInputManager()->GetTextInputState();
-
-  ime_bridge_.TextInputStateChanged(
-      state ? state->type : ui::TEXT_INPUT_TYPE_NONE,
-      state ? state->show_ime_if_needed : false);
+  container_->TextInputStateChanged(this, state);
 }
 
 void RenderWidgetHostView::OnImeCancelComposition(
     content::TextInputManager* text_input_manager,
     content::RenderWidgetHostViewBase* updated_view) {
-  if (ime_bridge_.context() || updated_view != this) {
+  if (!container_) {
     return;
   }
 
-  ime_bridge_.context()->CancelComposition();
+  container_->ImeCancelComposition(this);
+}
+
+void RenderWidgetHostView::OnSelectionBoundsChanged(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view) {
+  if (!container_) {
+    return;
+  }
+
+  if (updated_view != GetFocusedViewForTextSelection()) {
+    return;
+  }
+
+  const content::TextInputManager::SelectionRegion* region =
+      GetTextInputManager()->GetSelectionRegion(updated_view);
+  container_->SelectionBoundsChanged(this, region);
+}
+
+void RenderWidgetHostView::OnTextSelectionChanged(
+    content::TextInputManager* text_input_manager,
+    content::RenderWidgetHostViewBase* updated_view) {
+  if (!container_) {
+    return;
+  }
+
+  if (updated_view != GetFocusedViewForTextSelection()) {
+    return;
+  }
+
+  const content::TextInputManager::TextSelection* selection =
+      GetTextInputManager()->GetTextSelection(updated_view);
+  container_->TextSelectionChanged(this, updated_view, selection);
 }
 
 bool RenderWidgetHostView::SupportsAnimation() const {
@@ -694,7 +795,6 @@ RenderWidgetHostView::RenderWidgetHostView(
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
       id_allocator_(new cc::LocalSurfaceIdAllocator()),
       last_output_surface_id_(0),
-      ime_bridge_(this),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
       browser_controls_shrink_blink_size_(false),
@@ -760,22 +860,44 @@ void RenderWidgetHostView::SetContainer(
   host_->WasResized();
 }
 
-base::string16 RenderWidgetHostView::GetSelectionText() const {
-  auto* self = const_cast<RenderWidgetHostView*>(this);
-  if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection(self)) {
-    return base::string16();
-  }
-  return self->GetTextInputManager()->GetTextSelection(self)->text;
-}
+blink::WebContextMenuData::EditFlags RenderWidgetHostView::GetEditFlags() {
+  blink::WebContextMenuData::EditFlags flags =
+      blink::WebContextMenuData::CanDoNone;
 
-gfx::Range RenderWidgetHostView::GetSelectionRange() const {
-  auto* self = const_cast<RenderWidgetHostView*>(this);
-  if (!self->GetTextInputManager() ||
-      !self->GetTextInputManager()->GetTextSelection(self)) {
-    return gfx::Range();
+  content::RenderWidgetHostViewBase* view = GetFocusedViewForTextSelection();
+  if (!view) {
+    return flags;
   }
-  return self->GetTextInputManager()->GetTextSelection(self)->range;
+
+  const content::TextInputState* state =
+      GetTextInputManager()->GetTextInputState();
+  ui::TextInputType text_input_type =
+      state ? state->type : ui::TEXT_INPUT_TYPE_NONE;
+
+  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
+  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
+
+  const content::TextInputManager::TextSelection* selection =
+      GetTextInputManager()->GetTextSelection(state ? nullptr : view);
+  bool has_selection = selection && !selection->range.is_empty();
+
+  // XXX: if editable, can we determine whether undo/redo is available?
+  if (editable && readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCut;
+  }
+  if (readable && has_selection) {
+    flags |= blink::WebContextMenuData::CanCopy;
+  }
+  if (editable &&
+      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
+    flags |= blink::WebContextMenuData::CanPaste;
+  }
+  if (editable && has_selection) {
+    flags |= blink::WebContextMenuData::CanDelete;
+  }
+  flags |= blink::WebContextMenuData::CanSelectAll;
+
+  return flags;
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
@@ -793,9 +915,11 @@ void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
     return;
   }
 
-  host_->ForwardTouchEventWithLatencyInfo(
-      MakeWebTouchEvent(event, rv.moved_beyond_slop_region),
-      ui::LatencyInfo());
+  content::RenderWidgetHostInputEventRouter* router =
+      host_->delegate()->GetInputEventRouter();
+  blink::WebTouchEvent web_touch_event =
+      MakeWebTouchEvent(event, rv.moved_beyond_slop_region);
+  router->RouteTouchEvent(this, &web_touch_event, ui::LatencyInfo());
 }
 
 void RenderWidgetHostView::ResetGestureDetection() {
@@ -814,6 +938,16 @@ void RenderWidgetHostView::Blur() {
   host_->Blur();
 
   selection_controller_->HideAndDisallowShowingAutomatically();
+}
+
+content::RenderWidgetHostViewBase*
+RenderWidgetHostView::GetFocusedViewForTextSelection() const {
+  content::RenderWidgetHostImpl* host = GetFocusedWidget();
+  if (!host) {
+    return nullptr;
+  }
+
+  return host->GetView();
 }
 
 content::RenderWidgetHost* RenderWidgetHostView::GetRenderWidgetHost() const {

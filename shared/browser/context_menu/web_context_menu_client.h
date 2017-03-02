@@ -34,7 +34,8 @@ class WebContextMenuClient {
 
   virtual void Close() = 0;
 
-  virtual void ExecuteCommand(WebContextMenuAction action) = 0;
+  virtual void ExecuteCommand(WebContextMenuAction action,
+                              bool close = true) = 0;
 };
 
 } // namespace oxide

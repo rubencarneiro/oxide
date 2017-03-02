@@ -29,7 +29,7 @@ class WebContextMenuClient {
 
   virtual void close() = 0;
 
-  virtual void execCommand(WebContextMenuAction action) = 0;
+  virtual void execCommand(WebContextMenuAction action, bool close = true) = 0;
 };
 
 } // namespace qt

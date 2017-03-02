@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2015 Canonical Ltd.
+// Copyright (C) 2015-2016 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,17 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_ime_bridge.h"
+#ifndef _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OWNER_CLIENT_H_
+#define _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OWNER_CLIENT_H_
+
+#include <QtGlobal>
+
+QT_BEGIN_NAMESPACE
+class QScreen;
+QT_END_NAMESPACE
 
 namespace oxide {
+namespace qt {
 
-ImeBridge::ImeBridge()
-    : text_input_type_(ui::TEXT_INPUT_TYPE_NONE),
-      show_ime_if_needed_(false),
-      selection_cursor_position_(0),
-      selection_anchor_position_(0),
-      focused_node_is_editable_(false) {}
+class InputMethodContextOwnerClient {
+ public:
+  virtual ~InputMethodContextOwnerClient() = default;
 
-ImeBridge::~ImeBridge() {}
+  virtual void SetInputMethodAccepted(bool accepted) = 0;
 
+  virtual QScreen* GetScreen() const = 0;
+};
+
+} // namespace qt
 } // namespace oxide
+
+#endif // _OXIDE_QT_CORE_BROWSER_INPUT_INPUT_METHOD_CONTEXT_OWNER_CLIENT_H_

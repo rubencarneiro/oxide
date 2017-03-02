@@ -25,6 +25,7 @@
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QRect>
+#include <QScreen>
 #include <QTouchEvent>
 #include <QWindow>
 
@@ -41,7 +42,7 @@
 #include "ui/events/gesture_detection/motion_event.h"
 #include "ui/gfx/geometry/point.h"
 
-#include "qt/core/browser/input/oxide_qt_input_method_context.h"
+#include "qt/core/browser/input/qt_input_method_context.h"
 #include "qt/core/glue/contents_view_client.h"
 #include "qt/core/glue/legacy_touch_editing_client.h"
 #include "qt/core/glue/touch_handle_drawable.h"
@@ -279,8 +280,12 @@ void ContentsViewImpl::windowChanged() {
   window_ = client_->GetWindow();
 
   if (window_) {
-    connect(window_, SIGNAL(screenChanged(QScreen*)),
-            SLOT(OnScreenChanged()));
+    connect(window_.data(), &QWindow::screenChanged,
+            this, &ContentsViewImpl::OnScreenChanged);
+    connect(window_.data(), &QWindow::xChanged,
+            this, &ContentsViewImpl::OnWindowMoved);
+    connect(window_.data(), &QWindow::yChanged,
+            this, &ContentsViewImpl::OnWindowMoved);
   }
 
   if (!view()) {
@@ -288,11 +293,16 @@ void ContentsViewImpl::windowChanged() {
   }
 
   view()->ScreenChanged();
+  view()->ScreenRectsChanged();
   view()->WasResized();
 }
 
 void ContentsViewImpl::wasResized() {
   view()->WasResized();
+}
+
+void ContentsViewImpl::screenRectsChanged() {
+  view()->ScreenRectsChanged();
 }
 
 void ContentsViewImpl::visibilityChanged() {
@@ -321,12 +331,6 @@ void ContentsViewImpl::handleKeyEvent(QKeyEvent* event) {
 
 void ContentsViewImpl::handleInputMethodEvent(QInputMethodEvent* event) {
   input_method_context_->HandleEvent(event);
-  event->accept();
-}
-
-void ContentsViewImpl::handleFocusEvent(QFocusEvent* event) {
-  input_method_context_->FocusChanged(event);
-
   event->accept();
 }
 
@@ -437,8 +441,8 @@ void ContentsViewImpl::handleDropEvent(QDropEvent* event) {
   }
 }
 
-void ContentsViewImpl::SetInputMethodEnabled(bool enabled) {
-  client_->SetInputMethodEnabled(enabled);
+void ContentsViewImpl::SetInputMethodAccepted(bool accepted) {
+  client_->SetInputMethodAccepted(accepted);
 }
 
 bool ContentsViewImpl::IsVisible() const {
@@ -554,8 +558,12 @@ void ContentsViewImpl::UnhandledKeyboardEvent(
   client_->HandleUnhandledKeyboardEvent(key_event);
 }
 
-void ContentsViewImpl::OnScreenChanged() {
+void ContentsViewImpl::OnScreenChanged(QScreen* screen) {
   view()->ScreenChanged();
+}
+
+void ContentsViewImpl::OnWindowMoved(int arg) {
+  view()->ScreenRectsChanged();
 }
 
 ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
@@ -580,7 +588,6 @@ ContentsViewImpl::ContentsViewImpl(ContentsViewClient* client,
 ContentsViewImpl::~ContentsViewImpl() {
   DCHECK_EQ(client_->view_, this);
   client_->view_ = nullptr;
-  input_method_context_->DetachClient();
 }
 
 // static

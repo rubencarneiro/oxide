@@ -69,7 +69,10 @@ class Compositor : public cc::LayerTreeHostClient,
   ~Compositor() override;
 
   void SetVisibility(bool visible);
+
+  float device_scale_factor() const { return device_scale_factor_; }
   void SetDeviceScaleFactor(float scale);
+
   void SetViewportSize(const gfx::Size& bounds);
   void SetRootLayer(scoped_refptr<cc::Layer> layer);
   void SetNeedsRedraw();

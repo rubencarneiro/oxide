@@ -213,12 +213,12 @@ void ContextMenuContext::copyImage() const {
     return;
   }
 
-  client_->execCommand(WebContextMenuAction::CopyImage);
+  client_->execCommand(WebContextMenuAction::CopyImage, false);
 }
 
 void ContextMenuContext::saveLink() const {
   if (linkUrl().isValid()) {
-    client_->execCommand(WebContextMenuAction::SaveLink);
+    client_->execCommand(WebContextMenuAction::SaveLink, false);
   } else {
     qWarning() << "ContextMenuContext::saveLink(): not a valid link";
   }
@@ -233,7 +233,7 @@ void ContextMenuContext::saveMedia() const {
       return;
     }
 
-    client_->execCommand(WebContextMenuAction::SaveImage);
+    client_->execCommand(WebContextMenuAction::SaveImage, false);
   } else if (media_type == OxideQQuickWebView::MediaTypeVideo ||
              media_type == OxideQQuickWebView::MediaTypeAudio) {
     if (!mediaFlags().testFlag(OxideQQuickWebView::MediaStatusCanSave)) {
@@ -241,7 +241,7 @@ void ContextMenuContext::saveMedia() const {
       return;
     }
 
-    client_->execCommand(WebContextMenuAction::SaveMedia);
+    client_->execCommand(WebContextMenuAction::SaveMedia, false);
   } else {
     qWarning() << "ContextMenuContext::saveMedia(): invalid content";
   }
