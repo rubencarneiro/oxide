@@ -405,26 +405,6 @@ void RenderWidgetHostView::Destroy() {
 
 void RenderWidgetHostView::SetTooltipText(const base::string16& tooltip_text) {}
 
-void RenderWidgetHostView::CopyFromCompositingSurface(
-    const gfx::Rect& src_subrect,
-    const gfx::Size& dst_size,
-    const content::ReadbackRequestCallback& callback,
-    const SkColorType color_type) {
-  callback.Run(SkBitmap(), content::READBACK_FAILED);
-}
-
-void RenderWidgetHostView::CopyFromCompositingSurfaceToVideoFrame(
-    const gfx::Rect& src_subrect,
-    const scoped_refptr<media::VideoFrame>& target,
-    const base::Callback<void(const gfx::Rect&, bool)>& callback) {
-  NOTIMPLEMENTED();
-  callback.Run(gfx::Rect(), false);
-}
-
-bool RenderWidgetHostView::CanCopyToVideoFrame() const {
-  return false;
-}
-
 bool RenderWidgetHostView::HasAcceleratedSurface(
     const gfx::Size& desired_size) {
   return false;

@@ -56,6 +56,8 @@ void CompositorOutputSurface::BindToClient(cc::OutputSurfaceClient* client) {
   listener_->OutputSurfaceBound(this);
 }
 
+void CompositorOutputSurface::SetDrawRectangle(const gfx::Rect& rect) {}
+
 cc::OverlayCandidateValidator*
 CompositorOutputSurface::GetOverlayCandidateValidator() const {
   return nullptr;
