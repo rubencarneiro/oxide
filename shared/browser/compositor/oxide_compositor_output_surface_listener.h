@@ -22,6 +22,7 @@
 
 namespace gpu {
 class Mailbox;
+class SyncToken;
 }
 
 namespace oxide {
@@ -42,7 +43,7 @@ class CompositorOutputSurfaceListener {
 
   // Notification that a buffer was created with the specified mailbox name
   virtual void MailboxBufferCreated(const gpu::Mailbox& mailbox,
-                                    uint64_t sync_point) = 0;
+                                    const gpu::SyncToken& sync_token) = 0;
 
   // Notification that the buffer with the specified mailbox name was destroyed
   virtual void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) = 0;

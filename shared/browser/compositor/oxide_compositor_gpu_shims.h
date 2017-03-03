@@ -42,6 +42,7 @@ class SingleThreadTaskRunner;
 
 namespace gpu {
 class Mailbox;
+class SyncToken;
 }
 
 namespace oxide {
@@ -61,10 +62,8 @@ class GpuUtils {
 
   static scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner();
 
-  static bool IsSyncPointRetired(gpu::CommandBufferId command_buffer_id,
-                                 uint64_t sync_point);
-  static bool WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
-                               uint64_t sync_point,
+  static bool IsSyncPointRetired(const gpu::SyncToken& sync_token);
+  static bool WaitForSyncPoint(const gpu::SyncToken& sync_token,
                                const base::Closure& callback);
 
   static bool CanUseEGLImage();

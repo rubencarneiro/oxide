@@ -154,7 +154,7 @@ class Compositor : public cc::LayerTreeHostClient,
   void OutputSurfaceBound(CompositorOutputSurface* output_surface) override;
   void OutputSurfaceDestroyed(CompositorOutputSurface* output_surface) override;
   void MailboxBufferCreated(const gpu::Mailbox& mailbox,
-                            uint64_t sync_point) override;
+                            const gpu::SyncToken& sync_token) override;
   void MailboxBufferDestroyed(const gpu::Mailbox& mailbox) override;
   void SwapCompositorFrame(std::unique_ptr<CompositorFrameData> frame) override;
   void AllFramesReturnedFromClient() override;

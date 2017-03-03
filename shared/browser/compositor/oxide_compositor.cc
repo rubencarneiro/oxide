@@ -561,7 +561,7 @@ void Compositor::OutputSurfaceDestroyed(
 }
 
 void Compositor::MailboxBufferCreated(const gpu::Mailbox& mailbox,
-                                      uint64_t sync_point) {
+                                      const gpu::SyncToken& sync_token) {
   DCHECK(output_surface_);
 
   TRACE_EVENT_ASYNC_BEGIN1(
@@ -576,7 +576,7 @@ void Compositor::MailboxBufferCreated(const gpu::Mailbox& mailbox,
     CompositorUtils::GetInstance()->GetTextureFromMailbox(
         output_surface_->context_provider(),
         mailbox,
-        sync_point,
+        sync_token,
         base::Bind(&Compositor::GetTextureFromMailboxResponse,
                    weak_factory_.GetWeakPtr(),
                    output_surface_->surface_id(), mailbox));
@@ -585,7 +585,7 @@ void Compositor::MailboxBufferCreated(const gpu::Mailbox& mailbox,
     CompositorUtils::GetInstance()->CreateEGLImageFromMailbox(
         output_surface_->context_provider(),
         mailbox,
-        sync_point,
+        sync_token,
         base::Bind(&Compositor::CreateEGLImageFromMailboxResponseThunk,
                    weak_factory_.GetWeakPtr(),
                    output_surface_->surface_id(), mailbox));

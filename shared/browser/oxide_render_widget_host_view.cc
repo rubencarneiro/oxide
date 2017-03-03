@@ -859,7 +859,7 @@ blink::WebContextMenuData::EditFlags RenderWidgetHostView::GetEditFlags() {
 
   const content::TextInputManager::TextSelection* selection =
       GetTextInputManager()->GetTextSelection(state ? nullptr : view);
-  bool has_selection = selection && !selection->range.is_empty();
+  bool has_selection = selection && !selection->range().is_empty();
 
   // XXX: if editable, can we determine whether undo/redo is available?
   if (editable && readable && has_selection) {

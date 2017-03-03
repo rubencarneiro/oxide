@@ -38,23 +38,7 @@
 
 namespace oxide {
 
-class SyncPointWaiter {
- public:
-  SyncPointWaiter();
-  ~SyncPointWaiter();
-
-  bool Wait(gpu::SyncPointClientState* release_state,
-            uint64_t release_count,
-            const base::Closure& wait_complete_callback);
-
- private:
-  std::unique_ptr<gpu::SyncPointClient> sync_point_client_;
-};
-
 namespace {
-
-base::LazyInstance<SyncPointWaiter> g_sync_point_waiter =
-    LAZY_INSTANCE_INITIALIZER;
 
 gpu::gles2::GLES2Decoder* GetGLES2Decoder(
     gpu::CommandBufferId command_buffer_id) {
@@ -84,22 +68,6 @@ gpu::gles2::GLES2Decoder* GetGLES2Decoder(
   return command_buffer->decoder();
 }
 
-}
-
-SyncPointWaiter::SyncPointWaiter()
-    : sync_point_client_(
-        content::GpuChildThread::GetChannelManager()
-          ->sync_point_manager()
-          ->CreateSyncPointClientWaiter()) {}
-
-SyncPointWaiter::~SyncPointWaiter() {}
-
-bool SyncPointWaiter::Wait(gpu::SyncPointClientState* release_state,
-                           uint64_t release_count,
-                           const base::Closure& wait_complete_callback) {
-  return sync_point_client_->WaitOutOfOrder(release_state,
-                                            release_count,
-                                            wait_complete_callback);
 }
 
 class ScopedTextureBinder {
@@ -162,34 +130,16 @@ scoped_refptr<base::SingleThreadTaskRunner> GpuUtils::GetTaskRunner() {
 }
 
 // static
-bool GpuUtils::IsSyncPointRetired(gpu::CommandBufferId command_buffer_id,
-                                  uint64_t sync_point) {
-  scoped_refptr<gpu::SyncPointClientState> client_state =
-      content::GpuChildThread::GetChannelManager()
-        ->sync_point_manager()
-        ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
-                                  command_buffer_id);
-  if (!client_state) {
-    return true;
-  }
-
-  return client_state->IsFenceSyncReleased(sync_point);
+bool GpuUtils::IsSyncPointRetired(const gpu::SyncToken& sync_token) {
+  return content::GpuChildThread::GetChannelManager()
+      ->sync_point_manager()->IsSyncTokenReleased(sync_token);
 }
 
 // static
-bool GpuUtils::WaitForSyncPoint(gpu::CommandBufferId command_buffer_id,
-                                uint64_t sync_point,
+bool GpuUtils::WaitForSyncPoint(const gpu::SyncToken& sync_token,
                                 const base::Closure& callback) {
-  scoped_refptr<gpu::SyncPointClientState> client_state =
-      content::GpuChildThread::GetChannelManager()
-        ->sync_point_manager()
-        ->GetSyncPointClientState(gpu::CommandBufferNamespace::GPU_IO,
-                                  command_buffer_id);
-  DCHECK(client_state);
-
-  return g_sync_point_waiter.Get().Wait(client_state.get(),
-                                        sync_point,
-                                        callback);
+  return content::GpuChildThread::GetChannelManager()
+      ->sync_point_manager()->WaitOutOfOrder(sync_token, callback);
 }
 
 // static

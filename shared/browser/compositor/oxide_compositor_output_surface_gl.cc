@@ -108,12 +108,10 @@ void CompositorOutputSurfaceGL::EnsureBackbuffer() {
     GLuint64 sync_point = gl->InsertFenceSyncCHROMIUM();
     gl->ShallowFlushCHROMIUM();
 
-    // We don't use the SyncToken. However, generating it ensures that the
-    // sync point has been flushed to the GPU thread before continuing
-    gpu::SyncToken token;
-    gl->GenSyncTokenCHROMIUM(sync_point, token.GetData());
+    gpu::SyncToken sync_token;
+    gl->GenSyncTokenCHROMIUM(sync_point, sync_token.GetData());
 
-    listener()->MailboxBufferCreated(back_buffer_->mailbox, sync_point);
+    listener()->MailboxBufferCreated(back_buffer_->mailbox, sync_token);
   }
 
   DCHECK_NE(back_buffer_->texture_id, 0U);
