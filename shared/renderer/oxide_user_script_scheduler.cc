@@ -22,7 +22,7 @@
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebLocalFrame.h"
 
-#include "grit/oxide_resources.h"
+#include "shared/grit/oxide_resources.h"
 
 #include "shared/common/oxide_user_script.h"
 

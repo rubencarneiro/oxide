@@ -34,11 +34,10 @@ namespace oxide {
 
 namespace {
 
-std::unique_ptr<base::StringValue> V8StringToValue(
-    v8::Local<v8::String> string) {
+std::unique_ptr<base::Value> V8StringToValue(v8::Local<v8::String> string) {
   v8::String::Value v(string);
   base::string16 s(static_cast<const base::char16 *>(*v), v.length());
-  return base::WrapUnique(new base::StringValue(base::UTF16ToUTF8(s)));
+  return base::WrapUnique(new base::Value(base::UTF16ToUTF8(s)));
 }
 
 }

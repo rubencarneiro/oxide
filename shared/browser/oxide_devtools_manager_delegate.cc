@@ -20,7 +20,7 @@
 #include "content/public/browser/devtools_frontend_host.h"
 #include "ui/base/resource/resource_bundle.h"
 
-#include "grit/oxide_resources.h"
+#include "shared/grit/oxide_resources.h"
 
 namespace oxide {
 
