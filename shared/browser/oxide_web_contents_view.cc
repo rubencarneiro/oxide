@@ -329,7 +329,7 @@ void WebContentsView::TextSelectionChangedInternal(
     const content::TextInputManager::TextSelection& selection) {
   InputMethodContext* context = client_->GetInputMethodContext();
   if (context) {
-    context->TextSelectionChanged(selection.offset, selection.range);
+    context->TextSelectionChanged(selection.offset(), selection.range());
   }
 
   if (!editing_capabilities_changed_callback_.is_null()) {
@@ -884,7 +884,7 @@ base::string16 WebContentsView::GetSelectionText() const {
     return base::string16();
   }
 
-  return selection->text;
+  return selection->text();
 }
 
 bool WebContentsView::GetSelectedText(base::string16* text) const {
@@ -895,7 +895,8 @@ bool WebContentsView::GetSelectedText(base::string16* text) const {
     return false;
   }
 
-  return selection->GetSelectedText(text);
+  *text = selection->selected_text();
+  return true;
 }
 
 void WebContentsView::HideAndDisallowShowingAutomatically() {

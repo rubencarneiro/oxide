@@ -41,6 +41,7 @@ class TaskGraphRunner;
 
 namespace gpu {
 class Mailbox;
+class SyncToken;
 }
 
 namespace oxide {
@@ -68,7 +69,7 @@ class CompositorUtils {
   virtual void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const GetTextureFromMailboxCallback& callback) = 0;
 
   typedef base::Callback<void(EGLImageKHR)> CreateEGLImageFromMailboxCallback;
@@ -79,7 +80,7 @@ class CompositorUtils {
   virtual void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const CreateEGLImageFromMailboxCallback& callback) = 0;
 
   virtual bool CanUseGpuCompositing() const = 0;

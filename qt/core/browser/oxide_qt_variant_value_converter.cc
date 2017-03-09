@@ -104,14 +104,14 @@ std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
 
   switch (variant.type()) {
     case QVariant::Bool:
-      return base::WrapUnique(new base::FundamentalValue(variant.toBool()));
+      return base::WrapUnique(new base::Value(variant.toBool()));
     case QVariant::Double:
     case QVariant::LongLong:
     case QVariant::UInt:
     case QVariant::ULongLong:
-      return base::WrapUnique(new base::FundamentalValue(variant.toDouble()));
+      return base::WrapUnique(new base::Value(variant.toDouble()));
     case QVariant::Int:
-      return base::WrapUnique(new base::FundamentalValue(variant.toInt()));
+      return base::WrapUnique(new base::Value(variant.toInt()));
     case QVariant::List:
     case QVariant::StringList:
       return FromVariantListValueInternal(variant.toList(), state);

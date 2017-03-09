@@ -58,6 +58,7 @@ class CompositorOutputSurface : public cc::OutputSurface {
 
   // cc::OutputSurface implementation
   void BindToClient(cc::OutputSurfaceClient* client) override;
+  void SetDrawRectangle(const gfx::Rect& rect) override;
   cc::OverlayCandidateValidator* GetOverlayCandidateValidator() const override;
   bool IsDisplayedAsOverlayPlane() const override;
   unsigned GetOverlayTextureId() const override;

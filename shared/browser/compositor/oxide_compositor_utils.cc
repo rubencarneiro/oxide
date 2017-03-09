@@ -35,6 +35,7 @@
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
 #include "gpu/command_buffer/common/command_buffer_id.h"
 #include "gpu/command_buffer/common/mailbox.h"
+#include "gpu/command_buffer/common/sync_token.h"
 #include "gpu/ipc/client/command_buffer_proxy_impl.h"
 #include "gpu/ipc/client/gpu_channel_host.h"
 #include "services/ui/public/cpp/gpu/context_provider_command_buffer.h"
@@ -70,21 +71,21 @@ class FetchTextureResourcesTaskInfo {
     return command_buffer_id_;
   }
   const gpu::Mailbox& mailbox() const { return mailbox_; }
-  uint64_t sync_point() const { return sync_point_; }
+  const gpu::SyncToken& sync_token() const { return sync_token_; }
 
  protected:
   FetchTextureResourcesTaskInfo(
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point)
+      const gpu::SyncToken& sync_token)
       : command_buffer_id_(command_buffer_id),
         mailbox_(mailbox),
-        sync_point_(sync_point) {}
+        sync_token_(sync_token) {}
 
  private:
   gpu::CommandBufferId command_buffer_id_;
   gpu::Mailbox mailbox_;
-  uint64_t sync_point_;
+  gpu::SyncToken sync_token_;
 };
 
 class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
@@ -92,11 +93,11 @@ class FetchTextureIDTaskInfo : public FetchTextureResourcesTaskInfo {
   FetchTextureIDTaskInfo(
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const CompositorUtils::GetTextureFromMailboxCallback& callback)
       : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
-                                      sync_point),
+                                      sync_token),
         callback_(callback),
         texture_(0) {}
   ~FetchTextureIDTaskInfo() override;
@@ -114,11 +115,11 @@ class FetchEGLImageTaskInfo : public FetchTextureResourcesTaskInfo {
   FetchEGLImageTaskInfo(
       const gpu::CommandBufferId& command_buffer_id,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback)
       : FetchTextureResourcesTaskInfo(command_buffer_id,
                                       mailbox,
-                                      sync_point),
+                                      sync_token),
         callback_(callback),
         egl_image_(EGL_NO_IMAGE_KHR) {}
   ~FetchEGLImageTaskInfo() override;
@@ -142,12 +143,12 @@ class CompositorUtilsImpl : public CompositorUtils,
   void GetTextureFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const CompositorUtils::GetTextureFromMailboxCallback& callback) override;
   void CreateEGLImageFromMailbox(
       cc::ContextProvider* context_provider,
       const gpu::Mailbox& mailbox,
-      uint64_t sync_point,
+      const gpu::SyncToken& sync_token,
       const CompositorUtils::CreateEGLImageFromMailboxCallback& callback) override;
   bool CanUseGpuCompositing() const override;
   CompositingMode GetCompositingMode() const override;
@@ -310,8 +311,7 @@ void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
          texture_resource_fetches_.info_map.end());
   texture_resource_fetches_.info_map[id] = info;
 
-  if (GpuUtils::IsSyncPointRetired(info->command_buffer_id(),
-                                   info->sync_point())) {
+  if (GpuUtils::IsSyncPointRetired(info->sync_token())) {
     ContinueFetchTextureResourcesOnGpuThread_Locked(id);
     return;
   }
@@ -320,8 +320,7 @@ void CompositorUtilsImpl::FetchTextureResourcesOnGpuThread(
   base::AutoReset<bool> in_fetch_resources(&gpu().in_fetch_resources, true);
 
   if (!GpuUtils::WaitForSyncPoint(
-          info->command_buffer_id(),
-          info->sync_point(),
+          info->sync_token(),
           base::Bind(
             &CompositorUtilsImpl::ContinueFetchTextureResourcesOnGpuThread,
             base::Unretained(this),
@@ -504,7 +503,7 @@ void CompositorUtilsImpl::Shutdown() {
 void CompositorUtilsImpl::GetTextureFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint64_t sync_point,
+    const gpu::SyncToken& sync_token,
     const CompositorUtils::GetTextureFromMailboxCallback& callback) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   DCHECK(context_provider);
@@ -516,7 +515,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
         static_cast<ui::ContextProviderCommandBuffer*>(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
-        sync_point,
+        sync_token,
         callback);
 
   base::AutoLock lock(incoming_texture_resource_fetches_.lock);
@@ -538,7 +537,7 @@ void CompositorUtilsImpl::GetTextureFromMailbox(
 void CompositorUtilsImpl::CreateEGLImageFromMailbox(
     cc::ContextProvider* context_provider,
     const gpu::Mailbox& mailbox,
-    uint64_t sync_point,
+    const gpu::SyncToken& sync_token,
     const CompositorUtils::CreateEGLImageFromMailboxCallback& callback) {
   DCHECK(main_thread_checker_.CalledOnValidThread());
   DCHECK(context_provider);
@@ -550,7 +549,7 @@ void CompositorUtilsImpl::CreateEGLImageFromMailbox(
         static_cast<ui::ContextProviderCommandBuffer*>(
             context_provider)->GetCommandBufferProxy()->GetCommandBufferID(),
         mailbox,
-        sync_point,
+        sync_token,
         callback);
 
   base::AutoLock lock(incoming_texture_resource_fetches_.lock);

@@ -154,9 +154,10 @@ void ContentRendererClient::OverrideCompositorSettings(
     // XXX: This will need updating if we support overlay scrollbars on
     //  desktop. See https://launchpad.net/bugs/1426567
     settings->scrollbar_animator = cc::LayerTreeSettings::ANDROID_OVERLAY;
-    settings->scrollbar_fade_delay = base::TimeDelta::FromMilliseconds(300);
-    settings->scrollbar_fade_resize_delay = base::TimeDelta::FromSeconds(2);
-    settings->scrollbar_fade_duration = base::TimeDelta::FromMilliseconds(300);
+    settings->scrollbar_fade_out_delay = base::TimeDelta::FromMilliseconds(300);
+    settings->scrollbar_fade_out_resize_delay = base::TimeDelta::FromSeconds(2);
+    settings->scrollbar_fade_out_duration =
+        base::TimeDelta::FromMilliseconds(300);
     settings->solid_color_scrollbar_color = SkColorSetARGB(128, 128, 128, 128);
   }
 }
