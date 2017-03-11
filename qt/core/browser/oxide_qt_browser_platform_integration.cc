@@ -51,7 +51,7 @@ namespace oxide {
 namespace qt {
 
 namespace {
-base::LazyInstance<QPointer<QThread> > g_io_thread;
+base::LazyInstance<QPointer<QThread>>::Leaky g_io_thread;
 
 void LaunchURLExternallyOnUIThread(const GURL& url) {
   QDesktopServices::openUrl(QUrl(QString::fromStdString(url.spec())));

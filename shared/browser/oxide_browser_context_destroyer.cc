@@ -31,7 +31,7 @@ namespace oxide {
 
 namespace {
 
-base::LazyInstance<std::list<BrowserContextDestroyer*>>
+base::LazyInstance<std::list<BrowserContextDestroyer*>>::Leaky
     g_contexts_pending_deletion = LAZY_INSTANCE_INITIALIZER;
 
 std::set<content::RenderProcessHost*> 

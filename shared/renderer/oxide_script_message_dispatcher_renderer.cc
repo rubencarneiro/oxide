@@ -49,7 +49,7 @@ namespace oxide {
 namespace {
 typedef std::map<content::RenderFrame*, ScriptMessageDispatcherRenderer*>
     ScriptMessageDispatcherMap;
-base::LazyInstance<ScriptMessageDispatcherMap> g_dispatcher_map =
+base::LazyInstance<ScriptMessageDispatcherMap>::Leaky g_dispatcher_map =
     LAZY_INSTANCE_INITIALIZER;
 }
 

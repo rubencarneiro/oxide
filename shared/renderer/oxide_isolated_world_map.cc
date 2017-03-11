@@ -32,7 +32,7 @@ int g_next_isolated_world_id = 1;
 
 typedef std::map<GURL, int> WorldIDMap;
 typedef WorldIDMap::iterator WorldIDMapIterator;
-base::LazyInstance<WorldIDMap> g_isolated_world_map =
+base::LazyInstance<WorldIDMap>::Leaky g_isolated_world_map =
     LAZY_INSTANCE_INITIALIZER;
 
 } // namespace

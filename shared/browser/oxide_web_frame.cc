@@ -39,7 +39,7 @@ namespace {
 typedef std::pair<int, int> RenderFrameHostID;
 typedef std::map<RenderFrameHostID, WebFrame*> WebFrameMap;
 
-base::LazyInstance<WebFrameMap> g_frame_map = LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<WebFrameMap>::Leaky g_frame_map = LAZY_INSTANCE_INITIALIZER;
 
 RenderFrameHostID MakeRenderFrameHostID(content::RenderFrameHost* host) {
   return std::make_pair(host->GetProcess()->GetID(), host->GetRoutingID());

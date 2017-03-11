@@ -41,7 +41,7 @@ namespace {
 
 DEFINE_WEB_CONTENTS_USER_DATA_KEY(WebContentsHelper);
 
-base::LazyInstance<std::set<WebContentsHelper*>> g_contents_helpers =
+base::LazyInstance<std::set<WebContentsHelper*>>::Leaky g_contents_helpers =
     LAZY_INSTANCE_INITIALIZER;
 
 }
