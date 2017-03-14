@@ -32,7 +32,7 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/test/oxide_test_browser_thread_bundle.h"
+#include "shared/test/test_browser_thread_bundle.h"
 
 #include "oxide_certificate_error.h"
 #include "oxide_certificate_error_placeholder_page.h"

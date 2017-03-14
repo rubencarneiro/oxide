@@ -15,7 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_test_browser_thread_bundle.h"
+#include "test_browser_thread_bundle.h"
 
 #include "base/memory/ptr_util.h"
 #include "base/message_loop/message_loop.h"

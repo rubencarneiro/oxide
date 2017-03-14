@@ -37,7 +37,7 @@
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/browser/web_contents_id_tracker.h"
-#include "shared/test/oxide_test_browser_thread_bundle.h"
+#include "shared/test/test_browser_thread_bundle.h"
 
 #include "oxide_qt_security_status.h"
 

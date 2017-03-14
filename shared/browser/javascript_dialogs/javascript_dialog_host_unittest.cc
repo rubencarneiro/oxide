@@ -24,7 +24,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
-#include "shared/test/oxide_test_browser_thread_bundle.h"
+#include "shared/test/test_browser_thread_bundle.h"
 
 #include "javascript_dialog.h"
 #include "javascript_dialog_contents_helper.h"
