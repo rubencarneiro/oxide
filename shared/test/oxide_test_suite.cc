@@ -21,8 +21,6 @@
 #include "content/public/test/test_content_client_initializer.h"
 #include "testing/gtest/include/gtest/gtest.h"
 
-#include "oxide_test_web_contents_view.h"
-
 namespace oxide {
 
 class TestInitializationListener : public testing::EmptyTestEventListener {
@@ -46,8 +44,6 @@ class TestInitializationListener : public testing::EmptyTestEventListener {
 };
 
 void TestSuite::Initialize() {
-  content::SetWebContentsViewOxideFactory(oxide::TestWebContentsView::Create);
-
   content::ContentTestSuiteBase::Initialize();
 
   testing::TestEventListeners& listeners =

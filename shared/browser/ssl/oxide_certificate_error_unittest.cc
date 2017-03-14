@@ -33,6 +33,7 @@
 
 #include "shared/common/oxide_enum_flags.h"
 #include "shared/test/test_browser_thread_bundle.h"
+#include "shared/test/test_web_contents_factory.h"
 
 #include "oxide_certificate_error.h"
 #include "oxide_certificate_error_placeholder_page.h"
@@ -324,7 +325,7 @@ TEST_F(CertificateErrorTest, DenyDismissesPlaceholder) {
   CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
   TestBrowserThreadBundle browser_thread_bundle;
   content::TestBrowserContext browser_context;
-  content::TestWebContentsFactory web_contents_factory;
+  TestWebContentsFactory web_contents_factory;
 
   std::unique_ptr<TestWebContentsDelegate> delegate =
       base::WrapUnique(new TestWebContentsDelegate());

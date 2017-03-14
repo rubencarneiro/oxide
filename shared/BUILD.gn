@@ -690,7 +690,11 @@ source_set("shared_testutils") {
     "test/oxide_test_web_contents_view.cc",
     "test/oxide_test_web_contents_view.h",
     "test/test_browser_thread_bundle.cc",
-    "test/test_browser_thread_bundle.h"
+    "test/test_browser_thread_bundle.h",
+    "test/test_web_contents_factory.cc",
+    "test/test_web_contents_factory.h",
+    "test/web_contents_test_harness.cc",
+    "test/web_contents_test_harness.h"
   ]
 }
 

@@ -37,7 +37,7 @@
 #include "qt/core/api/oxideqsslcertificate.h"
 #include "qt/core/api/oxideqsslcertificate_p.h"
 #include "qt/core/browser/web_contents_id_tracker.h"
-#include "shared/test/test_browser_thread_bundle.h"
+#include "shared/test/web_contents_test_harness.h"
 
 #include "oxide_qt_security_status.h"
 
@@ -46,7 +46,7 @@ namespace qt {
 
 using oxide::TestBrowserThreadBundle;
 
-class SecurityStatusTest : public testing::Test {
+class SecurityStatusTest : public WebContentsTestHarness {
  public:
   SecurityStatusTest();
 
@@ -55,32 +55,24 @@ class SecurityStatusTest : public testing::Test {
 
   OxideQSecurityStatus* status() const { return security_status_.get(); }
 
-  content::WebContents* web_contents() const { return web_contents_; }
-
  private:
   void SetUp() override;
 
-  TestBrowserThreadBundle browser_thread_bundle_;
-  content::TestBrowserContext browser_context_;
-  content::TestWebContentsFactory web_contents_factory_;
-
   std::unique_ptr<OxideQSecurityStatus> security_status_;
-  content::WebContents* web_contents_;
 
   scoped_refptr<net::X509Certificate> cert_;
   scoped_refptr<net::X509Certificate> expired_cert_;
 };
 
-SecurityStatusTest::SecurityStatusTest()
-    : web_contents_(nullptr) {}
+SecurityStatusTest::SecurityStatusTest() {}
 
 void SecurityStatusTest::SetUp() {
   security_status_ = base::WrapUnique(OxideQSecurityStatusPrivate::Create());
-  web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
-  oxide::SecurityStatus::CreateForWebContents(web_contents_);
+  WebContentsTestHarness::SetUp();
+  oxide::SecurityStatus::CreateForWebContents(web_contents());
 
   OxideQSecurityStatusPrivate::get(security_status_.get())->Init(
-      WebContentsIDTracker::GetInstance()->GetIDForWebContents(web_contents_));
+      WebContentsIDTracker::GetInstance()->GetIDForWebContents(web_contents()));
 
   cert_ =
       new net::X509Certificate("https://www.google.com/",

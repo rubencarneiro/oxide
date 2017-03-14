@@ -24,7 +24,7 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
-#include "shared/test/test_browser_thread_bundle.h"
+#include "shared/test/web_contents_test_harness.h"
 
 #include "javascript_dialog.h"
 #include "javascript_dialog_contents_helper.h"
@@ -36,30 +36,22 @@ namespace oxide {
 
 using testing::_;
 
-class JavaScriptDialogHostTest : public testing::Test {
- protected:
-  content::WebContents* web_contents() const { return web_contents_; }
-
+class JavaScriptDialogHostTest : public WebContentsTestHarness {
+ public:
   JavaScriptDialogContentsHelper* GetJSDialogContentsHelper() const;
 
  private:
   void SetUp() override;
-
-  TestBrowserThreadBundle browser_thread_bundle_;
-  content::TestBrowserContext browser_context_;
-  content::TestWebContentsFactory web_contents_factory_;
-
-  content::WebContents* web_contents_ = nullptr;
 };
 
 JavaScriptDialogContentsHelper*
 JavaScriptDialogHostTest::GetJSDialogContentsHelper() const {
-  return JavaScriptDialogContentsHelper::FromWebContents(web_contents_);
+  return JavaScriptDialogContentsHelper::FromWebContents(web_contents());
 }
 
 void JavaScriptDialogHostTest::SetUp() {
-  web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
-  JavaScriptDialogContentsHelper::CreateForWebContents(web_contents_);
+  WebContentsTestHarness::SetUp();
+  JavaScriptDialogContentsHelper::CreateForWebContents(web_contents());
 }
 
 struct JavaScriptDialogHostConstructTestRow {
