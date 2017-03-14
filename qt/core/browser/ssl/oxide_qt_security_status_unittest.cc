@@ -57,6 +57,7 @@ class SecurityStatusTest : public WebContentsTestHarness {
 
  private:
   void SetUp() override;
+  void TearDown() override;
 
   std::unique_ptr<OxideQSecurityStatus> security_status_;
 
@@ -85,6 +86,11 @@ void SecurityStatusTest::SetUp() {
                                "https://www.example.com/",
                                base::Time::UnixEpoch(),
                                base::Time::Now() - base::TimeDelta::FromDays(1));
+}
+
+void SecurityStatusTest::TearDown() {
+  security_status_.reset();
+  WebContentsTestHarness::TearDown();
 }
 
 TEST_F(SecurityStatusTest, Uninitialized) {
