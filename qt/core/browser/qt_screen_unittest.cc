@@ -35,7 +35,7 @@
 #include "ui/gfx/geometry/rect.h"
 
 #include "shared/browser/display_form_factor.h"
-#include "shared/test/mock_screen_observer.h"
+#include "shared/browser/mock_screen_observer.h"
 
 #include "qt_screen.h"
 
