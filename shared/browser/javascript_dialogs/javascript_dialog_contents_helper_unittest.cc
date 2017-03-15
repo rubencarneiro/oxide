@@ -121,8 +121,14 @@ class MockJavaScriptDialog : public JavaScriptDialog {
 
  private:
   // JavaScriptDialog implementation
-  void Show() override { sink_->Show(); }
-  void Hide() override { sink_->Hide(); }
+  void Show() override {
+    ASSERT_TRUE(sink_);
+    sink_->Show(); }
+  void Hide() override {
+    ASSERT_TRUE(sink_);
+    sink_->Hide();
+    sink_ = nullptr;
+  }
   base::string16 GetCurrentPromptText() override {
     sink_->GetCurrentPromptText();
     return base::ASCIIToUTF16("foo");
