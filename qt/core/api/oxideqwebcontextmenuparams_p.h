@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2016 Canonical Ltd.
+// Copyright (C) 2016-2017 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -52,6 +52,7 @@ class OXIDE_QTCORE_EXPORT OxideQWebContextMenuParamsData : public QSharedData {
   QString link_text;
   QString title_text;
   QUrl src_url;
+  QString selection_text;
 };
 
 #endif // _OXIDE_QT_CORE_API_WEB_CONTEXT_MENU_PARAMS_P_H_
