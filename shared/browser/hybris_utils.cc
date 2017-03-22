@@ -142,12 +142,12 @@ bool CameraCompatAvailable() {
 #endif
 
 base::LazyInstance<
-    LazyHybrisValue<DevicePropertyData, PopulateDeviceProperties>>
-      g_device_properties = LAZY_INSTANCE_INITIALIZER;
-base::LazyInstance<LazyHybrisValue<bool, UsingAndroidEGL>>
+    LazyHybrisValue<DevicePropertyData, PopulateDeviceProperties>>::Leaky
+        g_device_properties = LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<LazyHybrisValue<bool, UsingAndroidEGL>>::Leaky
     g_using_android_egl = LAZY_INSTANCE_INITIALIZER;
 #if defined(ENABLE_HYBRIS_CAMERA)
-base::LazyInstance<LazyHybrisValue<bool, CameraCompatAvailable>>
+base::LazyInstance<LazyHybrisValue<bool, CameraCompatAvailable>>::Leaky
     g_camera_compat_available = LAZY_INSTANCE_INITIALIZER;
 #endif
 

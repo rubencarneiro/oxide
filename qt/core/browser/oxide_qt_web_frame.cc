@@ -41,7 +41,7 @@ namespace qt {
 
 namespace {
 
-base::LazyInstance<std::map<uintptr_t, WebFrame*>> g_frame_map =
+base::LazyInstance<std::map<uintptr_t, WebFrame*>>::Leaky g_frame_map =
     LAZY_INSTANCE_INITIALIZER;
 
 }

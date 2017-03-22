@@ -22,7 +22,7 @@
 namespace oxide {
 
 namespace {
-base::LazyInstance<std::string> g_user_agent = LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<std::string>::Leaky g_user_agent = LAZY_INSTANCE_INITIALIZER;
 }
 
 std::string GetUserAgent() {

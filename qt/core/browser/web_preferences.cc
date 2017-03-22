@@ -34,9 +34,8 @@ namespace qt {
 
 namespace {
 
-base::LazyInstance<std::map<oxide::WebPreferences*,
-                            WebPreferences*>> g_prefs_map =
-    LAZY_INSTANCE_INITIALIZER;
+base::LazyInstance<std::map<oxide::WebPreferences*, WebPreferences*>>::Leaky
+    g_prefs_map = LAZY_INSTANCE_INITIALIZER;
 
 content::ScriptFontFamilyMap MakeDefaultScriptFontFamilyMap(const QFont& font) {
   return content::ScriptFontFamilyMap(

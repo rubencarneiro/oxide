@@ -82,7 +82,7 @@ namespace oxide {
 
 namespace {
 
-base::LazyInstance<std::set<BrowserContext*>> g_all_contexts;
+base::LazyInstance<std::set<BrowserContext*>>::Leaky g_all_contexts;
 
 // Cache was used for the default blockfile backend (CACHE_BACKEND_BLOCKFILE),
 // Cache2 is used since the switch to the simple backend (CACHE_BACKEND_SIMPLE).

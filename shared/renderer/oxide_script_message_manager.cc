@@ -39,7 +39,7 @@
 #include "oxide_script_message_handler_renderer.h"
 #include "oxide_script_message_request_impl_renderer.h"
 
-#include "grit/oxide_resources.h"
+#include "shared/grit/oxide_resources.h"
 
 namespace oxide {
 

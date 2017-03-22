@@ -25,7 +25,7 @@ namespace oxide {
 
 namespace {
 
-base::LazyInstance<base::ThreadLocalPointer<MessagePump>> g_lazy_tls =
+base::LazyInstance<base::ThreadLocalPointer<MessagePump>>::Leaky g_lazy_tls =
     LAZY_INSTANCE_INITIALIZER;
 
 }

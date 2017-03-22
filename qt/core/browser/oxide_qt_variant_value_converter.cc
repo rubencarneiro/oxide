@@ -119,7 +119,7 @@ std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
       return FromVariantMapValueInternal(variant.toMap(), state);
     case QVariant::String:
       return base::WrapUnique(
-          new base::StringValue(variant.toString().toStdString()));
+          new base::Value(variant.toString().toStdString()));
     default:
       break;
   }
@@ -134,7 +134,7 @@ std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
   }
 
   return base::WrapUnique(
-      new base::StringValue(variant.toString().toStdString()));
+      new base::Value(variant.toString().toStdString()));
 }
 
 QVariant ToVariantValueInternal(const base::Value* value,

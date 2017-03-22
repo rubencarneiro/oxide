@@ -50,7 +50,7 @@ namespace {
 
 Q_GLOBAL_STATIC(BrowserStartup, g_instance)
 
-base::LazyInstance<std::queue<base::Closure>> g_shutdown_callbacks =
+base::LazyInstance<std::queue<base::Closure>>::Leaky g_shutdown_callbacks =
     LAZY_INSTANCE_INITIALIZER;
 
 void ShutdownChromium() {
