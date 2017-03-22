@@ -15,29 +15,36 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "oxide_test_browser_thread_bundle.h"
+#include "legacy_external_touch_editing_menu_controller.h"
 
-#include "base/memory/ptr_util.h"
-#include "base/message_loop/message_loop.h"
-#include "base/message_loop/message_pump_default.h"
-#include "content/public/test/test_browser_thread_bundle.h"
+#include "base/logging.h"
+
+#include "legacy_external_touch_editing_menu_controller_delegate.h"
 
 namespace oxide {
+namespace qt {
 
-namespace {
-
-std::unique_ptr<base::MessagePump> CreateUIMessagePump() {
-  return base::WrapUnique(new base::MessagePumpDefault());
+LegacyExternalTouchEditingMenuController
+    ::LegacyExternalTouchEditingMenuController(
+        LegacyExternalTouchEditingMenuControllerDelegate* delegate)
+        : delegate_(delegate) {
+  DCHECK(!delegate_->controller_);
+  delegate_->controller_ = this;
 }
 
+void LegacyExternalTouchEditingMenuController::ClearDelegate() {
+  DCHECK(delegate_);
+  DCHECK_EQ(delegate_->controller_, this);
+  delegate_->controller_ = nullptr;
+  delegate_ = nullptr;
 }
 
-TestBrowserThreadBundle::TestBrowserThreadBundle() {
-  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
-  bundle_.reset(new content::TestBrowserThreadBundle());
-  base::MessageLoop::InitMessagePumpForUIFactory(CreateUIMessagePump);
+LegacyExternalTouchEditingMenuController
+    ::~LegacyExternalTouchEditingMenuController() {
+  if (delegate_) {
+    ClearDelegate();
+  }
 }
 
-TestBrowserThreadBundle::~TestBrowserThreadBundle() {}
-
+} // namespace qt
 } // namespace oxide

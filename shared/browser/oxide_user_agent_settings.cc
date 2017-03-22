@@ -76,7 +76,12 @@ KeyedService* UserAgentSettingsFactory::BuildServiceInstanceFor(
 
 content::BrowserContext* UserAgentSettingsFactory::GetBrowserContextToUse(
     content::BrowserContext* context) const {
-  return BrowserContext::FromContent(context)->GetOriginalContext();
+  BrowserContext* c = BrowserContext::FromContent(context);
+  if (!c) {
+    // Can be null in unit tests
+    return nullptr;
+  }
+  return c->GetOriginalContext();
 }
 
 // static

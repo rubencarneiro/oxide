@@ -154,6 +154,12 @@ class WebView : public oxide::WebViewClient,
       const content::ContextMenuParams& params,
       const std::vector<content::MenuItem>& items,
       oxide::WebContextMenuClient* client) override;
+  std::unique_ptr<oxide::TouchEditingMenuController>
+  CreateOverrideTouchEditingMenuController(
+      oxide::TouchEditingMenuControllerClient* client) override;
+  std::unique_ptr<oxide::TouchEditingMenu> CreateTouchEditingMenu(
+      blink::WebContextMenuData::EditFlags edit_flags,
+      oxide::TouchEditingMenuClient* client) override;
 
   // oxide::ScriptMessageTarget implementation
   size_t GetScriptMessageHandlerCount() const override;

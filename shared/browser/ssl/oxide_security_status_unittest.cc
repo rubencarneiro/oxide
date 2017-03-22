@@ -32,7 +32,7 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/test/oxide_test_browser_thread_bundle.h"
+#include "shared/test/web_contents_test_harness.h"
 
 #include "oxide_security_status.h"
 #include "oxide_security_types.h"
@@ -45,32 +45,24 @@ OXIDE_MAKE_ENUM_BITWISE_OPERATORS(SecurityStatus::ChangedFlags);
 
 }
 
-class SecurityStatusTest : public testing::Test {
+class SecurityStatusTest : public WebContentsTestHarness {
  public:
   SecurityStatusTest();
 
  protected:
-  content::WebContents* web_contents() const { return web_contents_; }
-
   net::X509Certificate* cert() const { return cert_.get(); }
   net::X509Certificate* expired_cert() const { return expired_cert_.get(); }
 
  private:
   void SetUp() override;
 
-  TestBrowserThreadBundle browser_thread_bundle_;
-  content::TestBrowserContext browser_context_;
-  content::TestWebContentsFactory web_contents_factory_;
-
-  content::WebContents* web_contents_;
-
   scoped_refptr<net::X509Certificate> cert_;
   scoped_refptr<net::X509Certificate> expired_cert_;
 };
 
 void SecurityStatusTest::SetUp() {
-  web_contents_ = web_contents_factory_.CreateWebContents(&browser_context_);
-  SecurityStatus::CreateForWebContents(web_contents_);
+  WebContentsTestHarness::SetUp();
+  SecurityStatus::CreateForWebContents(web_contents());
 
   cert_ =
       new net::X509Certificate("https://www.google.com/",

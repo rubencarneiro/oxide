@@ -15,10 +15,12 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CLIENT_H_
-#define _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CLIENT_H_
+#ifndef _OXIDE_QT_CORE_GLUE_LEGACY_EXTERNAL_TOUCH_EDITING_MENU_CONTROLLER_DELEGATE_H_
+#define _OXIDE_QT_CORE_GLUE_LEGACY_EXTERNAL_TOUCH_EDITING_MENU_CONTROLLER_DELEGATE_H_
 
 #include <QtGlobal>
+
+#include "qt/core/glue/legacy_external_touch_editing_menu_controller.h"
 
 QT_BEGIN_NAMESPACE
 class QRectF;
@@ -27,9 +29,10 @@ QT_END_NAMESPACE
 namespace oxide {
 namespace qt {
 
-class LegacyTouchEditingController;
+class LegacyExternalTouchEditingMenuController;
+struct WebContextMenuParams;
 
-class LegacyTouchEditingClient {
+class LegacyExternalTouchEditingMenuControllerDelegate {
  public:
   enum class ActiveStatus {
     INACTIVE,
@@ -37,7 +40,12 @@ class LegacyTouchEditingClient {
     SELECTION_ACTIVE
   };
 
-  virtual ~LegacyTouchEditingClient() = default;
+  virtual ~LegacyExternalTouchEditingMenuControllerDelegate() {
+    if (controller_) {
+      controller_->ClearDelegate();
+      Q_ASSERT(!controller_);
+    }
+  }
 
   virtual void StatusChanged(ActiveStatus status,
                              const QRectF& bounds,
@@ -45,18 +53,20 @@ class LegacyTouchEditingClient {
 
   virtual void InsertionHandleTapped() = 0;
 
-  virtual void ContextMenuIntercepted() = 0;
+  virtual bool HandleContextMenu(const WebContextMenuParams& params) = 0;
 
  protected:
-  LegacyTouchEditingController* controller() const { return controller_; }
+  LegacyExternalTouchEditingMenuController* controller() const {
+    return controller_;
+  }
 
  private:
-  friend class LegacyTouchEditingController;
+  friend class LegacyExternalTouchEditingMenuController;
 
-  LegacyTouchEditingController* controller_ = nullptr;
+  LegacyExternalTouchEditingMenuController* controller_ = nullptr;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CLIENT_H_
+#endif // _OXIDE_QT_CORE_GLUE_LEGACY_EXTERNAL_TOUCH_EDITING_MENU_CONTROLLER_DELEGATE_H_

@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2016 Canonical Ltd.
+// Copyright (C) 2016-2017 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -77,18 +77,19 @@ void tst_oxideqwebcontextmenuparams::construct() {
                          "Test title",
                          oxide::qt::MEDIA_TYPE_IMAGE,
                          QUrl("http://www.example.com/image.jpg"),
-                         "", false));
+                         "Lorem ipsum dolor sit amet", false));
 
   QCOMPARE(params.pageUrl(), QUrl("https://www.twitter.com/"));
   QCOMPARE(params.frameUrl(), QUrl("https://www.google.com/"));
   QVERIFY(params.isLink());
   QVERIFY(!params.isEditable());
-  QVERIFY(!params.isSelection());
+  QVERIFY(params.isSelection());
   QCOMPARE(params.mediaType(), OxideQWebContextMenuParams::MediaTypeImage);
   QCOMPARE(params.linkUrl(), QUrl("http://www.example.com/"));
   QCOMPARE(params.linkText(), QLatin1String("Test link"));
   QCOMPARE(params.titleText(), QLatin1String("Test title"));
   QCOMPARE(params.srcUrl(), QUrl("http://www.example.com/image.jpg"));
+  QCOMPARE(params.selectionText(), QLatin1String("Lorem ipsum dolor sit amet"));
 }
 
 void tst_oxideqwebcontextmenuparams::assignment() {
@@ -104,18 +105,19 @@ void tst_oxideqwebcontextmenuparams::assignment() {
                          "Test title",
                          oxide::qt::MEDIA_TYPE_IMAGE,
                          QUrl("http://www.example.com/image.jpg"),
-                         "", false));
+                         "Lorem ipsum dolor sit amet", false));
 
   QCOMPARE(params.pageUrl(), QUrl("https://www.twitter.com/"));
   QCOMPARE(params.frameUrl(), QUrl("https://www.google.com/"));
   QVERIFY(params.isLink());
   QVERIFY(!params.isEditable());
-  QVERIFY(!params.isSelection());
+  QVERIFY(params.isSelection());
   QCOMPARE(params.mediaType(), OxideQWebContextMenuParams::MediaTypeImage);
   QCOMPARE(params.linkUrl(), QUrl("http://www.example.com/"));
   QCOMPARE(params.linkText(), QLatin1String("Test link"));
   QCOMPARE(params.titleText(), QLatin1String("Test title"));
   QCOMPARE(params.srcUrl(), QUrl("http://www.example.com/image.jpg"));
+  QCOMPARE(params.selectionText(), QLatin1String("Lorem ipsum dolor sit amet"));
 }
 
 void tst_oxideqwebcontextmenuparams::copy() {
@@ -154,7 +156,7 @@ void tst_oxideqwebcontextmenuparams::equality() {
                      "Test title",
                      oxide::qt::MEDIA_TYPE_IMAGE,
                      QUrl("http://www.example.com/image.jpg"),
-                     "", false);
+                     "Lorem ipsum dolor sit amet", false);
 
   OxideQWebContextMenuParams params1 =
       OxideQWebContextMenuParamsData::Create(input_params);
@@ -181,7 +183,7 @@ void tst_oxideqwebcontextmenuparams::isLink() {
                      "Test title",
                      oxide::qt::MEDIA_TYPE_IMAGE,
                      QUrl("http://www.example.com/image.jpg"),
-                     "", false);
+                     "Lorem ipsum dolor sit amet", false);
 
   OxideQWebContextMenuParams params =
       OxideQWebContextMenuParamsData::Create(input_params);
@@ -201,7 +203,7 @@ void tst_oxideqwebcontextmenuparams::isEditable() {
                      "Test title",
                      oxide::qt::MEDIA_TYPE_IMAGE,
                      QUrl("http://www.example.com/image.jpg"),
-                     "", false);
+                     "Lorem ipsum dolor sit amet", false);
 
   OxideQWebContextMenuParams params =
       OxideQWebContextMenuParamsData::Create(input_params);
@@ -227,7 +229,7 @@ void tst_oxideqwebcontextmenuparams::isSelection() {
       OxideQWebContextMenuParamsData::Create(input_params);
   QVERIFY(!params.isSelection());
 
-  input_params.selection_text = "Foo";
+  input_params.selection_text = "Lorem ipsum dolor sit amet";
   params = OxideQWebContextMenuParamsData::Create(input_params);
   QVERIFY(params.isSelection());
 }
@@ -241,7 +243,7 @@ void tst_oxideqwebcontextmenuparams::mediaType() {
                      "Test title",
                      oxide::qt::MEDIA_TYPE_IMAGE,
                      QUrl("http://www.example.com/image.jpg"),
-                     "", false);
+                     "Lorem ipsum dolor sit amet", false);
 
   OxideQWebContextMenuParams params =
       OxideQWebContextMenuParamsData::Create(input_params);

@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "qt/core/glue/javascript_dialog_type.h"
+#include "qt/core/glue/touch_editing_menu.h"
 
 #include "qquick_legacy_alert_dialog.h"
 #include "qquick_legacy_before_unload_dialog.h"
@@ -30,9 +31,11 @@
 namespace oxide {
 namespace qquick {
 
+using qt::EditCapabilityFlags;
 using qt::JavaScriptDialogClient;
 using qt::JavaScriptDialogType;
 using qt::MenuItem;
+using qt::TouchEditingMenuClient;
 using qt::WebContextMenuClient;
 using qt::WebContextMenuParams;
 
@@ -47,6 +50,14 @@ LegacyAuxiliaryUIFactory::CreateWebContextMenu(
 
   return std::unique_ptr<qt::WebContextMenu>(
       new LegacyWebContextMenu(item_, context_menu_, params, client));
+}
+
+std::unique_ptr<qt::TouchEditingMenu>
+LegacyAuxiliaryUIFactory::CreateTouchEditingMenu(
+    EditCapabilityFlags edit_flags,
+    TouchEditingMenuClient* client) {
+  Q_ASSERT(0);
+  return nullptr;
 }
 
 std::unique_ptr<qt::JavaScriptDialog>

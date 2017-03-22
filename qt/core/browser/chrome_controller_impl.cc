@@ -53,7 +53,7 @@ struct ChromeControllerImpl::InitProps {
   bool animation_enabled = true;
 };
 
-void ChromeControllerImpl::ChromePositionUpdated() {
+void ChromeControllerImpl::ContentOrTopControlsOffsetChanged() {
   client_->ChromePositionUpdated();
 }
 
@@ -62,10 +62,8 @@ void ChromeControllerImpl::init(WebContentsID web_contents_id) {
       WebContentsIDTracker::GetInstance()->GetWebContentsFromID(web_contents_id);
   DCHECK(contents);
 
-  controller_ = oxide::ChromeController::FromWebContents(contents);
-  DCHECK(controller_);
-
-  controller_->set_client(this);
+  Observe(oxide::ChromeController::FromWebContents(contents));
+  DCHECK(controller());
 
   contents_view_ = ContentsViewImpl::FromWebContents(contents);
   DCHECK(contents_view_);
@@ -76,7 +74,7 @@ void ChromeControllerImpl::init(WebContentsID web_contents_id) {
   setMode(init_props->mode);
   setAnimationEnabled(init_props->animation_enabled);
 
-  ChromePositionUpdated();
+  client_->ChromePositionUpdated();
 }
 
 int ChromeControllerImpl::topControlsHeight() const {
@@ -86,21 +84,21 @@ int ChromeControllerImpl::topControlsHeight() const {
 void ChromeControllerImpl::setTopControlsHeight(int height) {
   top_controls_height_ = height;
 
-  if (!controller_) {
+  if (!controller()) {
     return;
   }
 
-  controller_->SetTopControlsHeight(
+  controller()->SetTopControlsHeight(
       DpiUtils::ConvertQtPixelsToChromium(height,
                                           contents_view_->GetScreen()));
 }
 
 ChromeController::Mode ChromeControllerImpl::mode() const {
-  if (!controller_) {
+  if (!controller()) {
     return init_props_->mode;
   }
 
-  switch (controller_->constraints()) {
+  switch (controller()->constraints()) {
     case blink::WebBrowserControlsShown:
       return Mode::Shown;
     case blink::WebBrowserControlsHidden:
@@ -114,57 +112,57 @@ ChromeController::Mode ChromeControllerImpl::mode() const {
 }
 
 void ChromeControllerImpl::setMode(Mode mode) {
-  if (!controller_) {
+  if (!controller()) {
     init_props_->mode = mode;
   } else {
-    controller_->SetConstraints(ModeToTopControlsState(mode));
+    controller()->SetConstraints(ModeToTopControlsState(mode));
   }
 }
 
 bool ChromeControllerImpl::animationEnabled() const {
-  if (!controller_) {
+  if (!controller()) {
     return init_props_->animation_enabled;
   }
 
-  return controller_->animation_enabled();
+  return controller()->animation_enabled();
 }
 
 void ChromeControllerImpl::setAnimationEnabled(bool enabled) {
-  if (!controller_) {
+  if (!controller()) {
     init_props_->animation_enabled = enabled;
   } else {
-    controller_->set_animation_enabled(enabled);
+    controller()->set_animation_enabled(enabled);
   }
 }
 
 void ChromeControllerImpl::show(bool animated) {
-  if (!controller_) {
+  if (!controller()) {
     return;
   }
 
-  controller_->Show(animated);
+  controller()->Show(animated);
 }
 
 void ChromeControllerImpl::hide(bool animated) {
-  if (!controller_) {
+  if (!controller()) {
     return;
   }
 
-  controller_->Hide(animated);
+  controller()->Hide(animated);
 }
 
 int ChromeControllerImpl::topControlsOffset() const {
-  if (!controller_) {
+  if (!controller()) {
     return 0;
   }
 
   return DpiUtils::ConvertChromiumPixelsToQt(
-      controller_->GetTopControlsOffset(),
+      controller()->GetTopControlsOffset(),
       contents_view_->GetScreen());
 }
 
 int ChromeControllerImpl::topContentOffset() const {
-  return DpiUtils::ConvertChromiumPixelsToQt(controller_->GetTopContentOffset(),
+  return DpiUtils::ConvertChromiumPixelsToQt(controller()->GetTopContentOffset(),
                                              contents_view_->GetScreen());
 }
 
@@ -180,18 +178,13 @@ void ChromeControllerImpl::OnDisplayPropertiesChanged(
 ChromeControllerImpl::ChromeControllerImpl(qt::ChromeControllerClient* client,
                                            QObject* handle)
     : client_(client),
-      controller_(nullptr),
       contents_view_(nullptr),
       init_props_(new InitProps()),
       top_controls_height_(0) {
   setHandle(handle);
 }
 
-ChromeControllerImpl::~ChromeControllerImpl() {
-  if (controller_) {
-    controller_->set_client(nullptr);
-  }
-}
+ChromeControllerImpl::~ChromeControllerImpl() = default;
 
 } // namespace qt
 } // namespace oxide

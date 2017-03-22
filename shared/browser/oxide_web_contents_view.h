@@ -30,6 +30,7 @@
 #include "content/browser/web_contents/web_contents_view_oxide.h" // nogncheck
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/common/drop_data.h"
+#include "third_party/WebKit/public/web/WebContextMenuData.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rect_f.h"
 #include "ui/gfx/geometry/size.h"
@@ -38,11 +39,11 @@
 #include "shared/browser/compositor/oxide_compositor_client.h"
 #include "shared/browser/compositor/oxide_compositor_observer.h"
 #include "shared/browser/input/input_method_context_client.h"
-#include "shared/browser/legacy_touch_editing_controller.h"
 #include "shared/browser/oxide_drag_source_client.h"
 #include "shared/browser/oxide_mouse_event_state.h"
 #include "shared/browser/oxide_render_widget_host_view_container.h"
 #include "shared/browser/screen_observer.h"
+#include "shared/browser/touch_selection/touch_editing_menu_controller_client.h"
 #include "shared/common/oxide_shared_export.h"
 
 namespace blink {
@@ -76,8 +77,8 @@ class Compositor;
 class CompositorFrameData;
 class CompositorFrameHandle;
 class DragSource;
-class LegacyTouchEditingClient;
 class RenderWidgetHostView;
+class TouchEditingMenuController;
 class WebContentsViewClient;
 class WebContextMenuHost;
 class WebPopupMenuHost;
@@ -89,9 +90,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
       public CompositorObserver,
       public DragSourceClient,
       public InputMethodContextClient,
-      public LegacyTouchEditingController,
       public RenderWidgetHostViewContainer,
-      public ScreenObserver {
+      public ScreenObserver,
+      public TouchEditingMenuControllerClient {
  public:
   ~WebContentsView();
   static content::WebContentsViewOxide* Create(
@@ -105,16 +106,13 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void SetClient(WebContentsViewClient* client);
 
+  blink::WebContextMenuData::EditFlags GetEditingCapabilities() const;
+
   void set_editing_capabilities_changed_callback(
       const base::Closure& callback) {
     editing_capabilities_changed_callback_ = callback;
   }
 
-  bool IsVisible() const;
-  bool HasFocus() const;
-
-  gfx::Size GetSize() const;
-  gfx::Size GetSizeInPixels() const;
   gfx::Rect GetBounds() const;
 
   display::Display GetDisplay() const;
@@ -154,12 +152,15 @@ class OXIDE_SHARED_EXPORT WebContentsView
   void VisibilityChanged();
   void FocusChanged();
   void ScreenChanged();
+  void TopLevelWindowBoundsChanged();
 
   // XXX(chrisccoulson): This will probably be removed, please don't use it
   //  See https://launchpad.net/bugs/1665722
   ChromeController* chrome_controller() const {
     return chrome_controller_.get();
   }
+
+  void InitializeTouchEditingController();
 
  private:
   WebContentsView(content::WebContents* web_contents);
@@ -178,7 +179,14 @@ class OXIDE_SHARED_EXPORT WebContentsView
   bool ShouldScrollFocusedEditableNodeIntoView();
   void MaybeScrollFocusedEditableNodeIntoView();
 
+  bool IsVisible() const;
+  bool HasFocus() const;
+
+  gfx::Size GetSize() const;
+  gfx::Size GetSizeInPixels() const;
   gfx::RectF GetBoundsF() const;
+
+  gfx::Rect GetTopLevelWindowBounds() const;
 
   bool ViewSizeShouldBeScreenSize() const;
 
@@ -187,8 +195,6 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void DidCloseContextMenu();
   void DidHidePopupMenu();
-
-  void HideTouchSelectionController();
 
   void CursorChangedInternal(RenderWidgetHostView* view);
   void TouchEditingStatusChangedInternal(RenderWidgetHostView* view);
@@ -200,6 +206,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   void SyncClientWithNewView(RenderWidgetHostView* view = nullptr);
 
+  const content::TextInputState* GetTextInputState() const;
   const content::TextInputManager::TextSelection* GetTextSelection() const;
 
   // content::WebContentsView implementation
@@ -282,9 +289,6 @@ class OXIDE_SHARED_EXPORT WebContentsView
   base::string16 GetSelectionText() const override;
   bool GetSelectedText(base::string16* text) const override;
 
-  // LegacyTouchEditingController implementation
-  void HideAndDisallowShowingAutomatically() override;
-
   // RenderWidgetHostViewContainer implementation
   void AttachLayer(scoped_refptr<cc::Layer> layer) override;
   void DetachLayer(scoped_refptr<cc::Layer> layer) override;
@@ -293,8 +297,8 @@ class OXIDE_SHARED_EXPORT WebContentsView
   bool IsFullscreen() const override;
   float GetTopControlsHeight() override;
   std::unique_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() override;
-  void TouchEditingStatusChanged(RenderWidgetHostView* view) override;
-  void TouchInsertionHandleTapped(RenderWidgetHostView* view) override;
+  void OnTouchSelectionEvent(RenderWidgetHostView* view,
+                             ui::SelectionEventType event) override;
   void TextInputStateChanged(RenderWidgetHostView* view,
                              const content::TextInputState* state) override;
   void ImeCancelComposition(RenderWidgetHostView* view) override;
@@ -310,6 +314,9 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   // ScreenObserver implementation
   void OnDisplayPropertiesChanged(const display::Display& display) override;
+
+  // TouchEditingMenuControllerClient implementation
+  ChromeController* GetChromeController() const override;
 
   WebContentsViewClient* client_;
   base::Closure editing_capabilities_changed_callback_;
@@ -345,7 +352,7 @@ class OXIDE_SHARED_EXPORT WebContentsView
 
   std::unique_ptr<ChromeController> chrome_controller_;
 
-  LegacyTouchEditingClient* legacy_touch_editing_client_;
+  std::unique_ptr<TouchEditingMenuController> touch_editing_menu_controller_;
 
   RenderWidgetHostWeakPtr last_focused_widget_for_text_selection_;
 

@@ -82,7 +82,7 @@ namespace oxide {
 
 namespace {
 
-base::LazyInstance<std::set<BrowserContext *>>::Leaky g_all_contexts;
+base::LazyInstance<std::set<BrowserContext*>>::Leaky g_all_contexts;
 
 // Cache was used for the default blockfile backend (CACHE_BACKEND_BLOCKFILE),
 // Cache2 is used since the switch to the simple backend (CACHE_BACKEND_SIMPLE).
@@ -725,7 +725,8 @@ BrowserContext::BrowserContext(BrowserContextIOData* io_data)
 BrowserContext::~BrowserContext() {
   DCHECK(CalledOnValidThread());
 
-  g_all_contexts.Get().erase(this);
+  size_t erased = g_all_contexts.Get().erase(this);
+  DCHECK_EQ(erased, 1);
 
   BrowserContextDependencyManager::GetInstance()
       ->DestroyBrowserContextServices(this);
@@ -736,6 +737,16 @@ BrowserContext::~BrowserContext() {
   content::BrowserThread::DeleteSoon(content::BrowserThread::IO,
                                      FROM_HERE, io_data_);
   io_data_ = nullptr;
+}
+
+// static
+BrowserContext* BrowserContext::FromContent(content::BrowserContext* context) {
+  BrowserContext* result = static_cast<BrowserContext*>(context);
+  if (g_all_contexts.Get().find(result) != g_all_contexts.Get().end()) {
+    return result;
+  }
+
+  return nullptr;
 }
 
 // static

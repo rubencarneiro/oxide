@@ -23,6 +23,7 @@
 
 #include <QtGlobal>
 
+#include "qt/core/glue/edit_capability_flags.h"
 #include "qt/core/glue/menu_item.h"
 
 QT_BEGIN_NAMESPACE
@@ -36,6 +37,8 @@ namespace qt {
 class JavaScriptDialog;
 class JavaScriptDialogClient;
 enum class JavaScriptDialogType;
+class TouchEditingMenu;
+class TouchEditingMenuClient;
 class WebContextMenu;
 class WebContextMenuClient;
 struct WebContextMenuParams;
@@ -48,6 +51,10 @@ class AuxiliaryUIFactory {
       const WebContextMenuParams& params,
       const std::vector<MenuItem>& items,
       WebContextMenuClient* client) = 0;
+
+  virtual std::unique_ptr<TouchEditingMenu> CreateTouchEditingMenu(
+      EditCapabilityFlags edit_flags,
+      TouchEditingMenuClient* client) = 0;
 
   virtual std::unique_ptr<JavaScriptDialog> CreateJavaScriptDialog(
       const QUrl& origin_url,

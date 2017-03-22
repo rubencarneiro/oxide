@@ -45,9 +45,7 @@ class LegacyContentsView : public ContentsView {
     popup_menu_ = popup_menu;
   }
 
-  OxideQQuickTouchSelectionController* touch_selection_controller() const {
-    return touch_selection_controller_.get();
-  }
+  void set_touch_selection_controller(OxideQQuickTouchSelectionController* tsc);
 
  private:
   // qt::ContentsViewClient implementation
@@ -57,11 +55,9 @@ class LegacyContentsView : public ContentsView {
       const QRect& bounds,
       qt::WebPopupMenuClient* client) override;
   std::unique_ptr<qt::TouchHandleDrawable> CreateTouchHandleDrawable() override;
-  qt::LegacyTouchEditingClient* GetLegacyTouchEditingClient() override;
-
-  std::unique_ptr<OxideQQuickTouchSelectionController> touch_selection_controller_;
 
   QPointer<QQmlComponent> popup_menu_;
+  QPointer<OxideQQuickTouchSelectionController> touch_selection_controller_;
 };
 
 } // namespace qquick

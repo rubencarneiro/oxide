@@ -24,7 +24,7 @@ class WebContentsDataTracker {
 
     std::unique_ptr<T> r(new T(contents));
     contents->SetUserData(UserDataKey(), new Data(r.get()));
-    r->contents_ = contents;
+    r->WebContentsDataTracker<T>::contents_ = contents;
     return std::move(r);
   }
 

@@ -18,10 +18,11 @@
 #ifndef _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_P_H_
 #define _OXIDE_QT_QUICK_API_TOUCH_SELECTION_CONTROLLER_P_H_
 
+#include <memory>
 #include <QPointer>
 #include <QRectF>
 
-#include "qt/core/glue/legacy_touch_editing_client.h"
+#include "qt/core/glue/legacy_external_touch_editing_menu_controller_delegate.h"
 #include "qt/quick/api/oxideqquicktouchselectioncontroller.h"
 
 QT_BEGIN_NAMESPACE
@@ -29,11 +30,13 @@ class QQmlComponent;
 QT_END_NAMESPACE
 
 class OxideQQuickTouchSelectionControllerPrivate
-    : public oxide::qt::LegacyTouchEditingClient {
+    : public oxide::qt::LegacyExternalTouchEditingMenuControllerDelegate {
   Q_DECLARE_PUBLIC(OxideQQuickTouchSelectionController)
   Q_DISABLE_COPY(OxideQQuickTouchSelectionControllerPrivate)
 
  public:
+  static std::unique_ptr<OxideQQuickTouchSelectionController> Create();
+
   static OxideQQuickTouchSelectionControllerPrivate* get(
       OxideQQuickTouchSelectionController* q);
 
@@ -41,12 +44,12 @@ class OxideQQuickTouchSelectionControllerPrivate
   OxideQQuickTouchSelectionControllerPrivate(
       OxideQQuickTouchSelectionController* q);
 
-  // oxide::qt::LegacyTouchSelectionControllerPrivate
+  // oxide::qt::LegacyExternalTouchEditingMenuControllerDelegate implementation
   void StatusChanged(ActiveStatus status,
                      const QRectF& bounds,
                      bool handle_drag_in_progress) override;
   void InsertionHandleTapped() override;
-  void ContextMenuIntercepted() override;
+  bool HandleContextMenu(const oxide::qt::WebContextMenuParams& params) override;
 
   OxideQQuickTouchSelectionController* q_ptr;
 

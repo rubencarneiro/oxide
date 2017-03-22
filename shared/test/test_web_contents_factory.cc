@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2016 Canonical Ltd.
+// Copyright (C) 2017 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -15,22 +15,28 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#include "legacy_touch_editing_controller.h"
+#include "test_web_contents_factory.h"
 
-#include "base/logging.h"
+#include "base/memory/ptr_util.h"
+#include "content/public/test/test_web_contents_factory.h"
 
-#include "legacy_touch_editing_client.h"
+#include "oxide_test_web_contents_view.h"
 
 namespace oxide {
-namespace qt {
 
-void LegacyTouchEditingController::AttachToClient(
-    LegacyTouchEditingClient* client) {
-  DCHECK(!client->controller_);
-  client->controller_ = this;
+TestWebContentsFactory::TestWebContentsFactory() {
+  content::SetWebContentsViewOxideFactory(TestWebContentsView::Create);
+  factory_ = base::MakeUnique<content::TestWebContentsFactory>();
 }
 
-LegacyTouchEditingController::~LegacyTouchEditingController() = default;
+TestWebContentsFactory::~TestWebContentsFactory() {
+  factory_.reset();
+  content::SetWebContentsViewOxideFactory(nullptr);
+}
 
-} // namespace qt
+content::WebContents* TestWebContentsFactory::CreateWebContents(
+    content::BrowserContext* context) {
+  return factory_->CreateWebContents(context);
+}
+
 } // namespace oxide

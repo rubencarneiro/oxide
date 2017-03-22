@@ -15,27 +15,26 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-#ifndef _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
-#define _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#ifndef _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_
+#define _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_
 
 namespace oxide {
 namespace qt {
 
-class LegacyTouchEditingClient;
+enum class WebContextMenuAction : unsigned;
 
-class LegacyTouchEditingController {
+class TouchEditingMenuClient {
  public:
-  virtual ~LegacyTouchEditingController();
+  virtual ~TouchEditingMenuClient() = default;
 
-  virtual void HideAndDisallowShowingAutomatically() = 0;
+  virtual void ExecuteCommand(WebContextMenuAction action) = 0;
 
- protected:
-#if defined(OXIDE_QTCORE_IMPLEMENTATION)
-  void AttachToClient(LegacyTouchEditingClient* client);
-#endif
+  virtual void Close() = 0;
+
+  virtual void WasResized() = 0;
 };
 
 } // namespace qt
 } // namespace oxide
 
-#endif // _OXIDE_QT_CORE_GLUE_LEGACY_TOUCH_EDITING_CONTROLLER_H_
+#endif // _OXIDE_QT_CORE_GLUE_TOUCH_EDITING_MENU_CLIENT_H_

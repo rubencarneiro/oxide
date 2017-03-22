@@ -23,6 +23,7 @@
 
 #include "base/macros.h"
 #include "ui/display/display.h"
+#include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/rect_f.h"
 
 #include "shared/common/oxide_shared_export.h"
@@ -33,10 +34,6 @@ struct MenuItem;
 class NativeWebKeyboardEvent;
 class RenderFrameHost;
 class WebCursor;
-}
-
-namespace gfx {
-class Rect;
 }
 
 namespace ui {
@@ -62,7 +59,11 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
 
   virtual bool HasFocus() const = 0;
 
+  // The view's bounds in screen coordinates
   virtual gfx::RectF GetBounds() const = 0;
+
+  // The top-level window's bounds in screen coordinates
+  virtual gfx::Rect GetTopLevelWindowBounds() const = 0;
 
   virtual void SwapCompositorFrame() = 0;
   virtual void EvictCurrentFrame() = 0;
@@ -70,14 +71,14 @@ class OXIDE_SHARED_EXPORT WebContentsViewClient {
   virtual void UpdateCursor(const content::WebCursor& cursor);
 
   virtual std::unique_ptr<WebPopupMenu> CreatePopupMenu(
-      const std::vector<content::MenuItem> & items,
+      const std::vector<content::MenuItem>& items,
       int selected_item,
       bool allow_multiple_selection,
       const gfx::Rect& bounds,
       WebPopupMenuClient* client);
 
   virtual std::unique_ptr<ui::TouchHandleDrawable> 
-  CreateTouchHandleDrawable() const;
+  CreateTouchHandleDrawable();
 
   virtual InputMethodContext* GetInputMethodContext() const;
 

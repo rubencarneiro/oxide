@@ -203,5 +203,26 @@ UbuntuTestWebView {
       verify(callback.wait());
       webView.contextMenuOpening.disconnect(callback);
     }
+
+    function test_UbuntuWebView_contextMenuOpening3_selectionText() {
+      function contextMenuOpeningHandler(params, menu) {
+        verify(params.isSelection);
+        compare(params.selectionText, "Some text");
+      }
+
+      var callback = wrapCallbackTestSequence(contextMenuOpeningHandler);
+      webView.contextMenuOpening.connect(callback);
+
+      webView.getTestApi().evaluateCode(
+          "var range = document.createRange(); " +
+          "range.selectNodeContents(document.getElementById(\"text\")); " +
+          "var selection = window.getSelection(); " +
+          "selection.removeAllRanges(); selection.addRange(range);")
+      var r = webView.getTestApi().getBoundingClientRectForSelector("#text");
+      mouseClick(webView, r.x + r.width / 2, r.y + r.height / 2, Qt.RightButton);
+
+      verify(callback.wait());
+      webView.contextMenuOpening.disconnect(callback);
+    }
   }
 }

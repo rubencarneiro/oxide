@@ -35,7 +35,7 @@
 #include "url/gurl.h"
 
 #include "shared/common/oxide_enum_flags.h"
-#include "shared/test/oxide_test_browser_thread_bundle.h"
+#include "shared/test/web_contents_test_harness.h"
 
 #include "oxide_certificate_error.h"
 #include "oxide_certificate_error_dispatcher.h"
@@ -57,16 +57,12 @@ scoped_refptr<net::X509Certificate> CreateCertificate(bool expired = false) {
 
 }
 
-class CertificateErrorDispatcherTest : public testing::Test {
+class CertificateErrorDispatcherTest : public WebContentsTestHarness {
  public:
   CertificateErrorDispatcherTest();
   ~CertificateErrorDispatcherTest() override;
 
  protected:
-  content::WebContents* CreateWebContents();
-
-  content::WebContents* web_contents() const { return web_contents_; }
-
   CertificateError* last_error() const { return last_error_.get(); }
 
   void ClearLastError();
@@ -90,21 +86,11 @@ class CertificateErrorDispatcherTest : public testing::Test {
                           std::unique_ptr<CertificateError> error);
   void OnResponse(content::CertificateRequestResultType response);
 
-  TestBrowserThreadBundle browser_thread_bundle_;
-  content::TestBrowserContext browser_context_;
-  content::TestWebContentsFactory web_contents_factory_;
-
-  content::WebContents* web_contents_;
-
   std::unique_ptr<CertificateError> last_error_;
 
   int response_count_;
   content::CertificateRequestResultType last_response_;
 };
-
-content::WebContents* CertificateErrorDispatcherTest::CreateWebContents() {
-  return web_contents_factory_.CreateWebContents(&browser_context_);
-}
 
 void CertificateErrorDispatcherTest::ClearLastError() {
   last_error_.reset();
@@ -124,13 +110,14 @@ void CertificateErrorDispatcherTest::AttachCertificateErrorCallback(
 }
 
 void CertificateErrorDispatcherTest::SetUp() {
-  web_contents_ = CreateWebContents();
-  CertificateErrorDispatcher::CreateForWebContents(web_contents_);
+  WebContentsTestHarness::SetUp();
+  CertificateErrorDispatcher::CreateForWebContents(web_contents());
   CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(true);
 }
 
 void CertificateErrorDispatcherTest::TearDown() {
   CertificateErrorPlaceholderPage::SetDontCreateViewForTesting(false);
+  WebContentsTestHarness::TearDown();
 }
 
 void CertificateErrorDispatcherTest::OnCertificateError(
@@ -149,24 +136,22 @@ void CertificateErrorDispatcherTest::OnResponse(
 }
 
 CertificateErrorDispatcherTest::CertificateErrorDispatcherTest()
-    : web_contents_(nullptr),
-      response_count_(0),
+    : response_count_(0),
       last_response_(content::CERTIFICATE_REQUEST_RESULT_TYPE_DENY) {}
 
-CertificateErrorDispatcherTest::~CertificateErrorDispatcherTest() {
-  web_contents_ = nullptr;
-}
+CertificateErrorDispatcherTest::~CertificateErrorDispatcherTest() {}
 
 // Test that we deny an error if there's no dispatcher associated with
 // the WebContents
 TEST_F(CertificateErrorDispatcherTest, NoDispatcher) {
-  content::WebContents* contents = CreateWebContents();
-  ASSERT_EQ(CertificateErrorDispatcher::FromWebContents(contents), nullptr);
+  std::unique_ptr<content::WebContents> contents = CreateTestWebContents();
+  ASSERT_EQ(CertificateErrorDispatcher::FromWebContents(contents.get()),
+                                                        nullptr);
 
   net::SSLInfo ssl_info;
   ssl_info.cert = CreateCertificate();
   CertificateErrorDispatcher::AllowCertificateError(
-      contents,
+      contents.get(),
       true, // is_main_frame
       net::ERR_CERT_COMMON_NAME_INVALID,
       ssl_info,

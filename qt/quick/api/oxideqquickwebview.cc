@@ -62,6 +62,8 @@
 #include "oxideqquicknavigationhistory_p.h"
 #include "oxideqquickscriptmessagehandler.h"
 #include "oxideqquickscriptmessagehandler_p.h"
+#include "oxideqquicktouchselectioncontroller.h"
+#include "oxideqquicktouchselectioncontroller_p.h"
 #include "oxideqquickwebcontext.h"
 #include "oxideqquickwebcontext_p.h"
 #include "oxideqquickwebframe.h"
@@ -139,6 +141,17 @@ OxideQQuickWebViewPrivate::OxideQQuickWebViewPrivate(
       file_picker_(nullptr),
       using_old_load_event_signal_(false),
       construct_props_(new ConstructProps()) {}
+
+oxide::qt::LegacyExternalTouchEditingMenuControllerDelegate*
+OxideQQuickWebViewPrivate
+    ::GetLegacyExternalTouchEditingMenuControllerDelegate() const {
+  if (!touch_selection_controller_) {
+    return nullptr;
+  }
+
+  return OxideQQuickTouchSelectionControllerPrivate::get(
+      touch_selection_controller_.get());
+}
 
 oxide::qt::FilePickerProxy* OxideQQuickWebViewPrivate::CreateFilePicker(
     oxide::qt::FilePickerProxyClient* client) {
@@ -1243,6 +1256,10 @@ OxideQQuickWebView::OxideQQuickWebView(QQuickItem* parent)
   d->legacy_aux_ui_factory_ =
       static_cast<oxide::qquick::LegacyAuxiliaryUIFactory*>(
           d->aux_ui_factory_.get());
+  d->touch_selection_controller_ =
+      OxideQQuickTouchSelectionControllerPrivate::Create();
+  qobject_cast<oxide::qquick::LegacyContentsView*>(d->contents_view_.get())
+      ->set_touch_selection_controller(d->touch_selection_controller_.get());
 }
 
 OxideQQuickWebView::~OxideQQuickWebView() {
@@ -2889,13 +2906,7 @@ documentation for TouchSelectionController for more details about how to use it.
 OxideQQuickTouchSelectionController* OxideQQuickWebView::touchSelectionController() {
   Q_D(OxideQQuickWebView);
 
-  oxide::qquick::LegacyContentsView* legacy_view =
-      qobject_cast<oxide::qquick::LegacyContentsView*>(d->contents_view_.get());
-  if (!legacy_view) {
-    return nullptr;
-  }
-
-  return legacy_view->touch_selection_controller();
+  return d->touch_selection_controller_.get();
 }
 
 #include "moc_oxideqquickwebview.cpp"

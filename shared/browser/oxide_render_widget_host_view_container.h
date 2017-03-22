@@ -26,6 +26,7 @@
 #include "content/public/common/menu_item.h"
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/geometry/size.h"
+#include "ui/touch_selection/selection_event_type.h"
 
 namespace cc {
 class Layer;
@@ -74,8 +75,8 @@ class RenderWidgetHostViewContainer {
   // Touch editing support
   virtual std::unique_ptr<ui::TouchHandleDrawable>
   CreateTouchHandleDrawable() = 0;
-  virtual void TouchEditingStatusChanged(RenderWidgetHostView* view) = 0;
-  virtual void TouchInsertionHandleTapped(RenderWidgetHostView* view) = 0;
+  virtual void OnTouchSelectionEvent(RenderWidgetHostView* view,
+                                     ui::SelectionEventType event) = 0;
 
   // IME integration
   virtual void TextInputStateChanged(RenderWidgetHostView* view,

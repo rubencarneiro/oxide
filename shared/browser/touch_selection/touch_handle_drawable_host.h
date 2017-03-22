@@ -22,20 +22,21 @@
 #include "ui/gfx/geometry/point_f.h"
 #include "ui/touch_selection/touch_handle.h"
 
-#include "shared/browser/oxide_web_contents_view.h"
+#include "shared/browser/chrome_controller_observer.h"
 
 namespace oxide {
 
-class TouchHandleDrawableHost : public ui::TouchHandleDrawable {
+class ChromeController;
+
+class TouchHandleDrawableHost : public ui::TouchHandleDrawable,
+                                public ChromeControllerObserver {
  public:
-  TouchHandleDrawableHost(WebContentsView* view);
+  TouchHandleDrawableHost(ChromeController* chrome_controller);
   ~TouchHandleDrawableHost() override;
 
   void Init(std::unique_ptr<ui::TouchHandleDrawable> drawable);
 
  private:
-  void OnSwapCompositorFrame(const CompositorFrameData* data,
-                             const cc::CompositorFrameMetadata& metadata);
   void UpdatePosition();
 
   // ui::TouchHandleDrawable implementation
@@ -48,8 +49,8 @@ class TouchHandleDrawableHost : public ui::TouchHandleDrawable {
   gfx::RectF GetVisibleBounds() const override;
   float GetDrawableHorizontalPaddingRatio() const override;
 
-  std::unique_ptr<WebContentsView::SwapCompositorFrameSubscription>
-      swap_compositor_frame_subscription_;
+  // ChromeControllerObserver implementation
+  void ContentOrTopControlsOffsetChanged() override;
 
   float content_offset_ = 0.f;
   gfx::PointF origin_;

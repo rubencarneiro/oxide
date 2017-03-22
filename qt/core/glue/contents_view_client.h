@@ -39,7 +39,6 @@ namespace qt {
 
 class ContentsView;
 class ContentsViewImpl;
-class LegacyTouchEditingClient;
 struct MenuItem;
 class TouchHandleDrawable;
 class WebPopupMenu;
@@ -73,10 +72,6 @@ class OXIDE_QTCORE_EXPORT ContentsViewClient {
       WebPopupMenuClient* client) = 0;
 
   virtual std::unique_ptr<TouchHandleDrawable> CreateTouchHandleDrawable() = 0;
-
-  virtual LegacyTouchEditingClient* GetLegacyTouchEditingClient() {
-    return nullptr;
-  }
 
   virtual void HandleUnhandledKeyboardEvent(QKeyEvent* event) = 0;
 

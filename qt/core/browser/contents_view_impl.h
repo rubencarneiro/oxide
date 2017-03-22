@@ -47,7 +47,6 @@ namespace qt {
 class CompositorFrameHandle;
 class ContentsViewClient;
 class InputMethodContext;
-class LegacyTouchEditingClientProxy;
 
 class ContentsViewImpl : public QObject,
                          public ContentsView,
@@ -107,6 +106,7 @@ class ContentsViewImpl : public QObject,
   bool IsVisible() const override;
   bool HasFocus() const override;
   gfx::RectF GetBounds() const override;
+  gfx::Rect GetTopLevelWindowBounds() const override;
   void SwapCompositorFrame() override;
   void EvictCurrentFrame() override;
   void UpdateCursor(const content::WebCursor& cursor) override;
@@ -116,16 +116,14 @@ class ContentsViewImpl : public QObject,
       bool allow_multiple_selection,
       const gfx::Rect& bounds,
       oxide::WebPopupMenuClient* client) override;
-  std::unique_ptr<ui::TouchHandleDrawable>
-  CreateTouchHandleDrawable() const override;
+  std::unique_ptr<ui::TouchHandleDrawable> CreateTouchHandleDrawable() override;
   oxide::InputMethodContext* GetInputMethodContext() const override;
-  oxide::LegacyTouchEditingClient* GetLegacyTouchEditingClient() const override;
   void UnhandledKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
 
  private Q_SLOTS:
   void OnScreenChanged(QScreen* screen);
-  void OnWindowMoved(int arg);
+  void OnWindowGeometryChanged(int arg);
 
  private:
   ContentsViewClient* client_;
@@ -139,8 +137,6 @@ class ContentsViewImpl : public QObject,
   QSharedPointer<CompositorFrameHandle> compositor_frame_;
 
   std::unique_ptr<InputMethodContext> input_method_context_;
-
-  std::unique_ptr<LegacyTouchEditingClientProxy> legacy_touch_editing_client_;
 
   DISALLOW_COPY_AND_ASSIGN(ContentsViewImpl);
 };

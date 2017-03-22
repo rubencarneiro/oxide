@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "base/macros.h"
+#include "base/observer_list.h"
 #include "base/optional.h"
 #include "cc/output/compositor_frame_metadata.h"
 #include "content/public/browser/web_contents_observer.h"
@@ -39,7 +40,7 @@ class WebContents;
 
 namespace oxide {
 
-class ChromeControllerClient;
+class ChromeControllerObserver;
 class RenderWidgetHostView;
 
 // A mechanism to allow Oxide to position an application's UI, using the
@@ -67,14 +68,17 @@ class OXIDE_SHARED_EXPORT ChromeController
   float GetTopControlsOffset() const;
   float GetTopContentOffset() const;
 
-  void set_client(ChromeControllerClient* client) { client_ = client; }
-
   void FrameMetadataUpdated(
       const base::Optional<cc::CompositorFrameMetadata>& metadata);
 
  private:
+  friend class ChromeControllerObserver;
   friend class WebContentsDataTracker<ChromeController>;
+
   ChromeController(content::WebContents* contents);
+
+  void AddObserver(ChromeControllerObserver* observer);
+  void RemoveObserver(ChromeControllerObserver* observer);
 
   void InitializeForHost(content::RenderFrameHost* render_frame_host,
                          bool initial_host);
@@ -112,7 +116,7 @@ class OXIDE_SHARED_EXPORT ChromeController
   void DidAttachInterstitialPage() override;
   void DidDetachInterstitialPage() override;
 
-  ChromeControllerClient* client_;
+  base::ObserverList<ChromeControllerObserver> observers_;
 
   float top_controls_height_;
   blink::WebBrowserControlsState constraints_;

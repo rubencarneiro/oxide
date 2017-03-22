@@ -28,7 +28,10 @@ void ScreenObserver::OnScreenDestruction() {
 
 ScreenObserver::ScreenObserver()
     : screen_(Screen::GetInstance()) {
-  screen_->AddObserver(this);
+  if (screen_) {
+    // Can be null in unit tests
+    screen_->AddObserver(this);
+  }
 }
 
 ScreenObserver::~ScreenObserver() {

@@ -22,10 +22,9 @@
 #include "ui/display/display.h"
 #include "ui/gfx/geometry/point.h"
 
-#include "shared/test/mock_screen_observer.h"
-
 #include "display_form_factor.h"
 #include "hybris_utils.h"
+#include "mock_screen_observer.h"
 #include "screen.h"
 #include "screen_observer.h"
 #include "shell_mode.h"

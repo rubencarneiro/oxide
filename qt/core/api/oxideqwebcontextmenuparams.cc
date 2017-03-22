@@ -1,5 +1,5 @@
 // vim:expandtab:shiftwidth=2:tabstop=2:
-// Copyright (C) 2016 Canonical Ltd.
+// Copyright (C) 2016-2017 Canonical Ltd.
 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -56,6 +56,7 @@ OxideQWebContextMenuParams OxideQWebContextMenuParamsData::Create(
   d->link_text = params.link_text;
   d->title_text = params.title_text;
   d->src_url = params.src_url;
+  d->selection_text = params.selection_text;
 
   return OxideQWebContextMenuParams(d);
 }
@@ -128,4 +129,8 @@ QString OxideQWebContextMenuParams::titleText() const {
 
 QUrl OxideQWebContextMenuParams::srcUrl() const {
   return d->src_url;
+}
+
+QString OxideQWebContextMenuParams::selectionText() const {
+  return d->selection_text;
 }

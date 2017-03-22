@@ -59,6 +59,9 @@ class LegacyAuxiliaryUIFactory : public qt::AuxiliaryUIFactory {
       const qt::WebContextMenuParams& params,
       const std::vector<qt::MenuItem>& items,
       qt::WebContextMenuClient* client) override;
+  std::unique_ptr<qt::TouchEditingMenu> CreateTouchEditingMenu(
+      qt::EditCapabilityFlags edit_flags,
+      qt::TouchEditingMenuClient* client) override;
   std::unique_ptr<qt::JavaScriptDialog> CreateJavaScriptDialog(
       const QUrl& origin_url,
       qt::JavaScriptDialogType type,

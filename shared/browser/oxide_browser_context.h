@@ -163,10 +163,7 @@ class OXIDE_SHARED_EXPORT BrowserContext : public content::BrowserContext,
 
   virtual ~BrowserContext();
 
-  static BrowserContext* FromContent(
-      content::BrowserContext* context) {
-    return static_cast<BrowserContext *>(context);
-  }
+  static BrowserContext* FromContent(content::BrowserContext* context);
 
   struct Deleter {
     void operator()(BrowserContext* context);

@@ -21,11 +21,14 @@
 #include <QQmlComponent>
 
 #include "qt/core/api/oxideqglobal_p.h"
-#include "qt/core/glue/legacy_touch_editing_controller.h"
+#include "qt/core/glue/legacy_external_touch_editing_menu_controller.h"
+#include "qt/core/glue/web_context_menu_params.h"
 
 QT_BEGIN_NAMESPACE
 class QQmlComponent;
 QT_END_NAMESPACE
+
+using oxide::qt::WebContextMenuParams;
 
 OxideQQuickTouchSelectionControllerPrivate
     ::OxideQQuickTouchSelectionControllerPrivate(
@@ -71,10 +74,25 @@ void OxideQQuickTouchSelectionControllerPrivate::InsertionHandleTapped() {
   Q_EMIT q->insertionHandleTapped();
 }
 
-void OxideQQuickTouchSelectionControllerPrivate::ContextMenuIntercepted() {
+bool OxideQQuickTouchSelectionControllerPrivate::HandleContextMenu(
+    const WebContextMenuParams& params) {
   Q_Q(OxideQQuickTouchSelectionController);
 
+  if (params.source_type != WebContextMenuParams::SourceType::LongPress ||
+      !params.is_editable ||
+      !params.selection_text.isEmpty()) {
+    return false;
+  }
+
   Q_EMIT q->contextMenuIntercepted();
+  return true;
+}
+
+// static
+std::unique_ptr<OxideQQuickTouchSelectionController>
+OxideQQuickTouchSelectionControllerPrivate::Create() {
+  return std::unique_ptr<OxideQQuickTouchSelectionController>(
+      new OxideQQuickTouchSelectionController());
 }
 
 // static

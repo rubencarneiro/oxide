@@ -54,7 +54,6 @@
 #include "ui/gfx/selection_bound.h"
 #include "ui/touch_selection/touch_selection_controller.h"
 
-#include "shared/browser/clipboard/oxide_clipboard.h"
 #include "shared/browser/compositor/oxide_compositor.h"
 #include "shared/browser/compositor/oxide_compositor_utils.h"
 #include "shared/common/oxide_enum_flags.h"
@@ -145,7 +144,7 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                  output_surface_id);
   ack_callbacks_.push(ack_callback);
 
-  const cc::CompositorFrameMetadata& metadata = frame.metadata;
+  cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
 
   float device_scale_factor = metadata.device_scale_factor;
   cc::RenderPass* root_pass = frame.render_pass_list.back().get();
@@ -154,13 +153,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
   gfx::Size frame_size_dip = gfx::Size(
       std::lround(frame_size.width() / device_scale_factor),
       std::lround(frame_size.height() / device_scale_factor));
-
-  bool shrink =
-      metadata.top_controls_height > 0.f &&
-      metadata.top_controls_shown_ratio == 1.f;
-  bool has_mobile_viewport = HasMobileViewport(metadata);
-  bool has_fixed_page_scale = HasFixedPageScale(metadata);
-  cc::Selection<gfx::SelectionBound> selection = metadata.selection;
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -207,16 +199,31 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
 
   last_frame_size_dip_ = frame_size_dip;
 
+  bool shrink =
+      metadata.top_controls_height > 0.f &&
+      metadata.top_controls_shown_ratio == 1.f;
   if (shrink != browser_controls_shrink_blink_size_) {
     browser_controls_shrink_blink_size_ = shrink;
     host_->WasResized();
   }
 
+  bool has_mobile_viewport = HasMobileViewport(metadata);
+  bool has_fixed_page_scale = HasFixedPageScale(metadata);
   gesture_provider_->SetDoubleTapSupportForPageEnabled(
       !has_fixed_page_scale && !has_mobile_viewport);
 
+  const cc::Selection<gfx::SelectionBound>& selection = metadata.selection;
   selection_controller_->OnSelectionBoundsChanged(selection.start,
                                                   selection.end);
+
+  gfx::SizeF viewport_size(metadata.scrollable_viewport_size);
+  viewport_size.Scale(metadata.page_scale_factor);
+  gfx::RectF viewport_rect(0.0f,
+                           metadata.top_controls_height *
+                               metadata.top_controls_shown_ratio,
+                           viewport_size.width(),
+                           viewport_size.height());
+  selection_controller_->OnViewportChanged(viewport_rect);
 
   if (host_->is_hidden()) {
     RunAckCallbacks();
@@ -540,14 +547,6 @@ void RenderWidgetHostView::HandleGestureForTouchSelection(
   }
 }
 
-void RenderWidgetHostView::NotifyTouchSelectionChanged() {
-  if (!container_) {
-    return;
-  }
-
-  container_->TouchEditingStatusChanged(this);
-}
-
 void RenderWidgetHostView::ReturnResources(
     const cc::ReturnedResourceArray& resources) {
   if (resources.empty()) {
@@ -662,15 +661,14 @@ void RenderWidgetHostView::OnSelectionEvent(ui::SelectionEventType event) {
     case ui::INSERTION_HANDLE_DRAG_STOPPED:
       selection_handle_drag_in_progress_ = false;
       break;
-    case ui::INSERTION_HANDLE_TAPPED:
-      if (container_) {
-        container_->TouchInsertionHandleTapped(this);
-      }
-      return;
     default:
       break;
   }
-  NotifyTouchSelectionChanged();
+
+  if (container_) {
+    container_->OnTouchSelectionEvent(this, event);
+  }
+
 }
 
 std::unique_ptr<ui::TouchHandleDrawable>
@@ -838,46 +836,6 @@ void RenderWidgetHostView::SetContainer(
 
   host_->SendScreenRects();
   host_->WasResized();
-}
-
-blink::WebContextMenuData::EditFlags RenderWidgetHostView::GetEditFlags() {
-  blink::WebContextMenuData::EditFlags flags =
-      blink::WebContextMenuData::CanDoNone;
-
-  content::RenderWidgetHostViewBase* view = GetFocusedViewForTextSelection();
-  if (!view) {
-    return flags;
-  }
-
-  const content::TextInputState* state =
-      GetTextInputManager()->GetTextInputState();
-  ui::TextInputType text_input_type =
-      state ? state->type : ui::TEXT_INPUT_TYPE_NONE;
-
-  bool editable = (text_input_type != ui::TEXT_INPUT_TYPE_NONE);
-  bool readable = (text_input_type != ui::TEXT_INPUT_TYPE_PASSWORD);
-
-  const content::TextInputManager::TextSelection* selection =
-      GetTextInputManager()->GetTextSelection(state ? nullptr : view);
-  bool has_selection = selection && !selection->range().is_empty();
-
-  // XXX: if editable, can we determine whether undo/redo is available?
-  if (editable && readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCut;
-  }
-  if (readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCopy;
-  }
-  if (editable &&
-      Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
-    flags |= blink::WebContextMenuData::CanPaste;
-  }
-  if (editable && has_selection) {
-    flags |= blink::WebContextMenuData::CanDelete;
-  }
-  flags |= blink::WebContextMenuData::CanSelectAll;
-
-  return flags;
 }
 
 void RenderWidgetHostView::HandleTouchEvent(const ui::MotionEvent& event) {
