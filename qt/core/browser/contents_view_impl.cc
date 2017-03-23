@@ -355,10 +355,8 @@ void ContentsViewImpl::handleTouchUngrabEvent() {
   view()->HandleMotionEvent(*cancel_event.get());
 }
 
-void ContentsViewImpl::handleWheelEvent(QWheelEvent* event,
-                                        const QPointF& window_pos) {
-  view()->HandleWheelEvent(
-      MakeWebMouseWheelEvent(event, window_pos, GetScreen()));
+void ContentsViewImpl::handleWheelEvent(QWheelEvent* event) {
+  view()->HandleWheelEvent(MakeWebMouseWheelEvent(event, GetScreen()));
   event->accept();
 }
 
@@ -377,10 +375,8 @@ void ContentsViewImpl::handleTouchEvent(QTouchEvent* event) {
 }
 
 void ContentsViewImpl::handleHoverEvent(QHoverEvent* event,
-                                        const QPointF& window_pos,
                                         const QPoint& global_pos) {
-  view()->HandleMouseEvent(
-      MakeWebMouseEvent(event, window_pos, global_pos, GetScreen()));
+  view()->HandleMouseEvent(MakeWebMouseEvent(event, global_pos, GetScreen()));
   event->accept();
 }
 

@@ -236,12 +236,6 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   result.x = pos.x();
   result.y = pos.y();
 
-  gfx::PointF window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->windowPos()),
-                                          screen);
-  result.windowX = std::floor(window_pos.x());
-  result.windowY = std::floor(window_pos.y());
-
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
                                           screen);
@@ -295,7 +289,6 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 }
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
-                                                 const QPointF& window_pos,
                                                  QScreen* screen) {
   blink::WebMouseWheelEvent result;
 
@@ -324,11 +317,6 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
   result.y = pos.y();
-
-  gfx::PointF converted_window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
-  result.windowX = std::floor(converted_window_pos.x());
-  result.windowY = std::floor(converted_window_pos.y());
 
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
@@ -362,7 +350,6 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
 
 blink::WebMouseEvent MakeWebMouseEvent(
     QHoverEvent* event,
-    const QPointF& window_pos,
     const QPoint& global_pos,
     QScreen* screen) {
   blink::WebMouseEvent result;
@@ -375,11 +362,6 @@ blink::WebMouseEvent MakeWebMouseEvent(
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
   result.y = pos.y();
-
-  gfx::PointF converted_window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
-  result.windowX = std::floor(converted_window_pos.x());
-  result.windowY = std::floor(converted_window_pos.y());
 
   gfx::Point converted_global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(global_pos), screen);

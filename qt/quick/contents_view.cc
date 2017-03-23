@@ -73,8 +73,7 @@ void ContentsView::handleHoverEvent(QHoverEvent* event) {
 
   QPointF window_pos = item_->mapToScene(event->posF());
   view()->handleHoverEvent(event,
-                            window_pos,
-                            (window_pos + item_->window()->position()).toPoint());
+                           (window_pos + item_->window()->position()).toPoint());
 }
 
 void ContentsView::didUpdatePaintNode() {
@@ -235,8 +234,7 @@ void ContentsView::handleWheelEvent(QWheelEvent* event) {
     return;
   }
 
-  QPointF window_pos = item_->mapToScene(event->posF());
-  view()->handleWheelEvent(event, window_pos);
+  view()->handleWheelEvent(event);
 }
 
 void ContentsView::handleTouchEvent(QTouchEvent* event) {
