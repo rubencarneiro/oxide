@@ -180,7 +180,7 @@ def WriteStaticArgs(writer):
   writer.WriteBool("use_cups", False)
   writer.WriteBool("use_gconf", False)
   writer.WriteBool("use_ozone", True)
-  writer.WriteBool("ozone_platform_x11", False)
+  writer.WriteBool("ozone_platform_x11", True)
   writer.WriteString("ozone_platform", "oxide")
   writer.WriteBool("use_pango", True)
   writer.WriteBool("toolkit_views", False)
