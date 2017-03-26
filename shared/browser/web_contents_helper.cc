@@ -157,6 +157,12 @@ void WebContentsHelper::CreateForWebContents(content::WebContents* contents,
 }
 
 // static
+WebContentsHelper* WebContentsHelper::FromWebContents(
+    content::WebContents* contents) {
+  return content::WebContentsUserData<WebContentsHelper>::FromWebContents(contents);
+}
+
+// static
 WebContentsHelper* WebContentsHelper::FromRenderFrameHost(
     content::RenderFrameHost* rfh) {
   content::WebContents* contents =

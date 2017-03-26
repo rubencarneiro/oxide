@@ -53,6 +53,7 @@ class OXIDE_SHARED_EXPORT WebContentsHelper
   static void CreateForWebContents(content::WebContents* contents,
                                    content::WebContents* opener);
 
+  static WebContentsHelper* FromWebContents(content::WebContents* contents);
   static WebContentsHelper* FromRenderFrameHost(content::RenderFrameHost* rfh);
   static WebContentsHelper* FromRenderViewHost(content::RenderViewHost* rvh);
 
