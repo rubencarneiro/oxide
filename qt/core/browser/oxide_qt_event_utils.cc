@@ -164,13 +164,19 @@ blink::WebInputEvent::Type QInputEventTypeToWebEventType(QInputEvent* event,
   }
 }
 
-void ReleaseKeyEvent(void* event) {
-  delete reinterpret_cast<QKeyEvent*>(event);
-}
+class QKeyEventWrapper
+    : public content::NativeWebKeyboardEvent::ExtraData {
+ public:
+  QKeyEventWrapper(QKeyEvent event)
+      : event_(std::move(event)) {}
 
-void* CopyKeyEvent(void* event) {
-  return new QKeyEvent(*reinterpret_cast<QKeyEvent*>(event));
-}
+  QKeyEvent& event() { return event_; }
+
+ private:
+  ~QKeyEventWrapper() = default;
+
+  QKeyEvent event_;
+};
 
 }
 
@@ -181,9 +187,10 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
       QInputEventStateToWebEventModifiers(event),
       QInputEventTimeToWebEventTime(event));
 
-  QKeyEvent* os_event = new QKeyEvent(*event);
-  os_event->setAccepted(false);
-  result.SetExtraData(os_event, ReleaseKeyEvent, CopyKeyEvent);
+  scoped_refptr<QKeyEventWrapper> wrapper =
+      new QKeyEventWrapper(QKeyEvent(*event));
+  wrapper->event().setAccepted(false);
+  result.extra_data = wrapper;
 
   if (event->isAutoRepeat()) {
     result.setModifiers(
@@ -387,6 +394,17 @@ blink::WebMouseEvent MakeWebMouseEvent(
   result.button = blink::WebPointerProperties::Button::NoButton;
 
   return result;
+}
+
+QKeyEvent* NativeWebKeyboardEventToQKeyEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  QKeyEventWrapper* wrapper =
+      static_cast<QKeyEventWrapper*>(event.extra_data.get());
+  if (!wrapper) {
+    return nullptr;
+  }
+
+  return &wrapper->event();
 }
 
 } // namespace qt

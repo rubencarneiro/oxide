@@ -53,6 +53,9 @@ blink::WebMouseEvent MakeWebMouseEvent(QHoverEvent* event,
                                        const QPoint& global_pos,
                                        QScreen* screen);
 
+QKeyEvent* NativeWebKeyboardEventToQKeyEvent(
+    const content::NativeWebKeyboardEvent& event);
+
 } // namespace qt
 } // namespace oxide
 

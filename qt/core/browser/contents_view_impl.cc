@@ -551,11 +551,10 @@ void ContentsViewImpl::UnhandledKeyboardEvent(
     return;
   }
 
-  if (!event.extra_data()) {
+  QKeyEvent* key_event = NativeWebKeyboardEventToQKeyEvent(event);
+  if (!key_event) {
     return;
   }
-
-  QKeyEvent* key_event = reinterpret_cast<QKeyEvent*>(event.extra_data());
   DCHECK(!key_event->isAccepted());
 
   client_->HandleUnhandledKeyboardEvent(key_event);
