@@ -150,10 +150,11 @@ void PlatformNotificationService::ClosePersistentNotification(
   NOTIMPLEMENTED();
 }
 
-bool PlatformNotificationService::GetDisplayedNotifications(
+void PlatformNotificationService::GetDisplayedNotifications(
     content::BrowserContext* browser_context,
-    std::set<std::string>* displayed_notifications) {
-  return false;
+    const DisplayedNotificationsCallback& callback) {
+  auto displayed_notifications = base::MakeUnique<std::set<std::string>>();
+  callback.Run(std::move(displayed_notifications), false);
 }
 
 PlatformNotificationService* PlatformNotificationService::GetInstance() {

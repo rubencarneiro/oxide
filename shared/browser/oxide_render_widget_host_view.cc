@@ -27,7 +27,6 @@
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/quads/render_pass.h"
-#include "cc/surfaces/local_surface_id_allocator.h"
 #include "cc/surfaces/surface.h"
 #include "cc/surfaces/surface_factory.h"
 #include "cc/surfaces/surface_hittest.h"
@@ -120,8 +119,10 @@ void RenderWidgetHostView::FocusedNodeChanged(
   container_->FocusedNodeChanged(this, is_editable_node);
 }
 
-void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
-                                                 cc::CompositorFrame frame) {
+void RenderWidgetHostView::OnSwapCompositorFrame(
+    uint32_t compositor_frame_sink_id,
+    const cc::LocalSurfaceId& local_surface_id,
+    cc::CompositorFrame frame) {
   if (frame.render_pass_list.empty()) {
     DLOG(ERROR) << "Invalid delegated frame";
     host_->GetProcess()->ShutdownForBadMessage(
@@ -129,30 +130,25 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     return;
   }
 
-  if (output_surface_id != last_output_surface_id_) {
+  if (compositor_frame_sink_id != last_compositor_frame_sink_id_) {
     DestroyDelegatedContent();
     surface_factory_.reset();
     if (!surface_returned_resources_.empty()) {
       SendReturnedDelegatedResources();
     }
-    last_output_surface_id_ = output_surface_id;
+    last_compositor_frame_sink_id_ = compositor_frame_sink_id;
   }
 
   base::Closure ack_callback =
       base::Bind(&RenderWidgetHostView::SendDelegatedFrameAck,
                  weak_ptr_factory_.GetWeakPtr(),
-                 output_surface_id);
+                 compositor_frame_sink_id);
   ack_callbacks_.push(ack_callback);
 
   cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
 
-  float device_scale_factor = metadata.device_scale_factor;
   cc::RenderPass* root_pass = frame.render_pass_list.back().get();
-
   gfx::Size frame_size = root_pass->output_rect.size();
-  gfx::Size frame_size_dip = gfx::Size(
-      std::lround(frame_size.width() / device_scale_factor),
-      std::lround(frame_size.height() / device_scale_factor));
 
   if (frame_size.IsEmpty()) {
     DestroyDelegatedContent();
@@ -166,14 +162,19 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
     }
 
     if (!local_surface_id_.is_valid() ||
-        frame_size_dip != last_frame_size_dip_) {
+        local_surface_id_ != local_surface_id) {
       DestroyDelegatedContent();
 
-      local_surface_id_ = id_allocator_->GenerateId();
+      local_surface_id_ = local_surface_id;
       DCHECK(local_surface_id_.is_valid());
 
       layer_ = cc::SurfaceLayer::Create(manager->reference_factory());
       DCHECK(layer_);
+
+      float device_scale_factor = metadata.device_scale_factor;
+      gfx::Size frame_size_dip = gfx::Size(
+          std::lround(frame_size.width() / device_scale_factor),
+          std::lround(frame_size.height() / device_scale_factor));
 
       layer_->SetPrimarySurfaceInfo(
           cc::SurfaceInfo(cc::SurfaceId(frame_sink_id_, local_surface_id_),
@@ -196,8 +197,6 @@ void RenderWidgetHostView::OnSwapCompositorFrame(uint32_t output_surface_id,
                                             std::move(frame),
                                             ack_callback);
   }
-
-  last_frame_size_dip_ = frame_size_dip;
 
   bool shrink =
       metadata.top_controls_height > 0.f &&
@@ -721,7 +720,7 @@ void RenderWidgetHostView::SendReturnedDelegatedResources() {
 
   content::RenderWidgetHostImpl::SendReclaimCompositorResources(
       host_->GetRoutingID(),
-      last_output_surface_id_,
+      last_compositor_frame_sink_id_,
       host_->GetProcess()->GetID(),
       false, // is_swap_ack
       surface_returned_resources_);
@@ -771,8 +770,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     : host_(host),
       container_(nullptr),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
-      id_allocator_(new cc::LocalSurfaceIdAllocator()),
-      last_output_surface_id_(0),
+      last_compositor_frame_sink_id_(0),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
       browser_controls_shrink_blink_size_(false),

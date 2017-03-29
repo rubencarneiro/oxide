@@ -88,11 +88,9 @@ class ContentsView {
   virtual void handleInputMethodEvent(QInputMethodEvent* event) = 0;
   virtual void handleMouseEvent(QMouseEvent* event) = 0;
   virtual void handleTouchUngrabEvent() = 0;
-  virtual void handleWheelEvent(QWheelEvent* event,
-                                const QPointF& window_pos) = 0;
+  virtual void handleWheelEvent(QWheelEvent* event) = 0;
   virtual void handleTouchEvent(QTouchEvent* event) = 0;
   virtual void handleHoverEvent(QHoverEvent* event,
-                                const QPointF& window_pos,
                                 const QPoint& global_pos) = 0;
   virtual void handleDragEnterEvent(QDragEnterEvent* event) = 0;
   virtual void handleDragMoveEvent(QDragMoveEvent* event) = 0;

@@ -71,9 +71,9 @@ class PlatformNotificationService: public content::PlatformNotificationService {
   void ClosePersistentNotification(
       content::BrowserContext* browser_context,
       const std::string& notification_id) override;
-  bool GetDisplayedNotifications(
+  void GetDisplayedNotifications(
       content::BrowserContext* browser_context,
-      std::set<std::string>* displayed_notifications) override;
+      const DisplayedNotificationsCallback& callback) override;
 
   std::unique_ptr<SystemNotificationDispatcher> system_notification_dispatcher_;
 

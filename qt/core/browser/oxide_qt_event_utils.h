@@ -47,13 +47,14 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(
     QWheelEvent* event,
-    const QPointF& window_pos,
     QScreen* screen);
 
 blink::WebMouseEvent MakeWebMouseEvent(QHoverEvent* event,
-                                       const QPointF& window_pos,
                                        const QPoint& global_pos,
                                        QScreen* screen);
+
+QKeyEvent* NativeWebKeyboardEventToQKeyEvent(
+    const content::NativeWebKeyboardEvent& event);
 
 } // namespace qt
 } // namespace oxide

@@ -42,7 +42,6 @@
 #include "shared/browser/oxide_gesture_provider.h"
 
 namespace cc {
-class LocalSurfaceIdAllocator;
 class SurfaceFactory;
 class SurfaceLayer;
 }
@@ -114,7 +113,8 @@ class RenderWidgetHostView
   float GetTopControlsHeight() const override;
   void FocusedNodeChanged(bool is_editable_node,
                           const gfx::Rect& node_bounds_in_screen) override;
-  void OnSwapCompositorFrame(uint32_t output_surface_id,
+  void OnSwapCompositorFrame(uint32_t compositor_frame_sink_id,
+                             const cc::LocalSurfaceId& local_surface_id,
                              cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -223,15 +223,13 @@ class RenderWidgetHostView
 
   scoped_refptr<cc::SurfaceLayer> layer_;
   cc::FrameSinkId frame_sink_id_;
-  std::unique_ptr<cc::LocalSurfaceIdAllocator> id_allocator_;
   std::unique_ptr<cc::SurfaceFactory> surface_factory_;
   cc::LocalSurfaceId local_surface_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
 
-  // The output surface ID for the last frame from the renderer
-  uint32_t last_output_surface_id_;
+  // The compositor frame sink ID for the last frame from the renderer
+  uint32_t last_compositor_frame_sink_id_;
 
-  gfx::Size last_frame_size_dip_;
   cc::CompositorFrameMetadata last_drawn_frame_metadata_;
 
   std::queue<base::Closure> ack_callbacks_;

@@ -164,13 +164,19 @@ blink::WebInputEvent::Type QInputEventTypeToWebEventType(QInputEvent* event,
   }
 }
 
-void ReleaseKeyEvent(void* event) {
-  delete reinterpret_cast<QKeyEvent*>(event);
-}
+class QKeyEventWrapper
+    : public content::NativeWebKeyboardEvent::ExtraData {
+ public:
+  QKeyEventWrapper(QKeyEvent event)
+      : event_(std::move(event)) {}
 
-void* CopyKeyEvent(void* event) {
-  return new QKeyEvent(*reinterpret_cast<QKeyEvent*>(event));
-}
+  QKeyEvent& event() { return event_; }
+
+ private:
+  ~QKeyEventWrapper() = default;
+
+  QKeyEvent event_;
+};
 
 }
 
@@ -181,9 +187,10 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
       QInputEventStateToWebEventModifiers(event),
       QInputEventTimeToWebEventTime(event));
 
-  QKeyEvent* os_event = new QKeyEvent(*event);
-  os_event->setAccepted(false);
-  result.SetExtraData(os_event, ReleaseKeyEvent, CopyKeyEvent);
+  scoped_refptr<QKeyEventWrapper> wrapper =
+      new QKeyEventWrapper(QKeyEvent(*event));
+  wrapper->event().setAccepted(false);
+  result.extra_data = wrapper;
 
   if (event->isAutoRepeat()) {
     result.setModifiers(
@@ -235,12 +242,6 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
   result.y = pos.y();
-
-  gfx::PointF window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->windowPos()),
-                                          screen);
-  result.windowX = std::floor(window_pos.x());
-  result.windowY = std::floor(window_pos.y());
 
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
@@ -295,7 +296,6 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
 }
 
 blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
-                                                 const QPointF& window_pos,
                                                  QScreen* screen) {
   blink::WebMouseWheelEvent result;
 
@@ -324,11 +324,6 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
   result.y = pos.y();
-
-  gfx::PointF converted_window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
-  result.windowX = std::floor(converted_window_pos.x());
-  result.windowY = std::floor(converted_window_pos.y());
 
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
@@ -362,7 +357,6 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
 
 blink::WebMouseEvent MakeWebMouseEvent(
     QHoverEvent* event,
-    const QPointF& window_pos,
     const QPoint& global_pos,
     QScreen* screen) {
   blink::WebMouseEvent result;
@@ -375,11 +369,6 @@ blink::WebMouseEvent MakeWebMouseEvent(
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
   result.x = pos.x();
   result.y = pos.y();
-
-  gfx::PointF converted_window_pos =
-      DpiUtils::ConvertQtPixelsToChromium(ToChromium(window_pos), screen);
-  result.windowX = std::floor(converted_window_pos.x());
-  result.windowY = std::floor(converted_window_pos.y());
 
   gfx::Point converted_global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(global_pos), screen);
@@ -405,6 +394,17 @@ blink::WebMouseEvent MakeWebMouseEvent(
   result.button = blink::WebPointerProperties::Button::NoButton;
 
   return result;
+}
+
+QKeyEvent* NativeWebKeyboardEventToQKeyEvent(
+    const content::NativeWebKeyboardEvent& event) {
+  QKeyEventWrapper* wrapper =
+      static_cast<QKeyEventWrapper*>(event.extra_data.get());
+  if (!wrapper) {
+    return nullptr;
+  }
+
+  return &wrapper->event();
 }
 
 } // namespace qt

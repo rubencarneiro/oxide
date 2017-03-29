@@ -88,11 +88,9 @@ class ContentsViewImpl : public QObject,
   void handleInputMethodEvent(QInputMethodEvent* event) override;
   void handleMouseEvent(QMouseEvent* event) override;
   void handleTouchUngrabEvent() override;
-  void handleWheelEvent(QWheelEvent* event,
-                        const QPointF& window_pos) override;
+  void handleWheelEvent(QWheelEvent* event) override;
   void handleTouchEvent(QTouchEvent* event) override;
   void handleHoverEvent(QHoverEvent* event,
-                        const QPointF& window_pos,
                         const QPoint& global_pos) override;
   void handleDragEnterEvent(QDragEnterEvent* event) override;
   void handleDragMoveEvent(QDragMoveEvent* event) override;
