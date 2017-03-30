@@ -17,6 +17,8 @@
 
 #include "uitk_touch_editing_menu.h"
 
+#include <cmath>
+
 #include <QLatin1String>
 #include <QObject>
 #include <QPointF>

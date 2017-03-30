@@ -28,15 +28,17 @@
 #include "shared/browser/chrome_controller_observer.h"
 #include "shared/browser/touch_selection/touch_editing_menu_client.h"
 #include "shared/browser/touch_selection/touch_editing_menu_controller.h"
+#include "shared/common/oxide_shared_export.h"
 
 namespace oxide {
 
 class TouchEditingMenu;
 class TouchEditingMenuControllerClient;
 
-class TouchEditingMenuControllerImpl : public TouchEditingMenuController,
-                                       public TouchEditingMenuClient,
-                                       public ChromeControllerObserver {
+class OXIDE_SHARED_EXPORT TouchEditingMenuControllerImpl
+    : public TouchEditingMenuController,
+      public TouchEditingMenuClient,
+      public ChromeControllerObserver {
  public:
   TouchEditingMenuControllerImpl(TouchEditingMenuControllerClient* client);
   ~TouchEditingMenuControllerImpl() override;

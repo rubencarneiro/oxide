@@ -279,6 +279,12 @@ void ChromeController::DidDetachInterstitialPage() {
 }
 
 // static
+std::unique_ptr<ChromeController> ChromeController::CreateForWebContents(
+    content::WebContents* contents) {
+  return WebContentsDataTracker<ChromeController>::CreateForWebContents(contents);
+}
+
+// static
 ChromeController* ChromeController::FromWebContents(
     content::WebContents* contents) {
   return WebContentsDataTracker<ChromeController>::FromWebContents(contents);

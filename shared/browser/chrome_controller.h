@@ -49,6 +49,8 @@ class OXIDE_SHARED_EXPORT ChromeController
     : public WebContentsDataTracker<ChromeController>,
       public content::WebContentsObserver {
  public:
+  static std::unique_ptr<ChromeController> CreateForWebContents(
+      content::WebContents* contents);
   static ChromeController* FromWebContents(content::WebContents* contents);
 
   ~ChromeController() override;
