@@ -52,7 +52,6 @@ class BrowserPlatformIntegration : public QObject,
 
   // oxide::BrowserPlatformIntegration implementation
   bool LaunchURLExternally(const GURL& url) override;
-  bool IsTouchSupported() override;
   intptr_t GetNativeDisplay() override;
   oxide::Screen* GetScreen() override;
   oxide::GLContextDependent* GetGLShareContext() override;

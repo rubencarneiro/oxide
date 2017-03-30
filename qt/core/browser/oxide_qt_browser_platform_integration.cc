@@ -24,7 +24,6 @@
 #include <QPointer>
 #include <QString>
 #include <QThread>
-#include <QTouchDevice>
 #include <QUrl>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 
@@ -105,12 +104,6 @@ bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
   }
 
   return true;
-}
-
-bool BrowserPlatformIntegration::IsTouchSupported() {
-  DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
-  // XXX: Is there a way to get notified if a touch device is added?
-  return QTouchDevice::devices().size() > 0;
 }
 
 intptr_t BrowserPlatformIntegration::GetNativeDisplay() {

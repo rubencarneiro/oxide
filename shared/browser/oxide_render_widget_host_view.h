@@ -113,8 +113,8 @@ class RenderWidgetHostView
   float GetTopControlsHeight() const override;
   void FocusedNodeChanged(bool is_editable_node,
                           const gfx::Rect& node_bounds_in_screen) override;
-  void OnSwapCompositorFrame(uint32_t compositor_frame_sink_id,
-                             const cc::LocalSurfaceId& local_surface_id,
+  void DidCreateNewRendererCompositorFrameSink() override;
+  void SubmitCompositorFrame(const cc::LocalSurfaceId& local_surface_id,
                              cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;
   void ProcessAckedTouchEvent(const content::TouchEventWithLatencyInfo& touch,
@@ -207,7 +207,7 @@ class RenderWidgetHostView
   void UpdateCurrentCursor();
 
   void DestroyDelegatedContent();
-  void SendDelegatedFrameAck(uint32_t surface_id);
+  void SendDelegatedFrameAck();
   void SendReturnedDelegatedResources();
   void SurfaceDrawn(const cc::LocalSurfaceId& id,
                     cc::CompositorFrameMetadata metadata);
@@ -226,9 +226,6 @@ class RenderWidgetHostView
   std::unique_ptr<cc::SurfaceFactory> surface_factory_;
   cc::LocalSurfaceId local_surface_id_;
   cc::ReturnedResourceArray surface_returned_resources_;
-
-  // The compositor frame sink ID for the last frame from the renderer
-  uint32_t last_compositor_frame_sink_id_;
 
   cc::CompositorFrameMetadata last_drawn_frame_metadata_;
 

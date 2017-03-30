@@ -74,10 +74,6 @@ class OXIDE_SHARED_EXPORT BrowserPlatformIntegration {
   // Launch |url| in an external application. Can be called on any thread
   virtual bool LaunchURLExternally(const GURL& url);
 
-  // Determine if there are any touch devices connected. Called on the UI
-  // thread
-  virtual bool IsTouchSupported();
-
   // Return a native display handle that can be used to create GL contexts.
   // Called on the UI thread
   virtual intptr_t GetNativeDisplay() = 0;

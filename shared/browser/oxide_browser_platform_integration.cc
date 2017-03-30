@@ -56,10 +56,6 @@ bool BrowserPlatformIntegration::LaunchURLExternally(const GURL& url) {
   return false;
 }
 
-bool BrowserPlatformIntegration::IsTouchSupported() {
-  return false;
-}
-
 GLContextDependent* BrowserPlatformIntegration::GetGLShareContext() {
   return nullptr;
 }

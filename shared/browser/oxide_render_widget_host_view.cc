@@ -119,8 +119,15 @@ void RenderWidgetHostView::FocusedNodeChanged(
   container_->FocusedNodeChanged(this, is_editable_node);
 }
 
-void RenderWidgetHostView::OnSwapCompositorFrame(
-    uint32_t compositor_frame_sink_id,
+void RenderWidgetHostView::DidCreateNewRendererCompositorFrameSink() {
+  DestroyDelegatedContent();
+  surface_factory_.reset();
+  if (!surface_returned_resources_.empty()) {
+    SendReturnedDelegatedResources();
+  }
+}
+
+void RenderWidgetHostView::SubmitCompositorFrame(
     const cc::LocalSurfaceId& local_surface_id,
     cc::CompositorFrame frame) {
   if (frame.render_pass_list.empty()) {
@@ -130,19 +137,9 @@ void RenderWidgetHostView::OnSwapCompositorFrame(
     return;
   }
 
-  if (compositor_frame_sink_id != last_compositor_frame_sink_id_) {
-    DestroyDelegatedContent();
-    surface_factory_.reset();
-    if (!surface_returned_resources_.empty()) {
-      SendReturnedDelegatedResources();
-    }
-    last_compositor_frame_sink_id_ = compositor_frame_sink_id;
-  }
-
   base::Closure ack_callback =
       base::Bind(&RenderWidgetHostView::SendDelegatedFrameAck,
-                 weak_ptr_factory_.GetWeakPtr(),
-                 compositor_frame_sink_id);
+                 weak_ptr_factory_.GetWeakPtr());
   ack_callbacks_.push(ack_callback);
 
   cc::CompositorFrameMetadata metadata = frame.metadata.Clone();
@@ -705,25 +702,17 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
   layer_ = nullptr;
 }
 
-void RenderWidgetHostView::SendDelegatedFrameAck(uint32_t surface_id) {
-  content::RenderWidgetHostImpl::SendReclaimCompositorResources(
-      host_->GetRoutingID(),
-      surface_id,
-      host_->GetProcess()->GetID(),
-      true, // is_swap_ack
-      surface_returned_resources_);
+void RenderWidgetHostView::SendDelegatedFrameAck() {
+  host_->SendReclaimCompositorResources(true, // is_swap_ack
+                                        surface_returned_resources_);
   surface_returned_resources_.clear();
 }
 
 void RenderWidgetHostView::SendReturnedDelegatedResources() {
   DCHECK(host_);
 
-  content::RenderWidgetHostImpl::SendReclaimCompositorResources(
-      host_->GetRoutingID(),
-      last_compositor_frame_sink_id_,
-      host_->GetProcess()->GetID(),
-      false, // is_swap_ack
-      surface_returned_resources_);
+  host_->SendReclaimCompositorResources(false, // is_swap_ack
+                                        surface_returned_resources_);
   surface_returned_resources_.clear();
 }
 
@@ -770,7 +759,6 @@ RenderWidgetHostView::RenderWidgetHostView(
     : host_(host),
       container_(nullptr),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
-      last_compositor_frame_sink_id_(0),
       is_loading_(false),
       is_showing_(!host->is_hidden()),
       browser_controls_shrink_blink_size_(false),
