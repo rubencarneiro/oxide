@@ -33,14 +33,16 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/browser/resource_dispatcher_host.h"
 #include "content/public/common/content_switches.h"
+#include "content/public/common/service_info.h"
 #include "content/public/common/web_preferences.h"
-#include "device/vibration/vibration_manager.mojom.h"
 #include "ppapi/features/features.h"
+#include "services/device/public/interfaces/constants.mojom.h"
 #include "services/service_manager/public/cpp/interface_registry.h"
 #include "ui/display/display.h"
 #include "ui/native_theme/native_theme_switches.h"
 
 #include "shared/browser/compositor/oxide_compositor_utils.h"
+#include "shared/browser/device/oxide_device_service.h"
 #include "shared/browser/media/oxide_media_capture_devices_dispatcher.h"
 #include "shared/browser/notifications/oxide_platform_notification_service.h"
 #include "shared/browser/ssl/oxide_certificate_error_dispatcher.h"
@@ -78,16 +80,6 @@
 #endif
 
 namespace oxide {
-
-namespace {
-
-void CreateVibrationManager(
-    mojo::InterfaceRequest<device::mojom::VibrationManager> request) {
-  BrowserPlatformIntegration::GetInstance()
-      ->CreateVibrationManager(std::move(request));
-}
-
-}
 
 content::BrowserMainParts* ContentBrowserClient::CreateBrowserMainParts(
     const content::MainFunctionParams& parameters) {
@@ -324,11 +316,18 @@ ContentBrowserClient::GetDevToolsManagerDelegate() {
   return new DevToolsManagerDelegate();
 }
 
-void ContentBrowserClient::RegisterRenderFrameMojoInterfaces(
-    service_manager::InterfaceRegistry* registry,
-    content::RenderFrameHost* render_frame_host) {
-  DCHECK(registry);
-  registry->AddInterface(base::Bind(&CreateVibrationManager));
+void ContentBrowserClient::RegisterInProcessServices(
+    StaticServiceMap* services) {
+  content::ServiceInfo device_info;
+  device_info.factory =
+      base::Bind(
+          &CreateDeviceService,
+          content::BrowserThread::GetTaskRunnerForThread(
+              content::BrowserThread::FILE),
+          content::BrowserThread::GetTaskRunnerForThread(
+              content::BrowserThread::IO));
+  device_info.task_runner = base::ThreadTaskRunnerHandle::Get();
+  services->insert(std::make_pair(device::mojom::kServiceName, device_info));
 }
 
 void ContentBrowserClient::DidCreatePpapiPlugin(content::BrowserPpapiHost* host) {
