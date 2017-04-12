@@ -116,25 +116,6 @@ bool URLRequestDelegatedJobFactory::IsHandledProtocol(
   return delegate->IsCustomProtocolHandlerRegistered(scheme);
 }
 
-bool URLRequestDelegatedJobFactory::IsHandledURL(const GURL& url) const {
-  if (job_factory_->IsHandledURL(url)) {
-    return true;
-  }
-
-  std::string scheme = url.scheme();
-
-  if (!CanDelegateProtocol(scheme)) {
-    return false;
-  }
-
-  scoped_refptr<BrowserContextDelegate> delegate(context_->GetDelegate());
-  if (!delegate.get()) {
-    return false;
-  }
-
-  return delegate->IsCustomProtocolHandlerRegistered(scheme);
-}
-
 bool URLRequestDelegatedJobFactory::IsSafeRedirectTarget(
     const GURL& location) const {
   if (!location.is_valid()) {

@@ -51,7 +51,6 @@ class URLRequestDelegatedJobFactory final : public net::URLRequestJobFactory {
       net::URLRequest* request,
       net::NetworkDelegate* network_delegate) const final;
   bool IsHandledProtocol(const std::string& scheme) const final;
-  bool IsHandledURL(const GURL& url) const final;
   bool IsSafeRedirectTarget(const GURL& location) const final;
 
   std::unique_ptr<net::URLRequestJobFactory> job_factory_;

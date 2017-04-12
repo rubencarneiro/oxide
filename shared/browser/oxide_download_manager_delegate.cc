@@ -100,15 +100,12 @@ bool DownloadManagerDelegate::DetermineDownloadTarget(
     const content::DownloadTargetCallback& callback) {
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
-  if (!download->GetForcedFilePath().empty()) {
-    callback.Run(download->GetForcedFilePath(),
-                 content::DownloadItem::TARGET_DISPOSITION_OVERWRITE,
-                 content::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS,
-                 download->GetForcedFilePath());
-    return true;
-  }
-
-  return false;
+  callback.Run(base::FilePath(),
+               content::DownloadItem::TARGET_DISPOSITION_OVERWRITE,
+               content::DOWNLOAD_DANGER_TYPE_NOT_DANGEROUS,
+               base::FilePath(),
+               content::DOWNLOAD_INTERRUPT_REASON_USER_CANCELED);
+  return true;
 }
 
 bool DownloadManagerDelegate::ShouldCompleteDownload(
