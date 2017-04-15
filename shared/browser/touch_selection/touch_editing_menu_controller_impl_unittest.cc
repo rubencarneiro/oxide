@@ -129,7 +129,7 @@ class StubTouchEditingMenuControllerClient
   content::WebContents* web_contents_;
 
   blink::WebContextMenuData::EditFlags editing_capabilities_ =
-      blink::WebContextMenuData::CanDoNone;
+      blink::WebContextMenuData::kCanDoNone;
 };
 
 class TouchEditingMenuSink : public TouchEditingMenu {
@@ -384,15 +384,15 @@ TEST_F(TouchEditingMenuControllerImplTest, EditingCapabilities) {
   SetCreateTouchEditingMenu(false);
 
   SetEditingCapabilities(
-      blink::WebContextMenuData::CanCut
-      | blink::WebContextMenuData::CanCopy
-      | blink::WebContextMenuData::CanDelete
-      | blink::WebContextMenuData::CanSelectAll);
+      blink::WebContextMenuData::kCanCut
+      | blink::WebContextMenuData::kCanCopy
+      | blink::WebContextMenuData::kCanDelete
+      | blink::WebContextMenuData::kCanSelectAll);
 
   blink::WebContextMenuData::EditFlags expected_caps =
-      blink::WebContextMenuData::CanCut
-      | blink::WebContextMenuData::CanCopy
-      | blink::WebContextMenuData::CanSelectAll;
+      blink::WebContextMenuData::kCanCut
+      | blink::WebContextMenuData::kCanCopy
+      | blink::WebContextMenuData::kCanSelectAll;
 
   EXPECT_CALL(web_contents_client(),
               CreateTouchEditingMenu(expected_caps, controller()));
@@ -406,11 +406,11 @@ TEST_F(TouchEditingMenuControllerImplTest, EditingCapabilities) {
       gfx::SelectionBound(), gfx::SelectionBound());
 
   SetEditingCapabilities(
-      blink::WebContextMenuData::CanCopy
-      | blink::WebContextMenuData::CanSelectAll);
+      blink::WebContextMenuData::kCanCopy
+      | blink::WebContextMenuData::kCanSelectAll);
   expected_caps =
-      blink::WebContextMenuData::CanCopy
-      | blink::WebContextMenuData::CanSelectAll;
+      blink::WebContextMenuData::kCanCopy
+      | blink::WebContextMenuData::kCanSelectAll;
 
   EXPECT_CALL(web_contents_client(),
               CreateTouchEditingMenu(expected_caps, controller()));

@@ -180,6 +180,7 @@ component("shared") {
     "//base:i18n",
     "//cc",
     "//cc/surfaces",
+    "//components/display_compositor",
     "//components/keyed_service/content",
     "//components/keyed_service/core",
     "//components/sessions",

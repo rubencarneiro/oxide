@@ -48,7 +48,7 @@ void DragSource::StartDragging(content::WebContents* contents,
                                const gfx::Vector2d& image_offset) {
   ContentsViewImpl* view = ContentsViewImpl::FromWebContents(contents);
   if (!view) {
-    client()->EndDrag(blink::WebDragOperationNone);
+    client()->EndDrag(blink::kWebDragOperationNone);
     return;
   }
 

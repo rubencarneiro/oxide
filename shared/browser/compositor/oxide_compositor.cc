@@ -37,10 +37,10 @@
 #include "cc/surfaces/display_scheduler.h"
 #include "cc/trees/layer_tree_host.h"
 #include "cc/trees/layer_tree_settings.h"
+#include "components/display_compositor/host_shared_bitmap_manager.h"
 #include "content/browser/gpu/browser_gpu_channel_host_factory.h" // nogncheck
 #include "content/browser/gpu/browser_gpu_memory_buffer_manager.h" // nogncheck
 #include "content/browser/gpu/gpu_data_manager_impl.h" // nogncheck
-#include "content/common/host_shared_bitmap_manager.h" // nogncheck
 #include "gpu/command_buffer/client/context_support.h"
 #include "gpu/command_buffer/client/gles2_interface.h"
 #include "gpu/command_buffer/client/shared_memory_limits.h"
@@ -337,7 +337,7 @@ Compositor::CreateCompositorFrameSink() {
 
   display_ =
       base::MakeUnique<cc::Display>(
-          content::HostSharedBitmapManager::current(),
+          display_compositor::HostSharedBitmapManager::current(),
           content::BrowserGpuMemoryBufferManager::current(),
           cc::RendererSettings(),
           frame_sink_id_,
@@ -355,7 +355,7 @@ Compositor::CreateCompositorFrameSink() {
           context_provider,
           nullptr,
           content::BrowserGpuMemoryBufferManager::current(),
-          content::HostSharedBitmapManager::current());
+          display_compositor::HostSharedBitmapManager::current());
 
   display_->Resize(layer_tree_host_->device_viewport_size());
   display_->SetVisible(layer_tree_host_->IsVisible());

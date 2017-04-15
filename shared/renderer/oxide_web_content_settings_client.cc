@@ -43,9 +43,9 @@ void WebContentSettingsClient::DidCommitProvisionalLoad(
   did_block_displaying_insecure_content_ = false;
   did_block_running_insecure_content_ = false;
 
-  if (render_frame()->GetWebFrame()->dataSource()->navigationType() !=
-          blink::WebNavigationTypeReload &&
-      !render_frame()->GetWebFrame()->parent()) {
+  if (render_frame()->GetWebFrame()->DataSource()->GetNavigationType() !=
+          blink::kWebNavigationTypeReload &&
+      !render_frame()->GetWebFrame()->Parent()) {
     can_display_insecure_content_ = false;
     can_run_insecure_content_ = false;
   }
@@ -65,8 +65,9 @@ bool WebContentSettingsClient::OnMessageReceived(const IPC::Message& message) {
   return handled;
 }
 
-bool WebContentSettingsClient::allowDisplayingInsecureContent(
+bool WebContentSettingsClient::AllowDisplayingInsecureContent(
     bool enabled_per_settings,
+    const blink::WebSecurityOrigin& origin,
     const blink::WebURL& url) {
   if (enabled_per_settings ||
       can_display_insecure_content_ ||
@@ -82,7 +83,7 @@ bool WebContentSettingsClient::allowDisplayingInsecureContent(
   return false;
 }
 
-bool WebContentSettingsClient::allowRunningInsecureContent(
+bool WebContentSettingsClient::AllowRunningInsecureContent(
     bool enabled_per_settings,
     const blink::WebSecurityOrigin& origin,
     const blink::WebURL& url) {
@@ -107,8 +108,8 @@ void WebContentSettingsClient::OnSetAllowRunningInsecureContent(bool allow) {
 }
 
 void WebContentSettingsClient::OnReloadFrame() {
-  DCHECK(!render_frame()->GetWebFrame()->parent());
-  render_frame()->GetWebFrame()->reload(blink::WebFrameLoadType::Reload);
+  DCHECK(!render_frame()->GetWebFrame()->Parent());
+  render_frame()->GetWebFrame()->Reload(blink::WebFrameLoadType::kReload);
 }
 
 WebContentSettingsClient::WebContentSettingsClient(
@@ -119,7 +120,7 @@ WebContentSettingsClient::WebContentSettingsClient(
       can_run_insecure_content_(false),
       did_block_displaying_insecure_content_(false),
       did_block_running_insecure_content_(false) {
-  render_frame->GetWebFrame()->setContentSettingsClient(this);
+  render_frame->GetWebFrame()->SetContentSettingsClient(this);
 
   // Copy settings from the main frame else we end up in an infinite loop
   // in the case where a subframe tries to display or run insecure content

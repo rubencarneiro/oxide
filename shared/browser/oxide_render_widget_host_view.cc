@@ -234,7 +234,7 @@ void RenderWidgetHostView::ProcessAckedTouchEvent(
     const content::TouchEventWithLatencyInfo& touch,
     content::InputEventAckState ack_result) {
   gesture_provider_->OnTouchEventAck(
-      touch.event.uniqueTouchEventId,
+      touch.event.unique_touch_event_id,
       ack_result == content::INPUT_EVENT_ACK_STATE_CONSUMED);
 }
 
@@ -468,6 +468,14 @@ gfx::Rect RenderWidgetHostView::GetViewBounds() const {
   return bounds;
 }
 
+void RenderWidgetHostView::SetBackgroundColor(SkColor color) {
+  NOTREACHED();
+}
+
+SkColor RenderWidgetHostView::background_color() const {
+  return SK_ColorWHITE;
+}
+
 bool RenderWidgetHostView::LockMouse() {
   return false;
 }
@@ -490,16 +498,16 @@ void RenderWidgetHostView::OnGestureEvent(blink::WebGestureEvent event) {
   content::RenderWidgetHostInputEventRouter* router =
       host_->delegate()->GetInputEventRouter();
 
-  if (event.type() == blink::WebInputEvent::GestureTapDown) {
+  if (event.GetType() == blink::WebInputEvent::kGestureTapDown) {
     // Webkit does not stop a fling-scroll on tap-down. So explicitly send an
     // event to stop any in-progress flings.
     blink::WebGestureEvent fling_cancel = event;
-    fling_cancel.setType(blink::WebInputEvent::GestureFlingCancel);
-    fling_cancel.sourceDevice = blink::WebGestureDeviceTouchpad;
+    fling_cancel.SetType(blink::WebInputEvent::kGestureFlingCancel);
+    fling_cancel.source_device = blink::kWebGestureDeviceTouchpad;
     router->RouteGestureEvent(this, &fling_cancel, ui::LatencyInfo());
   }
 
-  if (event.type() == blink::WebInputEvent::Undefined) {
+  if (event.GetType() == blink::WebInputEvent::kUndefined) {
     return;
   }
 
@@ -515,26 +523,26 @@ void RenderWidgetHostView::OnUserInput() const {
 
 void RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
-  switch (event.type()) {
-    case blink::WebInputEvent::GestureLongPress: {
+  switch (event.GetType()) {
+    case blink::WebInputEvent::kGestureLongPress: {
       base::TimeTicks event_time = base::TimeTicks() +
-          base::TimeDelta::FromSecondsD(event.timeStampSeconds());
+          base::TimeDelta::FromSecondsD(event.TimeStampSeconds());
       gfx::PointF location(event.x, event.y);
       selection_controller_->HandleLongPressEvent(event_time, location);
       break;
     }
-    case blink::WebInputEvent::GestureTap: {
+    case blink::WebInputEvent::kGestureTap: {
       gfx::PointF location(event.x, event.y);
-      selection_controller_->HandleTapEvent(location, event.data.tap.tapCount);
+      selection_controller_->HandleTapEvent(location, event.data.tap.tap_count);
       break;
     }
-    case blink::WebInputEvent::GestureScrollBegin:
+    case blink::WebInputEvent::kGestureScrollBegin:
       // XXX: currently commented out because when doing a pinch-to-zoom
       // gesture, we don’t always get the corresponding GestureScrollEnd event,
       // so selection handles would remain hidden.
       //selection_controller()->SetTemporarilyHidden(true);
       break;
-    case blink::WebInputEvent::GestureScrollEnd:
+    case blink::WebInputEvent::kGestureScrollEnd:
       // XXX: see above
       //selection_controller()->SetTemporarilyHidden(false);
       break;
@@ -679,7 +687,7 @@ RenderWidgetHostView::CreateDrawable() {
 void RenderWidgetHostView::UpdateCurrentCursor() {
   if (is_loading_) {
     content::WebCursor::CursorInfo busy_cursor_info(
-        blink::WebCursorInfo::TypeWait);
+        blink::WebCursorInfo::kTypeWait);
     current_cursor_.InitFromCursorInfo(busy_cursor_info);
   } else {
     current_cursor_ = web_cursor_;

@@ -68,12 +68,12 @@ void ContentRendererClient::RenderThreadStarted() {
 
   // Usually enabled only on Android. We want this on mobile, but
   // should be ok everywhere
-  blink::WebRuntimeFeatures::enableOrientationEvent(true);
+  blink::WebRuntimeFeatures::EnableOrientationEvent(true);
   // Oxide has no mechanism to display page popups
-  blink::WebRuntimeFeatures::enablePagePopup(false);
+  blink::WebRuntimeFeatures::EnablePagePopup(false);
   // Oxide does not support NavigatorContentUtils.
   // See https://launchpad.net/bugs/1214046
-  blink::WebRuntimeFeatures::enableNavigatorContentUtils(false);
+  blink::WebRuntimeFeatures::EnableNavigatorContentUtils(false);
 }
 
 void ContentRendererClient::RenderFrameCreated(
@@ -103,7 +103,7 @@ void ContentRendererClient::AddImageContextMenuProperties(
   // XXX(oSoMoN): see comment in
   // oxide::ResourceDispatcherHostDelegate::DispatchDownloadRequest(…).
   (*properties)[oxide::kImageContextMenuPropertiesMimeType] =
-      response.mimeType().utf8();
+      response.MimeType().Utf8();
 }
 
 void ContentRendererClient::RunScriptsAtDocumentStart(

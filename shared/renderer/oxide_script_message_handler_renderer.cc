@@ -62,7 +62,7 @@ bool ScriptMessageHandlerRenderer::ReceiveMessageCallback(
   {
     v8::MicrotasksScope microtasks(isolate,
                                    v8::MicrotasksScope::kDoNotRunMicrotasks);
-    manager_->frame()->GetWebFrame()->callFunctionEvenIfScriptDisabled(
+    manager_->frame()->GetWebFrame()->CallFunctionEvenIfScriptDisabled(
         function, manager_->GetV8Context()->Global(), arraysize(argv), argv);
   }
 

@@ -71,95 +71,95 @@ namespace {
 inline QCursor QCursorFromWebCursor(blink::WebCursorInfo::Type type) {
   Qt::CursorShape cs = Qt::ArrowCursor;
   switch (type) {
-  case blink::WebCursorInfo::TypeCross:
+  case blink::WebCursorInfo::kTypeCross:
     cs = Qt::CrossCursor;
     break;
 
-  case blink::WebCursorInfo::TypeHand:
+  case blink::WebCursorInfo::kTypeHand:
     cs = Qt::PointingHandCursor;
     break;
 
-  case blink::WebCursorInfo::TypeCell:
-  case blink::WebCursorInfo::TypeIBeam:
+  case blink::WebCursorInfo::kTypeCell:
+  case blink::WebCursorInfo::kTypeIBeam:
     cs = Qt::IBeamCursor;
     break;
 
-  case blink::WebCursorInfo::TypeWait:
+  case blink::WebCursorInfo::kTypeWait:
     cs = Qt::WaitCursor;
     break;
 
-  case blink::WebCursorInfo::TypeHelp:
+  case blink::WebCursorInfo::kTypeHelp:
     cs = Qt::WhatsThisCursor;
     break;
 
-  case blink::WebCursorInfo::TypeEastResize:
-  case blink::WebCursorInfo::TypeWestResize:
-  case blink::WebCursorInfo::TypeEastWestResize:
+  case blink::WebCursorInfo::kTypeEastResize:
+  case blink::WebCursorInfo::kTypeWestResize:
+  case blink::WebCursorInfo::kTypeEastWestResize:
     cs = Qt::SizeHorCursor;
     break;
 
-  case blink::WebCursorInfo::TypeNorthResize:
-  case blink::WebCursorInfo::TypeSouthResize:
-  case blink::WebCursorInfo::TypeNorthSouthResize:
+  case blink::WebCursorInfo::kTypeNorthResize:
+  case blink::WebCursorInfo::kTypeSouthResize:
+  case blink::WebCursorInfo::kTypeNorthSouthResize:
     cs = Qt::SizeVerCursor;
     break;
 
-  case blink::WebCursorInfo::TypeNorthEastResize:
-  case blink::WebCursorInfo::TypeSouthWestResize:
+  case blink::WebCursorInfo::kTypeNorthEastResize:
+  case blink::WebCursorInfo::kTypeSouthWestResize:
     cs = Qt::SizeBDiagCursor;
     break;
 
-  case blink::WebCursorInfo::TypeNorthWestResize:
-  case blink::WebCursorInfo::TypeSouthEastResize:
+  case blink::WebCursorInfo::kTypeNorthWestResize:
+  case blink::WebCursorInfo::kTypeSouthEastResize:
     cs = Qt::SizeFDiagCursor;
     break;
 
-  case blink::WebCursorInfo::TypeNorthEastSouthWestResize:
-  case blink::WebCursorInfo::TypeNorthWestSouthEastResize:
-  case blink::WebCursorInfo::TypeMove:
+  case blink::WebCursorInfo::kTypeNorthEastSouthWestResize:
+  case blink::WebCursorInfo::kTypeNorthWestSouthEastResize:
+  case blink::WebCursorInfo::kTypeMove:
     cs = Qt::SizeAllCursor;
     break;
 
-  case blink::WebCursorInfo::TypeColumnResize:
+  case blink::WebCursorInfo::kTypeColumnResize:
     cs = Qt::SplitHCursor;
     break;
 
-  case blink::WebCursorInfo::TypeRowResize:
+  case blink::WebCursorInfo::kTypeRowResize:
     cs = Qt::SplitVCursor;
     break;
 
-  case blink::WebCursorInfo::TypeMiddlePanning:
-  case blink::WebCursorInfo::TypeEastPanning:
-  case blink::WebCursorInfo::TypeNorthPanning:
-  case blink::WebCursorInfo::TypeNorthEastPanning:
-  case blink::WebCursorInfo::TypeNorthWestPanning:
-  case blink::WebCursorInfo::TypeSouthPanning:
-  case blink::WebCursorInfo::TypeSouthEastPanning:
-  case blink::WebCursorInfo::TypeSouthWestPanning:
-  case blink::WebCursorInfo::TypeWestPanning:
-  case blink::WebCursorInfo::TypeGrab:
-  case blink::WebCursorInfo::TypeGrabbing:
+  case blink::WebCursorInfo::kTypeMiddlePanning:
+  case blink::WebCursorInfo::kTypeEastPanning:
+  case blink::WebCursorInfo::kTypeNorthPanning:
+  case blink::WebCursorInfo::kTypeNorthEastPanning:
+  case blink::WebCursorInfo::kTypeNorthWestPanning:
+  case blink::WebCursorInfo::kTypeSouthPanning:
+  case blink::WebCursorInfo::kTypeSouthEastPanning:
+  case blink::WebCursorInfo::kTypeSouthWestPanning:
+  case blink::WebCursorInfo::kTypeWestPanning:
+  case blink::WebCursorInfo::kTypeGrab:
+  case blink::WebCursorInfo::kTypeGrabbing:
     cs = Qt::ClosedHandCursor;
     break;
 
-  case blink::WebCursorInfo::TypeProgress:
+  case blink::WebCursorInfo::kTypeProgress:
     cs = Qt::BusyCursor;
     break;
 
-  case blink::WebCursorInfo::TypeNoDrop:
-  case blink::WebCursorInfo::TypeNotAllowed:
+  case blink::WebCursorInfo::kTypeNoDrop:
+  case blink::WebCursorInfo::kTypeNotAllowed:
     cs = Qt::ForbiddenCursor;
     break;
 
-  case blink::WebCursorInfo::TypeCopy:
-  case blink::WebCursorInfo::TypeContextMenu:
-  case blink::WebCursorInfo::TypeVerticalText:
-  case blink::WebCursorInfo::TypeAlias:
-  case blink::WebCursorInfo::TypeZoomIn:
-  case blink::WebCursorInfo::TypeZoomOut:
-  case blink::WebCursorInfo::TypeCustom:
-  case blink::WebCursorInfo::TypePointer:
-  case blink::WebCursorInfo::TypeNone:
+  case blink::WebCursorInfo::kTypeCopy:
+  case blink::WebCursorInfo::kTypeContextMenu:
+  case blink::WebCursorInfo::kTypeVerticalText:
+  case blink::WebCursorInfo::kTypeAlias:
+  case blink::WebCursorInfo::kTypeZoomIn:
+  case blink::WebCursorInfo::kTypeZoomOut:
+  case blink::WebCursorInfo::kTypeCustom:
+  case blink::WebCursorInfo::kTypePointer:
+  case blink::WebCursorInfo::kTypeNone:
   default:
     break;
   }
@@ -383,7 +383,7 @@ void ContentsViewImpl::handleHoverEvent(QHoverEvent* event,
 void ContentsViewImpl::handleDragEnterEvent(QDragEnterEvent* event) {
   content::DropData drop_data;
   gfx::Point location;
-  blink::WebDragOperationsMask allowed_ops = blink::WebDragOperationNone;
+  blink::WebDragOperationsMask allowed_ops = blink::kWebDragOperationNone;
   int key_modifiers = 0;
 
   GetDragEnterEventParams(event,
@@ -546,8 +546,8 @@ void ContentsViewImpl::UnhandledKeyboardEvent(
     return;
   }
 
-  if (event.type() != blink::WebInputEvent::RawKeyDown &&
-      event.type() != blink::WebInputEvent::KeyUp) {
+  if (event.GetType() != blink::WebInputEvent::kRawKeyDown &&
+      event.GetType() != blink::WebInputEvent::kKeyUp) {
     return;
   }
 

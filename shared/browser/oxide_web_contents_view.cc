@@ -87,9 +87,9 @@ int kUserDataKey;
 void SendFakeCompositionKeyEvent(content::RenderWidgetHostImpl* host,
                                  blink::WebInputEvent::Type type) {
   content::NativeWebKeyboardEvent fake_event(type, 0, base::TimeTicks::Now());
-  fake_event.windowsKeyCode = ui::VKEY_PROCESSKEY;
+  fake_event.windows_key_code = ui::VKEY_PROCESSKEY;
   fake_event.skip_in_browser = true;
-  fake_event.domKey = ui::DomKey::Key::PROCESS;
+  fake_event.dom_key = ui::DomKey::Key::PROCESS;
   host->ForwardKeyboardEvent(fake_event);
 }
 
@@ -111,8 +111,8 @@ WebContentsView::WebContentsView(content::WebContents* web_contents)
       client_(nullptr),
       compositor_(Compositor::Create(this)),
       root_layer_(cc::SolidColorLayer::Create()),
-      current_drag_allowed_ops_(blink::WebDragOperationNone),
-      current_drag_op_(blink::WebDragOperationNone),
+      current_drag_allowed_ops_(blink::kWebDragOperationNone),
+      current_drag_op_(blink::kWebDragOperationNone),
       chrome_controller_(ChromeController::CreateForWebContents(web_contents)) {
   web_contents->SetUserData(&kUserDataKey,
                             new UnownedUserData<WebContentsView>(this));
@@ -860,13 +860,13 @@ void WebContentsView::SetComposingText(
     return;
   }
 
-  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::kRawKeyDown);
   widget->ImeSetComposition(text,
                             underlines,
                             gfx::Range::InvalidRange(),
                             selection_range.start(),
                             selection_range.end());
-  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::kKeyUp);
 }
 
 void WebContentsView::CommitText(const base::string16& text,
@@ -885,12 +885,12 @@ void WebContentsView::CommitText(const base::string16& text,
     return;
   }
 
-  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::RawKeyDown);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::kRawKeyDown);
   widget->ImeCommitText(text,
                         std::vector<blink::WebCompositionUnderline>(),
                         replacement_range,
                         false);
-  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::KeyUp);
+  SendFakeCompositionKeyEvent(widget, blink::WebInputEvent::kKeyUp);
 }
 
 base::string16 WebContentsView::GetSelectionText() const {
@@ -1152,7 +1152,7 @@ void WebContentsView::SetClient(WebContentsViewClient* client) {
 blink::WebContextMenuData::EditFlags
 WebContentsView::GetEditingCapabilities() const {
   blink::WebContextMenuData::EditFlags flags =
-      blink::WebContextMenuData::CanDoNone;
+      blink::WebContextMenuData::kCanDoNone;
 
   const content::TextInputState* state = GetTextInputState();
   ui::TextInputType text_input_type =
@@ -1167,19 +1167,19 @@ WebContentsView::GetEditingCapabilities() const {
 
   // XXX: if editable, can we determine whether undo/redo is available?
   if (editable && readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCut;
+    flags |= blink::WebContextMenuData::kCanCut;
   }
   if (readable && has_selection) {
-    flags |= blink::WebContextMenuData::CanCopy;
+    flags |= blink::WebContextMenuData::kCanCopy;
   }
   if (editable &&
       Clipboard::GetForCurrentThread()->HasData(ui::CLIPBOARD_TYPE_COPY_PASTE)) {
-    flags |= blink::WebContextMenuData::CanPaste;
+    flags |= blink::WebContextMenuData::kCanPaste;
   }
   if (editable && has_selection) {
-    flags |= blink::WebContextMenuData::CanDelete;
+    flags |= blink::WebContextMenuData::kCanDelete;
   }
-  flags |= blink::WebContextMenuData::CanSelectAll;
+  flags |= blink::WebContextMenuData::kCanSelectAll;
 
   return flags;
 }
@@ -1212,7 +1212,10 @@ void WebContentsView::HandleKeyEvent(
 }
 
 void WebContentsView::HandleMouseEvent(blink::WebMouseEvent event) {
-  event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
+  event.SetPositionInWidget(
+      event.PositionInWidget().x,
+      std::floor(event.PositionInWidget().y -
+                 chrome_controller_->GetTopContentOffset()));
   mouse_state_.UpdateEvent(&event);
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
@@ -1238,7 +1241,10 @@ void WebContentsView::HandleMotionEvent(const ui::MotionEvent& event) {
 }
 
 void WebContentsView::HandleWheelEvent(blink::WebMouseWheelEvent event) {
-  event.y = std::floor(event.y - chrome_controller_->GetTopContentOffset());
+  event.SetPositionInWidget(
+      event.PositionInWidget().x,
+      std::floor(event.PositionInWidget().y -
+                 chrome_controller_->GetTopContentOffset()));
 
   RenderWidgetHostView* rwhv = GetRenderWidgetHostView();
   if (!rwhv) {
@@ -1283,7 +1289,7 @@ blink::WebDragOperation WebContentsView::HandleDragMove(
     const gfx::Point& location,
     int key_modifiers) {
   if (!current_drop_data_) {
-    return blink::WebDragOperationNone;
+    return blink::kWebDragOperationNone;
   }
 
   gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());
@@ -1328,7 +1334,7 @@ void WebContentsView::HandleDragLeave() {
 blink::WebDragOperation WebContentsView::HandleDrop(const gfx::Point& location,
                                                     int key_modifiers) {
   if (!current_drop_data_) {
-    return blink::WebDragOperationNone;
+    return blink::kWebDragOperationNone;
   }
 
   gfx::Vector2d offset(0, chrome_controller_->GetTopContentOffset());

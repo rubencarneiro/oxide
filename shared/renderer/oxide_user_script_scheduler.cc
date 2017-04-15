@@ -73,7 +73,7 @@ void UserScriptScheduler::FrameDetached(blink::WebFrame* frame) {
     return;
   }
 
-  blink::WebLocalFrame* local_frame = frame->toWebLocalFrame();
+  blink::WebLocalFrame* local_frame = frame->ToWebLocalFrame();
   if (local_frame) {
     pending_idle_frames_.erase(local_frame);
   }

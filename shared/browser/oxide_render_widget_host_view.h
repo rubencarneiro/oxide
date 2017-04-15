@@ -163,6 +163,8 @@ class RenderWidgetHostView
   bool IsSurfaceAvailableForCopy() const override;
   bool IsShowing() override;
   gfx::Rect GetViewBounds() const override;
+  void SetBackgroundColor(SkColor color) override;
+  SkColor background_color() const override;
   bool LockMouse() override;
   void UnlockMouse() override;
   void SetNeedsBeginFrames(bool needs_begin_frames) override;

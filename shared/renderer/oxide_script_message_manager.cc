@@ -159,7 +159,7 @@ v8::Handle<v8::Object> ScriptMessageManager::GetOxideApiObject(
     exports
   };
 
-  frame_->GetWebFrame()->callFunctionEvenIfScriptDisabled(
+  frame_->GetWebFrame()->CallFunctionEvenIfScriptDisabled(
       function,
       GetV8Context()->Global(),
       arraysize(argv),

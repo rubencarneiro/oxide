@@ -22,6 +22,7 @@
 #include <string>
 
 #include "base/macros.h"
+#include "base/memory/ptr_util.h"
 #include "base/memory/ref_counted.h"
 #include "base/values.h"
 #include "url/gurl.h"
@@ -52,7 +53,8 @@ class OXIDE_SHARED_EXPORT ScriptMessage :
 
   void Reply(std::unique_ptr<base::Value> payload);
   void Error(ScriptMessageParams::Error code,
-             std::unique_ptr<base::Value> payload = base::Value::CreateNullValue());
+             std::unique_ptr<base::Value> payload =
+                 base::MakeUnique<base::Value>());
 
   int serial() const { return serial_; }
   GURL context() const { return context_; }

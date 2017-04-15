@@ -35,15 +35,15 @@ namespace {
 blink::WebBrowserControlsState ModeToTopControlsState(ChromeController::Mode mode) {
   switch (mode) {
     case ChromeController::Mode::Auto:
-      return blink::WebBrowserControlsBoth;
+      return blink::kWebBrowserControlsBoth;
     case ChromeController::Mode::Shown:
-      return blink::WebBrowserControlsShown;
+      return blink::kWebBrowserControlsShown;
     case ChromeController::Mode::Hidden:
-      return blink::WebBrowserControlsHidden;
+      return blink::kWebBrowserControlsHidden;
   }
 
   NOTREACHED();
-  return blink::WebBrowserControlsBoth;
+  return blink::kWebBrowserControlsBoth;
 }
 
 }
@@ -99,11 +99,11 @@ ChromeController::Mode ChromeControllerImpl::mode() const {
   }
 
   switch (controller()->constraints()) {
-    case blink::WebBrowserControlsShown:
+    case blink::kWebBrowserControlsShown:
       return Mode::Shown;
-    case blink::WebBrowserControlsHidden:
+    case blink::kWebBrowserControlsHidden:
       return Mode::Hidden;
-    case blink::WebBrowserControlsBoth:
+    case blink::kWebBrowserControlsBoth:
       return Mode::Auto;
   }
 

@@ -33,7 +33,7 @@ void BrowserControlsHandler::OnUpdateBrowserControlsState(
     return;
   }
 
-  view->updateBrowserControlsState(constraints, current, animate);
+  view->UpdateBrowserControlsState(constraints, current, animate);
 }
 
 void BrowserControlsHandler::OnDestruct() {

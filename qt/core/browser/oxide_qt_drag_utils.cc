@@ -120,15 +120,15 @@ void ToDropData(const QMimeData* mime_data, content::DropData* drop_data) {
 }
 
 blink::WebDragOperationsMask ToWebDragOperations(Qt::DropActions actions) {
-  blink::WebDragOperationsMask ops = blink::WebDragOperationNone;
+  blink::WebDragOperationsMask ops = blink::kWebDragOperationNone;
   if (actions | Qt::CopyAction) {
-    ops |= blink::WebDragOperationCopy;
+    ops |= blink::kWebDragOperationCopy;
   }
   if ((actions | Qt::MoveAction) || (actions | Qt::TargetMoveAction)) {
-    ops |= blink::WebDragOperationMove;
+    ops |= blink::kWebDragOperationMove;
   }
   if (actions | Qt::LinkAction) {
-    ops |= blink::WebDragOperationLink;
+    ops |= blink::kWebDragOperationLink;
   }
 
   return ops;
@@ -180,13 +180,13 @@ void ToQMimeData(const content::DropData& drop_data, QMimeData* mime_data) {
 Qt::DropActions ToQtDropActions(blink::WebDragOperationsMask mask) {
   Qt::DropActions actions = Qt::IgnoreAction;
 
-  if (mask & blink::WebDragOperationCopy) {
+  if (mask & blink::kWebDragOperationCopy) {
     actions |= Qt::CopyAction;
   }
-  if (mask & blink::WebDragOperationLink) {
+  if (mask & blink::kWebDragOperationLink) {
     actions |= Qt::LinkAction;
   }
-  if (mask & blink::WebDragOperationMove) {
+  if (mask & blink::kWebDragOperationMove) {
     actions |= Qt::MoveAction;
   }
 
@@ -196,17 +196,17 @@ Qt::DropActions ToQtDropActions(blink::WebDragOperationsMask mask) {
 blink::WebDragOperation ToWebDragOperation(Qt::DropAction action) {
   switch (action) {
     case Qt::CopyAction:
-      return blink::WebDragOperationCopy;
+      return blink::kWebDragOperationCopy;
     case Qt::MoveAction:
     case Qt::TargetMoveAction:
-      return blink::WebDragOperationMove;
+      return blink::kWebDragOperationMove;
     case Qt::LinkAction:
-      return blink::WebDragOperationLink;
+      return blink::kWebDragOperationLink;
     case Qt::IgnoreAction:
-      return blink::WebDragOperationNone;
+      return blink::kWebDragOperationNone;
     default:
       NOTREACHED();
-      return blink::WebDragOperationNone;
+      return blink::kWebDragOperationNone;
   }
 }
 
@@ -246,13 +246,13 @@ void GetDropEventParams(QDropEvent* event,
 
 Qt::DropAction ToQtDropAction(blink::WebDragOperation op) {
   switch (op) {
-    case blink::WebDragOperationCopy:
+    case blink::kWebDragOperationCopy:
       return Qt::CopyAction;
-    case blink::WebDragOperationMove:
+    case blink::kWebDragOperationMove:
       return Qt::MoveAction;
-    case blink::WebDragOperationLink:
+    case blink::kWebDragOperationLink:
       return Qt::LinkAction;
-    case blink::WebDragOperationNone:
+    case blink::kWebDragOperationNone:
       return Qt::IgnoreAction;
     default:
       return Qt::IgnoreAction;

@@ -23,7 +23,7 @@
 
 #include "content/public/renderer/render_frame_observer.h"
 #include "content/public/renderer/render_frame_observer_tracker.h"
-#include "third_party/WebKit/public/web/WebContentSettingsClient.h"
+#include "third_party/WebKit/public/platform/WebContentSettingsClient.h"
 
 namespace content {
 class RenderFrame;
@@ -47,9 +47,10 @@ class WebContentSettingsClient
   bool OnMessageReceived(const IPC::Message& message) override;
 
   // blink::WebContentSettingsClient implementation
-  bool allowDisplayingInsecureContent(bool enabled_per_settings,
+  bool AllowDisplayingInsecureContent(bool enabled_per_settings,
+                                      const blink::WebSecurityOrigin& origin,
                                       const blink::WebURL& url) override;
-  bool allowRunningInsecureContent(bool enabled_per_settings,
+  bool AllowRunningInsecureContent(bool enabled_per_settings,
                                    const blink::WebSecurityOrigin& origin,
                                    const blink::WebURL& url) override;
 

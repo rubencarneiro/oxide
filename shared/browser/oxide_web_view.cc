@@ -161,7 +161,7 @@ WebView::CreateParams::~CreateParams() {}
 WebView::WebView(WebViewClient* client)
     : client_(client),
       blocked_content_(CONTENT_TYPE_NONE),
-      edit_flags_(blink::WebContextMenuData::CanDoNone),
+      edit_flags_(blink::WebContextMenuData::kCanDoNone),
       weak_factory_(this) {
   CHECK(client) << "Didn't specify a client";
 }

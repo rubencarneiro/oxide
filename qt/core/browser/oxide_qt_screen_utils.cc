@@ -38,16 +38,16 @@ blink::WebScreenOrientationType GetOrientationTypeFromScreenOrientation(
     Qt::ScreenOrientation orientation) {
   switch (orientation) {
     case Qt::PortraitOrientation:
-      return blink::WebScreenOrientationPortraitPrimary;
+      return blink::kWebScreenOrientationPortraitPrimary;
     case Qt::LandscapeOrientation:
-      return blink::WebScreenOrientationLandscapePrimary;
+      return blink::kWebScreenOrientationLandscapePrimary;
     case Qt::InvertedPortraitOrientation:
-      return blink::WebScreenOrientationPortraitSecondary;
+      return blink::kWebScreenOrientationPortraitSecondary;
     case Qt::InvertedLandscapeOrientation:
-      return blink::WebScreenOrientationLandscapeSecondary;
+      return blink::kWebScreenOrientationLandscapeSecondary;
     default:
       NOTREACHED();
-      return blink::WebScreenOrientationUndefined;
+      return blink::kWebScreenOrientationUndefined;
   }
 }
 
@@ -57,9 +57,9 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
   blink::WebScreenInfo result;
 
   result.depth = 24;
-  result.depthPerComponent = 8; // XXX: Copied the GTK impl here
-  result.isMonochrome = result.depth == 1;
-  result.deviceScaleFactor = DpiUtils::GetScaleFactorForScreen(screen);
+  result.depth_per_component = 8; // XXX: Copied the GTK impl here
+  result.is_monochrome = result.depth == 1;
+  result.device_scale_factor = DpiUtils::GetScaleFactorForScreen(screen);
 
   gfx::Rect rect =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(screen->geometry()),
@@ -73,15 +73,15 @@ blink::WebScreenInfo GetWebScreenInfoFromQScreen(QScreen* screen) {
       DpiUtils::ConvertQtPixelsToChromium(
         ToChromium(screen->availableGeometry()),
         screen);
-  result.availableRect = blink::WebRect(available_rect.x(),
-                                        available_rect.y(),
-                                        available_rect.width(),
-                                        available_rect.height());
+  result.available_rect = blink::WebRect(available_rect.x(),
+                                         available_rect.y(),
+                                         available_rect.width(),
+                                         available_rect.height());
 
-  result.orientationType =
+  result.orientation_type =
       GetOrientationTypeFromScreenOrientation(screen->orientation());
 
-  result.orientationAngle =
+  result.orientation_angle =
       screen->angleBetween(screen->orientation(),
                            screen->nativeOrientation());
 

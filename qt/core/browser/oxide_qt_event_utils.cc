@@ -112,19 +112,19 @@ int QInputEventStateToWebEventModifiers(QInputEvent* qevent) {
 
   int modifiers = 0;
   if (qmodifiers & Qt::ShiftModifier) {
-    modifiers |= blink::WebInputEvent::ShiftKey;
+    modifiers |= blink::WebInputEvent::kShiftKey;
   }
   if (qmodifiers & Qt::ControlModifier) {
-    modifiers |= blink::WebInputEvent::ControlKey;
+    modifiers |= blink::WebInputEvent::kControlKey;
   }
   if (qmodifiers & Qt::AltModifier) {
-    modifiers |= blink::WebInputEvent::AltKey;
+    modifiers |= blink::WebInputEvent::kAltKey;
   }
   if (qmodifiers & Qt::MetaModifier) {
-    modifiers |= blink::WebInputEvent::MetaKey;
+    modifiers |= blink::WebInputEvent::kMetaKey;
   }
   if (qmodifiers & Qt::KeypadModifier) {
-    modifiers |= blink::WebInputEvent::IsKeyPad;
+    modifiers |= blink::WebInputEvent::kIsKeyPad;
   }
 
   return modifiers;
@@ -136,13 +136,13 @@ int QMouseEventStateToWebEventModifiers(QMouseEvent* qevent) {
   int modifiers = 0;
 
   if (buttons & Qt::LeftButton) {
-    modifiers |= blink::WebInputEvent::LeftButtonDown;
+    modifiers |= blink::WebInputEvent::kLeftButtonDown;
   }
   if (buttons & Qt::MidButton) {
-    modifiers |= blink::WebInputEvent::MiddleButtonDown;
+    modifiers |= blink::WebInputEvent::kMiddleButtonDown;
   }
   if (buttons & Qt::RightButton) {
-    modifiers |= blink::WebInputEvent::RightButtonDown;
+    modifiers |= blink::WebInputEvent::kRightButtonDown;
   }
 
   modifiers |= QInputEventStateToWebEventModifiers(qevent);
@@ -155,12 +155,12 @@ blink::WebInputEvent::Type QInputEventTypeToWebEventType(QInputEvent* event,
   switch (event->type()) {
     case QEvent::KeyPress:
       return is_char ?
-          blink::WebInputEvent::Char : blink::WebInputEvent::RawKeyDown;
+          blink::WebInputEvent::kChar : blink::WebInputEvent::kRawKeyDown;
     case QEvent::KeyRelease:
-      return blink::WebInputEvent::KeyUp;
+      return blink::WebInputEvent::kKeyUp;
     default:
       NOTREACHED();
-      return blink::WebInputEvent::Undefined;
+      return blink::WebInputEvent::kUndefined;
   }
 }
 
@@ -193,38 +193,38 @@ content::NativeWebKeyboardEvent MakeNativeWebKeyboardEvent(QKeyEvent* event,
   result.extra_data = wrapper;
 
   if (event->isAutoRepeat()) {
-    result.setModifiers(
-        result.modifiers() | blink::WebInputEvent::IsAutoRepeat);
+    result.SetModifiers(
+        result.GetModifiers() | blink::WebInputEvent::kIsAutoRepeat);
   }
 
-  if (result.modifiers() & blink::WebInputEvent::AltKey) {
-    result.isSystemKey = true;
+  if (result.GetModifiers() & blink::WebInputEvent::kAltKey) {
+    result.is_system_key = true;
   }
 
-  int windowsKeyCode = GetKeyboardCodeFromQKeyEvent(event);
-  result.windowsKeyCode = oxide::WindowsKeyCodeWithoutLocation(windowsKeyCode);
-  result.setModifiers(
-      result.modifiers()
-      | oxide::LocationModifiersFromWindowsKeyCode(windowsKeyCode));
-  result.nativeKeyCode = event->nativeVirtualKey();
+  int windows_key_code = GetKeyboardCodeFromQKeyEvent(event);
+  result.windows_key_code = oxide::WindowsKeyCodeWithoutLocation(windows_key_code);
+  result.SetModifiers(
+      result.GetModifiers()
+      | oxide::LocationModifiersFromWindowsKeyCode(windows_key_code));
+  result.native_key_code = event->nativeVirtualKey();
 
-  result.domCode = static_cast<int>(
+  result.dom_code = static_cast<int>(
       ui::KeycodeConverter::NativeKeycodeToDomCode(event->nativeScanCode()));
-  result.domKey = GetDomKeyFromQKeyEvent(event);
+  result.dom_key = GetDomKeyFromQKeyEvent(event);
 
   const unsigned short* text = event->text().utf16();
-  memcpy(result.unmodifiedText, text, qMin(sizeof(result.unmodifiedText), sizeof(*text)));
+  memcpy(result.unmodified_text, text, qMin(sizeof(result.unmodified_text), sizeof(*text)));
 
-  static_assert(sizeof(result.unmodifiedText) == sizeof(result.text),
+  static_assert(sizeof(result.unmodified_text) == sizeof(result.text),
                 "blink::WebKeyboardEvent::text and "
-                "blink::WebKeyboardEvent::unmodifiedText sizes don't match");
+                "blink::WebKeyboardEvent::unmodified_text sizes don't match");
 
-  if (result.modifiers() & blink::WebInputEvent::ControlKey) {
+  if (result.GetModifiers() & blink::WebInputEvent::kControlKey) {
     result.text[0] = GetControlCharacter(
-        result.windowsKeyCode,
-        result.modifiers() & blink::WebInputEvent::ShiftKey);
+        result.windows_key_code,
+        result.GetModifiers() & blink::WebInputEvent::kShiftKey);
   } else {
-    memcpy(result.text, result.unmodifiedText, sizeof(result.unmodifiedText));
+    memcpy(result.text, result.unmodified_text, sizeof(result.unmodified_text));
   }
 
   return result;
@@ -234,33 +234,31 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
                                        QScreen* screen) {
   blink::WebMouseEvent result;
 
-  result.setTimeStampSeconds(QInputEventTimeToWebEventTime(event));
-  result.setModifiers(QMouseEventStateToWebEventModifiers(event));
-  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
+  result.SetTimeStampSeconds(QInputEventTimeToWebEventTime(event));
+  result.SetModifiers(QMouseEventStateToWebEventModifiers(event));
+  result.pointer_type = blink::WebPointerProperties::PointerType::kMouse;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
-  result.x = pos.x();
-  result.y = pos.y();
+  result.SetPositionInWidget(pos.x(), pos.y());
 
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
                                           screen);
-  result.globalX = global_pos.x();
-  result.globalY = global_pos.y();
+  result.SetPositionInScreen(global_pos.x(), global_pos.y());
 
-  result.clickCount = 0;
+  result.click_count = 0;
 
   switch (event->type()) {
     case QEvent::MouseButtonPress:
-      result.setType(blink::WebInputEvent::MouseDown);
-      result.clickCount = 1;
+      result.SetType(blink::WebInputEvent::kMouseDown);
+      result.click_count = 1;
       break;
     case QEvent::MouseButtonRelease:
-      result.setType(blink::WebInputEvent::MouseUp);
+      result.SetType(blink::WebInputEvent::kMouseUp);
       break;
     case QEvent::MouseMove:
-      result.setType(blink::WebInputEvent::MouseMove);
+      result.SetType(blink::WebInputEvent::kMouseMove);
       break;
     default:
       NOTREACHED();
@@ -269,26 +267,26 @@ blink::WebMouseEvent MakeWebMouseEvent(QMouseEvent* event,
   if (event->type() != QEvent::MouseMove) {
     switch(event->button()) {
       case Qt::LeftButton:
-        result.button = blink::WebPointerProperties::Button::Left;
+        result.button = blink::WebPointerProperties::Button::kLeft;
         break;
       case Qt::MidButton:
-        result.button = blink::WebPointerProperties::Button::Middle;
+        result.button = blink::WebPointerProperties::Button::kMiddle;
         break;
       case Qt::RightButton:
-        result.button = blink::WebPointerProperties::Button::Right;
+        result.button = blink::WebPointerProperties::Button::kRight;
         break;
       default:
         NOTREACHED();
     }
   } else {
     if (event->buttons() & Qt::LeftButton) {
-      result.button = blink::WebPointerProperties::Button::Left;
+      result.button = blink::WebPointerProperties::Button::kLeft;
     }
     if (event->buttons() & Qt::MidButton) {
-      result.button = blink::WebPointerProperties::Button::Middle;
+      result.button = blink::WebPointerProperties::Button::kMiddle;
     }
     if (event->buttons() & Qt::RightButton) {
-      result.button = blink::WebPointerProperties::Button::Right;
+      result.button = blink::WebPointerProperties::Button::kRight;
     }
   }
 
@@ -301,10 +299,10 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
 
   // The timestamp has be referenced to TimeTicks as ui::InputHandlerProxy uses
   // this on the renderer side to compute a roundtrip delay.
-  result.setTimeStampSeconds(
+  result.SetTimeStampSeconds(
       (base::TimeTicks::Now() - base::TimeTicks()).InSecondsF());
 
-  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
+  result.pointer_type = blink::WebPointerProperties::PointerType::kMouse;
 
   // In Chromium a wheel event is a type of mouse event, but this is not the
   // case in Qt (QWheelEvent is not derived from QMouseEvent). We create a
@@ -315,21 +313,19 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
                     Qt::NoButton,
                     event->buttons(),
                     event->modifiers());
-  result.setModifiers(QMouseEventStateToWebEventModifiers(&dummy));
+  result.SetModifiers(QMouseEventStateToWebEventModifiers(&dummy));
 
-  result.setType(blink::WebInputEvent::MouseWheel);
-  result.button = blink::WebPointerProperties::Button::NoButton;
+  result.SetType(blink::WebInputEvent::kMouseWheel);
+  result.button = blink::WebPointerProperties::Button::kNoButton;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
-  result.x = pos.x();
-  result.y = pos.y();
+  result.SetPositionInWidget(pos.x(), pos.y());
 
   gfx::Point global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->globalPos()),
                                           screen);
-  result.globalX = global_pos.x();
-  result.globalY = global_pos.y();
+  result.SetPositionInScreen(global_pos.x(), global_pos.y());
 
   QPoint delta = event->angleDelta();
   QPoint pixels = event->pixelDelta();
@@ -339,17 +335,17 @@ blink::WebMouseWheelEvent MakeWebMouseWheelEvent(QWheelEvent* event,
   if (!pixels.isNull()) {
     gfx::Point p = DpiUtils::ConvertQtPixelsToChromium(ToChromium(pixels),
                                                        screen);
-    result.deltaX = p.x();
-    result.deltaY = p.y();
-    result.wheelTicksX = result.deltaX / kPixelsPerTick;
-    result.wheelTicksY = result.deltaY / kPixelsPerTick;
+    result.delta_x = p.x();
+    result.delta_y = p.y();
+    result.wheel_ticks_x = result.delta_x / kPixelsPerTick;
+    result.wheel_ticks_y = result.delta_y / kPixelsPerTick;
   } else {
     // angelDelta unit is 0.125degrees
     // Assuming 1 tick == 15degrees, then 1 tick == (120*0.125)degrees
-    result.wheelTicksX = delta.x() / 120.0f;
-    result.wheelTicksY = delta.y() / 120.0f;
-    result.deltaX = result.wheelTicksX * kPixelsPerTick;
-    result.deltaY = result.wheelTicksY * kPixelsPerTick;
+    result.wheel_ticks_x = delta.x() / 120.0f;
+    result.wheel_ticks_y = delta.y() / 120.0f;
+    result.delta_x = result.wheel_ticks_x * kPixelsPerTick;
+    result.delta_y = result.wheel_ticks_y * kPixelsPerTick;
   }
 
   return result;
@@ -361,37 +357,36 @@ blink::WebMouseEvent MakeWebMouseEvent(
     QScreen* screen) {
   blink::WebMouseEvent result;
 
-  result.setTimeStampSeconds(QInputEventTimeToWebEventTime(event));
-  result.setModifiers(QInputEventStateToWebEventModifiers(event));
-  result.pointerType = blink::WebPointerProperties::PointerType::Mouse;
+  result.SetTimeStampSeconds(QInputEventTimeToWebEventTime(event));
+  result.SetModifiers(QInputEventStateToWebEventModifiers(event));
+  result.pointer_type = blink::WebPointerProperties::PointerType::kMouse;
 
   gfx::Point pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(event->pos()), screen);
-  result.x = pos.x();
-  result.y = pos.y();
+  result.SetPositionInWidget(pos.x(), pos.y());
 
   gfx::Point converted_global_pos =
       DpiUtils::ConvertQtPixelsToChromium(ToChromium(global_pos), screen);
-  result.globalX = converted_global_pos.x();
-  result.globalY = converted_global_pos.y();
+  result.SetPositionInScreen(converted_global_pos.x(),
+                             converted_global_pos.y());
 
-  result.clickCount = 0;
+  result.click_count = 0;
 
   switch (event->type()) {
     case QEvent::HoverEnter:
-      result.setType(blink::WebInputEvent::MouseEnter);
+      result.SetType(blink::WebInputEvent::kMouseEnter);
       break;
     case QEvent::HoverLeave:
-      result.setType(blink::WebInputEvent::MouseLeave);
+      result.SetType(blink::WebInputEvent::kMouseLeave);
       break;
     case QEvent::HoverMove:
-      result.setType(blink::WebInputEvent::MouseMove);
+      result.SetType(blink::WebInputEvent::kMouseMove);
       break;
     default:
       NOTREACHED();
   }
 
-  result.button = blink::WebPointerProperties::Button::NoButton;
+  result.button = blink::WebPointerProperties::Button::kNoButton;
 
   return result;
 }

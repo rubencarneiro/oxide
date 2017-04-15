@@ -37,7 +37,7 @@
 #include "device/vibration/vibration_manager.mojom.h"
 #include "ppapi/features/features.h"
 #include "services/device/public/interfaces/constants.mojom.h"
-#include "services/service_manager/public/cpp/interface_registry.h"
+#include "services/service_manager/public/cpp/binder_registry.h"
 #include "ui/display/display.h"
 #include "ui/native_theme/native_theme_switches.h"
 
@@ -348,7 +348,7 @@ ContentBrowserClient::GetOsTypeOverrideForGpuDataManager(
 }
 
 void ContentBrowserClient::OverrideDeviceServiceMojoInterfaces(
-    service_manager::InterfaceRegistry* registry) {
+    service_manager::BinderRegistry* registry) {
   registry->AddInterface(base::Bind(&CreateVibrationManager));
 }
 

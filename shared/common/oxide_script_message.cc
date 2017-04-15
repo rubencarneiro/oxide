@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 
 namespace oxide {
 
@@ -52,7 +53,7 @@ ScriptMessage::ScriptMessage(int serial,
       msg_id_(msg_id),
       has_responded_(serial == ScriptMessageParams::kInvalidSerial) {
   if (!wrapped_payload->Remove(0, &payload_)) {
-    payload_ = base::Value::CreateNullValue();
+    payload_ = base::MakeUnique<base::Value>();
   }
 }
 

@@ -306,35 +306,35 @@ bool WebContextMenuHost::IsCommandEnabled(WebContextMenuAction action) const {
     case WebContextMenuAction::OpenMediaInNewTab:
       return can_create_windows &&
              params_.src_url.is_valid() &&
-             params_.media_flags & blink::WebContextMenuData::MediaCanSave;
+             params_.media_flags & blink::WebContextMenuData::kMediaCanSave;
 
     case WebContextMenuAction::CopyMediaLocation:
       return params_.src_url.is_valid();
 
     case WebContextMenuAction::SaveMedia:
       return params_.src_url.is_valid() &&
-             params_.media_flags & blink::WebContextMenuData::MediaCanSave;
+             params_.media_flags & blink::WebContextMenuData::kMediaCanSave;
 
     case WebContextMenuAction::Undo:
-      return params_.edit_flags & blink::WebContextMenuData::CanUndo;
+      return params_.edit_flags & blink::WebContextMenuData::kCanUndo;
 
     case WebContextMenuAction::Redo:
-      return params_.edit_flags & blink::WebContextMenuData::CanRedo;
+      return params_.edit_flags & blink::WebContextMenuData::kCanRedo;
 
     case WebContextMenuAction::Cut:
-      return params_.edit_flags & blink::WebContextMenuData::CanCut;
+      return params_.edit_flags & blink::WebContextMenuData::kCanCut;
 
     case WebContextMenuAction::Copy:
-      return params_.edit_flags & blink::WebContextMenuData::CanCopy;
+      return params_.edit_flags & blink::WebContextMenuData::kCanCopy;
 
     case WebContextMenuAction::Paste:
-      return params_.edit_flags & blink::WebContextMenuData::CanPaste;
+      return params_.edit_flags & blink::WebContextMenuData::kCanPaste;
 
     case WebContextMenuAction::Erase:
-      return params_.edit_flags & blink::WebContextMenuData::CanDelete;
+      return params_.edit_flags & blink::WebContextMenuData::kCanDelete;
 
     case WebContextMenuAction::SelectAll:
-      return params_.edit_flags & blink::WebContextMenuData::CanSelectAll;
+      return params_.edit_flags & blink::WebContextMenuData::kCanSelectAll;
   }
 
   NOTREACHED();
@@ -348,19 +348,19 @@ std::vector<content::MenuItem> WebContextMenuHost::BuildItems() {
     AppendLinkItems(&items);
   }
 
-  if (params_.media_type == blink::WebContextMenuData::MediaTypeImage ||
-      params_.media_type == blink::WebContextMenuData::MediaTypeCanvas ||
-      params_.media_type == blink::WebContextMenuData::MediaTypeAudio ||
-      params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
+  if (params_.media_type == blink::WebContextMenuData::kMediaTypeImage ||
+      params_.media_type == blink::WebContextMenuData::kMediaTypeCanvas ||
+      params_.media_type == blink::WebContextMenuData::kMediaTypeAudio ||
+      params_.media_type == blink::WebContextMenuData::kMediaTypeVideo) {
     MenuBuilder(this, &items).BeginSection(WebContextMenuSection::Media);
 
-    if (params_.media_type == blink::WebContextMenuData::MediaTypeImage) {
+    if (params_.media_type == blink::WebContextMenuData::kMediaTypeImage) {
       AppendImageItems(&items);
-    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeCanvas) {
+    } else if (params_.media_type == blink::WebContextMenuData::kMediaTypeCanvas) {
       AppendCanvasItems(&items);
-    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeAudio) {
+    } else if (params_.media_type == blink::WebContextMenuData::kMediaTypeAudio) {
       AppendAudioItems(&items);
-    } else if (params_.media_type == blink::WebContextMenuData::MediaTypeVideo) {
+    } else if (params_.media_type == blink::WebContextMenuData::kMediaTypeVideo) {
       AppendVideoItems(&items);
     }
   }

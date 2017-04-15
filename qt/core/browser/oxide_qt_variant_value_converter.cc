@@ -70,7 +70,7 @@ std::unique_ptr<base::ListValue> FromVariantListValueInternal(
   for (auto it = list.begin(); it != list.end(); ++it) {
     std::unique_ptr<base::Value> value = FromVariantValueInternal(*it, state);
     if (!value) {
-      value = base::Value::CreateNullValue();
+      value = base::MakeUnique<base::Value>();
     }
     rv->Append(std::move(value));
   }
@@ -125,7 +125,7 @@ std::unique_ptr<base::Value> FromVariantValueInternal(const QVariant& variant,
   }
 
   if (variant.isNull()) {
-    return base::Value::CreateNullValue();
+    return base::MakeUnique<base::Value>();
   }
 
   QString str = variant.toString();

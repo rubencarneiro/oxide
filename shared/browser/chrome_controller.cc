@@ -45,7 +45,7 @@ DEFINE_WEB_CONTENTS_DATA_TRACKER_KEY(ChromeController);
 ChromeController::ChromeController(content::WebContents* contents)
     : content::WebContentsObserver(contents),
       top_controls_height_(0),
-      constraints_(blink::WebBrowserControlsBoth),
+      constraints_(blink::kWebBrowserControlsBoth),
       animation_enabled_(true) {
   FullscreenHelper::CreateForWebContents(contents);
   SecurityStatus::CreateForWebContents(contents);
@@ -77,8 +77,8 @@ void ChromeController::InitializeForHost(
   // Show the location bar if this is the initial RVH and the constraints
   // are set to blink::WebBrowserControlsBoth
   blink::WebBrowserControlsState current = constraints_;
-  if (initial_host && constraints_ == blink::WebBrowserControlsBoth) {
-    current = blink::WebBrowserControlsShown;
+  if (initial_host && constraints_ == blink::kWebBrowserControlsBoth) {
+    current = blink::kWebBrowserControlsShown;
   }
 
   UpdateBrowserControlsState(render_frame_host, current, false);
@@ -86,7 +86,7 @@ void ChromeController::InitializeForHost(
 
 void ChromeController::RefreshBrowserControlsState() {
   UpdateBrowserControlsState(web_contents()->GetMainFrame(),
-                             blink::WebBrowserControlsBoth,
+                             blink::kWebBrowserControlsBoth,
                              animation_enabled_);
 }
 
@@ -95,18 +95,18 @@ void ChromeController::UpdateBrowserControlsState(
     blink::WebBrowserControlsState current_state,
     bool animated) {
   blink::WebBrowserControlsState constraints = constraints_;
-  if (constraints_ == blink::WebBrowserControlsBoth) {
+  if (constraints_ == blink::kWebBrowserControlsBoth) {
     if (!CanHideBrowserControls()) {
-      current_state = constraints = blink::WebBrowserControlsShown;
+      current_state = constraints = blink::kWebBrowserControlsShown;
     } else if (!CanShowBrowserControls()) {
-      current_state = constraints = blink::WebBrowserControlsHidden;
+      current_state = constraints = blink::kWebBrowserControlsHidden;
     }
   }
 
-  DCHECK((current_state != blink::WebBrowserControlsHidden ||
-          constraints != blink::WebBrowserControlsShown) &&
-         (current_state != blink::WebBrowserControlsShown ||
-          constraints != blink::WebBrowserControlsHidden));
+  DCHECK((current_state != blink::kWebBrowserControlsHidden ||
+          constraints != blink::kWebBrowserControlsShown) &&
+         (current_state != blink::kWebBrowserControlsShown ||
+          constraints != blink::kWebBrowserControlsHidden));
 
   // render_frame_host can be null here, because I think we're hitting something
   // like https://bugs.chromium.org/p/chromium/issues/detail?id=575245
@@ -163,7 +163,7 @@ cc::CompositorFrameMetadata ChromeController::FallbackMetadata() const {
   cc::CompositorFrameMetadata metadata;
   metadata.top_controls_height = top_controls_height();
   metadata.top_controls_shown_ratio =
-      constraints_ == blink::WebBrowserControlsHidden ? 0.f : 1.f;
+      constraints_ == blink::kWebBrowserControlsHidden ? 0.f : 1.f;
 
   return std::move(metadata);
 }
@@ -325,23 +325,23 @@ void ChromeController::SetConstraints(blink::WebBrowserControlsState constraints
   constraints_ = constraints;
 
   UpdateBrowserControlsState(web_contents()->GetMainFrame(),
-                             blink::WebBrowserControlsBoth,
+                             blink::kWebBrowserControlsBoth,
                              animation_enabled_);
 }
 
 void ChromeController::Show(bool animate) {
-  DCHECK_EQ(constraints_, blink::WebBrowserControlsBoth);
+  DCHECK_EQ(constraints_, blink::kWebBrowserControlsBoth);
 
   UpdateBrowserControlsState(web_contents()->GetMainFrame(),
-                             blink::WebBrowserControlsShown,
+                             blink::kWebBrowserControlsShown,
                              animate);
 }
 
 void ChromeController::Hide(bool animate) {
-  DCHECK_EQ(constraints_, blink::WebBrowserControlsBoth);
+  DCHECK_EQ(constraints_, blink::kWebBrowserControlsBoth);
 
   UpdateBrowserControlsState(web_contents()->GetMainFrame(),
-                             blink::WebBrowserControlsHidden,
+                             blink::kWebBrowserControlsHidden,
                              animate);
 }
 

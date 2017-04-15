@@ -44,7 +44,7 @@ void ScriptMessageRequestImplRenderer::DispatchResponse(
   {
     v8::MicrotasksScope microtasks(manager()->isolate(),
                                    v8::MicrotasksScope::kDoNotRunMicrotasks);
-    manager()->frame()->GetWebFrame()->callFunctionEvenIfScriptDisabled(
+    manager()->frame()->GetWebFrame()->CallFunctionEvenIfScriptDisabled(
         function, GetHandle(), argc, argv);
   }
   if (try_catch.HasCaught()) {

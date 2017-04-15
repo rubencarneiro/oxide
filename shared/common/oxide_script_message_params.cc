@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 
 namespace oxide {
 
@@ -55,8 +56,7 @@ void PopulateScriptMessageParams(int serial,
   params->error = ScriptMessageParams::ERROR_OK;
   params->msg_id = msg_id;
   params->wrapped_payload.Set(0, payload ?
-      std::move(payload) :
-      base::Value::CreateNullValue());
+      std::move(payload) : base::MakeUnique<base::Value>());
 }
 
 } // namespace oxide

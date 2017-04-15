@@ -42,10 +42,10 @@ namespace {
 OXIDE_MAKE_ENUM_BITWISE_OPERATORS(blink::WebContextMenuData::EditFlags)
 
 blink::WebContextMenuData::EditFlags SupportedEditingCapabilities() {
-  return blink::WebContextMenuData::CanCut
-      | blink::WebContextMenuData::CanCopy
-      | blink::WebContextMenuData::CanPaste
-      | blink::WebContextMenuData::CanSelectAll;
+  return blink::WebContextMenuData::kCanCut
+      | blink::WebContextMenuData::kCanCopy
+      | blink::WebContextMenuData::kCanPaste
+      | blink::WebContextMenuData::kCanSelectAll;
 }
 
 }

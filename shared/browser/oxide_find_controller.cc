@@ -67,8 +67,8 @@ void FindController::StartFinding(const std::string& text,
 
   blink::WebFindOptions options;
   options.forward = true;
-  options.findNext = false;
-  options.matchCase = case_sensitive_;
+  options.find_next = false;
+  options.match_case = case_sensitive_;
 
   contents_->Find(current_session_id_, base::UTF8ToUTF16(text_), options);
 }
@@ -94,7 +94,7 @@ void FindController::GotoNextMatch() {
 
   blink::WebFindOptions options;
   options.forward = true;
-  options.findNext = true;
+  options.find_next = true;
 
   contents_->Find(s_request_id_counter_++, base::UTF8ToUTF16(text_), options);
 }
@@ -107,7 +107,7 @@ void FindController::GotoPreviousMatch() {
 
   blink::WebFindOptions options;
   options.forward = false;
-  options.findNext = true;
+  options.find_next = true;
 
   contents_->Find(s_request_id_counter_++, base::UTF8ToUTF16(text_), options);
 }

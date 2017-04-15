@@ -67,12 +67,12 @@ int UserScriptSlave::GetIsolatedWorldID(const GURL& url,
                                         blink::WebLocalFrame* frame) {
   int id = IsolatedWorldMap::IDFromURL(url);
 
-  frame->setIsolatedWorldSecurityOrigin(
+  frame->SetIsolatedWorldSecurityOrigin(
       id,
-      blink::WebSecurityOrigin::createFromString(
-          blink::WebString::fromUTF8(url.spec())));
-  frame->setIsolatedWorldContentSecurityPolicy(
-      id, blink::WebString::fromUTF8(kIsolatedWorldCSP));
+      blink::WebSecurityOrigin::CreateFromString(
+          blink::WebString::FromUTF8(url.spec())));
+  frame->SetIsolatedWorldContentSecurityPolicy(
+      id, blink::WebString::FromUTF8(kIsolatedWorldCSP));
 
   return id;
 }
@@ -131,7 +131,7 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
 
   v8::Local<v8::String> src(
       v8::String::NewFromUtf8(isolate,
-                              script_source.code.utf8().c_str()));
+                              script_source.code.Utf8().c_str()));
   DCHECK(!src.IsEmpty() && src->Length() > 0);
 
   v8::Local<v8::String> wrapped_script_tail(
@@ -159,7 +159,7 @@ void UserScriptSlave::InjectGreaseMonkeyScriptInMainWorld(
         message_manager->GetOxideApiObject(message_manager->isolate())
     };
 
-    frame->callFunctionEvenIfScriptDisabled(
+    frame->CallFunctionEvenIfScriptDisabled(
         function,
         message_manager->GetV8Context()->Global(),
         arraysize(argv),
@@ -205,10 +205,10 @@ UserScriptSlave::UserScriptSlave()
 
 void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
                                     UserScript::RunLocation location) {
-  blink::WebDataSource* data_source = frame->provisionalDataSource() ?
-      frame->provisionalDataSource() : frame->dataSource();
+  blink::WebDataSource* data_source = frame->ProvisionalDataSource() ?
+      frame->ProvisionalDataSource() : frame->DataSource();
   CHECK(data_source);
-  GURL data_source_url(data_source->getRequest().url());
+  GURL data_source_url(data_source->GetRequest().Url());
   if (data_source_url.is_empty()) {
     return;
   }
@@ -227,7 +227,7 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
 
     if (!script->match_all_frames() &&
         !script->emulate_greasemonkey() &&
-        frame->parent()) {
+        frame->Parent()) {
       continue;
     }
 
@@ -248,19 +248,19 @@ void UserScriptSlave::InjectScripts(blink::WebLocalFrame* frame,
       content += kUserScriptTail;
     }
 
-    blink::WebScriptSource source(blink::WebString::fromUTF8(content));
+    blink::WebScriptSource source(blink::WebString::FromUTF8(content));
 
     if (script->context() == GURL(kMainWorldContextUrl)) {
       if (script->emulate_greasemonkey()) {
         InjectGreaseMonkeyScriptInMainWorld(frame, source);
       } else {
-        frame->executeScript(source);
+        frame->ExecuteScript(source);
       }
       continue;
     }
 
     int id = GetIsolatedWorldID(script->context(), frame);
-    frame->executeScriptInIsolatedWorld(id, &source, 1, 0);
+    frame->ExecuteScriptInIsolatedWorld(id, &source, 1, 0);
   }
 }
 

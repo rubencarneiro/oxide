@@ -712,25 +712,25 @@ std::unique_ptr<oxide::TouchEditingMenu> WebView::CreateTouchEditingMenu(
       base::MakeUnique<TouchEditingMenuHost>(contents_view_.get(), client);
 
   EditCapabilityFlags edit_caps;
-  if (edit_flags & blink::WebContextMenuData::CanUndo) {
+  if (edit_flags & blink::WebContextMenuData::kCanUndo) {
     edit_caps |= EDIT_CAPABILITY_UNDO;
   }
-  if (edit_flags & blink::WebContextMenuData::CanRedo) {
+  if (edit_flags & blink::WebContextMenuData::kCanRedo) {
     edit_caps |= EDIT_CAPABILITY_REDO;
   }
-  if (edit_flags & blink::WebContextMenuData::CanCut) {
+  if (edit_flags & blink::WebContextMenuData::kCanCut) {
     edit_caps |= EDIT_CAPABILITY_CUT;
   }
-  if (edit_flags & blink::WebContextMenuData::CanCopy) {
+  if (edit_flags & blink::WebContextMenuData::kCanCopy) {
     edit_caps |= EDIT_CAPABILITY_COPY;
   }
-  if (edit_flags & blink::WebContextMenuData::CanPaste) {
+  if (edit_flags & blink::WebContextMenuData::kCanPaste) {
     edit_caps |= EDIT_CAPABILITY_PASTE;
   }
-  if (edit_flags & blink::WebContextMenuData::CanDelete) {
+  if (edit_flags & blink::WebContextMenuData::kCanDelete) {
     edit_caps |= EDIT_CAPABILITY_ERASE;
   }
-  if (edit_flags & blink::WebContextMenuData::CanSelectAll) {
+  if (edit_flags & blink::WebContextMenuData::kCanSelectAll) {
     edit_caps |= EDIT_CAPABILITY_SELECT_ALL;
   }
 
@@ -1121,25 +1121,25 @@ QUrl WebView::targetUrl() const {
 EditCapabilityFlags WebView::editFlags() const {
   EditCapabilityFlags caps;
   blink::WebContextMenuData::EditFlags flags = web_view_->GetEditFlags();
-  if (flags & blink::WebContextMenuData::CanUndo) {
+  if (flags & blink::WebContextMenuData::kCanUndo) {
     caps |= EDIT_CAPABILITY_UNDO;
   }
-  if (flags & blink::WebContextMenuData::CanRedo) {
+  if (flags & blink::WebContextMenuData::kCanRedo) {
     caps |= EDIT_CAPABILITY_REDO;
   }
-  if (flags & blink::WebContextMenuData::CanCut) {
+  if (flags & blink::WebContextMenuData::kCanCut) {
     caps |= EDIT_CAPABILITY_CUT;
   }
-  if (flags & blink::WebContextMenuData::CanCopy) {
+  if (flags & blink::WebContextMenuData::kCanCopy) {
     caps |= EDIT_CAPABILITY_COPY;
   }
-  if (flags & blink::WebContextMenuData::CanPaste) {
+  if (flags & blink::WebContextMenuData::kCanPaste) {
     caps |= EDIT_CAPABILITY_PASTE;
   }
-  if (flags & blink::WebContextMenuData::CanDelete) {
+  if (flags & blink::WebContextMenuData::kCanDelete) {
     caps |= EDIT_CAPABILITY_ERASE;
   }
-  if (flags & blink::WebContextMenuData::CanSelectAll) {
+  if (flags & blink::WebContextMenuData::kCanSelectAll) {
     caps |= EDIT_CAPABILITY_SELECT_ALL;
   }
   return caps;

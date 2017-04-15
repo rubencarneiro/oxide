@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "base/logging.h"
+#include "base/memory/ptr_util.h"
 #include "base/values.h"
 
 namespace oxide {
@@ -42,7 +43,7 @@ void ScriptMessageRequest::OnReceiveResponse(
 
   std::unique_ptr<base::Value> payload;
   if (!wrapped_payload->Remove(0, &payload)) {
-    payload = base::Value::CreateNullValue();
+    payload = base::MakeUnique<base::Value>();
   }
 
   if (error == ScriptMessageParams::ERROR_OK) {

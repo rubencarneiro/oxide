@@ -33,18 +33,18 @@ namespace {
 
 MediaType ToMediaType(blink::WebContextMenuData::MediaType type) {
   switch (type) {
-    case blink::WebContextMenuData::MediaTypeNone:
-    case blink::WebContextMenuData::MediaTypeFile:
+    case blink::WebContextMenuData::kMediaTypeNone:
+    case blink::WebContextMenuData::kMediaTypeFile:
       return MEDIA_TYPE_NONE;
-    case blink::WebContextMenuData::MediaTypeImage:
+    case blink::WebContextMenuData::kMediaTypeImage:
       return MEDIA_TYPE_IMAGE;
-    case blink::WebContextMenuData::MediaTypeVideo:
+    case blink::WebContextMenuData::kMediaTypeVideo:
       return MEDIA_TYPE_VIDEO;
-    case blink::WebContextMenuData::MediaTypeAudio:
+    case blink::WebContextMenuData::kMediaTypeAudio:
       return MEDIA_TYPE_AUDIO;
-    case blink::WebContextMenuData::MediaTypeCanvas:
+    case blink::WebContextMenuData::kMediaTypeCanvas:
       return MEDIA_TYPE_CANVAS;
-    case blink::WebContextMenuData::MediaTypePlugin:
+    case blink::WebContextMenuData::kMediaTypePlugin:
       return MEDIA_TYPE_PLUGIN;
     default:
       Q_UNREACHABLE();
@@ -53,34 +53,34 @@ MediaType ToMediaType(blink::WebContextMenuData::MediaType type) {
 
 MediaStatusFlags ToMediaStatusFlags(int flags) {
   MediaStatusFlags rv;
-  if (flags & blink::WebContextMenuData::MediaInError) {
+  if (flags & blink::WebContextMenuData::kMediaInError) {
     rv |= MEDIA_STATUS_IN_ERROR;
   }
-  if (flags & blink::WebContextMenuData::MediaPaused) {
+  if (flags & blink::WebContextMenuData::kMediaPaused) {
     rv |= MEDIA_STATUS_PAUSED;
   }
-  if (flags & blink::WebContextMenuData::MediaMuted) {
+  if (flags & blink::WebContextMenuData::kMediaMuted) {
     rv |= MEDIA_STATUS_MUTED;
   }
-  if (flags & blink::WebContextMenuData::MediaLoop) {
+  if (flags & blink::WebContextMenuData::kMediaLoop) {
     rv |= MEDIA_STATUS_LOOP;
   }
-  if (flags & blink::WebContextMenuData::MediaCanSave) {
+  if (flags & blink::WebContextMenuData::kMediaCanSave) {
     rv |= MEDIA_STATUS_CAN_SAVE;
   }
-  if (flags & blink::WebContextMenuData::MediaHasAudio) {
+  if (flags & blink::WebContextMenuData::kMediaHasAudio) {
     rv |= MEDIA_STATUS_HAS_AUDIO;
   }
-  if (flags & blink::WebContextMenuData::MediaCanToggleControls) {
+  if (flags & blink::WebContextMenuData::kMediaCanToggleControls) {
     rv |= MEDIA_STATUS_CAN_TOGGLE_CONTROLS;
   }
-  if (flags & blink::WebContextMenuData::MediaControls) {
+  if (flags & blink::WebContextMenuData::kMediaControls) {
     rv |= MEDIA_STATUS_CONTROLS;
   }
-  if (flags & blink::WebContextMenuData::MediaCanPrint) {
+  if (flags & blink::WebContextMenuData::kMediaCanPrint) {
     rv |= MEDIA_STATUS_CAN_PRINT;
   }
-  if (flags & blink::WebContextMenuData::MediaCanRotate) {
+  if (flags & blink::WebContextMenuData::kMediaCanRotate) {
     rv |= MEDIA_STATUS_CAN_ROTATE;
   }
   return rv;
@@ -88,25 +88,25 @@ MediaStatusFlags ToMediaStatusFlags(int flags) {
 
 EditCapabilityFlags ToEditCapabilityFlags(int flags) {
   EditCapabilityFlags rv;
-  if (flags & blink::WebContextMenuData::CanUndo) {
+  if (flags & blink::WebContextMenuData::kCanUndo) {
     rv |= EDIT_CAPABILITY_UNDO;
   }
-  if (flags & blink::WebContextMenuData::CanRedo) {
+  if (flags & blink::WebContextMenuData::kCanRedo) {
     rv |= EDIT_CAPABILITY_REDO;
   }
-  if (flags & blink::WebContextMenuData::CanCut) {
+  if (flags & blink::WebContextMenuData::kCanCut) {
     rv |= EDIT_CAPABILITY_CUT;
   }
-  if (flags & blink::WebContextMenuData::CanCopy) {
+  if (flags & blink::WebContextMenuData::kCanCopy) {
     rv |= EDIT_CAPABILITY_COPY;
   }
-  if (flags & blink::WebContextMenuData::CanPaste) {
+  if (flags & blink::WebContextMenuData::kCanPaste) {
     rv |= EDIT_CAPABILITY_PASTE;
   }
-  if (flags & blink::WebContextMenuData::CanDelete) {
+  if (flags & blink::WebContextMenuData::kCanDelete) {
     rv |= EDIT_CAPABILITY_ERASE;
   }
-  if (flags & blink::WebContextMenuData::CanSelectAll) {
+  if (flags & blink::WebContextMenuData::kCanSelectAll) {
     rv |= EDIT_CAPABILITY_SELECT_ALL;
   }
   return rv;

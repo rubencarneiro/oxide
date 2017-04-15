@@ -19,7 +19,7 @@
 #define _OXIDE_SHARED_BROWSER_MOUSE_EVENT_STATE_H_
 
 #include "third_party/WebKit/public/platform/WebPointerProperties.h"
-#include "ui/gfx/geometry/point.h"
+#include "ui/gfx/geometry/point_f.h"
 
 namespace blink {
 class WebMouseEvent;
@@ -39,11 +39,11 @@ class MouseEventState {
   bool IsConsecutiveClick(const blink::WebMouseEvent& event);
 
   bool mouse_entered_;
-  gfx::Point global_position_;
+  gfx::PointF global_position_;
 
   blink::WebPointerProperties::Button click_button_;
   int click_count_;
-  gfx::Point click_position_;
+  gfx::PointF click_position_;
   double last_click_event_time_;
 };
 
