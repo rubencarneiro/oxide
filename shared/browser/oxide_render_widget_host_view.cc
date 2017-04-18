@@ -24,6 +24,7 @@
 #include "base/logging.h"
 #include "base/memory/ptr_util.h"
 #include "base/memory/scoped_vector.h"
+#include "cc/ipc/mojo_compositor_frame_sink.mojom.h"
 #include "cc/layers/surface_layer.h"
 #include "cc/output/compositor_frame.h"
 #include "cc/quads/render_pass.h"
@@ -42,6 +43,7 @@
 #include "content/public/browser/render_view_host.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/context_menu_params.h"
+#include "content/public/common/cursor_info.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebGestureDevice.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
@@ -119,12 +121,15 @@ void RenderWidgetHostView::FocusedNodeChanged(
   container_->FocusedNodeChanged(this, is_editable_node);
 }
 
-void RenderWidgetHostView::DidCreateNewRendererCompositorFrameSink() {
+void RenderWidgetHostView::DidCreateNewRendererCompositorFrameSink(
+    cc::mojom::MojoCompositorFrameSinkClient* renderer_compositor_frame_sink) {
   DestroyDelegatedContent();
   surface_factory_.reset();
   if (!surface_returned_resources_.empty()) {
     SendReturnedDelegatedResources();
   }
+
+  renderer_compositor_frame_sink_ = renderer_compositor_frame_sink;
 }
 
 void RenderWidgetHostView::SubmitCompositorFrame(
@@ -686,7 +691,7 @@ RenderWidgetHostView::CreateDrawable() {
 
 void RenderWidgetHostView::UpdateCurrentCursor() {
   if (is_loading_) {
-    content::WebCursor::CursorInfo busy_cursor_info(
+    content::CursorInfo busy_cursor_info(
         blink::WebCursorInfo::kTypeWait);
     current_cursor_.InitFromCursorInfo(busy_cursor_info);
   } else {
@@ -711,16 +716,15 @@ void RenderWidgetHostView::DestroyDelegatedContent() {
 }
 
 void RenderWidgetHostView::SendDelegatedFrameAck() {
-  host_->SendReclaimCompositorResources(true, // is_swap_ack
-                                        surface_returned_resources_);
+  renderer_compositor_frame_sink_->DidReceiveCompositorFrameAck(
+      surface_returned_resources_);
   surface_returned_resources_.clear();
 }
 
 void RenderWidgetHostView::SendReturnedDelegatedResources() {
-  DCHECK(host_);
+  DCHECK(renderer_compositor_frame_sink_);
 
-  host_->SendReclaimCompositorResources(false, // is_swap_ack
-                                        surface_returned_resources_);
+  renderer_compositor_frame_sink_->ReclaimResources(surface_returned_resources_);
   surface_returned_resources_.clear();
 }
 
@@ -766,6 +770,7 @@ RenderWidgetHostView::RenderWidgetHostView(
     content::RenderWidgetHostImpl* host)
     : host_(host),
       container_(nullptr),
+      renderer_compositor_frame_sink_(nullptr),
       frame_sink_id_(CompositorUtils::GetInstance()->AllocateFrameSinkId()),
       is_loading_(false),
       is_showing_(!host->is_hidden()),

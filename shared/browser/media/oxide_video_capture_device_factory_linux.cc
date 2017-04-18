@@ -57,14 +57,11 @@ const char* GetDeviceNameFromCameraType(CameraType type) {
   return "";
 }
 
-std::unique_ptr<media::VideoCaptureDeviceDescriptors>
-GetDeviceDescriptorsFromHybris() {
+void GetDeviceDescriptorsFromHybris(
+    media::VideoCaptureDeviceDescriptors* descriptors) {
   DCHECK(HybrisUtils::GetInstance()->IsCameraCompatAvailable());
 
   int32_t number_of_devices = android_camera_get_number_of_devices();
-
-  std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors(
-      new media::VideoCaptureDeviceDescriptors());
 
   for (int32_t camera_id = 0; camera_id < number_of_devices; ++camera_id) {
     CameraType type;
@@ -89,18 +86,16 @@ GetDeviceDescriptorsFromHybris() {
           GetDeviceNameFromCameraType(type),
           device_id));
   }
-
-  return descriptors;
 }
 
 bool IsDeviceDescriptorIn(const media::VideoCaptureDeviceDescriptor& descriptor,
-                          media::VideoCaptureDeviceDescriptors* descriptors) {
+                          const media::VideoCaptureDeviceDescriptors& descriptors) {
   return std::find_if(
-      descriptors->begin(),
-      descriptors->end(),
+      descriptors.begin(),
+      descriptors.end(),
       [descriptor](const media::VideoCaptureDeviceDescriptor& i) {
         return descriptor.device_id == i.device_id;
-      }) != descriptors->end();
+      }) != descriptors.end();
 }
 
 #endif
@@ -115,13 +110,10 @@ VideoCaptureDeviceFactoryLinux::CreateDevice(
     return platform_factory_->CreateDevice(device_descriptor);
   }
 
-  std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors =
-      GetDeviceDescriptorsFromHybris();
-  if (!descriptors) {
-    return nullptr;
-  }
+  media::VideoCaptureDeviceDescriptors descriptors
+  GetDeviceDescriptorsFromHybris(&descriptors);
 
-  if (!IsDeviceDescriptorIn(device_descriptor, descriptors.get())) {
+  if (!IsDeviceDescriptorIn(device_descriptor, descriptors)) {
     return nullptr;
   }
 
@@ -129,20 +121,6 @@ VideoCaptureDeviceFactoryLinux::CreateDevice(
 #else
   return platform_factory_->CreateDevice(device_descriptor);
 #endif
-}
-
-void VideoCaptureDeviceFactoryLinux::EnumerateDeviceDescriptors(
-    const EnumerateDevicesCallback& callback) {
-#if defined(ENABLE_HYBRIS_CAMERA)
-  if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
-    std::unique_ptr<media::VideoCaptureDeviceDescriptors> descriptors =
-        GetDeviceDescriptorsFromHybris();
-    callback.Run(std::move(descriptors));
-  } else
-#endif
-  {
-    platform_factory_->EnumerateDeviceDescriptors(callback);
-  }
 }
 
 void VideoCaptureDeviceFactoryLinux::GetSupportedFormats(
@@ -159,7 +137,14 @@ void VideoCaptureDeviceFactoryLinux::GetSupportedFormats(
 
 void VideoCaptureDeviceFactoryLinux::GetDeviceDescriptors(
     media::VideoCaptureDeviceDescriptors* device_descriptors) {
-  NOTREACHED();
+#if defined(ENABLE_HYBRIS_CAMERA)
+  if (HybrisUtils::GetInstance()->IsCameraCompatAvailable()) {
+    GetDeviceDescriptorsFromHybris(device_descriptors);
+  } else
+#endif
+  {
+    platform_factory_->GetDeviceDescriptors(device_descriptors);
+  }
 }
 
 VideoCaptureDeviceFactoryLinux::VideoCaptureDeviceFactoryLinux(

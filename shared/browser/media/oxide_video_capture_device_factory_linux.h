@@ -41,8 +41,6 @@ class VideoCaptureDeviceFactoryLinux
   // media::VideoCaptureDeviceFactory implementation
   std::unique_ptr<media::VideoCaptureDevice> CreateDevice(
       const media::VideoCaptureDeviceDescriptor& device_descriptor) override;
-  void EnumerateDeviceDescriptors(
-      const EnumerateDevicesCallback& callback) override;
   void GetSupportedFormats(
       const media::VideoCaptureDeviceDescriptor& device_descriptor,
       media::VideoCaptureFormats* supported_formats) override;

@@ -36,6 +36,7 @@
 #include "base/memory/scoped_vector.h"
 #include "content/common/cursors/webcursor.h"
 #include "content/public/browser/native_web_keyboard_event.h"
+#include "content/public/common/cursor_info.h"
 #include "content/public/common/drop_data.h"
 #include "third_party/WebKit/public/platform/WebCursorInfo.h"
 #include "third_party/WebKit/public/platform/WebInputEvent.h"
@@ -479,7 +480,7 @@ void ContentsViewImpl::EvictCurrentFrame() {
 }
 
 void ContentsViewImpl::UpdateCursor(const content::WebCursor& cursor) {
-  content::WebCursor::CursorInfo cursor_info;
+  content::CursorInfo cursor_info;
 
   cursor.GetCursorInfo(&cursor_info);
   if (cursor.IsCustom()) {

@@ -147,7 +147,7 @@ QList<QVariant> ToVariantListValueInternal(const base::ListValue* list,
 
   for (const auto& v : *list) {
     bool dummy;
-    rv.push_back(ToVariantValueInternal(v.get(), state, &dummy));
+    rv.push_back(ToVariantValueInternal(&v, state, &dummy));
   }
 
   return rv;

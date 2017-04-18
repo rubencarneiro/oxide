@@ -113,7 +113,8 @@ class RenderWidgetHostView
   float GetTopControlsHeight() const override;
   void FocusedNodeChanged(bool is_editable_node,
                           const gfx::Rect& node_bounds_in_screen) override;
-  void DidCreateNewRendererCompositorFrameSink() override;
+  void DidCreateNewRendererCompositorFrameSink(
+      cc::mojom::MojoCompositorFrameSinkClient* renderer_compositor_frame_sink) override;
   void SubmitCompositorFrame(const cc::LocalSurfaceId& local_surface_id,
                              cc::CompositorFrame frame) override;
   void ClearCompositorFrame() override;
@@ -222,6 +223,8 @@ class RenderWidgetHostView
   content::RenderWidgetHostImpl* host_;
 
   RenderWidgetHostViewContainer* container_;
+
+  cc::mojom::MojoCompositorFrameSinkClient* renderer_compositor_frame_sink_;
 
   scoped_refptr<cc::SurfaceLayer> layer_;
   cc::FrameSinkId frame_sink_id_;
