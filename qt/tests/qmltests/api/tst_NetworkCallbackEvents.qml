@@ -155,8 +155,9 @@ TestWebView {
         { url: data.url.replace(/([^\?]+)/, "http://testsuite/get-headers.py"), method: "GET", requestCancelled: false, isMainFrame: false, hasUA: true, UA: "Oxide Test", hasFoo: false, Foo: "" }
       ]);
 
-      var headers = JSON.parse(webView.getTestApiForFrame(webView.rootFrame.childFrames[0]).evaluateCode(
-          "return document.body.children[0].innerHTML", true));
+      var testApi = webView.getTestApiForFrame(webView.rootFrame.childFrames[0]);
+      verify(TestUtils.waitFor(function() { return testApi.evaluateCode("return document.body.children.length", true) == 1; }));
+      var headers = JSON.parse(testApi.evaluateCode("return document.body.children[0].innerHTML", true));
 
       compare(headers["user-agent"], data["User-Agent"]);
       compare(headers["foo"], data["Foo"]);
