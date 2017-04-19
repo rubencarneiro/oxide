@@ -55,8 +55,8 @@ TestWebView {
 
     function invokeContextMenu(id) {
       var r = webView.getTestApi().getBoundingClientRectForSelector("#" + id);
-      var x = r.x + r.width / 2;
-      var y = r.y + r.height / 2;
+      var x = Math.round(r.x + r.width / 2);
+      var y = Math.round(r.y + r.height / 2);
       mouseClick(webView, x, y, Qt.RightButton);
       verify(webView.waitForContextMenu(),
              "Timed out waiting for context menu to show");
