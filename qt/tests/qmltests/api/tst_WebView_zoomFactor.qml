@@ -32,12 +32,18 @@ TestWebView {
 
     function verify_zoomFactor(factor) {
       compare(webView.zoomFactor, factor);
+      function testpixel(i, color) {
+        var image = grabImage(webView);
+        return (image.pixel(i, i) == color);
+      }
+      var zoomedSize = Math.round(originalSize * factor);
+      verify(TestUtils.waitFor(function() { return testpixel(zoomedSize - 1, red); }));
+      verify(TestUtils.waitFor(function() { return testpixel(zoomedSize, white); }));
       var image = grabImage(webView);
-      var zoomedSize = originalSize * factor;
       for (var i = 0; i < zoomedSize; ++i) {
         compare(image.pixel(i, i), red);
       }
-      compare(image.pixel(zoomedSize + 1, zoomedSize + 1), white);
+      compare(image.pixel(zoomedSize, zoomedSize), white);
     }
 
     function test_WebView_zoomFactor() {
