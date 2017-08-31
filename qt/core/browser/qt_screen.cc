@@ -122,12 +122,24 @@ void Screen::OnScreenAdded(QScreen* screen) {
     QList<QScreen*> virtual_siblings = screen->virtualSiblings();
     auto it = std::find(virtual_siblings.begin(), virtual_siblings.end(),
                         existing_screen);
+    LOG(WARNING) << "Virtual screens: " << displays_.size();
+
+#if defined(ENABLE_HYBRIS)
+    oxide::HybrisUtils* instance = oxide::HybrisUtils::GetInstance();
+    if (it == virtual_siblings.end() && !instance->HasDeviceProperties()) {
+      LOG(WARNING) <<
+          "More than one virtual screen detected - this is not " <<
+          "supported in Oxide";
+      return;
+    }
+#else
     if (it == virtual_siblings.end()) {
       LOG(WARNING) <<
           "More than one virtual screen detected - this is not " <<
           "supported in Oxide";
       return;
     }
+#endif
   }
 #else
   DCHECK(!screen->property(kDisplayIdName).isValid());
