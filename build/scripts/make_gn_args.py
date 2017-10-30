@@ -25,11 +25,13 @@ import psutil
 import re
 from StringIO import StringIO
 import sys
+import subprocess
 
 EXTRA_ARGS_RE = r'([^=]+)=(.+)'
 
 def HostArch():
-  machine = platform.machine()
+  #machine = platform.machine()
+  machine = subprocess.check_output(["dpkg-architecture", "-q", "DEB_HOST_ARCH_CPU"])
 
   if re.match(r'i.86', machine):
     return "x86"
@@ -204,6 +206,7 @@ def WriteConfigurableArgs(writer, options):
                                 options.host_compiler,
                                 host_arch)
   writer.WriteString("host_toolchain", host_toolchain)
+  writer.WriteString("host_cpu", host_arch)
 
   if options.target_arch and options.target_arch != host_arch:
     writer.WriteBool("oxide_enable_cross_toolchains", True)
@@ -223,6 +226,7 @@ def WriteConfigurableArgs(writer, options):
   else:
     writer.WriteString("custom_toolchain", host_toolchain)
     writer.WriteString("v8_snapshot_toolchain", host_toolchain)
+    writer.WriteString("target_cpu", host_arch)
 
   if options.component_build:
     writer.WriteBool("is_component_build", True)
