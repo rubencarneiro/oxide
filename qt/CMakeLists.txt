@@ -33,7 +33,7 @@ if(ENABLE_TESTS)
   find_package(Qt5Positioning REQUIRED)
   find_package(Qt5Test REQUIRED)
   find_package(Qt5QuickTest REQUIRED)
-  find_package(Qt5PlatformSupport REQUIRED)
+#  find_package(Qt5PlatformSupport REQUIRED) #FIXME broken with qt 5.9
 endif()
 
 if(NOT CMAKE_CROSSCOMPILING)

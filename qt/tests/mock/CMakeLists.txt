@@ -18,4 +18,4 @@
 
 add_subdirectory(feedback)
 add_subdirectory(position)
-add_subdirectory(qpa)
+#add_subdirectory(qpa) #FIXME broken with qt 5.9
