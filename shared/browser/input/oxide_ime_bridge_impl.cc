@@ -153,9 +153,6 @@ void ImeBridgeImpl::SelectionBoundsChanged(const gfx::Rect& caret_rect,
 }
 
 void ImeBridgeImpl::FocusedNodeChanged(bool is_editable_node) {
-  if (is_editable_node == focused_node_is_editable_) {
-    return;
-  }
 
   focused_node_is_editable_ = is_editable_node;
 
