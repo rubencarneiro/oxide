@@ -67,6 +67,7 @@ class InputMethodContext : public QObject,
   void SelectionBoundsChanged() override;
   void SelectionChanged() override;
   void CancelComposition() override;
+  void Commit() override;
   void FocusedNodeChanged() override;
 
   InputMethodContextClient* client_; // Owns us

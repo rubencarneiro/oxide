@@ -226,6 +226,20 @@ void InputMethodContext::CancelComposition() {
   im->reset();
 }
 
+void InputMethodContext::Commit() {
+    
+  if (!has_input_method_state_) {
+    return;
+  }
+
+  QInputMethod* im = QGuiApplication::inputMethod();
+  if (!im) {
+    return;
+  }
+
+  im->commit(); 
+}
+
 void InputMethodContext::FocusedNodeChanged() {
   if (!client_) {
     return;
