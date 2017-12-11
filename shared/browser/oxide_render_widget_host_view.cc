@@ -559,6 +559,12 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
     const blink::WebGestureEvent& event) const {
   switch (event.type) {
     case blink::WebInputEvent::GestureLongPress: {
+        
+      // targets https://github.com/ubports/oxide/issues/1
+      if (ime_bridge_.context()) {
+        ime_bridge_.context()->Commit();
+      }
+      
       base::TimeTicks event_time = base::TimeTicks() +
           base::TimeDelta::FromSecondsD(event.timeStampSeconds);
       gfx::PointF location(event.x, event.y);
@@ -569,6 +575,12 @@ bool RenderWidgetHostView::HandleGestureForTouchSelection(
       break;
     }
     case blink::WebInputEvent::GestureTap: {
+      
+      // targets https://github.com/ubports/oxide/issues/1
+      if (ime_bridge_.context()) {
+        ime_bridge_.context()->Commit();
+      }
+        
       gfx::PointF location(event.x, event.y);
       if (selection_controller_->WillHandleTapEvent(
               location, event.data.tap.tapCount)) {

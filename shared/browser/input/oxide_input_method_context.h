@@ -43,6 +43,7 @@ class OXIDE_SHARED_EXPORT InputMethodContext {
   virtual void SelectionBoundsChanged();
   virtual void SelectionChanged();
   virtual void CancelComposition();
+  virtual void Commit();
   virtual void FocusedNodeChanged();
 
  protected:

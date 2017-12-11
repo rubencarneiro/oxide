@@ -83,6 +83,7 @@ void InputMethodContext::TextInputStateChanged() {}
 void InputMethodContext::SelectionBoundsChanged() {}
 void InputMethodContext::SelectionChanged() {}
 void InputMethodContext::CancelComposition() {}
+void InputMethodContext::Commit() {}
 void InputMethodContext::FocusedNodeChanged() {}
 
 } // namespace oxide
